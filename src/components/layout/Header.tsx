@@ -187,7 +187,7 @@ const Header = () => {
                 <Link to="/candidate/apply">Apply Now</Link>
               </Button>
               <Button variant="default" size="sm" asChild>
-                <Link to="/employer/post-job">Post Job</Link>
+                <Link to="/employer/login">Post Job</Link>
               </Button>
             </div>
 
@@ -294,7 +294,7 @@ const Header = () => {
                   </Link>
                 </Button>
                 <Button variant="default" size="sm" asChild>
-                  <Link to="/employer/post-job" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
                     Post Job
                   </Link>
                 </Button>
