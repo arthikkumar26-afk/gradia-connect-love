@@ -20,6 +20,7 @@ import PlaceholderPage from "./components/PlaceholderPage";
 import JobsResults from "./pages/JobsResults";
 import NotFound from "./pages/NotFound";
 import EmployerLogin from "./pages/EmployerLogin";
+import CandidateLogin from "./pages/CandidateLogin";
 
 const queryClient = new QueryClient();
 
@@ -52,7 +53,7 @@ const App = () => (
             <Route path="/job/:id" element={<PlaceholderPage title="Job Details" />} />
             <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
             <Route path="/candidate/signup" element={<PlaceholderPage title="Candidate Signup" />} />
-            <Route path="/candidate/login" element={<PlaceholderPage title="Candidate Login" />} />
+            <Route path="/candidate/login" element={<CandidateLogin />} />
             <Route path="/candidate/apply" element={<PlaceholderPage title="Apply Now" />} />
             <Route path="/candidate/dashboard" element={<PlaceholderPage title="Candidate Dashboard" />} />
             <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
