@@ -19,6 +19,7 @@ import Privacy from "./pages/Privacy";
 import PlaceholderPage from "./components/PlaceholderPage";
 import JobsResults from "./pages/JobsResults";
 import NotFound from "./pages/NotFound";
+import EmployerLogin from "./pages/EmployerLogin";
 
 const queryClient = new QueryClient();
 
@@ -66,7 +67,7 @@ const App = () => (
             <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
             <Route path="/employer/post-job" element={<PlaceholderPage title="Post a Job" />} />
             <Route path="/employer/signup" element={<PlaceholderPage title="Employer Signup" />} />
-            <Route path="/employer/login" element={<PlaceholderPage title="Employer Login" />} />
+            <Route path="/employer/login" element={<EmployerLogin />} />
             <Route path="/employer/dashboard" element={<PlaceholderPage title="Employer Dashboard" />} />
             <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
             <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
