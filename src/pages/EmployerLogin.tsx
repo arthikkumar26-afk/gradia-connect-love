@@ -41,7 +41,7 @@ const EmployerLogin = () => {
           {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Employer Login
+              Client Login
             </h1>
             <p className="text-muted-foreground">
               Sign in to access your employer dashboard
