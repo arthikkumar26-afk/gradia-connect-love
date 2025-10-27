@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import EmployerLogin from "./pages/EmployerLogin";
 import CandidateLogin from "./pages/CandidateLogin";
 import CreateProfile from "./pages/CreateProfile";
+import ProfileSuccess from "./pages/ProfileSuccess";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/candidate/apply" element={<CreateProfile />} />
             <Route path="/create-profile" element={<CreateProfile />} />
             <Route path="/signup" element={<CreateProfile />} />
+            <Route path="/profile/success" element={<ProfileSuccess />} />
             <Route path="/candidate/dashboard" element={<PlaceholderPage title="Candidate Dashboard" />} />
             <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
             <Route path="/candidate/interview-prep" element={<PlaceholderPage title="Interview Prep" />} />
