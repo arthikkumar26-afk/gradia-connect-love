@@ -21,7 +21,6 @@ import JobsResults from "./pages/JobsResults";
 import NotFound from "./pages/NotFound";
 import EmployerLogin from "./pages/EmployerLogin";
 import CandidateLogin from "./pages/CandidateLogin";
-import CreateProfile from "./pages/CreateProfile";
 
 const queryClient = new QueryClient();
 
@@ -47,8 +46,6 @@ const App = () => (
 
             {/* Candidate Routes */}
             <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
-            <Route path="/create-profile" element={<CreateProfile />} />
-            <Route path="/signup" element={<CreateProfile />} />
             <Route path="/jobs" element={<PlaceholderPage title="Browse Jobs" />} />
             <Route path="/jobs-results" element={<JobsResults />} />
             <Route path="/jobs/software" element={<PlaceholderPage title="Software Jobs" />} />
