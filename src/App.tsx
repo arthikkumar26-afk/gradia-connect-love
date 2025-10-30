@@ -20,6 +20,7 @@ import PlaceholderPage from "./components/PlaceholderPage";
 import JobsResults from "./pages/JobsResults";
 import NotFound from "./pages/NotFound";
 import EmployerLogin from "./pages/EmployerLogin";
+import EmployerDashboard from "./pages/EmployerDashboard";
 import CandidateLogin from "./pages/CandidateLogin";
 import CreateProfile from "./pages/CreateProfile";
 import ProfileSuccess from "./pages/ProfileSuccess";
@@ -74,7 +75,7 @@ const App = () => (
             <Route path="/employer/post-job" element={<PlaceholderPage title="Post a Job" />} />
             <Route path="/employer/signup" element={<PlaceholderPage title="Employer Signup" />} />
             <Route path="/employer/login" element={<EmployerLogin />} />
-            <Route path="/employer/dashboard" element={<PlaceholderPage title="Employer Dashboard" />} />
+            <Route path="/employer/dashboard" element={<EmployerDashboard />} />
             <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
             <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
             <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />

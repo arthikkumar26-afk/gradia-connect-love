@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Briefcase, ArrowLeft } from "lucide-react";
 
 const EmployerLogin = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -15,6 +16,9 @@ const EmployerLogin = () => {
     e.preventDefault();
     // Handle login logic here
     console.log("Login attempt:", { email, password, rememberMe });
+    
+    // Navigate to employer dashboard after successful login
+    navigate("/employer/dashboard");
   };
 
   return (
