@@ -86,21 +86,6 @@ const Header = () => {
               Home
             </Link>
 
-            {/* For Candidates Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                For Candidates
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48">
-                {candidatePages.map((page) => (
-                  <DropdownMenuItem key={page.path} asChild>
-                    <Link to={page.path}>{page.name}</Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             {/* For Employers Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
@@ -109,6 +94,21 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48">
                 {employerPages.map((page) => (
+                  <DropdownMenuItem key={page.path} asChild>
+                    <Link to={page.path}>{page.name}</Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* For Candidates Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
+                For Candidates
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48">
+                {candidatePages.map((page) => (
                   <DropdownMenuItem key={page.path} asChild>
                     <Link to={page.path}>{page.name}</Link>
                   </DropdownMenuItem>
@@ -227,9 +227,9 @@ const Header = () => {
                 </Link>
                 <div className="px-3 py-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">
-                    For Candidates
+                    For Employers
                   </div>
-                  {candidatePages.map((page) => (
+                  {employerPages.map((page) => (
                     <Link
                       key={page.path}
                       to={page.path}
@@ -242,9 +242,9 @@ const Header = () => {
                 </div>
                 <div className="px-3 py-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">
-                    For Employers
+                    For Candidates
                   </div>
-                  {employerPages.map((page) => (
+                  {candidatePages.map((page) => (
                     <Link
                       key={page.path}
                       to={page.path}
