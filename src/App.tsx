@@ -24,6 +24,7 @@ import EmployerDashboard from "./pages/EmployerDashboard";
 import CandidateLogin from "./pages/CandidateLogin";
 import CreateProfile from "./pages/CreateProfile";
 import ProfileSuccess from "./pages/ProfileSuccess";
+import JobRequirements from "./pages/JobRequirements";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/employer/signup" element={<PlaceholderPage title="Employer Signup" />} />
             <Route path="/employer/login" element={<EmployerLogin />} />
             <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+            <Route path="/employer/job-requirements" element={<JobRequirements />} />
             <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
             <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
             <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
