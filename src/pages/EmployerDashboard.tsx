@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { JobManagementContent } from "@/components/employer/JobManagementContent";
 
 const EmployerDashboard = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -140,7 +141,9 @@ const EmployerDashboard = () => {
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {activeMenu === "jobs" ? "Job Management" : "Dashboard"}
+            </h1>
           </div>
 
           <Button variant="cta" size="lg" className="rounded-xl" asChild>
@@ -154,75 +157,81 @@ const EmployerDashboard = () => {
         {/* Dashboard Content */}
         <main className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
-            {/* Summary Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {dashboardCards.map((card, index) => {
-                const Icon = card.icon;
-                
-                return (
-                  <Card 
-                    key={index}
-                    className="overflow-hidden hover:shadow-large transition-all duration-300 animate-fade-in border-border"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <CardHeader className={`bg-gradient-to-br ${card.gradient} pb-3`}>
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-base font-semibold text-foreground">
-                          {card.title}
-                        </CardTitle>
-                        <div className="p-2 bg-background/50 rounded-lg">
-                          <Icon className="h-5 w-5 text-accent" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="text-4xl font-bold text-foreground mb-1">
-                        {card.value}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {card.subtitle}
-                      </p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            {activeMenu === "dashboard" && (
+              <>
+                {/* Summary Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {dashboardCards.map((card, index) => {
+                    const Icon = card.icon;
+                    
+                    return (
+                      <Card 
+                        key={index}
+                        className="overflow-hidden hover:shadow-large transition-all duration-300 animate-fade-in border-border"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <CardHeader className={`bg-gradient-to-br ${card.gradient} pb-3`}>
+                          <div className="flex items-start justify-between">
+                            <CardTitle className="text-base font-semibold text-foreground">
+                              {card.title}
+                            </CardTitle>
+                            <div className="p-2 bg-background/50 rounded-lg">
+                              <Icon className="h-5 w-5 text-accent" />
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <div className="text-4xl font-bold text-foreground mb-1">
+                            {card.value}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {card.subtitle}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
 
-            {/* Quick Actions Section */}
-            <div className="mt-8 bg-card rounded-xl border border-border p-6 shadow-soft">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button variant="outline" className="justify-start h-auto py-4" asChild>
-                  <Link to="/employer/jobs">
-                    <Briefcase className="h-5 w-5 mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium">Manage Jobs</div>
-                      <div className="text-xs text-muted-foreground">View and edit postings</div>
-                    </div>
-                  </Link>
-                </Button>
-                
-                <Button variant="outline" className="justify-start h-auto py-4" asChild>
-                  <Link to="/employer/talent-pool">
-                    <Users className="h-5 w-5 mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium">Browse Talent</div>
-                      <div className="text-xs text-muted-foreground">Find qualified candidates</div>
-                    </div>
-                  </Link>
-                </Button>
-                
-                <Button variant="outline" className="justify-start h-auto py-4" asChild>
-                  <Link to="/employer/approvals">
-                    <CheckSquare className="h-5 w-5 mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium">Review Approvals</div>
-                      <div className="text-xs text-muted-foreground">Pending actions</div>
-                    </div>
-                  </Link>
-                </Button>
-              </div>
-            </div>
+                {/* Quick Actions Section */}
+                <div className="mt-8 bg-card rounded-xl border border-border p-6 shadow-soft">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button variant="outline" className="justify-start h-auto py-4" asChild>
+                      <Link to="/employer/jobs">
+                        <Briefcase className="h-5 w-5 mr-3" />
+                        <div className="text-left">
+                          <div className="font-medium">Manage Jobs</div>
+                          <div className="text-xs text-muted-foreground">View and edit postings</div>
+                        </div>
+                      </Link>
+                    </Button>
+                    
+                    <Button variant="outline" className="justify-start h-auto py-4" asChild>
+                      <Link to="/employer/talent-pool">
+                        <Users className="h-5 w-5 mr-3" />
+                        <div className="text-left">
+                          <div className="font-medium">Browse Talent</div>
+                          <div className="text-xs text-muted-foreground">Find qualified candidates</div>
+                        </div>
+                      </Link>
+                    </Button>
+                    
+                    <Button variant="outline" className="justify-start h-auto py-4" asChild>
+                      <Link to="/employer/approvals">
+                        <CheckSquare className="h-5 w-5 mr-3" />
+                        <div className="text-left">
+                          <div className="font-medium">Review Approvals</div>
+                          <div className="text-xs text-muted-foreground">Pending actions</div>
+                        </div>
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {activeMenu === "jobs" && <JobManagementContent />}
           </div>
         </main>
       </div>
