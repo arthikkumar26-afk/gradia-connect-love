@@ -9,14 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import {
   Search,
   Menu,
   X,
@@ -56,32 +48,15 @@ const Header = () => {
     { name: "Request Demo", path: "/employer/demo" },
   ];
 
-  const resourceCategories = {
-    exploreCategories: [
-      { name: "Cybersecurity", path: "/resources/cybersecurity" },
-      { name: "Web Development", path: "/resources/web-development" },
-      { name: "Mobile App Development", path: "/resources/mobile-development" },
-      { name: "DevOps", path: "/resources/devops" },
-      { name: "AI & Automation", path: "/resources/ai-automation" },
-      { name: "SaaS Products", path: "/resources/saas" },
-    ],
-    exploreCollections: [
-      { name: "Top IT Companies", path: "/companies/top-it" },
-      { name: "Cybersecurity Companies", path: "/companies/cybersecurity" },
-      { name: "Product-Based Companies", path: "/companies/product-based" },
-      { name: "Startup Companies", path: "/companies/startups" },
-      { name: "Featured Tech Companies", path: "/companies/featured" },
-      { name: "Partnered Companies", path: "/companies/partners" },
-    ],
-    researchTools: [
-      { name: "Interview Questions", path: "/resources/interview-questions" },
-      { name: "Salary Insights", path: "/resources/salary-insights" },
-      { name: "Company Reviews", path: "/resources/reviews" },
-      { name: "Skill Assessment Tests", path: "/resources/assessments" },
-      { name: "Career Guides", path: "/resources/career-guides" },
-      { name: "Salary Calculator", path: "/resources/salary-calculator" },
-    ],
-  };
+  const resourcePages = [
+    { name: "Blog", path: "/blog" },
+    { name: "Events", path: "/events" },
+    { name: "Workshops", path: "/workshops" },
+    { name: "Resource Library", path: "/library" },
+    { name: "Downloads", path: "/downloads" },
+    { name: "Video Testimonials", path: "/testimonials" },
+    { name: "Newsletter", path: "/newsletter" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -141,84 +116,20 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Resources Mega Menu */}
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-sm font-medium bg-transparent hover:bg-transparent data-[state=open]:bg-transparent">
-                    Resources
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="w-[800px] p-6 bg-background">
-                      <div className="grid grid-cols-3 gap-8">
-                        {/* Explore Categories */}
-                        <div>
-                          <h3 className="text-sm font-semibold text-foreground mb-4">
-                            Explore Categories
-                          </h3>
-                          <ul className="space-y-3">
-                            {resourceCategories.exploreCategories.map((item) => (
-                              <li key={item.path}>
-                                <NavigationMenuLink asChild>
-                                  <Link
-                                    to={item.path}
-                                    className="block text-sm text-muted-foreground hover:text-accent transition-colors"
-                                  >
-                                    {item.name}
-                                  </Link>
-                                </NavigationMenuLink>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {/* Explore Collections */}
-                        <div>
-                          <h3 className="text-sm font-semibold text-foreground mb-4">
-                            Explore Collections
-                          </h3>
-                          <ul className="space-y-3">
-                            {resourceCategories.exploreCollections.map((item) => (
-                              <li key={item.path}>
-                                <NavigationMenuLink asChild>
-                                  <Link
-                                    to={item.path}
-                                    className="block text-sm text-muted-foreground hover:text-accent transition-colors"
-                                  >
-                                    {item.name}
-                                  </Link>
-                                </NavigationMenuLink>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        {/* Research & Tools */}
-                        <div>
-                          <h3 className="text-sm font-semibold text-foreground mb-4">
-                            Research & Tools
-                          </h3>
-                          <ul className="space-y-3">
-                            {resourceCategories.researchTools.map((item) => (
-                              <li key={item.path}>
-                                <NavigationMenuLink asChild>
-                                  <Link
-                                    to={item.path}
-                                    className="block text-sm text-muted-foreground hover:text-accent transition-colors"
-                                  >
-                                    {item.name}
-                                  </Link>
-                                </NavigationMenuLink>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            {/* Resources Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
+                Resources
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48">
+                {resourcePages.map((page) => (
+                  <DropdownMenuItem key={page.path} asChild>
+                    <Link to={page.path}>{page.name}</Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Link
               to="/about"
@@ -345,44 +256,14 @@ const Header = () => {
                   ))}
                 </div>
                 <div className="px-3 py-2">
-                  <div className="text-sm font-semibold text-foreground mb-3">
-                    Explore Categories
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    Resources
                   </div>
-                  {resourceCategories.exploreCategories.map((page) => (
+                  {resourcePages.map((page) => (
                     <Link
                       key={page.path}
                       to={page.path}
-                      className="block px-2 py-1.5 text-sm text-muted-foreground hover:text-accent transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {page.name}
-                    </Link>
-                  ))}
-                </div>
-                <div className="px-3 py-2">
-                  <div className="text-sm font-semibold text-foreground mb-3">
-                    Explore Collections
-                  </div>
-                  {resourceCategories.exploreCollections.map((page) => (
-                    <Link
-                      key={page.path}
-                      to={page.path}
-                      className="block px-2 py-1.5 text-sm text-muted-foreground hover:text-accent transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {page.name}
-                    </Link>
-                  ))}
-                </div>
-                <div className="px-3 py-2">
-                  <div className="text-sm font-semibold text-foreground mb-3">
-                    Research & Tools
-                  </div>
-                  {resourceCategories.researchTools.map((page) => (
-                    <Link
-                      key={page.path}
-                      to={page.path}
-                      className="block px-2 py-1.5 text-sm text-muted-foreground hover:text-accent transition-colors"
+                      className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       {page.name}
