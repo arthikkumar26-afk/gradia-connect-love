@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { EmployerProvider } from "./contexts/EmployerContext";
 
 // Layout
 import Layout from "./components/layout/Layout";
@@ -25,17 +26,23 @@ import CandidateLogin from "./pages/CandidateLogin";
 import CreateProfile from "./pages/CreateProfile";
 import ProfileSuccess from "./pages/ProfileSuccess";
 import JobRequirements from "./pages/JobRequirements";
+import Registration from "./pages/employer/Registration";
+import Agreement from "./pages/employer/Agreement";
+import Terms from "./pages/employer/Terms";
+import Plans from "./pages/employer/Plans";
+import Onboarding from "./pages/employer/Onboarding";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Layout>
-          <Routes>
+    <EmployerProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Layout>
+            <Routes>
             {/* Main Pages */}
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
@@ -73,10 +80,14 @@ const App = () => (
 
             {/* Employer Routes */}
             <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
-            <Route path="/employer/post-job" element={<PlaceholderPage title="Post a Job" />} />
-            <Route path="/employer/signup" element={<PlaceholderPage title="Employer Signup" />} />
+            <Route path="/employer/signup" element={<Registration />} />
             <Route path="/employer/login" element={<EmployerLogin />} />
+            <Route path="/employer/agreement" element={<Agreement />} />
+            <Route path="/employer/terms" element={<Terms />} />
+            <Route path="/employer/plans" element={<Plans />} />
+            <Route path="/employer/onboarding" element={<Onboarding />} />
             <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+            <Route path="/employer/post-job" element={<PlaceholderPage title="Post a Job" />} />
             <Route path="/employer/job-requirements" element={<JobRequirements />} />
             <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
             <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
@@ -124,6 +135,7 @@ const App = () => (
         </Layout>
       </BrowserRouter>
     </TooltipProvider>
+    </EmployerProvider>
   </QueryClientProvider>
 );
 
