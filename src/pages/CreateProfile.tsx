@@ -152,7 +152,7 @@ const CreateProfile = () => {
 
               <div className="mb-6">
                 <h2 className="text-3xl font-bold text-foreground mb-2">
-                  Create your Consultancy Profile
+                  Create your Profile
                 </h2>
                 <p className="text-muted-foreground">
                   Search & apply to jobs from top companies
