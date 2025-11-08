@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Search, Filter, UserPlus, Mail, Phone } from 'lucide-react';
-import { mockGetCandidates } from '@/utils/mockApi';
+import { Search, Filter, UserPlus, Mail, Phone, Eye } from 'lucide-react';
+import { mockGetCandidates, mockShortlistCandidate, mockRejectPlacement, mockGetJobs, mockGetClients } from '@/utils/mockApi';
 import { Candidate } from '@/contexts/EmployerContext';
+import CandidateProfileModal from './CandidateProfileModal';
+import RejectionReasonModal from './RejectionReasonModal';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TalentPoolContent() {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
 
   useEffect(() => {
     loadCandidates();
@@ -32,6 +41,67 @@ export default function TalentPoolContent() {
       candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.skills.some((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleViewProfile = (candidate: Candidate) => {
+    setSelectedCandidate(candidate);
+    setShowProfileModal(true);
+  };
+
+  const handleShortlist = async () => {
+    if (!selectedCandidate) return;
+
+    try {
+      // Get first job and client for demo
+      const jobs = await mockGetJobs();
+      const clients = await mockGetClients();
+      
+      await mockShortlistCandidate(selectedCandidate.id, jobs[0]?.id || '1', clients[0]?.id || '1');
+      
+      toast({
+        title: 'Candidate Shortlisted',
+        description: `${selectedCandidate.name} has been added to Placements.`,
+      });
+      
+      setShowProfileModal(false);
+      setSelectedCandidate(null);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to shortlist candidate',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRejectFromModal = () => {
+    setShowProfileModal(false);
+    setShowRejectionModal(true);
+  };
+
+  const handleConfirmRejection = async (reason: string, comments: string) => {
+    if (!selectedCandidate) return;
+
+    try {
+      toast({
+        title: 'Candidate Rejected',
+        description: 'Reason recorded successfully.',
+      });
+      
+      setShowRejectionModal(false);
+      setSelectedCandidate(null);
+      
+      // Redirect candidate to learning platform
+      setTimeout(() => {
+        navigate(`/learning-platform?reason=${encodeURIComponent(reason)}`);
+      }, 1500);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to record rejection',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const getStatusColor = (status: Candidate['status']) => {
     switch (status) {
@@ -82,6 +152,7 @@ export default function TalentPoolContent() {
                 <TableHead>Name</TableHead>
                 <TableHead>Skills</TableHead>
                 <TableHead>Experience</TableHead>
+                <TableHead>AI Score</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -111,6 +182,23 @@ export default function TalentPoolContent() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">{candidate.experience}</TableCell>
                   <TableCell>
+                    {candidate.aiScore ? (
+                      <Badge
+                        className={
+                          candidate.aiScore >= 80
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : candidate.aiScore >= 60
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                        }
+                      >
+                        {candidate.aiScore}/100
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">N/A</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <Badge className={getStatusColor(candidate.status)}>{candidate.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -121,7 +209,12 @@ export default function TalentPoolContent() {
                       <Button variant="ghost" size="sm">
                         <Phone className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewProfile(candidate)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
                         View Profile
                       </Button>
                     </div>
@@ -132,6 +225,29 @@ export default function TalentPoolContent() {
           </Table>
         )}
       </div>
+
+      {/* Modals */}
+      <CandidateProfileModal
+        isOpen={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false);
+          setSelectedCandidate(null);
+        }}
+        candidate={selectedCandidate}
+        onShortlist={handleShortlist}
+        onReject={handleRejectFromModal}
+      />
+
+      <RejectionReasonModal
+        isOpen={showRejectionModal}
+        onClose={() => {
+          setShowRejectionModal(false);
+          setSelectedCandidate(null);
+        }}
+        onConfirm={handleConfirmRejection}
+        candidateName={selectedCandidate?.name || ''}
+        stage="Talent Pool"
+      />
     </div>
   );
 }

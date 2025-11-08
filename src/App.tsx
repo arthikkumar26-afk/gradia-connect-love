@@ -31,6 +31,7 @@ import Agreement from "./pages/employer/Agreement";
 import Terms from "./pages/employer/Terms";
 import Plans from "./pages/employer/Plans";
 import Onboarding from "./pages/employer/Onboarding";
+import LearningPlatform from "./pages/LearningPlatform";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="/employer/plans" element={<Plans />} />
             <Route path="/employer/onboarding" element={<Onboarding />} />
             <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+            <Route path="/learning-platform" element={<LearningPlatform />} />
             <Route path="/employer/post-job" element={<PlaceholderPage title="Post a Job" />} />
             <Route path="/employer/job-requirements" element={<JobRequirements />} />
             <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />

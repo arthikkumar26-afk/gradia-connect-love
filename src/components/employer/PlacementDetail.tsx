@@ -1,15 +1,20 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Placement, Job, Candidate, Client } from '@/contexts/EmployerContext';
-import { ChevronLeft, CheckCircle, Circle, Calendar, FileText, Upload, Check, X } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Circle, Calendar, FileText, Upload, Check, X, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ScheduleMeetingModal from './ScheduleMeetingModal';
 import BGVSection from './BGVSection';
 import OfferLetterModal from './OfferLetterModal';
+import CommentSection from './CommentSection';
+import ScreeningTestSection from './ScreeningTestSection';
+import RejectionReasonModal from './RejectionReasonModal';
 import { useToast } from '@/hooks/use-toast';
-import { mockUpdatePlacementStage, mockRejectPlacement } from '@/utils/mockApi';
+import { mockUpdatePlacementStage, mockRejectPlacement, mockAddPlacementComment, mockSubmitAIEvaluation } from '@/utils/mockApi';
 
 interface PlacementDetailProps {
   placement: Placement;
@@ -21,7 +26,7 @@ interface PlacementDetailProps {
 }
 
 const PLACEMENT_STAGES = [
-  'Applied',
+  'Shortlisted',
   'Screening Test',
   'Panel Interview',
   'Feedback',
@@ -39,11 +44,18 @@ export default function PlacementDetail({
   onUpdate,
 }: PlacementDetailProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [documentsOpen, setDocumentsOpen] = useState(false);
 
   const currentStageIndex = PLACEMENT_STAGES.indexOf(placement.stage as any);
-  const progress = ((currentStageIndex + 1) / PLACEMENT_STAGES.length) * 100;
+  const progress = placement.stage === 'Rejected' 
+    ? 100 
+    : placement.stage === 'Hired'
+    ? 100
+    : ((currentStageIndex + 1) / PLACEMENT_STAGES.length) * 100;
 
   const handleMoveToNextStage = async () => {
     const nextIndex = currentStageIndex + 1;
@@ -59,15 +71,56 @@ export default function PlacementDetail({
     }
   };
 
-  const handleReject = async () => {
-    if (confirm('Are you sure you want to reject this placement?')) {
-      try {
-        const updated = await mockRejectPlacement(placement.id, 'Employer decided not to proceed');
-        onUpdate(updated);
-        toast({ title: 'Placement Rejected', variant: 'destructive' });
-      } catch (error) {
-        toast({ title: 'Error', description: 'Failed to reject placement', variant: 'destructive' });
-      }
+  const handleReject = () => {
+    setShowRejectionModal(true);
+  };
+
+  const handleConfirmRejection = async (reason: string, comments: string) => {
+    try {
+      const updated = await mockRejectPlacement(placement.id, reason, comments);
+      onUpdate(updated);
+      toast({ 
+        title: 'Candidate Rejected', 
+        description: 'Reason recorded successfully.',
+        variant: 'destructive' 
+      });
+      setShowRejectionModal(false);
+      
+      // Redirect to learning platform
+      setTimeout(() => {
+        navigate(`/learning-platform?reason=${encodeURIComponent(reason)}`);
+      }, 1500);
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to reject placement', variant: 'destructive' });
+    }
+  };
+
+  const handleAddComment = async (text: string) => {
+    try {
+      const updated = await mockAddPlacementComment(
+        placement.id,
+        text,
+        'Employer Name',
+        'employer',
+        placement.stage
+      );
+      onUpdate(updated);
+      toast({ title: 'Comment Posted' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to post comment', variant: 'destructive' });
+    }
+  };
+
+  const handleAIEvaluation = async (evaluation: any) => {
+    try {
+      const updated = await mockSubmitAIEvaluation(placement.id, evaluation);
+      onUpdate(updated);
+      toast({ 
+        title: 'AI Evaluation Complete', 
+        description: `Score: ${evaluation.score}/100` 
+      });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save evaluation', variant: 'destructive' });
     }
   };
 
@@ -109,37 +162,45 @@ export default function PlacementDetail({
         </Badge>
       </div>
 
-      {/* Progress Bar */}
-      {placement.stage !== 'Rejected' && placement.stage !== 'Hired' && (
-        <Card className="p-6">
-          <h3 className="font-semibold text-foreground mb-4">Placement Progress</h3>
-          <Progress value={progress} className="mb-4" />
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            {PLACEMENT_STAGES.map((stage) => (
-              <div key={stage} className="flex flex-col items-center text-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-colors ${
-                    isStageComplete(stage)
-                      ? 'bg-green-100 dark:bg-green-900/30'
-                      : stage === placement.stage
-                      ? 'bg-primary'
-                      : 'bg-muted'
-                  }`}
-                >
-                  {isStageComplete(stage) ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                  ) : stage === placement.stage ? (
-                    <Circle className="w-5 h-5 text-primary-foreground fill-current" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
-                <span className={`text-xs font-medium ${getStageColor(stage)}`}>{stage}</span>
+      {/* Progress Bar - Always visible */}
+      <Card className="p-6">
+        <h3 className="font-semibold text-foreground mb-4">Placement Progress</h3>
+        <Progress value={progress} className="mb-4" />
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {PLACEMENT_STAGES.map((stage) => (
+            <div key={stage} className="flex flex-col items-center text-center">
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-colors ${
+                  isStageComplete(stage)
+                    ? 'bg-green-100 dark:bg-green-900/30'
+                    : stage === placement.stage
+                    ? 'bg-primary'
+                    : 'bg-muted'
+                }`}
+              >
+                {isStageComplete(stage) ? (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                ) : stage === placement.stage ? (
+                  <Circle className="w-5 h-5 text-primary-foreground fill-current" />
+                ) : (
+                  <Circle className="w-5 h-5 text-muted-foreground" />
+                )}
               </div>
-            ))}
+              <span className={`text-xs font-medium ${getStageColor(stage)}`}>{stage}</span>
+            </div>
+          ))}
+        </div>
+        {placement.stage === 'Rejected' && placement.rejectionReason && (
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <p className="text-sm font-medium text-red-800 dark:text-red-400">
+              Rejection Reason: {placement.rejectionReason}
+            </p>
+            {placement.rejectionComments && (
+              <p className="text-sm text-muted-foreground mt-1">{placement.rejectionComments}</p>
+            )}
           </div>
-        </Card>
-      )}
+        )}
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Candidate Info */}
@@ -203,7 +264,25 @@ export default function PlacementDetail({
             ))}
           </div>
 
+          {/* Comments Section */}
+          <CommentSection
+            comments={placement.comments || []}
+            currentStage={placement.stage}
+            onAddComment={handleAddComment}
+            userRole="employer"
+          />
+
           {/* Stage-specific Actions */}
+          {placement.stage === 'Screening Test' && (
+            <div className="border-t pt-6">
+              <ScreeningTestSection
+                placementId={placement.id}
+                evaluation={placement.aiEvaluation}
+                onComplete={handleAIEvaluation}
+              />
+            </div>
+          )}
+
           {placement.stage === 'Panel Interview' && !placement.meeting && (
             <div className="border-t pt-6">
               <Button onClick={() => setShowMeetingModal(true)} className="w-full">
@@ -230,7 +309,55 @@ export default function PlacementDetail({
           )}
 
           {placement.stage === 'BGV' && (
-            <BGVSection placement={placement} onUpdate={onUpdate} />
+            <div className="border-t pt-6">
+              <BGVSection placement={placement} onUpdate={onUpdate} />
+            </div>
+          )}
+
+          {placement.stage === 'Confirmation' && placement.bgvDocuments && placement.bgvDocuments.length > 0 && (
+            <div className="border-t pt-6">
+              <Collapsible open={documentsOpen} onOpenChange={setDocumentsOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    <span>BGV Documents ({placement.bgvDocuments.length})</span>
+                    {documentsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 space-y-3">
+                  {placement.bgvDocuments.map((doc) => (
+                    <Card key={doc.id} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{doc.name}</p>
+                          <p className="text-xs text-muted-foreground">{doc.fileName}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge
+                              className={
+                                doc.status === 'verified'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                  : doc.status === 'rejected'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                              }
+                            >
+                              {doc.status}
+                            </Badge>
+                            {doc.verifiedAt && (
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(doc.verifiedAt).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
           )}
 
           {placement.stage === 'Offer Letter' && !placement.offerLetter && (
@@ -306,6 +433,14 @@ export default function PlacementDetail({
           setShowOfferModal(false);
           onUpdate(updated);
         }}
+      />
+
+      <RejectionReasonModal
+        isOpen={showRejectionModal}
+        onClose={() => setShowRejectionModal(false)}
+        onConfirm={handleConfirmRejection}
+        candidateName={candidate.name}
+        stage={placement.stage}
       />
     </div>
   );

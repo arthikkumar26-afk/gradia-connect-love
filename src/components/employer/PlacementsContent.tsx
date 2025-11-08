@@ -9,7 +9,7 @@ import { ChevronRight, CheckCircle, Circle, AlertCircle, FileText } from 'lucide
 import PlacementDetail from './PlacementDetail';
 
 const PLACEMENT_STAGES = [
-  'Applied',
+  'Shortlisted',
   'Screening Test',
   'Panel Interview',
   'Feedback',

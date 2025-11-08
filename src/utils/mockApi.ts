@@ -65,33 +65,49 @@ export function seedMockData() {
       id: '1',
       name: 'John Doe',
       email: 'john@example.com',
+      phone: '+1-555-0150',
       skills: ['React', 'Node.js', 'TypeScript'],
       experience: '6 years',
       status: 'Available',
+      resumeUrl: 'https://example.com/resume/john-doe.pdf',
+      summary: 'Experienced full-stack developer with a passion for creating scalable web applications. Strong background in React, Node.js, and cloud technologies.',
+      aiScore: 87,
     },
     {
       id: '2',
       name: 'Jane Smith',
       email: 'jane@example.com',
+      phone: '+1-555-0151',
       skills: ['Product Management', 'Agile', 'UX'],
       experience: '4 years',
       status: 'In Process',
+      resumeUrl: 'https://example.com/resume/jane-smith.pdf',
+      summary: 'Strategic product manager with proven track record in driving product growth. Expert in agile methodologies and user-centered design.',
+      aiScore: 92,
     },
     {
       id: '3',
       name: 'Mike Johnson',
       email: 'mike@example.com',
+      phone: '+1-555-0152',
       skills: ['AWS', 'CI/CD', 'Python'],
       experience: '5 years',
       status: 'Available',
+      resumeUrl: 'https://example.com/resume/mike-johnson.pdf',
+      summary: 'DevOps engineer specializing in AWS cloud infrastructure and automation. Proficient in building robust CI/CD pipelines.',
+      aiScore: 85,
     },
     {
       id: '4',
       name: 'Sarah Williams',
       email: 'sarah@example.com',
+      phone: '+1-555-0153',
       skills: ['Vue.js', 'JavaScript', 'CSS'],
       experience: '3 years',
       status: 'Available',
+      resumeUrl: 'https://example.com/resume/sarah-williams.pdf',
+      summary: 'Frontend developer with an eye for design and user experience. Skilled in Vue.js, modern CSS, and responsive design.',
+      aiScore: 78,
     },
   ];
 
@@ -623,7 +639,8 @@ export async function mockRespondToOffer(
 
 export async function mockRejectPlacement(
   placementId: string,
-  reason: string
+  reason: string,
+  comments?: string
 ): Promise<Placement> {
   await delay(500);
   const placement = mockDb.placements.find((p) => p.id === placementId);
@@ -631,17 +648,143 @@ export async function mockRejectPlacement(
 
   placement.stage = 'Rejected';
   placement.rejectionReason = reason;
+  placement.rejectionComments = comments;
   placement.lastUpdated = new Date().toISOString().split('T')[0];
 
   placement.timeline.push({
     id: `evt_${Date.now()}`,
     stage: 'Rejected',
     date: new Date().toISOString().split('T')[0],
-    notes: `Placement rejected: ${reason}`,
+    notes: `Placement rejected: ${reason}${comments ? ` - ${comments}` : ''}`,
     completedBy: 'Admin',
-    eventType: 'stage_change',
+    eventType: 'rejection',
   });
 
+  return placement;
+}
+
+// Shortlist candidate from talent pool
+export async function mockShortlistCandidate(
+  candidateId: string,
+  jobId: string,
+  clientId: string
+): Promise<Placement> {
+  await delay(500);
+
+  const newPlacement: Placement = {
+    id: `placement_${Date.now()}`,
+    jobId,
+    candidateId,
+    clientId,
+    stage: 'Shortlisted',
+    appliedDate: new Date().toISOString().split('T')[0],
+    lastUpdated: new Date().toISOString().split('T')[0],
+    timeline: [
+      {
+        id: `evt_${Date.now()}`,
+        stage: 'Shortlisted',
+        date: new Date().toISOString().split('T')[0],
+        notes: 'Candidate shortlisted from talent pool',
+        completedBy: 'Employer',
+        eventType: 'stage_change',
+      },
+    ],
+    comments: [],
+  };
+
+  mockDb.placements.push(newPlacement);
+  return newPlacement;
+}
+
+// Add comment to placement
+export async function mockAddPlacementComment(
+  placementId: string,
+  text: string,
+  author: string,
+  authorRole: 'employer' | 'candidate',
+  stage: string
+): Promise<Placement> {
+  await delay(300);
+  const placement = mockDb.placements.find((p) => p.id === placementId);
+  if (!placement) throw new Error('Placement not found');
+
+  if (!placement.comments) {
+    placement.comments = [];
+  }
+
+  const newComment = {
+    id: `comment_${Date.now()}`,
+    text,
+    author,
+    authorRole,
+    timestamp: new Date().toLocaleString(),
+    stage,
+  };
+
+  placement.comments.push(newComment);
+
+  placement.timeline.push({
+    id: `evt_${Date.now()}`,
+    stage,
+    date: new Date().toISOString().split('T')[0],
+    notes: `Comment added by ${author}`,
+    completedBy: author,
+    eventType: 'comment_added',
+  });
+
+  placement.lastUpdated = new Date().toISOString().split('T')[0];
+  return placement;
+}
+
+// Submit AI evaluation
+export async function mockSubmitAIEvaluation(
+  placementId: string,
+  evaluation: any
+): Promise<Placement> {
+  await delay(500);
+  const placement = mockDb.placements.find((p) => p.id === placementId);
+  if (!placement) throw new Error('Placement not found');
+
+  placement.aiEvaluation = evaluation;
+
+  placement.timeline.push({
+    id: `evt_${Date.now()}`,
+    stage: 'Screening Test',
+    date: new Date().toISOString().split('T')[0],
+    notes: `AI Evaluation completed - Score: ${evaluation.score}/100`,
+    completedBy: 'AI System',
+    eventType: 'ai_evaluation',
+  });
+
+  placement.lastUpdated = new Date().toISOString().split('T')[0];
+  return placement;
+}
+
+// Approve or reject deferred offer
+export async function mockRespondToDeferral(
+  placementId: string,
+  approved: boolean
+): Promise<Placement> {
+  await delay(500);
+  const placement = mockDb.placements.find((p) => p.id === placementId);
+  if (!placement || !placement.offerLetter) throw new Error('Placement or offer not found');
+
+  placement.offerLetter.deferApproval = approved ? 'approved' : 'rejected';
+
+  if (approved) {
+    placement.stage = 'Hired';
+  }
+
+  placement.timeline.push({
+    id: `evt_${Date.now()}`,
+    stage: placement.stage,
+    date: new Date().toISOString().split('T')[0],
+    notes: `Deferral request ${approved ? 'approved' : 'rejected'} by employer`,
+    completedBy: 'Employer',
+    eventType: 'offer_response',
+  });
+
+  placement.lastUpdated = new Date().toISOString().split('T')[0];
   return placement;
 }
 

@@ -43,10 +43,13 @@ export interface Candidate {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   skills: string[];
   experience: string;
   status: 'Available' | 'In Process' | 'Placed';
   resumeUrl?: string;
+  summary?: string;
+  aiScore?: number;
 }
 
 export interface Application {
@@ -64,7 +67,7 @@ export interface Placement {
   jobId: string;
   candidateId: string;
   clientId: string;
-  stage: 'Applied' | 'Screening Test' | 'Panel Interview' | 'Feedback' | 'BGV' | 'Confirmation' | 'Offer Letter' | 'Hired' | 'Rejected';
+  stage: 'Shortlisted' | 'Screening Test' | 'Panel Interview' | 'Feedback' | 'BGV' | 'Confirmation' | 'Offer Letter' | 'Hired' | 'Rejected';
   appliedDate: string;
   lastUpdated: string;
   timeline: PlacementTimelineEvent[];
@@ -72,6 +75,9 @@ export interface Placement {
   bgvDocuments?: BGVDocument[];
   offerLetter?: OfferLetter;
   rejectionReason?: string;
+  rejectionComments?: string;
+  aiEvaluation?: AIEvaluation;
+  comments?: PlacementComment[];
 }
 
 export interface PlacementTimelineEvent {
@@ -80,7 +86,33 @@ export interface PlacementTimelineEvent {
   date: string;
   notes: string;
   completedBy?: string;
-  eventType: 'stage_change' | 'meeting_scheduled' | 'document_uploaded' | 'document_verified' | 'offer_sent' | 'offer_response';
+  eventType: 'stage_change' | 'meeting_scheduled' | 'document_uploaded' | 'document_verified' | 'offer_sent' | 'offer_response' | 'comment_added' | 'ai_evaluation' | 'rejection';
+}
+
+export interface AIEvaluation {
+  id: string;
+  score: number;
+  rationale: string;
+  evaluatedAt: string;
+  questions?: ScreeningQuestion[];
+  answers?: string[];
+}
+
+export interface ScreeningQuestion {
+  id: string;
+  question: string;
+  type: 'mcq' | 'text';
+  options?: string[];
+  correctAnswer?: string;
+}
+
+export interface PlacementComment {
+  id: string;
+  text: string;
+  author: string;
+  authorRole: 'employer' | 'candidate';
+  timestamp: string;
+  stage: string;
 }
 
 export interface Meeting {
@@ -98,6 +130,7 @@ export interface BGVDocument {
   name: string;
   type: 'ID Proof' | 'Address Proof' | 'Education Certificate' | 'Experience Letter' | 'Other';
   fileName: string;
+  fileSize?: number;
   uploadedAt: string;
   uploadedBy: string;
   status: 'pending' | 'verified' | 'rejected';
