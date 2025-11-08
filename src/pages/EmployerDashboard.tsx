@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import gradiaLogo from "@/assets/gradia-logo.png";
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -102,9 +103,12 @@ const EmployerDashboard = () => {
           sidebarOpen ? "w-64" : "w-0"
         } bg-card border-r border-border transition-all duration-300 overflow-hidden flex flex-col`}
       >
-        <div className="p-6 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">Client Platform</h2>
-          <p className="text-sm text-muted-foreground mt-1">Employer Dashboard</p>
+        <div className="p-6 border-b border-border flex justify-center">
+          <img 
+            src={gradiaLogo} 
+            alt="Gradia - Your Next Step" 
+            className="h-10 w-auto object-contain"
+          />
         </div>
 
         <nav className="flex-1 p-4 space-y-1">

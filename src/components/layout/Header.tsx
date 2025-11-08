@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import gradiaLogo from "@/assets/gradia-logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,18 +79,12 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-accent flex items-center justify-center">
-              <span className="text-accent-foreground font-bold text-lg">G</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-heading font-bold text-xl text-foreground">
-                Gradia
-              </span>
-              <span className="text-xs text-muted-foreground font-medium -mt-1">
-                Your next move
-              </span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={gradiaLogo} 
+              alt="Gradia - Your Next Step" 
+              className="h-10 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}

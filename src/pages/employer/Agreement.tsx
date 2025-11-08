@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { mockRecordAgreement } from '@/utils/mockApi';
 import { useToast } from '@/hooks/use-toast';
+import gradiaLogo from '@/assets/gradia-logo.png';
 
 export default function Agreement() {
   const navigate = useNavigate();
@@ -37,8 +38,12 @@ export default function Agreement() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <Card className="w-full max-w-4xl p-8 shadow-lg">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-            <FileText className="w-8 h-8 text-primary" />
+          <div className="flex justify-center mb-4">
+            <img 
+              src={gradiaLogo} 
+              alt="Gradia - Your Next Step" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold text-foreground">Service Agreement</h1>
           <p className="text-muted-foreground mt-2">Please review and accept our service agreement</p>

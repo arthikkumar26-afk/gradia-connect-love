@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserCircle, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import gradiaLogo from "@/assets/gradia-logo.png";
 
 const CandidateLogin = () => {
   const [email, setEmail] = useState("");
@@ -31,11 +32,13 @@ const CandidateLogin = () => {
 
         {/* Login Card */}
         <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in">
-          {/* Logo/Icon */}
+          {/* Logo */}
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-gradient-accent rounded-lg flex items-center justify-center">
-              <UserCircle className="h-8 w-8 text-accent-foreground" />
-            </div>
+            <img 
+              src={gradiaLogo} 
+              alt="Gradia - Your Next Step" 
+              className="h-20 w-auto object-contain"
+            />
           </div>
 
           {/* Title */}

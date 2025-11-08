@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Building2, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { mockRegister } from '@/utils/mockApi';
 import { useToast } from '@/hooks/use-toast';
+import gradiaLogo from '@/assets/gradia-logo.png';
 
 export default function Registration() {
   const navigate = useNavigate();
@@ -74,8 +75,12 @@ export default function Registration() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <Card className="w-full max-w-3xl p-8 shadow-lg">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-            <Building2 className="w-8 h-8 text-primary" />
+          <div className="flex justify-center mb-4">
+            <img 
+              src={gradiaLogo} 
+              alt="Gradia - Your Next Step" 
+              className="h-16 w-auto object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold text-foreground">Employer Registration</h1>
           <p className="text-muted-foreground mt-2">Create your company account</p>

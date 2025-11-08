@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, Users, Building, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import gradiaLogo from '@/assets/gradia-logo.png';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -51,6 +52,14 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
       <Card className="w-full max-w-2xl p-8 shadow-lg">
+        <div className="flex justify-center mb-6">
+          <img 
+            src={gradiaLogo} 
+            alt="Gradia - Your Next Step" 
+            className="h-12 w-auto object-contain"
+          />
+        </div>
+        
         <div className="mb-8">
           <div className="flex justify-between mb-4">
             {[1, 2, 3].map((s) => (
