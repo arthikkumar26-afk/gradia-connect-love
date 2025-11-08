@@ -39,6 +39,8 @@ const Header = () => {
   ];
 
   const employerPages = [
+    { name: "Register", path: "/employer/signup" },
+    { name: "Login", path: "/employer/login" },
     { name: "Post a Job", path: "/employer/post-job" },
     { name: "Dashboard", path: "/employer/dashboard" },
     { name: "Campus Hiring", path: "/employer/campus-hiring" },
