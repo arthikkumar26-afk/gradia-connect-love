@@ -59,6 +59,67 @@ export interface Application {
   notes: string;
 }
 
+export interface Placement {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  clientId: string;
+  stage: 'Applied' | 'Screening Test' | 'Panel Interview' | 'Feedback' | 'BGV' | 'Confirmation' | 'Offer Letter' | 'Hired' | 'Rejected';
+  appliedDate: string;
+  lastUpdated: string;
+  timeline: PlacementTimelineEvent[];
+  meeting?: Meeting;
+  bgvDocuments?: BGVDocument[];
+  offerLetter?: OfferLetter;
+  rejectionReason?: string;
+}
+
+export interface PlacementTimelineEvent {
+  id: string;
+  stage: string;
+  date: string;
+  notes: string;
+  completedBy?: string;
+  eventType: 'stage_change' | 'meeting_scheduled' | 'document_uploaded' | 'document_verified' | 'offer_sent' | 'offer_response';
+}
+
+export interface Meeting {
+  id: string;
+  date: string;
+  time: string;
+  timezone: string;
+  participants: string[];
+  scheduledBy: string;
+  scheduledAt: string;
+}
+
+export interface BGVDocument {
+  id: string;
+  name: string;
+  type: 'ID Proof' | 'Address Proof' | 'Education Certificate' | 'Experience Letter' | 'Other';
+  fileName: string;
+  uploadedAt: string;
+  uploadedBy: string;
+  status: 'pending' | 'verified' | 'rejected';
+  verifiedBy?: string;
+  verifiedAt?: string;
+  comments?: string;
+}
+
+export interface OfferLetter {
+  id: string;
+  salary: string;
+  joiningDate: string;
+  probationPeriod: string;
+  customNotes: string;
+  sentAt: string;
+  sentBy: string;
+  candidateResponse?: 'accepted' | 'rejected' | 'deferred';
+  responseDate?: string;
+  deferredDate?: string;
+  deferApproval?: 'approved' | 'rejected';
+}
+
 export interface TimelineEvent {
   stage: string;
   date: string;
@@ -83,8 +144,10 @@ interface EmployerState {
   jobs: Job[];
   candidates: Candidate[];
   applications: Application[];
+  placements: Placement[];
   clients: Client[];
   isAuthenticated: boolean;
+  userRole?: 'employer' | 'candidate' | null;
 }
 
 type EmployerAction =
@@ -98,7 +161,10 @@ type EmployerAction =
   | { type: 'ADD_CANDIDATE'; payload: Candidate }
   | { type: 'SET_APPLICATIONS'; payload: Application[] }
   | { type: 'UPDATE_APPLICATION'; payload: Application }
+  | { type: 'SET_PLACEMENTS'; payload: Placement[] }
+  | { type: 'UPDATE_PLACEMENT'; payload: Placement }
   | { type: 'SET_CLIENTS'; payload: Client[] }
+  | { type: 'SET_USER_ROLE'; payload: 'employer' | 'candidate' | null }
   | { type: 'LOGIN'; payload: { user: User; company: Company; subscription: Subscription } }
   | { type: 'LOGOUT' };
 
@@ -109,8 +175,10 @@ const initialState: EmployerState = {
   jobs: [],
   candidates: [],
   applications: [],
+  placements: [],
   clients: [],
   isAuthenticated: false,
+  userRole: null,
 };
 
 function employerReducer(state: EmployerState, action: EmployerAction): EmployerState {
@@ -143,8 +211,19 @@ function employerReducer(state: EmployerState, action: EmployerAction): Employer
           app.id === action.payload.id ? action.payload : app
         ),
       };
+    case 'SET_PLACEMENTS':
+      return { ...state, placements: action.payload };
+    case 'UPDATE_PLACEMENT':
+      return {
+        ...state,
+        placements: state.placements.map((placement) =>
+          placement.id === action.payload.id ? action.payload : placement
+        ),
+      };
     case 'SET_CLIENTS':
       return { ...state, clients: action.payload };
+    case 'SET_USER_ROLE':
+      return { ...state, userRole: action.payload };
     case 'LOGIN':
       return {
         ...state,

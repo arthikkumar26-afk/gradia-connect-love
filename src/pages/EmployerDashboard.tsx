@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { JobManagementContent } from "@/components/employer/JobManagementContent";
 import TalentPoolContent from "@/components/employer/TalentPoolContent";
-import ApplicationTracker from "@/components/employer/ApplicationTracker";
+import PlacementsContent from "@/components/employer/PlacementsContent";
 
 const EmployerDashboard = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -235,7 +235,7 @@ const EmployerDashboard = () => {
 
             {activeMenu === "jobs" && <JobManagementContent />}
             {activeMenu === "talent-pool" && <TalentPoolContent />}
-            {activeMenu === "placements" && <ApplicationTracker />}
+            {activeMenu === "placements" && <PlacementsContent />}
           </div>
         </main>
       </div>
