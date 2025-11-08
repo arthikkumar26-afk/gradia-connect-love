@@ -41,7 +41,7 @@ const EmployerLogin = () => {
             <img 
               src={gradiaLogo} 
               alt="Gradia - Your Next Step" 
-              className="h-20 w-auto object-contain"
+              className="h-15 w-auto object-contain"
             />
           </div>
 
