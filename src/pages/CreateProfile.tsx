@@ -22,7 +22,9 @@ import {
   FileText,
   Briefcase,
   MapPin,
-  Linkedin
+  Linkedin,
+  Camera,
+  X
 } from "lucide-react";
 
 const CreateProfile = () => {
@@ -32,6 +34,9 @@ const CreateProfile = () => {
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
   const [resume, setResume] = useState<File | null>(null);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [roleType, setRoleType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
   const [location, setLocation] = useState("");
@@ -60,6 +65,46 @@ const CreateProfile = () => {
     if (e.target.files && e.target.files[0]) {
       setResume(e.target.files[0]);
     }
+  };
+
+  const handleProfilePictureChange = (file: File) => {
+    if (file.type.startsWith("image/")) {
+      setProfilePicture(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePicturePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfilePictureInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleProfilePictureChange(e.target.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleProfilePictureChange(e.dataTransfer.files[0]);
+    }
+  };
+
+  const removeProfilePicture = () => {
+    setProfilePicture(null);
+    setProfilePicturePreview(null);
   };
 
   const benefits = [
@@ -160,6 +205,78 @@ const CreateProfile = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Profile Picture Upload */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Camera className="h-4 w-4 text-muted-foreground" />
+                    Profile Picture
+                  </Label>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative border-2 border-dashed rounded-lg transition-all ${
+                      isDragging
+                        ? "border-accent bg-accent/10"
+                        : "border-input hover:border-accent"
+                    }`}
+                  >
+                    <Input
+                      id="profilePicture"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePictureInputChange}
+                      className="hidden"
+                    />
+                    
+                    {profilePicturePreview ? (
+                      <div className="relative p-4 flex items-center gap-4">
+                        <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-accent shadow-medium">
+                          <img
+                            src={profilePicturePreview}
+                            alt="Profile preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {profilePicture?.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {profilePicture && (profilePicture.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={removeProfilePicture}
+                          className="hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="profilePicture"
+                        className="flex flex-col items-center justify-center gap-2 p-8 cursor-pointer"
+                      >
+                        <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
+                          <Camera className="h-8 w-8 text-accent" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-medium text-foreground">
+                            Drop your photo here or click to browse
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            PNG, JPG, WEBP (Max 5MB)
+                          </p>
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
                 {/* Full Name */}
                 <div className="space-y-2">
                   <Label htmlFor="fullName" className="flex items-center gap-2">
