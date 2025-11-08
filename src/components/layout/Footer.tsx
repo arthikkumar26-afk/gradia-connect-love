@@ -42,7 +42,7 @@ const Footer = () => {
     { name: "Resource Library", path: "/library" },
     { name: "Downloads", path: "/downloads" },
     { name: "Video Testimonials", path: "/testimonials" },
-    { name: "Success Stories", path: "/success-stories" },
+    { name: "Companies", path: "/companies" },
     { name: "Newsletter", path: "/newsletter" },
   ];
 
