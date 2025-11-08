@@ -83,7 +83,7 @@ const Header = () => {
             <img 
               src={gradiaLogo} 
               alt="Gradia - Your Next Step" 
-              className="h-[90px] w-auto object-contain"
+              className="h-[85px] w-auto object-contain"
             />
           </Link>
 
