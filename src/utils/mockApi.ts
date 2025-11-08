@@ -1,6 +1,38 @@
 // Mock API utilities - Replace with real backend endpoints
 
 import { Company, User, Subscription, Job, Candidate, Application, Client, Placement, Meeting, BGVDocument, OfferLetter, PlacementTimelineEvent } from '@/contexts/EmployerContext';
+import { supabase } from '@/integrations/supabase/client';
+
+// Email notification helper
+const sendEmailNotification = async (params: {
+  type: 'stage_change' | 'comment_added' | 'document_uploaded' | 'offer_response';
+  recipientEmail: string;
+  recipientName: string;
+  candidateName: string;
+  jobTitle: string;
+  companyName?: string;
+  stage?: string;
+  previousStage?: string;
+  comment?: string;
+  commentAuthor?: string;
+  documentName?: string;
+  offerAction?: 'accepted' | 'rejected' | 'deferred';
+  deferredDate?: string;
+}) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-notification-email', {
+      body: params
+    });
+    
+    if (error) {
+      console.error('Error sending email notification:', error);
+    } else {
+      console.log('Email notification sent successfully:', data);
+    }
+  } catch (error) {
+    console.error('Failed to send email notification:', error);
+  }
+};
 
 // Simulate API delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -468,6 +500,7 @@ export async function mockUpdatePlacementStage(
   const placement = mockDb.placements.find((p) => p.id === placementId);
   if (!placement) throw new Error('Placement not found');
 
+  const previousStage = placement.stage;
   placement.stage = stage;
   placement.lastUpdated = new Date().toISOString().split('T')[0];
   placement.timeline.push({
@@ -478,6 +511,34 @@ export async function mockUpdatePlacementStage(
     completedBy: 'Admin',
     eventType: 'stage_change',
   });
+
+  // Send email notifications to both employer and candidate
+  const candidate = mockDb.candidates.find(c => c.id === placement.candidateId);
+  const job = mockDb.jobs.find(j => j.id === placement.jobId);
+
+  if (candidate && job) {
+    // Notify candidate
+    sendEmailNotification({
+      type: 'stage_change',
+      recipientEmail: candidate.email,
+      recipientName: candidate.name,
+      candidateName: candidate.name,
+      jobTitle: job.title,
+      stage,
+      previousStage
+    });
+
+    // Notify employer (mock email)
+    sendEmailNotification({
+      type: 'stage_change',
+      recipientEmail: 'employer@gradia.com',
+      recipientName: 'Hiring Manager',
+      candidateName: candidate.name,
+      jobTitle: job.title,
+      stage,
+      previousStage
+    });
+  }
 
   return placement;
 }
@@ -542,6 +603,23 @@ export async function mockUploadBGVDocument(
   });
 
   placement.lastUpdated = new Date().toISOString().split('T')[0];
+
+  // Send email notifications
+  const candidate = mockDb.candidates.find(c => c.id === placement.candidateId);
+  const job = mockDb.jobs.find(j => j.id === placement.jobId);
+
+  if (candidate && job) {
+    // Notify employer
+    sendEmailNotification({
+      type: 'document_uploaded',
+      recipientEmail: 'employer@gradia.com',
+      recipientName: 'Hiring Manager',
+      candidateName: candidate.name,
+      jobTitle: job.title,
+      documentName: document.name
+    });
+  }
+
   return placement;
 }
 
@@ -634,6 +712,35 @@ export async function mockRespondToOffer(
   });
 
   placement.lastUpdated = new Date().toISOString().split('T')[0];
+
+  // Send email notifications
+  const candidate = mockDb.candidates.find(c => c.id === placement.candidateId);
+  const job = mockDb.jobs.find(j => j.id === placement.jobId);
+
+  if (candidate && job) {
+    // Notify employer
+    sendEmailNotification({
+      type: 'offer_response',
+      recipientEmail: 'employer@gradia.com',
+      recipientName: 'Hiring Manager',
+      candidateName: candidate.name,
+      jobTitle: job.title,
+      offerAction: response,
+      deferredDate
+    });
+
+    // Notify candidate
+    sendEmailNotification({
+      type: 'offer_response',
+      recipientEmail: candidate.email,
+      recipientName: candidate.name,
+      candidateName: candidate.name,
+      jobTitle: job.title,
+      offerAction: response,
+      deferredDate
+    });
+  }
+
   return placement;
 }
 
@@ -733,6 +840,37 @@ export async function mockAddPlacementComment(
   });
 
   placement.lastUpdated = new Date().toISOString().split('T')[0];
+
+  // Send email notifications
+  const candidate = mockDb.candidates.find(c => c.id === placement.candidateId);
+  const job = mockDb.jobs.find(j => j.id === placement.jobId);
+
+  if (candidate && job) {
+    // Notify the other party (if employer comments, notify candidate and vice versa)
+    if (authorRole === 'employer') {
+      sendEmailNotification({
+        type: 'comment_added',
+        recipientEmail: candidate.email,
+        recipientName: candidate.name,
+        candidateName: candidate.name,
+        jobTitle: job.title,
+        comment: text,
+        commentAuthor: author
+      });
+    } else {
+      // Notify employer
+      sendEmailNotification({
+        type: 'comment_added',
+        recipientEmail: 'employer@gradia.com',
+        recipientName: 'Hiring Manager',
+        candidateName: candidate.name,
+        jobTitle: job.title,
+        comment: text,
+        commentAuthor: author
+      });
+    }
+  }
+
   return placement;
 }
 
