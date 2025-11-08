@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,8 @@ const CreateProfile = () => {
   const [resume, setResume] = useState<File | null>(null);
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
+  const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
+  const [showCropModal, setShowCropModal] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [roleType, setRoleType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
@@ -69,13 +72,30 @@ const CreateProfile = () => {
 
   const handleProfilePictureChange = (file: File) => {
     if (file.type.startsWith("image/")) {
-      setProfilePicture(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePicturePreview(reader.result as string);
+        setTempImageForCrop(reader.result as string);
+        setShowCropModal(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Convert blob to file
+    const croppedFile = new File([croppedBlob], "profile-picture.jpg", {
+      type: "image/jpeg",
+    });
+    setProfilePicture(croppedFile);
+    
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(croppedBlob);
+    setProfilePicturePreview(previewUrl);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setTempImageForCrop(null);
   };
 
   const handleProfilePictureInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,7 +134,18 @@ const CreateProfile = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-subtle to-background">
+    <>
+      {/* Image Crop Modal */}
+      {tempImageForCrop && (
+        <ImageCropModal
+          open={showCropModal}
+          imageUrl={tempImageForCrop}
+          onClose={handleCropCancel}
+          onCropComplete={handleCropComplete}
+        />
+      )}
+
+      <div className="min-h-screen bg-gradient-to-b from-subtle to-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground py-16">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-secondary/80" />
@@ -532,6 +563,7 @@ const CreateProfile = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
