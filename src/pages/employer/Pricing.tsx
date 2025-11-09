@@ -16,16 +16,12 @@ export default function Pricing() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSelectPlan = async (planId: string, cta: string) => {
-    if (!isAuthenticated) {
-      toast({
-        title: 'Login required',
-        description: 'Please login to subscribe to a plan',
-      });
-      navigate('/employer/login', { state: { from: '/employer/pricing' } });
-      return;
-    }
-
+    // Allow free plan and contact sales without authentication
     if (cta === 'free') {
+      if (!isAuthenticated) {
+        navigate('/employer/signup', { state: { from: '/employer/pricing', plan: 'basic' } });
+        return;
+      }
       toast({
         title: 'Free plan activated!',
         description: 'You can now start posting jobs',
@@ -36,6 +32,16 @@ export default function Pricing() {
 
     if (cta === 'contact') {
       navigate('/employer/demo');
+      return;
+    }
+
+    // Only require auth for paid subscriptions
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login required',
+        description: 'Please login to subscribe to a paid plan',
+      });
+      navigate('/employer/login', { state: { from: '/employer/pricing' } });
       return;
     }
 
