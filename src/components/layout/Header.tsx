@@ -76,8 +76,8 @@ const Header = () => {
     { name: "Register", path: "/employer/signup" },
     { name: "Login", path: "/employer/login" },
     { name: "Post a Job", path: "/employer/post-job", protected: true },
-    { name: "Pricing", path: "/employer/pricing", protected: true },
-    { name: "Request Demo", path: "/employer/demo", protected: true },
+    { name: "Pricing", path: "/employer/pricing" },
+    { name: "Request Demo", path: "/employer/demo" },
   ];
 
   const authenticatedEmployerPages = [
