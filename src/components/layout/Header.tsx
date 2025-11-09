@@ -161,7 +161,7 @@ const Header = () => {
             {/* Candidates Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Candidates
+                For Candidates
                 <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56 bg-background z-50">
@@ -376,7 +376,7 @@ const Header = () => {
                 {/* Candidates Section */}
                 <div className="px-3 py-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">
-                    Candidates
+                    For Candidates
                   </div>
                   {candidateMenuItems.map((item) => (
                     <Link
