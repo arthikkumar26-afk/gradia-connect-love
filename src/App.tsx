@@ -32,6 +32,9 @@ import Agreement from "./pages/employer/Agreement";
 import Terms from "./pages/employer/Terms";
 import Plans from "./pages/employer/Plans";
 import Onboarding from "./pages/employer/Onboarding";
+import Pricing from "./pages/employer/Pricing";
+import RequestDemo from "./pages/employer/RequestDemo";
+import DemoRequestsAdmin from "./pages/employer/DemoRequestsAdmin";
 import LearningPlatform from "./pages/LearningPlatform";
 
 const queryClient = new QueryClient();
@@ -96,9 +99,10 @@ const App = () => (
             <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
             <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
             <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
-            <Route path="/employer/pricing" element={<PlaceholderPage title="Pricing Plans" />} />
+            <Route path="/employer/pricing" element={<Pricing />} />
             <Route path="/employer/case-studies" element={<PlaceholderPage title="Case Studies" />} />
-            <Route path="/employer/demo" element={<PlaceholderPage title="Request Demo" />} />
+            <Route path="/employer/demo" element={<RequestDemo />} />
+            <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
 
             {/* Service Routes */}
             <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
