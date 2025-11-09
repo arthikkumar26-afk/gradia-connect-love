@@ -1,38 +1,25 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 
 const EmployerLogin = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const from = (location.state as any)?.from || "/employer/dashboard";
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    // Handle login logic here
+    console.log("Login attempt:", { email, password, rememberMe });
     
-    try {
-      await login(email, password);
-      toast.success("Login successful!");
-      navigate(from);
-    } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
-    } finally {
-      setIsLoading(false);
-    }
+    // Navigate to employer dashboard after successful login
+    navigate("/employer/dashboard");
   };
 
   return (
@@ -122,8 +109,8 @@ const EmployerLogin = () => {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing In..." : "Sign In"}
+            <Button type="submit" variant="cta" size="lg" className="w-full">
+              Sign In
             </Button>
           </form>
 
