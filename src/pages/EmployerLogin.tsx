@@ -1,25 +1,47 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const EmployerLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const { toast } = useToast();
+  
+  const from = (location.state as any)?.from || "/employer/dashboard";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", { email, password, rememberMe });
+    setIsLoading(true);
     
-    // Navigate to employer dashboard after successful login
-    navigate("/employer/dashboard");
+    // Mock authentication - replace with actual API call
+    setTimeout(() => {
+      login({
+        id: "1",
+        name: email.split("@")[0],
+        email: email,
+        role: "employer",
+      });
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      
+      navigate(from);
+      setIsLoading(false);
+    }, 1000);
   };
 
   return (
@@ -109,8 +131,8 @@ const EmployerLogin = () => {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" variant="cta" size="lg" className="w-full">
-              Sign In
+            <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isLoading}>
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
 

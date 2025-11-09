@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import gradiaLogo from "@/assets/gradia-logo.png";
@@ -8,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
@@ -17,15 +18,47 @@ import {
   Moon,
   Globe,
   ChevronDown,
+  LogOut,
+  LayoutDashboard,
+  Briefcase,
+  Users,
+  Settings as SettingsIcon,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
+  };
+
+  const handleProtectedNavigation = (path: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please login to continue.",
+        variant: "destructive",
+      });
+      navigate("/employer/login", { state: { from: path } });
+      return;
+    }
+    navigate(path);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
   };
 
   const candidatePages = [
@@ -39,16 +72,19 @@ const Header = () => {
     { name: "Salary Insights", path: "/candidate/salary-insights" },
   ];
 
-  const employerPages = [
+  const publicEmployerPages = [
     { name: "Register", path: "/employer/signup" },
     { name: "Login", path: "/employer/login" },
-    { name: "Post a Job", path: "/employer/post-job" },
-    { name: "Dashboard", path: "/employer/dashboard" },
-    { name: "Campus Hiring", path: "/employer/campus-hiring" },
-    { name: "Partnerships", path: "/employer/partnerships" },
-    { name: "Pricing", path: "/employer/pricing" },
-    { name: "Case Studies", path: "/employer/case-studies" },
-    { name: "Request Demo", path: "/employer/demo" },
+    { name: "Post a Job", path: "/employer/post-job", protected: true },
+    { name: "Pricing", path: "/employer/pricing", protected: true },
+    { name: "Request Demo", path: "/employer/demo", protected: true },
+  ];
+
+  const authenticatedEmployerPages = [
+    { name: "Dashboard", path: "/employer/dashboard", icon: LayoutDashboard },
+    { name: "Placements", path: "/employer/dashboard?tab=placements", icon: Briefcase },
+    { name: "Talent Pool", path: "/employer/dashboard?tab=talent-pool", icon: Users },
+    { name: "Settings", path: "/employer/settings", icon: SettingsIcon },
   ];
 
   const resourceCategories = {
@@ -102,12 +138,44 @@ const Header = () => {
                 For Employers
                 <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48">
-                {employerPages.map((page) => (
-                  <DropdownMenuItem key={page.path} asChild>
-                    <Link to={page.path}>{page.name}</Link>
-                  </DropdownMenuItem>
-                ))}
+              <DropdownMenuContent className="w-48 bg-background z-50">
+                {!isAuthenticated ? (
+                  <>
+                    {publicEmployerPages.map((page) => (
+                      <DropdownMenuItem
+                        key={page.path}
+                        onClick={() => {
+                          if (page.protected) {
+                            handleProtectedNavigation(page.path);
+                          } else {
+                            navigate(page.path);
+                          }
+                        }}
+                      >
+                        {page.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {authenticatedEmployerPages.map((page) => {
+                      const Icon = page.icon;
+                      return (
+                        <DropdownMenuItem key={page.path} asChild>
+                          <Link to={page.path} className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            {page.name}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -284,16 +352,53 @@ const Header = () => {
                   <div className="text-sm font-medium text-muted-foreground mb-2">
                     For Employers
                   </div>
-                  {employerPages.map((page) => (
-                    <Link
-                      key={page.path}
-                      to={page.path}
-                      className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {page.name}
-                    </Link>
-                  ))}
+                  {!isAuthenticated ? (
+                    <>
+                      {publicEmployerPages.map((page) => (
+                        <div
+                          key={page.path}
+                          className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors cursor-pointer"
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            if (page.protected) {
+                              handleProtectedNavigation(page.path);
+                            } else {
+                              navigate(page.path);
+                            }
+                          }}
+                        >
+                          {page.name}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      {authenticatedEmployerPages.map((page) => {
+                        const Icon = page.icon;
+                        return (
+                          <Link
+                            key={page.path}
+                            to={page.path}
+                            className="flex items-center gap-2 px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {page.name}
+                          </Link>
+                        );
+                      })}
+                      <div
+                        className="flex items-center gap-2 px-2 py-1 text-sm text-destructive hover:text-destructive/80 transition-colors cursor-pointer"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          handleLogout();
+                        }}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="px-3 py-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">
