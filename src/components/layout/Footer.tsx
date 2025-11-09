@@ -36,14 +36,14 @@ const Footer = () => {
     { name: "Request Demo", path: "/employer/demo" },
   ];
 
-  const resourceLinks = [
+  const learningLinks = [
+    { name: "Tech Learning", path: "/learning/tech" },
+    { name: "Non-Tech Learning", path: "/learning/non-tech" },
+    { name: "Education & Teaching", path: "/learning/education" },
+    { name: "Languages & Communication", path: "/learning/languages" },
+    { name: "All Categories", path: "/learning/all-categories" },
     { name: "Blog", path: "/blog" },
     { name: "Events & Workshops", path: "/events" },
-    { name: "Resource Library", path: "/library" },
-    { name: "Downloads", path: "/downloads" },
-    { name: "Video Testimonials", path: "/testimonials" },
-    { name: "Companies", path: "/companies" },
-    { name: "Newsletter", path: "/newsletter" },
   ];
 
   const companyLinks = [
@@ -167,11 +167,11 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Learning */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+            <h4 className="font-semibold text-foreground mb-4">Learning</h4>
             <ul className="space-y-2">
-              {resourceLinks.map((link) => (
+              {learningLinks.map((link) => (
                 <li key={link.path}>
                   <Link
                     to={link.path}

@@ -89,29 +89,6 @@ const Header = () => {
     { name: "Settings", path: "/employer/settings", icon: SettingsIcon },
   ];
 
-  const companyResourceCategories = {
-    exploreCategories: [
-      { name: "Unicorn", path: "/resources/unicorn" },
-      { name: "MNC", path: "/resources/mnc" },
-      { name: "Startup", path: "/resources/startup" },
-      { name: "Product based", path: "/resources/product-based" },
-      { name: "Internet", path: "/resources/internet" },
-    ],
-    exploreCollections: [
-      { name: "Top companies", path: "/resources/top-companies" },
-      { name: "IT companies", path: "/resources/it-companies" },
-      { name: "Fintech companies", path: "/resources/fintech-companies" },
-      { name: "Sponsored companies", path: "/resources/sponsored-companies" },
-      { name: "Featured companies", path: "/resources/featured-companies" },
-    ],
-    researchCompanies: [
-      { name: "Interview questions", path: "/resources/interview-questions" },
-      { name: "Company salaries", path: "/resources/company-salaries" },
-      { name: "Company reviews", path: "/resources/company-reviews" },
-      { name: "Salary Calculator", path: "/resources/salary-calculator" },
-    ],
-  };
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
@@ -201,10 +178,10 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Resources / Learning Dropdown - Multi-column */}
+            {/* Learning Dropdown - Multi-column */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Resources / Learning
+                Learning
                 <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[800px] p-6 bg-background z-50" align="start">
@@ -249,65 +226,6 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Companies (old Resources) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Companies
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[640px] p-6 bg-background z-50">
-                <div className="grid grid-cols-3 gap-8">
-                  <div>
-                    <h3 className="font-semibold text-sm text-foreground mb-3">
-                      Explore categories
-                    </h3>
-                    <div className="flex flex-col space-y-2">
-                      {companyResourceCategories.exploreCategories.map((item) => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-sm text-foreground mb-3">
-                      Explore collections
-                    </h3>
-                    <div className="flex flex-col space-y-2">
-                      {companyResourceCategories.exploreCollections.map((item) => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-sm text-foreground mb-3">
-                      Research companies
-                    </h3>
-                    <div className="flex flex-col space-y-2">
-                      {companyResourceCategories.researchCompanies.map((item) => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {item.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <Link
               to="/about"
@@ -473,10 +391,10 @@ const Header = () => {
                   ))}
                 </div>
 
-                {/* Resources / Learning Section - Accordion style */}
+                {/* Learning Section - Accordion style */}
                 <div className="px-3 py-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">
-                    Resources / Learning
+                    Learning
                   </div>
                   {learningCategories.map((category) => (
                     <Collapsible key={category.name} className="mb-2">
@@ -508,51 +426,6 @@ const Header = () => {
                   </Button>
                 </div>
 
-                {/* Companies Section */}
-                <div className="px-3 py-2">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">
-                    Companies
-                  </div>
-                  <div className="text-xs font-semibold text-foreground mb-2 mt-3">
-                    Explore categories
-                  </div>
-                  {companyResourceCategories.exploreCategories.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="block px-2 py-1 text-sm text-muted-foreground hover:text-accent transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                  <div className="text-xs font-semibold text-foreground mb-2 mt-3">
-                    Explore collections
-                  </div>
-                  {companyResourceCategories.exploreCollections.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="block px-2 py-1 text-sm text-muted-foreground hover:text-accent transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                  <div className="text-xs font-semibold text-foreground mb-2 mt-3">
-                    Research companies
-                  </div>
-                  {companyResourceCategories.researchCompanies.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="block px-2 py-1 text-sm text-muted-foreground hover:text-accent transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
                 <Link
                   to="/about"
                   className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-muted rounded-md transition-colors"
