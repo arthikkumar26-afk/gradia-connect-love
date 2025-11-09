@@ -20,6 +20,9 @@ import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import PlaceholderPage from "./components/PlaceholderPage";
 import JobsResults from "./pages/JobsResults";
+import Jobs from "./pages/Jobs";
+import JobsSoftware from "./pages/JobsSoftware";
+import JobsEducation from "./pages/JobsEducation";
 import NotFound from "./pages/NotFound";
 import EmployerLogin from "./pages/EmployerLogin";
 import EmployerDashboard from "./pages/EmployerDashboard";
@@ -36,6 +39,14 @@ import Pricing from "./pages/employer/Pricing";
 import RequestDemo from "./pages/employer/RequestDemo";
 import DemoRequestsAdmin from "./pages/employer/DemoRequestsAdmin";
 import LearningPlatform from "./pages/LearningPlatform";
+import ResumeBuilder from "./pages/candidate/ResumeBuilder";
+import InterviewPrep from "./pages/candidate/InterviewPrep";
+import CareerCoaching from "./pages/candidate/CareerCoaching";
+import TechLearning from "./pages/learning/TechLearning";
+import NonTechLearning from "./pages/learning/NonTechLearning";
+import EducationLearning from "./pages/learning/EducationLearning";
+import LanguagesLearning from "./pages/learning/LanguagesLearning";
+import AllCategories from "./pages/learning/AllCategories";
 
 const queryClient = new QueryClient();
 
@@ -63,10 +74,10 @@ const App = () => (
 
             {/* Candidate Routes */}
             <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
-            <Route path="/jobs" element={<PlaceholderPage title="Browse Jobs" />} />
+            <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs-results" element={<JobsResults />} />
-            <Route path="/jobs/software" element={<PlaceholderPage title="Software Jobs" />} />
-            <Route path="/jobs/education" element={<PlaceholderPage title="Education Jobs" />} />
+            <Route path="/jobs/software" element={<JobsSoftware />} />
+            <Route path="/jobs/education" element={<JobsEducation />} />
             <Route path="/job/:id" element={<PlaceholderPage title="Job Details" />} />
             <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
             <Route path="/candidate/signup" element={<CreateProfile />} />
@@ -77,12 +88,19 @@ const App = () => (
             <Route path="/profile/success" element={<ProfileSuccess />} />
             <Route path="/candidate/dashboard" element={<PlaceholderPage title="Candidate Dashboard" />} />
             <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
-            <Route path="/candidate/interview-prep" element={<PlaceholderPage title="Interview Prep" />} />
-            <Route path="/candidate/resume-builder" element={<PlaceholderPage title="Resume Builder" />} />
+            <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
+            <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
             <Route path="/candidate/assessments" element={<PlaceholderPage title="Skill Assessments" />} />
             <Route path="/candidate/mock-interviews" element={<PlaceholderPage title="Mock Interviews" />} />
             <Route path="/candidate/salary-insights" element={<PlaceholderPage title="Salary Insights" />} />
-            <Route path="/candidate/coaching" element={<PlaceholderPage title="Career Coaching" />} />
+            <Route path="/candidate/coaching" element={<CareerCoaching />} />
+
+            {/* Learning Platform Routes */}
+            <Route path="/learning/tech" element={<TechLearning />} />
+            <Route path="/learning/non-tech" element={<NonTechLearning />} />
+            <Route path="/learning/education" element={<EducationLearning />} />
+            <Route path="/learning/languages" element={<LanguagesLearning />} />
+            <Route path="/learning/all-categories" element={<AllCategories />} />
 
             {/* Employer Routes */}
             <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />

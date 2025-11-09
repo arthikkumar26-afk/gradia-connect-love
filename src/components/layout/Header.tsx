@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { learningCategories } from "@/data/learningCategories";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,15 +63,15 @@ const Header = () => {
     });
   };
 
-  const candidatePages = [
-    { name: "Browse Jobs", path: "/jobs" },
-    { name: "Software Jobs", path: "/jobs/software" },
-    { name: "Education Jobs", path: "/jobs/education" },
-    { name: "Dashboard", path: "/candidate/dashboard" },
-    { name: "Resume Builder", path: "/candidate/resume-builder" },
-    { name: "Interview Prep", path: "/candidate/interview-prep" },
-    { name: "Career Coaching", path: "/candidate/coaching" },
-    { name: "Salary Insights", path: "/candidate/salary-insights" },
+  // Restructured Candidates menu - public items only
+  const candidateMenuItems = [
+    { name: "Register / Login", path: "/candidate/login", public: true },
+    { name: "Browse Jobs", path: "/jobs", public: true },
+    { name: "Software Jobs", path: "/jobs/software", public: true },
+    { name: "Education Jobs", path: "/jobs/education", public: true },
+    { name: "Resume Builder", path: "/candidate/resume-builder", public: true, badge: "Save requires login" },
+    { name: "Interview Prep", path: "/candidate/interview-prep", public: true },
+    { name: "Career Coaching", path: "/candidate/coaching", public: true },
   ];
 
   const publicEmployerPages = [
@@ -87,7 +89,7 @@ const Header = () => {
     { name: "Settings", path: "/employer/settings", icon: SettingsIcon },
   ];
 
-  const resourceCategories = {
+  const companyResourceCategories = {
     exploreCategories: [
       { name: "Unicorn", path: "/resources/unicorn" },
       { name: "MNC", path: "/resources/mnc" },
@@ -179,35 +181,88 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* For Candidates Dropdown */}
+            {/* Candidates Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                For Candidates
+                Candidates
                 <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48">
-                {candidatePages.map((page) => (
-                  <DropdownMenuItem key={page.path} asChild>
-                    <Link to={page.path}>{page.name}</Link>
+              <DropdownMenuContent className="w-56 bg-background z-50">
+                {candidateMenuItems.map((item) => (
+                  <DropdownMenuItem key={item.path} asChild>
+                    <Link to={item.path} className="flex items-center justify-between">
+                      <span>{item.name}</span>
+                      {item.badge && (
+                        <span className="text-xs text-muted-foreground ml-2">*</span>
+                      )}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Resources Dropdown */}
+            {/* Resources / Learning Dropdown - Multi-column */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Resources
+                Resources / Learning
                 <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[640px] p-6">
+              <DropdownMenuContent className="w-[800px] p-6 bg-background z-50" align="start">
+                <div className="grid grid-cols-4 gap-6">
+                  {learningCategories.map((category) => (
+                    <div key={category.name}>
+                      <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                        <span>{category.icon}</span>
+                        {category.name}
+                      </h3>
+                      <div className="flex flex-col space-y-2">
+                        {category.subcategories.map((sub) => (
+                          <Link
+                            key={sub.name}
+                            to={sub.path}
+                            className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                          >
+                            <div className="flex items-start gap-1">
+                              <span className="flex-1">{sub.name}</span>
+                              <span className="text-xs opacity-60">{sub.count}</span>
+                            </div>
+                          </Link>
+                        ))}
+                        <Link
+                          to={category.subcategories[0]?.path || "/learning"}
+                          className="text-xs text-accent hover:text-accent/80 transition-colors mt-1"
+                        >
+                          View All →
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <DropdownMenuSeparator className="my-4" />
+                <div className="flex justify-center">
+                  <Button asChild variant="default" className="w-full max-w-md">
+                    <Link to="/learning/all-categories">
+                      View All Categories of Learning
+                    </Link>
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Companies (old Resources) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
+                Companies
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[640px] p-6 bg-background z-50">
                 <div className="grid grid-cols-3 gap-8">
                   <div>
                     <h3 className="font-semibold text-sm text-foreground mb-3">
                       Explore categories
                     </h3>
                     <div className="flex flex-col space-y-2">
-                      {resourceCategories.exploreCategories.map((item) => (
+                      {companyResourceCategories.exploreCategories.map((item) => (
                         <Link
                           key={item.path}
                           to={item.path}
@@ -223,7 +278,7 @@ const Header = () => {
                       Explore collections
                     </h3>
                     <div className="flex flex-col space-y-2">
-                      {resourceCategories.exploreCollections.map((item) => (
+                      {companyResourceCategories.exploreCollections.map((item) => (
                         <Link
                           key={item.path}
                           to={item.path}
@@ -239,7 +294,7 @@ const Header = () => {
                       Research companies
                     </h3>
                     <div className="flex flex-col space-y-2">
-                      {resourceCategories.researchCompanies.map((item) => (
+                      {companyResourceCategories.researchCompanies.map((item) => (
                         <Link
                           key={item.path}
                           to={item.path}
@@ -400,26 +455,68 @@ const Header = () => {
                     </>
                   )}
                 </div>
+                {/* Candidates Section */}
                 <div className="px-3 py-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">
-                    For Candidates
+                    Candidates
                   </div>
-                  {candidatePages.map((page) => (
+                  {candidateMenuItems.map((item) => (
                     <Link
-                      key={page.path}
-                      to={page.path}
+                      key={item.path}
+                      to={item.path}
                       className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      {page.name}
+                      {item.name}
+                      {item.badge && <span className="text-xs text-muted-foreground ml-2">*</span>}
                     </Link>
                   ))}
                 </div>
+
+                {/* Resources / Learning Section - Accordion style */}
                 <div className="px-3 py-2">
-                  <div className="text-sm font-semibold text-foreground mb-2">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    Resources / Learning
+                  </div>
+                  {learningCategories.map((category) => (
+                    <Collapsible key={category.name} className="mb-2">
+                      <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
+                        <span className="flex items-center gap-2">
+                          <span>{category.icon}</span>
+                          {category.name}
+                        </span>
+                        <ChevronDown className="h-3 w-3" />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                        {category.subcategories.map((sub) => (
+                          <Link
+                            key={sub.name}
+                            to={sub.path}
+                            className="block px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            {sub.name} ({sub.count})
+                          </Link>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+                  <Button asChild variant="default" size="sm" className="w-full mt-3">
+                    <Link to="/learning/all-categories" onClick={() => setIsMenuOpen(false)}>
+                      View All Categories
+                    </Link>
+                  </Button>
+                </div>
+
+                {/* Companies Section */}
+                <div className="px-3 py-2">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    Companies
+                  </div>
+                  <div className="text-xs font-semibold text-foreground mb-2 mt-3">
                     Explore categories
                   </div>
-                  {resourceCategories.exploreCategories.map((item) => (
+                  {companyResourceCategories.exploreCategories.map((item) => (
                     <Link
                       key={item.path}
                       to={item.path}
@@ -429,12 +526,10 @@ const Header = () => {
                       {item.name}
                     </Link>
                   ))}
-                </div>
-                <div className="px-3 py-2">
-                  <div className="text-sm font-semibold text-foreground mb-2">
+                  <div className="text-xs font-semibold text-foreground mb-2 mt-3">
                     Explore collections
                   </div>
-                  {resourceCategories.exploreCollections.map((item) => (
+                  {companyResourceCategories.exploreCollections.map((item) => (
                     <Link
                       key={item.path}
                       to={item.path}
@@ -444,12 +539,10 @@ const Header = () => {
                       {item.name}
                     </Link>
                   ))}
-                </div>
-                <div className="px-3 py-2">
-                  <div className="text-sm font-semibold text-foreground mb-2">
+                  <div className="text-xs font-semibold text-foreground mb-2 mt-3">
                     Research companies
                   </div>
-                  {resourceCategories.researchCompanies.map((item) => (
+                  {companyResourceCategories.researchCompanies.map((item) => (
                     <Link
                       key={item.path}
                       to={item.path}
