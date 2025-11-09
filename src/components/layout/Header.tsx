@@ -181,7 +181,7 @@ const Header = () => {
             {/* Learning Dropdown - Multi-column */}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Learning
+                Learning & Training
                 <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[800px] p-6 bg-background z-50" align="start">
@@ -394,7 +394,7 @@ const Header = () => {
                 {/* Learning Section - Accordion style */}
                 <div className="px-3 py-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">
-                    Learning
+                    Learning & Training
                   </div>
                   {learningCategories.map((category) => (
                     <Collapsible key={category.name} className="mb-2">
