@@ -4,9 +4,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { EmployerProvider } from "./contexts/EmployerContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 // Layout
 import Layout from "./components/layout/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Main Pages
 import Index from "./pages/Index";
@@ -37,13 +39,14 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <EmployerProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Layout>
-            <Routes>
+    <AuthProvider>
+      <EmployerProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Layout>
+              <Routes>
             {/* Main Pages */}
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<About />} />
@@ -83,20 +86,24 @@ const App = () => (
             <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
             <Route path="/employer/signup" element={<Registration />} />
             <Route path="/employer/login" element={<EmployerLogin />} />
-            <Route path="/employer/agreement" element={<Agreement />} />
             <Route path="/employer/terms" element={<Terms />} />
-            <Route path="/employer/plans" element={<Plans />} />
-            <Route path="/employer/onboarding" element={<Onboarding />} />
-            <Route path="/employer/dashboard" element={<EmployerDashboard />} />
-            <Route path="/learning-platform" element={<LearningPlatform />} />
-            <Route path="/employer/post-job" element={<PlaceholderPage title="Post a Job" />} />
-            <Route path="/employer/job-requirements" element={<JobRequirements />} />
-            <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
-            <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
-            <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
             <Route path="/employer/pricing" element={<PlaceholderPage title="Pricing Plans" />} />
-            <Route path="/employer/case-studies" element={<PlaceholderPage title="Case Studies" />} />
             <Route path="/employer/demo" element={<PlaceholderPage title="Request Demo" />} />
+            
+            {/* Protected Employer Routes */}
+            <Route path="/employer/agreement" element={<ProtectedRoute><Agreement /></ProtectedRoute>} />
+            <Route path="/employer/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+            <Route path="/employer/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/employer/dashboard" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
+            <Route path="/learning-platform" element={<ProtectedRoute><LearningPlatform /></ProtectedRoute>} />
+            <Route path="/employer/post-job" element={<ProtectedRoute><PlaceholderPage title="Post a Job" /></ProtectedRoute>} />
+            <Route path="/employer/job-requirements" element={<ProtectedRoute><JobRequirements /></ProtectedRoute>} />
+            <Route path="/employer/shortlist" element={<ProtectedRoute><PlaceholderPage title="Candidate Shortlist" /></ProtectedRoute>} />
+            <Route path="/employer/campus-hiring" element={<ProtectedRoute><PlaceholderPage title="Campus Hiring" /></ProtectedRoute>} />
+            <Route path="/employer/partnerships" element={<ProtectedRoute><PlaceholderPage title="Partnerships" /></ProtectedRoute>} />
+            <Route path="/employer/case-studies" element={<ProtectedRoute><PlaceholderPage title="Case Studies" /></ProtectedRoute>} />
+            <Route path="/employer/profile" element={<ProtectedRoute><PlaceholderPage title="Profile" /></ProtectedRoute>} />
+            <Route path="/employer/settings" element={<ProtectedRoute><PlaceholderPage title="Settings" /></ProtectedRoute>} />
 
             {/* Service Routes */}
             <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
@@ -133,11 +140,12 @@ const App = () => (
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </TooltipProvider>
-    </EmployerProvider>
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </TooltipProvider>
+      </EmployerProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
