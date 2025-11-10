@@ -5,7 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, MapPin, Clock, Users, DollarSign, Calendar } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Job {
   id: string;
@@ -26,9 +30,44 @@ interface JobDetailsDrawerProps {
 }
 
 export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDrawerProps) => {
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [status, setStatus] = useState(job?.status || "Open");
+
   if (!job) return null;
 
   const isEditMode = mode === "edit";
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Map UI status to database status
+      const dbStatus = status === "Open" ? "active" : status === "Closed" ? "closed" : "under_review";
+      
+      const { error } = await supabase
+        .from('jobs')
+        .update({ status: dbStatus })
+        .eq('id', job.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Job status updated successfully",
+      });
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error updating job:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update job status",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -133,14 +172,27 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
 
           {/* Status */}
           <div className="space-y-2">
-            <Label>Status</Label>
-            <Badge variant={
-              job.status === "Open" ? "default" : 
-              job.status === "Under Review" ? "secondary" : 
-              "outline"
-            }>
-              {job.status}
-            </Badge>
+            <Label htmlFor="status">Status</Label>
+            {isEditMode ? (
+              <Select value={status} onValueChange={(value) => setStatus(value as "Open" | "Under Review" | "Closed")}>
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Open">Open</SelectItem>
+                  <SelectItem value="Under Review">Under Review</SelectItem>
+                  <SelectItem value="Closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge variant={
+                job.status === "Open" ? "default" : 
+                job.status === "Under Review" ? "secondary" : 
+                "outline"
+              }>
+                {job.status}
+              </Badge>
+            )}
           </div>
 
           <Separator />
@@ -176,10 +228,10 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
           <div className="flex gap-3 pt-4">
             {isEditMode ? (
               <>
-                <Button variant="cta" className="flex-1">
-                  Save Changes
+                <Button variant="cta" className="flex-1" onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isSaving}>
                   Cancel
                 </Button>
               </>
