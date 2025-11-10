@@ -103,15 +103,7 @@ const EmployerDashboard = () => {
           sidebarOpen ? "w-64" : "w-0"
         } bg-card border-r border-border transition-all duration-300 overflow-hidden flex flex-col`}
       >
-        <div className="p-6 border-b border-border flex justify-center">
-          <img 
-            src={gradiaLogo} 
-            alt="Gradia - Your Next Step" 
-            className="h-10 w-auto object-contain"
-          />
-        </div>
-
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 pt-6">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeMenu === item.id;
