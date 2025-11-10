@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const EmployerLogin = () => {
   const navigate = useNavigate();
@@ -16,32 +17,49 @@ const EmployerLogin = () => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
   
   const from = (location.state as any)?.from || "/employer/dashboard";
+
+  useEffect(() => {
+    if (isAuthenticated && profile?.role === "employer") {
+      navigate(from);
+    }
+  }, [isAuthenticated, profile, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock authentication - replace with actual API call
-    setTimeout(() => {
-      login({
-        id: "1",
-        name: email.split("@")[0],
-        email: email,
-        role: "employer",
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      
+
+      if (error) {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-      
-      navigate(from);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred during login",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

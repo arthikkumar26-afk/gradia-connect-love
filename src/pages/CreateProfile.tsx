@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { Button } from "@/components/ui/button";
@@ -27,12 +27,15 @@ import {
   Camera,
   X
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreateProfile = () => {
   const navigate = useNavigate();
+  const { user, profile, refreshProfile } = useAuth();
+  const { toast } = useToast();
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
   const [resume, setResume] = useState<File | null>(null);
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
@@ -44,24 +47,133 @@ const CreateProfile = () => {
   const [experienceLevel, setExperienceLevel] = useState("");
   const [location, setLocation] = useState("");
   const [linkedin, setLinkedin] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [companyDescription, setCompanyDescription] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!user) {
+      navigate("/candidate/signup");
+      return;
+    }
+
+    if (profile) {
+      navigate(profile.role === "employer" ? "/employer/dashboard" : "/candidate/dashboard");
+    }
+
+    // Get role from user metadata
+    const role = user.user_metadata?.role;
+    if (role) {
+      setRoleType(role);
+    }
+  }, [user, profile, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Profile creation submitted", {
-      fullName,
-      email,
-      mobile,
-      resume: resume?.name,
-      roleType,
-      experienceLevel,
-      location,
-      linkedin,
-      agreeToTerms
-    });
     
-    // Navigate to success page
-    navigate("/profile/success");
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a profile",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!agreeToTerms) {
+      toast({
+        title: "Error",
+        description: "Please agree to the terms and conditions",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Upload profile picture if exists
+      let profilePictureUrl = null;
+      if (profilePicture) {
+        const fileExt = profilePicture.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `profile-pictures/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('profile-pictures')
+          .upload(filePath, profilePicture);
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-pictures')
+            .getPublicUrl(filePath);
+          profilePictureUrl = publicUrl;
+        }
+      }
+
+      // Upload resume if exists
+      let resumeUrl = null;
+      if (resume) {
+        const fileExt = resume.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `resumes/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('resumes')
+          .upload(filePath, resume);
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('resumes')
+            .getPublicUrl(filePath);
+          resumeUrl = publicUrl;
+        }
+      }
+
+      // Create profile
+      const { error } = await supabase.from("profiles").insert({
+        id: user.id,
+        full_name: fullName,
+        email: user.email!,
+        mobile,
+        role: roleType,
+        location,
+        linkedin,
+        profile_picture: profilePictureUrl,
+        resume_url: resumeUrl,
+        experience_level: experienceLevel,
+        preferred_role: experienceLevel,
+        company_name: roleType === 'employer' ? companyName : null,
+        company_description: roleType === 'employer' ? companyDescription : null,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await refreshProfile();
+      
+      toast({
+        title: "Success!",
+        description: "Your profile has been created",
+      });
+
+      navigate(roleType === "employer" ? "/employer/dashboard" : "/candidate/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,44 +437,6 @@ const CreateProfile = () => {
                   />
                 </div>
 
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    Email ID *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="h-12"
-                  />
-                </div>
-
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                    Password *
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Minimum 6 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="h-12"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Must be at least 6 characters long
-                  </p>
-                </div>
-
                 {/* Mobile */}
                 <div className="space-y-2">
                   <Label htmlFor="mobile" className="flex items-center gap-2">
@@ -406,43 +480,78 @@ const CreateProfile = () => {
                   </div>
                 </div>
 
-                {/* Role Type */}
+                {/* Role Type - Read only from signup */}
                 <div className="space-y-2">
                   <Label htmlFor="roleType" className="flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    Preferred Role *
+                    Account Type *
                   </Label>
-                  <Select value={roleType} onValueChange={setRoleType} required>
-                    <SelectTrigger id="roleType" className="h-12">
-                      <SelectValue placeholder="Select role type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="candidate">Candidate</SelectItem>
-                      <SelectItem value="employer">Employer</SelectItem>
-                      <SelectItem value="consultant">Consultant</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id="roleType"
+                    type="text"
+                    value={roleType === 'candidate' ? 'Candidate' : 'Employer'}
+                    disabled
+                    className="h-12 bg-muted"
+                  />
                 </div>
 
-                {/* Experience Level */}
-                <div className="space-y-2">
-                  <Label htmlFor="experience" className="flex items-center gap-2">
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    Experience Level *
-                  </Label>
-                  <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
-                    <SelectTrigger id="experience" className="h-12">
-                      <SelectValue placeholder="Select experience level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fresher">Fresher</SelectItem>
-                      <SelectItem value="0-1">0-1 year</SelectItem>
-                      <SelectItem value="1-3">1-3 years</SelectItem>
-                      <SelectItem value="3-5">3-5 years</SelectItem>
-                      <SelectItem value="5+">5+ years</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Employer-specific fields */}
+                {roleType === 'employer' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName" className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        Company Name *
+                      </Label>
+                      <Input
+                        id="companyName"
+                        type="text"
+                        placeholder="Your Company Name"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        required
+                        className="h-12"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="companyDescription" className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        Company Description
+                      </Label>
+                      <Input
+                        id="companyDescription"
+                        type="text"
+                        placeholder="Brief description of your company"
+                        value={companyDescription}
+                        onChange={(e) => setCompanyDescription(e.target.value)}
+                        className="h-12"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Candidate-specific fields */}
+                {roleType === 'candidate' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="experience" className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                      Experience Level *
+                    </Label>
+                    <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
+                      <SelectTrigger id="experience" className="h-12">
+                        <SelectValue placeholder="Select experience level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fresher">Fresher</SelectItem>
+                        <SelectItem value="0-1">0-1 year</SelectItem>
+                        <SelectItem value="1-3">1-3 years</SelectItem>
+                        <SelectItem value="3-5">3-5 years</SelectItem>
+                        <SelectItem value="5+">5+ years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {/* Current Location (Optional) */}
                 <div className="space-y-2">
