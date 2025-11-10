@@ -14,7 +14,170 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          applied_date: string | null
+          candidate_id: string
+          cover_letter: string | null
+          id: string
+          job_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          applied_date?: string | null
+          candidate_id: string
+          cover_letter?: string | null
+          id?: string
+          job_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          applied_date?: string | null
+          candidate_id?: string
+          cover_letter?: string | null
+          id?: string
+          job_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          closing_date: string | null
+          created_at: string | null
+          department: string | null
+          description: string | null
+          employer_id: string
+          experience_required: string | null
+          id: string
+          job_title: string
+          job_type: string | null
+          location: string | null
+          posted_date: string | null
+          requirements: string | null
+          salary_range: string | null
+          skills: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          closing_date?: string | null
+          created_at?: string | null
+          department?: string | null
+          description?: string | null
+          employer_id: string
+          experience_required?: string | null
+          id?: string
+          job_title: string
+          job_type?: string | null
+          location?: string | null
+          posted_date?: string | null
+          requirements?: string | null
+          salary_range?: string | null
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          closing_date?: string | null
+          created_at?: string | null
+          department?: string | null
+          description?: string | null
+          employer_id?: string
+          experience_required?: string | null
+          id?: string
+          job_title?: string
+          job_type?: string | null
+          location?: string | null
+          posted_date?: string | null
+          requirements?: string | null
+          salary_range?: string | null
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_employer_id_fkey"
+            columns: ["employer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          company_description: string | null
+          company_name: string | null
+          created_at: string | null
+          email: string
+          experience_level: string | null
+          full_name: string
+          id: string
+          linkedin: string | null
+          location: string | null
+          mobile: string | null
+          preferred_role: string | null
+          profile_picture: string | null
+          resume_url: string | null
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_description?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email: string
+          experience_level?: string | null
+          full_name: string
+          id: string
+          linkedin?: string | null
+          location?: string | null
+          mobile?: string | null
+          preferred_role?: string | null
+          profile_picture?: string | null
+          resume_url?: string | null
+          role: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_description?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          email?: string
+          experience_level?: string | null
+          full_name?: string
+          id?: string
+          linkedin?: string | null
+          location?: string | null
+          mobile?: string | null
+          preferred_role?: string | null
+          profile_picture?: string | null
+          resume_url?: string | null
+          role?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
