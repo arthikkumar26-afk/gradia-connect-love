@@ -17,7 +17,7 @@ serve(async (req) => {
       jobType, 
       location, 
       experienceRequired, 
-      skills,
+      skills: inputSkills,
       isRefinement,
       currentDescription,
       currentRequirements,
@@ -68,7 +68,7 @@ ${department ? `Department: ${department}` : ''}
 Job Type: ${jobType}
 Location: ${location}
 Experience Required: ${experienceRequired}
-${skills ? `Suggested Skills: ${skills}` : ''}
+${inputSkills ? `Suggested Skills: ${inputSkills}` : ''}
 
 Please provide:
 1. A detailed job description (3-4 paragraphs) covering role overview, responsibilities, and what the candidate will be doing
@@ -151,13 +151,32 @@ Format the response as JSON with three fields: "description", "requirements", an
       throw new Error("Invalid response format from AI");
     }
 
+    // Ensure all fields are strings (in case AI returns arrays or other types)
+    const description = typeof parsedContent.description === 'string' 
+      ? parsedContent.description 
+      : Array.isArray(parsedContent.description) 
+        ? parsedContent.description.join('\n') 
+        : String(parsedContent.description);
+
+    const requirements = typeof parsedContent.requirements === 'string' 
+      ? parsedContent.requirements 
+      : Array.isArray(parsedContent.requirements) 
+        ? parsedContent.requirements.join('\n') 
+        : String(parsedContent.requirements);
+
+    const skills = typeof parsedContent.skills === 'string' 
+      ? parsedContent.skills 
+      : Array.isArray(parsedContent.skills) 
+        ? parsedContent.skills.join(', ') 
+        : String(parsedContent.skills);
+
     console.log("Successfully generated job description, requirements, and skills");
 
     return new Response(
       JSON.stringify({
-        description: parsedContent.description,
-        requirements: parsedContent.requirements,
-        skills: parsedContent.skills,
+        description,
+        requirements,
+        skills,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

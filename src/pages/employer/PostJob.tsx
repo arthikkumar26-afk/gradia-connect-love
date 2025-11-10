@@ -110,9 +110,14 @@ const PostJob = () => {
         throw new Error("Invalid response from AI service");
       }
 
-      form.setValue("description", data.description);
-      form.setValue("requirements", data.requirements);
-      form.setValue("skills", data.skills);
+      // Ensure all fields are strings
+      const descriptionValue = typeof data.description === 'string' ? data.description : String(data.description);
+      const requirementsValue = typeof data.requirements === 'string' ? data.requirements : String(data.requirements);
+      const skillsValue = typeof data.skills === 'string' ? data.skills : String(data.skills);
+
+      form.setValue("description", descriptionValue);
+      form.setValue("requirements", requirementsValue);
+      form.setValue("skills", skillsValue);
 
       setShowRefineDialog(false);
       setRefineFeedback("");
@@ -179,9 +184,14 @@ const PostJob = () => {
         throw new Error("Invalid response from AI service");
       }
 
-      form.setValue("description", data.description);
-      form.setValue("requirements", data.requirements);
-      form.setValue("skills", data.skills);
+      // Ensure all fields are strings
+      const descriptionValue = typeof data.description === 'string' ? data.description : String(data.description);
+      const requirementsValue = typeof data.requirements === 'string' ? data.requirements : String(data.requirements);
+      const skillsValue = typeof data.skills === 'string' ? data.skills : String(data.skills);
+
+      form.setValue("description", descriptionValue);
+      form.setValue("requirements", requirementsValue);
+      form.setValue("skills", skillsValue);
       setHasGenerated(true);
 
       toast({
