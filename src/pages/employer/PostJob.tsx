@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Briefcase, ArrowLeft } from "lucide-react";
+import { Loader2, Briefcase, ArrowLeft, Sparkles } from "lucide-react";
 
 const jobFormSchema = z.object({
   job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
@@ -32,6 +32,7 @@ const PostJob = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -48,6 +49,61 @@ const PostJob = () => {
       closing_date: "",
     },
   });
+
+  const handleGenerateJD = async () => {
+    const jobTitle = form.getValues("job_title");
+    const department = form.getValues("department");
+    const jobType = form.getValues("job_type");
+    const location = form.getValues("location");
+    const experienceRequired = form.getValues("experience_required");
+    const skills = form.getValues("skills");
+
+    if (!jobTitle || !jobType || !location || !experienceRequired) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in Job Title, Job Type, Location, and Experience Required to generate a job description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-job-description", {
+        body: {
+          jobTitle,
+          department,
+          jobType,
+          location,
+          experienceRequired,
+          skills,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      form.setValue("description", data.description);
+      form.setValue("requirements", data.requirements);
+
+      toast({
+        title: "Job description generated!",
+        description: "AI has generated a professional job description and requirements.",
+      });
+    } catch (error: any) {
+      console.error("Error generating job description:", error);
+      toast({
+        title: "Failed to generate description",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const onSubmit = async (values: JobFormValues) => {
     setIsSubmitting(true);
@@ -264,6 +320,29 @@ const PostJob = () => {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Generate JD Button */}
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateJD}
+                    disabled={isGenerating}
+                    className="gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Generate JD
+                      </>
+                    )}
+                  </Button>
                 </div>
 
                 {/* Job Description */}
