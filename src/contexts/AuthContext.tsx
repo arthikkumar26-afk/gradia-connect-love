@@ -10,6 +10,7 @@ interface Profile {
   mobile?: string;
   location?: string;
   linkedin?: string;
+  website?: string;
   profile_picture?: string;
   resume_url?: string;
   experience_level?: string;

@@ -25,7 +25,8 @@ import {
   MapPin,
   Linkedin,
   Camera,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +50,8 @@ const CreateProfile = () => {
   const [linkedin, setLinkedin] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [companyDescription, setCompanyDescription] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [isDetecting, setIsDetecting] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,6 +71,57 @@ const CreateProfile = () => {
       setRoleType(role);
     }
   }, [user, profile, navigate]);
+
+  const handleDetectCompanyInfo = async () => {
+    if (!companyWebsite) return;
+
+    setIsDetecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-company-website', {
+        body: { websiteUrl: companyWebsite }
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to analyze website. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        if (data.companyName) setCompanyName(data.companyName);
+        if (data.description) setCompanyDescription(data.description);
+        
+        // If logo URL is found, download and set as profile picture
+        if (data.logoUrl) {
+          try {
+            const response = await fetch(data.logoUrl);
+            const blob = await response.blob();
+            const file = new File([blob], "company-logo.jpg", { type: blob.type });
+            setProfilePicture(file);
+            setProfilePicturePreview(data.logoUrl);
+          } catch (logoError) {
+            console.error("Failed to fetch logo:", logoError);
+          }
+        }
+
+        toast({
+          title: "Success!",
+          description: "Company information detected successfully",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to analyze website",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDetecting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +194,7 @@ const CreateProfile = () => {
         role: roleType,
         location,
         linkedin,
+        website: roleType === 'employer' ? companyWebsite : null,
         profile_picture: profilePictureUrl,
         resume_url: resumeUrl,
         experience_level: experienceLevel,
@@ -500,6 +555,43 @@ const CreateProfile = () => {
                 {/* Employer-specific fields */}
                 {roleType === 'employer' && (
                   <>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyWebsite" className="flex items-center gap-2">
+                        <Linkedin className="h-4 w-4 text-muted-foreground" />
+                        Company Website *
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="companyWebsite"
+                          type="url"
+                          placeholder="https://yourcompany.com"
+                          value={companyWebsite}
+                          onChange={(e) => setCompanyWebsite(e.target.value)}
+                          required
+                          className="h-12 flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleDetectCompanyInfo}
+                          disabled={!companyWebsite || isDetecting}
+                          className="h-12"
+                        >
+                          {isDetecting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Detecting...
+                            </>
+                          ) : (
+                            "Auto-fill"
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Click "Auto-fill" to automatically detect company details
+                      </p>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="companyName" className="flex items-center gap-2">
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
