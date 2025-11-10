@@ -92,16 +92,17 @@ const PostJob = () => {
         throw new Error(data.error);
       }
 
-      if (!data?.description || !data?.requirements) {
+      if (!data?.description || !data?.requirements || !data?.skills) {
         throw new Error("Invalid response from AI service");
       }
 
       form.setValue("description", data.description);
       form.setValue("requirements", data.requirements);
+      form.setValue("skills", data.skills);
 
       toast({
         title: "Job description generated!",
-        description: "AI has generated a professional job description and requirements.",
+        description: "AI has generated job description, requirements, and skills.",
       });
     } catch (error: any) {
       console.error("Error generating job description:", error);

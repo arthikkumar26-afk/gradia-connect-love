@@ -20,20 +20,21 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const prompt = `Generate a professional and comprehensive job description and requirements for the following position:
+    const prompt = `Generate a professional and comprehensive job description, requirements, and skills for the following position:
 
 Job Title: ${jobTitle}
 ${department ? `Department: ${department}` : ''}
 Job Type: ${jobType}
 Location: ${location}
 Experience Required: ${experienceRequired}
-${skills ? `Required Skills: ${skills}` : ''}
+${skills ? `Suggested Skills: ${skills}` : ''}
 
 Please provide:
 1. A detailed job description (3-4 paragraphs) covering role overview, responsibilities, and what the candidate will be doing
-2. A comprehensive list of requirements including qualifications, skills, and experience
+2. A comprehensive list of requirements including qualifications, experience, and certifications
+3. A comma-separated list of 5-10 key technical and soft skills required for this role
 
-Format the response as JSON with two fields: "description" and "requirements".`;
+Format the response as JSON with three fields: "description", "requirements", and "skills" (as a string with comma-separated values).`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -104,16 +105,17 @@ Format the response as JSON with two fields: "description" and "requirements".`;
       }
     }
 
-    if (!parsedContent.description || !parsedContent.requirements) {
+    if (!parsedContent.description || !parsedContent.requirements || !parsedContent.skills) {
       throw new Error("Invalid response format from AI");
     }
 
-    console.log("Successfully generated job description");
+    console.log("Successfully generated job description, requirements, and skills");
 
     return new Response(
       JSON.stringify({
         description: parsedContent.description,
         requirements: parsedContent.requirements,
+        skills: parsedContent.skills,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
