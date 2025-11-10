@@ -50,6 +50,7 @@ import EducationLearning from "./pages/learning/EducationLearning";
 import LanguagesLearning from "./pages/learning/LanguagesLearning";
 import AllCategories from "./pages/learning/AllCategories";
 import CandidateDashboard from "./pages/candidate/Dashboard";
+import EditProfile from "./pages/EditProfile";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ const App = () => (
             <Route path="/signup" element={<CandidateSignup />} />
             <Route path="/profile/success" element={<ProfileSuccess />} />
             <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
+            <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
             <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
             <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />

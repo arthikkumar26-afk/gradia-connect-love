@@ -82,21 +82,27 @@ const CandidateDashboard = () => {
       <div className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  {profile?.full_name}
-                </h2>
-                <p className="text-sm text-muted-foreground">Candidate Dashboard</p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-6 w-6 text-primary" />
             </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                {profile?.full_name}
+              </h2>
+              <p className="text-sm text-muted-foreground">Candidate Dashboard</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/profile/edit")}>
+              <User className="h-4 w-4 mr-2" />
+              Edit Profile
+            </Button>
             <Button variant="outline" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
+          </div>
           </div>
         </div>
       </div>
