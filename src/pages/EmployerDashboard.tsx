@@ -96,7 +96,7 @@ const EmployerDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-subtle flex">
+    <div className="bg-subtle flex min-h-[calc(100vh-64px)]">
       {/* Sidebar */}
       <aside 
         className={`${

@@ -77,8 +77,8 @@ const CandidateDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-subtle">
-      {/* Header */}
+    <div className="bg-subtle min-h-[calc(100vh-64px)]">
+      {/* Dashboard Header */}
       <div className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
