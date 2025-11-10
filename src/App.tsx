@@ -51,6 +51,7 @@ import LanguagesLearning from "./pages/learning/LanguagesLearning";
 import AllCategories from "./pages/learning/AllCategories";
 import CandidateDashboard from "./pages/candidate/Dashboard";
 import EditProfile from "./pages/EditProfile";
+import PostJob from "./pages/employer/PostJob";
 
 const queryClient = new QueryClient();
 
@@ -117,7 +118,7 @@ const App = () => (
             <Route path="/employer/onboarding" element={<Onboarding />} />
             <Route path="/employer/dashboard" element={<EmployerDashboard />} />
             <Route path="/learning-platform" element={<LearningPlatform />} />
-            <Route path="/employer/post-job" element={<PlaceholderPage title="Post a Job" />} />
+            <Route path="/employer/post-job" element={<PostJob />} />
             <Route path="/employer/job-requirements" element={<JobRequirements />} />
             <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
             <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
