@@ -9,9 +9,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Briefcase, ArrowLeft, Sparkles } from "lucide-react";
+import { Loader2, Briefcase, ArrowLeft, Sparkles, RefreshCw } from "lucide-react";
 
 const jobFormSchema = z.object({
   job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
@@ -33,6 +34,10 @@ const PostJob = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showRefineDialog, setShowRefineDialog] = useState(false);
+  const [refineFeedback, setRefineFeedback] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -49,6 +54,84 @@ const PostJob = () => {
       closing_date: "",
     },
   });
+
+  const handleRefineWithAI = async () => {
+    if (!refineFeedback.trim()) {
+      toast({
+        title: "Feedback required",
+        description: "Please provide feedback on what you'd like to improve.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const currentDescription = form.getValues("description");
+    const currentRequirements = form.getValues("requirements");
+    const currentSkills = form.getValues("skills");
+
+    if (!currentDescription || !currentRequirements || !currentSkills) {
+      toast({
+        title: "No content to refine",
+        description: "Please generate a job description first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRefining(true);
+    console.log("Refining with feedback:", refineFeedback);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-job-description", {
+        body: {
+          jobTitle: form.getValues("job_title"),
+          department: form.getValues("department"),
+          jobType: form.getValues("job_type"),
+          location: form.getValues("location"),
+          experienceRequired: form.getValues("experience_required"),
+          skills: currentSkills,
+          isRefinement: true,
+          currentDescription,
+          currentRequirements,
+          currentSkills,
+          feedback: refineFeedback,
+        },
+      });
+
+      console.log("Refinement response:", { data, error });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data?.description || !data?.requirements || !data?.skills) {
+        throw new Error("Invalid response from AI service");
+      }
+
+      form.setValue("description", data.description);
+      form.setValue("requirements", data.requirements);
+      form.setValue("skills", data.skills);
+
+      setShowRefineDialog(false);
+      setRefineFeedback("");
+
+      toast({
+        title: "Content refined!",
+        description: "AI has improved the content based on your feedback.",
+      });
+    } catch (error: any) {
+      console.error("Error refining job description:", error);
+      toast({
+        title: "Failed to refine content",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefining(false);
+    }
+  };
 
   const handleGenerateJD = async () => {
     console.log("Generate JD button clicked");
@@ -99,6 +182,7 @@ const PostJob = () => {
       form.setValue("description", data.description);
       form.setValue("requirements", data.requirements);
       form.setValue("skills", data.skills);
+      setHasGenerated(true);
 
       toast({
         title: "Job description generated!",
@@ -333,13 +417,25 @@ const PostJob = () => {
                   />
                 </div>
 
-                {/* Generate JD Button */}
-                <div className="flex justify-end">
+                {/* Generate JD & Refine Buttons */}
+                <div className="flex justify-end gap-3">
+                  {hasGenerated && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowRefineDialog(true)}
+                      disabled={isGenerating || isRefining}
+                      className="gap-2"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Refine with AI
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleGenerateJD}
-                    disabled={isGenerating}
+                    disabled={isGenerating || isRefining}
                     className="gap-2"
                   >
                     {isGenerating ? (
@@ -445,6 +541,63 @@ const PostJob = () => {
             </Form>
           </CardContent>
         </Card>
+
+        {/* Refine with AI Dialog */}
+        <Dialog open={showRefineDialog} onOpenChange={setShowRefineDialog}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5 text-primary" />
+                Refine with AI
+              </DialogTitle>
+              <DialogDescription>
+                Tell the AI how you'd like to improve the job description, requirements, or skills. Be specific about what you want to change.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label htmlFor="feedback" className="text-sm font-medium">
+                  Your Feedback
+                </label>
+                <Textarea
+                  id="feedback"
+                  placeholder="e.g., 'Make the description more concise', 'Add more technical skills', 'Focus more on leadership qualities', 'Make it less formal'..."
+                  value={refineFeedback}
+                  onChange={(e) => setRefineFeedback(e.target.value)}
+                  className="min-h-[120px]"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowRefineDialog(false);
+                  setRefineFeedback("");
+                }}
+                disabled={isRefining}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRefineWithAI}
+                disabled={isRefining || !refineFeedback.trim()}
+              >
+                {isRefining ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Refining...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Refine Content
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

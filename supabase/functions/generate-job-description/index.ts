@@ -11,16 +11,57 @@ serve(async (req) => {
   }
 
   try {
-    const { jobTitle, department, jobType, location, experienceRequired, skills } = await req.json();
+    const { 
+      jobTitle, 
+      department, 
+      jobType, 
+      location, 
+      experienceRequired, 
+      skills,
+      isRefinement,
+      currentDescription,
+      currentRequirements,
+      currentSkills,
+      feedback
+    } = await req.json();
 
-    console.log("Generating job description for:", { jobTitle, department, jobType, location });
+    console.log("Request type:", isRefinement ? "Refinement" : "Generation");
+    console.log("Job details:", { jobTitle, department, jobType, location });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const prompt = `Generate a professional and comprehensive job description, requirements, and skills for the following position:
+    let prompt;
+    
+    if (isRefinement) {
+      prompt = `Refine and improve the following job posting content based on the employer's feedback.
+
+Job Title: ${jobTitle}
+${department ? `Department: ${department}` : ''}
+Job Type: ${jobType}
+Location: ${location}
+Experience Required: ${experienceRequired}
+
+CURRENT CONTENT:
+---
+Description:
+${currentDescription}
+
+Requirements:
+${currentRequirements}
+
+Skills:
+${currentSkills}
+---
+
+EMPLOYER'S FEEDBACK:
+${feedback}
+
+Please refine and improve the content according to the feedback while maintaining professionalism and completeness. Format the response as JSON with three fields: "description", "requirements", and "skills" (as a string with comma-separated values).`;
+    } else {
+      prompt = `Generate a professional and comprehensive job description, requirements, and skills for the following position:
 
 Job Title: ${jobTitle}
 ${department ? `Department: ${department}` : ''}
@@ -35,6 +76,7 @@ Please provide:
 3. A comma-separated list of 5-10 key technical and soft skills required for this role
 
 Format the response as JSON with three fields: "description", "requirements", and "skills" (as a string with comma-separated values).`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
