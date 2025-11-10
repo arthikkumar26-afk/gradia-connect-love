@@ -29,12 +29,18 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Fetching website content for: ${websiteUrl}`);
+    // Normalize the URL by adding https:// if no protocol is specified
+    let normalizedUrl = websiteUrl.trim();
+    if (!normalizedUrl.match(/^https?:\/\//i)) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+    
+    console.log(`Fetching website content for: ${normalizedUrl}`);
     
     // Fetch the website content
     let websiteContent = '';
     try {
-      const websiteResponse = await fetch(websiteUrl, {
+      const websiteResponse = await fetch(normalizedUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; GradiaBot/1.0)',
         },
@@ -171,7 +177,7 @@ serve(async (req) => {
     // If logo URL is relative, make it absolute
     let logoUrl = companyInfo.logoUrl || '';
     if (logoUrl && !logoUrl.startsWith('http')) {
-      const urlObj = new URL(websiteUrl);
+      const urlObj = new URL(normalizedUrl);
       if (logoUrl.startsWith('/')) {
         logoUrl = `${urlObj.protocol}//${urlObj.host}${logoUrl}`;
       } else {
