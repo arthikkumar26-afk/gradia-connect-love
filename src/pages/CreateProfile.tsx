@@ -454,31 +454,33 @@ const CreateProfile = () => {
                   />
                 </div>
 
-                {/* Resume Upload */}
-                <div className="space-y-2">
-                  <Label htmlFor="resume" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    Upload Resume
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="resume"
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="resume"
-                      className="flex items-center justify-center gap-2 h-12 px-4 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors"
-                    >
-                      <Upload className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {resume ? resume.name : "Choose File (PDF, DOC, DOCX)"}
-                      </span>
-                    </label>
+                {/* Resume Upload - Only for candidates */}
+                {roleType === 'candidate' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="resume" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      Upload Resume
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="resume"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="resume"
+                        className="flex items-center justify-center gap-2 h-12 px-4 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors"
+                      >
+                        <Upload className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {resume ? resume.name : "Choose File (PDF, DOC, DOCX)"}
+                        </span>
+                      </label>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Role Type - Read only from signup */}
                 <div className="space-y-2">
