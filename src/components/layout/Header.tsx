@@ -32,9 +32,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, profile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  const userRole = profile?.role; // 'employer' or 'candidate'
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -111,72 +113,85 @@ const Header = () => {
               Home
             </Link>
 
-            {/* For Employers Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                For Employers
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 bg-background z-50">
-                {!isAuthenticated ? (
-                  <>
-                    {publicEmployerPages.map((page) => (
-                      <DropdownMenuItem
-                        key={page.path}
-                        onClick={() => {
-                          if (page.protected) {
-                            handleProtectedNavigation(page.path);
-                          } else {
-                            navigate(page.path);
-                          }
-                        }}
-                      >
-                        {page.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    {authenticatedEmployerPages.map((page) => {
-                      const Icon = page.icon;
-                      return (
-                        <DropdownMenuItem key={page.path} asChild>
-                          <Link to={page.path} className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
-                            {page.name}
-                          </Link>
+            {/* Show For Employers dropdown only if not logged in as candidate */}
+            {userRole !== 'candidate' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
+                  For Employers
+                  <ChevronDown className="ml-1 h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-background z-50">
+                  {!isAuthenticated || userRole !== 'employer' ? (
+                    <>
+                      {publicEmployerPages.map((page) => (
+                        <DropdownMenuItem
+                          key={page.path}
+                          onClick={() => {
+                            if (page.protected) {
+                              handleProtectedNavigation(page.path);
+                            } else {
+                              navigate(page.path);
+                            }
+                          }}
+                        >
+                          {page.name}
                         </DropdownMenuItem>
-                      );
-                    })}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      {authenticatedEmployerPages.map((page) => {
+                        const Icon = page.icon;
+                        return (
+                          <DropdownMenuItem key={page.path} asChild>
+                            <Link to={page.path} className="flex items-center gap-2">
+                              <Icon className="h-4 w-4" />
+                              {page.name}
+                            </Link>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
-            {/* Candidates Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                For Candidates
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-background z-50">
-                {candidateMenuItems.map((item) => (
-                  <DropdownMenuItem key={item.path} asChild>
-                    <Link to={item.path} className="flex items-center justify-between">
-                      <span>{item.name}</span>
-                      {item.badge && (
-                        <span className="text-xs text-muted-foreground ml-2">*</span>
-                      )}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Show For Candidates dropdown only if not logged in as employer */}
+            {userRole !== 'employer' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
+                  For Candidates
+                  <ChevronDown className="ml-1 h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-background z-50">
+                  {candidateMenuItems.map((item) => (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link to={item.path} className="flex items-center justify-between">
+                        <span>{item.name}</span>
+                        {item.badge && (
+                          <span className="text-xs text-muted-foreground ml-2">*</span>
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                  {isAuthenticated && userRole === 'candidate' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* Learning Dropdown - Multi-column */}
             <DropdownMenu>
@@ -266,15 +281,17 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* CTAs */}
-            <div className="hidden lg:flex items-center space-x-3">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/candidate/apply">Apply Now</Link>
-              </Button>
-              <Button variant="default" size="sm" asChild>
-                <Link to="/employer/login">Post Job</Link>
-              </Button>
-            </div>
+            {/* CTAs - Hide if user is logged in */}
+            {!isAuthenticated && (
+              <div className="hidden lg:flex items-center space-x-3">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/candidate/apply">Apply Now</Link>
+                </Button>
+                <Button variant="default" size="sm" asChild>
+                  <Link to="/employer/login">Post Job</Link>
+                </Button>
+              </div>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -301,45 +318,81 @@ const Header = () => {
                 >
                   Home
                 </Link>
-                <div className="px-3 py-2">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">
-                    For Employers
-                  </div>
-                  {!isAuthenticated ? (
-                    <>
-                      {publicEmployerPages.map((page) => (
+                
+                {/* Mobile - For Employers Section */}
+                {userRole !== 'candidate' && (
+                  <div className="px-3 py-2">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">
+                      For Employers
+                    </div>
+                    {!isAuthenticated || userRole !== 'employer' ? (
+                      <>
+                        {publicEmployerPages.map((page) => (
+                          <div
+                            key={page.path}
+                            className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors cursor-pointer"
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              if (page.protected) {
+                                handleProtectedNavigation(page.path);
+                              } else {
+                                navigate(page.path);
+                              }
+                            }}
+                          >
+                            {page.name}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {authenticatedEmployerPages.map((page) => {
+                          const Icon = page.icon;
+                          return (
+                            <Link
+                              key={page.path}
+                              to={page.path}
+                              className="flex items-center gap-2 px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              <Icon className="h-4 w-4" />
+                              {page.name}
+                            </Link>
+                          );
+                        })}
                         <div
-                          key={page.path}
-                          className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors cursor-pointer"
+                          className="flex items-center gap-2 px-2 py-1 text-sm text-destructive hover:text-destructive/80 transition-colors cursor-pointer"
                           onClick={() => {
                             setIsMenuOpen(false);
-                            if (page.protected) {
-                              handleProtectedNavigation(page.path);
-                            } else {
-                              navigate(page.path);
-                            }
+                            handleLogout();
                           }}
                         >
-                          {page.name}
+                          <LogOut className="h-4 w-4" />
+                          Logout
                         </div>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      {authenticatedEmployerPages.map((page) => {
-                        const Icon = page.icon;
-                        return (
-                          <Link
-                            key={page.path}
-                            to={page.path}
-                            className="flex items-center gap-2 px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            <Icon className="h-4 w-4" />
-                            {page.name}
-                          </Link>
-                        );
-                      })}
+                      </>
+                    )}
+                  </div>
+                )}
+                
+                {/* Mobile - Candidates Section */}
+                {userRole !== 'employer' && (
+                  <div className="px-3 py-2">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">
+                      For Candidates
+                    </div>
+                    {candidateMenuItems.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {item.name}
+                        {item.badge && <span className="text-xs text-muted-foreground ml-2">*</span>}
+                      </Link>
+                    ))}
+                    {isAuthenticated && userRole === 'candidate' && (
                       <div
                         className="flex items-center gap-2 px-2 py-1 text-sm text-destructive hover:text-destructive/80 transition-colors cursor-pointer"
                         onClick={() => {
@@ -350,26 +403,9 @@ const Header = () => {
                         <LogOut className="h-4 w-4" />
                         Logout
                       </div>
-                    </>
-                  )}
-                </div>
-                {/* Candidates Section */}
-                <div className="px-3 py-2">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">
-                    For Candidates
+                    )}
                   </div>
-                  {candidateMenuItems.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.name}
-                      {item.badge && <span className="text-xs text-muted-foreground ml-2">*</span>}
-                    </Link>
-                  ))}
-                </div>
+                )}
 
                 {/* Learning Section - Accordion style */}
                 <div className="px-3 py-2">
@@ -422,19 +458,21 @@ const Header = () => {
                 </Link>
               </div>
 
-              {/* Mobile CTAs */}
-              <div className="flex flex-col space-y-2 px-3">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/candidate/apply" onClick={() => setIsMenuOpen(false)}>
-                    Apply Now
-                  </Link>
-                </Button>
-                <Button variant="default" size="sm" asChild>
-                  <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
-                    Post Job
-                  </Link>
-                </Button>
-              </div>
+              {/* Mobile CTAs - Hide if logged in */}
+              {!isAuthenticated && (
+                <div className="flex flex-col space-y-2 px-3">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/candidate/apply" onClick={() => setIsMenuOpen(false)}>
+                      Apply Now
+                    </Link>
+                  </Button>
+                  <Button variant="default" size="sm" asChild>
+                    <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
+                      Post Job
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
