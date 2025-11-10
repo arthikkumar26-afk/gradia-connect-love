@@ -82,6 +82,7 @@ const CreateProfile = () => {
       });
 
       if (error) {
+        console.error('Edge function error:', error);
         toast({
           title: "Error",
           description: "Failed to analyze website. Please try again.",
@@ -90,31 +91,42 @@ const CreateProfile = () => {
         return;
       }
 
+      console.log('Received data from edge function:', data);
+
       if (data) {
         if (data.companyName) setCompanyName(data.companyName);
         if (data.description) setCompanyDescription(data.description);
         
-        // If logo URL is found, set it directly as base64 or download it
+        // If logo URL is found, set it as profile picture
         if (data.logoUrl) {
+          console.log('Logo URL received:', data.logoUrl.substring(0, 50) + '...');
           try {
-            // If it's already base64, use it directly
+            let imageBlob: Blob;
+            
+            // If it's base64, convert it
             if (data.logoUrl.startsWith('data:')) {
-              setProfilePicturePreview(data.logoUrl);
-              // Convert base64 to File for upload
               const response = await fetch(data.logoUrl);
-              const blob = await response.blob();
-              const file = new File([blob], "company-logo.png", { type: blob.type });
-              setProfilePicture(file);
+              imageBlob = await response.blob();
             } else {
-              // Otherwise fetch from URL
+              // If it's a URL, fetch it
               const response = await fetch(data.logoUrl);
-              const blob = await response.blob();
-              const file = new File([blob], "company-logo.jpg", { type: blob.type });
-              setProfilePicture(file);
-              setProfilePicturePreview(data.logoUrl);
+              imageBlob = await response.blob();
             }
+            
+            const file = new File([imageBlob], "company-logo.png", { type: imageBlob.type });
+            setProfilePicture(file);
+            
+            // Create object URL for preview
+            const previewUrl = URL.createObjectURL(imageBlob);
+            setProfilePicturePreview(previewUrl);
+            
+            console.log('Profile picture set successfully');
           } catch (logoError) {
-            console.error("Failed to fetch logo:", logoError);
+            console.error("Failed to process logo:", logoError);
+            toast({
+              title: "Warning",
+              description: "Could not load company logo. You can upload it manually.",
+            });
           }
         }
 
@@ -124,6 +136,7 @@ const CreateProfile = () => {
         });
       }
     } catch (error: any) {
+      console.error('Error in handleDetectCompanyInfo:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to analyze website",
