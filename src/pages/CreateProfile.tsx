@@ -613,8 +613,9 @@ const CreateProfile = () => {
                   type="submit"
                   size="lg"
                   className="w-full h-12 bg-gradient-accent hover:shadow-glow transition-all"
+                  disabled={isLoading}
                 >
-                  Create Profile & Continue
+                  {isLoading ? "Creating Profile..." : "Create Profile & Continue"}
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
 
