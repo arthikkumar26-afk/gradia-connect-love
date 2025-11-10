@@ -51,12 +51,15 @@ const PostJob = () => {
   });
 
   const handleGenerateJD = async () => {
+    console.log("Generate JD button clicked");
     const jobTitle = form.getValues("job_title");
     const department = form.getValues("department");
     const jobType = form.getValues("job_type");
     const location = form.getValues("location");
     const experienceRequired = form.getValues("experience_required");
     const skills = form.getValues("skills");
+
+    console.log("Form values:", { jobTitle, jobType, location, experienceRequired });
 
     if (!jobTitle || !jobType || !location || !experienceRequired) {
       toast({
@@ -68,6 +71,7 @@ const PostJob = () => {
     }
 
     setIsGenerating(true);
+    console.log("Calling generate-job-description function...");
     try {
       const { data, error } = await supabase.functions.invoke("generate-job-description", {
         body: {
@@ -80,10 +84,16 @@ const PostJob = () => {
         },
       });
 
+      console.log("Function response:", { data, error });
+
       if (error) throw error;
 
-      if (data.error) {
+      if (data?.error) {
         throw new Error(data.error);
+      }
+
+      if (!data?.description || !data?.requirements) {
+        throw new Error("Invalid response from AI service");
       }
 
       form.setValue("description", data.description);
