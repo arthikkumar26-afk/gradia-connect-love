@@ -94,14 +94,25 @@ const CreateProfile = () => {
         if (data.companyName) setCompanyName(data.companyName);
         if (data.description) setCompanyDescription(data.description);
         
-        // If logo URL is found, download and set as profile picture
+        // If logo URL is found, set it directly as base64 or download it
         if (data.logoUrl) {
           try {
-            const response = await fetch(data.logoUrl);
-            const blob = await response.blob();
-            const file = new File([blob], "company-logo.jpg", { type: blob.type });
-            setProfilePicture(file);
-            setProfilePicturePreview(data.logoUrl);
+            // If it's already base64, use it directly
+            if (data.logoUrl.startsWith('data:')) {
+              setProfilePicturePreview(data.logoUrl);
+              // Convert base64 to File for upload
+              const response = await fetch(data.logoUrl);
+              const blob = await response.blob();
+              const file = new File([blob], "company-logo.png", { type: blob.type });
+              setProfilePicture(file);
+            } else {
+              // Otherwise fetch from URL
+              const response = await fetch(data.logoUrl);
+              const blob = await response.blob();
+              const file = new File([blob], "company-logo.jpg", { type: blob.type });
+              setProfilePicture(file);
+              setProfilePicturePreview(data.logoUrl);
+            }
           } catch (logoError) {
             console.error("Failed to fetch logo:", logoError);
           }

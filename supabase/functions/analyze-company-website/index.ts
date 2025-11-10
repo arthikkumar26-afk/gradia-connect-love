@@ -185,13 +185,34 @@ serve(async (req) => {
       }
     }
 
+    // Fetch the logo and convert to base64 to avoid CORS issues
+    let logoBase64 = '';
+    if (logoUrl) {
+      try {
+        const logoResponse = await fetch(logoUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; GradiaBot/1.0)',
+          },
+        });
+        if (logoResponse.ok) {
+          const logoBlob = await logoResponse.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(logoBlob)));
+          const contentType = logoResponse.headers.get('content-type') || 'image/png';
+          logoBase64 = `data:${contentType};base64,${base64}`;
+        }
+      } catch (logoError) {
+        console.error('Failed to fetch logo:', logoError);
+        // Continue without logo
+      }
+    }
+
     console.log('Extracted company info:', companyInfo);
 
     return new Response(
       JSON.stringify({
         companyName: companyInfo.companyName || '',
         description: companyInfo.description || '',
-        logoUrl: logoUrl,
+        logoUrl: logoBase64 || logoUrl, // Return base64 if available, otherwise URL
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
