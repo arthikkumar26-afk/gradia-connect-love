@@ -241,19 +241,8 @@ const Header = () => {
             </Link>
           </nav>
 
-          {/* Right side - Search, Theme toggle, Language, CTAs */}
+          {/* Right side - Theme toggle, Language, CTAs */}
           <div className="flex items-center space-x-4">
-            {/* Search */}
-            <div className="hidden md:flex items-center">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search jobs, companies..."
-                  className="pl-10 w-64"
-                />
-              </div>
-            </div>
-
             {/* Theme Toggle */}
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {isDark ? (
@@ -303,15 +292,6 @@ const Header = () => {
         {isMenuOpen && (
           <div className="lg:hidden py-4 border-t border-border animate-slide-up">
             <div className="flex flex-col space-y-4">
-              {/* Mobile Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search jobs, companies..."
-                  className="pl-10"
-                />
-              </div>
-
               {/* Mobile Navigation */}
               <div className="flex flex-col space-y-2">
                 <Link
