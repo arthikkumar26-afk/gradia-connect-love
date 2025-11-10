@@ -8,6 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, 
@@ -21,7 +29,8 @@ import {
   X, 
   Upload,
   FileText,
-  Loader2
+  Loader2,
+  CheckCircle
 } from "lucide-react";
 
 const EditProfile = () => {
@@ -31,6 +40,8 @@ const EditProfile = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [detectedLogo, setDetectedLogo] = useState<{ file: File; preview: string } | null>(null);
+  const [showLogoConfirmation, setShowLogoConfirmation] = useState(false);
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
   const [location, setLocation] = useState("");
@@ -100,6 +111,31 @@ const EditProfile = () => {
     setProfilePicturePreview(profile?.profile_picture || null);
   };
 
+  const handleKeepDetectedLogo = () => {
+    if (detectedLogo) {
+      setProfilePicture(detectedLogo.file);
+      setProfilePicturePreview(detectedLogo.preview);
+      setShowLogoConfirmation(false);
+      setDetectedLogo(null);
+      toast({
+        title: "Logo Added",
+        description: "Company logo has been set as your profile picture",
+      });
+    }
+  };
+
+  const handleUploadDifferentLogo = () => {
+    setShowLogoConfirmation(false);
+    setDetectedLogo(null);
+    // Trigger file input
+    document.getElementById('profilePicture')?.click();
+  };
+
+  const handleSkipLogo = () => {
+    setShowLogoConfirmation(false);
+    setDetectedLogo(null);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setResume(e.target.files[0]);
@@ -148,13 +184,15 @@ const EditProfile = () => {
             }
             
             const file = new File([imageBlob], "company-logo.png", { type: imageBlob.type });
-            setProfilePicture(file);
             
             // Create object URL for preview
             const previewUrl = URL.createObjectURL(imageBlob);
-            setProfilePicturePreview(previewUrl);
             
-            console.log('Profile picture set successfully');
+            // Store detected logo and show confirmation
+            setDetectedLogo({ file, preview: previewUrl });
+            setShowLogoConfirmation(true);
+            
+            console.log('Logo detected, showing confirmation');
           } catch (logoError) {
             console.error("Failed to process logo:", logoError);
             toast({
@@ -599,6 +637,44 @@ const EditProfile = () => {
           onCropComplete={handleCropComplete}
         />
       )}
+
+      {/* Logo Confirmation Dialog */}
+      <Dialog open={showLogoConfirmation} onOpenChange={setShowLogoConfirmation}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Company Logo Detected</DialogTitle>
+            <DialogDescription>
+              We found a logo for your company. Would you like to use it as your profile picture?
+            </DialogDescription>
+          </DialogHeader>
+          
+          {detectedLogo && (
+            <div className="flex justify-center py-4">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-accent shadow-lg">
+                <img
+                  src={detectedLogo.preview}
+                  alt="Detected company logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col sm:flex-col gap-2">
+            <Button onClick={handleKeepDetectedLogo} className="w-full">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Use This Logo
+            </Button>
+            <Button onClick={handleUploadDifferentLogo} variant="outline" className="w-full">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Different Image
+            </Button>
+            <Button onClick={handleSkipLogo} variant="ghost" className="w-full">
+              Skip for Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +60,8 @@ const CreateProfile = () => {
   const [companyDescription, setCompanyDescription] = useState("");
   const [companyWebsite, setCompanyWebsite] = useState("");
   const [isDetecting, setIsDetecting] = useState(false);
+  const [detectedLogo, setDetectedLogo] = useState<{ file: File; preview: string } | null>(null);
+  const [showLogoConfirmation, setShowLogoConfirmation] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -114,13 +124,15 @@ const CreateProfile = () => {
             }
             
             const file = new File([imageBlob], "company-logo.png", { type: imageBlob.type });
-            setProfilePicture(file);
             
             // Create object URL for preview
             const previewUrl = URL.createObjectURL(imageBlob);
-            setProfilePicturePreview(previewUrl);
             
-            console.log('Profile picture set successfully');
+            // Store detected logo and show confirmation
+            setDetectedLogo({ file, preview: previewUrl });
+            setShowLogoConfirmation(true);
+            
+            console.log('Logo detected, showing confirmation');
           } catch (logoError) {
             console.error("Failed to process logo:", logoError);
             toast({
@@ -318,6 +330,31 @@ const CreateProfile = () => {
     setProfilePicturePreview(null);
   };
 
+  const handleKeepDetectedLogo = () => {
+    if (detectedLogo) {
+      setProfilePicture(detectedLogo.file);
+      setProfilePicturePreview(detectedLogo.preview);
+      setShowLogoConfirmation(false);
+      setDetectedLogo(null);
+      toast({
+        title: "Logo Added",
+        description: "Company logo has been set as your profile picture",
+      });
+    }
+  };
+
+  const handleUploadDifferentLogo = () => {
+    setShowLogoConfirmation(false);
+    setDetectedLogo(null);
+    // Trigger file input
+    document.getElementById('profilePicture')?.click();
+  };
+
+  const handleSkipLogo = () => {
+    setShowLogoConfirmation(false);
+    setDetectedLogo(null);
+  };
+
   const benefits = [
     "Build your profile and let recruiters find you",
     "Get job postings delivered right to your email",
@@ -335,6 +372,44 @@ const CreateProfile = () => {
           onCropComplete={handleCropComplete}
         />
       )}
+
+      {/* Logo Confirmation Dialog */}
+      <Dialog open={showLogoConfirmation} onOpenChange={setShowLogoConfirmation}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Company Logo Detected</DialogTitle>
+            <DialogDescription>
+              We found a logo for your company. Would you like to use it as your profile picture?
+            </DialogDescription>
+          </DialogHeader>
+          
+          {detectedLogo && (
+            <div className="flex justify-center py-4">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-accent shadow-lg">
+                <img
+                  src={detectedLogo.preview}
+                  alt="Detected company logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex-col sm:flex-col gap-2">
+            <Button onClick={handleKeepDetectedLogo} className="w-full">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Use This Logo
+            </Button>
+            <Button onClick={handleUploadDifferentLogo} variant="outline" className="w-full">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Different Image
+            </Button>
+            <Button onClick={handleSkipLogo} variant="ghost" className="w-full">
+              Skip for Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="min-h-screen bg-gradient-to-b from-subtle to-background">
       {/* Hero Section */}
