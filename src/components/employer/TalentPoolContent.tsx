@@ -5,31 +5,52 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Filter, UserPlus, Mail, Phone, Eye } from 'lucide-react';
-import { mockGetCandidates, mockShortlistCandidate, mockRejectPlacement, mockGetJobs, mockGetClients } from '@/utils/mockApi';
-import { Candidate } from '@/contexts/EmployerContext';
-import CandidateProfileModal from './CandidateProfileModal';
-import RejectionReasonModal from './RejectionReasonModal';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface CandidateProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  mobile: string | null;
+  location: string | null;
+  experience_level: string | null;
+  preferred_role: string | null;
+  profile_picture: string | null;
+  resume_url: string | null;
+}
 
 export default function TalentPoolContent() {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const { profile } = useAuth();
+  const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [showRejectionModal, setShowRejectionModal] = useState(false);
 
   useEffect(() => {
-    loadCandidates();
-  }, []);
+    if (profile?.role === 'employer') {
+      loadCandidates();
+    }
+  }, [profile]);
 
   const loadCandidates = async () => {
     setLoading(true);
     try {
-      const data = await mockGetCandidates();
-      setCandidates(data);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("role", "candidate");
+
+      if (error) throw error;
+      setCandidates(data || []);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -37,84 +58,10 @@ export default function TalentPoolContent() {
 
   const filteredCandidates = candidates.filter(
     (candidate) =>
-      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.skills.some((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+      (candidate.location && candidate.location.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  const handleViewProfile = (candidate: Candidate) => {
-    setSelectedCandidate(candidate);
-    setShowProfileModal(true);
-  };
-
-  const handleShortlist = async () => {
-    if (!selectedCandidate) return;
-
-    try {
-      // Get first job and client for demo
-      const jobs = await mockGetJobs();
-      const clients = await mockGetClients();
-      
-      await mockShortlistCandidate(selectedCandidate.id, jobs[0]?.id || '1', clients[0]?.id || '1');
-      
-      toast({
-        title: 'Candidate Shortlisted',
-        description: `${selectedCandidate.name} has been added to Placements.`,
-      });
-      
-      setShowProfileModal(false);
-      setSelectedCandidate(null);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to shortlist candidate',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleRejectFromModal = () => {
-    setShowProfileModal(false);
-    setShowRejectionModal(true);
-  };
-
-  const handleConfirmRejection = async (reason: string, comments: string) => {
-    if (!selectedCandidate) return;
-
-    try {
-      toast({
-        title: 'Candidate Rejected',
-        description: 'Reason recorded successfully.',
-      });
-      
-      setShowRejectionModal(false);
-      setSelectedCandidate(null);
-      
-      // Redirect candidate to learning platform
-      setTimeout(() => {
-        navigate(`/learning-platform?reason=${encodeURIComponent(reason)}`);
-      }, 1500);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to record rejection',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const getStatusColor = (status: Candidate['status']) => {
-    switch (status) {
-      case 'Available':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 'In Process':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'Placed':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -133,10 +80,6 @@ export default function TalentPoolContent() {
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Candidate
-          </Button>
         </div>
       </div>
 
@@ -150,10 +93,9 @@ export default function TalentPoolContent() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Skills</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Experience</TableHead>
-                <TableHead>AI Score</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Location</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -161,62 +103,66 @@ export default function TalentPoolContent() {
               {filteredCandidates.map((candidate) => (
                 <TableRow key={candidate.id} className="hover:bg-muted/50">
                   <TableCell>
-                    <div>
-                      <p className="font-medium text-foreground">{candidate.name}</p>
-                      <p className="text-sm text-muted-foreground">{candidate.email}</p>
+                    <div className="flex items-center gap-3">
+                      {candidate.profile_picture ? (
+                        <img
+                          src={candidate.profile_picture}
+                          alt={candidate.full_name}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-medium text-primary">
+                            {candidate.full_name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-foreground">{candidate.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{candidate.preferred_role}</p>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {candidate.skills.slice(0, 3).map((skill, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
-                      {candidate.skills.length > 3 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{candidate.skills.length - 3}
-                        </Badge>
+                    <div>
+                      <p className="text-sm text-foreground">{candidate.email}</p>
+                      {candidate.mobile && (
+                        <p className="text-sm text-muted-foreground">{candidate.mobile}</p>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{candidate.experience}</TableCell>
                   <TableCell>
-                    {candidate.aiScore ? (
-                      <Badge
-                        className={
-                          candidate.aiScore >= 80
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : candidate.aiScore >= 60
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                        }
-                      >
-                        {candidate.aiScore}/100
-                      </Badge>
+                    {candidate.experience_level ? (
+                      <Badge variant="secondary">{candidate.experience_level}</Badge>
                     ) : (
-                      <span className="text-xs text-muted-foreground">N/A</span>
+                      <span className="text-sm text-muted-foreground">N/A</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(candidate.status)}>{candidate.status}</Badge>
+                  <TableCell className="text-muted-foreground">
+                    {candidate.location || 'Not specified'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Mail className="h-4 w-4" />
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href={`mailto:${candidate.email}`}>
+                          <Mail className="h-4 w-4" />
+                        </a>
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewProfile(candidate)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Profile
-                      </Button>
+                      {candidate.mobile && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={`tel:${candidate.mobile}`}>
+                            <Phone className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {candidate.resume_url && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Resume
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -225,29 +171,6 @@ export default function TalentPoolContent() {
           </Table>
         )}
       </div>
-
-      {/* Modals */}
-      <CandidateProfileModal
-        isOpen={showProfileModal}
-        onClose={() => {
-          setShowProfileModal(false);
-          setSelectedCandidate(null);
-        }}
-        candidate={selectedCandidate}
-        onShortlist={handleShortlist}
-        onReject={handleRejectFromModal}
-      />
-
-      <RejectionReasonModal
-        isOpen={showRejectionModal}
-        onClose={() => {
-          setShowRejectionModal(false);
-          setSelectedCandidate(null);
-        }}
-        onConfirm={handleConfirmRejection}
-        candidateName={selectedCandidate?.name || ''}
-        stage="Talent Pool"
-      />
     </div>
   );
 }

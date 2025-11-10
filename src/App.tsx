@@ -49,6 +49,7 @@ import NonTechLearning from "./pages/learning/NonTechLearning";
 import EducationLearning from "./pages/learning/EducationLearning";
 import LanguagesLearning from "./pages/learning/LanguagesLearning";
 import AllCategories from "./pages/learning/AllCategories";
+import CandidateDashboard from "./pages/candidate/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -88,7 +89,7 @@ const App = () => (
             <Route path="/create-profile" element={<CreateProfile />} />
             <Route path="/signup" element={<CandidateSignup />} />
             <Route path="/profile/success" element={<ProfileSuccess />} />
-            <Route path="/candidate/dashboard" element={<PlaceholderPage title="Candidate Dashboard" />} />
+            <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
             <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
             <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
             <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
