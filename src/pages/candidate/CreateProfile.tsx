@@ -244,8 +244,8 @@ const CandidateCreateProfile = () => {
         // If parsing was skipped (e.g., PDF/DOC), inform the user gracefully
         if (data.note === "parsing_skipped") {
           toast({
-            title: "Resume uploaded",
-            description: "Parsing isn't supported for this file type yet. Please fill details manually.",
+            title: "Resume uploaded successfully",
+            description: "AI parsing works with image files (JPG/PNG). Please fill in your details manually for PDF/DOC files.",
           });
           return;
         }
@@ -588,7 +588,7 @@ const CandidateCreateProfile = () => {
                       </label>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Upload your resume and AI will auto-fill your details
+                      AI auto-fill works with image files (JPG/PNG). PDF/DOC files accepted but require manual entry.
                     </p>
                   </div>
 
