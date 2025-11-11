@@ -53,16 +53,32 @@ const CandidateCreateProfile = () => {
       return;
     }
 
-    if (profile) {
-      navigate("/candidate/dashboard");
-    }
+    // Check if profile already exists
+    const checkExistingProfile = async () => {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        toast({
+          title: "Profile Already Exists",
+          description: "Redirecting to your dashboard",
+        });
+        navigate("/candidate/dashboard");
+        return;
+      }
+    };
+
+    checkExistingProfile();
 
     // Verify user is a candidate
     const role = user.user_metadata?.role;
     if (role !== 'candidate') {
       navigate("/employer/create-profile");
     }
-  }, [user, profile, navigate]);
+  }, [user, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -60,16 +60,32 @@ const EmployerCreateProfile = () => {
       return;
     }
 
-    if (profile) {
-      navigate("/employer/dashboard");
-    }
+    // Check if profile already exists
+    const checkExistingProfile = async () => {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        toast({
+          title: "Profile Already Exists",
+          description: "Redirecting to your dashboard",
+        });
+        navigate("/employer/dashboard");
+        return;
+      }
+    };
+
+    checkExistingProfile();
 
     // Verify user is an employer
     const role = user.user_metadata?.role;
     if (role !== 'employer') {
       navigate("/candidate/create-profile");
     }
-  }, [user, profile, navigate]);
+  }, [user, navigate, toast]);
 
   const handleDetectCompanyInfo = async () => {
     if (!companyWebsite) return;
