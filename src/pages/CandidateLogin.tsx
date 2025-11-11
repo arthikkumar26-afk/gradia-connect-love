@@ -9,6 +9,7 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useDevLogin } from "@/hooks/useDevLogin";
 
 const CandidateLogin = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const CandidateLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { handleDevLogin, isLoading: isDevLoginLoading } = useDevLogin('candidate');
 
   useEffect(() => {
     if (isAuthenticated && profile?.role === "candidate") {
@@ -52,62 +54,6 @@ const CandidateLogin = () => {
       toast({
         title: "Error",
         description: error.message || "An error occurred during login",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDevLogin = async () => {
-    setIsLoading(true);
-    try {
-      const devEmail = "candidate@test.com";
-      const devPassword = "test123456";
-      
-      // Try to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: devEmail,
-        password: devPassword,
-      });
-
-      if (signInError) {
-        // If user doesn't exist, create it
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: devEmail,
-          password: devPassword,
-          options: {
-            data: {
-              role: 'candidate',
-              full_name: 'Test Candidate'
-            }
-          }
-        });
-
-        if (signUpError) {
-          toast({
-            title: "Dev Login Failed",
-            description: signUpError.message,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Try signing in again after signup
-        await supabase.auth.signInWithPassword({
-          email: devEmail,
-          password: devPassword,
-        });
-      }
-
-      toast({
-        title: "Dev Login Successful",
-        description: "Logged in as test candidate",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Dev login failed",
         variant: "destructive",
       });
     } finally {
@@ -226,7 +172,7 @@ const CandidateLogin = () => {
                 size="lg" 
                 className="w-full" 
                 onClick={handleDevLogin}
-                disabled={isLoading}
+                disabled={isLoading || isDevLoginLoading}
               >
                 🚀 Dev Login (Test Candidate)
               </Button>
