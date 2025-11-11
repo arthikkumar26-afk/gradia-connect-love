@@ -44,53 +44,32 @@ const EmployerDashboard = () => {
 
   const dashboardCards = [
     {
-      title: "Shortlisted Profile Status",
-      value: "24",
-      subtitle: "Profiles under review",
-      icon: FileText,
-      gradient: "from-accent/20 to-accent/5",
-    },
-    {
       title: "Active Job Posts",
       value: "12",
-      subtitle: "Currently hiring for",
+      subtitle: "Currently hiring",
       icon: Briefcase,
       gradient: "from-primary/20 to-primary/5",
     },
     {
-      title: "Total Applications Received",
+      title: "Applications Received",
       value: "156",
-      subtitle: "In last 30 days",
+      subtitle: "Last 30 days",
       icon: UserPlus,
       gradient: "from-success/20 to-success/5",
     },
     {
-      title: "Pending Applications to Review",
+      title: "Pending Reviews",
       value: "48",
-      subtitle: "Awaiting your feedback",
+      subtitle: "Awaiting feedback",
       icon: Clock,
       gradient: "from-warning/20 to-warning/5",
-    },
-    {
-      title: "Shortlisted Candidates",
-      value: "32",
-      subtitle: "Ready for interviews",
-      icon: UserCheck,
-      gradient: "from-accent/20 to-accent/5",
     },
     {
       title: "Interviews Scheduled",
       value: "18",
       subtitle: "This week",
       icon: Calendar,
-      gradient: "from-primary/20 to-primary/5",
-    },
-    {
-      title: "Hires Complete",
-      value: "8",
-      subtitle: "This month",
-      icon: Award,
-      gradient: "from-success/20 to-success/5",
+      gradient: "from-accent/20 to-accent/5",
     },
   ];
 
@@ -160,12 +139,12 @@ const EmployerDashboard = () => {
         </header>
 
         {/* Dashboard Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 p-4 overflow-y-auto">
+          <div className="max-w-6xl mx-auto">
           {activeMenu === "dashboard" && (
               <>
                 {/* Summary Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {dashboardCards.map((card, index) => {
                     const Icon = card.icon;
                     
@@ -175,21 +154,21 @@ const EmployerDashboard = () => {
                         className="overflow-hidden hover:shadow-large transition-all duration-300 animate-fade-in border-border"
                         style={{ animationDelay: `${index * 50}ms` }}
                       >
-                        <CardHeader className={`bg-gradient-to-br ${card.gradient} pb-3`}>
+                        <CardHeader className={`bg-gradient-to-br ${card.gradient} pb-2`}>
                           <div className="flex items-start justify-between">
-                            <CardTitle className="text-base font-semibold text-foreground">
+                            <CardTitle className="text-sm font-semibold text-foreground">
                               {card.title}
                             </CardTitle>
-                            <div className="p-2 bg-background/50 rounded-lg">
-                              <Icon className="h-5 w-5 text-accent" />
+                            <div className="p-1.5 bg-background/50 rounded-lg">
+                              <Icon className="h-4 w-4 text-accent" />
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent className="pt-4">
-                          <div className="text-4xl font-bold text-foreground mb-1">
+                        <CardContent className="pt-3 pb-3">
+                          <div className="text-3xl font-bold text-foreground mb-0.5">
                             {card.value}
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             {card.subtitle}
                           </p>
                         </CardContent>
@@ -199,34 +178,34 @@ const EmployerDashboard = () => {
                 </div>
 
                 {/* Quick Actions Section */}
-                <div className="mt-8 bg-card rounded-xl border border-border p-6 shadow-soft">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button variant="outline" className="justify-start h-auto py-4" asChild>
+                <div className="mt-6 bg-card rounded-xl border border-border p-4 shadow-soft">
+                  <h3 className="text-base font-semibold text-foreground mb-3">Quick Actions</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Button variant="outline" className="justify-start h-auto py-3" asChild>
                       <Link to="/employer/jobs">
-                        <Briefcase className="h-5 w-5 mr-3" />
+                        <Briefcase className="h-4 w-4 mr-2" />
                         <div className="text-left">
-                          <div className="font-medium">Manage Jobs</div>
-                          <div className="text-xs text-muted-foreground">View and edit postings</div>
+                          <div className="text-sm font-medium">Manage Jobs</div>
+                          <div className="text-xs text-muted-foreground">View postings</div>
                         </div>
                       </Link>
                     </Button>
                     
-                    <Button variant="outline" className="justify-start h-auto py-4" asChild>
+                    <Button variant="outline" className="justify-start h-auto py-3" asChild>
                       <Link to="/employer/talent-pool">
-                        <Users className="h-5 w-5 mr-3" />
+                        <Users className="h-4 w-4 mr-2" />
                         <div className="text-left">
-                          <div className="font-medium">Browse Talent</div>
-                          <div className="text-xs text-muted-foreground">Find qualified candidates</div>
+                          <div className="text-sm font-medium">Browse Talent</div>
+                          <div className="text-xs text-muted-foreground">Find candidates</div>
                         </div>
                       </Link>
                     </Button>
                     
-                    <Button variant="outline" className="justify-start h-auto py-4" asChild>
+                    <Button variant="outline" className="justify-start h-auto py-3" asChild>
                       <Link to="/employer/approvals">
-                        <CheckSquare className="h-5 w-5 mr-3" />
+                        <CheckSquare className="h-4 w-4 mr-2" />
                         <div className="text-left">
-                          <div className="font-medium">Review Approvals</div>
+                          <div className="text-sm font-medium">Review Approvals</div>
                           <div className="text-xs text-muted-foreground">Pending actions</div>
                         </div>
                       </Link>
