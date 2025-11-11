@@ -123,12 +123,6 @@ const EmployerDashboard = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="lg" className="rounded-xl" asChild>
-              <Link to="/profile/edit">
-                <Settings className="h-5 w-5 mr-2" />
-                Edit Profile
-              </Link>
-            </Button>
             <Button variant="cta" size="lg" className="rounded-xl" asChild>
               <Link to="/employer/post-job">
                 <Briefcase className="h-5 w-5 mr-2" />
