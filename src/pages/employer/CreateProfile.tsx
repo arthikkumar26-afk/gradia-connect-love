@@ -206,6 +206,20 @@ const EmployerCreateProfile = () => {
 
       await refreshProfile();
       
+      // Send welcome email in background
+      try {
+        await supabase.functions.invoke('send-welcome-email', {
+          body: { 
+            email: user.email,
+            fullName: fullName,
+            role: 'employer'
+          }
+        });
+      } catch (emailError) {
+        // Don't block profile creation if email fails
+        console.error('Welcome email failed:', emailError);
+      }
+      
       toast({
         title: "Success!",
         description: "Your company profile has been created",
