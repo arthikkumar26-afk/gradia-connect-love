@@ -31,7 +31,7 @@ serve(async (req) => {
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
     const mimeType = file.type || "application/pdf";
 
-    const prompt = `Analyze this resume/CV document and extract the following information in JSON format:
+    const prompt = `Analyze this resume/CV document and extract the following information:
 - full_name: The candidate's full name
 - mobile: Phone number (with country code if available)
 - email: Email address
@@ -39,9 +39,9 @@ serve(async (req) => {
 - location: City and country
 - linkedin: LinkedIn profile URL (if mentioned)
 - preferred_role: Primary job title or role they're seeking
-- has_profile_picture: Boolean indicating if the resume contains a profile photo
+- profile_picture: If there is a profile photo in the resume, extract it and return it as a base64-encoded image string with format "data:image/[type];base64,[data]"
 
-Return ONLY valid JSON with these exact field names. If a field is not found, use null.`;
+Extract all available information from the document.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -49,7 +49,7 @@ Return ONLY valid JSON with these exact field names. If a field is not found, us
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
+        body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
           {
@@ -70,7 +70,7 @@ Return ONLY valid JSON with these exact field names. If a field is not found, us
             type: "function",
             function: {
               name: "extract_resume_data",
-              description: "Extract structured data from a resume",
+              description: "Extract structured data from a resume including profile picture",
               parameters: {
                 type: "object",
                 properties: {
@@ -84,7 +84,7 @@ Return ONLY valid JSON with these exact field names. If a field is not found, us
                   location: { type: "string" },
                   linkedin: { type: "string" },
                   preferred_role: { type: "string" },
-                  has_profile_picture: { type: "boolean" },
+                  profile_picture: { type: "string", description: "Base64-encoded profile image with data URI format" },
                 },
                 required: ["full_name"],
               },
