@@ -28,19 +28,29 @@ serve(async (req) => {
 
     // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
+    const mimeType = file.type || "application/octet-stream";
+
+    // Enforce 20MB limit and only attempt AI parsing for images to avoid gateway errors on PDFs/DOCs
+    const MAX_SIZE = 20 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      return new Response(JSON.stringify({ error: "File too large. Max size is 20MB." }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!mimeType.startsWith("image/")) {
+      // For non-image resumes (PDF/DOC/DOCX/TXT), skip AI parsing to prevent 400 errors from the AI gateway.
+      // Frontend will handle manual entry. Still return 200 to avoid breaking UX.
+      return new Response(JSON.stringify({ note: "parsing_skipped" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const mimeType = file.type || "application/pdf";
 
-    const prompt = `Analyze this resume/CV document and extract the following information:
-- full_name: The candidate's full name
-- mobile: Phone number (with country code if available)
-- email: Email address
-- experience_level: One of "entry", "mid", "senior", "expert" based on years of experience
-- location: City and country
-- linkedin: LinkedIn profile URL (if mentioned)
-- preferred_role: Primary job title or role they're seeking
-
-Extract all available information from the document. Do not try to extract images.`;
+    const prompt = `Analyze this resume image and extract the following information:\n- full_name\n- mobile\n- email\n- experience_level (entry|mid|senior|expert)\n- location\n- linkedin\n- preferred_role\nReturn only data you are confident in.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

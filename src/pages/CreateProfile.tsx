@@ -300,6 +300,15 @@ const CreateProfile = () => {
         
         const data = await response.json();
         
+        // If parsing was skipped (e.g., PDF/DOC), inform the user gracefully
+        if (data.note === "parsing_skipped") {
+          toast({
+            title: "Resume uploaded",
+            description: "Parsing isn't supported for this file type yet. Please fill details manually.",
+          });
+          return;
+        }
+        
         // Auto-fill form fields
         if (data.full_name) setFullName(data.full_name);
         if (data.mobile) setMobile(data.mobile);
