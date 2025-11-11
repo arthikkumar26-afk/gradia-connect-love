@@ -281,17 +281,15 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* CTAs - Hide if user is logged in */}
-            {!isAuthenticated && (
-              <div className="hidden lg:flex items-center space-x-3">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/candidate/apply">Apply Now</Link>
-                </Button>
-                <Button variant="default" size="sm" asChild>
-                  <Link to="/employer/login">Post Job</Link>
-                </Button>
-              </div>
-            )}
+            {/* CTAs - Always visible */}
+            <div className="hidden lg:flex items-center space-x-3">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/candidate/apply">Apply Now</Link>
+              </Button>
+              <Button variant="default" size="sm" asChild>
+                <Link to="/employer/login">Post Job</Link>
+              </Button>
+            </div>
 
             {/* Mobile Menu Button */}
             <Button
@@ -458,21 +456,19 @@ const Header = () => {
                 </Link>
               </div>
 
-              {/* Mobile CTAs - Hide if logged in */}
-              {!isAuthenticated && (
-                <div className="flex flex-col space-y-2 px-3">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/candidate/apply" onClick={() => setIsMenuOpen(false)}>
-                      Apply Now
-                    </Link>
-                  </Button>
-                  <Button variant="default" size="sm" asChild>
-                    <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
-                      Post Job
-                    </Link>
-                  </Button>
-                </div>
-              )}
+              {/* Mobile CTAs - Always visible */}
+              <div className="flex flex-col space-y-2 px-3">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/candidate/apply" onClick={() => setIsMenuOpen(false)}>
+                    Apply Now
+                  </Link>
+                </Button>
+                <Button variant="default" size="sm" asChild>
+                  <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
+                    Post Job
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         )}
