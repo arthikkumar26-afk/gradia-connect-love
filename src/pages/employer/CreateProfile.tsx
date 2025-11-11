@@ -89,9 +89,9 @@ const EmployerCreateProfile = () => {
         console.error('Error checking profile:', error);
       }
 
-      // Verify user is an employer
+      // Only redirect if explicitly a candidate (not if role is missing)
       const role = user.user_metadata?.role;
-      if (role && role !== 'employer') {
+      if (role === 'candidate') {
         navigate("/candidate/create-profile");
       }
     };
