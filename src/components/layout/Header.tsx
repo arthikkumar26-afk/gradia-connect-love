@@ -23,8 +23,6 @@ import {
   Briefcase,
   Users,
   Settings as SettingsIcon,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -258,28 +256,8 @@ const Header = () => {
             </Link>
           </nav>
 
-          {/* Right side - Navigation, Theme toggle, Language, CTAs */}
+          {/* Right side - Theme toggle, Language, CTAs */}
           <div className="flex items-center space-x-4">
-            {/* Browser Navigation - Back/Forward */}
-            <div className="hidden lg:flex items-center space-x-1">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate(-1)}
-                title="Go back"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate(1)}
-                title="Go forward"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
             {/* Theme Toggle */}
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {isDark ? (
