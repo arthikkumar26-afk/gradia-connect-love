@@ -307,25 +307,9 @@ const CreateProfile = () => {
         if (data.location) setLocation(data.location);
         if (data.linkedin) setLinkedin(data.linkedin);
         
-        // Handle profile picture if extracted
-        if (data.profile_picture) {
-          try {
-            const imageResponse = await fetch(data.profile_picture);
-            const imageBlob = await imageResponse.blob();
-            const imageFile = new File([imageBlob], "profile-picture.jpg", { type: imageBlob.type });
-            
-            setProfilePicture(imageFile);
-            setProfilePicturePreview(data.profile_picture);
-          } catch (imageError) {
-            console.error("Failed to process profile picture:", imageError);
-          }
-        }
-        
         toast({
           title: "Success!",
-          description: data.profile_picture 
-            ? "Profile details and picture extracted from your resume" 
-            : "Profile details extracted from your resume",
+          description: "Profile details extracted from your resume",
         });
       } catch (error) {
         console.error("Error parsing resume:", error);
