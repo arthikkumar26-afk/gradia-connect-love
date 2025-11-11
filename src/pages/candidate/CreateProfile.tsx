@@ -228,28 +228,18 @@ const CandidateCreateProfile = () => {
         description: "AI is extracting your profile details",
       });
       
-      // Parse resume with AI
+      // Parse resume with AI using authenticated edge function
       try {
         const formData = new FormData();
         formData.append("file", file);
         
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: formData,
-          }
-        );
+        const { data, error } = await supabase.functions.invoke('parse-resume', {
+          body: formData,
+        });
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to parse resume");
+        if (error) {
+          throw new Error(error.message || "Failed to parse resume");
         }
-        
-        const data = await response.json();
         
         // If parsing was skipped (e.g., PDF/DOC), inform the user gracefully
         if (data.note === "parsing_skipped") {
