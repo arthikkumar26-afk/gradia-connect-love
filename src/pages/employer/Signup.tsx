@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Users, Target, BarChart, Shield } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +20,7 @@ const EmployerSignup = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/create-profile");
+      navigate("/employer/create-profile");
     }
   }, [isAuthenticated, navigate]);
 
@@ -48,7 +48,7 @@ const EmployerSignup = () => {
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/create-profile`;
+      const redirectUrl = `${window.location.origin}/employer/create-profile`;
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -72,10 +72,10 @@ const EmployerSignup = () => {
 
       toast({
         title: "Account Created!",
-        description: "Please complete your profile",
+        description: "Please complete your company profile to start hiring",
       });
 
-      navigate("/create-profile");
+      navigate("/employer/create-profile");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -89,16 +89,119 @@ const EmployerSignup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
-      <div className="w-full max-w-md">
-        <Link 
-          to="/" 
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-8"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Link>
+      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
+        {/* Left Side - Benefits */}
+        <div className="hidden md:block space-y-6 animate-fade-in">
+          <Link 
+            to="/" 
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Link>
+          
+          <div>
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Find Top Talent Faster
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8">
+              Join leading companies using Gradia to build exceptional teams
+            </p>
+          </div>
 
+          <div className="space-y-6">
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-accent" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">Quality Candidates</h3>
+                <p className="text-sm text-muted-foreground">
+                  Access a pool of pre-vetted, skilled professionals ready to join your team
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Target className="h-6 w-6 text-accent" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">Smart Matching</h3>
+                <p className="text-sm text-muted-foreground">
+                  AI-powered candidate matching to find the perfect fit for your roles
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                  <BarChart className="h-6 w-6 text-accent" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">Analytics Dashboard</h3>
+                <p className="text-sm text-muted-foreground">
+                  Track hiring metrics and optimize your recruitment process
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-accent" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">Secure & Compliant</h3>
+                <p className="text-sm text-muted-foreground">
+                  Background verification and screening tools built-in
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Onboarding Steps */}
+          <div className="mt-8 p-4 bg-card/50 rounded-lg border border-border">
+            <h4 className="font-medium text-foreground mb-3">Your Hiring Journey</h4>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold">1</div>
+                <span className="font-medium">Create Account</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">2</div>
+                <span>Complete Company Profile</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">3</div>
+                <span>Post Your First Job</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">4</div>
+                <span>Review Applications</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Form */}
         <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in">
+          {/* Mobile back button */}
+          <Link 
+            to="/" 
+            className="md:hidden inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-6"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Link>
+
           <div className="flex justify-center mb-6">
             <img 
               src={gradiaLogo} 
