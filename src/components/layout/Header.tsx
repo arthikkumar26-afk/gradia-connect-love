@@ -284,7 +284,7 @@ const Header = () => {
             {/* CTAs - Always visible */}
             <div className="hidden lg:flex items-center space-x-3">
               <Button variant="outline" size="sm" asChild>
-                <Link to="/candidate/apply">Apply Now</Link>
+                <Link to="/candidate/login">Apply Now</Link>
               </Button>
               <Button variant="default" size="sm" asChild>
                 <Link to="/employer/login">Post Job</Link>
@@ -459,7 +459,7 @@ const Header = () => {
               {/* Mobile CTAs - Always visible */}
               <div className="flex flex-col space-y-2 px-3">
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/candidate/apply" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/candidate/login" onClick={() => setIsMenuOpen(false)}>
                     Apply Now
                   </Link>
                 </Button>
