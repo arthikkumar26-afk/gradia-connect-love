@@ -31,7 +31,7 @@ serve(async (req) => {
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
     const mimeType = file.type || "application/pdf";
 
-    const prompt = `Analyze this resume/CV document and extract the following information in JSON format:
+    const prompt = `Analyze this resume/CV document and extract the following information:
 - full_name: The candidate's full name
 - mobile: Phone number (with country code if available)
 - email: Email address
@@ -39,9 +39,8 @@ serve(async (req) => {
 - location: City and country
 - linkedin: LinkedIn profile URL (if mentioned)
 - preferred_role: Primary job title or role they're seeking
-- has_profile_picture: Boolean indicating if the resume contains a profile photo
 
-Return ONLY valid JSON with these exact field names. If a field is not found, use null.`;
+IMPORTANT: If the resume contains a profile photo/picture, extract it and include it in your response.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -84,7 +83,6 @@ Return ONLY valid JSON with these exact field names. If a field is not found, us
                   location: { type: "string" },
                   linkedin: { type: "string" },
                   preferred_role: { type: "string" },
-                  has_profile_picture: { type: "boolean" },
                 },
                 required: ["full_name"],
               },
@@ -92,6 +90,7 @@ Return ONLY valid JSON with these exact field names. If a field is not found, us
           },
         ],
         tool_choice: { type: "function", function: { name: "extract_resume_data" } },
+        modalities: ["text", "image"],
       }),
     });
 
@@ -121,6 +120,12 @@ Return ONLY valid JSON with these exact field names. If a field is not found, us
     }
 
     const extractedData = JSON.parse(toolCall.function.arguments);
+    
+    // Check if AI generated an image (profile picture)
+    const images = data.choices?.[0]?.message?.images;
+    if (images && images.length > 0) {
+      extractedData.profile_picture = images[0].image_url.url;
+    }
 
     return new Response(JSON.stringify(extractedData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
