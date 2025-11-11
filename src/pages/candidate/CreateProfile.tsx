@@ -146,20 +146,15 @@ const CandidateCreateProfile = () => {
       if (resume) {
         const fileExt = resume.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-        const filePath = `resumes/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('resumes')
           .upload(filePath, resume);
 
         if (!uploadError) {
-          // Use signed URL for secure access (1 year expiry)
-          const { data, error: urlError } = await supabase.storage
-            .from('resumes')
-            .createSignedUrl(filePath, 31536000);
-          if (data && !urlError) {
-            resumeUrl = data.signedUrl;
-          }
+          // Store path, not URL - will generate signed URL when needed
+          resumeUrl = filePath;
         }
       }
 
