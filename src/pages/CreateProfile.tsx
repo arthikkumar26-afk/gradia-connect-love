@@ -267,9 +267,58 @@ const CreateProfile = () => {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setResume(e.target.files[0]);
+      const file = e.target.files[0];
+      setResume(file);
+      
+      toast({
+        title: "Analyzing resume...",
+        description: "AI is extracting your profile details",
+      });
+      
+      // Parse resume with AI
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: formData,
+          }
+        );
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to parse resume");
+        }
+        
+        const data = await response.json();
+        
+        // Auto-fill form fields
+        if (data.full_name) setFullName(data.full_name);
+        if (data.mobile) setMobile(data.mobile);
+        if (data.experience_level) setExperienceLevel(data.experience_level);
+        if (data.location) setLocation(data.location);
+        if (data.linkedin) setLinkedin(data.linkedin);
+        
+        toast({
+          title: "Success!",
+          description: "Profile details extracted from your resume",
+        });
+      } catch (error) {
+        console.error("Error parsing resume:", error);
+        toast({
+          title: "Note",
+          description: "Resume uploaded. Please fill in your details manually.",
+          variant: "default",
+        });
+      }
     }
   };
 
