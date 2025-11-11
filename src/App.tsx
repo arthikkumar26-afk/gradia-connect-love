@@ -27,7 +27,6 @@ import NotFound from "./pages/NotFound";
 import EmployerLogin from "./pages/EmployerLogin";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import CandidateLogin from "./pages/CandidateLogin";
-import CreateProfile from "./pages/CreateProfile";
 import ProfileSuccess from "./pages/ProfileSuccess";
 import JobRequirements from "./pages/JobRequirements";
 import Registration from "./pages/employer/Registration";
@@ -44,6 +43,8 @@ import ResumeBuilder from "./pages/candidate/ResumeBuilder";
 import InterviewPrep from "./pages/candidate/InterviewPrep";
 import CareerCoaching from "./pages/candidate/CareerCoaching";
 import CandidateSignup from "./pages/candidate/Signup";
+import CandidateCreateProfile from "./pages/candidate/CreateProfile";
+import EmployerCreateProfile from "./pages/employer/CreateProfile";
 import TechLearning from "./pages/learning/TechLearning";
 import NonTechLearning from "./pages/learning/NonTechLearning";
 import EducationLearning from "./pages/learning/EducationLearning";
@@ -87,8 +88,9 @@ const App = () => (
             <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
             <Route path="/candidate/signup" element={<CandidateSignup />} />
             <Route path="/candidate/login" element={<CandidateLogin />} />
-            <Route path="/candidate/apply" element={<CreateProfile />} />
-            <Route path="/create-profile" element={<CreateProfile />} />
+            <Route path="/candidate/create-profile" element={<CandidateCreateProfile />} />
+            <Route path="/candidate/apply" element={<CandidateCreateProfile />} />
+            <Route path="/create-profile" element={<CandidateCreateProfile />} />
             <Route path="/signup" element={<CandidateSignup />} />
             <Route path="/profile/success" element={<ProfileSuccess />} />
             <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
@@ -112,6 +114,7 @@ const App = () => (
             <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
             <Route path="/employer/signup" element={<EmployerSignup />} />
             <Route path="/employer/login" element={<EmployerLogin />} />
+            <Route path="/employer/create-profile" element={<EmployerCreateProfile />} />
             <Route path="/employer/agreement" element={<Agreement />} />
             <Route path="/employer/terms" element={<Terms />} />
             <Route path="/employer/plans" element={<Plans />} />
