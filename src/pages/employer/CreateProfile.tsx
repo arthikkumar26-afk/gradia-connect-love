@@ -55,36 +55,40 @@ const EmployerCreateProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/employer/signup");
-      return;
-    }
-
-    // Check if profile already exists
-    const checkExistingProfile = async () => {
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (existingProfile) {
-        toast({
-          title: "Profile Already Exists",
-          description: "Redirecting to your dashboard",
-        });
-        navigate("/employer/dashboard");
+    const checkAndRedirect = async () => {
+      if (!user) {
+        navigate("/employer/signup");
         return;
+      }
+
+      // Check if profile already exists
+      try {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (existingProfile) {
+          toast({
+            title: "Profile Already Exists",
+            description: "Redirecting to your dashboard",
+          });
+          navigate("/employer/dashboard");
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+      }
+
+      // Verify user is an employer
+      const role = user.user_metadata?.role;
+      if (role && role !== 'employer') {
+        navigate("/candidate/create-profile");
       }
     };
 
-    checkExistingProfile();
-
-    // Verify user is an employer
-    const role = user.user_metadata?.role;
-    if (role !== 'employer') {
-      navigate("/candidate/create-profile");
-    }
+    checkAndRedirect();
   }, [user, navigate, toast]);
 
   const handleDetectCompanyInfo = async () => {
