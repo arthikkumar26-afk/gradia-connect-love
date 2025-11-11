@@ -285,7 +285,7 @@ const Header = () => {
             {!isAuthenticated && (
               <div className="hidden lg:flex items-center space-x-3">
                 <Button variant="outline" size="sm" asChild>
-                  <Link to="/candidate/apply">Apply Now</Link>
+                  <Link to="/candidate/apply">Apply Job</Link>
                 </Button>
                 <Button variant="default" size="sm" asChild>
                   <Link to="/employer/login">Post Job</Link>
@@ -463,7 +463,7 @@ const Header = () => {
                 <div className="flex flex-col space-y-2 px-3">
                   <Button variant="outline" size="sm" asChild>
                     <Link to="/candidate/apply" onClick={() => setIsMenuOpen(false)}>
-                      Apply Now
+                      Apply Job
                     </Link>
                   </Button>
                   <Button variant="default" size="sm" asChild>
