@@ -241,11 +241,11 @@ const CandidateCreateProfile = () => {
           throw new Error(error.message || "Failed to parse resume");
         }
         
-        // If parsing was skipped (e.g., PDF/DOC), inform the user gracefully
+        // If parsing was skipped (e.g., DOC/DOCX), inform the user gracefully
         if (data.note === "parsing_skipped") {
           toast({
             title: "Resume uploaded successfully",
-            description: "AI parsing works with image files (JPG/PNG). Please fill in your details manually for PDF/DOC files.",
+            description: "AI parsing isn't available for this file type. Please fill in your details manually.",
           });
           return;
         }
@@ -588,7 +588,7 @@ const CandidateCreateProfile = () => {
                       </label>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      AI auto-fill works with image files (JPG/PNG). PDF/DOC files accepted but require manual entry.
+                      Upload your resume (PDF, JPG, or PNG) and AI will auto-fill your details
                     </p>
                   </div>
 

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import pdf from "https://esm.sh/pdf-parse@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,11 +27,10 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Convert file to base64
     const arrayBuffer = await file.arrayBuffer();
     const mimeType = file.type || "application/octet-stream";
 
-    // Enforce 20MB limit and only attempt AI parsing for images to avoid gateway errors on PDFs/DOCs
+    // Enforce 20MB limit
     const MAX_SIZE = 20 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       return new Response(JSON.stringify({ error: "File too large. Max size is 20MB." }), {
@@ -39,18 +39,46 @@ serve(async (req) => {
       });
     }
 
-    if (!mimeType.startsWith("image/")) {
-      // For non-image resumes (PDF/DOC/DOCX/TXT), skip AI parsing to prevent 400 errors from the AI gateway.
-      // Frontend will handle manual entry. Still return 200 to avoid breaking UX.
+    let messageContent: any[];
+    
+    // Handle PDF files
+    if (mimeType === "application/pdf") {
+      console.log("Parsing PDF resume");
+      const pdfData = await pdf(new Uint8Array(arrayBuffer));
+      const extractedText = pdfData.text;
+      
+      if (!extractedText || extractedText.trim().length < 10) {
+        return new Response(
+          JSON.stringify({ error: "Could not extract text from PDF. Please try an image format or enter details manually." }), 
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      const prompt = `Analyze this resume text and extract the following information:\n- full_name\n- mobile\n- email\n- experience_level (entry|mid|senior|expert)\n- location\n- linkedin\n- preferred_role\n\nResume text:\n${extractedText}\n\nReturn only data you are confident in.`;
+      
+      messageContent = [{ type: "text", text: prompt }];
+    } 
+    // Handle image files
+    else if (mimeType.startsWith("image/")) {
+      console.log("Parsing image resume");
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const prompt = `Analyze this resume image and extract the following information:\n- full_name\n- mobile\n- email\n- experience_level (entry|mid|senior|expert)\n- location\n- linkedin\n- preferred_role\nReturn only data you are confident in.`;
+      
+      messageContent = [
+        { type: "text", text: prompt },
+        {
+          type: "image_url",
+          image_url: { url: `data:${mimeType};base64,${base64}` },
+        },
+      ];
+    }
+    // DOC/DOCX not supported yet
+    else {
       return new Response(JSON.stringify({ note: "parsing_skipped" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-    const prompt = `Analyze this resume image and extract the following information:\n- full_name\n- mobile\n- email\n- experience_level (entry|mid|senior|expert)\n- location\n- linkedin\n- preferred_role\nReturn only data you are confident in.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -58,20 +86,12 @@ serve(async (req) => {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-        body: JSON.stringify({
+      body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${mimeType};base64,${base64}`,
-                },
-              },
-            ],
+            content: messageContent,
           },
         ],
         tools: [
