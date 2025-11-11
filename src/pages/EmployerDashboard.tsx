@@ -22,6 +22,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { JobManagementContent } from "@/components/employer/JobManagementContent";
 import TalentPoolContent from "@/components/employer/TalentPoolContent";
 import PlacementsContent from "@/components/employer/PlacementsContent";
@@ -131,6 +139,38 @@ const EmployerDashboard = () => {
             </Button>
           </div>
         </header>
+
+        {/* Breadcrumbs */}
+        <div className="bg-background px-6 py-3 border-b border-border">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/">Home</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/employer/dashboard">Employer</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>
+                  {activeMenu === "dashboard" ? "Dashboard" :
+                   activeMenu === "jobs" ? "Jobs" :
+                   activeMenu === "talent-pool" ? "Talent Pool" :
+                   activeMenu === "teams" ? "Teams" :
+                   activeMenu === "placements" ? "Placements" :
+                   activeMenu === "approvals" ? "Approvals" :
+                   activeMenu === "settings" ? "Settings" :
+                   activeMenu === "configuration" ? "Configuration" : "Dashboard"}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
 
         {/* Dashboard Content */}
         <main className="flex-1 p-4 overflow-y-auto">
