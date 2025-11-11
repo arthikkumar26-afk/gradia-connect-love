@@ -87,6 +87,62 @@ const EmployerSignup = () => {
     }
   };
 
+  const handleDevLogin = async () => {
+    setIsLoading(true);
+    try {
+      const devEmail = "employer@test.com";
+      const devPassword = "test123456";
+      
+      // Try to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: devEmail,
+        password: devPassword,
+      });
+
+      if (signInError) {
+        // If user doesn't exist, create it
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: devEmail,
+          password: devPassword,
+          options: {
+            data: {
+              role: 'employer',
+              full_name: 'Test Employer'
+            }
+          }
+        });
+
+        if (signUpError) {
+          toast({
+            title: "Dev Login Failed",
+            description: signUpError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Try signing in again after signup
+        await supabase.auth.signInWithPassword({
+          email: devEmail,
+          password: devPassword,
+        });
+      }
+
+      toast({
+        title: "Dev Login Successful",
+        description: "Logged in as test employer",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Dev login failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
       <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
@@ -265,6 +321,32 @@ const EmployerSignup = () => {
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
+
+          {/* Dev Login Section */}
+          {import.meta.env.DEV && (
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-card px-4 text-muted-foreground">
+                    Quick Test
+                  </span>
+                </div>
+              </div>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="lg" 
+                className="w-full" 
+                onClick={handleDevLogin}
+                disabled={isLoading}
+              >
+                🚀 Dev Login (Test Employer)
+              </Button>
+            </>
+          )}
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
