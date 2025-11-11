@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,9 +36,11 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import RoleSwitcher from "@/components/auth/RoleSwitcher";
 
 const CandidateCreateProfile = () => {
   const navigate = useNavigate();
+  const routerLocation = useLocation();
   const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [fullName, setFullName] = useState("");
@@ -83,9 +85,13 @@ const CandidateCreateProfile = () => {
       }
 
       // Only redirect if explicitly an employer (not if role is missing)
-      const role = user.user_metadata?.role;
-      if (role === 'employer') {
-        navigate("/employer/create-profile");
+      const params = new URLSearchParams(window.location.search);
+      const override = params.get('role');
+      if (!override) {
+        const role = user.user_metadata?.role;
+        if (role === 'employer') {
+          navigate("/employer/create-profile");
+        }
       }
     };
 
@@ -411,6 +417,7 @@ const CandidateCreateProfile = () => {
 
         {/* Main Content */}
         <div className="container mx-auto px-4 py-8">
+          <div className="mb-6"><RoleSwitcher current="candidate" /></div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 max-w-7xl mx-auto">
             {/* Left Info Panel */}
             <div className="lg:col-span-1 animate-slide-up">
