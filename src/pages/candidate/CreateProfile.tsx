@@ -153,10 +153,13 @@ const CandidateCreateProfile = () => {
           .upload(filePath, resume);
 
         if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage
+          // Use signed URL for secure access (1 year expiry)
+          const { data, error: urlError } = await supabase.storage
             .from('resumes')
-            .getPublicUrl(filePath);
-          resumeUrl = publicUrl;
+            .createSignedUrl(filePath, 31536000);
+          if (data && !urlError) {
+            resumeUrl = data.signedUrl;
+          }
         }
       }
 
