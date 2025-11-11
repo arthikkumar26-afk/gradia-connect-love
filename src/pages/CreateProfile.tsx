@@ -307,34 +307,10 @@ const CreateProfile = () => {
         if (data.location) setLocation(data.location);
         if (data.linkedin) setLinkedin(data.linkedin);
         
-        // Handle profile picture if extracted
-        if (data.profile_picture) {
-          try {
-            // Convert base64 to blob
-            const response = await fetch(data.profile_picture);
-            const blob = await response.blob();
-            const pictureFile = new File([blob], "profile-picture.jpg", { type: blob.type });
-            
-            setProfilePicture(pictureFile);
-            setProfilePicturePreview(data.profile_picture);
-            
-            toast({
-              title: "Success!",
-              description: "Profile details and picture extracted from your resume",
-            });
-          } catch (error) {
-            console.error("Error processing profile picture:", error);
-            toast({
-              title: "Partial Success",
-              description: "Profile details extracted. Please upload profile picture manually.",
-            });
-          }
-        } else {
-          toast({
-            title: "Success!",
-            description: "Profile details extracted from your resume",
-          });
-        }
+        toast({
+          title: "Success!",
+          description: "Profile details extracted from your resume",
+        });
       } catch (error) {
         console.error("Error parsing resume:", error);
         toast({

@@ -39,9 +39,8 @@ serve(async (req) => {
 - location: City and country
 - linkedin: LinkedIn profile URL (if mentioned)
 - preferred_role: Primary job title or role they're seeking
-- profile_picture: If there is a profile photo in the resume, extract it and return it as a base64-encoded image string with format "data:image/[type];base64,[data]"
 
-Extract all available information from the document.`;
+Extract all available information from the document. Do not try to extract images.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -70,7 +69,7 @@ Extract all available information from the document.`;
             type: "function",
             function: {
               name: "extract_resume_data",
-              description: "Extract structured data from a resume including profile picture",
+              description: "Extract structured data from a resume",
               parameters: {
                 type: "object",
                 properties: {
@@ -84,7 +83,6 @@ Extract all available information from the document.`;
                   location: { type: "string" },
                   linkedin: { type: "string" },
                   preferred_role: { type: "string" },
-                  profile_picture: { type: "string", description: "Base64-encoded profile image with data URI format" },
                 },
                 required: ["full_name"],
               },
