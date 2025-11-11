@@ -181,6 +181,92 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          employer_id: string
+          full_name: string
+          id: string
+          joined_date: string | null
+          position: string | null
+          profile_picture: string | null
+          updated_at: string | null
+          work_status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          employer_id: string
+          full_name: string
+          id?: string
+          joined_date?: string | null
+          position?: string | null
+          profile_picture?: string | null
+          updated_at?: string | null
+          work_status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          employer_id?: string
+          full_name?: string
+          id?: string
+          joined_date?: string | null
+          position?: string | null
+          profile_picture?: string | null
+          updated_at?: string | null
+          work_status?: string | null
+        }
+        Relationships: []
+      }
+      team_posts: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          employer_id: string
+          file_url: string | null
+          id: string
+          post_type: string
+          team_member_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          employer_id: string
+          file_url?: string | null
+          id?: string
+          post_type: string
+          team_member_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          employer_id?: string
+          file_url?: string | null
+          id?: string
+          post_type?: string
+          team_member_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_posts_team_member_id_fkey"
+            columns: ["team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
