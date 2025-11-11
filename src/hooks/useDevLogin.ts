@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -6,6 +7,7 @@ type Role = 'candidate' | 'employer';
 
 export const useDevLogin = (role: Role) => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleDevLogin = async () => {
@@ -54,6 +56,10 @@ export const useDevLogin = (role: Role) => {
         title: "Dev Login Successful",
         description: `Logged in as test ${role}`,
       });
+
+      // Navigate to the appropriate page
+      const destination = role === 'candidate' ? '/candidate/create-profile' : '/employer/create-profile';
+      navigate(destination);
     } catch (error: any) {
       toast({
         title: "Error",
