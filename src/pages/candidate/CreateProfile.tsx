@@ -142,20 +142,23 @@ const CandidateCreateProfile = () => {
         }
       }
 
-      // Create profile
-      const { error } = await supabase.from("profiles").insert({
-        id: user.id,
-        full_name: fullName,
-        email: user.email!,
-        mobile,
-        role: 'candidate',
-        location,
-        linkedin,
-        profile_picture: profilePictureUrl,
-        resume_url: resumeUrl,
-        experience_level: experienceLevel,
-        preferred_role: experienceLevel,
-      });
+      // Upsert profile (create or update if exists)
+      const { error } = await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          full_name: fullName,
+          email: user.email!,
+          mobile,
+          role: 'candidate',
+          location,
+          linkedin,
+          profile_picture: profilePictureUrl,
+          resume_url: resumeUrl,
+          experience_level: experienceLevel,
+          preferred_role: experienceLevel,
+        },
+        { onConflict: 'id' }
+      );
 
       if (error) {
         toast({

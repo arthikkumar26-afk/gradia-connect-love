@@ -196,20 +196,23 @@ const EmployerCreateProfile = () => {
         }
       }
 
-      // Create profile
-      const { error } = await supabase.from("profiles").insert({
-        id: user.id,
-        full_name: fullName,
-        email: user.email!,
-        mobile,
-        role: 'employer',
-        location,
-        linkedin,
-        website: companyWebsite,
-        profile_picture: profilePictureUrl,
-        company_name: companyName,
-        company_description: companyDescription,
-      });
+      // Upsert profile (create or update if exists)
+      const { error } = await supabase.from("profiles").upsert(
+        {
+          id: user.id,
+          full_name: fullName,
+          email: user.email!,
+          mobile,
+          role: 'employer',
+          location,
+          linkedin,
+          website: companyWebsite,
+          profile_picture: profilePictureUrl,
+          company_name: companyName,
+          company_description: companyDescription,
+        },
+        { onConflict: 'id' }
+      );
 
       if (error) {
         toast({
