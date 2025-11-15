@@ -1,49 +1,108 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
-import { UserPlus, Mail, Lock, Building2, User, Phone, Globe, Check, CreditCard, Smartphone, Landmark } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Link } from "react-router-dom";
+import { UserPlus, Mail, Lock, Building2, User, Phone, Globe, Check, CreditCard, Smartphone, Landmark } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { sponsorSignupSchema, type SponsorSignupFormData } from "@/lib/validations/sponsorSignup";
+import { signUpSponsor } from "@/lib/sponsorAuth";
 
 export default function SponsorSignup() {
   const [step, setStep] = useState(1);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [formData, setFormData] = useState({
-    companyName: "",
-    contactName: "",
-    email: "",
-    phone: "",
-    website: "",
-    companyDescription: "",
-    password: "",
-    confirmPassword: "",
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const form = useForm<SponsorSignupFormData>({
+    resolver: zodResolver(sponsorSignupSchema),
+    defaultValues: {
+      companyName: "",
+      contactName: "",
+      email: "",
+      phone: "",
+      website: "",
+      companyDescription: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleNextStep = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleNextStep = async (data: SponsorSignupFormData) => {
     setStep(2);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleTermsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      toast({
+        title: "Terms Required",
+        description: "Please accept the terms and conditions to continue",
+        variant: "destructive",
+      });
+      return;
+    }
     setStep(3);
   };
 
-  const handlePaymentSubmit = (e: React.FormEvent) => {
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registration complete:", formData, "Payment method:", paymentMethod);
+    
+    if (!paymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please select a payment method",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const formData = form.getValues();
+      const result = await signUpSponsor({
+        companyName: formData.companyName,
+        contactName: formData.contactName,
+        email: formData.email,
+        phone: formData.phone,
+        website: formData.website,
+        companyDescription: formData.companyDescription,
+        password: formData.password,
+      });
+
+      if (result.success) {
+        toast({
+          title: "Registration Successful!",
+          description: "Your sponsor account has been created. Please check your email to confirm your account.",
+        });
+        navigate("/sponsor/dashboard");
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: result.error || "An error occurred during registration",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -68,153 +127,193 @@ export default function SponsorSignup() {
 
         <Card className="p-8">
           {step === 1 ? (
-            <form onSubmit={handleNextStep} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Company Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Company Name *</Label>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="companyName"
-                      name="companyName"
-                      type="text"
-                      placeholder="Your Company Ltd."
-                      value={formData.companyName}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleNextStep)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Company Name */}
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Name *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Building2 className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                            <Input
+                              placeholder="Your Company Ltd."
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {/* Contact Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="contactName">Contact Name *</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="contactName"
-                      name="contactName"
-                      type="text"
-                      placeholder="John Doe"
-                      value={formData.contactName}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
+                  {/* Contact Name */}
+                  <FormField
+                    control={form.control}
+                    name="contactName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Name *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                            <Input
+                              placeholder="John Doe"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address *</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="contact@company.com"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
+                  {/* Email */}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                            <Input
+                              type="email"
+                              placeholder="contact@company.com"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                {/* Phone */}
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number *</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+1 (555) 000-0000"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Website */}
-              <div className="space-y-2">
-                <Label htmlFor="website">Website (Optional)</Label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    id="website"
-                    name="website"
-                    type="url"
-                    placeholder="https://yourcompany.com"
-                    value={formData.website}
-                    onChange={handleChange}
-                    className="pl-10"
+                  {/* Phone */}
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                            <Input
+                              type="tel"
+                              placeholder="+1 (555) 000-0000"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-              </div>
 
-              {/* Company Description */}
-              <div className="space-y-2">
-                <Label htmlFor="companyDescription">Company Description *</Label>
-                <Textarea
-                  id="companyDescription"
-                  name="companyDescription"
-                  placeholder="Tell us about your company, what you do, and why you'd like to sponsor..."
-                  value={formData.companyDescription}
-                  onChange={handleChange}
-                  rows={4}
-                  required
+                {/* Website */}
+                <FormField
+                  control={form.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Website (Optional)</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Globe className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                          <Input
+                            type="url"
+                            placeholder="https://yourcompany.com"
+                            className="pl-10"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      placeholder="Create a password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+                {/* Company Description */}
+                <FormField
+                  control={form.control}
+                  name="companyDescription"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Description *</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Tell us about your company, what you do, and why you'd like to sponsor..."
+                          rows={4}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Password */}
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                            <Input
+                              type="password"
+                              placeholder="Create a password"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Confirm Password */}
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password *</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                            <Input
+                              type="password"
+                              placeholder="Confirm your password"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
-                {/* Confirm Password */}
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <Button type="submit" size="lg" className="w-full">
-                Register as Sponsor
-              </Button>
+                <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Processing..." : "Register as Sponsor"}
+                </Button>
 
               <div className="text-center text-sm text-muted-foreground space-y-2">
                 <p>
@@ -229,7 +328,8 @@ export default function SponsorSignup() {
                   </Link>
                 </p>
               </div>
-            </form>
+              </form>
+            </Form>
           ) : step === 2 ? (
             <div className="space-y-8">
               {/* Sponsorship Proposal */}
@@ -380,7 +480,7 @@ export default function SponsorSignup() {
               </div>
 
               {/* Terms Acceptance Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleTermsSubmit} className="space-y-6">
                 <div className="border rounded-lg p-4 bg-muted/20">
                   <div className="flex items-start gap-3">
                     <Checkbox 
@@ -410,9 +510,9 @@ export default function SponsorSignup() {
                     type="submit" 
                     size="lg" 
                     className="flex-1" 
-                    disabled={!acceptedTerms}
+                    disabled={!acceptedTerms || isLoading}
                   >
-                    Complete Registration
+                    {isLoading ? "Processing..." : "Complete Registration"}
                   </Button>
                 </div>
               </form>
@@ -497,9 +597,9 @@ export default function SponsorSignup() {
                   type="submit" 
                   size="lg" 
                   className="flex-1" 
-                  disabled={!paymentMethod}
+                  disabled={!paymentMethod || isLoading}
                 >
-                  Proceed to Payment
+                  {isLoading ? "Processing..." : "Proceed to Payment"}
                 </Button>
               </div>
             </form>
