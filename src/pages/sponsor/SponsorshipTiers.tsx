@@ -6,35 +6,44 @@ export default function SponsorshipTiers() {
   const tiers = [
     {
       name: "Silver",
-      price: "₹25,000",
+      price: "₹35,000",
       period: "/year",
       features: [
-        "Logo placement",
-        "Monthly newsletter mention",
-        "Access to sponsor toolkit"
+        "Logo on posters at 4 job melas/year",
+        "Access to 200 resumes per mela",
+        "Small logo size (10x10 cm)",
+        "Monthly job mela updates",
+        "Basic analytics dashboard"
       ]
     },
     {
       name: "Gold",
-      price: "₹55,000",
+      price: "₹75,000",
       period: "/year",
       popular: true,
       features: [
-        "All Silver benefits",
-        "Blog feature",
-        "Event promotion",
-        "Featured client listing"
+        "Logo on posters at 8 job melas/year",
+        "Access to 500 resumes per mela",
+        "Medium logo size (20x20 cm)",
+        "Priority logo placement on posters",
+        "Featured in event announcements",
+        "Quarterly performance reports",
+        "Dedicated account manager"
       ]
     },
     {
       name: "Platinum",
-      price: "₹95,000",
+      price: "₹1,50,000",
       period: "/year",
       features: [
-        "All Gold benefits",
-        "Sponsored webinar",
-        "Custom marketing campaign",
-        "Priority support"
+        "Logo on posters at 12 job melas/year",
+        "Unlimited resume access from all melas",
+        "Large logo size (30x30 cm)",
+        "Top placement on all posters/banners",
+        "Company booth space at job melas",
+        "Pre-screening of candidates",
+        "Custom branding materials",
+        "Priority support 24/7"
       ]
     }
   ];
@@ -95,25 +104,36 @@ export default function SponsorshipTiers() {
               </thead>
               <tbody>
                 {[
-                  { feature: "Logo Placement", silver: true, gold: true, platinum: true },
-                  { feature: "Newsletter Mention", silver: true, gold: true, platinum: true },
-                  { feature: "Sponsor Toolkit", silver: true, gold: true, platinum: true },
-                  { feature: "Blog Feature", silver: false, gold: true, platinum: true },
-                  { feature: "Event Promotion", silver: false, gold: true, platinum: true },
-                  { feature: "Sponsored Webinar", silver: false, gold: false, platinum: true },
-                  { feature: "Custom Marketing", silver: false, gold: false, platinum: true },
+                  { feature: "Job Melas per Year", silver: "4", gold: "8", platinum: "12" },
+                  { feature: "Resume Access per Mela", silver: "200", gold: "500", platinum: "Unlimited" },
+                  { feature: "Logo Size on Posters", silver: "Small (10x10cm)", gold: "Medium (20x20cm)", platinum: "Large (30x30cm)" },
+                  { feature: "Logo Placement Priority", silver: false, gold: true, platinum: true },
+                  { feature: "Company Booth Space", silver: false, gold: false, platinum: true },
+                  { feature: "Pre-screening Service", silver: false, gold: false, platinum: true },
+                  { feature: "Custom Branding Materials", silver: false, gold: false, platinum: true },
+                  { feature: "Dedicated Account Manager", silver: false, gold: true, platinum: true },
+                  { feature: "Analytics Dashboard", silver: "Basic", gold: "Advanced", platinum: "Premium" },
                   { feature: "Priority Support", silver: false, gold: false, platinum: true }
                 ].map((row) => (
                   <tr key={row.feature} className="border-b">
                     <td className="py-4 px-4">{row.feature}</td>
                     <td className="text-center py-4 px-4">
-                      {row.silver ? <Check className="h-5 w-5 text-primary mx-auto" /> : "—"}
+                      {typeof row.silver === 'boolean' 
+                        ? (row.silver ? <Check className="h-5 w-5 text-primary mx-auto" /> : "—")
+                        : row.silver
+                      }
                     </td>
                     <td className="text-center py-4 px-4">
-                      {row.gold ? <Check className="h-5 w-5 text-primary mx-auto" /> : "—"}
+                      {typeof row.gold === 'boolean' 
+                        ? (row.gold ? <Check className="h-5 w-5 text-primary mx-auto" /> : "—")
+                        : row.gold
+                      }
                     </td>
                     <td className="text-center py-4 px-4">
-                      {row.platinum ? <Check className="h-5 w-5 text-primary mx-auto" /> : "—"}
+                      {typeof row.platinum === 'boolean' 
+                        ? (row.platinum ? <Check className="h-5 w-5 text-primary mx-auto" /> : "—")
+                        : row.platinum
+                      }
                     </td>
                   </tr>
                 ))}
