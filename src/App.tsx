@@ -73,6 +73,7 @@ import EventSponsorshipDeck from "./pages/sponsor/EventSponsorshipDeck";
 import SupportPortal from "./pages/sponsor/SupportPortal";
 import JobMelaCalendar from "./pages/sponsor/JobMelaCalendar";
 import SponsorLogin from "./pages/sponsor/SponsorLogin";
+import SponsorSignup from "./pages/sponsor/SponsorSignup";
 
 const queryClient = new QueryClient();
 
@@ -191,7 +192,8 @@ const App = () => (
             <Route path="/sponsor/settings" element={<SponsorSettings />} />
             
             {/* Partnership & Sponsorship Pages */}
-            <Route path="/become-a-partner" element={<BecomePartner />} />
+            <Route path="/become-a-partner" element={<SponsorSignup />} />
+            <Route path="/sponsor/signup" element={<SponsorSignup />} />
             <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
             <Route path="/job-mela-calendar" element={<JobMelaCalendar />} />
             <Route path="/sponsor/login" element={<SponsorLogin />} />
