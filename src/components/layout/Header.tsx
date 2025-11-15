@@ -19,6 +19,7 @@ import {
   Globe,
   ChevronDown,
   LogOut,
+  LogIn,
   LayoutDashboard,
   Briefcase,
   Users,
@@ -303,13 +304,6 @@ const Header = () => {
                         <Send className="h-3.5 w-3.5 opacity-70" />
                         <span>Submit Partnership Proposal</span>
                       </Link>
-                      <Link
-                        to="/sponsor/login"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <LogOut className="h-3.5 w-3.5 opacity-70" />
-                        <span>Sign In</span>
-                      </Link>
                     </div>
                   </div>
 
@@ -426,6 +420,12 @@ const Header = () => {
 
             {/* CTAs - Always visible */}
             <div className="hidden lg:flex items-center space-x-3">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/sponsor/login" className="flex items-center gap-1">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Link>
+              </Button>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/candidate/login">Apply Now</Link>
               </Button>
@@ -639,14 +639,6 @@ const Header = () => {
                         <Send className="h-3 w-3" />
                         Submit Partnership Proposal
                       </Link>
-                      <Link
-                        to="/sponsor/login"
-                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <LogOut className="h-3 w-3" />
-                        Sign In
-                      </Link>
                     </CollapsibleContent>
                   </Collapsible>
 
@@ -751,6 +743,12 @@ const Header = () => {
 
               {/* Mobile CTAs - Always visible */}
               <div className="flex flex-col space-y-2 px-3">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/sponsor/login" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-center gap-1">
+                    <LogIn className="h-4 w-4" />
+                    Sign In
+                  </Link>
+                </Button>
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/candidate/login" onClick={() => setIsMenuOpen(false)}>
                     Apply Now
