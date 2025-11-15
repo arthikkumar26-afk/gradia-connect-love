@@ -278,41 +278,51 @@ const Header = () => {
                       Sponsor Programs
                     </h3>
                     <div className="flex flex-col space-y-2">
-                    <Link
-                        to="/become-a-partner"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Handshake className="h-3.5 w-3.5 opacity-70" />
-                        <span>Become a Partner</span>
-                      </Link>
-                      <Link
-                        to="/sponsorship-tiers"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Award className="h-3.5 w-3.5 opacity-70" />
-                        <span>Sponsorship Tiers</span>
-                      </Link>
-                      <Link
-                        to="/job-mela-calendar"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Calendar className="h-3.5 w-3.5 opacity-70" />
-                        <span>Job Mela Calendar</span>
-                      </Link>
-                      <Link
-                        to="/collaboration-opportunities"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Users className="h-3.5 w-3.5 opacity-70" />
-                        <span>Collaboration Opportunities</span>
-                      </Link>
-                      <Link
-                        to="/partnership-proposal"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Send className="h-3.5 w-3.5 opacity-70" />
-                        <span>Submit Partnership Proposal</span>
-                      </Link>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/become-a-partner"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Handshake className="h-3.5 w-3.5 opacity-70" />
+                          <span>Become a Partner</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/sponsorship-tiers"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Award className="h-3.5 w-3.5 opacity-70" />
+                          <span>Sponsorship Tiers</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/job-mela-calendar"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Calendar className="h-3.5 w-3.5 opacity-70" />
+                          <span>Job Mela Calendar</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/collaboration-opportunities"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Users className="h-3.5 w-3.5 opacity-70" />
+                          <span>Collaboration Opportunities</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/partnership-proposal"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Send className="h-3.5 w-3.5 opacity-70" />
+                          <span>Submit Partnership Proposal</span>
+                        </Link>
+                      </DropdownMenuItem>
                     </div>
                   </div>
 
@@ -323,27 +333,33 @@ const Header = () => {
                       Our Clients & Partners
                     </h3>
                     <div className="flex flex-col space-y-2">
-                      <Link
-                        to="/featured-clients"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Star className="h-3.5 w-3.5 opacity-70" />
-                        <span>Featured Clients</span>
-                      </Link>
-                      <Link
-                        to="/success-stories"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Award className="h-3.5 w-3.5 opacity-70" />
-                        <span>Success Stories</span>
-                      </Link>
-                      <Link
-                        to="/partner-testimonials"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <MessageSquare className="h-3.5 w-3.5 opacity-70" />
-                        <span>Partner Testimonials</span>
-                      </Link>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/featured-clients"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Star className="h-3.5 w-3.5 opacity-70" />
+                          <span>Featured Clients</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/success-stories"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Award className="h-3.5 w-3.5 opacity-70" />
+                          <span>Success Stories</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/partner-testimonials"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <MessageSquare className="h-3.5 w-3.5 opacity-70" />
+                          <span>Partner Testimonials</span>
+                        </Link>
+                      </DropdownMenuItem>
                     </div>
                   </div>
 
@@ -354,34 +370,42 @@ const Header = () => {
                       Resources for Sponsors
                     </h3>
                     <div className="flex flex-col space-y-2">
-                      <Link
-                        to="/branding-guidelines"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Palette className="h-3.5 w-3.5 opacity-70" />
-                        <span>Branding Guidelines</span>
-                      </Link>
-                      <Link
-                        to="/marketing-toolkit"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Package className="h-3.5 w-3.5 opacity-70" />
-                        <span>Marketing Toolkit</span>
-                      </Link>
-                      <Link
-                        to="/event-sponsorship-deck"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <Calendar className="h-3.5 w-3.5 opacity-70" />
-                        <span>Event Sponsorship Deck</span>
-                      </Link>
-                      <Link
-                        to="/sponsor-support-portal"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <HelpCircle className="h-3.5 w-3.5 opacity-70" />
-                        <span>Sponsor Support Portal</span>
-                      </Link>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/branding-guidelines"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Palette className="h-3.5 w-3.5 opacity-70" />
+                          <span>Branding Guidelines</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/marketing-toolkit"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Package className="h-3.5 w-3.5 opacity-70" />
+                          <span>Marketing Toolkit</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/event-sponsorship-deck"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <Calendar className="h-3.5 w-3.5 opacity-70" />
+                          <span>Event Sponsorship Deck</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/sponsor-support-portal"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                        >
+                          <HelpCircle className="h-3.5 w-3.5 opacity-70" />
+                          <span>Sponsor Support Portal</span>
+                        </Link>
+                      </DropdownMenuItem>
                     </div>
                   </div>
                 </div>
