@@ -60,6 +60,18 @@ import Sponsorships from "./pages/sponsor/Sponsorships";
 import SponsorAnalytics from "./pages/sponsor/Analytics";
 import BrandingResources from "./pages/sponsor/Resources";
 import SponsorSettings from "./pages/sponsor/Settings";
+import BecomePartner from "./pages/sponsor/BecomePartner";
+import SponsorshipTiers from "./pages/sponsor/SponsorshipTiers";
+import CollaborationOpportunities from "./pages/sponsor/CollaborationOpportunities";
+import SubmitProposal from "./pages/sponsor/SubmitProposal";
+import FeaturedClients from "./pages/sponsor/FeaturedClients";
+import CaseStudies from "./pages/sponsor/CaseStudies";
+import SuccessStories from "./pages/sponsor/SuccessStories";
+import PartnerTestimonials from "./pages/sponsor/PartnerTestimonials";
+import BrandingGuidelines from "./pages/sponsor/BrandingGuidelines";
+import MarketingToolkit from "./pages/sponsor/MarketingToolkit";
+import EventSponsorshipDeck from "./pages/sponsor/EventSponsorshipDeck";
+import SupportPortal from "./pages/sponsor/SupportPortal";
 
 const queryClient = new QueryClient();
 
@@ -177,6 +189,21 @@ const App = () => (
             <Route path="/sponsor/analytics" element={<SponsorAnalytics />} />
             <Route path="/sponsor/resources" element={<BrandingResources />} />
             <Route path="/sponsor/settings" element={<SponsorSettings />} />
+            
+            {/* Partnership & Sponsorship Pages */}
+            <Route path="/become-a-partner" element={<BecomePartner />} />
+            <Route path="/partner-apply" element={<SubmitProposal />} />
+            <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
+            <Route path="/collaboration-opportunities" element={<CollaborationOpportunities />} />
+            <Route path="/submit-proposal" element={<SubmitProposal />} />
+            <Route path="/featured-clients" element={<FeaturedClients />} />
+            <Route path="/case-studies" element={<CaseStudies />} />
+            <Route path="/success-stories" element={<SuccessStories />} />
+            <Route path="/partner-testimonials" element={<PartnerTestimonials />} />
+            <Route path="/branding-guidelines" element={<BrandingGuidelines />} />
+            <Route path="/marketing-toolkit" element={<MarketingToolkit />} />
+            <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
+            <Route path="/sponsor-support" element={<SupportPortal />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
