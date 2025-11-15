@@ -490,8 +490,8 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t border-border animate-slide-up overflow-y-auto z-50">
-            <div className="flex flex-col space-y-4 pb-20 pt-4">
+          <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t border-border animate-slide-up overflow-y-auto z-40">
+            <div className="flex flex-col space-y-4 pb-20 pt-4 container mx-auto px-4">
               {/* Mobile Navigation */}
               <div className="flex flex-col space-y-2">
                 <Link
