@@ -303,6 +303,13 @@ const Header = () => {
                         <Send className="h-3.5 w-3.5 opacity-70" />
                         <span>Submit Partnership Proposal</span>
                       </Link>
+                      <Link
+                        to="/sponsor/login"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <LogOut className="h-3.5 w-3.5 opacity-70" />
+                        <span>Sign In</span>
+                      </Link>
                     </div>
                   </div>
 
@@ -631,6 +638,14 @@ const Header = () => {
                       >
                         <Send className="h-3 w-3" />
                         Submit Partnership Proposal
+                      </Link>
+                      <Link
+                        to="/sponsor/login"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <LogOut className="h-3 w-3" />
+                        Sign In
                       </Link>
                     </CollapsibleContent>
                   </Collapsible>
