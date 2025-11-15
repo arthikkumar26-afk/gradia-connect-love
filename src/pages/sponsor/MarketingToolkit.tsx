@@ -40,7 +40,7 @@ export default function MarketingToolkit() {
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-4">Marketing Toolkit</h1>
           <p className="text-xl text-muted-foreground">
-            Everything you need to promote your partnership with Qualiron
+            Everything you need to promote your partnership with Gradia
           </p>
         </div>
 
@@ -81,11 +81,11 @@ export default function MarketingToolkit() {
             </div>
             <div className="flex items-start gap-3">
               <span className="text-xl">🔗</span>
-              <p>When sharing on social media, tag @Qualiron for maximum visibility</p>
+              <p>When sharing on social media, tag @Gradia for maximum visibility</p>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-xl">📧</span>
-              <p>For custom materials, contact marketing@qualiron.com</p>
+              <p>For custom materials, contact marketing@gradia.com</p>
             </div>
           </div>
         </Card>

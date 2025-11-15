@@ -11,7 +11,7 @@ export default function BrandingGuidelines() {
   ];
 
   const downloads = [
-    { name: "Qualiron Logo Pack.zip", size: "2.4 MB", type: "ZIP" },
+    { name: "Gradia Logo Pack.zip", size: "2.4 MB", type: "ZIP" },
     { name: "Brand Book.pdf", size: "5.1 MB", type: "PDF" },
     { name: "Color Palette.ase", size: "12 KB", type: "ASE" },
     { name: "Typography Guide.pdf", size: "1.8 MB", type: "PDF" }

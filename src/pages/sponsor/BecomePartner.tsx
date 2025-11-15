@@ -8,7 +8,7 @@ export default function BecomePartner() {
       {/* Hero Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="container mx-auto max-w-6xl text-center">
-          <h1 className="text-5xl font-bold mb-4">Partner With Qualiron</h1>
+          <h1 className="text-5xl font-bold mb-4">Partner With Gradia</h1>
           <p className="text-xl text-muted-foreground">
             Join hands with us to build powerful digital solutions.
           </p>

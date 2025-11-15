@@ -92,7 +92,7 @@ export default function SubmitProposal() {
                 Contact our partnership team
               </p>
               <Button variant="outline" className="w-full">
-                partnerships@qualiron.com
+                partnerships@gradia.com
               </Button>
             </Card>
           </div>

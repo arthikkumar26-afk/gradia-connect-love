@@ -94,7 +94,7 @@ export default function SupportPortal() {
                 Get in touch with our sponsor relations team directly.
               </p>
               <Button variant="outline" className="w-full">
-                sponsor-support@qualiron.com
+                sponsor-support@gradia.com
               </Button>
             </Card>
           </div>
@@ -107,7 +107,7 @@ export default function SupportPortal() {
             <p>• Ensure you're using the email address registered with your sponsorship</p>
             <p>• Check your spam folder for OTP emails</p>
             <p>• OTP is valid for 10 minutes only</p>
-            <p>• For account issues, contact sponsor-support@qualiron.com</p>
+            <p>• For account issues, contact sponsor-support@gradia.com</p>
           </div>
         </Card>
       </div>
