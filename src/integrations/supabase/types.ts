@@ -59,6 +59,59 @@ export type Database = {
           },
         ]
       }
+      branding_resources: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          download_count: number | null
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          is_public: boolean | null
+          sponsor_id: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          download_count?: number | null
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          is_public?: boolean | null
+          sponsor_id?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          download_count?: number | null
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_public?: boolean | null
+          sponsor_id?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branding_resources_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           closing_date: string | null
@@ -180,6 +233,160 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      sponsor_analytics: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          leads_generated: number | null
+          link_clicks: number | null
+          logo_impressions: number | null
+          page_views: number | null
+          profile_visits: number | null
+          sponsor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          leads_generated?: number | null
+          link_clicks?: number | null
+          logo_impressions?: number | null
+          page_views?: number | null
+          profile_visits?: number | null
+          sponsor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          leads_generated?: number | null
+          link_clicks?: number | null
+          logo_impressions?: number | null
+          page_views?: number | null
+          profile_visits?: number | null
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_analytics_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          company_description: string | null
+          company_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contract_end_date: string | null
+          created_at: string | null
+          id: string
+          joined_date: string | null
+          logo_url: string | null
+          status: string
+          tier: string
+          updated_at: string | null
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          company_description?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_end_date?: string | null
+          created_at?: string | null
+          id?: string
+          joined_date?: string | null
+          logo_url?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string | null
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          company_description?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_end_date?: string | null
+          created_at?: string | null
+          id?: string
+          joined_date?: string | null
+          logo_url?: string | null
+          status?: string
+          tier?: string
+          updated_at?: string | null
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      sponsorships: {
+        Row: {
+          amount: number | null
+          benefits: string[] | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          end_date: string
+          id: string
+          sponsor_id: string
+          start_date: string
+          status: string
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          benefits?: string[] | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          sponsor_id: string
+          start_date: string
+          status?: string
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          benefits?: string[] | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          sponsor_id?: string
+          start_date?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorships_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_members: {
         Row: {
@@ -303,7 +510,7 @@ export type Database = {
       is_employer: { Args: { u_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "employer" | "candidate"
+      app_role: "employer" | "candidate" | "sponsor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -431,7 +638,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["employer", "candidate"],
+      app_role: ["employer", "candidate", "sponsor"],
     },
   },
 } as const
