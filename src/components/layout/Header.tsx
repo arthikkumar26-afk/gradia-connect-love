@@ -23,6 +23,18 @@ import {
   Briefcase,
   Users,
   Settings as SettingsIcon,
+  Handshake,
+  Award,
+  FileText,
+  Send,
+  Building2,
+  BookOpen,
+  Star,
+  MessageSquare,
+  Palette,
+  Package,
+  Calendar,
+  HelpCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -241,6 +253,130 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Sponsors Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
+                Sponsors
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[680px] p-6 bg-background z-50 shadow-lg" align="start">
+                <div className="grid grid-cols-3 gap-6">
+                  {/* Sponsor Programs Section */}
+                  <div>
+                    <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      Sponsor Programs
+                    </h3>
+                    <div className="flex flex-col space-y-2">
+                      <Link
+                        to="/sponsors/become-partner"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Handshake className="h-3.5 w-3.5 opacity-70" />
+                        <span>Become a Partner</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/tiers"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Award className="h-3.5 w-3.5 opacity-70" />
+                        <span>Sponsorship Tiers</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/collaboration"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Users className="h-3.5 w-3.5 opacity-70" />
+                        <span>Collaboration Opportunities</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/submit-proposal"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Send className="h-3.5 w-3.5 opacity-70" />
+                        <span>Submit Partnership Proposal</span>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Our Clients & Partners Section */}
+                  <div>
+                    <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                      <Handshake className="h-4 w-4 text-primary" />
+                      Our Clients & Partners
+                    </h3>
+                    <div className="flex flex-col space-y-2">
+                      <Link
+                        to="/sponsors/featured-clients"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Star className="h-3.5 w-3.5 opacity-70" />
+                        <span>Featured Clients</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/case-studies"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <BookOpen className="h-3.5 w-3.5 opacity-70" />
+                        <span>Case Studies</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/success-stories"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Award className="h-3.5 w-3.5 opacity-70" />
+                        <span>Success Stories</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/testimonials"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5 opacity-70" />
+                        <span>Partner Testimonials</span>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Resources for Sponsors Section */}
+                  <div>
+                    <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      Resources for Sponsors
+                    </h3>
+                    <div className="flex flex-col space-y-2">
+                      <Link
+                        to="/sponsors/branding-guidelines"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Palette className="h-3.5 w-3.5 opacity-70" />
+                        <span>Branding Guidelines</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/marketing-toolkit"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Package className="h-3.5 w-3.5 opacity-70" />
+                        <span>Marketing Toolkit</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/event-deck"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Calendar className="h-3.5 w-3.5 opacity-70" />
+                        <span>Event Sponsorship Deck</span>
+                      </Link>
+                      <Link
+                        to="/sponsors/support-portal"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <HelpCircle className="h-3.5 w-3.5 opacity-70" />
+                        <span>Sponsor Support Portal</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Link
               to="/about"
@@ -438,6 +574,148 @@ const Header = () => {
                       View All Categories
                     </Link>
                   </Button>
+                </div>
+
+                {/* Sponsors Section - Accordion style */}
+                <div className="px-3 py-2">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    Sponsors
+                  </div>
+                  
+                  {/* Sponsor Programs */}
+                  <Collapsible className="mb-2">
+                    <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
+                      <span className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4" />
+                        Sponsor Programs
+                      </span>
+                      <ChevronDown className="h-3 w-3" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                      <Link
+                        to="/sponsors/become-partner"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Handshake className="h-3 w-3" />
+                        Become a Partner
+                      </Link>
+                      <Link
+                        to="/sponsors/tiers"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Award className="h-3 w-3" />
+                        Sponsorship Tiers
+                      </Link>
+                      <Link
+                        to="/sponsors/collaboration"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Users className="h-3 w-3" />
+                        Collaboration Opportunities
+                      </Link>
+                      <Link
+                        to="/sponsors/submit-proposal"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Send className="h-3 w-3" />
+                        Submit Partnership Proposal
+                      </Link>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {/* Our Clients & Partners */}
+                  <Collapsible className="mb-2">
+                    <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
+                      <span className="flex items-center gap-2">
+                        <Handshake className="h-4 w-4" />
+                        Our Clients & Partners
+                      </span>
+                      <ChevronDown className="h-3 w-3" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                      <Link
+                        to="/sponsors/featured-clients"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Star className="h-3 w-3" />
+                        Featured Clients
+                      </Link>
+                      <Link
+                        to="/sponsors/case-studies"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <BookOpen className="h-3 w-3" />
+                        Case Studies
+                      </Link>
+                      <Link
+                        to="/sponsors/success-stories"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Award className="h-3 w-3" />
+                        Success Stories
+                      </Link>
+                      <Link
+                        to="/sponsors/testimonials"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        Partner Testimonials
+                      </Link>
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  {/* Resources for Sponsors */}
+                  <Collapsible className="mb-2">
+                    <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
+                      <span className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Resources for Sponsors
+                      </span>
+                      <ChevronDown className="h-3 w-3" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pl-4 mt-1 space-y-1">
+                      <Link
+                        to="/sponsors/branding-guidelines"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Palette className="h-3 w-3" />
+                        Branding Guidelines
+                      </Link>
+                      <Link
+                        to="/sponsors/marketing-toolkit"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Package className="h-3 w-3" />
+                        Marketing Toolkit
+                      </Link>
+                      <Link
+                        to="/sponsors/event-deck"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Calendar className="h-3 w-3" />
+                        Event Sponsorship Deck
+                      </Link>
+                      <Link
+                        to="/sponsors/support-portal"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <HelpCircle className="h-3 w-3" />
+                        Sponsor Support Portal
+                      </Link>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
 
                 <Link
