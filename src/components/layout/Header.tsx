@@ -314,13 +314,6 @@ const Header = () => {
                         <span>Featured Clients</span>
                       </Link>
                       <Link
-                        to="/case-studies"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <BookOpen className="h-3.5 w-3.5 opacity-70" />
-                        <span>Case Studies</span>
-                      </Link>
-                      <Link
                         to="/success-stories"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
@@ -638,7 +631,7 @@ const Header = () => {
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pl-4 mt-1 space-y-1">
                       <Link
-                        to="/sponsors/featured-clients"
+                        to="/featured-clients"
                         className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                       >
@@ -646,15 +639,7 @@ const Header = () => {
                         Featured Clients
                       </Link>
                       <Link
-                        to="/sponsors/case-studies"
-                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <BookOpen className="h-3 w-3" />
-                        Case Studies
-                      </Link>
-                      <Link
-                        to="/sponsors/success-stories"
+                        to="/success-stories"
                         className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
                         onClick={() => setIsMenuOpen(false)}
                       >

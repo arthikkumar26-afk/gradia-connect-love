@@ -65,7 +65,6 @@ import SponsorshipTiers from "./pages/sponsor/SponsorshipTiers";
 import CollaborationOpportunities from "./pages/sponsor/CollaborationOpportunities";
 import SubmitProposal from "./pages/sponsor/SubmitProposal";
 import FeaturedClients from "./pages/sponsor/FeaturedClients";
-import CaseStudies from "./pages/sponsor/CaseStudies";
 import SuccessStories from "./pages/sponsor/SuccessStories";
 import PartnerTestimonials from "./pages/sponsor/PartnerTestimonials";
 import BrandingGuidelines from "./pages/sponsor/BrandingGuidelines";
@@ -146,7 +145,6 @@ const App = () => (
             <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
             <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
             <Route path="/employer/pricing" element={<Pricing />} />
-            <Route path="/employer/case-studies" element={<PlaceholderPage title="Case Studies" />} />
             <Route path="/employer/demo" element={<RequestDemo />} />
             <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
 
@@ -196,7 +194,6 @@ const App = () => (
             <Route path="/collaboration-opportunities" element={<CollaborationOpportunities />} />
             <Route path="/partnership-proposal" element={<SubmitProposal />} />
             <Route path="/featured-clients" element={<FeaturedClients />} />
-            <Route path="/case-studies" element={<CaseStudies />} />
             <Route path="/success-stories" element={<SuccessStories />} />
             <Route path="/partner-testimonials" element={<PartnerTestimonials />} />
             <Route path="/branding-guidelines" element={<BrandingGuidelines />} />
