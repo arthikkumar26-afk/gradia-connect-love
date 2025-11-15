@@ -32,7 +32,6 @@ const Footer = () => {
     { name: "Campus Hiring", path: "/employer/campus-hiring" },
     { name: "Partnerships", path: "/employer/partnerships" },
     { name: "Pricing Plans", path: "/employer/pricing" },
-    { name: "Case Studies", path: "/employer/case-studies" },
     { name: "Request Demo", path: "/employer/demo" },
   ];
 
