@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,18 @@ const Header = () => {
   const { toast } = useToast();
   
   const userRole = profile?.role; // 'employer' or 'candidate'
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -478,8 +490,8 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-border animate-slide-up">
-            <div className="flex flex-col space-y-4">
+          <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t border-border animate-slide-up overflow-y-auto z-50">
+            <div className="flex flex-col space-y-4 pb-20 pt-4">
               {/* Mobile Navigation */}
               <div className="flex flex-col space-y-2">
                 <Link
