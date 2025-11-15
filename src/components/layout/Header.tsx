@@ -260,6 +260,16 @@ const Header = () => {
                 <ChevronDown className="ml-1 h-3 w-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[680px] p-6 bg-background z-50 shadow-lg" align="start">
+                {/* Header with Sign In on the right */}
+                <div className="flex justify-end mb-4">
+                  <Button asChild variant="default" size="sm">
+                    <Link to="/sponsor/login" className="flex items-center gap-2">
+                      <LogOut className="h-3.5 w-3.5" />
+                      Sign In
+                    </Link>
+                  </Button>
+                </div>
+                
                 <div className="grid grid-cols-3 gap-6">
                   {/* Sponsor Programs Section */}
                   <div>
@@ -302,13 +312,6 @@ const Header = () => {
                       >
                         <Send className="h-3.5 w-3.5 opacity-70" />
                         <span>Submit Partnership Proposal</span>
-                      </Link>
-                      <Link
-                        to="/sponsor/login"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                      >
-                        <LogOut className="h-3.5 w-3.5 opacity-70" />
-                        <span>Sign In</span>
                       </Link>
                     </div>
                   </div>
@@ -589,6 +592,16 @@ const Header = () => {
                     Sponsors
                   </div>
                   
+                  {/* Sign In Button - Prominent placement */}
+                  <div className="mb-3">
+                    <Button asChild variant="default" size="sm" className="w-full">
+                      <Link to="/sponsor/login" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                        <LogOut className="h-3 w-3" />
+                        Sign In
+                      </Link>
+                    </Button>
+                  </div>
+
                   {/* Sponsor Programs */}
                   <Collapsible className="mb-2">
                     <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
@@ -638,14 +651,6 @@ const Header = () => {
                       >
                         <Send className="h-3 w-3" />
                         Submit Partnership Proposal
-                      </Link>
-                      <Link
-                        to="/sponsor/login"
-                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <LogOut className="h-3 w-3" />
-                        Sign In
                       </Link>
                     </CollapsibleContent>
                   </Collapsible>
