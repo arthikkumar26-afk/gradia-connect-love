@@ -284,86 +284,86 @@ export default function SponsorSignup() {
               {/* Terms & Conditions */}
               <div>
                 <h3 className="text-xl font-semibold mb-4">Terms & Conditions</h3>
-                <div className="border rounded-lg p-6 bg-muted/30 max-h-80 overflow-y-auto space-y-3 text-xs">
+                <div className="border rounded-lg p-6 bg-muted/30 max-h-80 overflow-y-auto space-y-3 text-[10px]">
                   <div>
-                    <p className="font-semibold mb-1 text-sm">1. Sponsorship Agreement</p>
+                    <p className="font-semibold mb-1 text-xs">1. Sponsorship Agreement</p>
                     <p className="text-muted-foreground leading-relaxed">
                       By registering as a sponsor, you agree to enter into a sponsorship agreement with Gradia. Final terms will be determined based on your selected tier. This agreement constitutes a legally binding contract between you (the "Sponsor") and Gradia (the "Company"). The sponsorship package details, pricing, and deliverables will be outlined in a separate sponsorship agreement document.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">2. Payment Terms</p>
+                    <p className="font-semibold mb-1 text-xs">2. Payment Terms</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Payment is required within 30 days of invoice date. Sponsorship benefits begin upon receipt of payment. Late payments may incur interest charges of 1.5% per month or the maximum rate permitted by law. All fees are non-refundable unless otherwise specified in writing. Payment methods include bank transfer, credit card, or other mutually agreed methods.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">3. Brand Guidelines & Content Approval</p>
+                    <p className="font-semibold mb-1 text-xs">3. Brand Guidelines & Content Approval</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Sponsors must provide logos, images, and marketing materials that comply with our brand guidelines. We reserve the right to reject materials that don't meet quality standards or that conflict with our values and policies. All sponsor content must be submitted at least 5 business days before publication. Gradia retains final approval rights over all sponsor content displayed on the platform.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">4. Duration, Renewal & Termination</p>
+                    <p className="font-semibold mb-1 text-xs">4. Duration, Renewal & Termination</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Sponsorship periods are typically 12 months with options for renewal. Either party may terminate this agreement with 60 days written notice. Early termination by the Sponsor may be subject to fees as outlined in your agreement, typically 50% of remaining contract value. Automatic renewal clauses apply unless written notice is provided 90 days before contract end date.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">5. Data Privacy & Protection</p>
+                    <p className="font-semibold mb-1 text-xs">5. Data Privacy & Protection</p>
                     <p className="text-muted-foreground leading-relaxed">
                       All data shared will be handled in accordance with our privacy policy and applicable data protection regulations including GDPR, CCPA, and other relevant laws. Sponsor data will be stored securely and used only for sponsorship-related purposes. We will not share sponsor information with third parties without explicit consent. Sponsors must comply with all applicable data protection laws when accessing user data through the platform.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">6. Intellectual Property Rights</p>
+                    <p className="font-semibold mb-1 text-xs">6. Intellectual Property Rights</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Sponsors grant Gradia a non-exclusive, worldwide license to use sponsor logos, trademarks, and marketing materials for the purpose of fulfilling sponsorship obligations. Gradia retains all rights to its platform, content, and intellectual property. Neither party may use the other's trademarks or intellectual property beyond the scope of this agreement without prior written consent.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">7. Liability & Indemnification</p>
+                    <p className="font-semibold mb-1 text-xs">7. Liability & Indemnification</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Gradia is not liable for any indirect, incidental, special, or consequential damages resulting from the sponsorship agreement. Our total liability shall not exceed the total fees paid by the Sponsor in the 12 months preceding the claim. Sponsors agree to indemnify and hold harmless Gradia against any claims, damages, or expenses arising from sponsor content, materials, or violations of this agreement.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">8. Performance Metrics & Reporting</p>
+                    <p className="font-semibold mb-1 text-xs">8. Performance Metrics & Reporting</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Gradia will provide sponsors with access to analytics and performance metrics as outlined in the sponsorship package. While we strive for accuracy, we do not guarantee specific results or metrics. Reports will be provided on a monthly basis unless otherwise agreed. Sponsors acknowledge that engagement and conversion rates may vary and are not guaranteed.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">9. Content Standards & Restrictions</p>
+                    <p className="font-semibold mb-1 text-xs">9. Content Standards & Restrictions</p>
                     <p className="text-muted-foreground leading-relaxed">
                       All sponsor content must be truthful, not misleading, and comply with applicable advertising standards. Prohibited content includes discriminatory material, adult content, illegal products or services, and content that violates intellectual property rights. Gradia reserves the right to remove any content that violates these standards without refund or penalty.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">10. Force Majeure</p>
+                    <p className="font-semibold mb-1 text-xs">10. Force Majeure</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Neither party shall be liable for delays or failures in performance resulting from circumstances beyond their reasonable control, including but not limited to acts of God, natural disasters, war, terrorism, labor disputes, or technical failures. During such events, both parties agree to make reasonable efforts to mitigate the impact and resume normal operations.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">11. Modifications to Terms</p>
+                    <p className="font-semibold mb-1 text-xs">11. Modifications to Terms</p>
                     <p className="text-muted-foreground leading-relaxed">
                       Gradia reserves the right to modify these terms with 30 days written notice. Continued participation in the sponsorship program after notification constitutes acceptance of the modified terms. Material changes that significantly affect sponsor benefits will require mutual written agreement.
                     </p>
                   </div>
                   
                   <div>
-                    <p className="font-semibold mb-1 text-sm">12. Governing Law & Dispute Resolution</p>
+                    <p className="font-semibold mb-1 text-xs">12. Governing Law & Dispute Resolution</p>
                     <p className="text-muted-foreground leading-relaxed">
                       This agreement shall be governed by the laws of the jurisdiction in which Gradia is registered. Any disputes arising from this agreement shall first be addressed through good faith negotiations. If unresolved, disputes will be settled through binding arbitration in accordance with the rules of the applicable arbitration association. Each party bears their own legal costs unless otherwise determined by the arbitrator.
                     </p>
