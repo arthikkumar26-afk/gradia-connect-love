@@ -268,29 +268,29 @@ const Header = () => {
                       Sponsor Programs
                     </h3>
                     <div className="flex flex-col space-y-2">
-                      <Link
-                        to="/sponsors/become-partner"
+                    <Link
+                        to="/become-a-partner"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Handshake className="h-3.5 w-3.5 opacity-70" />
                         <span>Become a Partner</span>
                       </Link>
                       <Link
-                        to="/sponsors/tiers"
+                        to="/sponsorship-tiers"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Award className="h-3.5 w-3.5 opacity-70" />
                         <span>Sponsorship Tiers</span>
                       </Link>
                       <Link
-                        to="/sponsors/collaboration"
+                        to="/collaboration-opportunities"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Users className="h-3.5 w-3.5 opacity-70" />
                         <span>Collaboration Opportunities</span>
                       </Link>
                       <Link
-                        to="/sponsors/submit-proposal"
+                        to="/partnership-proposal"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Send className="h-3.5 w-3.5 opacity-70" />
@@ -307,28 +307,28 @@ const Header = () => {
                     </h3>
                     <div className="flex flex-col space-y-2">
                       <Link
-                        to="/sponsors/featured-clients"
+                        to="/featured-clients"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Star className="h-3.5 w-3.5 opacity-70" />
                         <span>Featured Clients</span>
                       </Link>
                       <Link
-                        to="/sponsors/case-studies"
+                        to="/case-studies"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <BookOpen className="h-3.5 w-3.5 opacity-70" />
                         <span>Case Studies</span>
                       </Link>
                       <Link
-                        to="/sponsors/success-stories"
+                        to="/success-stories"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Award className="h-3.5 w-3.5 opacity-70" />
                         <span>Success Stories</span>
                       </Link>
                       <Link
-                        to="/sponsors/testimonials"
+                        to="/partner-testimonials"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <MessageSquare className="h-3.5 w-3.5 opacity-70" />
@@ -345,28 +345,28 @@ const Header = () => {
                     </h3>
                     <div className="flex flex-col space-y-2">
                       <Link
-                        to="/sponsors/branding-guidelines"
+                        to="/branding-guidelines"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Palette className="h-3.5 w-3.5 opacity-70" />
                         <span>Branding Guidelines</span>
                       </Link>
                       <Link
-                        to="/sponsors/marketing-toolkit"
+                        to="/marketing-toolkit"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Package className="h-3.5 w-3.5 opacity-70" />
                         <span>Marketing Toolkit</span>
                       </Link>
                       <Link
-                        to="/sponsors/event-deck"
+                        to="/event-sponsorship-deck"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <Calendar className="h-3.5 w-3.5 opacity-70" />
                         <span>Event Sponsorship Deck</span>
                       </Link>
                       <Link
-                        to="/sponsors/support-portal"
+                        to="/sponsor-support-portal"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
                         <HelpCircle className="h-3.5 w-3.5 opacity-70" />

@@ -192,10 +192,9 @@ const App = () => (
             
             {/* Partnership & Sponsorship Pages */}
             <Route path="/become-a-partner" element={<BecomePartner />} />
-            <Route path="/partner-apply" element={<SubmitProposal />} />
             <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
             <Route path="/collaboration-opportunities" element={<CollaborationOpportunities />} />
-            <Route path="/submit-proposal" element={<SubmitProposal />} />
+            <Route path="/partnership-proposal" element={<SubmitProposal />} />
             <Route path="/featured-clients" element={<FeaturedClients />} />
             <Route path="/case-studies" element={<CaseStudies />} />
             <Route path="/success-stories" element={<SuccessStories />} />
@@ -203,7 +202,7 @@ const App = () => (
             <Route path="/branding-guidelines" element={<BrandingGuidelines />} />
             <Route path="/marketing-toolkit" element={<MarketingToolkit />} />
             <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
-            <Route path="/sponsor-support" element={<SupportPortal />} />
+            <Route path="/sponsor-support-portal" element={<SupportPortal />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
