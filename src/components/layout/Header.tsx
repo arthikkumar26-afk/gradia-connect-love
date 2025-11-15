@@ -125,11 +125,11 @@ const Header = () => {
               Home
             </Link>
 
-            {/* Show For Employers dropdown only if not logged in as candidate */}
+            {/* Show Employers dropdown only if not logged in as candidate */}
             {userRole !== 'candidate' && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                  For Employers
+                  Employers
                   <ChevronDown className="ml-1 h-3 w-3" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-48 bg-background z-50">
@@ -174,11 +174,11 @@ const Header = () => {
               </DropdownMenu>
             )}
 
-            {/* Show For Candidates dropdown only if not logged in as employer */}
+            {/* Show Candidates dropdown only if not logged in as employer */}
             {userRole !== 'employer' && (
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                  For Candidates
+                  Candidates
                   <ChevronDown className="ml-1 h-3 w-3" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-background z-50">
@@ -453,11 +453,11 @@ const Header = () => {
                   Home
                 </Link>
                 
-                {/* Mobile - For Employers Section */}
+                {/* Mobile - Employers Section */}
                 {userRole !== 'candidate' && (
                   <div className="px-3 py-2">
                     <div className="text-sm font-medium text-muted-foreground mb-2">
-                      For Employers
+                      Employers
                     </div>
                     {!isAuthenticated || userRole !== 'employer' ? (
                       <>
@@ -513,7 +513,7 @@ const Header = () => {
                 {userRole !== 'employer' && (
                   <div className="px-3 py-2">
                     <div className="text-sm font-medium text-muted-foreground mb-2">
-                      For Candidates
+                      Candidates
                     </div>
                     {candidateMenuItems.map((item) => (
                       <Link
