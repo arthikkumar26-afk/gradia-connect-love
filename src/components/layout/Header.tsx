@@ -221,23 +221,26 @@ const Header = () => {
                       </h3>
                       <div className="flex flex-col space-y-2">
                         {category.subcategories.map((sub) => (
-                          <Link
-                            key={sub.name}
-                            to={sub.path}
-                            className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                          >
-                            <div className="flex items-start gap-1">
-                              <span className="flex-1">{sub.name}</span>
-                              <span className="text-xs opacity-60">{sub.count}</span>
-                            </div>
-                          </Link>
+                          <DropdownMenuItem key={sub.name} asChild>
+                            <Link
+                              to={sub.path}
+                              className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                            >
+                              <div className="flex items-start gap-1">
+                                <span className="flex-1">{sub.name}</span>
+                                <span className="text-xs opacity-60">{sub.count}</span>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
                         ))}
-                        <Link
-                          to={category.subcategories[0]?.path || "/learning"}
-                          className="text-xs text-accent hover:text-accent/80 transition-colors mt-1"
-                        >
-                          View All →
-                        </Link>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to={category.subcategories[0]?.path || "/learning"}
+                            className="text-xs text-accent hover:text-accent/80 transition-colors mt-1"
+                          >
+                            View All →
+                          </Link>
+                        </DropdownMenuItem>
                       </div>
                     </div>
                   ))}
