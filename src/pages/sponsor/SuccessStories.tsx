@@ -7,7 +7,7 @@ export default function SuccessStories() {
     {
       company: "Nexen Labs",
       achievement: "Improved product quality by 40%",
-      quote: "After onboarding Qualiron's QA services, we saw an immediate improvement in our product quality. Their attention to detail and systematic approach helped us catch issues we never knew existed.",
+      quote: "After onboarding Gradia's QA services, we saw an immediate improvement in our product quality. Their attention to detail and systematic approach helped us catch issues we never knew existed.",
       person: "Amit Sharma",
       role: "VP of Engineering",
       initials: "AS",
@@ -16,7 +16,7 @@ export default function SuccessStories() {
     {
       company: "CloudWorks",
       achievement: "Achieved 99.2% test coverage",
-      quote: "The automation pipelines built by Qualiron transformed our testing process. We now have confidence in every release, and our test coverage has reached industry-leading levels.",
+      quote: "The automation pipelines built by Gradia transformed our testing process. We now have confidence in every release, and our test coverage has reached industry-leading levels.",
       person: "Priya Menon",
       role: "CTO",
       initials: "PM",
@@ -25,7 +25,7 @@ export default function SuccessStories() {
     {
       company: "StratosByte",
       achievement: "Saved ₹12 lakh annually",
-      quote: "By adopting Qualiron's DevOps workflow and automation solutions, we significantly reduced our operational costs while improving deployment speed and reliability. The ROI was clear within the first quarter.",
+      quote: "By adopting Gradia's DevOps workflow and automation solutions, we significantly reduced our operational costs while improving deployment speed and reliability. The ROI was clear within the first quarter.",
       person: "Rajesh Kumar",
       role: "Head of Operations",
       initials: "RK",

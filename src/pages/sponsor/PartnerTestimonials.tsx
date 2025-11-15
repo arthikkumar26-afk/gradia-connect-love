@@ -8,7 +8,7 @@ export default function PartnerTestimonials() {
       name: "Rohan Mehta",
       title: "CTO",
       company: "TechVision Labs",
-      quote: "Qualiron is our go-to partner for everything testing. Their expertise and reliability have been instrumental in our product success.",
+      quote: "Gradia is our go-to partner for everything testing. Their expertise and reliability have been instrumental in our product success.",
       rating: 5,
       initials: "RM",
       color: "bg-blue-500"
@@ -26,7 +26,7 @@ export default function PartnerTestimonials() {
       name: "Deepak Jain",
       title: "Product Head",
       company: "InnovateTech",
-      quote: "We improved release stability by 60% after partnering with Qualiron. Their methodical approach to testing is phenomenal.",
+      quote: "We improved release stability by 60% after partnering with Gradia. Their methodical approach to testing is phenomenal.",
       rating: 5,
       initials: "DJ",
       color: "bg-green-500"
@@ -44,7 +44,7 @@ export default function PartnerTestimonials() {
       name: "John Mathews",
       title: "CEO",
       company: "FinTech Dynamics",
-      quote: "Professional, consistent, and reliable. Qualiron has been a key partner in our journey to scale our platform.",
+      quote: "Professional, consistent, and reliable. Gradia has been a key partner in our journey to scale our platform.",
       rating: 5,
       initials: "JM",
       color: "bg-red-500"
