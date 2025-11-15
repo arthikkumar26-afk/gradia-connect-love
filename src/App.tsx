@@ -54,6 +54,13 @@ import CandidateDashboard from "./pages/candidate/Dashboard";
 import EditProfile from "./pages/EditProfile";
 import PostJob from "./pages/employer/PostJob";
 
+// Sponsor Pages
+import SponsorOverview from "./pages/sponsor/Overview";
+import Sponsorships from "./pages/sponsor/Sponsorships";
+import SponsorAnalytics from "./pages/sponsor/Analytics";
+import BrandingResources from "./pages/sponsor/Resources";
+import SponsorSettings from "./pages/sponsor/Settings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -163,6 +170,13 @@ const App = () => (
             <Route path="/accessibility" element={<PlaceholderPage title="Accessibility" />} />
             <Route path="/press" element={<PlaceholderPage title="Press & Media" />} />
             <Route path="/community-guidelines" element={<PlaceholderPage title="Community Guidelines" />} />
+
+            {/* Sponsor Portal Routes */}
+            <Route path="/sponsor/dashboard" element={<SponsorOverview />} />
+            <Route path="/sponsor/sponsorships" element={<Sponsorships />} />
+            <Route path="/sponsor/analytics" element={<SponsorAnalytics />} />
+            <Route path="/sponsor/resources" element={<BrandingResources />} />
+            <Route path="/sponsor/settings" element={<SponsorSettings />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
