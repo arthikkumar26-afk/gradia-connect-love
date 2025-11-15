@@ -194,6 +194,8 @@ const App = () => (
             {/* Partnership & Sponsorship Pages */}
             <Route path="/become-a-partner" element={<SponsorSignup />} />
             <Route path="/sponsor/signup" element={<SponsorSignup />} />
+            <Route path="/sponsor/become-partner" element={<SponsorSignup />} />
+            <Route path="/sponsors/become-partner" element={<SponsorSignup />} />
             <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
             <Route path="/job-mela-calendar" element={<JobMelaCalendar />} />
             <Route path="/sponsor/login" element={<SponsorLogin />} />
