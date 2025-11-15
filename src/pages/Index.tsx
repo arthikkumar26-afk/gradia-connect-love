@@ -315,7 +315,7 @@ const Index = () => {
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Link>
             </Button>
-            <Button variant="outline" size="xl" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary" asChild>
+            <Button variant="outline" size="xl" className="border-2 border-background text-background hover:bg-background hover:text-foreground bg-transparent" asChild>
               <Link to="/employer/post-job">
                 Hire Top Talent
               </Link>
