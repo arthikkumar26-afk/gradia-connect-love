@@ -4,13 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
-import { UserPlus, Mail, Lock, Building2, User, Phone, Globe, Check } from "lucide-react";
+import { UserPlus, Mail, Lock, Building2, User, Phone, Globe, Check, CreditCard, Smartphone, Landmark } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function SponsorSignup() {
   const [step, setStep] = useState(1);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [formData, setFormData] = useState({
     companyName: "",
     contactName: "",
@@ -36,7 +38,12 @@ export default function SponsorSignup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registration attempt:", formData, "Terms accepted:", acceptedTerms);
+    setStep(3);
+  };
+
+  const handlePaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Registration complete:", formData, "Payment method:", paymentMethod);
   };
 
   return (
@@ -47,14 +54,15 @@ export default function SponsorSignup() {
             <UserPlus className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-4xl font-bold mb-2">
-            {step === 1 ? "Become a Partner" : "Sponsorship Agreement"}
+            {step === 1 ? "Become a Partner" : step === 2 ? "Sponsorship Agreement" : "Payment Method"}
           </h1>
           <p className="text-muted-foreground">
-            {step === 1 ? "Join our network of sponsors and grow your brand visibility" : "Review sponsorship details"}
+            {step === 1 ? "Join our network of sponsors and grow your brand visibility" : step === 2 ? "Review sponsorship details" : "Choose your payment method"}
           </p>
           <div className="flex justify-center gap-2 mt-4">
             <div className={`h-2 w-16 rounded-full transition-colors ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
             <div className={`h-2 w-16 rounded-full transition-colors ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
+            <div className={`h-2 w-16 rounded-full transition-colors ${step >= 3 ? "bg-primary" : "bg-muted"}`} />
           </div>
         </div>
 
@@ -222,7 +230,7 @@ export default function SponsorSignup() {
                 </p>
               </div>
             </form>
-          ) : (
+          ) : step === 2 ? (
             <div className="space-y-8">
               {/* Sponsorship Proposal */}
               <div>
@@ -409,6 +417,92 @@ export default function SponsorSignup() {
                 </div>
               </form>
             </div>
+          ) : (
+            <form onSubmit={handlePaymentSubmit} className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Select Payment Method</h2>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <div className="space-y-3">
+                    {/* UPI Payment */}
+                    <Label
+                      htmlFor="upi"
+                      className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === "upi" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <RadioGroupItem value="upi" id="upi" />
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Smartphone className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">UPI Payment</p>
+                          <p className="text-sm text-muted-foreground">Pay using Google Pay, PhonePe, Paytm, etc.</p>
+                        </div>
+                      </div>
+                    </Label>
+
+                    {/* Credit/Debit Card */}
+                    <Label
+                      htmlFor="card"
+                      className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <RadioGroupItem value="card" id="card" />
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <CreditCard className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Credit or Debit Card</p>
+                          <p className="text-sm text-muted-foreground">Visa, Mastercard, Amex, and more</p>
+                        </div>
+                      </div>
+                    </Label>
+
+                    {/* Net Banking */}
+                    <Label
+                      htmlFor="netbanking"
+                      className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === "netbanking" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <RadioGroupItem value="netbanking" id="netbanking" />
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Landmark className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">Net Banking</p>
+                          <p className="text-sm text-muted-foreground">Pay directly from your bank account</p>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="flex gap-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="lg" 
+                  className="flex-1" 
+                  onClick={() => setStep(2)}
+                >
+                  Back
+                </Button>
+                <Button 
+                  type="submit" 
+                  size="lg" 
+                  className="flex-1" 
+                  disabled={!paymentMethod}
+                >
+                  Proceed to Payment
+                </Button>
+              </div>
+            </form>
           )}
         </Card>
       </div>
