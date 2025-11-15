@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -82,9 +83,27 @@ export default function SponsorSignup() {
       });
 
       if (result.success) {
+        // Send welcome email in the background
+        supabase.functions
+          .invoke('send-welcome-email', {
+            body: {
+              email: formData.email,
+              fullName: formData.contactName,
+              role: 'sponsor',
+              companyName: formData.companyName,
+            },
+          })
+          .then((response) => {
+            if (response.error) {
+              console.error('Failed to send welcome email:', response.error);
+            } else {
+              console.log('Welcome email sent successfully');
+            }
+          });
+
         toast({
           title: "Registration Successful!",
-          description: "Your sponsor account has been created. Please check your email to confirm your account.",
+          description: "Your sponsor account has been created. Please check your email for next steps.",
         });
         navigate("/sponsor/dashboard");
       } else {
