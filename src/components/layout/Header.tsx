@@ -283,6 +283,13 @@ const Header = () => {
                         <span>Sponsorship Tiers</span>
                       </Link>
                       <Link
+                        to="/job-mela-calendar"
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
+                      >
+                        <Calendar className="h-3.5 w-3.5 opacity-70" />
+                        <span>Job Mela Calendar</span>
+                      </Link>
+                      <Link
                         to="/collaboration-opportunities"
                         className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
                       >
@@ -600,6 +607,14 @@ const Header = () => {
                       >
                         <Award className="h-3 w-3" />
                         Sponsorship Tiers
+                      </Link>
+                      <Link
+                        to="/job-mela-calendar"
+                        className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Calendar className="h-3 w-3" />
+                        Job Mela Calendar
                       </Link>
                       <Link
                         to="/sponsors/collaboration"
