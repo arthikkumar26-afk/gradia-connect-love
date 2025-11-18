@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   Search, 
   TrendingUp, 
@@ -14,15 +14,6 @@ const Hero = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
   
   const stats = [
     { icon: Users, label: "Active Candidates", value: "50K+" },
@@ -41,10 +32,7 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
-      <div 
-        className="relative z-10 container mx-auto px-4 py-20 lg:py-32 transition-transform duration-100"
-        style={{ transform: `translateY(${scrollY * 0.3}px)` }}
-      >
+      <div className="relative z-10 container mx-auto px-4 py-20 lg:py-32">
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
           <div className="animate-fade-in">
@@ -136,10 +124,7 @@ const Hero = () => {
       </div>
 
       {/* Bottom Wave */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 transition-transform duration-100"
-        style={{ transform: `translateY(${scrollY * 0.15}px)` }}
-      >
+      <div className="absolute bottom-0 left-0 right-0">
         <svg
           viewBox="0 0 1200 120"
           preserveAspectRatio="none"
