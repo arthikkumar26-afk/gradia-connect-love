@@ -32,6 +32,26 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
+      {/* Animated Background Shapes */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Floating Circles */}
+        <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-accent/10 animate-[float_20s_ease-in-out_infinite]" />
+        <div className="absolute top-40 right-20 w-24 h-24 rounded-full bg-secondary/15 animate-[float_15s_ease-in-out_infinite_2s]" />
+        <div className="absolute bottom-32 left-1/4 w-40 h-40 rounded-full bg-primary-foreground/5 animate-[float_25s_ease-in-out_infinite_4s]" />
+        
+        {/* Floating Squares */}
+        <div className="absolute top-1/3 right-1/4 w-20 h-20 bg-accent/10 rotate-45 animate-[float_18s_ease-in-out_infinite_1s]" />
+        <div className="absolute bottom-1/4 right-10 w-28 h-28 bg-secondary/10 rotate-12 animate-[float_22s_ease-in-out_infinite_3s]" />
+        
+        {/* Floating Triangles */}
+        <div className="absolute top-1/2 left-1/3 w-0 h-0 border-l-[30px] border-l-transparent border-r-[30px] border-r-transparent border-b-[50px] border-b-accent/10 animate-[float_16s_ease-in-out_infinite_2s]" />
+        <div className="absolute bottom-20 right-1/3 w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-b-[60px] border-b-primary-foreground/8 animate-[float_20s_ease-in-out_infinite_5s]" />
+        
+        {/* Floating Rectangles */}
+        <div className="absolute top-3/4 left-20 w-36 h-8 bg-secondary/10 rounded-full rotate-12 animate-[float_19s_ease-in-out_infinite_1s]" />
+        <div className="absolute top-10 right-1/3 w-28 h-6 bg-accent/8 rounded-full -rotate-12 animate-[float_17s_ease-in-out_infinite_4s]" />
+      </div>
+
       <div className="relative z-10 container mx-auto px-4 py-20 lg:py-32">
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
