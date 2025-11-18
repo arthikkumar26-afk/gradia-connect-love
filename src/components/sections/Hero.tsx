@@ -10,8 +10,6 @@ import {
   Award,
   ArrowRight 
 } from "lucide-react";
-import heroImage from "@/assets/hero-consultancy.jpg";
-
 const Hero = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,16 +32,6 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="Professional consultancy environment"
-          className="w-full h-full object-cover opacity-20"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-secondary/80" />
-      </div>
-
       <div className="relative z-10 container mx-auto px-4 py-20 lg:py-32">
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
