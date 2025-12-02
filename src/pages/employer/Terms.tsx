@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowRight } from 'lucide-react';
-import { mockRecordTerms } from '@/utils/mockApi';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import gradiaLogo from '@/assets/gradia-logo.png';
 
@@ -15,6 +15,28 @@ export default function Terms() {
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/employer/signup");
+        return;
+      }
+
+      const { data: agreement } = await supabase
+        .from("agreements")
+        .select("id")
+        .eq("employer_id", user.id)
+        .single();
+
+      if (!agreement) {
+        toast({ title: 'Please sign the agreement first', variant: 'destructive' });
+        navigate("/employer/agreement");
+      }
+    };
+    checkAuth();
+  }, [navigate, toast]);
+
   const handleContinue = async () => {
     if (!accepted) {
       toast({ title: 'Please accept the terms', variant: 'destructive' });
@@ -23,11 +45,33 @@ export default function Terms() {
 
     setLoading(true);
     try {
-      const userId = sessionStorage.getItem('registrationUserId') || '';
-      await mockRecordTerms(userId);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: 'Authentication required', variant: 'destructive' });
+        navigate("/employer/signup");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+
+      const { error } = await supabase
+        .from("terms_acceptances")
+        .insert({
+          employer_id: user.id,
+          admin_name: profile?.full_name || "Unknown",
+          admin_email: profile?.email || user.email || "",
+        });
+
+      if (error) throw error;
+
       toast({ title: 'Terms accepted', description: 'Proceeding to plan selection' });
       navigate('/employer/plans');
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Terms error:", error);
       toast({ title: 'Error', description: 'Failed to record terms acceptance', variant: 'destructive' });
     } finally {
       setLoading(false);

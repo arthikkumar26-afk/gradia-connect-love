@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowRight } from 'lucide-react';
-import { mockRecordAgreement } from '@/utils/mockApi';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import gradiaLogo from '@/assets/gradia-logo.png';
 
@@ -14,8 +14,33 @@ export default function Agreement() {
   const { toast } = useToast();
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/employer/signup");
+        return;
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 10;
+    if (scrolledToBottom && !scrolledToEnd) {
+      setScrolledToEnd(true);
+    }
+  };
 
   const handleContinue = async () => {
+    if (!scrolledToEnd) {
+      toast({ title: 'Please scroll to the end of the agreement', variant: 'destructive' });
+      return;
+    }
+    
     if (!accepted) {
       toast({ title: 'Please accept the agreement', variant: 'destructive' });
       return;
@@ -23,11 +48,34 @@ export default function Agreement() {
 
     setLoading(true);
     try {
-      const userId = sessionStorage.getItem('registrationUserId') || '';
-      await mockRecordAgreement(userId);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: 'Authentication required', variant: 'destructive' });
+        navigate("/employer/signup");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email, company_name")
+        .eq("id", user.id)
+        .single();
+
+      const { error } = await supabase
+        .from("agreements")
+        .insert({
+          employer_id: user.id,
+          admin_name: profile?.full_name || "Unknown",
+          admin_email: profile?.email || user.email || "",
+          company_name: profile?.company_name || "",
+        });
+
+      if (error) throw error;
+
       toast({ title: 'Agreement accepted', description: 'Proceeding to terms & conditions' });
       navigate('/employer/terms');
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Agreement error:", error);
       toast({ title: 'Error', description: 'Failed to record agreement', variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -49,7 +97,10 @@ export default function Agreement() {
           <p className="text-muted-foreground mt-2">Please review and accept our service agreement</p>
         </div>
 
-        <ScrollArea className="h-[400px] rounded-md border p-6 mb-6 bg-muted/30">
+        <ScrollArea 
+          className="h-[400px] rounded-md border p-6 mb-6 bg-muted/30"
+          onScroll={handleScroll}
+        >
           <div className="prose prose-sm max-w-none">
             <h2 className="text-xl font-semibold mb-4">Employer Service Agreement</h2>
             
@@ -113,11 +164,19 @@ export default function Agreement() {
           </div>
         </ScrollArea>
 
+        {!scrolledToEnd && (
+          <div className="text-sm text-amber-600 mb-4 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>Please scroll to the end of the agreement to continue</span>
+          </div>
+        )}
+
         <div className="flex items-start gap-3 mb-6 p-4 bg-muted/50 rounded-md">
           <Checkbox
             id="accept-agreement"
             checked={accepted}
             onCheckedChange={(checked) => setAccepted(checked as boolean)}
+            disabled={!scrolledToEnd}
           />
           <label htmlFor="accept-agreement" className="text-sm leading-relaxed cursor-pointer">
             I confirm that I have read and understood this Service Agreement, and I accept its terms on behalf of my company.
@@ -129,7 +188,7 @@ export default function Agreement() {
           <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">
             Go Back
           </Button>
-          <Button onClick={handleContinue} disabled={!accepted || loading} className="flex-1">
+          <Button onClick={handleContinue} disabled={!accepted || loading || !scrolledToEnd} className="flex-1">
             {loading ? 'Processing...' : 'Accept & Continue'}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

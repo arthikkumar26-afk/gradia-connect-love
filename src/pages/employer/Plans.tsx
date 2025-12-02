@@ -1,57 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard } from 'lucide-react';
-import { mockProcessPayment } from '@/utils/mockApi';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const plans = [
   {
     id: 'basic',
     name: 'Basic',
-    monthlyPrice: 99,
-    annualPrice: 990,
+    monthlyPrice: 0,
+    annualPrice: 0,
     features: [
-      'Up to 5 active job postings',
-      'Basic candidate search',
+      'Post up to 3 jobs',
+      'Basic candidate tracker',
       'Email support',
-      'Application tracking',
-      'Basic analytics',
+      'No assessments',
     ],
   },
   {
     id: 'standard',
     name: 'Standard',
-    monthlyPrice: 199,
-    annualPrice: 1990,
+    monthlyPrice: 7999,
+    annualPrice: 79990,
     popular: true,
     features: [
-      'Up to 20 active job postings',
-      'Advanced candidate search',
-      'Priority email support',
-      'Full application tracking',
-      'Advanced analytics',
-      'Team collaboration (5 users)',
-      'Custom branding',
+      'Post up to 15 jobs',
+      'Advanced tracker with screening tests',
+      'Email + chat support',
+      'One active panel interview flow',
+      'Analytics dashboard (basic)',
     ],
   },
   {
     id: 'premium',
     name: 'Premium',
-    monthlyPrice: 399,
-    annualPrice: 3990,
+    monthlyPrice: 19999,
+    annualPrice: 199990,
     features: [
-      'Unlimited job postings',
-      'AI-powered candidate matching',
-      '24/7 phone & email support',
-      'Complete application pipeline',
-      'Enterprise analytics',
-      'Unlimited team members',
-      'Custom branding & domain',
-      'API access',
-      'Dedicated account manager',
+      'Unlimited job posts',
+      'Full tracker: Screening, Interview scheduling, Offer letter templates',
+      'Advanced analytics, CSV export, API access',
+      'Priority support + custom onboarding',
     ],
   },
 ];
@@ -62,23 +54,93 @@ export default function Plans() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handleSelectPlan = async (planId: 'basic' | 'standard' | 'premium') => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/employer/signup");
+        return;
+      }
+
+      const { data: terms } = await supabase
+        .from("terms_acceptances")
+        .select("id")
+        .eq("employer_id", user.id)
+        .single();
+
+      if (!terms) {
+        toast({ title: 'Please accept terms first', variant: 'destructive' });
+        navigate("/employer/terms");
+      }
+    };
+    checkAuth();
+  }, [navigate, toast]);
+
+  const handleSelectPlan = async (planId: string) => {
+    const selectedPlan = plans.find(p => p.id === planId);
+    if (!selectedPlan) return;
+
     setLoading(planId);
     
     try {
-      const userId = sessionStorage.getItem('registrationUserId') || '';
-      const result = await mockProcessPayment({ userId, plan: planId, billingCycle });
-      
-      if (result.success) {
-        sessionStorage.setItem('selectedPlan', planId);
-        sessionStorage.setItem('subscriptionId', result.subscriptionId || '');
-        toast({ title: 'Payment successful!', description: 'Proceeding to onboarding' });
-        navigate('/employer/onboarding');
-      } else {
-        toast({ title: 'Payment failed', description: result.message, variant: 'destructive' });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: 'Authentication required', variant: 'destructive' });
+        navigate("/employer/signup");
+        return;
       }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Payment processing failed', variant: 'destructive' });
+
+      const amount = billingCycle === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.annualPrice;
+
+      if (planId === 'basic') {
+        const { error } = await supabase
+          .from("subscriptions")
+          .insert({
+            employer_id: user.id,
+            plan_id: planId,
+            plan_name: selectedPlan.name,
+            billing_cycle: billingCycle,
+            amount: amount,
+            currency: "INR",
+            status: "active",
+          });
+
+        if (error) throw error;
+
+        toast({ title: 'Free plan activated!', description: 'Proceeding to onboarding' });
+        navigate("/employer/onboarding");
+      } else {
+        sessionStorage.setItem("selectedPlan", JSON.stringify({
+          planId,
+          planName: selectedPlan.name,
+          billingCycle,
+          amount,
+        }));
+        
+        toast({ title: 'Redirecting to payment...', description: 'Stripe integration coming soon' });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const { error } = await supabase
+          .from("subscriptions")
+          .insert({
+            employer_id: user.id,
+            plan_id: planId,
+            plan_name: selectedPlan.name,
+            billing_cycle: billingCycle,
+            amount: amount,
+            currency: "INR",
+            status: "active",
+            payment_method: "card",
+          });
+
+        if (error) throw error;
+
+        toast({ title: 'Payment successful!', description: 'Plan activated' });
+        navigate("/employer/onboarding");
+      }
+    } catch (error: any) {
+      console.error("Plan selection error:", error);
+      toast({ title: 'Error', description: 'Failed to process plan selection', variant: 'destructive' });
     } finally {
       setLoading(null);
     }
@@ -135,15 +197,15 @@ export default function Plans() {
                 <h3 className="text-2xl font-bold text-foreground mb-2">{plan.name}</h3>
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-primary">
-                    ${billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice}
+                    ₹{billingCycle === 'monthly' ? plan.monthlyPrice : plan.annualPrice}
                   </span>
                   <span className="text-muted-foreground">
                     /{billingCycle === 'monthly' ? 'month' : 'year'}
                   </span>
                 </div>
-                {billingCycle === 'annual' && (
+                {billingCycle === 'annual' && plan.annualPrice > 0 && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    ${(plan.annualPrice / 12).toFixed(2)}/month billed annually
+                    ₹{(plan.annualPrice / 12).toFixed(2)}/month billed annually
                   </p>
                 )}
               </div>
@@ -158,12 +220,12 @@ export default function Plans() {
               </ul>
 
               <Button
-                onClick={() => handleSelectPlan(plan.id as 'basic' | 'standard' | 'premium')}
+                onClick={() => handleSelectPlan(plan.id)}
                 disabled={loading !== null}
                 className="w-full"
                 variant={plan.popular ? 'default' : 'outline'}
               >
-                {loading === plan.id ? 'Processing...' : 'Select Plan'}
+                {loading === plan.id ? 'Processing...' : plan.id === 'basic' ? 'Start Free' : 'Select Plan'}
               </Button>
             </Card>
           ))}
@@ -171,7 +233,7 @@ export default function Plans() {
 
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-4">
-            All plans include a 14-day money-back guarantee • Cancel anytime
+            All paid plans include a 14-day money-back guarantee • Cancel anytime
           </p>
           <Button variant="ghost" onClick={() => navigate(-1)}>
             Go Back

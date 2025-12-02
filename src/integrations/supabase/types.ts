@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agreements: {
+        Row: {
+          admin_email: string
+          admin_name: string
+          company_name: string | null
+          created_at: string | null
+          employer_id: string
+          id: string
+          ip_address: string | null
+          signed_at: string
+        }
+        Insert: {
+          admin_email: string
+          admin_name: string
+          company_name?: string | null
+          created_at?: string | null
+          employer_id: string
+          id?: string
+          ip_address?: string | null
+          signed_at?: string
+        }
+        Update: {
+          admin_email?: string
+          admin_name?: string
+          company_name?: string | null
+          created_at?: string | null
+          employer_id?: string
+          id?: string
+          ip_address?: string | null
+          signed_at?: string
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           applied_date: string | null
@@ -388,6 +421,60 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          amount: number
+          auto_renew: boolean | null
+          billing_cycle: string
+          created_at: string | null
+          currency: string
+          employer_id: string
+          ends_at: string | null
+          id: string
+          payment_method: string | null
+          plan_id: string
+          plan_name: string
+          started_at: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          auto_renew?: boolean | null
+          billing_cycle?: string
+          created_at?: string | null
+          currency?: string
+          employer_id: string
+          ends_at?: string | null
+          id?: string
+          payment_method?: string | null
+          plan_id: string
+          plan_name: string
+          started_at?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          auto_renew?: boolean | null
+          billing_cycle?: string
+          created_at?: string | null
+          currency?: string
+          employer_id?: string
+          ends_at?: string | null
+          id?: string
+          payment_method?: string | null
+          plan_id?: string
+          plan_name?: string
+          started_at?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       team_members: {
         Row: {
           created_at: string | null
@@ -473,6 +560,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      terms_acceptances: {
+        Row: {
+          accepted_at: string
+          admin_email: string
+          admin_name: string
+          created_at: string | null
+          employer_id: string
+          id: string
+        }
+        Insert: {
+          accepted_at?: string
+          admin_email: string
+          admin_name: string
+          created_at?: string | null
+          employer_id: string
+          id?: string
+        }
+        Update: {
+          accepted_at?: string
+          admin_email?: string
+          admin_name?: string
+          created_at?: string | null
+          employer_id?: string
+          id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
