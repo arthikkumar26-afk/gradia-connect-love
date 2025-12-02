@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Check, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import OnboardingProgress from '@/components/employer/OnboardingProgress';
 
 const plans = [
   {
@@ -149,6 +150,7 @@ export default function Plans() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="max-w-7xl mx-auto">
+        <OnboardingProgress currentStep="payment" />
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
             <CreditCard className="w-8 h-8 text-primary" />
