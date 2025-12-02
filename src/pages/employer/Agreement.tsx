@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import gradiaLogo from '@/assets/gradia-logo.png';
+import OnboardingProgress from '@/components/employer/OnboardingProgress';
 
 export default function Agreement() {
   const navigate = useNavigate();
@@ -83,8 +84,10 @@ export default function Agreement() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-      <Card className="w-full max-w-4xl p-8 shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
+      <div className="w-full max-w-4xl">
+        <OnboardingProgress currentStep="agreement" />
+        <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <img 
@@ -193,7 +196,8 @@ export default function Agreement() {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

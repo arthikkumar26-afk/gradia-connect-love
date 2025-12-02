@@ -8,12 +8,14 @@ import { ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import gradiaLogo from '@/assets/gradia-logo.png';
+import OnboardingProgress from '@/components/employer/OnboardingProgress';
 
 export default function Terms() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,7 +39,19 @@ export default function Terms() {
     checkAuth();
   }, [navigate, toast]);
 
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 10;
+    if (scrolledToBottom && !scrolledToEnd) {
+      setScrolledToEnd(true);
+    }
+  };
+
   const handleContinue = async () => {
+    if (!scrolledToEnd) {
+      toast({ title: 'Please scroll to the end of the terms', variant: 'destructive' });
+      return;
+    }
     if (!accepted) {
       toast({ title: 'Please accept the terms', variant: 'destructive' });
       return;
@@ -79,8 +93,10 @@ export default function Terms() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4">
-      <Card className="w-full max-w-4xl p-8 shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
+      <div className="w-full max-w-4xl">
+        <OnboardingProgress currentStep="terms" />
+        <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <img 
@@ -93,7 +109,10 @@ export default function Terms() {
           <p className="text-muted-foreground mt-2">Please review and accept our terms of service</p>
         </div>
 
-        <ScrollArea className="h-[400px] rounded-md border p-6 mb-6 bg-muted/30">
+        <ScrollArea 
+          className="h-[400px] rounded-md border p-6 mb-6 bg-muted/30"
+          onScroll={handleScroll}
+        >
           <div className="prose prose-sm max-w-none">
             <h2 className="text-xl font-semibold mb-4">Terms and Conditions of Use</h2>
             
@@ -198,11 +217,19 @@ export default function Terms() {
           </div>
         </ScrollArea>
 
+        {!scrolledToEnd && (
+          <div className="text-sm text-amber-600 mb-4 flex items-center gap-2">
+            <span>⚠️</span>
+            <span>Please scroll to the end of the terms to continue</span>
+          </div>
+        )}
+
         <div className="flex items-start gap-3 mb-6 p-4 bg-muted/50 rounded-md">
           <Checkbox
             id="accept-terms"
             checked={accepted}
             onCheckedChange={(checked) => setAccepted(checked as boolean)}
+            disabled={!scrolledToEnd}
           />
           <label htmlFor="accept-terms" className="text-sm leading-relaxed cursor-pointer">
             I have read, understood, and agree to be bound by these Terms and Conditions. I acknowledge that these terms
@@ -214,12 +241,13 @@ export default function Terms() {
           <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">
             Go Back
           </Button>
-          <Button onClick={handleContinue} disabled={!accepted || loading} className="flex-1">
+          <Button onClick={handleContinue} disabled={!accepted || loading || !scrolledToEnd} className="flex-1">
             {loading ? 'Processing...' : 'Accept & Continue'}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
