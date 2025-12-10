@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, Target, BarChart, Shield } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,11 +11,35 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useDevLogin } from "@/hooks/useDevLogin";
 
+const companyCategories = [
+  "IT & Technology",
+  "Education",
+  "Healthcare",
+  "Finance & Banking",
+  "Manufacturing",
+  "Retail & E-commerce",
+  "Consulting",
+  "Other"
+];
+
+interface FormErrors {
+  companyName?: string;
+  companyCategory?: string;
+  contactPerson?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
 const EmployerSignup = () => {
   const navigate = useNavigate();
+  const [companyName, setCompanyName] = useState("");
+  const [companyCategory, setCompanyCategory] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -22,62 +47,109 @@ const EmployerSignup = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/employer/create-profile");
+      navigate("/employer/agreement");
     }
   }, [isAuthenticated, navigate]);
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+
+    if (!companyName.trim()) {
+      newErrors.companyName = "Company name is required";
+    }
+
+    if (!companyCategory) {
+      newErrors.companyCategory = "Please select a company category";
+    }
+
+    if (!contactPerson.trim()) {
+      newErrors.contactPerson = "Contact person name is required";
+    }
+
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
+    if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/employer/create-profile`;
+      const redirectUrl = `${window.location.origin}/employer/agreement`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            role: 'employer'
+            role: 'employer',
+            company_name: companyName,
+            company_category: companyCategory,
+            full_name: contactPerson,
           }
         }
       });
 
-      if (error) {
-        toast({
-          title: "Signup Failed",
-          description: error.message,
-          variant: "destructive",
-        });
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          setErrors({ email: "This email is already registered. Please login instead." });
+        } else {
+          toast({
+            title: "Signup Failed",
+            description: authError.message,
+            variant: "destructive",
+          });
+        }
         return;
+      }
+
+      if (authData.user) {
+        // Create or update profile with company details
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: authData.user.id,
+            email: email,
+            full_name: contactPerson,
+            company_name: companyName,
+            role: 'employer',
+          });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+        }
       }
 
       toast({
         title: "Account Created!",
-        description: "Please complete your company profile to start hiring",
+        description: "Please review and accept the agreement to continue",
       });
 
-      navigate("/employer/create-profile");
+      navigate("/employer/agreement");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -91,9 +163,9 @@ const EmployerSignup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
+      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-start">
         {/* Left Side - Benefits */}
-        <div className="hidden md:block space-y-6 animate-fade-in">
+        <div className="hidden md:block space-y-6 animate-fade-in sticky top-8">
           <Link 
             to="/" 
             className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors"
@@ -179,15 +251,15 @@ const EmployerSignup = () => {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">2</div>
-                <span>Complete Company Profile</span>
+                <span>Accept Agreement</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">3</div>
-                <span>Post Your First Job</span>
+                <span>Accept Terms & Conditions</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">4</div>
-                <span>Review Applications</span>
+                <span>Choose a Plan</span>
               </div>
             </div>
           </div>
@@ -221,50 +293,143 @@ const EmployerSignup = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Company Name */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="companyName">Company Name <span className="text-destructive">*</span></Label>
+              <Input
+                id="companyName"
+                type="text"
+                placeholder="Enter your company name"
+                value={companyName}
+                onChange={(e) => {
+                  setCompanyName(e.target.value);
+                  if (errors.companyName) setErrors({ ...errors, companyName: undefined });
+                }}
+                className={errors.companyName ? "border-destructive" : ""}
+                aria-invalid={!!errors.companyName}
+                aria-describedby={errors.companyName ? "companyName-error" : undefined}
+              />
+              {errors.companyName && (
+                <p id="companyName-error" className="text-sm text-destructive">{errors.companyName}</p>
+              )}
+            </div>
+
+            {/* Company Category */}
+            <div className="space-y-2">
+              <Label htmlFor="companyCategory">Company Category <span className="text-destructive">*</span></Label>
+              <Select 
+                value={companyCategory} 
+                onValueChange={(value) => {
+                  setCompanyCategory(value);
+                  if (errors.companyCategory) setErrors({ ...errors, companyCategory: undefined });
+                }}
+              >
+                <SelectTrigger 
+                  id="companyCategory"
+                  className={errors.companyCategory ? "border-destructive" : ""}
+                  aria-invalid={!!errors.companyCategory}
+                  aria-describedby={errors.companyCategory ? "companyCategory-error" : undefined}
+                >
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companyCategories.map((category) => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.companyCategory && (
+                <p id="companyCategory-error" className="text-sm text-destructive">{errors.companyCategory}</p>
+              )}
+            </div>
+
+            {/* Contact Person Name */}
+            <div className="space-y-2">
+              <Label htmlFor="contactPerson">Contact Person Name <span className="text-destructive">*</span></Label>
+              <Input
+                id="contactPerson"
+                type="text"
+                placeholder="Enter your full name"
+                value={contactPerson}
+                onChange={(e) => {
+                  setContactPerson(e.target.value);
+                  if (errors.contactPerson) setErrors({ ...errors, contactPerson: undefined });
+                }}
+                className={errors.contactPerson ? "border-destructive" : ""}
+                aria-invalid={!!errors.contactPerson}
+                aria-describedby={errors.contactPerson ? "contactPerson-error" : undefined}
+              />
+              {errors.contactPerson && (
+                <p id="contactPerson-error" className="text-sm text-destructive">{errors.contactPerson}</p>
+              )}
+            </div>
+
+            {/* Work Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Work Email <span className="text-destructive">*</span></Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="employer@company.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full"
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors({ ...errors, email: undefined });
+                }}
+                className={errors.email ? "border-destructive" : ""}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : undefined}
               />
+              {errors.email && (
+                <p id="email-error" className="text-sm text-destructive">{errors.email}</p>
+              )}
             </div>
 
+            {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors({ ...errors, password: undefined });
+                }}
+                className={errors.password ? "border-destructive" : ""}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? "password-error" : undefined}
               />
+              {errors.password && (
+                <p id="password-error" className="text-sm text-destructive">{errors.password}</p>
+              )}
             </div>
 
+            {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirm Password <span className="text-destructive">*</span></Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full"
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
+                }}
+                className={errors.confirmPassword ? "border-destructive" : ""}
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
               />
+              {errors.confirmPassword && (
+                <p id="confirmPassword-error" className="text-sm text-destructive">{errors.confirmPassword}</p>
+              )}
             </div>
 
             <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
+              {isLoading ? "Creating Account..." : "Continue"}
             </Button>
           </form>
 
@@ -307,12 +472,12 @@ const EmployerSignup = () => {
 
           <div className="text-center">
             <Button variant="outline" size="lg" className="w-full" asChild>
-              <Link to="/employer/login">Sign In</Link>
+              <Link to="/employer/login">Login</Link>
             </Button>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-6 text-center text-sm text-muted-foreground md:col-span-2">
           <p>
             Looking for a job?{" "}
             <Link to="/candidate/signup" className="text-accent hover:text-accent-hover transition-colors font-medium">
