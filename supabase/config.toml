@@ -1,16 +1,1 @@
-project_id = "pzlkkbxwvsvefkhzkeel"
-
-[functions.analyze-company-website]
-verify_jwt = true
-
-[functions.generate-job-description]
-verify_jwt = true
-
-[functions.parse-resume]
-verify_jwt = true
-
-[functions.send-notification-email]
-verify_jwt = false
-
-[functions.send-welcome-email]
-verify_jwt = false
+project_id = "cybqlimobxpjygwcdojv"
