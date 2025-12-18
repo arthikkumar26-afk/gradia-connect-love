@@ -3,17 +3,53 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
-import { LogIn, Mail, Lock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function SponsorLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", { email, password });
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      if (data.user) {
+        // Check if user has sponsor role
+        const { data: sponsorData } = await supabase
+          .from("sponsors")
+          .select("id")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (sponsorData) {
+          toast.success("Welcome back!");
+          navigate("/sponsor/benefits");
+        } else {
+          toast.error("No sponsor account found. Please sign up as a sponsor.");
+          await supabase.auth.signOut();
+        }
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,6 +79,7 @@ export default function SponsorLogin() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -59,6 +96,7 @@ export default function SponsorLogin() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -69,8 +107,15 @@ export default function SponsorLogin() {
               </Link>
             </div>
 
-            <Button type="submit" size="lg" className="w-full">
-              Sign In
+            <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
 
