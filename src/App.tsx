@@ -59,6 +59,10 @@ import SponsorOverview from "./pages/sponsor/Overview";
 import Sponsorships from "./pages/sponsor/Sponsorships";
 import SponsorAnalytics from "./pages/sponsor/Analytics";
 import BrandingResources from "./pages/sponsor/Resources";
+import CandidateLeads from "./pages/sponsor/CandidateLeads";
+import MyStalls from "./pages/sponsor/MyStalls";
+import Messages from "./pages/sponsor/Messages";
+import Billing from "./pages/sponsor/Billing";
 import SponsorSettings from "./pages/sponsor/Settings";
 import BecomePartner from "./pages/sponsor/BecomePartner";
 import SponsorshipTiers from "./pages/sponsor/SponsorshipTiers";
@@ -190,6 +194,11 @@ const App = () => (
             <Route path="/sponsor/sponsorships" element={<Sponsorships />} />
             <Route path="/sponsor/analytics" element={<SponsorAnalytics />} />
             <Route path="/sponsor/resources" element={<BrandingResources />} />
+            <Route path="/sponsor/leads" element={<CandidateLeads />} />
+            <Route path="/sponsor/stalls" element={<MyStalls />} />
+            <Route path="/sponsor/messages" element={<Messages />} />
+            <Route path="/sponsor/billing" element={<Billing />} />
+            <Route path="/sponsor/settings" element={<SponsorSettings />} />
             <Route path="/sponsor/settings" element={<SponsorSettings />} />
             
             {/* Partnership & Sponsorship Pages */}
