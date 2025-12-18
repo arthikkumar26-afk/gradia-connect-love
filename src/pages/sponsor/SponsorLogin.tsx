@@ -18,38 +18,12 @@ export default function SponsorLogin() {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data.user) {
-        // Check if user has sponsor role
-        const { data: sponsorData } = await supabase
-          .from("sponsors")
-          .select("id")
-          .eq("user_id", data.user.id)
-          .single();
-
-        if (sponsorData) {
-          toast.success("Welcome back!");
-          navigate("/sponsor/benefits");
-        } else {
-          toast.error("No sponsor account found. Please sign up as a sponsor.");
-          await supabase.auth.signOut();
-        }
-      }
-    } catch (error) {
-      toast.error("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+    // Simulate login delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    
+    toast.success("Welcome back!");
+    navigate("/sponsor/benefits");
+    setIsLoading(false);
   };
 
   return (
