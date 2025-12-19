@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,7 @@ const mockStalls = [
 ];
 
 export default function MyStalls() {
+  const navigate = useNavigate();
   const [selectedStall, setSelectedStall] = useState<typeof mockStalls[0] | null>(null);
 
   const getStatusBadge = (status: string) => {
@@ -280,7 +282,11 @@ export default function MyStalls() {
                           <p className="text-sm text-muted-foreground">Readiness</p>
                         </div>
                       </div>
-                      <Button variant="outline" className="w-full mt-4">
+                      <Button 
+                        variant="outline" 
+                        className="w-full mt-4"
+                        onClick={() => navigate(`/sponsor/event-report/${stall.id}`)}
+                      >
                         <FileText className="mr-2 h-4 w-4" />
                         View Event Report
                       </Button>
