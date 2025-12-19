@@ -80,6 +80,7 @@ import SponsorLogin from "./pages/sponsor/SponsorLogin";
 import SponsorSignup from "./pages/sponsor/SponsorSignup";
 import SponsorBenefits from "./pages/sponsor/SponsorBenefits";
 import SponsorLanding from "./pages/sponsor/SponsorLanding";
+import EventReport from "./pages/sponsor/EventReport";
 
 const queryClient = new QueryClient();
 
@@ -197,6 +198,7 @@ const App = () => (
             <Route path="/sponsor/resources" element={<BrandingResources />} />
             <Route path="/sponsor/leads" element={<CandidateLeads />} />
             <Route path="/sponsor/stalls" element={<MyStalls />} />
+            <Route path="/sponsor/event-report/:eventId" element={<EventReport />} />
             <Route path="/sponsor/messages" element={<Messages />} />
             <Route path="/sponsor/billing" element={<Billing />} />
             <Route path="/sponsor/settings" element={<SponsorSettings />} />
