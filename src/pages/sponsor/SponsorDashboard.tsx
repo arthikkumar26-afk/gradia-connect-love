@@ -84,17 +84,6 @@ export default function SponsorDashboardLayout({ children, activeTab }: SponsorD
               {sidebarOpen && <span className="font-semibold">Sponsor Portal</span>}
             </div>
 
-            {/* Toggle button for desktop */}
-            <div className="hidden lg:block p-2 border-b">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-              >
-                {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-              </Button>
-            </div>
 
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
