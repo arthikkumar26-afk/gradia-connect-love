@@ -10,9 +10,10 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   
-  // Hide footer for employer and candidate logged-in pages
+  // Hide footer for employer, candidate, and sponsor logged-in pages
   const hideFooter = location.pathname.startsWith('/employer/dashboard') || 
-                     location.pathname.startsWith('/candidate/dashboard');
+                     location.pathname.startsWith('/candidate/dashboard') ||
+                     location.pathname.startsWith('/sponsor/');
   
   return (
     <div className="min-h-screen flex flex-col">
