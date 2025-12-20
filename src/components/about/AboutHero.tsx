@@ -54,11 +54,11 @@ const AboutHero = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 backdrop-blur-sm"
+              className="border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 backdrop-blur-sm [&>a]:text-primary-foreground [&_svg]:text-primary-foreground"
               asChild
             >
-              <Link to="/sponsors">
-                <Handshake className="h-5 w-5 mr-2" />
+              <Link to="/sponsors" className="text-primary-foreground">
+                <Handshake className="h-5 w-5 mr-2 text-primary-foreground" />
                 Partner with Gradia
               </Link>
             </Button>
