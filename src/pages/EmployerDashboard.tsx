@@ -18,7 +18,8 @@ import {
   Calendar,
   Award,
   Menu,
-  X
+  X,
+  GitBranch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +45,7 @@ const EmployerDashboard = () => {
     { id: "jobs", label: "Jobs", icon: Briefcase, path: "/employer/jobs" },
     { id: "talent-pool", label: "Talent Pool", icon: Users, path: "/employer/talent-pool" },
     { id: "teams", label: "Teams", icon: UsersRound, path: "/employer/teams" },
+    { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "placements", label: "Placements", icon: UserCheck, path: "/employer/placements" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
@@ -162,6 +164,7 @@ const EmployerDashboard = () => {
                    activeMenu === "jobs" ? "Jobs" :
                    activeMenu === "talent-pool" ? "Talent Pool" :
                    activeMenu === "teams" ? "Teams" :
+                   activeMenu === "interview-pipeline" ? "Interview Pipeline" :
                    activeMenu === "placements" ? "Placements" :
                    activeMenu === "approvals" ? "Approvals" :
                    activeMenu === "settings" ? "Settings" :
