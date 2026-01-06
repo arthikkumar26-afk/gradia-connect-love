@@ -35,6 +35,7 @@ import { JobManagementContent } from "@/components/employer/JobManagementContent
 import TalentPoolContent from "@/components/employer/TalentPoolContent";
 import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
+import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
 
 const EmployerDashboard = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -256,6 +257,7 @@ const EmployerDashboard = () => {
             {activeMenu === "talent-pool" && <TalentPoolContent />}
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
+            {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
           </div>
         </main>
       </div>
