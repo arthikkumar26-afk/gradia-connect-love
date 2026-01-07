@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2 } from "lucide-react";
+import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,8 @@ interface Job {
   type: string;
   location: string;
   status: "Open" | "Under Review" | "Closed";
+  description?: string;
+  requirements?: string;
 }
 
 interface JobDetailsDrawerProps {
@@ -36,6 +38,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // Form state
   const [jobTitle, setJobTitle] = useState("");
@@ -45,6 +48,8 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
   const [jobType, setJobType] = useState("");
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState<"Open" | "Under Review" | "Closed">("Open");
+  const [description, setDescription] = useState("");
+  const [requirements, setRequirements] = useState("");
 
   // Reset form when job changes
   useEffect(() => {
@@ -56,6 +61,8 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
       setJobType(job.type);
       setLocation(job.location);
       setStatus(job.status);
+      setDescription(job.description || "");
+      setRequirements(job.requirements || "");
     }
   }, [job]);
 
@@ -63,10 +70,62 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
 
   const isEditMode = mode === "edit";
 
+  const handleGenerateAI = async () => {
+    if (!jobTitle || !jobType || !location || !experience) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in Job Title, Type, Location, and Experience to generate content.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-job-description", {
+        body: {
+          jobTitle,
+          department,
+          jobType,
+          location,
+          experienceRequired: experience,
+          skills,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data?.description || !data?.requirements || !data?.skills) {
+        throw new Error("Invalid response from AI service");
+      }
+
+      setDescription(typeof data.description === 'string' ? data.description : String(data.description));
+      setRequirements(typeof data.requirements === 'string' ? data.requirements : String(data.requirements));
+      setSkills(typeof data.skills === 'string' ? data.skills : String(data.skills));
+
+      toast({
+        title: "Content generated!",
+        description: "AI has generated description, requirements, and skills.",
+      });
+    } catch (error: any) {
+      console.error("Error generating content:", error);
+      toast({
+        title: "Failed to generate content",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Map UI status to database status
       const dbStatus = status === "Open" ? "active" : status === "Closed" ? "closed" : "under_review";
       
       const skillsArray = skills
@@ -84,6 +143,8 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
           job_type: jobType,
           location: location,
           status: dbStatus,
+          description: description || null,
+          requirements: requirements || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', job.id);
@@ -246,6 +307,67 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
 
           <Separator />
 
+          {/* AI Generate Button - Edit Mode Only */}
+          {isEditMode && (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateAI}
+                disabled={isGenerating || isSaving}
+                className="gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Generate with AI
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Job Description</Label>
+            {isEditMode ? (
+              <Textarea 
+                id="description" 
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                placeholder="Describe the role and responsibilities..."
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {job.description || "No description available"}
+              </p>
+            )}
+          </div>
+
+          {/* Requirements */}
+          <div className="space-y-2">
+            <Label htmlFor="requirements">Requirements</Label>
+            {isEditMode ? (
+              <Textarea 
+                id="requirements" 
+                value={requirements}
+                onChange={(e) => setRequirements(e.target.value)}
+                rows={4}
+                placeholder="List the qualifications and requirements..."
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {job.requirements || "No requirements specified"}
+              </p>
+            )}
+          </div>
+
           {/* Skills */}
           <div className="space-y-2">
             <Label htmlFor="skills">Required Skills</Label>
@@ -254,7 +376,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
                 id="skills" 
                 value={skills}
                 onChange={(e) => setSkills(e.target.value)}
-                rows={3}
+                rows={2}
                 placeholder="Comma-separated skills (e.g., React, TypeScript, Node.js)"
               />
             ) : (
@@ -326,7 +448,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
           <div className="flex gap-3 pt-4">
             {isEditMode ? (
               <>
-                <Button variant="cta" className="flex-1" onClick={handleSave} disabled={isSaving || isDeleting}>
+                <Button variant="cta" className="flex-1" onClick={handleSave} disabled={isSaving || isDeleting || isGenerating}>
                   {isSaving ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -336,12 +458,12 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
                     "Save Changes"
                   )}
                 </Button>
-                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving || isDeleting}>
+                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving || isDeleting || isGenerating}>
                   Cancel
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon" disabled={isSaving || isDeleting}>
+                    <Button variant="destructive" size="icon" disabled={isSaving || isDeleting || isGenerating}>
                       {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                   </AlertDialogTrigger>
