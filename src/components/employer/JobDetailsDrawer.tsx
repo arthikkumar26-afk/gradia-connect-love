@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Briefcase, MapPin, Clock, Users, DollarSign, Calendar } from "lucide-react";
-import { useState } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,12 +28,36 @@ interface JobDetailsDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "view" | "edit";
+  onJobUpdated?: () => void;
+  onJobDeleted?: () => void;
 }
 
-export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDrawerProps) => {
+export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, onJobDeleted }: JobDetailsDrawerProps) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const [status, setStatus] = useState(job?.status || "Open");
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Form state
+  const [jobTitle, setJobTitle] = useState("");
+  const [department, setDepartment] = useState("");
+  const [experience, setExperience] = useState("");
+  const [skills, setSkills] = useState("");
+  const [jobType, setJobType] = useState("");
+  const [location, setLocation] = useState("");
+  const [status, setStatus] = useState<"Open" | "Under Review" | "Closed">("Open");
+
+  // Reset form when job changes
+  useEffect(() => {
+    if (job) {
+      setJobTitle(job.jobTitle);
+      setDepartment(job.department);
+      setExperience(job.experience);
+      setSkills(job.skills);
+      setJobType(job.type);
+      setLocation(job.location);
+      setStatus(job.status);
+    }
+  }, [job]);
 
   if (!job) return null;
 
@@ -44,28 +69,72 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
       // Map UI status to database status
       const dbStatus = status === "Open" ? "active" : status === "Closed" ? "closed" : "under_review";
       
+      const skillsArray = skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
       const { error } = await supabase
         .from('jobs')
-        .update({ status: dbStatus })
+        .update({ 
+          job_title: jobTitle,
+          department: department || null,
+          experience_required: experience,
+          skills: skillsArray,
+          job_type: jobType,
+          location: location,
+          status: dbStatus,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', job.id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Job status updated successfully",
+        description: "Job updated successfully",
       });
 
+      onJobUpdated?.();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating job:", error);
       toast({
         title: "Error",
-        description: "Failed to update job status",
+        description: error.message || "Failed to update job",
         variant: "destructive",
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', job.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Job deleted",
+        description: "The job posting has been removed",
+      });
+
+      onJobDeleted?.();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Error deleting job:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete job",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -86,7 +155,11 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
           <div className="space-y-2">
             <Label htmlFor="jobTitle">Job Title</Label>
             {isEditMode ? (
-              <Input id="jobTitle" defaultValue={job.jobTitle} />
+              <Input 
+                id="jobTitle" 
+                value={jobTitle} 
+                onChange={(e) => setJobTitle(e.target.value)}
+              />
             ) : (
               <div className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-muted-foreground" />
@@ -102,7 +175,11 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
             <div className="space-y-2">
               <Label htmlFor="department">Department</Label>
               {isEditMode ? (
-                <Input id="department" defaultValue={job.department} />
+                <Input 
+                  id="department" 
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                />
               ) : (
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -114,7 +191,11 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
             <div className="space-y-2">
               <Label htmlFor="experience">Experience</Label>
               {isEditMode ? (
-                <Input id="experience" defaultValue={job.experience} />
+                <Input 
+                  id="experience" 
+                  value={experience}
+                  onChange={(e) => setExperience(e.target.value)}
+                />
               ) : (
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-muted-foreground" />
@@ -126,7 +207,18 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
             <div className="space-y-2">
               <Label htmlFor="type">Employment Type</Label>
               {isEditMode ? (
-                <Input id="type" defaultValue={job.type} />
+                <Select value={jobType} onValueChange={setJobType}>
+                  <SelectTrigger id="type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Full-time">Full-time</SelectItem>
+                    <SelectItem value="Part-time">Part-time</SelectItem>
+                    <SelectItem value="Contract">Contract</SelectItem>
+                    <SelectItem value="Internship">Internship</SelectItem>
+                    <SelectItem value="Remote">Remote</SelectItem>
+                  </SelectContent>
+                </Select>
               ) : (
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -138,7 +230,11 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               {isEditMode ? (
-                <Input id="location" defaultValue={job.location} />
+                <Input 
+                  id="location" 
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
               ) : (
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -156,8 +252,10 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
             {isEditMode ? (
               <Textarea 
                 id="skills" 
-                defaultValue={job.skills}
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
                 rows={3}
+                placeholder="Comma-separated skills (e.g., React, TypeScript, Node.js)"
               />
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -228,12 +326,40 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode }: JobDetailsDr
           <div className="flex gap-3 pt-4">
             {isEditMode ? (
               <>
-                <Button variant="cta" className="flex-1" onClick={handleSave} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
+                <Button variant="cta" className="flex-1" onClick={handleSave} disabled={isSaving || isDeleting}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isSaving}>
+                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving || isDeleting}>
                   Cancel
                 </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon" disabled={isSaving || isDeleting}>
+                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Job Posting?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete "{job.jobTitle}" and all associated applications. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             ) : (
               <>

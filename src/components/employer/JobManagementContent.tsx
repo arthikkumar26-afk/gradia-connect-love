@@ -234,6 +234,8 @@ export const JobManagementContent = () => {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         mode={drawerMode}
+        onJobUpdated={fetchJobs}
+        onJobDeleted={fetchJobs}
       />
     </>
   );
