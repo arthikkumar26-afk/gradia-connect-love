@@ -22,7 +22,10 @@ import {
   Video,
   XCircle,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Loader2,
+  RefreshCw,
+  Database
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,298 +40,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AIActionPanel } from "./AIActionPanel";
+import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 
-interface InterviewStep {
-  id: string;
-  title: string;
-  status: "completed" | "current" | "pending" | "failed";
-  date?: string;
-  notes?: string;
-  interviewer?: string;
-  score?: number;
-}
+// Stage icon mapping
+const stageIcons: Record<string, React.ElementType> = {
+  'Resume Screening': Users,
+  'AI Phone Interview': Phone,
+  'Technical Assessment': Code,
+  'HR Round': UserCheck,
+  'Final Review': FileCheck,
+  'Offer Stage': FileText,
+};
 
-interface Candidate {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-  appliedDate: string;
-  rating: number;
-  tags: string[];
-  phone?: string;
-  location?: string;
-  experience?: string;
-  education?: string;
-  resumeUrl?: string;
-  currentStage: string;
-  interviewSteps: InterviewStep[];
-  // AI fields
-  aiScore?: number;
-  interviewCandidateId?: string;
-  jobId?: string;
-}
+const stageColors: Record<string, string> = {
+  'Resume Screening': 'bg-blue-500',
+  'AI Phone Interview': 'bg-purple-500',
+  'Technical Assessment': 'bg-orange-500',
+  'HR Round': 'bg-green-500',
+  'Final Review': 'bg-cyan-500',
+  'Offer Stage': 'bg-emerald-500',
+};
 
-interface PipelineStage {
-  id: string;
-  title: string;
-  icon: React.ElementType;
-  color: string;
-  candidates: Candidate[];
-}
-
-const defaultInterviewSteps: InterviewStep[] = [
-  { id: "resume-review", title: "Resume Review", status: "pending" },
-  { id: "phone-screening", title: "Phone Screening", status: "pending" },
-  { id: "technical-assessment", title: "Technical Assessment", status: "pending" },
-  { id: "technical-interview", title: "Technical Interview", status: "pending" },
-  { id: "hr-interview", title: "HR Interview", status: "pending" },
-  { id: "reference-check", title: "Reference Check", status: "pending" },
-  { id: "offer-letter", title: "Offer Letter", status: "pending" },
-];
-
-const initialPipelineData: PipelineStage[] = [
-  {
-    id: "screening",
-    title: "Screening",
-    icon: Users,
-    color: "bg-blue-500",
-    candidates: [
-      {
-        id: "1",
-        name: "Priya Sharma",
-        email: "priya.sharma@email.com",
-        phone: "+91 98765 43210",
-        location: "Bangalore, India",
-        experience: "3 years",
-        education: "B.Tech in Computer Science",
-        role: "Frontend Developer",
-        appliedDate: "2 days ago",
-        rating: 4,
-        tags: ["React", "TypeScript"],
-        currentStage: "screening",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Jan 4, 2026", notes: "Strong React skills, good portfolio", interviewer: "HR Team", score: 8 },
-          { id: "phone-screening", title: "Phone Screening", status: "current", date: "Jan 6, 2026" },
-          { id: "technical-assessment", title: "Technical Assessment", status: "pending" },
-          { id: "technical-interview", title: "Technical Interview", status: "pending" },
-          { id: "hr-interview", title: "HR Interview", status: "pending" },
-          { id: "reference-check", title: "Reference Check", status: "pending" },
-          { id: "offer-letter", title: "Offer Letter", status: "pending" },
-        ],
-      },
-      {
-        id: "2",
-        name: "Rahul Kumar",
-        email: "rahul.kumar@email.com",
-        phone: "+91 87654 32109",
-        location: "Mumbai, India",
-        experience: "5 years",
-        education: "M.Tech in Software Engineering",
-        role: "Full Stack Developer",
-        appliedDate: "3 days ago",
-        rating: 5,
-        tags: ["Node.js", "React"],
-        currentStage: "screening",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Jan 3, 2026", notes: "Excellent full-stack experience", interviewer: "HR Team", score: 9 },
-          { id: "phone-screening", title: "Phone Screening", status: "pending" },
-          { id: "technical-assessment", title: "Technical Assessment", status: "pending" },
-          { id: "technical-interview", title: "Technical Interview", status: "pending" },
-          { id: "hr-interview", title: "HR Interview", status: "pending" },
-          { id: "reference-check", title: "Reference Check", status: "pending" },
-          { id: "offer-letter", title: "Offer Letter", status: "pending" },
-        ],
-      },
-      {
-        id: "3",
-        name: "Anita Desai",
-        email: "anita.desai@email.com",
-        phone: "+91 76543 21098",
-        location: "Pune, India",
-        experience: "2 years",
-        education: "B.Des in Visual Communication",
-        role: "UI/UX Designer",
-        appliedDate: "1 day ago",
-        rating: 4,
-        tags: ["Figma", "Design"],
-        currentStage: "screening",
-        interviewSteps: defaultInterviewSteps,
-      },
-    ],
-  },
-  {
-    id: "phone-interview",
-    title: "Phone Interview",
-    icon: Phone,
-    color: "bg-purple-500",
-    candidates: [
-      {
-        id: "4",
-        name: "Vikram Singh",
-        email: "vikram.singh@email.com",
-        phone: "+91 65432 10987",
-        location: "Delhi, India",
-        experience: "4 years",
-        education: "B.Tech in Information Technology",
-        role: "Backend Developer",
-        appliedDate: "5 days ago",
-        rating: 4,
-        tags: ["Python", "Django"],
-        currentStage: "phone-interview",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Jan 1, 2026", notes: "Strong backend skills", interviewer: "HR Team", score: 8 },
-          { id: "phone-screening", title: "Phone Screening", status: "completed", date: "Jan 3, 2026", notes: "Good communication, confident", interviewer: "Sarah Miller", score: 7 },
-          { id: "technical-assessment", title: "Technical Assessment", status: "current", date: "Jan 7, 2026" },
-          { id: "technical-interview", title: "Technical Interview", status: "pending" },
-          { id: "hr-interview", title: "HR Interview", status: "pending" },
-          { id: "reference-check", title: "Reference Check", status: "pending" },
-          { id: "offer-letter", title: "Offer Letter", status: "pending" },
-        ],
-      },
-      {
-        id: "5",
-        name: "Meera Patel",
-        email: "meera.patel@email.com",
-        phone: "+91 54321 09876",
-        location: "Ahmedabad, India",
-        experience: "3 years",
-        education: "M.Sc in Data Science",
-        role: "Data Analyst",
-        appliedDate: "4 days ago",
-        rating: 5,
-        tags: ["SQL", "Python"],
-        currentStage: "phone-interview",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Jan 2, 2026", notes: "Excellent analytical background", interviewer: "HR Team", score: 9 },
-          { id: "phone-screening", title: "Phone Screening", status: "completed", date: "Jan 4, 2026", notes: "Very impressive", interviewer: "John Davis", score: 9 },
-          { id: "technical-assessment", title: "Technical Assessment", status: "current" },
-          { id: "technical-interview", title: "Technical Interview", status: "pending" },
-          { id: "hr-interview", title: "HR Interview", status: "pending" },
-          { id: "reference-check", title: "Reference Check", status: "pending" },
-          { id: "offer-letter", title: "Offer Letter", status: "pending" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "technical-round",
-    title: "Technical Round",
-    icon: Code,
-    color: "bg-orange-500",
-    candidates: [
-      {
-        id: "6",
-        name: "Arjun Reddy",
-        email: "arjun.reddy@email.com",
-        phone: "+91 43210 98765",
-        location: "Hyderabad, India",
-        experience: "7 years",
-        education: "B.Tech in Computer Science",
-        role: "Senior Developer",
-        appliedDate: "1 week ago",
-        rating: 5,
-        tags: ["Java", "Spring"],
-        currentStage: "technical-round",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Dec 30, 2025", notes: "Highly experienced candidate", interviewer: "HR Team", score: 10 },
-          { id: "phone-screening", title: "Phone Screening", status: "completed", date: "Jan 1, 2026", notes: "Excellent communication", interviewer: "Emily Brown", score: 9 },
-          { id: "technical-assessment", title: "Technical Assessment", status: "completed", date: "Jan 3, 2026", notes: "Scored 95% on coding test", interviewer: "System", score: 9 },
-          { id: "technical-interview", title: "Technical Interview", status: "current", date: "Jan 8, 2026", interviewer: "Tech Lead - Raj" },
-          { id: "hr-interview", title: "HR Interview", status: "pending" },
-          { id: "reference-check", title: "Reference Check", status: "pending" },
-          { id: "offer-letter", title: "Offer Letter", status: "pending" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "hr-round",
-    title: "HR Round",
-    icon: UserCheck,
-    color: "bg-green-500",
-    candidates: [
-      {
-        id: "7",
-        name: "Sneha Gupta",
-        email: "sneha.gupta@email.com",
-        phone: "+91 32109 87654",
-        location: "Chennai, India",
-        experience: "6 years",
-        education: "MBA in Product Management",
-        role: "Product Manager",
-        appliedDate: "2 weeks ago",
-        rating: 5,
-        tags: ["Agile", "Scrum"],
-        currentStage: "hr-round",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Dec 23, 2025", score: 9 },
-          { id: "phone-screening", title: "Phone Screening", status: "completed", date: "Dec 25, 2025", score: 8 },
-          { id: "technical-assessment", title: "Technical Assessment", status: "completed", date: "Dec 27, 2025", score: 8 },
-          { id: "technical-interview", title: "Technical Interview", status: "completed", date: "Dec 30, 2025", notes: "Great product thinking", score: 9 },
-          { id: "hr-interview", title: "HR Interview", status: "current", date: "Jan 6, 2026", interviewer: "HR Manager" },
-          { id: "reference-check", title: "Reference Check", status: "pending" },
-          { id: "offer-letter", title: "Offer Letter", status: "pending" },
-        ],
-      },
-      {
-        id: "8",
-        name: "Karthik Nair",
-        email: "karthik.nair@email.com",
-        phone: "+91 21098 76543",
-        location: "Kochi, India",
-        experience: "4 years",
-        education: "B.Tech in Computer Science",
-        role: "DevOps Engineer",
-        appliedDate: "10 days ago",
-        rating: 4,
-        tags: ["AWS", "Docker"],
-        currentStage: "hr-round",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Dec 27, 2025", score: 8 },
-          { id: "phone-screening", title: "Phone Screening", status: "completed", date: "Dec 29, 2025", score: 7 },
-          { id: "technical-assessment", title: "Technical Assessment", status: "completed", date: "Jan 1, 2026", score: 8 },
-          { id: "technical-interview", title: "Technical Interview", status: "completed", date: "Jan 3, 2026", notes: "Good DevOps knowledge", score: 8 },
-          { id: "hr-interview", title: "HR Interview", status: "current", date: "Jan 7, 2026" },
-          { id: "reference-check", title: "Reference Check", status: "pending" },
-          { id: "offer-letter", title: "Offer Letter", status: "pending" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "offer",
-    title: "Offer Stage",
-    icon: FileCheck,
-    color: "bg-emerald-500",
-    candidates: [
-      {
-        id: "9",
-        name: "Deepa Krishnan",
-        email: "deepa.krishnan@email.com",
-        phone: "+91 10987 65432",
-        location: "Bangalore, India",
-        experience: "10 years",
-        education: "M.Tech in Computer Science",
-        role: "Tech Lead",
-        appliedDate: "3 weeks ago",
-        rating: 5,
-        tags: ["Leadership", "Architecture"],
-        currentStage: "offer",
-        interviewSteps: [
-          { id: "resume-review", title: "Resume Review", status: "completed", date: "Dec 16, 2025", score: 10 },
-          { id: "phone-screening", title: "Phone Screening", status: "completed", date: "Dec 18, 2025", score: 9 },
-          { id: "technical-assessment", title: "Technical Assessment", status: "completed", date: "Dec 20, 2025", score: 10 },
-          { id: "technical-interview", title: "Technical Interview", status: "completed", date: "Dec 23, 2025", notes: "Outstanding technical skills", score: 10 },
-          { id: "hr-interview", title: "HR Interview", status: "completed", date: "Dec 27, 2025", notes: "Perfect culture fit", score: 9 },
-          { id: "reference-check", title: "Reference Check", status: "completed", date: "Jan 2, 2026", notes: "All references verified", score: 9 },
-          { id: "offer-letter", title: "Offer Letter", status: "current", date: "Jan 6, 2026" },
-        ],
-      },
-    ],
-  },
-];
+type Candidate = PipelineCandidate;
 
 const getInitials = (name: string) => {
   return name
@@ -336,6 +69,14 @@ const getInitials = (name: string) => {
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+};
+
+const getStageIcon = (title: string): React.ElementType => {
+  return stageIcons[title] || Users;
+};
+
+const getStageColor = (title: string): string => {
+  return stageColors[title] || 'bg-gray-500';
 };
 
 // Candidate Detail View Component
@@ -709,7 +450,8 @@ const PipelineColumn = ({
   onMoveCandidate: (candidateId: string, fromStage: string, toStage: string) => void;
   onOpenCandidate: (candidate: Candidate) => void;
 }) => {
-  const Icon = stage.icon;
+  const Icon = getStageIcon(stage.title);
+  const color = getStageColor(stage.title);
 
   return (
     <div className="flex-shrink-0 w-72">
@@ -717,7 +459,7 @@ const PipelineColumn = ({
         <CardHeader className="pb-3 pt-4 px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className={`p-1.5 rounded-md ${stage.color}`}>
+              <div className={`p-1.5 rounded-md ${color}`}>
                 <Icon className="h-4 w-4 text-white" />
               </div>
               <CardTitle className="text-sm font-semibold text-foreground">
@@ -738,9 +480,9 @@ const PipelineColumn = ({
             ) : (
               stage.candidates.map((candidate) => (
                 <CandidateCard
-                  key={candidate.id}
+                  key={candidate.interviewCandidateId}
                   candidate={candidate}
-                  onMoveNext={() => onMoveCandidate(candidate.id, stage.id, "next")}
+                  onMoveNext={() => onMoveCandidate(candidate.interviewCandidateId, stage.id, "next")}
                   onSchedule={() => console.log("Schedule interview for", candidate.name)}
                   onEmail={() => console.log("Send email to", candidate.email)}
                   onOpenProfile={() => onOpenCandidate(candidate)}
@@ -755,86 +497,35 @@ const PipelineColumn = ({
 };
 
 export const InterviewPipelineContent = () => {
-  const [pipelineData, setPipelineData] = useState<PipelineStage[]>(initialPipelineData);
+  const { stages, loading, error, refetch, moveCandidate, updateEventStatus } = useInterviewPipeline();
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
-  const handleMoveCandidate = (candidateId: string, fromStageId: string, direction: string) => {
-    setPipelineData((prevData) => {
-      const newData = [...prevData];
-      const fromStageIndex = newData.findIndex((s) => s.id === fromStageId);
-      
-      if (fromStageIndex === -1) return prevData;
-      
-      const toStageIndex = direction === "next" ? fromStageIndex + 1 : fromStageIndex - 1;
-      
-      if (toStageIndex < 0 || toStageIndex >= newData.length) return prevData;
-      
-      const candidateIndex = newData[fromStageIndex].candidates.findIndex(
-        (c) => c.id === candidateId
-      );
-      
-      if (candidateIndex === -1) return prevData;
-      
-      const [candidate] = newData[fromStageIndex].candidates.splice(candidateIndex, 1);
-      newData[toStageIndex].candidates.push(candidate);
-      
-      return newData;
-    });
+  const handleMoveCandidate = async (interviewCandidateId: string, fromStageId: string, direction: string) => {
+    const fromStageIndex = stages.findIndex((s) => s.id === fromStageId);
+    if (fromStageIndex === -1) return;
+    
+    const toStageIndex = direction === "next" ? fromStageIndex + 1 : fromStageIndex - 1;
+    if (toStageIndex < 0 || toStageIndex >= stages.length) return;
+    
+    const toStageId = stages[toStageIndex].id;
+    await moveCandidate(interviewCandidateId, toStageId);
   };
 
   const handleOpenCandidate = (candidate: Candidate) => {
     setSelectedCandidate(candidate);
   };
 
-  const handleUpdateStep = (stepId: string, status: InterviewStep["status"]) => {
+  const handleUpdateStep = async (stepId: string, status: InterviewStep["status"]) => {
     if (!selectedCandidate) return;
-
-    setPipelineData((prevData) => {
-      return prevData.map(stage => ({
-        ...stage,
-        candidates: stage.candidates.map(candidate => {
-          if (candidate.id !== selectedCandidate.id) return candidate;
-          
-          const updatedSteps = candidate.interviewSteps.map((step, index, arr) => {
-            if (step.id === stepId) {
-              // Update the current step
-              return { ...step, status, date: step.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
-            }
-            // If completing a step, set the next pending step to current
-            if (status === "completed" && step.status === "pending") {
-              const currentStepIndex = arr.findIndex(s => s.id === stepId);
-              if (index === currentStepIndex + 1) {
-                return { ...step, status: "current" as const };
-              }
-            }
-            return step;
-          });
-          
-          return { ...candidate, interviewSteps: updatedSteps };
-        })
-      }));
-    });
-
-    // Update the selected candidate as well
-    setSelectedCandidate(prev => {
-      if (!prev) return null;
-      const updatedSteps = prev.interviewSteps.map((step, index, arr) => {
-        if (step.id === stepId) {
-          return { ...step, status, date: step.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) };
-        }
-        if (status === "completed" && step.status === "pending") {
-          const currentStepIndex = arr.findIndex(s => s.id === stepId);
-          if (index === currentStepIndex + 1) {
-            return { ...step, status: "current" as const };
-          }
-        }
-        return step;
-      });
-      return { ...prev, interviewSteps: updatedSteps };
-    });
+    
+    const dbStatus = status === "current" ? "in_progress" : status;
+    await updateEventStatus(selectedCandidate.interviewCandidateId, stepId, dbStatus);
+    
+    // Refresh selected candidate data
+    await refetch();
   };
 
-  const totalCandidates = pipelineData.reduce(
+  const totalCandidates = stages.reduce(
     (acc, stage) => acc + stage.candidates.length,
     0
   );
@@ -846,11 +537,54 @@ export const InterviewPipelineContent = () => {
         candidate={selectedCandidate}
         onBack={() => setSelectedCandidate(null)}
         onUpdateStep={handleUpdateStep}
-        onRefresh={() => {
-          // Could refresh data from database here
-          console.log("Refresh triggered");
-        }}
+        onRefresh={refetch}
       />
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading pipeline data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Database className="h-12 w-12 text-muted-foreground" />
+          <div>
+            <p className="text-lg font-medium text-foreground">Failed to load pipeline</p>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+          <Button onClick={refetch} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (stages.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Users className="h-12 w-12 text-muted-foreground" />
+          <div>
+            <p className="text-lg font-medium text-foreground">No pipeline stages</p>
+            <p className="text-sm text-muted-foreground">Configure interview stages to get started</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -859,12 +593,22 @@ export const InterviewPipelineContent = () => {
       {/* Header Stats */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Interview Pipeline</h2>
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            Interview Pipeline
+            <Badge variant="secondary" className="text-xs">
+              <Database className="h-3 w-3 mr-1" />
+              Live
+            </Badge>
+          </h2>
           <p className="text-sm text-muted-foreground">
-            Track candidates through your hiring process
+            Real-time candidate tracking across your hiring process
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <Button onClick={refetch} variant="ghost" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           <div className="text-right">
             <p className="text-2xl font-bold text-foreground">{totalCandidates}</p>
             <p className="text-xs text-muted-foreground">Total Candidates</p>
@@ -875,7 +619,7 @@ export const InterviewPipelineContent = () => {
       {/* Pipeline Board */}
       <ScrollArea className="w-full">
         <div className="flex gap-4 pb-4">
-          {pipelineData.map((stage) => (
+          {stages.map((stage) => (
             <PipelineColumn
               key={stage.id}
               stage={stage}
