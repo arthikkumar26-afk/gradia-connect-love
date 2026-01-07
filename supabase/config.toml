@@ -1,1 +1,28 @@
 project_id = "cybqlimobxpjygwcdojv"
+
+[functions.analyze-company-website]
+verify_jwt = true
+
+[functions.generate-job-description]
+verify_jwt = true
+
+[functions.parse-resume]
+verify_jwt = true
+
+[functions.send-notification-email]
+verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = false
+
+[functions.analyze-resume]
+verify_jwt = false
+
+[functions.process-interview-stage]
+verify_jwt = false
+
+[functions.send-interview-invitation]
+verify_jwt = false
+
+[functions.generate-offer-letter]
+verify_jwt = false

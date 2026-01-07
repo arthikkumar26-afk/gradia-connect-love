@@ -145,6 +145,186 @@ export type Database = {
           },
         ]
       }
+      interview_candidates: {
+        Row: {
+          ai_analysis: Json | null
+          ai_score: number | null
+          applied_at: string | null
+          candidate_id: string
+          current_stage_id: string | null
+          id: string
+          job_id: string
+          resume_url: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          ai_score?: number | null
+          applied_at?: string | null
+          candidate_id: string
+          current_stage_id?: string | null
+          id?: string
+          job_id: string
+          resume_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_analysis?: Json | null
+          ai_score?: number | null
+          applied_at?: string | null
+          candidate_id?: string
+          current_stage_id?: string | null
+          id?: string
+          job_id?: string
+          resume_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_candidates_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_candidates_current_stage_id_fkey"
+            columns: ["current_stage_id"]
+            isOneToOne: false
+            referencedRelation: "interview_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_candidates_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_events: {
+        Row: {
+          ai_feedback: Json | null
+          ai_score: number | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          interview_candidate_id: string
+          notes: string | null
+          scheduled_at: string | null
+          stage_id: string
+          status: string | null
+        }
+        Insert: {
+          ai_feedback?: Json | null
+          ai_score?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          interview_candidate_id: string
+          notes?: string | null
+          scheduled_at?: string | null
+          stage_id: string
+          status?: string | null
+        }
+        Update: {
+          ai_feedback?: Json | null
+          ai_score?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          interview_candidate_id?: string
+          notes?: string | null
+          scheduled_at?: string | null
+          stage_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_events_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_events_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "interview_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_invitations: {
+        Row: {
+          created_at: string | null
+          email_sent_at: string | null
+          email_status: string | null
+          expires_at: string | null
+          id: string
+          interview_event_id: string
+          invitation_token: string | null
+          meeting_link: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
+          expires_at?: string | null
+          id?: string
+          interview_event_id: string
+          invitation_token?: string | null
+          meeting_link?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_sent_at?: string | null
+          email_status?: string | null
+          expires_at?: string | null
+          id?: string
+          interview_event_id?: string
+          invitation_token?: string | null
+          meeting_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_invitations_interview_event_id_fkey"
+            columns: ["interview_event_id"]
+            isOneToOne: false
+            referencedRelation: "interview_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_stages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_ai_automated: boolean | null
+          name: string
+          stage_order: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_ai_automated?: boolean | null
+          name: string
+          stage_order: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_ai_automated?: boolean | null
+          name?: string
+          stage_order?: number
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           closing_date: string | null
@@ -206,6 +386,59 @@ export type Database = {
             columns: ["employer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offer_letters: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          generated_by_ai: boolean | null
+          id: string
+          interview_candidate_id: string
+          offer_content: string | null
+          position_title: string
+          responded_at: string | null
+          salary_offered: number | null
+          sent_at: string | null
+          start_date: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          generated_by_ai?: boolean | null
+          id?: string
+          interview_candidate_id: string
+          offer_content?: string | null
+          position_title: string
+          responded_at?: string | null
+          salary_offered?: number | null
+          sent_at?: string | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          generated_by_ai?: boolean | null
+          id?: string
+          interview_candidate_id?: string
+          offer_content?: string | null
+          position_title?: string
+          responded_at?: string | null
+          salary_offered?: number | null
+          sent_at?: string | null
+          start_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_letters_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
             referencedColumns: ["id"]
           },
         ]
