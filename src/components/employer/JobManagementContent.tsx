@@ -18,6 +18,8 @@ interface Job {
   type: string;
   location: string;
   status: "Open" | "Under Review" | "Closed";
+  description?: string;
+  requirements?: string;
 }
 
 export const JobManagementContent = () => {
@@ -55,6 +57,8 @@ export const JobManagementContent = () => {
         type: job.job_type || "Full-Time",
         location: job.location || "Remote",
         status: job.status === "active" ? "Open" : job.status === "closed" ? "Closed" : "Under Review",
+        description: job.description || "",
+        requirements: job.requirements || "",
       }));
 
       setJobs(formattedJobs);
