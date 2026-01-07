@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Briefcase, MapPin, Calendar, LogOut, User, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { JobApplicationModal } from "@/components/candidate/JobApplicationModal";
 
 interface Job {
   id: string;
@@ -35,6 +36,18 @@ const CandidateDashboard = () => {
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [applicationCount, setApplicationCount] = useState(0);
+
+  const fetchApplicationCount = async () => {
+    if (!profile?.id) return;
+    const { count } = await supabase
+      .from('applications')
+      .select('*', { count: 'exact', head: true })
+      .eq('candidate_id', profile.id);
+    setApplicationCount(count || 0);
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -48,7 +61,17 @@ const CandidateDashboard = () => {
     }
 
     fetchJobs();
+    fetchApplicationCount();
   }, [isAuthenticated, profile, navigate]);
+
+  const handleApply = (job: Job) => {
+    setSelectedJob(job);
+    setIsApplicationModalOpen(true);
+  };
+
+  const handleApplicationSubmitted = () => {
+    fetchApplicationCount();
+  };
 
   const fetchJobs = async () => {
     try {
@@ -162,7 +185,7 @@ const CandidateDashboard = () => {
                 <FileText className="h-6 w-6 text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">0</p>
+                <p className="text-2xl font-bold text-foreground">{applicationCount}</p>
                 <p className="text-sm text-muted-foreground">Applications</p>
               </div>
             </div>
@@ -241,7 +264,7 @@ const CandidateDashboard = () => {
                         <Badge variant="outline">{job.salary_range}</Badge>
                       )}
                     </div>
-                    <Button variant="cta">Apply Now</Button>
+                    <Button variant="cta" onClick={() => handleApply(job)}>Apply Now</Button>
                   </div>
                 </Card>
               ))}
@@ -249,6 +272,16 @@ const CandidateDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Application Modal */}
+      <JobApplicationModal
+        job={selectedJob}
+        open={isApplicationModalOpen}
+        onOpenChange={setIsApplicationModalOpen}
+        candidateId={profile?.id || ''}
+        candidateProfile={profile}
+        onApplicationSubmitted={handleApplicationSubmitted}
+      />
     </div>
   );
 };
