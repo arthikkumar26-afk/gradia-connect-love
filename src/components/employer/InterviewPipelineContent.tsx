@@ -21,7 +21,8 @@ import {
   MessageSquare,
   Video,
   XCircle,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { AIActionPanel } from "./AIActionPanel";
 
 interface InterviewStep {
   id: string;
@@ -62,6 +64,10 @@ interface Candidate {
   resumeUrl?: string;
   currentStage: string;
   interviewSteps: InterviewStep[];
+  // AI fields
+  aiScore?: number;
+  interviewCandidateId?: string;
+  jobId?: string;
 }
 
 interface PipelineStage {
@@ -336,11 +342,13 @@ const getInitials = (name: string) => {
 const CandidateDetailView = ({ 
   candidate, 
   onBack,
-  onUpdateStep
+  onUpdateStep,
+  onRefresh
 }: { 
   candidate: Candidate; 
   onBack: () => void;
   onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
+  onRefresh?: () => void;
 }) => {
   const completedSteps = candidate.interviewSteps.filter(s => s.status === "completed").length;
   const progress = (completedSteps / candidate.interviewSteps.length) * 100;
@@ -366,7 +374,15 @@ const CandidateDetailView = ({
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h2 className="text-xl font-semibold text-foreground">Candidate Profile</h2>
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            Candidate Profile
+            {candidate.aiScore && (
+              <Badge className="bg-primary/10 text-primary border-primary/20">
+                <Sparkles className="h-3 w-3 mr-1" />
+                AI Score: {candidate.aiScore}%
+              </Badge>
+            )}
+          </h2>
           <p className="text-sm text-muted-foreground">Interview progress and details</p>
         </div>
       </div>
@@ -469,6 +485,20 @@ const CandidateDetailView = ({
               </div>
             </CardContent>
           </Card>
+
+          {/* AI Action Panel */}
+          <AIActionPanel
+            candidateId={candidate.id}
+            candidateName={candidate.name}
+            candidateEmail={candidate.email}
+            jobId={candidate.jobId}
+            jobTitle={candidate.role}
+            interviewCandidateId={candidate.interviewCandidateId}
+            currentStage={candidate.currentStage}
+            aiScore={candidate.aiScore}
+            resumeUrl={candidate.resumeUrl}
+            onRefresh={onRefresh}
+          />
         </div>
 
         {/* Right Column - Interview Steps */}
@@ -816,6 +846,10 @@ export const InterviewPipelineContent = () => {
         candidate={selectedCandidate}
         onBack={() => setSelectedCandidate(null)}
         onUpdateStep={handleUpdateStep}
+        onRefresh={() => {
+          // Could refresh data from database here
+          console.log("Refresh triggered");
+        }}
       />
     );
   }
