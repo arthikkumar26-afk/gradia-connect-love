@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, Pencil, Plus } from "lucide-react";
+import { Search, Filter, Eye, Pencil, Plus, Loader2 } from "lucide-react";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Job {
   id: string;
@@ -17,64 +20,55 @@ interface Job {
   status: "Open" | "Under Review" | "Closed";
 }
 
-const sampleJobs: Job[] = [
-  {
-    id: "1",
-    jobTitle: "Frontend Developer",
-    department: "Engineering",
-    experience: "1–2 yrs",
-    skills: "React, JavaScript",
-    type: "Full-Time",
-    location: "Hyderabad",
-    status: "Open"
-  },
-  {
-    id: "2",
-    jobTitle: "HR Coordinator",
-    department: "HR",
-    experience: "0–1 yrs",
-    skills: "ATS basics, Communication",
-    type: "Full-Time",
-    location: "Remote",
-    status: "Under Review"
-  },
-  {
-    id: "3",
-    jobTitle: "QA Tester",
-    department: "QA",
-    experience: "0–1 yrs",
-    skills: "Manual Testing, Bug reporting",
-    type: "Full-Time",
-    location: "Hyderabad",
-    status: "Open"
-  },
-  {
-    id: "4",
-    jobTitle: "Backend Developer",
-    department: "Engineering",
-    experience: "2–4 yrs",
-    skills: "Node.js, Python, APIs",
-    type: "Full-Time",
-    location: "Bangalore",
-    status: "Open"
-  },
-  {
-    id: "5",
-    jobTitle: "Product Designer",
-    department: "Design",
-    experience: "3–5 yrs",
-    skills: "Figma, UI/UX, Prototyping",
-    type: "Contract",
-    location: "Remote",
-    status: "Closed"
-  }
-];
-
 export const JobManagementContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<"view" | "edit">("view");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("employer_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const formattedJobs: Job[] = (data || []).map((job) => ({
+        id: job.id,
+        jobTitle: job.job_title,
+        department: job.department || "General",
+        experience: job.experience_required || "Not specified",
+        skills: job.skills?.join(", ") || "Not specified",
+        type: job.job_type || "Full-Time",
+        location: job.location || "Remote",
+        status: job.status === "active" ? "Open" : job.status === "closed" ? "Closed" : "Under Review",
+      }));
+
+      setJobs(formattedJobs);
+    } catch (error: any) {
+      console.error("Error fetching jobs:", error);
+      toast({
+        title: "Failed to load jobs",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleViewJob = (job: Job) => {
     setSelectedJob(job);
@@ -100,6 +94,12 @@ export const JobManagementContent = () => {
         return "default";
     }
   };
+
+  const filteredJobs = jobs.filter((job) =>
+    job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    job.skills.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -127,9 +127,11 @@ export const JobManagementContent = () => {
               Filter
             </Button>
           </div>
-          <Button variant="cta" className="gap-2 w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            Post Job
+          <Button variant="cta" className="gap-2 w-full sm:w-auto" asChild>
+            <Link to="/employer/post-job">
+              <Plus className="h-4 w-4" />
+              Create Vacancy
+            </Link>
           </Button>
         </div>
 
@@ -150,44 +152,62 @@ export const JobManagementContent = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sampleJobs.map((job) => (
-                  <TableRow 
-                    key={job.id}
-                    className="hover:bg-accent/5 transition-colors"
-                  >
-                    <TableCell className="font-medium">{job.jobTitle}</TableCell>
-                    <TableCell>{job.department}</TableCell>
-                    <TableCell>{job.experience}</TableCell>
-                    <TableCell className="max-w-xs truncate">{job.skills}</TableCell>
-                    <TableCell>{job.type}</TableCell>
-                    <TableCell>{job.location}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
-                        {job.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleViewJob(job)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleEditJob(job)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground mt-2">Loading jobs...</p>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredJobs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <p className="text-muted-foreground">No jobs found</p>
+                      <Button variant="link" asChild className="mt-2">
+                        <Link to="/employer/post-job">Create your first vacancy</Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredJobs.map((job) => (
+                    <TableRow 
+                      key={job.id}
+                      className="hover:bg-accent/5 transition-colors"
+                    >
+                      <TableCell className="font-medium">{job.jobTitle}</TableCell>
+                      <TableCell>{job.department}</TableCell>
+                      <TableCell>{job.experience}</TableCell>
+                      <TableCell className="max-w-xs truncate">{job.skills}</TableCell>
+                      <TableCell>{job.type}</TableCell>
+                      <TableCell>{job.location}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
+                          {job.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleViewJob(job)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleEditJob(job)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -195,7 +215,7 @@ export const JobManagementContent = () => {
           {/* Pagination */}
           <div className="flex items-center justify-between px-6 py-4 border-t border-border">
             <p className="text-sm text-muted-foreground">
-              Showing <span className="font-medium">1-5</span> of <span className="font-medium">5</span> jobs
+              Showing <span className="font-medium">{filteredJobs.length}</span> of <span className="font-medium">{jobs.length}</span> jobs
             </p>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" disabled>
