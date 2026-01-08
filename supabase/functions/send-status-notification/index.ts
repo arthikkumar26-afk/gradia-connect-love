@@ -29,7 +29,7 @@ async function sendEmail(to: string, subject: string, html: string, fromName: st
 interface StatusNotificationRequest {
   candidateId: string;
   jobId: string;
-  status: 'shortlisted' | 'interview_scheduled' | 'offer_received' | 'rejected' | 'hired';
+  status: 'applied' | 'shortlisted' | 'interview_scheduled' | 'offer_received' | 'rejected' | 'hired';
   additionalInfo?: {
     interviewDate?: string;
     interviewType?: string;
@@ -60,6 +60,45 @@ const getEmailContent = (
   `;
 
   switch (status) {
+    case 'applied':
+      return {
+        subject: `✅ Application Received: ${jobTitle} at ${companyName}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>${baseStyles}</head>
+          <body>
+            <div class="container">
+              <div class="header" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white;">
+                <h1 style="margin: 0;">✅ Application Received!</h1>
+                <p style="margin: 10px 0 0; opacity: 0.9;">Thank you for applying</p>
+              </div>
+              <div class="content">
+                <p>Dear ${candidateName},</p>
+                <p>Thank you for applying for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>. We have received your application!</p>
+                
+                <div class="info-card" style="border-color: #6366f1;">
+                  <h3 style="margin-top: 0; color: #6366f1;">📋 What Happens Next</h3>
+                  <ul style="margin: 0; padding-left: 20px;">
+                    <li>Our AI system will analyze your profile</li>
+                    <li>Your skills will be matched with job requirements</li>
+                    <li>You'll receive updates on your application status</li>
+                    <li>If shortlisted, we'll contact you for an interview</li>
+                  </ul>
+                </div>
+                
+                <p style="color: #666;">Keep an eye on your inbox for updates. We aim to review applications within 2-3 business days.</p>
+              </div>
+              <div class="footer">
+                <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
+                <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
     case 'shortlisted':
       return {
         subject: `🌟 Great News! You've Been Shortlisted for ${jobTitle}`,

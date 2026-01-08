@@ -233,6 +233,21 @@ export const JobApplicationFlow = ({
             status: 'in_review',
           });
 
+        // Send application confirmation email
+        try {
+          await supabase.functions.invoke('send-status-notification', {
+            body: {
+              candidateId: user.id,
+              jobId: job.id,
+              status: 'applied',
+            },
+          });
+          console.log('Application confirmation email sent');
+        } catch (emailError) {
+          console.error('Failed to send confirmation email:', emailError);
+          // Don't fail the application if email fails
+        }
+
         setFlowStep('complete');
       } else {
         // Sample job - run mock analysis but still create application if possible
