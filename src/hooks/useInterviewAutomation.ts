@@ -62,5 +62,32 @@ export const useInterviewAutomation = () => {
     }
   };
 
-  return { analyzeResume, processStage, sendInvitation, generateOfferLetter };
+  const autoProgressPipeline = async (interviewCandidateId: string, autoProgressAll: boolean = true) => {
+    try {
+      const loadingToast = toast.loading("AI is processing interview stages...");
+      
+      const { data, error } = await supabase.functions.invoke('auto-progress-pipeline', {
+        body: { interviewCandidateId, autoProgressAll }
+      });
+      
+      toast.dismiss(loadingToast);
+      
+      if (error) throw error;
+      
+      if (data.status === 'completed') {
+        toast.success("🎉 " + data.message);
+      } else if (data.status === 'rejected') {
+        toast.error(data.message);
+      } else {
+        toast.success(data.message);
+      }
+      
+      return data;
+    } catch (error: any) {
+      toast.error(error.message || "Failed to auto-progress pipeline");
+      throw error;
+    }
+  };
+
+  return { analyzeResume, processStage, sendInvitation, generateOfferLetter, autoProgressPipeline };
 };
