@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import pdf from "https://esm.sh/pdf-parse@1.1.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,31 +38,42 @@ serve(async (req) => {
       });
     }
 
+    console.log("Processing file:", file.name, "Type:", mimeType, "Size:", file.size);
+
     let messageContent: any[];
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
     
-    // Handle PDF files
+    const prompt = `You are an expert resume parser. Analyze this resume document and extract ALL available information.
+
+CRITICAL: Extract the email address - look carefully for it in the contact section, header, or anywhere in the document. Email addresses typically contain @ symbol.
+
+Extract these fields:
+- full_name: The candidate's full name
+- mobile: Phone number (with country code if available)  
+- email: Email address (MUST extract this - look for @ symbol)
+- experience_level: One of "entry", "mid", "senior", "expert" based on years of experience
+- location: City, State/Country
+- linkedin: LinkedIn profile URL if available
+- preferred_role: The job title they're seeking or their current role
+- skills: List of technical and soft skills
+- education: Highest degree and institution
+
+Be thorough - scan the entire document for contact information.`;
+
+    // Handle PDF files - send as base64 to vision model
     if (mimeType === "application/pdf") {
-      console.log("Parsing PDF resume");
-      const pdfData = await pdf(new Uint8Array(arrayBuffer));
-      const extractedText = pdfData.text;
-      
-      if (!extractedText || extractedText.trim().length < 10) {
-        return new Response(
-          JSON.stringify({ error: "Could not extract text from PDF. Please try an image format or enter details manually." }), 
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      const prompt = `Analyze this resume text and extract the following information:\n- full_name\n- mobile\n- email\n- experience_level (entry|mid|senior|expert)\n- location\n- linkedin\n- preferred_role\n\nResume text:\n${extractedText}\n\nReturn only data you are confident in.`;
-      
-      messageContent = [{ type: "text", text: prompt }];
+      console.log("Parsing PDF resume with vision model");
+      messageContent = [
+        { type: "text", text: prompt },
+        {
+          type: "image_url",
+          image_url: { url: `data:application/pdf;base64,${base64}` },
+        },
+      ];
     } 
     // Handle image files
     else if (mimeType.startsWith("image/")) {
       console.log("Parsing image resume");
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      const prompt = `Analyze this resume image and extract the following information:\n- full_name\n- mobile\n- email\n- experience_level (entry|mid|senior|expert)\n- location\n- linkedin\n- preferred_role\nReturn only data you are confident in.`;
-      
       messageContent = [
         { type: "text", text: prompt },
         {
@@ -72,13 +82,26 @@ serve(async (req) => {
         },
       ];
     }
-    // DOC/DOCX not supported yet
+    // DOC/DOCX - try as binary
+    else if (mimeType.includes("document") || mimeType.includes("msword")) {
+      console.log("Document format detected, attempting to process");
+      // For Word docs, we'll try sending as-is - the model may be able to process it
+      messageContent = [
+        { type: "text", text: prompt + "\n\nNote: This is a Word document." },
+        {
+          type: "image_url",
+          image_url: { url: `data:${mimeType};base64,${base64}` },
+        },
+      ];
+    }
     else {
-      return new Response(JSON.stringify({ note: "parsing_skipped" }), {
-        status: 200,
+      return new Response(JSON.stringify({ error: "Unsupported file format. Please upload PDF, image, or Word document." }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("Sending to AI for parsing...");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -103,18 +126,26 @@ serve(async (req) => {
               parameters: {
                 type: "object",
                 properties: {
-                  full_name: { type: "string" },
-                  mobile: { type: "string" },
-                  email: { type: "string" },
+                  full_name: { type: "string", description: "Candidate's full name" },
+                  mobile: { type: "string", description: "Phone number" },
+                  email: { type: "string", description: "Email address - look for @ symbol" },
                   experience_level: { 
                     type: "string", 
-                    enum: ["entry", "mid", "senior", "expert"] 
+                    enum: ["entry", "mid", "senior", "expert"],
+                    description: "Experience level based on years"
                   },
-                  location: { type: "string" },
-                  linkedin: { type: "string" },
-                  preferred_role: { type: "string" },
+                  location: { type: "string", description: "City and country/state" },
+                  linkedin: { type: "string", description: "LinkedIn URL" },
+                  preferred_role: { type: "string", description: "Current or desired job title" },
+                  skills: { 
+                    type: "array", 
+                    items: { type: "string" },
+                    description: "List of skills from the resume"
+                  },
+                  education: { type: "string", description: "Education details" },
                 },
                 required: ["full_name"],
+                additionalProperties: false
               },
             },
           },
@@ -124,6 +155,9 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI gateway error:", response.status, errorText);
+      
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
@@ -136,19 +170,21 @@ serve(async (req) => {
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("Failed to parse resume");
+      throw new Error("Failed to parse resume with AI");
     }
 
     const data = await response.json();
+    console.log("AI response received");
+    
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     
     if (!toolCall) {
+      console.error("No tool call in response:", JSON.stringify(data));
       throw new Error("No structured data returned from AI");
     }
 
     const extractedData = JSON.parse(toolCall.function.arguments);
+    console.log("Extracted data:", JSON.stringify(extractedData));
 
     return new Response(JSON.stringify(extractedData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
