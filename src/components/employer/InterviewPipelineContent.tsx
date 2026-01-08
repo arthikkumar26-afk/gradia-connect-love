@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { 
   Users, 
-  Phone, 
+  Phone,
   Code, 
-  UserCheck, 
-  FileCheck, 
+  UserCheck,
+  FileCheck,
   ChevronRight,
   MoreVertical,
   Calendar,
@@ -51,7 +51,6 @@ import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep }
 // Stage icon mapping
 const stageIcons: Record<string, React.ElementType> = {
   'Resume Screening': Users,
-  'AI Phone Interview': Phone,
   'Technical Assessment': Code,
   'HR Round': UserCheck,
   'Final Review': FileCheck,
@@ -60,7 +59,6 @@ const stageIcons: Record<string, React.ElementType> = {
 
 const stageColors: Record<string, string> = {
   'Resume Screening': 'bg-blue-500',
-  'AI Phone Interview': 'bg-purple-500',
   'Technical Assessment': 'bg-orange-500',
   'HR Round': 'bg-green-500',
   'Final Review': 'bg-cyan-500',
@@ -307,7 +305,9 @@ const CandidateProfileModal = ({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {candidate.interviewSteps.map((step, index) => (
+                    {candidate.interviewSteps
+                      .filter(step => step.title !== "AI Phone Interview")
+                      .map((step, index) => (
                       <div key={step.id} className="flex items-start gap-3">
                         <div className="mt-0.5">{getStepIcon(step.status)}</div>
                         <div className="flex-1 min-w-0">
