@@ -20,7 +20,8 @@ import {
   Menu,
   X,
   GitBranch,
-  QrCode
+  QrCode,
+  Bell
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -39,11 +40,15 @@ import TalentPoolContent from "@/components/employer/TalentPoolContent";
 import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
 import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [newApplications, setNewApplications] = useState(0);
   const { user, profile, isAuthenticated } = useAuth();
 
   // Role-based access control
@@ -58,6 +63,80 @@ const EmployerDashboard = () => {
       return;
     }
   }, [isAuthenticated, profile, navigate]);
+
+  // Real-time subscription for new applications
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // First, get all job IDs for this employer
+    const setupRealtimeSubscription = async () => {
+      const { data: myJobs } = await supabase
+        .from('jobs')
+        .select('id, job_title')
+        .eq('employer_id', user.id);
+
+      if (!myJobs || myJobs.length === 0) return;
+
+      const jobIds = myJobs.map(j => j.id);
+      const jobTitles = Object.fromEntries(myJobs.map(j => [j.id, j.job_title]));
+
+      // Subscribe to new interview_candidates for employer's jobs
+      const channel = supabase
+        .channel('employer-applications')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'interview_candidates'
+          },
+          async (payload) => {
+            const newCandidate = payload.new as any;
+            
+            // Check if this application is for one of our jobs
+            if (jobIds.includes(newCandidate.job_id)) {
+              // Fetch candidate name
+              const { data: candidateProfile } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', newCandidate.candidate_id)
+                .single();
+
+              const candidateName = candidateProfile?.full_name || 'A candidate';
+              const jobTitle = jobTitles[newCandidate.job_id] || 'your job';
+              const aiScore = newCandidate.ai_score;
+
+              // Show toast notification
+              toast.success(
+                `🎉 New Application!`,
+                {
+                  description: `${candidateName} applied for ${jobTitle}${aiScore ? ` (AI Score: ${aiScore}%)` : ''}`,
+                  duration: 8000,
+                  action: {
+                    label: "View",
+                    onClick: () => setActiveMenu("talent-pool")
+                  }
+                }
+              );
+
+              // Update badge count
+              setNewApplications(prev => prev + 1);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+    
+    return () => {
+      cleanup.then(fn => fn?.());
+    };
+  }, [user?.id]);
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
@@ -114,11 +193,18 @@ const EmployerDashboard = () => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeMenu === item.id;
+            const showBadge = item.id === "talent-pool" && newApplications > 0;
             
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveMenu(item.id)}
+                onClick={() => {
+                  setActiveMenu(item.id);
+                  // Clear badge when viewing talent pool
+                  if (item.id === "talent-pool") {
+                    setNewApplications(0);
+                  }
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                   isActive
                     ? "bg-accent/10 text-accent font-medium"
@@ -126,7 +212,12 @@ const EmployerDashboard = () => {
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                <span className="flex-1 text-left">{item.label}</span>
+                {showBadge && (
+                  <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5 animate-pulse">
+                    {newApplications}
+                  </Badge>
+                )}
               </button>
             );
           })}
