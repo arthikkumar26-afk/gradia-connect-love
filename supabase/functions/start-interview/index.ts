@@ -110,35 +110,82 @@ Return ONLY a valid JSON array with this exact format:
 The correctAnswer should be the index (0-3) of the correct option.
 Make questions progressively harder. Focus on practical knowledge.`;
 
-    const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'You are a technical interviewer generating assessment questions. Always respond with valid JSON only.' },
-          { role: 'user', content: prompt }
-        ],
-      }),
-    });
-
-    const aiData = await aiResponse.json();
-    console.log('AI Response received');
-
     let questions = [];
+    let aiError = null;
+
     try {
-      const content = aiData.choices[0].message.content;
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        questions = JSON.parse(jsonMatch[0]);
+      const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: 'You are a technical interviewer generating assessment questions. Always respond with valid JSON only.' },
+            { role: 'user', content: prompt }
+          ],
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error('AI API error:', aiResponse.status, errorText);
+        aiError = `AI API returned ${aiResponse.status}`;
+      } else {
+        const aiData = await aiResponse.json();
+        console.log('AI Response received');
+
+        const content = aiData.choices?.[0]?.message?.content;
+        if (content) {
+          // Extract JSON from response (handle markdown code blocks)
+          const jsonMatch = content.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            questions = JSON.parse(jsonMatch[0]);
+          }
+        }
       }
     } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
+      console.error('Failed to parse AI response:', parseError, 'aiError:', aiError);
       // Fallback to generic questions
+      questions = [
+        {
+          question: `What is the primary purpose of ${skills[0] || 'programming'}?`,
+          options: ["Code organization", "Performance optimization", "Error handling", "All of the above"],
+          correctAnswer: 3,
+          explanation: "All aspects are important in software development."
+        },
+        {
+          question: "Which best describes good coding practices?",
+          options: ["Writing complex code", "Clear and maintainable code", "Maximum lines of code", "No comments needed"],
+          correctAnswer: 1,
+          explanation: "Clear and maintainable code is essential for team collaboration."
+        },
+        {
+          question: "What is debugging?",
+          options: ["Adding new features", "Finding and fixing errors", "Deleting code", "Writing tests"],
+          correctAnswer: 1,
+          explanation: "Debugging is the process of finding and fixing errors in code."
+        },
+        {
+          question: "Why is version control important?",
+          options: ["It's not important", "Track changes and collaborate", "Make code slower", "Delete old files"],
+          correctAnswer: 1,
+          explanation: "Version control helps track changes and enables team collaboration."
+        },
+        {
+          question: "What does API stand for?",
+          options: ["Automated Programming Interface", "Application Programming Interface", "Advanced Protocol Integration", "Application Protocol Integration"],
+          correctAnswer: 1,
+          explanation: "API stands for Application Programming Interface."
+        }
+      ];
+    }
+
+    // Ensure we have questions before proceeding
+    if (!questions || questions.length === 0) {
+      console.error('No questions generated, using fallback');
       questions = [
         {
           question: `What is the primary purpose of ${skills[0] || 'programming'}?`,
