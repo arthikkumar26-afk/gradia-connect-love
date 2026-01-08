@@ -16,7 +16,7 @@ import {
   X,
   Sun,
   Moon,
-  Globe,
+  QrCode,
   ChevronDown,
   LogOut,
   LayoutDashboard,
@@ -35,7 +35,14 @@ import {
   Package,
   Calendar,
   HelpCircle,
+  ExternalLink,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { learningCategories } from "@/data/learningCategories";
@@ -452,19 +459,38 @@ const Header = () => {
               )}
             </Button>
 
-            {/* Language Selector */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Globe className="h-4 w-4" />
+            {/* Job Vacancies QR Code */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative">
+                  <QrCode className="h-4 w-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>English</DropdownMenuItem>
-                <DropdownMenuItem>Español</DropdownMenuItem>
-                <DropdownMenuItem>Français</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4" align="end">
+                <div className="flex flex-col items-center gap-3">
+                  <h4 className="font-semibold text-sm text-foreground">Scan for Job Vacancies</h4>
+                  <div className="bg-white p-3 rounded-lg shadow-sm">
+                    <QRCodeSVG
+                      value={`${window.location.origin}/companies`}
+                      size={140}
+                      level="H"
+                      includeMargin
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Scan to browse all company job openings
+                  </p>
+                  <Button variant="outline" size="sm" asChild className="w-full">
+                    <Link to="/companies" className="flex items-center gap-2">
+                      <ExternalLink className="h-3 w-3" />
+                      View All Companies
+                    </Link>
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* CTAs - Always visible */}
             <div className="hidden lg:flex items-center space-x-3">
