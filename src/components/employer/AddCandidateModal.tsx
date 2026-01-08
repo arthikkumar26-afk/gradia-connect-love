@@ -167,47 +167,8 @@ export const AddCandidateModal = ({
       // Step 2: Upload resume file
       const resumeUrl = await uploadResume();
 
-      // Step 3: Create a profile or use existing one
+      // Step 3: Trigger AI analysis which also creates profile and adds to talent pool
       setAnalysisStep('analyzing');
-
-      // Check if profile exists for this email
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', finalEmail)
-        .maybeSingle();
-
-      let candidateId: string;
-
-      if (existingProfile) {
-        candidateId = existingProfile.id;
-      } else {
-        // Create a new profile record for this candidate
-        const newCandidateId = crypto.randomUUID();
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: newCandidateId,
-            email: finalEmail,
-            full_name: parsedData?.full_name || finalName,
-            role: 'candidate',
-            experience_level: parsedData?.experience_level || null,
-            preferred_role: parsedData?.preferred_role || selectedJob.job_title,
-            location: parsedData?.location || null,
-            linkedin: parsedData?.linkedin || null,
-            mobile: parsedData?.mobile || null,
-            resume_url: resumeUrl,
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw new Error('Failed to create candidate profile');
-        }
-        candidateId = newCandidateId;
-      }
-
-      // Step 4: Trigger AI analysis and add to talent pool
-      setAnalysisStep('adding-to-pool');
 
       const candidateProfile = {
         full_name: parsedData?.full_name || finalName,
@@ -219,9 +180,11 @@ export const AddCandidateModal = ({
         education: parsedData?.education || 'Not specified',
       };
 
+      setAnalysisStep('adding-to-pool');
+
       const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('analyze-resume', {
         body: {
-          candidateId,
+          candidateId: null, // Profile will be created in edge function
           jobId: selectedJobId,
           resumeUrl,
           candidateProfile,
