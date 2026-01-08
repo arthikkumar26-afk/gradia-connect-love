@@ -49,6 +49,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AIActionPanel } from "./AIActionPanel";
 import { InterviewRecordingPlayer } from "./InterviewRecordingPlayer";
+import { StageRecordingPlayer } from "./StageRecordingPlayer";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 
 // Stage icon mapping
@@ -307,76 +308,97 @@ const CandidateProfileModal = ({
                   <CardTitle className="text-sm">Interview Stages</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {candidate.interviewSteps
                       .filter(step => step.title !== "AI Phone Interview")
-                      .map((step, index) => (
-                      <div key={step.id} className="flex items-start gap-3">
-                        <div className="mt-0.5">{getStepIcon(step.status)}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <h4 className="text-sm font-medium text-foreground truncate">{step.title}</h4>
-                            {step.status === "current" && (
-                              <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs shrink-0">
-                                In Progress
-                              </Badge>
-                            )}
-                            {step.status === "completed" && (
-                              <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-xs shrink-0">
-                                Done
-                              </Badge>
-                            )}
-                            {step.status === "failed" && (
-                              <Badge variant="destructive" className="text-xs shrink-0">Failed</Badge>
-                            )}
-                          </div>
-                          {step.date && (
-                            <p className="text-xs text-muted-foreground">
-                              {step.date}
-                              {step.interviewer && ` • ${step.interviewer}`}
-                            </p>
-                          )}
-                          {step.notes && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{step.notes}</p>
-                          )}
-                          {step.score !== undefined && (
-                            <p className="text-xs text-muted-foreground">Score: {step.score}/10</p>
-                          )}
-                          {/* Action buttons for current step */}
-                          {step.status === "current" && (
-                            <div className="flex gap-2 mt-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => onUpdateStep(step.id, "failed")}
-                                className="text-destructive hover:text-destructive h-7 text-xs"
-                              >
-                                <XCircle className="h-3 w-3 mr-1" />
-                                Fail
-                              </Button>
-                              <Button 
-                                size="sm"
-                                onClick={() => onUpdateStep(step.id, "completed")}
-                                className="h-7 text-xs"
-                              >
-                                <Check className="h-3 w-3 mr-1" />
-                                Complete
-                              </Button>
+                      .map((step, index, filteredSteps) => {
+                        // Find first pending step index
+                        const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
+                        const isFirstPending = step.status === "pending" && index === firstPendingIndex;
+                        
+                        // Check if this stage might have a recording (Technical Assessment, etc.)
+                        const hasRecordingCapability = step.title === "Technical Assessment" || step.title === "HR Round";
+                        
+                        return (
+                          <div key={step.id} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                            <div className="flex items-start gap-3">
+                              <div className="mt-0.5">{getStepIcon(step.status)}</div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <h4 className="text-sm font-medium text-foreground truncate">{step.title}</h4>
+                                  {step.status === "current" && (
+                                    <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs shrink-0">
+                                      In Progress
+                                    </Badge>
+                                  )}
+                                  {step.status === "completed" && (
+                                    <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-xs shrink-0">
+                                      Done
+                                    </Badge>
+                                  )}
+                                  {step.status === "failed" && (
+                                    <Badge variant="destructive" className="text-xs shrink-0">Failed</Badge>
+                                  )}
+                                </div>
+                                {step.date && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {step.date}
+                                    {step.interviewer && ` • ${step.interviewer}`}
+                                  </p>
+                                )}
+                                {step.notes && (
+                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{step.notes}</p>
+                                )}
+                                {step.score !== undefined && (
+                                  <p className="text-xs text-muted-foreground">Score: {step.score}/10</p>
+                                )}
+                                
+                                {/* Show recording for completed stages that have recordings */}
+                                {step.status === "completed" && hasRecordingCapability && (
+                                  <StageRecordingPlayer
+                                    interviewCandidateId={candidate.interviewCandidateId}
+                                    stageId={step.id}
+                                    stageName={step.title}
+                                  />
+                                )}
+                                
+                                {/* Action buttons for current step */}
+                                {step.status === "current" && (
+                                  <div className="flex gap-2 mt-2">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => onUpdateStep(step.id, "failed")}
+                                      className="text-destructive hover:text-destructive h-7 text-xs"
+                                    >
+                                      <XCircle className="h-3 w-3 mr-1" />
+                                      Fail
+                                    </Button>
+                                    <Button 
+                                      size="sm"
+                                      onClick={() => onUpdateStep(step.id, "completed")}
+                                      className="h-7 text-xs"
+                                    >
+                                      <Check className="h-3 w-3 mr-1" />
+                                      Complete
+                                    </Button>
+                                  </div>
+                                )}
+                                {isFirstPending && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => onUpdateStep(step.id, "current")}
+                                    className="mt-2 h-7 text-xs"
+                                  >
+                                    Start
+                                  </Button>
+                                )}
+                              </div>
                             </div>
-                          )}
-                          {step.status === "pending" && index === candidate.interviewSteps.findIndex(s => s.status === "pending") && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => onUpdateStep(step.id, "current")}
-                              className="mt-2 h-7 text-xs"
-                            >
-                              Start
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                          </div>
+                        );
+                      })}
                   </div>
                 </CardContent>
               </Card>
