@@ -144,10 +144,66 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { candidateId, jobId, resumeUrl, candidateProfile, jobDetails }: ResumeAnalysisRequest = await req.json();
+    const { candidateId: originalCandidateId, jobId, resumeUrl, candidateProfile, jobDetails }: ResumeAnalysisRequest = await req.json();
 
-    console.log('Analyzing resume for candidate:', candidateId, 'job:', jobId);
-    console.log('Candidate email:', candidateProfile.email);
+    console.log('Analyzing resume for original candidate ID:', originalCandidateId, 'job:', jobId);
+    console.log('Candidate email from resume:', candidateProfile.email);
+
+    // Check if we need to create a new profile for this candidate (when applying via QR/employer upload)
+    // First, check if a profile with this email already exists
+    let actualCandidateId = originalCandidateId;
+    
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .eq('email', candidateProfile.email)
+      .single();
+
+    if (existingProfile) {
+      // Use existing profile
+      actualCandidateId = existingProfile.id;
+      console.log('Found existing profile for candidate:', existingProfile.email, 'ID:', actualCandidateId);
+    } else if (candidateProfile.email && candidateProfile.email !== '') {
+      // Check if the original candidate's email is different from parsed resume email
+      const { data: originalProfile } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('id', originalCandidateId)
+        .single();
+
+      if (originalProfile && originalProfile.email !== candidateProfile.email) {
+        // This is a new candidate - create a profile for them
+        console.log('Creating new profile for candidate from resume:', candidateProfile.email);
+        
+        const newCandidateId = crypto.randomUUID();
+        
+        const { data: newProfile, error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: newCandidateId,
+            email: candidateProfile.email,
+            full_name: candidateProfile.full_name || 'Unknown',
+            role: 'candidate',
+            experience_level: candidateProfile.experience_level,
+            preferred_role: candidateProfile.preferred_role,
+            location: candidateProfile.location,
+            mobile: candidateProfile.mobile,
+            resume_url: resumeUrl,
+          })
+          .select()
+          .single();
+
+        if (profileError) {
+          console.error('Error creating candidate profile:', profileError);
+          // Continue with original ID if profile creation fails
+        } else {
+          actualCandidateId = newProfile.id;
+          console.log('Created new candidate profile with ID:', actualCandidateId);
+        }
+      }
+    }
+
+    console.log('Using candidate ID for pipeline:', actualCandidateId);
 
     // Build prompt for AI analysis with all available candidate data
     const candidateSkills = candidateProfile.skills?.join(', ') || 'Not specified';
@@ -258,7 +314,7 @@ Provide your analysis using the suggest_analysis function.`;
       .from('interview_candidates')
       .upsert({
         job_id: jobId,
-        candidate_id: candidateId,
+        candidate_id: actualCandidateId,
         current_stage_id: nextStage?.id || resumeScreeningStage?.id,
         ai_score: analysis.overall_score,
         ai_analysis: analysis,
