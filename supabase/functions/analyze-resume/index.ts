@@ -16,6 +16,9 @@ interface ResumeAnalysisRequest {
     experience_level?: string;
     preferred_role?: string;
     location?: string;
+    skills?: string[];
+    education?: string;
+    mobile?: string;
   };
   jobDetails: {
     job_title: string;
@@ -146,7 +149,9 @@ serve(async (req) => {
     console.log('Analyzing resume for candidate:', candidateId, 'job:', jobId);
     console.log('Candidate email:', candidateProfile.email);
 
-    // Build prompt for AI analysis
+    // Build prompt for AI analysis with all available candidate data
+    const candidateSkills = candidateProfile.skills?.join(', ') || 'Not specified';
+    
     const prompt = `You are an expert HR analyst. Analyze this candidate's profile against the job requirements and provide a comprehensive evaluation.
 
 CANDIDATE PROFILE:
@@ -155,6 +160,9 @@ CANDIDATE PROFILE:
 - Experience Level: ${candidateProfile.experience_level || 'Not specified'}
 - Preferred Role: ${candidateProfile.preferred_role || 'Not specified'}
 - Location: ${candidateProfile.location || 'Not specified'}
+- Skills: ${candidateSkills}
+- Education: ${candidateProfile.education || 'Not specified'}
+- Phone: ${candidateProfile.mobile || 'Not specified'}
 
 JOB DETAILS:
 - Title: ${jobDetails.job_title}

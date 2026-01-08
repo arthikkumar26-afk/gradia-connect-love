@@ -164,7 +164,29 @@ export const JobApplicationFlow = ({
       }
 
       // User is authenticated - proceed with real analysis
-      // Step 1: Upload resume to storage
+      // Step 1: Parse resume to extract details
+      let parsedResumeData: any = null;
+      if (resumeFile) {
+        try {
+          const formData = new FormData();
+          formData.append('file', resumeFile);
+          
+          const parseResponse = await supabase.functions.invoke('parse-resume', {
+            body: formData,
+          });
+          
+          if (parseResponse.data && !parseResponse.error) {
+            parsedResumeData = parseResponse.data;
+            console.log('Parsed resume data:', parsedResumeData);
+          }
+        } catch (parseError) {
+          console.error('Resume parsing error:', parseError);
+        }
+      }
+
+      setAnalysisSubStep('analyzing');
+
+      // Step 2: Upload resume to storage
       let resumeUrl: string | null = null;
       try {
         resumeUrl = await uploadResumeToStorage();
@@ -172,16 +194,14 @@ export const JobApplicationFlow = ({
         console.log('Resume upload failed, continuing without URL:', uploadErr);
       }
 
-      setAnalysisSubStep('analyzing');
-
-      // Step 2: Get user profile
+      // Step 3: Get user profile for fallback data
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      // Step 3: Check if this is a real job from DB or sample job
+      // Step 4: Check if this is a real job from DB or sample job
       const { data: dbJob } = await supabase
         .from('jobs')
         .select('*')
@@ -192,17 +212,21 @@ export const JobApplicationFlow = ({
         // Real job from database - call the analyze-resume edge function
         setAnalysisSubStep('matching');
 
+        // Use parsed resume data if available, otherwise fall back to profile
         const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('analyze-resume', {
           body: {
             candidateId: user.id,
             jobId: job.id,
             resumeUrl,
             candidateProfile: {
-              full_name: profile?.full_name || user.email?.split('@')[0] || 'Candidate',
-              email: user.email || '',
-              experience_level: profile?.experience_level,
-              preferred_role: profile?.preferred_role,
-              location: profile?.location,
+              full_name: parsedResumeData?.full_name || profile?.full_name || user.email?.split('@')[0] || 'Candidate',
+              email: parsedResumeData?.email || user.email || '',
+              experience_level: parsedResumeData?.experience_level || profile?.experience_level,
+              preferred_role: parsedResumeData?.preferred_role || profile?.preferred_role,
+              location: parsedResumeData?.location || profile?.location,
+              skills: parsedResumeData?.skills || [],
+              education: parsedResumeData?.education,
+              mobile: parsedResumeData?.mobile || profile?.mobile,
             },
             jobDetails: {
               job_title: dbJob.job_title,
