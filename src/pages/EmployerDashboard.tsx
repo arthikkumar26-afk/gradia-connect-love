@@ -19,8 +19,11 @@ import {
   Award,
   Menu,
   X,
-  GitBranch
+  GitBranch,
+  QrCode
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import EmployerQRCode from "@/components/employer/EmployerQRCode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -40,6 +43,7 @@ import { InterviewPipelineContent } from "@/components/employer/InterviewPipelin
 const EmployerDashboard = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { user, profile } = useAuth();
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
@@ -215,39 +219,50 @@ const EmployerDashboard = () => {
                   })}
                 </div>
 
-                {/* Quick Actions Section */}
-                <div className="mt-6 bg-card rounded-xl border border-border p-4 shadow-soft">
-                  <h3 className="text-base font-semibold text-foreground mb-3">Quick Actions</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                      <Link to="/employer/jobs">
-                        <Briefcase className="h-4 w-4 mr-2" />
-                        <div className="text-left">
-                          <div className="text-sm font-medium">Manage Jobs</div>
-                          <div className="text-xs text-muted-foreground">View postings</div>
-                        </div>
-                      </Link>
-                    </Button>
-                    
-                    <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                      <Link to="/employer/talent-pool">
-                        <Users className="h-4 w-4 mr-2" />
-                        <div className="text-left">
-                          <div className="text-sm font-medium">Browse Talent</div>
-                          <div className="text-xs text-muted-foreground">Find candidates</div>
-                        </div>
-                      </Link>
-                    </Button>
-                    
-                    <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                      <Link to="/employer/approvals">
-                        <CheckSquare className="h-4 w-4 mr-2" />
-                        <div className="text-left">
-                          <div className="text-sm font-medium">Review Approvals</div>
-                          <div className="text-xs text-muted-foreground">Pending actions</div>
-                        </div>
-                      </Link>
-                    </Button>
+                {/* QR Code & Quick Actions Section */}
+                <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* QR Code Card */}
+                  {user?.id && (
+                    <EmployerQRCode 
+                      employerId={user.id} 
+                      companyName={profile?.company_name || profile?.full_name} 
+                    />
+                  )}
+
+                  {/* Quick Actions Section */}
+                  <div className="lg:col-span-2 bg-card rounded-xl border border-border p-4 shadow-soft">
+                    <h3 className="text-base font-semibold text-foreground mb-3">Quick Actions</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                        <Link to="/employer/jobs">
+                          <Briefcase className="h-4 w-4 mr-2" />
+                          <div className="text-left">
+                            <div className="text-sm font-medium">Manage Jobs</div>
+                            <div className="text-xs text-muted-foreground">View postings</div>
+                          </div>
+                        </Link>
+                      </Button>
+                      
+                      <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                        <Link to="/employer/talent-pool">
+                          <Users className="h-4 w-4 mr-2" />
+                          <div className="text-left">
+                            <div className="text-sm font-medium">Browse Talent</div>
+                            <div className="text-xs text-muted-foreground">Find candidates</div>
+                          </div>
+                        </Link>
+                      </Button>
+                      
+                      <Button variant="outline" className="justify-start h-auto py-3" asChild>
+                        <Link to="/employer/approvals">
+                          <CheckSquare className="h-4 w-4 mr-2" />
+                          <div className="text-left">
+                            <div className="text-sm font-medium">Review Approvals</div>
+                            <div className="text-xs text-muted-foreground">Pending actions</div>
+                          </div>
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </>
