@@ -20,7 +20,13 @@ async function sendEmail(apiKey: string, params: { from: string; to: string[]; r
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(params),
+    body: JSON.stringify({
+      ...params,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@gradia.co.in>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    }),
   });
   return response.json();
 }
@@ -123,58 +129,60 @@ serve(async (req) => {
       from: `${companyName} Hiring <noreply@gradia.co.in>`,
       to: [candidate.email],
       reply_to: 'support@gradia.co.in',
-      subject: `Interview Invitation: ${stageName} for ${job.job_title} at ${companyName}`,
+      subject: `Interview scheduled for ${job.job_title} at ${companyName}`,
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
-            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-            .highlight { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-            .btn { display: inline-block; background: #667eea; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; margin-top: 20px; }
-            .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Interview Invitation</h1>
-              <p>Congratulations on advancing to the next stage</p>
-            </div>
-            <div class="content">
-              <p>Dear <strong>${candidate.full_name}</strong>,</p>
-              
-              <p>We are pleased to inform you that you have been selected for the <strong>${stageName}</strong> round for the position of <strong>${job.job_title}</strong> at <strong>${companyName}</strong>.</p>
-              
-              <div class="highlight">
-                <h3 style="margin-top: 0;">📅 Interview Details</h3>
-                <p><strong>Stage:</strong> ${stageName}</p>
-                <p><strong>Position:</strong> ${job.job_title}</p>
-                <p><strong>Date & Time:</strong> ${formattedDate} IST</p>
-                ${meetingLink ? `<p><strong>Meeting Link:</strong> <a href="${meetingLink}">${meetingLink}</a></p>` : ''}
-              </div>
-              
-              <h3>📝 Preparation Tips</h3>
-              <ul>
-                <li>Review the job description and requirements</li>
-                <li>Prepare examples of your relevant experience</li>
-                <li>Have questions ready about the role and company</li>
-                <li>Test your audio/video setup before the interview</li>
-              </ul>
-              
-              ${meetingLink ? `<a href="${meetingLink}" class="btn">Join Interview</a>` : ''}
-              
-              <div class="footer">
-                <p>Best of luck with your interview!</p>
-                <p>The ${companyName} Hiring Team</p>
-              </div>
-            </div>
-          </div>
-        </body>
-        </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="padding: 32px 24px; border-bottom: 1px solid #e5e7eb;">
+        <h1 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">Interview Invitation</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px;">
+        <p style="margin: 0 0 16px;">Dear ${candidate.full_name},</p>
+        
+        <p style="margin: 0 0 16px;">You have been selected for the <strong>${stageName}</strong> round for the position of <strong>${job.job_title}</strong> at <strong>${companyName}</strong>.</p>
+        
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+          <tr>
+            <td style="padding: 20px;">
+              <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280;">Interview Details</p>
+              <p style="margin: 0 0 8px;"><strong>Stage:</strong> ${stageName}</p>
+              <p style="margin: 0 0 8px;"><strong>Position:</strong> ${job.job_title}</p>
+              <p style="margin: 0 0 8px;"><strong>Date and Time:</strong> ${formattedDate} IST</p>
+              ${meetingLink ? `<p style="margin: 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #2563eb;">${meetingLink}</a></p>` : ''}
+            </td>
+          </tr>
+        </table>
+        
+        <p style="margin: 0 0 8px; font-weight: 600;">Preparation tips:</p>
+        <ul style="margin: 0 0 24px; padding-left: 20px;">
+          <li style="margin-bottom: 4px;">Review the job description and requirements</li>
+          <li style="margin-bottom: 4px;">Prepare examples of your relevant experience</li>
+          <li style="margin-bottom: 4px;">Test your audio/video setup before the interview</li>
+        </ul>
+        
+        <p style="margin: 0;">Best of luck,<br>The ${companyName} Hiring Team</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
+          This email was sent by Gradia Job Portal on behalf of ${companyName}.<br>
+          <a href="mailto:unsubscribe@gradia.co.in?subject=Unsubscribe" style="color: #9ca3af;">Unsubscribe</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `,
     });
 

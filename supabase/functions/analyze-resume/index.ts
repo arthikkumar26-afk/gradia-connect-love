@@ -45,71 +45,66 @@ async function sendInterviewInvitationEmail(apiKey: string, params: {
     from: 'Gradia Hiring <noreply@gradia.co.in>',
     to: [params.candidateEmail],
     reply_to: 'support@gradia.co.in',
-    subject: `Application Update: You've Been Selected for ${params.jobTitle} at ${params.companyName}`,
+    subject: `Your application for ${params.jobTitle} has been reviewed`,
+    headers: {
+      'List-Unsubscribe': '<mailto:unsubscribe@gradia.co.in>',
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    },
     html: `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
-          .header h1 { margin: 0 0 10px; font-size: 28px; }
-          .content { background: #ffffff; padding: 30px; }
-          .score-card { background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #e0e7ff; }
-          .score { font-size: 48px; font-weight: bold; color: #667eea; }
-          .score-label { color: #666; font-size: 14px; margin-top: 5px; }
-          .highlight { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-          .next-steps { background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; }
-          .next-steps h3 { color: #16a34a; margin-top: 0; }
-          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; }
-          .badge { display: inline-block; background: ${params.recommendation === 'strong_yes' ? '#16a34a' : params.recommendation === 'yes' ? '#2563eb' : '#f59e0b'}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Congratulations, ${params.candidateName}!</h1>
-            <p style="margin: 0; opacity: 0.9;">Your application has been reviewed</p>
-          </div>
-          <div class="content">
-            <p>We are thrilled to inform you that your profile has been <strong>successfully reviewed</strong> for the position of <strong>${params.jobTitle}</strong> at <strong>${params.companyName}</strong>.</p>
-            
-            <div class="score-card">
-              <div class="score">${params.aiScore}%</div>
-              <div class="score-label">AI Match Score</div>
-              <div style="margin-top: 15px;">
-                <span class="badge">${params.recommendation === 'strong_yes' ? '⭐ Excellent Match' : params.recommendation === 'yes' ? '✓ Good Match' : '• Potential Match'}</span>
-              </div>
-            </div>
-            
-            <div class="highlight">
-              <h3 style="margin-top: 0; color: #667eea;">📋 Application Status</h3>
-              <p><strong>Current Stage:</strong> ${params.stageName}</p>
-              <p><strong>Position:</strong> ${params.jobTitle}</p>
-              <p><strong>Company:</strong> ${params.companyName}</p>
-              <p style="margin-bottom: 0;"><strong>Status:</strong> Under Review ✓</p>
-            </div>
-            
-            <div class="next-steps">
-              <h3>🚀 What Happens Next?</h3>
-              <ol style="margin: 0; padding-left: 20px;">
-                <li>Our hiring team will review your profile</li>
-                <li>If shortlisted, you'll receive an interview invitation</li>
-                <li>Prepare for potential technical assessments</li>
-                <li>Keep an eye on your inbox for updates!</li>
-              </ol>
-            </div>
-            
-            <p style="color: #666;">We appreciate your interest in joining our team. We'll be in touch soon with the next steps.</p>
-          </div>
-          <div class="footer">
-            <p>Best regards,<br><strong>The ${params.companyName} Hiring Team</strong></p>
-            <p style="font-size: 12px; color: #999;">This is an automated message from Gradia Job Portal</p>
-          </div>
-        </div>
-      </body>
-      </html>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="padding: 32px 24px; border-bottom: 1px solid #e5e7eb;">
+        <h1 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">Application Update</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px;">
+        <p style="margin: 0 0 16px;">Dear ${params.candidateName},</p>
+        
+        <p style="margin: 0 0 16px;">Thank you for applying for the <strong>${params.jobTitle}</strong> position at <strong>${params.companyName}</strong>. Your application has been reviewed by our team.</p>
+        
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+          <tr>
+            <td style="padding: 20px;">
+              <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280;">Application Details</p>
+              <p style="margin: 0 0 8px;"><strong>Position:</strong> ${params.jobTitle}</p>
+              <p style="margin: 0 0 8px;"><strong>Company:</strong> ${params.companyName}</p>
+              <p style="margin: 0 0 8px;"><strong>Current Stage:</strong> ${params.stageName}</p>
+              <p style="margin: 0;"><strong>Match Score:</strong> ${params.aiScore}%</p>
+            </td>
+          </tr>
+        </table>
+        
+        <p style="margin: 0 0 16px;"><strong>Next Steps:</strong></p>
+        <ol style="margin: 0 0 24px; padding-left: 20px;">
+          <li style="margin-bottom: 8px;">Our hiring team will conduct a detailed review</li>
+          <li style="margin-bottom: 8px;">If shortlisted, you will receive an interview invitation</li>
+          <li style="margin-bottom: 8px;">Please check your inbox regularly for updates</li>
+        </ol>
+        
+        <p style="margin: 0 0 24px; color: #6b7280;">If you have any questions, please reply to this email.</p>
+        
+        <p style="margin: 0;">Best regards,<br>The ${params.companyName} Hiring Team</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
+          This email was sent by Gradia Job Portal on behalf of ${params.companyName}.<br>
+          <a href="mailto:unsubscribe@gradia.co.in?subject=Unsubscribe" style="color: #9ca3af;">Unsubscribe</a> from these notifications.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
     `,
   };
   
