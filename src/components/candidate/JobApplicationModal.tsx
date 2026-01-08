@@ -92,17 +92,20 @@ export const JobApplicationModal = ({
   const uploadResume = async (): Promise<string | null> => {
     if (!resumeFile) return candidateProfile?.resume_url || null;
 
-    const fileExt = resumeFile.name.split('.').pop();
-    const fileName = `${candidateId}/${Date.now()}.${fileExt}`;
+    // Use edge function to upload (bypasses storage RLS)
+    const formData = new FormData();
+    formData.append('file', resumeFile);
 
-    const { error: uploadError } = await supabase.storage
-      .from('resumes')
-      .upload(fileName, resumeFile, { upsert: true });
+    const response = await supabase.functions.invoke('upload-resume', {
+      body: formData,
+    });
 
-    if (uploadError) throw uploadError;
+    if (response.error) {
+      console.error('Resume upload error:', response.error);
+      throw new Error('Failed to upload resume');
+    }
 
-    const { data } = supabase.storage.from('resumes').getPublicUrl(fileName);
-    return data.publicUrl;
+    return response.data?.url || null;
   };
 
   const handleSubmit = async () => {
