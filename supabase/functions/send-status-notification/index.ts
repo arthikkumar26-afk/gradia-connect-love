@@ -22,6 +22,10 @@ async function sendEmail(to: string, subject: string, html: string, fromName: st
       reply_to: 'support@gradia.co.in',
       subject,
       html,
+      headers: {
+        'List-Unsubscribe': '<mailto:unsubscribe@gradia.co.in>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
     }),
   });
   return response.json();
@@ -48,288 +52,201 @@ const getEmailContent = (
   companyName: string,
   additionalInfo?: any
 ) => {
-  const baseStyles = `
-    <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0; }
-      .content { background: #ffffff; padding: 30px; }
-      .info-card { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid; }
-      .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; border-radius: 0 0 12px 12px; }
-      .button { display: inline-block; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px; }
-    </style>
-  `;
+  const wrapper = (content: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="padding: 32px 24px; border-bottom: 1px solid #e5e7eb;">
+        <h1 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">Application Update</h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px;">
+        ${content}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
+          This email was sent by Gradia Job Portal on behalf of ${companyName}.<br>
+          <a href="mailto:unsubscribe@gradia.co.in?subject=Unsubscribe" style="color: #9ca3af;">Unsubscribe</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
   switch (status) {
     case 'applied':
       return {
-        subject: `Application Received: ${jobTitle} at ${companyName}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>${baseStyles}</head>
-          <body>
-            <div class="container">
-              <div class="header" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white;">
-                <h1 style="margin: 0;">Application Received</h1>
-                <p style="margin: 10px 0 0; opacity: 0.9;">Thank you for applying</p>
-              </div>
-              <div class="content">
-                <p>Dear ${candidateName},</p>
-                <p>Thank you for applying for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>. We have received your application.</p>
-                
-                <div class="info-card" style="border-color: #6366f1;">
-                  <h3 style="margin-top: 0; color: #6366f1;">What Happens Next</h3>
-                  <ul style="margin: 0; padding-left: 20px;">
-                    <li>Our AI system will analyze your profile</li>
-                    <li>Your skills will be matched with job requirements</li>
-                    <li>You'll receive updates on your application status</li>
-                    <li>If shortlisted, we'll contact you for an interview</li>
-                  </ul>
-                </div>
-                
-                <p style="color: #666;">Keep an eye on your inbox for updates. We aim to review applications within 2-3 business days.</p>
-              </div>
-              <div class="footer">
-                <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
-                <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        subject: `Application received for ${jobTitle} at ${companyName}`,
+        html: wrapper(`
+          <p style="margin: 0 0 16px;">Dear ${candidateName},</p>
+          <p style="margin: 0 0 16px;">Thank you for applying for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>. We have received your application.</p>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 8px; font-weight: 600;">What happens next:</p>
+                <ul style="margin: 0; padding-left: 20px;">
+                  <li style="margin-bottom: 4px;">Our team will review your application</li>
+                  <li style="margin-bottom: 4px;">You will receive updates on your status</li>
+                  <li style="margin-bottom: 4px;">If shortlisted, we will contact you for an interview</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+          
+          <p style="margin: 0 0 24px; color: #6b7280;">We aim to review applications within 2-3 business days.</p>
+          <p style="margin: 0;">Best regards,<br>The ${companyName} Hiring Team</p>
+        `)
       };
 
     case 'shortlisted':
       return {
-        subject: `Great News: You've Been Shortlisted for ${jobTitle}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>${baseStyles}</head>
-          <body>
-            <div class="container">
-              <div class="header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
-                <h1 style="margin: 0;">Congratulations!</h1>
-                <p style="margin: 10px 0 0; opacity: 0.9;">You've been shortlisted</p>
-              </div>
-              <div class="content">
-                <p>Dear ${candidateName},</p>
-                <p>We are excited to inform you that your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong> has been <strong>shortlisted</strong>!</p>
-                
-                <div class="info-card" style="border-color: #10b981;">
-                  <h3 style="margin-top: 0; color: #10b981;">📋 What This Means</h3>
-                  <ul style="margin: 0; padding-left: 20px;">
-                    <li>Your profile has impressed our hiring team</li>
-                    <li>You're moving forward in our selection process</li>
-                    <li>We'll be in touch soon with next steps</li>
-                  </ul>
-                </div>
-                
-                <p style="color: #666;">Please ensure your contact information is up to date and keep an eye on your inbox for further communication.</p>
-              </div>
-              <div class="footer">
-                <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
-                <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        subject: `You have been shortlisted for ${jobTitle} at ${companyName}`,
+        html: wrapper(`
+          <p style="margin: 0 0 16px;">Dear ${candidateName},</p>
+          <p style="margin: 0 0 16px;">We are pleased to inform you that your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong> has been shortlisted.</p>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 8px; font-weight: 600;">Next steps:</p>
+                <ul style="margin: 0; padding-left: 20px;">
+                  <li style="margin-bottom: 4px;">Your profile has impressed our hiring team</li>
+                  <li style="margin-bottom: 4px;">You are moving forward in our selection process</li>
+                  <li style="margin-bottom: 4px;">We will contact you soon with further details</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+          
+          <p style="margin: 0 0 24px; color: #6b7280;">Please ensure your contact information is up to date.</p>
+          <p style="margin: 0;">Best regards,<br>The ${companyName} Hiring Team</p>
+        `)
       };
 
     case 'interview_scheduled':
       const interviewDate = additionalInfo?.interviewDate 
         ? new Date(additionalInfo.interviewDate).toLocaleString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit'
           })
         : 'To be confirmed';
       
       return {
-        subject: `📅 Interview Scheduled: ${jobTitle} at ${companyName}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>${baseStyles}</head>
-          <body>
-            <div class="container">
-              <div class="header" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;">
-                <h1 style="margin: 0;">📅 Interview Scheduled!</h1>
-                <p style="margin: 10px 0 0; opacity: 0.9;">Get ready for your interview</p>
-              </div>
-              <div class="content">
-                <p>Dear ${candidateName},</p>
-                <p>Great news! Your interview for <strong>${jobTitle}</strong> at <strong>${companyName}</strong> has been scheduled.</p>
-                
-                <div class="info-card" style="border-color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
-                  <h3 style="margin-top: 0; color: #1d4ed8;">📋 Interview Details</h3>
-                  <p><strong>📅 Date & Time:</strong> ${interviewDate}</p>
-                  <p><strong>🎯 Type:</strong> ${additionalInfo?.interviewType || 'Video Call'}</p>
-                  ${additionalInfo?.meetingLink ? `<p><strong>🔗 Meeting Link:</strong> <a href="${additionalInfo.meetingLink}" style="color: #3b82f6;">${additionalInfo.meetingLink}</a></p>` : ''}
-                </div>
-                
-                <div class="info-card" style="border-color: #f59e0b; background: #fffbeb;">
-                  <h3 style="margin-top: 0; color: #d97706;">💡 Tips for Success</h3>
-                  <ul style="margin: 0; padding-left: 20px;">
-                    <li>Test your audio and video before the call</li>
-                    <li>Find a quiet, well-lit space</li>
-                    <li>Have a copy of your resume ready</li>
-                    <li>Prepare questions about the role and company</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="footer">
-                <p>Best of luck!<br><strong>The ${companyName} Hiring Team</strong></p>
-                <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        subject: `Interview scheduled for ${jobTitle} at ${companyName}`,
+        html: wrapper(`
+          <p style="margin: 0 0 16px;">Dear ${candidateName},</p>
+          <p style="margin: 0 0 16px;">Your interview for <strong>${jobTitle}</strong> at <strong>${companyName}</strong> has been scheduled.</p>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 8px;"><strong>Date and Time:</strong> ${interviewDate}</p>
+                <p style="margin: 0 0 8px;"><strong>Type:</strong> ${additionalInfo?.interviewType || 'Video Call'}</p>
+                ${additionalInfo?.meetingLink ? `<p style="margin: 0;"><strong>Meeting Link:</strong> <a href="${additionalInfo.meetingLink}" style="color: #2563eb;">${additionalInfo.meetingLink}</a></p>` : ''}
+              </td>
+            </tr>
+          </table>
+          
+          <p style="margin: 0 0 8px; font-weight: 600;">Preparation tips:</p>
+          <ul style="margin: 0 0 24px; padding-left: 20px;">
+            <li style="margin-bottom: 4px;">Test your audio and video before the call</li>
+            <li style="margin-bottom: 4px;">Find a quiet, well-lit space</li>
+            <li style="margin-bottom: 4px;">Have a copy of your resume ready</li>
+          </ul>
+          
+          <p style="margin: 0;">Best of luck,<br>The ${companyName} Hiring Team</p>
+        `)
       };
 
     case 'offer_received':
       return {
-        subject: `🎊 Job Offer: ${jobTitle} at ${companyName}!`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>${baseStyles}</head>
-          <body>
-            <div class="container">
-              <div class="header" style="background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white;">
-                <h1 style="margin: 0;">🎊 Congratulations!</h1>
-                <p style="margin: 10px 0 0; opacity: 0.9;">You've received a job offer!</p>
-              </div>
-              <div class="content">
-                <p>Dear ${candidateName},</p>
-                <p>We are thrilled to extend an offer for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>!</p>
-                
-                <div class="info-card" style="border-color: #8b5cf6; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);">
-                  <h3 style="margin-top: 0; color: #6d28d9;">📋 Offer Summary</h3>
-                  <p><strong>💼 Position:</strong> ${jobTitle}</p>
-                  ${additionalInfo?.salary ? `<p><strong>💰 Compensation:</strong> ${additionalInfo.salary}</p>` : ''}
-                  ${additionalInfo?.startDate ? `<p><strong>📅 Start Date:</strong> ${additionalInfo.startDate}</p>` : ''}
-                </div>
-                
-                <p>Your detailed offer letter will be sent separately. Please review it carefully and let us know if you have any questions.</p>
-                
-                <p style="color: #666; font-size: 14px;">We are excited about the possibility of you joining our team and look forward to your response!</p>
-              </div>
-              <div class="footer">
-                <p>Welcome to the team!<br><strong>The ${companyName} Hiring Team</strong></p>
-                <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        subject: `Job offer for ${jobTitle} at ${companyName}`,
+        html: wrapper(`
+          <p style="margin: 0 0 16px;">Dear ${candidateName},</p>
+          <p style="margin: 0 0 16px;">We are pleased to extend an offer for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>.</p>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 8px;"><strong>Position:</strong> ${jobTitle}</p>
+                ${additionalInfo?.salary ? `<p style="margin: 0 0 8px;"><strong>Compensation:</strong> ${additionalInfo.salary}</p>` : ''}
+                ${additionalInfo?.startDate ? `<p style="margin: 0;"><strong>Start Date:</strong> ${additionalInfo.startDate}</p>` : ''}
+              </td>
+            </tr>
+          </table>
+          
+          <p style="margin: 0 0 24px; color: #6b7280;">Your detailed offer letter will be sent separately. Please review it carefully and let us know if you have any questions.</p>
+          <p style="margin: 0;">Welcome to the team,<br>The ${companyName} Hiring Team</p>
+        `)
       };
 
     case 'rejected':
       return {
-        subject: `Application Update: ${jobTitle} at ${companyName}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>${baseStyles}</head>
-          <body>
-            <div class="container">
-              <div class="header" style="background: #64748b; color: white;">
-                <h1 style="margin: 0;">Application Update</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${candidateName},</p>
-                <p>Thank you for your interest in the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong> and for taking the time to apply.</p>
-                
-                <p>After careful consideration, we have decided to move forward with other candidates whose qualifications more closely match our current needs.</p>
-                
-                ${additionalInfo?.rejectionReason ? `
-                <div class="info-card" style="border-color: #94a3b8;">
-                  <p style="margin: 0;"><strong>Feedback:</strong> ${additionalInfo.rejectionReason}</p>
-                </div>
-                ` : ''}
-                
-                <p>We encourage you to apply for future positions that match your skills and experience. We wish you the best in your job search and future endeavors.</p>
-              </div>
-              <div class="footer">
-                <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
-                <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        subject: `Application update for ${jobTitle} at ${companyName}`,
+        html: wrapper(`
+          <p style="margin: 0 0 16px;">Dear ${candidateName},</p>
+          <p style="margin: 0 0 16px;">Thank you for your interest in the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong> and for taking the time to apply.</p>
+          <p style="margin: 0 0 16px;">After careful consideration, we have decided to move forward with other candidates whose qualifications more closely match our current needs.</p>
+          
+          ${additionalInfo?.rejectionReason ? `
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0;"><strong>Feedback:</strong> ${additionalInfo.rejectionReason}</p>
+              </td>
+            </tr>
+          </table>
+          ` : ''}
+          
+          <p style="margin: 0 0 24px; color: #6b7280;">We encourage you to apply for future positions that match your skills and experience.</p>
+          <p style="margin: 0;">Best regards,<br>The ${companyName} Hiring Team</p>
+        `)
       };
 
     case 'hired':
       return {
-        subject: `🎉 Welcome to ${companyName}!`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>${baseStyles}</head>
-          <body>
-            <div class="container">
-              <div class="header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
-                <h1 style="margin: 0;">🎉 Welcome Aboard!</h1>
-                <p style="margin: 10px 0 0; opacity: 0.9;">You're officially part of the team!</p>
-              </div>
-              <div class="content">
-                <p>Dear ${candidateName},</p>
-                <p>We are delighted to confirm that you have officially joined <strong>${companyName}</strong> as our new <strong>${jobTitle}</strong>!</p>
-                
-                <div class="info-card" style="border-color: #10b981; background: #ecfdf5;">
-                  <h3 style="margin-top: 0; color: #059669;">🚀 Next Steps</h3>
-                  <ul style="margin: 0; padding-left: 20px;">
-                    <li>Complete your onboarding documentation</li>
-                    <li>Set up your work accounts and access</li>
-                    <li>Meet your team members</li>
-                    <li>Review company policies and guidelines</li>
-                  </ul>
-                </div>
-                
-                <p>We're thrilled to have you on board and can't wait to see the amazing contributions you'll make!</p>
-              </div>
-              <div class="footer">
-                <p>See you soon!<br><strong>The ${companyName} Team</strong></p>
-                <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        subject: `Welcome to ${companyName}`,
+        html: wrapper(`
+          <p style="margin: 0 0 16px;">Dear ${candidateName},</p>
+          <p style="margin: 0 0 16px;">We are delighted to confirm that you have officially joined <strong>${companyName}</strong> as our new <strong>${jobTitle}</strong>.</p>
+          
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+            <tr>
+              <td style="padding: 20px;">
+                <p style="margin: 0 0 8px; font-weight: 600;">Next steps:</p>
+                <ul style="margin: 0; padding-left: 20px;">
+                  <li style="margin-bottom: 4px;">Complete your onboarding documentation</li>
+                  <li style="margin-bottom: 4px;">Set up your work accounts and access</li>
+                  <li style="margin-bottom: 4px;">Meet your team members</li>
+                </ul>
+              </td>
+            </tr>
+          </table>
+          
+          <p style="margin: 0 0 24px; color: #6b7280;">We are thrilled to have you on board.</p>
+          <p style="margin: 0;">See you soon,<br>The ${companyName} Team</p>
+        `)
       };
 
     default:
       return {
-        subject: `Application Update: ${jobTitle}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>${baseStyles}</head>
-          <body>
-            <div class="container">
-              <div class="header" style="background: #6366f1; color: white;">
-                <h1 style="margin: 0;">Application Update</h1>
-              </div>
-              <div class="content">
-                <p>Dear ${candidateName},</p>
-                <p>There has been an update to your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong>.</p>
-                <p>Please log in to your account to view the details.</p>
-              </div>
-              <div class="footer">
-                <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `
+        subject: `Application update for ${jobTitle}`,
+        html: wrapper(`
+          <p style="margin: 0 0 16px;">Dear ${candidateName},</p>
+          <p style="margin: 0 0 16px;">There has been an update to your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong>.</p>
+          <p style="margin: 0 0 24px; color: #6b7280;">Please log in to your account to view the details.</p>
+          <p style="margin: 0;">Best regards,<br>The ${companyName} Hiring Team</p>
+        `)
       };
   }
 };
