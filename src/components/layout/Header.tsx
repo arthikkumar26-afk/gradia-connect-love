@@ -472,7 +472,7 @@ const Header = () => {
                   <h4 className="font-semibold text-sm text-foreground">Scan for Job Vacancies</h4>
                   <div className="bg-white p-3 rounded-lg shadow-sm">
                     <QRCodeSVG
-                      value={`${window.location.origin}/companies`}
+                      value={`${window.location.origin}/jobs`}
                       size={140}
                       level="H"
                       includeMargin
@@ -481,12 +481,12 @@ const Header = () => {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
-                    Scan to browse all company job openings
+                    Scan to browse all job vacancies
                   </p>
                   <Button variant="outline" size="sm" asChild className="w-full">
-                    <Link to="/companies" className="flex items-center gap-2">
+                    <Link to="/jobs" className="flex items-center gap-2">
                       <ExternalLink className="h-3 w-3" />
-                      View All Companies
+                      View All Jobs
                     </Link>
                   </Button>
                 </div>
