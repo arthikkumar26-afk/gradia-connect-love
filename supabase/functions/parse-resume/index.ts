@@ -1,9 +1,62 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import * as JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Extract text from DOCX file
+async function extractDocxText(arrayBuffer: ArrayBuffer): Promise<string> {
+  try {
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const documentXml = await zip.file("word/document.xml")?.async("string");
+    
+    if (!documentXml) {
+      throw new Error("Could not find document.xml in DOCX");
+    }
+    
+    // Simple XML text extraction - remove tags and decode entities
+    let text = documentXml
+      .replace(/<w:p[^>]*>/g, "\n") // Paragraph breaks
+      .replace(/<w:br[^>]*>/g, "\n") // Line breaks
+      .replace(/<w:tab[^>]*>/g, "\t") // Tabs
+      .replace(/<[^>]+>/g, "") // Remove all XML tags
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/\n{3,}/g, "\n\n") // Reduce multiple newlines
+      .trim();
+    
+    return text;
+  } catch (error) {
+    console.error("Error extracting DOCX text:", error);
+    throw new Error("Failed to extract text from Word document");
+  }
+}
+
+// Extract text from DOC file (older format) - basic attempt
+function extractDocText(arrayBuffer: ArrayBuffer): string {
+  try {
+    const decoder = new TextDecoder("utf-8", { fatal: false });
+    let text = decoder.decode(arrayBuffer);
+    
+    // Filter to printable ASCII and common characters
+    text = text.replace(/[^\x20-\x7E\n\r\t]/g, " ")
+      .replace(/\s{3,}/g, " ")
+      .trim();
+    
+    // If we got some reasonable text, return it
+    if (text.length > 100) {
+      return text;
+    }
+    throw new Error("Could not extract meaningful text from DOC");
+  } catch {
+    throw new Error("Failed to extract text from old Word format. Please convert to DOCX or PDF.");
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,6 +81,7 @@ serve(async (req) => {
 
     const arrayBuffer = await file.arrayBuffer();
     const mimeType = file.type || "application/octet-stream";
+    const fileName = file.name.toLowerCase();
 
     // Enforce 20MB limit
     const MAX_SIZE = 20 * 1024 * 1024;
@@ -42,17 +96,7 @@ serve(async (req) => {
 
     let messageContent: any[];
     
-    // Convert to base64 using chunked approach to avoid stack overflow
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binary = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.subarray(i, i + chunkSize);
-      binary += String.fromCharCode.apply(null, Array.from(chunk));
-    }
-    const base64 = btoa(binary);
-    
-    const prompt = `You are an expert resume parser. Analyze this resume document and extract ALL available information.
+    const prompt = `You are an expert resume parser. Analyze this resume and extract ALL available information.
 
 CRITICAL: Extract the email address - look carefully for it in the contact section, header, or anywhere in the document. Email addresses typically contain @ symbol.
 
@@ -69,9 +113,27 @@ Extract these fields:
 
 Be thorough - scan the entire document for contact information.`;
 
+    // Check if it's a DOCX file (by extension or mime type)
+    const isDocx = fileName.endsWith(".docx") || 
+                   mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    
+    // Check if it's an old DOC file
+    const isDoc = fileName.endsWith(".doc") || mimeType === "application/msword";
+
     // Handle PDF files - send as base64 to vision model
     if (mimeType === "application/pdf") {
       console.log("Parsing PDF resume with vision model");
+      
+      // Convert to base64
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      const base64 = btoa(binary);
+      
       messageContent = [
         { type: "text", text: prompt },
         {
@@ -83,6 +145,16 @@ Be thorough - scan the entire document for contact information.`;
     // Handle image files
     else if (mimeType.startsWith("image/")) {
       console.log("Parsing image resume");
+      
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      const base64 = btoa(binary);
+      
       messageContent = [
         { type: "text", text: prompt },
         {
@@ -91,20 +163,36 @@ Be thorough - scan the entire document for contact information.`;
         },
       ];
     }
-    // DOC/DOCX - try as binary
-    else if (mimeType.includes("document") || mimeType.includes("msword")) {
-      console.log("Document format detected, attempting to process");
-      // For Word docs, we'll try sending as-is - the model may be able to process it
+    // Handle DOCX files - extract text first
+    else if (isDocx) {
+      console.log("Extracting text from DOCX file");
+      const extractedText = await extractDocxText(arrayBuffer);
+      console.log("Extracted text length:", extractedText.length);
+      
+      // Send as text-only message
       messageContent = [
-        { type: "text", text: prompt + "\n\nNote: This is a Word document." },
-        {
-          type: "image_url",
-          image_url: { url: `data:${mimeType};base64,${base64}` },
-        },
+        { type: "text", text: `${prompt}\n\n--- RESUME CONTENT ---\n\n${extractedText}` },
       ];
     }
+    // Handle old DOC files
+    else if (isDoc) {
+      console.log("Attempting to extract text from DOC file");
+      try {
+        const extractedText = extractDocText(arrayBuffer);
+        console.log("Extracted text length:", extractedText.length);
+        
+        messageContent = [
+          { type: "text", text: `${prompt}\n\n--- RESUME CONTENT ---\n\n${extractedText}` },
+        ];
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "Old Word format (.doc) is not fully supported. Please convert to .docx or PDF." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
     else {
-      return new Response(JSON.stringify({ error: "Unsupported file format. Please upload PDF, image, or Word document." }), {
+      return new Response(JSON.stringify({ error: "Unsupported file format. Please upload PDF, image, or Word document (.docx)." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
