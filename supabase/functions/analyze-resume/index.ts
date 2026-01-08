@@ -411,7 +411,9 @@ Provide your analysis using the suggest_analysis function.`;
     // Generate invitation token for MCQ interview
     const invitationToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    const interviewLink = `https://cybqlimobxpjygwcdojv.lovableproject.com/interview?token=${invitationToken}`;
+    // Use the published app domain for interview links
+    const appDomain = Deno.env.get('APP_DOMAIN') || 'b06fa647-568a-470e-9033-ffe17071d8a6.lovableproject.com';
+    const interviewLink = `https://${appDomain}/interview?token=${invitationToken}`;
 
     // Create pending event for next stage (AI Phone Interview / MCQ Round)
     let interviewEventId: string | null = null;
