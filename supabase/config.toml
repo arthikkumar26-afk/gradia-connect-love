@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.send-status-notification]
 verify_jwt = false
+
+[functions.send-application-email]
+verify_jwt = false
