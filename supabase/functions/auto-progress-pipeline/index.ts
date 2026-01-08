@@ -6,9 +6,137 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
 interface ProgressRequest {
   interviewCandidateId: string;
-  autoProgressAll?: boolean; // If true, auto-progress through all AI-automated stages
+  autoProgressAll?: boolean;
+}
+
+// Send stage transition email notification
+async function sendStageTransitionEmail(
+  candidateEmail: string,
+  candidateName: string,
+  jobTitle: string,
+  companyName: string,
+  stageName: string,
+  passed: boolean,
+  score: number,
+  feedback: string,
+  nextStageName?: string
+): Promise<void> {
+  if (!RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not configured, skipping email');
+    return;
+  }
+
+  const baseStyles = `
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0; }
+      .content { background: #ffffff; padding: 30px; }
+      .info-card { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid; }
+      .score-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 18px; }
+      .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; border-radius: 0 0 12px 12px; }
+    </style>
+  `;
+
+  const stageIcons: Record<string, string> = {
+    'Resume Screening': '📄',
+    'AI Phone Interview': '📞',
+    'Technical Assessment': '💻',
+    'HR Round': '👥',
+    'Final Review': '🎯',
+    'Offer Stage': '🎁'
+  };
+
+  const stageIcon = stageIcons[stageName] || '📋';
+  const headerColor = passed ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+  const statusText = passed ? 'Stage Completed!' : 'Application Update';
+  const statusIcon = passed ? '✅' : '📋';
+
+  let emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>${baseStyles}</head>
+    <body>
+      <div class="container">
+        <div class="header" style="background: ${headerColor}; color: white;">
+          <h1 style="margin: 0;">${statusIcon} ${statusText}</h1>
+          <p style="margin: 10px 0 0; opacity: 0.9;">${stageIcon} ${stageName}</p>
+        </div>
+        <div class="content">
+          <p>Dear ${candidateName},</p>
+          ${passed ? `
+            <p>Great news! You have successfully completed the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.</p>
+          ` : `
+            <p>Thank you for participating in the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.</p>
+          `}
+          
+          <div class="info-card" style="border-color: ${passed ? '#10b981' : '#64748b'}; text-align: center;">
+            <h3 style="margin-top: 0; color: ${passed ? '#10b981' : '#64748b'};">Your Score</h3>
+            <span class="score-badge" style="background: ${passed ? '#ecfdf5' : '#f1f5f9'}; color: ${passed ? '#059669' : '#475569'};">
+              ${score}%
+            </span>
+          </div>
+
+          <div class="info-card" style="border-color: #3b82f6;">
+            <h3 style="margin-top: 0; color: #1d4ed8;">💬 Feedback</h3>
+            <p style="margin: 0;">${feedback}</p>
+          </div>
+
+          ${passed && nextStageName ? `
+            <div class="info-card" style="border-color: #8b5cf6; background: #f5f3ff;">
+              <h3 style="margin-top: 0; color: #6d28d9;">🚀 Next Step</h3>
+              <p style="margin: 0;">You're advancing to the <strong>${nextStageName}</strong> stage! Stay tuned for updates.</p>
+            </div>
+          ` : ''}
+
+          ${passed && !nextStageName ? `
+            <div class="info-card" style="border-color: #f59e0b; background: #fffbeb;">
+              <h3 style="margin-top: 0; color: #d97706;">🎉 Congratulations!</h3>
+              <p style="margin: 0;">You've completed all interview stages! We'll be in touch soon with the next steps.</p>
+            </div>
+          ` : ''}
+
+          ${!passed ? `
+            <p style="color: #666;">While we've decided to move forward with other candidates for this position, we encourage you to apply for other opportunities that match your skills.</p>
+          ` : ''}
+        </div>
+        <div class="footer">
+          <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
+          <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const subject = passed 
+    ? `${stageIcon} ${stageName} Complete - ${jobTitle} at ${companyName}`
+    : `Application Update: ${jobTitle} at ${companyName}`;
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `${companyName} Hiring <onboarding@resend.dev>`,
+        to: [candidateEmail],
+        subject,
+        html: emailHtml,
+      }),
+    });
+
+    const result = await response.json();
+    console.log(`Stage transition email sent to ${candidateEmail}:`, result);
+  } catch (error) {
+    console.error('Failed to send stage transition email:', error);
+  }
 }
 
 async function evaluateStageWithAI(
@@ -157,6 +285,18 @@ serve(async (req) => {
       });
     }
 
+    // Get employer info for company name
+    const { data: employer } = await supabase
+      .from('profiles')
+      .select('company_name, full_name')
+      .eq('id', candidate.jobs?.employer_id)
+      .single();
+
+    const companyName = employer?.company_name || employer?.full_name || 'Gradia';
+    const candidateEmail = candidate.profiles?.email;
+    const candidateName = candidate.profiles?.full_name || 'Candidate';
+    const jobTitle = candidate.jobs?.job_title || 'Position';
+
     // Get all stages
     const { data: stages } = await supabase
       .from('interview_stages')
@@ -177,7 +317,6 @@ serve(async (req) => {
       }
 
       if (!stage.is_ai_automated && stage.stage_order !== currentStageOrder) {
-        // Stop at non-automated stages (require manual intervention)
         console.log(`Stopping at non-automated stage: ${stage.name}`);
         break;
       }
@@ -187,8 +326,8 @@ serve(async (req) => {
       // Evaluate this stage with AI
       const evaluation = await evaluateStageWithAI(
         LOVABLE_API_KEY,
-        candidate.profiles?.full_name || 'Unknown',
-        candidate.jobs?.job_title || 'Unknown Position',
+        candidateName,
+        jobTitle,
         stage.name,
         candidate.ai_score || 70,
         candidate.ai_analysis || {}
@@ -224,6 +363,24 @@ serve(async (req) => {
         feedback: evaluation.feedback
       });
 
+      // Find next stage name for email
+      const nextStage = stages.find(s => s.stage_order === stage.stage_order + 1);
+
+      // Send email notification for this stage transition
+      if (candidateEmail) {
+        await sendStageTransitionEmail(
+          candidateEmail,
+          candidateName,
+          jobTitle,
+          companyName,
+          stage.name,
+          evaluation.passed,
+          evaluation.score,
+          evaluation.feedback,
+          evaluation.passed ? nextStage?.name : undefined
+        );
+      }
+
       if (!evaluation.passed) {
         // Candidate failed this stage
         await supabase
@@ -246,15 +403,12 @@ serve(async (req) => {
       }
 
       // Move to next stage
-      const nextStage = stages.find(s => s.stage_order === stage.stage_order + 1);
-      
       if (nextStage) {
         await supabase
           .from('interview_candidates')
           .update({ current_stage_id: nextStage.id })
           .eq('id', interviewCandidateId);
 
-        // If not auto-progressing all, stop after one stage
         if (!autoProgressAll) {
           return new Response(JSON.stringify({
             success: true,
