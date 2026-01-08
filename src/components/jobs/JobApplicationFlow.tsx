@@ -533,8 +533,7 @@ export const JobApplicationFlow = ({
                 disabled={!resumeFile || isSubmitting}
                 className="gap-2"
               >
-                <Sparkles className="h-4 w-4" />
-                Start AI Interview
+                Submit
               </Button>
             </DialogFooter>
           </>
