@@ -30,6 +30,65 @@ interface ResumeAnalysisRequest {
   };
 }
 
+async function sendEmailWithRetry(
+  apiKey: string, 
+  emailPayload: any, 
+  maxRetries: number = 3,
+  retryDelayMs: number = 1000
+): Promise<{ success: boolean; result?: any; error?: any }> {
+  let lastError: any = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Email send attempt ${attempt}/${maxRetries}`);
+      
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailPayload),
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok) {
+        console.log(`Email sent successfully on attempt ${attempt}! ID:`, result.id);
+        return { success: true, result };
+      }
+      
+      // Check for non-retryable errors
+      if (response.status === 400 || response.status === 401 || response.status === 403) {
+        console.error(`Non-retryable error (${response.status}):`, result);
+        return { success: false, error: result };
+      }
+      
+      // Retryable error
+      lastError = result;
+      console.warn(`Email attempt ${attempt} failed (${response.status}):`, result);
+      
+      if (attempt < maxRetries) {
+        const delay = retryDelayMs * Math.pow(2, attempt - 1); // Exponential backoff
+        console.log(`Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    } catch (error) {
+      lastError = error;
+      console.error(`Email attempt ${attempt} threw error:`, error);
+      
+      if (attempt < maxRetries) {
+        const delay = retryDelayMs * Math.pow(2, attempt - 1);
+        console.log(`Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  console.error(`All ${maxRetries} email attempts failed. Last error:`, lastError);
+  return { success: false, error: lastError };
+}
+
 async function sendFirstRoundInterviewEmail(apiKey: string, params: {
   candidateName: string;
   candidateEmail: string;
@@ -39,7 +98,7 @@ async function sendFirstRoundInterviewEmail(apiKey: string, params: {
   aiScore: number;
   interviewLink: string;
   expiresAt: string;
-}) {
+}): Promise<{ success: boolean; result?: any; error?: any }> {
   console.log('Sending first round interview invitation email to:', params.candidateEmail);
   
   const emailPayload = {
@@ -128,26 +187,7 @@ async function sendFirstRoundInterviewEmail(apiKey: string, params: {
     `,
   };
   
-  console.log('Sending email with payload:', JSON.stringify({ from: emailPayload.from, to: emailPayload.to, subject: emailPayload.subject }));
-  
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(emailPayload),
-  });
-  
-  const result = await response.json();
-  
-  if (!response.ok) {
-    console.error('Resend API error:', response.status, JSON.stringify(result));
-    return { error: result };
-  }
-  
-  console.log('First round interview email sent successfully! ID:', result.id);
-  return result;
+  return sendEmailWithRetry(apiKey, emailPayload, 3, 1000);
 }
 
 serve(async (req) => {
@@ -432,36 +472,43 @@ Provide your analysis using the suggest_analysis function.`;
       timeZone: 'Asia/Kolkata'
     });
 
-    // Send first round interview invitation email with MCQ link
+    // Send first round interview invitation email with MCQ link (with retry)
     let emailSent = false;
+    let emailError: any = null;
+    
     if (RESEND_API_KEY && candidateProfile.email) {
-      try {
-        const emailResult = await sendFirstRoundInterviewEmail(RESEND_API_KEY, {
-          candidateName: candidateProfile.full_name,
-          candidateEmail: candidateProfile.email,
-          jobTitle: jobDetails.job_title,
-          companyName: companyName,
-          stageName: stageName,
-          aiScore: analysis.overall_score,
-          interviewLink: interviewLink,
-          expiresAt: formattedExpiry
-        });
-        
-        emailSent = !emailResult.error;
-        console.log('First round interview invitation email sent:', emailSent);
+      const emailResult = await sendFirstRoundInterviewEmail(RESEND_API_KEY, {
+        candidateName: candidateProfile.full_name,
+        candidateEmail: candidateProfile.email,
+        jobTitle: jobDetails.job_title,
+        companyName: companyName,
+        stageName: stageName,
+        aiScore: analysis.overall_score,
+        interviewLink: interviewLink,
+        expiresAt: formattedExpiry
+      });
+      
+      emailSent = emailResult.success;
+      emailError = emailResult.error;
+      
+      console.log('First round interview invitation email result:', { 
+        sent: emailSent, 
+        emailId: emailResult.result?.id 
+      });
 
-        // Update invitation status
-        if (emailSent && invitationToken) {
-          await supabase
-            .from('interview_invitations')
-            .update({ 
-              email_sent_at: new Date().toISOString(),
-              email_status: 'sent'
-            })
-            .eq('invitation_token', invitationToken);
-        }
-      } catch (emailError) {
-        console.error('Failed to send email:', emailError);
+      // Update invitation status based on result
+      if (invitationToken) {
+        await supabase
+          .from('interview_invitations')
+          .update({ 
+            email_sent_at: emailSent ? new Date().toISOString() : null,
+            email_status: emailSent ? 'sent' : 'failed'
+          })
+          .eq('invitation_token', invitationToken);
+      }
+      
+      if (!emailSent) {
+        console.error('Email failed after all retries:', emailError);
       }
     }
 
