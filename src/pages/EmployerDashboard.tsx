@@ -21,7 +21,8 @@ import {
   X,
   GitBranch,
   QrCode,
-  Bell
+  Bell,
+  Mail
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -40,6 +41,7 @@ import TalentPoolContent from "@/components/employer/TalentPoolContent";
 import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
 import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
+import { EmailTemplatesEditor } from "@/components/employer/EmailTemplatesEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -145,6 +147,7 @@ const EmployerDashboard = () => {
     { id: "teams", label: "Teams", icon: UsersRound, path: "/employer/teams" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "placements", label: "Placements", icon: UserCheck, path: "/employer/placements" },
+    { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
     { id: "configuration", label: "Configuration", icon: Sliders, path: "/employer/configuration" },
@@ -284,6 +287,7 @@ const EmployerDashboard = () => {
                    activeMenu === "teams" ? "Teams" :
                    activeMenu === "interview-pipeline" ? "Interview Pipeline" :
                    activeMenu === "placements" ? "Placements" :
+                   activeMenu === "email-templates" ? "Email Templates" :
                    activeMenu === "approvals" ? "Approvals" :
                    activeMenu === "settings" ? "Settings" :
                    activeMenu === "configuration" ? "Configuration" : "Dashboard"}
@@ -386,6 +390,7 @@ const EmployerDashboard = () => {
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
             {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
+            {activeMenu === "email-templates" && <EmailTemplatesEditor />}
           </div>
         </main>
       </div>

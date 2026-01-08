@@ -145,6 +145,51 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          body_text: string
+          created_at: string
+          employer_id: string
+          footer_text: string | null
+          header_text: string | null
+          id: string
+          is_active: boolean | null
+          primary_color: string | null
+          stage_name: string
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          body_text: string
+          created_at?: string
+          employer_id: string
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          primary_color?: string | null
+          stage_name: string
+          subject: string
+          template_type?: string
+          updated_at?: string
+        }
+        Update: {
+          body_text?: string
+          created_at?: string
+          employer_id?: string
+          footer_text?: string | null
+          header_text?: string | null
+          id?: string
+          is_active?: boolean | null
+          primary_color?: string | null
+          stage_name?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interview_candidates: {
         Row: {
           ai_analysis: Json | null
