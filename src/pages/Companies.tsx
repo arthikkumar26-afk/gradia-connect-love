@@ -1,14 +1,68 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Building2, MapPin, Users, TrendingUp, Search, Filter } from "lucide-react";
-import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import CompanyQRCard from "@/components/CompanyQRCard";
+
+interface EmployerWithJobs {
+  id: string;
+  full_name: string;
+  company_name: string | null;
+  company_description: string | null;
+  location: string | null;
+  profile_picture: string | null;
+  job_count: number;
+}
 
 const Companies = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [employers, setEmployers] = useState<EmployerWithJobs[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const companies = [
+  useEffect(() => {
+    fetchEmployersWithJobs();
+  }, []);
+
+  const fetchEmployersWithJobs = async () => {
+    try {
+      // Fetch employers with their active job counts
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, company_name, company_description, location, profile_picture")
+        .eq("role", "employer");
+
+      if (profilesError) throw profilesError;
+
+      // Get job counts for each employer
+      const employersWithCounts = await Promise.all(
+        (profilesData || []).map(async (profile) => {
+          const { count } = await supabase
+            .from("jobs")
+            .select("*", { count: "exact", head: true })
+            .eq("employer_id", profile.id)
+            .eq("status", "active");
+
+          return {
+            ...profile,
+            job_count: count || 0,
+          };
+        })
+      );
+
+      // Filter to only show employers with at least 1 job
+      setEmployers(employersWithCounts.filter((e) => e.job_count > 0));
+    } catch (error) {
+      console.error("Error fetching employers:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const staticCompanies = [
     {
       name: "TechFlow Solutions",
       logo: "🚀",
@@ -77,10 +131,15 @@ const Companies = () => {
     }
   ];
 
-  const filteredCompanies = companies.filter(company =>
+  const filteredStaticCompanies = staticCompanies.filter(company =>
     company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
     company.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredEmployers = employers.filter(employer =>
+    (employer.company_name || employer.full_name).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (employer.location || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const stats = [
@@ -97,6 +156,7 @@ const Companies = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Our Partner Companies</h1>
           <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto mb-8">
             Discover amazing companies across industries that are actively hiring talented professionals.
+            Scan a QR code to view jobs and apply instantly!
           </p>
         </div>
       </section>
@@ -122,7 +182,7 @@ const Companies = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                  placeholder="Search by company name, industry, or location..."
+                  placeholder="Search by company name or location..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -135,9 +195,35 @@ const Companies = () => {
             </div>
           </div>
 
-          {/* Companies Grid */}
+          {/* Real Employers with QR Codes */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-48 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : filteredEmployers.length > 0 && (
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold text-foreground mb-6">Companies Hiring Now</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredEmployers.map((employer) => (
+                  <CompanyQRCard
+                    key={employer.id}
+                    id={employer.id}
+                    name={employer.company_name || employer.full_name}
+                    logo={employer.profile_picture || undefined}
+                    location={employer.location || undefined}
+                    openPositions={employer.job_count}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Static Companies Grid */}
+          <h2 className="text-2xl font-bold text-foreground mb-6">Featured Partners</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCompanies.map((company, index) => (
+            {filteredStaticCompanies.map((company, index) => (
               <Card key={index} className="hover:shadow-large transition-all duration-200">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-4">
@@ -190,7 +276,7 @@ const Companies = () => {
             ))}
           </div>
 
-          {filteredCompanies.length === 0 && (
+          {filteredStaticCompanies.length === 0 && filteredEmployers.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No companies found matching your search.</p>
             </div>

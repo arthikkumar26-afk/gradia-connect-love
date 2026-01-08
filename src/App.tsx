@@ -53,6 +53,7 @@ import AllCategories from "./pages/learning/AllCategories";
 import CandidateDashboard from "./pages/candidate/Dashboard";
 import EditProfile from "./pages/EditProfile";
 import PostJob from "./pages/employer/PostJob";
+import CompanyJobs from "./pages/CompanyJobs";
 
 // Sponsor Pages
 import SponsorOverview from "./pages/sponsor/Overview";
@@ -157,6 +158,9 @@ const App = () => (
             <Route path="/employer/pricing" element={<Pricing />} />
             <Route path="/employer/demo" element={<RequestDemo />} />
             <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
+
+            {/* Public Company Jobs (QR Code destination) */}
+            <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
 
             {/* Service Routes */}
             <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
