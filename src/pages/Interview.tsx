@@ -245,89 +245,22 @@ const Interview = () => {
 
   if (completed) {
     return (
-      <div className="min-h-screen bg-background py-8 px-4">
-        <div className="max-w-3xl mx-auto">
-          <Card className="mb-6">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Interview Completed!</CardTitle>
-              <p className="text-muted-foreground mt-2">
-                Thank you for completing the {stageName} for {jobTitle}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center items-center gap-8 py-6">
-                <div className="text-center">
-                  <div className={`text-5xl font-bold ${finalScore >= 60 ? 'text-green-600' : finalScore >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {finalScore}%
-                  </div>
-                  <p className="text-muted-foreground mt-1">Your Score</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-semibold text-foreground">
-                    {results.filter(r => r.isCorrect).length}/{results.length}
-                  </div>
-                  <p className="text-muted-foreground mt-1">Correct Answers</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-semibold text-foreground">
-                    {Math.floor(totalTime / 60)}:{(totalTime % 60).toString().padStart(2, '0')}
-                  </div>
-                  <p className="text-muted-foreground mt-1">Time Taken</p>
-                </div>
-              </div>
-
-              <Badge 
-                className="mx-auto block w-fit mt-4"
-                variant={finalScore >= 60 ? "default" : finalScore >= 40 ? "secondary" : "destructive"}
-              >
-                {finalScore >= 60 ? "Passed" : finalScore >= 40 ? "Needs Review" : "Below Threshold"}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          <h3 className="text-lg font-semibold mb-4">Review Your Answers</h3>
-          <div className="space-y-4">
-            {results.map((result, idx) => (
-              <Card key={idx} className={result.isCorrect ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"}>
-                <CardContent className="pt-4">
-                  <div className="flex items-start gap-3">
-                    {result.isCorrect ? (
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium mb-2">Q{idx + 1}: {result.question}</p>
-                      <div className="space-y-1 text-sm">
-                        {result.options.map((opt, optIdx) => (
-                          <div 
-                            key={optIdx}
-                            className={`p-2 rounded ${
-                              optIdx === result.correctAnswer 
-                                ? 'bg-green-100 text-green-800' 
-                                : optIdx === result.userAnswer && !result.isCorrect
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-background'
-                            }`}
-                          >
-                            {String.fromCharCode(65 + optIdx)}. {opt}
-                            {optIdx === result.correctAnswer && " ✓"}
-                            {optIdx === result.userAnswer && optIdx !== result.correctAnswer && " (Your answer)"}
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-2 italic">{result.explanation}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <p className="text-center text-muted-foreground mt-8">
-            The hiring team will review your results and contact you soon.
-          </p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-8 pb-8 text-center">
+            <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold mb-2">Interview Completed!</h2>
+            <p className="text-muted-foreground mb-4">
+              Thank you for completing the {stageName} for {jobTitle}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              The hiring team will review your submission and contact you with next steps.
+            </p>
+            <p className="text-xs text-muted-foreground mt-6">
+              You can now close this window.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
