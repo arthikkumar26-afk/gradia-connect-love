@@ -54,6 +54,7 @@ import CandidateDashboard from "./pages/candidate/Dashboard";
 import EditProfile from "./pages/EditProfile";
 import PostJob from "./pages/employer/PostJob";
 import CompanyJobs from "./pages/CompanyJobs";
+import Interview from "./pages/Interview";
 
 // Sponsor Pages
 import SponsorOverview from "./pages/sponsor/Overview";
@@ -161,6 +162,9 @@ const App = () => (
 
             {/* Public Company Jobs (QR Code destination) */}
             <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
+            
+            {/* Public Interview Page */}
+            <Route path="/interview" element={<Interview />} />
 
             {/* Service Routes */}
             <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
