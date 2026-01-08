@@ -5,10 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users } from 'lucide-react';
+import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { AddCandidateModal } from './AddCandidateModal';
 
 interface AppliedCandidate {
   id: string;
@@ -46,6 +47,8 @@ export default function TalentPoolContent() {
   const [candidates, setCandidates] = useState<AppliedCandidate[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [jobs, setJobs] = useState<any[]>([]);
   const [stats, setStats] = useState({
     total: 0,
     shortlisted: 0,
@@ -56,8 +59,18 @@ export default function TalentPoolContent() {
   useEffect(() => {
     if (user?.id) {
       loadAppliedCandidates();
+      loadJobs();
     }
   }, [user?.id]);
+
+  const loadJobs = async () => {
+    const { data } = await supabase
+      .from('jobs')
+      .select('id, job_title, department, description, requirements, skills, experience_required, location')
+      .eq('employer_id', user?.id)
+      .eq('status', 'active');
+    setJobs(data || []);
+  };
 
   const loadAppliedCandidates = async () => {
     setLoading(true);
@@ -226,6 +239,10 @@ export default function TalentPoolContent() {
           />
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setShowAddModal(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Candidate
+          </Button>
           <Button variant="outline">
             <Filter className="h-4 w-4 mr-2" />
             Filter
@@ -235,6 +252,14 @@ export default function TalentPoolContent() {
           </Button>
         </div>
       </div>
+
+      {/* Add Candidate Modal */}
+      <AddCandidateModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        jobs={jobs}
+        onCandidateAdded={loadAppliedCandidates}
+      />
 
       {/* Candidates Table */}
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
