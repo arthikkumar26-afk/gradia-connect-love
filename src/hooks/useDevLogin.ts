@@ -57,8 +57,8 @@ export const useDevLogin = (role: Role) => {
         description: `Logged in as test ${role}`,
       });
 
-      // Navigate to the appropriate page
-      const destination = role === 'candidate' ? '/candidate/create-profile' : '/employer/create-profile';
+      // Navigate to the appropriate dashboard
+      const destination = role === 'candidate' ? '/candidate/dashboard' : '/employer/dashboard';
       navigate(destination);
     } catch (error: any) {
       toast({
