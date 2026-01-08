@@ -627,6 +627,9 @@ export const InterviewPipelineContent = () => {
     );
   }
 
+  // Get all candidates from all stages
+  const allCandidates = stages.flatMap(stage => stage.candidates);
+
   return (
     <div className="space-y-4">
       {/* Candidate Profile Modal */}
@@ -651,7 +654,7 @@ export const InterviewPipelineContent = () => {
             </Badge>
           </h2>
           <p className="text-sm text-muted-foreground">
-            Real-time candidate tracking across your hiring process
+            Track candidates through your hiring process
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -666,20 +669,31 @@ export const InterviewPipelineContent = () => {
         </div>
       </div>
 
-      {/* Pipeline Board */}
-      <ScrollArea className="w-full">
-        <div className="flex gap-4 pb-4">
-          {stages.map((stage) => (
-            <PipelineColumn
-              key={stage.id}
-              stage={stage}
-              onMoveCandidate={handleMoveCandidate}
-              onOpenCandidate={handleOpenCandidate}
+      {/* Candidates Grid */}
+      {allCandidates.length === 0 ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <Users className="h-12 w-12 text-muted-foreground" />
+            <div>
+              <p className="text-lg font-medium text-foreground">No candidates yet</p>
+              <p className="text-sm text-muted-foreground">Candidates will appear here when they apply</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {allCandidates.map((candidate) => (
+            <CandidateCard
+              key={candidate.interviewCandidateId}
+              candidate={candidate}
+              onMoveNext={() => {}}
+              onSchedule={() => console.log("Schedule interview for", candidate.name)}
+              onEmail={() => console.log("Send email to", candidate.email)}
+              onOpenProfile={() => handleOpenCandidate(candidate)}
             />
           ))}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      )}
     </div>
   );
 };
