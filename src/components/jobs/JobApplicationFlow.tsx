@@ -283,9 +283,33 @@ export const JobApplicationFlow = ({
   };
 
   const runMockAnalysis = async () => {
-    // Mock analysis for demo/unauthenticated users
+    // Parse resume to extract email and other info
     setAnalysisSubStep('analyzing');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    let extractedEmail: string | null = null;
+    let extractedName: string | null = null;
+    
+    // Try to parse the resume to get email
+    if (resumeFile) {
+      try {
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+        
+        const parseResponse = await supabase.functions.invoke('parse-resume', {
+          body: formData,
+        });
+        
+        if (parseResponse.data && !parseResponse.error) {
+          extractedEmail = parseResponse.data.email;
+          extractedName = parseResponse.data.full_name;
+          console.log('Extracted from resume:', { email: extractedEmail, name: extractedName });
+        }
+      } catch (parseError) {
+        console.error('Resume parsing error:', parseError);
+      }
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     setAnalysisSubStep('matching');
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -316,6 +340,26 @@ export const JobApplicationFlow = ({
     });
     
     setAnalysisSubStep('scheduling');
+    
+    // Send confirmation email to extracted email address
+    if (extractedEmail && job) {
+      try {
+        await supabase.functions.invoke('send-application-email', {
+          body: {
+            email: extractedEmail,
+            candidateName: extractedName || 'Candidate',
+            jobTitle: job.title,
+            companyName: job.company,
+            aiScore: mockScore,
+          },
+        });
+        console.log('Application confirmation email sent to:', extractedEmail);
+        toast.success(`Confirmation email sent to ${extractedEmail}`);
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+      }
+    }
+    
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     setFlowStep('complete');
