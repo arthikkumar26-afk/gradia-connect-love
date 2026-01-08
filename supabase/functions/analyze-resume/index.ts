@@ -30,22 +30,23 @@ interface ResumeAnalysisRequest {
   };
 }
 
-async function sendInterviewInvitationEmail(apiKey: string, params: {
+async function sendFirstRoundInterviewEmail(apiKey: string, params: {
   candidateName: string;
   candidateEmail: string;
   jobTitle: string;
   companyName: string;
   stageName: string;
   aiScore: number;
-  recommendation: string;
+  interviewLink: string;
+  expiresAt: string;
 }) {
-  console.log('Sending interview invitation email to:', params.candidateEmail);
+  console.log('Sending first round interview invitation email to:', params.candidateEmail);
   
   const emailPayload = {
-    from: 'Gradia Hiring <noreply@gradia.co.in>',
+    from: `${params.companyName} Hiring <noreply@gradia.co.in>`,
     to: [params.candidateEmail],
     reply_to: 'support@gradia.co.in',
-    subject: `Your application for ${params.jobTitle} has been reviewed`,
+    subject: `Interview Invitation - ${params.jobTitle} at ${params.companyName}`,
     headers: {
       'List-Unsubscribe': '<mailto:unsubscribe@gradia.co.in>',
       'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -61,37 +62,56 @@ async function sendInterviewInvitationEmail(apiKey: string, params: {
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
       <td style="padding: 32px 24px; border-bottom: 1px solid #e5e7eb;">
-        <h1 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">Application Update</h1>
+        <h1 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">🎉 Congratulations! You're Invited to Interview</h1>
       </td>
     </tr>
     <tr>
       <td style="padding: 24px;">
         <p style="margin: 0 0 16px;">Dear ${params.candidateName},</p>
         
-        <p style="margin: 0 0 16px;">Thank you for applying for the <strong>${params.jobTitle}</strong> position at <strong>${params.companyName}</strong>. Your application has been reviewed by our team.</p>
+        <p style="margin: 0 0 16px;">Great news! Your application for the <strong>${params.jobTitle}</strong> position at <strong>${params.companyName}</strong> has been reviewed and we're excited to invite you to the first round interview.</p>
         
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 6px; margin: 24px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ecfdf5; border-radius: 6px; margin: 24px 0; border: 1px solid #a7f3d0;">
           <tr>
             <td style="padding: 20px;">
-              <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280;">Application Details</p>
+              <p style="margin: 0 0 8px; font-size: 13px; color: #059669; font-weight: 600;">Interview Details</p>
               <p style="margin: 0 0 8px;"><strong>Position:</strong> ${params.jobTitle}</p>
               <p style="margin: 0 0 8px;"><strong>Company:</strong> ${params.companyName}</p>
-              <p style="margin: 0 0 8px;"><strong>Current Stage:</strong> ${params.stageName}</p>
-              <p style="margin: 0;"><strong>Match Score:</strong> ${params.aiScore}%</p>
+              <p style="margin: 0 0 8px;"><strong>Round:</strong> ${params.stageName} (MCQ Assessment)</p>
+              <p style="margin: 0 0 8px;"><strong>Format:</strong> 5 Multiple Choice Questions, 60 seconds each</p>
+              <p style="margin: 0;"><strong>Your Match Score:</strong> ${params.aiScore}%</p>
             </td>
           </tr>
         </table>
         
-        <p style="margin: 0 0 16px;"><strong>Next Steps:</strong></p>
-        <ol style="margin: 0 0 24px; padding-left: 20px;">
-          <li style="margin-bottom: 8px;">Our hiring team will conduct a detailed review</li>
-          <li style="margin-bottom: 8px;">If shortlisted, you will receive an interview invitation</li>
-          <li style="margin-bottom: 8px;">Please check your inbox regularly for updates</li>
-        </ol>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+          <tr>
+            <td align="center">
+              <a href="${params.interviewLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">Start Interview Now</a>
+            </td>
+          </tr>
+        </table>
         
-        <p style="margin: 0 0 24px; color: #6b7280;">If you have any questions, please reply to this email.</p>
+        <p style="margin: 0 0 8px; font-weight: 600; color: #111827;">📋 Important Instructions:</p>
+        <ul style="margin: 0 0 24px; padding-left: 20px; color: #4b5563;">
+          <li style="margin-bottom: 8px;">Use a desktop/laptop with a stable internet connection</li>
+          <li style="margin-bottom: 8px;">Your screen will be recorded during the interview</li>
+          <li style="margin-bottom: 8px;">Each question has a <strong>60-second time limit</strong></li>
+          <li style="margin-bottom: 8px;">You <strong>cannot pause or go back</strong> once started</li>
+          <li style="margin-bottom: 8px;">Complete the interview before <strong>${params.expiresAt}</strong></li>
+        </ul>
         
-        <p style="margin: 0;">Best regards,<br>The ${params.companyName} Hiring Team</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-radius: 6px; margin: 24px 0; border: 1px solid #fcd34d;">
+          <tr>
+            <td style="padding: 16px;">
+              <p style="margin: 0; font-size: 13px; color: #92400e;">
+                <strong>⚠️ Note:</strong> This interview link is unique to you and will expire in 7 days. Make sure you're in a quiet environment before starting.
+              </p>
+            </td>
+          </tr>
+        </table>
+        
+        <p style="margin: 0;">Best of luck!<br>The ${params.companyName} Hiring Team</p>
       </td>
     </tr>
     <tr>
@@ -126,7 +146,7 @@ async function sendInterviewInvitationEmail(apiKey: string, params: {
     return { error: result };
   }
   
-  console.log('Email sent successfully! ID:', result.id);
+  console.log('First round interview email sent successfully! ID:', result.id);
   return result;
 }
 
@@ -348,19 +368,46 @@ Provide your analysis using the suggest_analysis function.`;
       console.error('Error creating screening event:', screeningEventError);
     }
 
-    // Create pending event for next stage (AI Phone Interview)
+    // Generate invitation token for MCQ interview
+    const invitationToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const interviewLink = `https://cybqlimobxpjygwcdojv.lovableproject.com/interview?token=${invitationToken}`;
+
+    // Create pending event for next stage (AI Phone Interview / MCQ Round)
+    let interviewEventId: string | null = null;
     if (nextStage) {
-      const { error: nextEventError } = await supabase
+      const { data: nextEvent, error: nextEventError } = await supabase
         .from('interview_events')
         .insert({
           interview_candidate_id: interviewCandidate.id,
           stage_id: nextStage.id,
-          status: 'pending',
-          scheduled_at: null
-        });
+          status: 'scheduled',
+          scheduled_at: expiresAt.toISOString()
+        })
+        .select()
+        .single();
 
       if (nextEventError) {
         console.error('Error creating next stage event:', nextEventError);
+      } else {
+        interviewEventId = nextEvent?.id;
+      }
+    }
+
+    // Create interview invitation record with token
+    if (interviewEventId) {
+      const { error: invitationError } = await supabase
+        .from('interview_invitations')
+        .insert({
+          interview_event_id: interviewEventId,
+          invitation_token: invitationToken,
+          meeting_link: interviewLink,
+          expires_at: expiresAt.toISOString(),
+          email_status: 'pending'
+        });
+
+      if (invitationError) {
+        console.error('Error creating invitation:', invitationError);
       }
     }
 
@@ -372,23 +419,47 @@ Provide your analysis using the suggest_analysis function.`;
       .single();
 
     const companyName = jobWithEmployer?.employer?.company_name || 'Gradia';
+    const stageName = nextStage?.name || 'AI Phone Interview';
 
-    // Send interview invitation email
+    // Format expiry date for email
+    const formattedExpiry = expiresAt.toLocaleString('en-IN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata'
+    });
+
+    // Send first round interview invitation email with MCQ link
     let emailSent = false;
     if (RESEND_API_KEY && candidateProfile.email) {
       try {
-        const emailResult = await sendInterviewInvitationEmail(RESEND_API_KEY, {
+        const emailResult = await sendFirstRoundInterviewEmail(RESEND_API_KEY, {
           candidateName: candidateProfile.full_name,
           candidateEmail: candidateProfile.email,
           jobTitle: jobDetails.job_title,
           companyName: companyName,
-          stageName: nextStage?.name || 'AI Phone Interview',
+          stageName: stageName,
           aiScore: analysis.overall_score,
-          recommendation: analysis.recommendation
+          interviewLink: interviewLink,
+          expiresAt: formattedExpiry
         });
         
         emailSent = !emailResult.error;
-        console.log('Interview invitation email sent:', emailSent);
+        console.log('First round interview invitation email sent:', emailSent);
+
+        // Update invitation status
+        if (emailSent && invitationToken) {
+          await supabase
+            .from('interview_invitations')
+            .update({ 
+              email_sent_at: new Date().toISOString(),
+              email_status: 'sent'
+            })
+            .eq('invitation_token', invitationToken);
+        }
       } catch (emailError) {
         console.error('Failed to send email:', emailError);
       }
@@ -399,7 +470,9 @@ Provide your analysis using the suggest_analysis function.`;
       interviewCandidateId: interviewCandidate.id,
       analysis: enrichedAnalysis,
       emailSent,
-      nextStage: nextStage?.name || 'AI Phone Interview'
+      interviewLink: interviewLink,
+      invitationToken: invitationToken,
+      nextStage: stageName
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
