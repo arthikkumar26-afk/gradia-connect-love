@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Clock, CheckCircle, XCircle, AlertCircle, Video, Loader2 } from "lucide-react";
+import { Clock, CheckCircle, XCircle, AlertCircle, Video, Loader2, RefreshCw } from "lucide-react";
 
 interface Question {
   question: string;
@@ -52,38 +52,41 @@ const Interview = () => {
   const startTimeRef = useRef<number>(0);
 
   // Initialize interview
-  useEffect(() => {
+  const initInterview = useCallback(async () => {
     if (!token) {
       setError("Invalid interview link. Please use the link from your email.");
       setLoading(false);
       return;
     }
 
-    const initInterview = async () => {
-      try {
-        const { data, error: fnError } = await supabase.functions.invoke('start-interview', {
-          body: { token }
-        });
+    setLoading(true);
+    setError(null);
 
-        if (fnError || data?.error) {
-          throw new Error(data?.error || fnError?.message || 'Failed to load interview');
-        }
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('start-interview', {
+        body: { token }
+      });
 
-        setResponseId(data.responseId);
-        setQuestions(data.questions);
-        setAnswers(new Array(data.questions.length).fill(null));
-        setCandidateName(data.candidateName);
-        setJobTitle(data.jobTitle);
-        setStageName(data.stageName);
-        setLoading(false);
-      } catch (err: any) {
-        setError(err.message);
-        setLoading(false);
+      if (fnError || data?.error) {
+        throw new Error(data?.error || fnError?.message || 'Failed to load interview');
       }
-    };
 
-    initInterview();
+      setResponseId(data.responseId);
+      setQuestions(data.questions);
+      setAnswers(new Array(data.questions.length).fill(null));
+      setCandidateName(data.candidateName);
+      setJobTitle(data.jobTitle);
+      setStageName(data.stageName);
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
   }, [token]);
+
+  useEffect(() => {
+    initInterview();
+  }, [initInterview]);
 
   // Timer countdown
   useEffect(() => {
@@ -229,7 +232,11 @@ const Interview = () => {
           <CardContent className="pt-6 text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">Unable to Load Interview</h2>
-            <p className="text-muted-foreground">{error}</p>
+            <p className="text-muted-foreground mb-6">{error}</p>
+            <Button onClick={initInterview} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </Button>
           </CardContent>
         </Card>
       </div>
