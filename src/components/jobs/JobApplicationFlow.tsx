@@ -67,6 +67,8 @@ export const JobApplicationFlow = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [nextStage, setNextStage] = useState<string>('AI Phone Interview');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getAnalysisProgress = () => {
@@ -216,6 +218,10 @@ export const JobApplicationFlow = ({
         if (analysisResult?.analysis) {
           setAiAnalysis(analysisResult.analysis);
         }
+        
+        // Track email sent status and next stage
+        setEmailSent(analysisResult?.emailSent || false);
+        setNextStage(analysisResult?.nextStage || 'AI Phone Interview');
 
         // Create application record
         await supabase
@@ -224,7 +230,7 @@ export const JobApplicationFlow = ({
             candidate_id: user.id,
             job_id: job.id,
             cover_letter: coverLetter || null,
-            status: 'pending',
+            status: 'in_review',
           });
 
         setFlowStep('complete');
@@ -307,6 +313,8 @@ export const JobApplicationFlow = ({
     setCoverLetter("");
     setAiAnalysis(null);
     setError(null);
+    setEmailSent(false);
+    setNextStage('AI Phone Interview');
     onOpenChange(false);
   };
 
@@ -649,12 +657,30 @@ export const JobApplicationFlow = ({
                   </div>
                 )}
 
+                {/* Email Notification */}
+                {emailSent && (
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-green-700 dark:text-green-400 mb-1">📧 Email Sent!</h4>
+                      <p className="text-sm text-green-600 dark:text-green-300">
+                        An interview invitation has been sent to your email. Please check your inbox.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Next Steps */}
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <h4 className="font-semibold text-foreground mb-2">Next Steps</h4>
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <ArrowRight className="h-4 w-4 text-primary" />
+                    Next Stage: {nextStage}
+                  </h4>
                   <p className="text-sm text-muted-foreground">
-                    Our hiring team will review your application and contact you within 2-3 business days 
-                    to schedule the next round of interviews.
+                    {emailSent 
+                      ? `You've been added to the interview pipeline. Check your email for details about the ${nextStage} round.`
+                      : `Our hiring team will review your application and contact you within 2-3 business days to schedule the ${nextStage}.`
+                    }
                   </p>
                 </div>
               </div>
