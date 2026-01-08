@@ -64,6 +64,22 @@ export default function CandidateDetailModal({
 
   const analysis = candidate.ai_analysis;
   const profile = candidate.candidate;
+  const candidateData = analysis?.candidate_data;
+
+  // Helper to get candidate data - prefer ai_analysis.candidate_data, fallback to profile
+  const getData = () => ({
+    full_name: candidateData?.full_name || profile?.full_name || 'Unknown',
+    email: candidateData?.email || profile?.email || '',
+    mobile: candidateData?.mobile || profile?.mobile || null,
+    location: candidateData?.location || profile?.location || null,
+    experience_level: candidateData?.experience_level || profile?.experience_level || null,
+    preferred_role: candidateData?.preferred_role || profile?.preferred_role || null,
+    skills: candidateData?.skills || [],
+    education: candidateData?.education || null,
+    profile_picture: profile?.profile_picture || null,
+  });
+
+  const data = getData();
 
   const getScoreColor = (score: number | null) => {
     if (!score) return 'text-muted-foreground';
@@ -109,22 +125,22 @@ export default function CandidateDetailModal({
             <DialogHeader className="mb-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  {profile?.profile_picture ? (
+                  {data.profile_picture ? (
                     <img
-                      src={profile.profile_picture}
-                      alt={profile.full_name}
+                      src={data.profile_picture}
+                      alt={data.full_name}
                       className="h-16 w-16 rounded-full object-cover border-2 border-primary/20"
                     />
                   ) : (
                     <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
                       <span className="text-2xl font-bold text-primary">
-                        {profile?.full_name?.charAt(0) || '?'}
+                        {data.full_name?.charAt(0) || '?'}
                       </span>
                     </div>
                   )}
                   <div>
-                    <DialogTitle className="text-2xl mb-1">{profile?.full_name || 'Unknown Candidate'}</DialogTitle>
-                    <p className="text-muted-foreground">{profile?.preferred_role || 'Job Seeker'}</p>
+                    <DialogTitle className="text-2xl mb-1">{data.full_name}</DialogTitle>
+                    <p className="text-muted-foreground">{data.preferred_role || 'Job Seeker'}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">
                         {candidate.current_stage?.name || 'Resume Screening'}
@@ -159,22 +175,22 @@ export default function CandidateDetailModal({
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${profile?.email}`} className="text-primary hover:underline">
-                        {profile?.email || 'N/A'}
+                      <a href={`mailto:${data.email}`} className="text-primary hover:underline">
+                        {data.email || 'N/A'}
                       </a>
                     </div>
-                    {profile?.mobile && (
+                    {data.mobile && (
                       <div className="flex items-center gap-2 text-sm">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <a href={`tel:${profile.mobile}`} className="text-primary hover:underline">
-                          {profile.mobile}
+                        <a href={`tel:${data.mobile}`} className="text-primary hover:underline">
+                          {data.mobile}
                         </a>
                       </div>
                     )}
-                    {profile?.location && (
+                    {data.location && (
                       <div className="flex items-center gap-2 text-sm">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{profile.location}</span>
+                        <span>{data.location}</span>
                       </div>
                     )}
                   </div>
@@ -188,12 +204,18 @@ export default function CandidateDetailModal({
                   <div className="space-y-3 text-sm">
                     <div>
                       <span className="text-muted-foreground">Experience Level:</span>
-                      <p className="font-medium">{formatExperienceLevel(profile?.experience_level)}</p>
+                      <p className="font-medium">{formatExperienceLevel(data.experience_level)}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Preferred Role:</span>
-                      <p className="font-medium">{profile?.preferred_role || 'Not specified'}</p>
+                      <p className="font-medium">{data.preferred_role || 'Not specified'}</p>
                     </div>
+                    {data.education && (
+                      <div>
+                        <span className="text-muted-foreground">Education:</span>
+                        <p className="font-medium">{data.education}</p>
+                      </div>
+                    )}
                     <div>
                       <span className="text-muted-foreground">Applied For:</span>
                       <p className="font-medium">{candidate.job?.job_title}</p>
@@ -201,6 +223,28 @@ export default function CandidateDetailModal({
                     </div>
                   </div>
                 </Card>
+
+                {/* Skills from parsed resume */}
+                {data.skills && data.skills.length > 0 && (
+                  <Card className="p-4">
+                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Star className="h-4 w-4 text-primary" />
+                      Skills
+                    </h3>
+                    <div className="flex flex-wrap gap-1">
+                      {data.skills.slice(0, 15).map((skill: string, idx: number) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {data.skills.length > 15 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{data.skills.length - 15} more
+                        </Badge>
+                      )}
+                    </div>
+                  </Card>
+                )}
 
                 {candidate.resume_url && (
                   <Card className="p-4">
@@ -371,17 +415,17 @@ export default function CandidateDetailModal({
               <Button variant="outline" onClick={onClose}>
                 Close
               </Button>
-              {profile?.email && (
+              {data.email && (
                 <Button variant="outline" asChild>
-                  <a href={`mailto:${profile.email}`}>
+                  <a href={`mailto:${data.email}`}>
                     <Mail className="h-4 w-4 mr-2" />
                     Send Email
                   </a>
                 </Button>
               )}
-              {profile?.mobile && (
+              {data.mobile && (
                 <Button asChild>
-                  <a href={`tel:${profile.mobile}`}>
+                  <a href={`tel:${data.mobile}`}>
                     <Phone className="h-4 w-4 mr-2" />
                     Call Candidate
                   </a>

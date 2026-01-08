@@ -146,13 +146,33 @@ export default function TalentPoolContent() {
     }
   };
 
-  const filteredCandidates = candidates.filter(
-    (candidate) =>
-      candidate.candidate?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.candidate?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  // Helper function to get candidate data - prefer ai_analysis.candidate_data, fallback to profile
+  const getCandidateData = (candidate: AppliedCandidate) => {
+    const aiData = candidate.ai_analysis?.candidate_data;
+    const profile = candidate.candidate;
+    
+    return {
+      full_name: aiData?.full_name || profile?.full_name || 'Unknown',
+      email: aiData?.email || profile?.email || '',
+      mobile: aiData?.mobile || profile?.mobile || null,
+      location: aiData?.location || profile?.location || null,
+      experience_level: aiData?.experience_level || profile?.experience_level || null,
+      preferred_role: aiData?.preferred_role || profile?.preferred_role || null,
+      skills: aiData?.skills || [],
+      education: aiData?.education || null,
+      profile_picture: profile?.profile_picture || null,
+    };
+  };
+
+  const filteredCandidates = candidates.filter((candidate) => {
+    const data = getCandidateData(candidate);
+    return (
+      data.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      data.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.job?.job_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (candidate.candidate?.location && candidate.candidate.location.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+      (data.location && data.location.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  });
 
   const getScoreBadge = (score: number | null) => {
     if (!score) return <Badge variant="outline">N/A</Badge>;
@@ -296,81 +316,84 @@ export default function TalentPoolContent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCandidates.map((candidate) => (
-                <TableRow key={candidate.id} className="hover:bg-muted/50">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      {candidate.candidate?.profile_picture ? (
-                        <img
-                          src={candidate.candidate.profile_picture}
-                          alt={candidate.candidate.full_name}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">
-                            {candidate.candidate?.full_name?.charAt(0) || '?'}
-                          </span>
+              {filteredCandidates.map((candidate) => {
+                const candidateData = getCandidateData(candidate);
+                return (
+                  <TableRow key={candidate.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        {candidateData.profile_picture ? (
+                          <img
+                            src={candidateData.profile_picture}
+                            alt={candidateData.full_name}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-sm font-medium text-primary">
+                              {candidateData.full_name?.charAt(0) || '?'}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {candidateData.full_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {candidateData.email}
+                          </p>
                         </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {candidate.candidate?.full_name || 'Unknown'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {candidate.candidate?.email}
-                        </p>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-foreground">{candidate.job?.job_title}</p>
-                      <p className="text-sm text-muted-foreground">{candidate.job?.department}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>{getScoreBadge(candidate.ai_score)}</TableCell>
-                  <TableCell>{getRecommendationBadge(candidate.ai_analysis)}</TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <Badge variant="outline" className="text-xs">
-                        {candidate.current_stage?.name || 'Resume Screening'}
-                      </Badge>
-                      <Progress 
-                        value={(candidate.current_stage?.stage_order || 1) / 6 * 100} 
-                        className="h-1 w-20"
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {formatDate(candidate.applied_at)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={`mailto:${candidate.candidate?.email}`}>
-                          <Mail className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      {candidate.candidate?.mobile && (
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-foreground">{candidate.job?.job_title}</p>
+                        <p className="text-sm text-muted-foreground">{candidate.job?.department}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getScoreBadge(candidate.ai_score)}</TableCell>
+                    <TableCell>{getRecommendationBadge(candidate.ai_analysis)}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Badge variant="outline" className="text-xs">
+                          {candidate.current_stage?.name || 'Resume Screening'}
+                        </Badge>
+                        <Progress 
+                          value={(candidate.current_stage?.stage_order || 1) / 6 * 100} 
+                          className="h-1 w-20"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {formatDate(candidate.applied_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" asChild>
-                          <a href={`tel:${candidate.candidate.mobile}`}>
-                            <Phone className="h-4 w-4" />
+                          <a href={`mailto:${candidateData.email}`}>
+                            <Mail className="h-4 w-4" />
                           </a>
                         </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setSelectedCandidate(candidate)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        {candidateData.mobile && (
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={`tel:${candidateData.mobile}`}>
+                              <Phone className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setSelectedCandidate(candidate)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}

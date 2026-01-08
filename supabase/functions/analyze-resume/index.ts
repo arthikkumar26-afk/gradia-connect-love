@@ -146,64 +146,43 @@ serve(async (req) => {
 
     const { candidateId: originalCandidateId, jobId, resumeUrl, candidateProfile, jobDetails }: ResumeAnalysisRequest = await req.json();
 
-    console.log('Analyzing resume for original candidate ID:', originalCandidateId, 'job:', jobId);
-    console.log('Candidate email from resume:', candidateProfile.email);
+    console.log('Analyzing resume for candidate ID:', originalCandidateId, 'job:', jobId);
+    console.log('Candidate details from resume:', {
+      name: candidateProfile.full_name,
+      email: candidateProfile.email,
+      skills: candidateProfile.skills?.length || 0,
+      experience: candidateProfile.experience_level
+    });
 
-    // Check if we need to create a new profile for this candidate (when applying via QR/employer upload)
-    // First, check if a profile with this email already exists
+    // Check if a profile with this email already exists (for existing auth users)
     let actualCandidateId = originalCandidateId;
     
-    const { data: existingProfile } = await supabase
-      .from('profiles')
-      .select('id, email')
-      .eq('email', candidateProfile.email)
-      .single();
-
-    if (existingProfile) {
-      // Use existing profile
-      actualCandidateId = existingProfile.id;
-      console.log('Found existing profile for candidate:', existingProfile.email, 'ID:', actualCandidateId);
-    } else if (candidateProfile.email && candidateProfile.email !== '') {
-      // Check if the original candidate's email is different from parsed resume email
-      const { data: originalProfile } = await supabase
+    if (candidateProfile.email) {
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id, email')
-        .eq('id', originalCandidateId)
+        .select('id, email, full_name')
+        .eq('email', candidateProfile.email)
         .single();
 
-      if (originalProfile && originalProfile.email !== candidateProfile.email) {
-        // This is a new candidate - create a profile for them
-        console.log('Creating new profile for candidate from resume:', candidateProfile.email);
+      if (existingProfile) {
+        // Use existing profile's ID
+        actualCandidateId = existingProfile.id;
+        console.log('Found existing profile for candidate:', existingProfile.email, 'ID:', actualCandidateId);
         
-        const newCandidateId = crypto.randomUUID();
-        
-        const { data: newProfile, error: profileError } = await supabase
+        // Update profile with parsed resume data if missing
+        await supabase
           .from('profiles')
-          .insert({
-            id: newCandidateId,
-            email: candidateProfile.email,
-            full_name: candidateProfile.full_name || 'Unknown',
-            role: 'candidate',
+          .update({
+            full_name: candidateProfile.full_name || existingProfile.full_name,
             experience_level: candidateProfile.experience_level,
             preferred_role: candidateProfile.preferred_role,
             location: candidateProfile.location,
             mobile: candidateProfile.mobile,
-            resume_url: resumeUrl,
+            resume_url: resumeUrl || undefined,
           })
-          .select()
-          .single();
-
-        if (profileError) {
-          console.error('Error creating candidate profile:', profileError);
-          // Continue with original ID if profile creation fails
-        } else {
-          actualCandidateId = newProfile.id;
-          console.log('Created new candidate profile with ID:', actualCandidateId);
-        }
+          .eq('id', existingProfile.id);
       }
     }
-
-    console.log('Using candidate ID for pipeline:', actualCandidateId);
 
     // Build prompt for AI analysis with all available candidate data
     const candidateSkills = candidateProfile.skills?.join(', ') || 'Not specified';
@@ -298,7 +277,23 @@ Provide your analysis using the suggest_analysis function.`;
     }
 
     const analysis = JSON.parse(toolCall.function.arguments);
-    console.log('AI Analysis completed:', analysis);
+    
+    // Include parsed candidate profile data in the analysis for display in talent pool
+    const enrichedAnalysis = {
+      ...analysis,
+      candidate_data: {
+        full_name: candidateProfile.full_name,
+        email: candidateProfile.email,
+        mobile: candidateProfile.mobile,
+        location: candidateProfile.location,
+        experience_level: candidateProfile.experience_level,
+        preferred_role: candidateProfile.preferred_role,
+        skills: candidateProfile.skills || [],
+        education: candidateProfile.education,
+      }
+    };
+    
+    console.log('AI Analysis completed with candidate data:', enrichedAnalysis);
 
     // Get the second stage (AI Phone Interview) for next step
     const { data: stages } = await supabase
@@ -309,15 +304,15 @@ Provide your analysis using the suggest_analysis function.`;
     const resumeScreeningStage = stages?.find(s => s.stage_order === 1);
     const nextStage = stages?.find(s => s.stage_order === 2);
 
-    // Create interview candidate record
+    // Create interview candidate record with enriched analysis data
     const { data: interviewCandidate, error: candidateError } = await supabase
       .from('interview_candidates')
       .upsert({
         job_id: jobId,
         candidate_id: actualCandidateId,
         current_stage_id: nextStage?.id || resumeScreeningStage?.id,
-        ai_score: analysis.overall_score,
-        ai_analysis: analysis,
+        ai_score: enrichedAnalysis.overall_score,
+        ai_analysis: enrichedAnalysis,
         resume_url: resumeUrl,
         status: 'active'
       }, { onConflict: 'job_id,candidate_id' })
@@ -339,8 +334,8 @@ Provide your analysis using the suggest_analysis function.`;
         stage_id: resumeScreeningStage?.id,
         status: 'completed',
         completed_at: new Date().toISOString(),
-        ai_feedback: analysis,
-        ai_score: analysis.overall_score
+        ai_feedback: enrichedAnalysis,
+        ai_score: enrichedAnalysis.overall_score
       });
 
     if (screeningEventError) {
@@ -396,7 +391,7 @@ Provide your analysis using the suggest_analysis function.`;
     return new Response(JSON.stringify({
       success: true,
       interviewCandidateId: interviewCandidate.id,
-      analysis,
+      analysis: enrichedAnalysis,
       emailSent,
       nextStage: nextStage?.name || 'AI Phone Interview'
     }), {
