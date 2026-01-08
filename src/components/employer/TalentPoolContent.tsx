@@ -5,12 +5,22 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus } from 'lucide-react';
+import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AddCandidateModal } from './AddCandidateModal';
 import CandidateDetailModal from './CandidateDetailModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface AppliedCandidate {
   id: string;
@@ -51,6 +61,8 @@ export default function TalentPoolContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<AppliedCandidate | null>(null);
   const [jobs, setJobs] = useState<any[]>([]);
+  const [deleteCandidate, setDeleteCandidate] = useState<AppliedCandidate | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     shortlisted: 0,
@@ -197,6 +209,57 @@ export default function TalentPoolContent() {
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const handleDeleteCandidate = async () => {
+    if (!deleteCandidate) return;
+    
+    setDeleting(true);
+    try {
+      // Delete interview events first
+      await supabase
+        .from('interview_events')
+        .delete()
+        .eq('interview_candidate_id', deleteCandidate.id);
+      
+      // Delete interview responses
+      const { data: events } = await supabase
+        .from('interview_events')
+        .select('id')
+        .eq('interview_candidate_id', deleteCandidate.id);
+      
+      if (events?.length) {
+        await supabase
+          .from('interview_responses')
+          .delete()
+          .in('interview_event_id', events.map(e => e.id));
+      }
+      
+      // Delete the interview candidate record
+      const { error } = await supabase
+        .from('interview_candidates')
+        .delete()
+        .eq('id', deleteCandidate.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Candidate removed',
+        description: 'The candidate has been removed from the talent pool.',
+      });
+      
+      setDeleteCandidate(null);
+      loadAppliedCandidates();
+    } catch (error: any) {
+      console.error('Error deleting candidate:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete candidate',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -389,6 +452,14 @@ export default function TalentPoolContent() {
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteCandidate(candidate)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -437,6 +508,29 @@ export default function TalentPoolContent() {
           )}
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteCandidate} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Candidate</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {deleteCandidate && getCandidateData(deleteCandidate).full_name} from the talent pool? 
+              This will delete all interview records and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCandidate}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Removing...' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
