@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Video, Play, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Loader2, Video, Play, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, ExternalLink, Link, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface InterviewResponse {
   id: string;
@@ -17,29 +18,40 @@ interface InterviewResponse {
   interview_event_id: string;
 }
 
+interface InterviewInvitation {
+  id: string;
+  invitation_token: string;
+  expires_at: string;
+  email_status: string;
+}
+
 interface StageRecordingPlayerProps {
   interviewCandidateId: string;
   stageId: string;
   stageName: string;
+  showLinkForPending?: boolean;
 }
 
 export const StageRecordingPlayer = ({ 
   interviewCandidateId, 
   stageId,
-  stageName 
+  stageName,
+  showLinkForPending = false
 }: StageRecordingPlayerProps) => {
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState<InterviewResponse | null>(null);
+  const [invitation, setInvitation] = useState<InterviewInvitation | null>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const fetchResponse = async () => {
+    const fetchData = async () => {
       try {
         // Get interview event for this stage
         const { data: event, error: eventError } = await supabase
           .from('interview_events')
-          .select('id')
+          .select('id, status')
           .eq('interview_candidate_id', interviewCandidateId)
           .eq('stage_id', stageId)
           .single();
@@ -49,7 +61,20 @@ export const StageRecordingPlayer = ({
           return;
         }
 
-        // Get response for this event
+        // Get invitation for this event (to show interview link)
+        const { data: invitationData } = await supabase
+          .from('interview_invitations')
+          .select('id, invitation_token, expires_at, email_status')
+          .eq('interview_event_id', event.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (invitationData) {
+          setInvitation(invitationData as InterviewInvitation);
+        }
+
+        // Get response for this event (completed interview)
         const { data: responseData, error: responseError } = await supabase
           .from('interview_responses')
           .select('*')
@@ -70,7 +95,7 @@ export const StageRecordingPlayer = ({
     };
 
     if (interviewCandidateId && stageId) {
-      fetchResponse();
+      fetchData();
     }
   }, [interviewCandidateId, stageId]);
 
@@ -81,11 +106,75 @@ export const StageRecordingPlayer = ({
     return `${mins}m ${secs}s`;
   };
 
+  const getInterviewLink = () => {
+    if (!invitation?.invitation_token) return null;
+    return `${window.location.origin}/interview?token=${invitation.invitation_token}`;
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const link = getInterviewLink();
+    if (link) {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      toast.success('Interview link copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground py-2">
         <Loader2 className="h-3 w-3 animate-spin" />
         <span className="text-xs">Loading results...</span>
+      </div>
+    );
+  }
+
+  // Show interview link if we have invitation but no completed response
+  const interviewLink = getInterviewLink();
+  const isExpired = invitation?.expires_at ? new Date(invitation.expires_at) < new Date() : false;
+
+  if (!response && invitation && interviewLink) {
+    return (
+      <div className="mt-2 p-2 rounded-lg bg-blue-50 border border-blue-200">
+        <div className="flex items-center gap-2 mb-2">
+          <Link className="h-3 w-3 text-blue-600" />
+          <span className="text-xs font-medium text-blue-800">Interview Link</span>
+          {isExpired && (
+            <Badge variant="destructive" className="text-xs h-4 px-1">Expired</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={interviewLink}
+            readOnly
+            className="flex-1 text-xs bg-white border rounded px-2 py-1 text-muted-foreground truncate"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 text-xs shrink-0"
+            onClick={handleCopyLink}
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3 mr-1 text-green-600" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-3 w-3 mr-1" />
+                Copy
+              </>
+            )}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Share this link with the candidate to take the interview
+        </p>
       </div>
     );
   }

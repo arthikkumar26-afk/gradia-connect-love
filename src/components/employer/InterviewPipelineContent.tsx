@@ -366,12 +366,13 @@ const CandidateProfileModal = ({
                                   <p className="text-xs text-muted-foreground">Score: {step.score}/10</p>
                                 )}
                                 
-                                {/* Show recording for completed stages that have recordings */}
-                                {step.status === "completed" && hasRecordingCapability && (
+                                {/* Show recording for completed stages OR interview link for current/pending stages */}
+                                {(step.status === "completed" || step.status === "current") && hasRecordingCapability && (
                                   <StageRecordingPlayer
                                     interviewCandidateId={candidate.interviewCandidateId}
                                     stageId={step.id}
                                     stageName={step.title}
+                                    showLinkForPending={step.status === "current"}
                                   />
                                 )}
                                 
