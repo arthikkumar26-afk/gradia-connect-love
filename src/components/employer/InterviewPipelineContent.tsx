@@ -25,7 +25,8 @@ import {
   Loader2,
   RefreshCw,
   Database,
-  X
+  X,
+  Trash2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -51,6 +62,8 @@ import { AIActionPanel } from "./AIActionPanel";
 import { InterviewRecordingPlayer } from "./InterviewRecordingPlayer";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Stage icon mapping
 const stageIcons: Record<string, React.ElementType> = {
@@ -435,6 +448,7 @@ const CandidateCard = ({
   onSchedule, 
   onEmail,
   onOpenProfile,
+  onDelete,
   isSelected,
   onToggleSelect
 }: { 
@@ -443,6 +457,7 @@ const CandidateCard = ({
   onSchedule: () => void;
   onEmail: () => void;
   onOpenProfile: () => void;
+  onDelete?: () => void;
   isSelected?: boolean;
   onToggleSelect?: () => void;
 }) => {
@@ -498,6 +513,18 @@ const CandidateCard = ({
                     <ChevronRight className="h-4 w-4 mr-2" />
                     Move to Next Stage
                   </DropdownMenuItem>
+                  {onDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove Candidate
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -540,11 +567,13 @@ const CandidateCard = ({
 const PipelineColumn = ({ 
   stage, 
   onMoveCandidate,
-  onOpenCandidate 
+  onOpenCandidate,
+  onDeleteCandidate
 }: { 
   stage: PipelineStage;
   onMoveCandidate: (candidateId: string, fromStage: string, toStage: string) => void;
   onOpenCandidate: (candidate: Candidate) => void;
+  onDeleteCandidate: (candidate: Candidate) => void;
 }) => {
   const Icon = getStageIcon(stage.title);
   const color = getStageColor(stage.title);
@@ -582,6 +611,7 @@ const PipelineColumn = ({
                   onSchedule={() => console.log("Schedule interview for", candidate.name)}
                   onEmail={() => console.log("Send email to", candidate.email)}
                   onOpenProfile={() => onOpenCandidate(candidate)}
+                  onDelete={() => onDeleteCandidate(candidate)}
                 />
               ))
             )}
@@ -598,6 +628,8 @@ export const InterviewPipelineContent = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkTargetStage, setBulkTargetStage] = useState<string>("");
   const [isBulkMoving, setIsBulkMoving] = useState(false);
+  const [deleteCandidate, setDeleteCandidate] = useState<Candidate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get all candidates from all stages
   const allCandidates = stages.flatMap(stage => stage.candidates);
@@ -668,6 +700,50 @@ export const InterviewPipelineContent = () => {
     
     // Refresh selected candidate data
     await refetch();
+  };
+
+  const handleDeleteCandidate = async () => {
+    if (!deleteCandidate) return;
+    
+    setIsDeleting(true);
+    try {
+      // Get interview events for this candidate
+      const { data: events } = await supabase
+        .from('interview_events')
+        .select('id')
+        .eq('interview_candidate_id', deleteCandidate.interviewCandidateId);
+      
+      // Delete interview responses first
+      if (events?.length) {
+        await supabase
+          .from('interview_responses')
+          .delete()
+          .in('interview_event_id', events.map(e => e.id));
+      }
+      
+      // Delete interview events
+      await supabase
+        .from('interview_events')
+        .delete()
+        .eq('interview_candidate_id', deleteCandidate.interviewCandidateId);
+      
+      // Delete the interview candidate record
+      const { error } = await supabase
+        .from('interview_candidates')
+        .delete()
+        .eq('id', deleteCandidate.interviewCandidateId);
+      
+      if (error) throw error;
+      
+      toast.success('Candidate removed from pipeline');
+      setDeleteCandidate(null);
+      refetch();
+    } catch (error: any) {
+      console.error('Error deleting candidate:', error);
+      toast.error(error.message || 'Failed to remove candidate');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const totalCandidates = stages.reduce(
@@ -843,12 +919,36 @@ export const InterviewPipelineContent = () => {
               onSchedule={() => console.log("Schedule interview for", candidate.name)}
               onEmail={() => console.log("Send email to", candidate.email)}
               onOpenProfile={() => handleOpenCandidate(candidate)}
+              onDelete={() => setDeleteCandidate(candidate)}
               isSelected={selectedIds.has(candidate.interviewCandidateId)}
               onToggleSelect={() => handleToggleSelect(candidate.interviewCandidateId)}
             />
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteCandidate} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Candidate</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {deleteCandidate?.name} from the interview pipeline? 
+              This will delete all interview records and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCandidate}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Removing...' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
