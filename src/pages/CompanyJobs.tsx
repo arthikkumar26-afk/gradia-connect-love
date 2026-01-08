@@ -177,6 +177,14 @@ const CompanyJobs = () => {
       setAiScore(score);
       setAiAnalysis(analysis);
 
+      // Fetch the first interview stage (Resume Screening)
+      const { data: firstStage } = await supabase
+        .from('interview_stages')
+        .select('id')
+        .order('stage_order', { ascending: true })
+        .limit(1)
+        .single();
+
       // Create interview candidate record
       const { error: candidateError } = await supabase.from("interview_candidates").insert({
         job_id: selectedJob.id,
@@ -185,6 +193,7 @@ const CompanyJobs = () => {
         ai_score: score,
         ai_analysis: analysis,
         status: "active",
+        current_stage_id: firstStage?.id || null,
       });
 
       if (candidateError) {

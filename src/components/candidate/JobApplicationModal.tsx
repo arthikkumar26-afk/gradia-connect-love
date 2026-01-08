@@ -121,6 +121,14 @@ export const JobApplicationModal = ({
       // Step 2: Create interview candidate entry
       setAnalysisStep('analyzing');
       
+      // Fetch the first interview stage (Resume Screening)
+      const { data: firstStage } = await supabase
+        .from('interview_stages')
+        .select('id')
+        .order('stage_order', { ascending: true })
+        .limit(1)
+        .single();
+
       const { data: interviewCandidate, error: icError } = await supabase
         .from('interview_candidates')
         .insert({
@@ -128,6 +136,7 @@ export const JobApplicationModal = ({
           job_id: job.id,
           resume_url: resumeUrl,
           status: 'active',
+          current_stage_id: firstStage?.id || null,
         })
         .select()
         .single();
