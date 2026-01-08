@@ -183,11 +183,11 @@ const EmployerDashboard = () => {
 
   return (
     <div className="bg-subtle flex min-h-[calc(100vh-64px)]">
-      {/* Sidebar */}
+      {/* Sidebar - Always visible with toggle */}
       <aside 
         className={`${
-          sidebarOpen ? "w-64" : "w-0"
-        } bg-card border-r border-border transition-all duration-300 overflow-hidden flex flex-col`}
+          sidebarOpen ? "w-64 min-w-64" : "w-16 min-w-16"
+        } bg-card border-r border-border transition-all duration-300 flex flex-col flex-shrink-0`}
       >
         <nav className="flex-1 p-4 space-y-1 pt-6">
           {menuItems.map((item) => {
@@ -210,13 +210,21 @@ const EmployerDashboard = () => {
                     ? "bg-accent/10 text-accent font-medium"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
+                title={!sidebarOpen ? item.label : undefined}
               >
-                <Icon className="h-5 w-5" />
-                <span className="flex-1 text-left">{item.label}</span>
-                {showBadge && (
-                  <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5 animate-pulse">
-                    {newApplications}
-                  </Badge>
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                {sidebarOpen && (
+                  <>
+                    <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
+                    {showBadge && (
+                      <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5 animate-pulse">
+                        {newApplications}
+                      </Badge>
+                    )}
+                  </>
+                )}
+                {!sidebarOpen && showBadge && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                 )}
               </button>
             );
