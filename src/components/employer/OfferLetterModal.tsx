@@ -60,13 +60,27 @@ export default function OfferLetterModal({
         }
       });
 
-      if (error || data?.error) {
-        throw new Error(data?.error || error?.message || 'Failed to send offer letter');
+      if (error) {
+        throw new Error(error.message || 'Failed to generate offer letter');
       }
 
-      toast({ title: 'Success', description: 'Offer letter sent successfully to ' + (candidateEmail || candidateName) });
-      onSuccess();
-      onClose();
+      // Check if email was sent or just saved
+      if (data?.success) {
+        toast({ title: 'Success', description: 'Offer letter sent successfully to ' + (data.candidateEmail || candidateEmail || candidateName) });
+        onSuccess();
+        onClose();
+      } else if (data?.offerSaved) {
+        // Offer was saved but email failed
+        toast({ 
+          title: 'Offer Letter Saved', 
+          description: data.message || 'Offer letter saved but email could not be sent. Please verify your domain at resend.com/domains.',
+          variant: 'destructive'
+        });
+        onSuccess();
+        onClose();
+      } else {
+        throw new Error(data?.error || 'Failed to send offer letter');
+      }
     } catch (error: any) {
       console.error('Offer letter error:', error);
       toast({ title: 'Error', description: error.message || 'Failed to send offer letter', variant: 'destructive' });

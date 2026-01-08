@@ -166,98 +166,118 @@ Use the generate_letter function to return the content.`;
     }
 
     // Send email
-    const emailResponse = await sendEmail(RESEND_API_KEY, {
-      from: `${companyName} HR <onboarding@resend.dev>`,
-      to: [candidate.email],
-      subject: letterContent.subject,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #333; }
-            .container { max-width: 700px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px; border-radius: 10px 10px 0 0; text-align: center; }
-            .header h1 { margin: 0; font-size: 28px; }
-            .content { background: white; padding: 40px; border: 1px solid #e5e7eb; }
-            .highlight-box { background: #f0fdf4; padding: 25px; border-radius: 8px; margin: 25px 0; border: 2px solid #10b981; }
-            .details-grid { display: grid; gap: 15px; }
-            .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
-            .detail-label { color: #666; }
-            .detail-value { font-weight: 600; color: #111; }
-            .btn { display: inline-block; padding: 15px 40px; border-radius: 8px; text-decoration: none; margin: 10px 5px; font-weight: 600; }
-            .btn-accept { background: #10b981; color: white; }
-            .btn-decline { background: #f3f4f6; color: #666; }
-            .footer { text-align: center; padding: 30px; background: #f9fafb; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; }
-            .deadline { background: #fef3c7; padding: 15px; border-radius: 8px; margin-top: 25px; text-align: center; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎉 Congratulations!</h1>
-              <p style="margin-bottom: 0; opacity: 0.9;">You've Been Selected</p>
-            </div>
-            <div class="content">
-              <p>${letterContent.greeting}</p>
-              
-              ${letterContent.body}
-              
-              <div class="highlight-box">
-                <h3 style="margin-top: 0; color: #059669;">📋 Offer Details</h3>
-                <div class="details-grid">
-                  <div class="detail-row">
-                    <span class="detail-label">Position</span>
-                    <span class="detail-value">${job.job_title}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Department</span>
-                    <span class="detail-value">${job.department || 'To be assigned'}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Location</span>
-                    <span class="detail-value">${job.location || 'To be confirmed'}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Annual Salary</span>
-                    <span class="detail-value">₹${salaryOffered.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div class="detail-row">
-                    <span class="detail-label">Start Date</span>
-                    <span class="detail-value">${new Date(startDate).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+    let emailSent = false;
+    let emailError = null;
+    
+    try {
+      const emailResponse = await sendEmail(RESEND_API_KEY, {
+        from: `${companyName} HR <onboarding@resend.dev>`,
+        to: [candidate.email],
+        subject: letterContent.subject,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #333; }
+              .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px; border-radius: 10px 10px 0 0; text-align: center; }
+              .header h1 { margin: 0; font-size: 28px; }
+              .content { background: white; padding: 40px; border: 1px solid #e5e7eb; }
+              .highlight-box { background: #f0fdf4; padding: 25px; border-radius: 8px; margin: 25px 0; border: 2px solid #10b981; }
+              .details-grid { display: grid; gap: 15px; }
+              .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+              .detail-label { color: #666; }
+              .detail-value { font-weight: 600; color: #111; }
+              .btn { display: inline-block; padding: 15px 40px; border-radius: 8px; text-decoration: none; margin: 10px 5px; font-weight: 600; }
+              .btn-accept { background: #10b981; color: white; }
+              .btn-decline { background: #f3f4f6; color: #666; }
+              .footer { text-align: center; padding: 30px; background: #f9fafb; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; }
+              .deadline { background: #fef3c7; padding: 15px; border-radius: 8px; margin-top: 25px; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Congratulations!</h1>
+                <p style="margin-bottom: 0; opacity: 0.9;">You've Been Selected</p>
+              </div>
+              <div class="content">
+                <p>${letterContent.greeting}</p>
+                
+                ${letterContent.body}
+                
+                <div class="highlight-box">
+                  <h3 style="margin-top: 0; color: #059669;">📋 Offer Details</h3>
+                  <div class="details-grid">
+                    <div class="detail-row">
+                      <span class="detail-label">Position</span>
+                      <span class="detail-value">${job.job_title}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Department</span>
+                      <span class="detail-value">${job.department || 'To be assigned'}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Location</span>
+                      <span class="detail-value">${job.location || 'To be confirmed'}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Annual Salary</span>
+                      <span class="detail-value">₹${salaryOffered.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Start Date</span>
+                      <span class="detail-value">${new Date(startDate).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
                   </div>
                 </div>
+                
+                <p>${letterContent.closing}</p>
+                
+                <div class="deadline">
+                  <strong>⏰ Please respond by: ${letterContent.acceptance_deadline}</strong>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                  <a href="#accept" class="btn btn-accept">✓ Accept Offer</a>
+                  <a href="#decline" class="btn btn-decline">Decline</a>
+                </div>
               </div>
-              
-              <p>${letterContent.closing}</p>
-              
-              <div class="deadline">
-                <strong>⏰ Please respond by: ${letterContent.acceptance_deadline}</strong>
-              </div>
-              
-              <div style="text-align: center; margin-top: 30px;">
-                <a href="#accept" class="btn btn-accept">✓ Accept Offer</a>
-                <a href="#decline" class="btn btn-decline">Decline</a>
+              <div class="footer">
+                <p style="margin: 0;">We look forward to welcoming you to the team!</p>
+                <p style="margin: 5px 0 0 0; color: #666;">${companyName} HR Team</p>
               </div>
             </div>
-            <div class="footer">
-              <p style="margin: 0;">We look forward to welcoming you to the team!</p>
-              <p style="margin: 5px 0 0 0; color: #666;">${companyName} HR Team</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-    });
+          </body>
+          </html>
+        `,
+      });
 
-    console.log("Offer letter sent successfully:", emailResponse);
+      console.log("Email API response:", emailResponse);
 
-    // Update offer letter status
+      // Check if email was actually sent successfully
+      if (emailResponse.statusCode === 403 || emailResponse.name === 'validation_error') {
+        emailError = 'Domain not verified. To send emails to candidates, please verify your domain at resend.com/domains';
+        console.error("Resend domain error:", emailResponse.message);
+      } else if (emailResponse.id) {
+        emailSent = true;
+        console.log("Email sent successfully with ID:", emailResponse.id);
+      } else if (emailResponse.error) {
+        emailError = emailResponse.error.message || 'Email sending failed';
+        console.error("Email error:", emailResponse.error);
+      }
+    } catch (err: any) {
+      console.error("Email sending exception:", err);
+      emailError = err.message;
+    }
+
+    // Update offer letter status based on email result
     await supabase
       .from('offer_letters')
       .update({ 
-        status: 'sent',
-        sent_at: new Date().toISOString()
+        status: emailSent ? 'sent' : 'draft',
+        sent_at: emailSent ? new Date().toISOString() : null
       })
       .eq('id', offerLetter.id);
 
@@ -267,10 +287,25 @@ Use the generate_letter function to return the content.`;
       .update({ status: 'active' })
       .eq('id', interviewCandidateId);
 
+    // Return response with email status
+    if (!emailSent) {
+      return new Response(JSON.stringify({
+        success: false,
+        offerLetterId: offerLetter.id,
+        error: emailError || 'Email could not be sent. Please verify your domain at resend.com/domains to send emails to candidates.',
+        offerSaved: true,
+        message: 'Offer letter was saved but email was not sent. ' + (emailError || '')
+      }), {
+        status: 200, // Return 200 so frontend can show the specific error
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     return new Response(JSON.stringify({
       success: true,
       offerLetterId: offerLetter.id,
-      emailResponse
+      emailSent: true,
+      candidateEmail: candidate.email
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
