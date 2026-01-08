@@ -150,19 +150,12 @@ const CandidateDetailView = ({
                     />
                   ))}
                 </div>
-                <div className="flex flex-wrap justify-center gap-1 mt-3">
-                  {candidate.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
               </div>
 
               <div className="mt-6 space-y-3">
                 <div className="flex items-center gap-3 text-sm">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-foreground">{candidate.email}</span>
+                  <span className="text-foreground">{candidate.email || 'Not provided'}</span>
                 </div>
                 {candidate.phone && (
                   <div className="flex items-center gap-3 text-sm">
@@ -188,6 +181,19 @@ const CandidateDetailView = ({
                     <span className="text-foreground">{candidate.education}</span>
                   </div>
                 )}
+                {candidate.resumeUrl && (
+                  <div className="flex items-center gap-3 text-sm">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <a 
+                      href={candidate.resumeUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      View Resume
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 flex gap-2">
@@ -202,6 +208,27 @@ const CandidateDetailView = ({
               </div>
             </CardContent>
           </Card>
+
+          {/* Skills Section */}
+          {candidate.skills && candidate.skills.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Code className="h-4 w-4" />
+                  Skills
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1.5">
+                  {candidate.skills.map((skill, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Stats */}
           <Card>
@@ -226,6 +253,49 @@ const CandidateDetailView = ({
               </div>
             </CardContent>
           </Card>
+
+          {/* AI Analysis Summary */}
+          {candidate.aiAnalysis && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  AI Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {candidate.aiAnalysis.summary && (
+                  <p className="text-sm text-muted-foreground">{candidate.aiAnalysis.summary}</p>
+                )}
+                {candidate.aiAnalysis.strengths && candidate.aiAnalysis.strengths.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-green-600 mb-1">Strengths</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                      {candidate.aiAnalysis.strengths.slice(0, 3).map((s, i) => (
+                        <li key={i} className="flex items-start gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {candidate.aiAnalysis.concerns && candidate.aiAnalysis.concerns.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-amber-600 mb-1">Concerns</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                      {candidate.aiAnalysis.concerns.slice(0, 2).map((c, i) => (
+                        <li key={i} className="flex items-start gap-1">
+                          <XCircle className="h-3 w-3 text-amber-500 mt-0.5 flex-shrink-0" />
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* AI Action Panel */}
           <AIActionPanel

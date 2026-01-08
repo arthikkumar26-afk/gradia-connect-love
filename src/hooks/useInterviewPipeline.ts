@@ -31,6 +31,21 @@ export interface PipelineCandidate {
   aiScore?: number;
   interviewCandidateId: string;
   jobId: string;
+  skills?: string[];
+  aiAnalysis?: {
+    summary?: string;
+    strengths?: string[];
+    concerns?: string[];
+    interview_focus?: string[];
+    candidate_data?: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      skills?: string[];
+      education?: string;
+      location?: string;
+    };
+  };
 }
 
 export interface PipelineStage {
@@ -185,26 +200,38 @@ export const useInterviewPipeline = () => {
               };
             });
 
+            // Get candidate data from AI analysis first, fallback to profile
+            const candidateData = c.ai_analysis?.candidate_data;
+            const candidateName = candidateData?.name || c.profiles?.full_name || 'Unknown';
+            const candidateEmail = candidateData?.email || c.profiles?.email || '';
+            const candidatePhone = candidateData?.phone || c.profiles?.mobile || undefined;
+            const candidateLocation = candidateData?.location || c.profiles?.location || undefined;
+            const candidateEducation = candidateData?.education || undefined;
+            const candidateSkills = candidateData?.skills || c.jobs?.skills?.slice(0, 5) || [];
+
             return {
               id: c.candidate_id,
               interviewCandidateId: c.id,
               jobId: c.job_id,
-              name: c.profiles?.full_name || 'Unknown',
-              email: c.profiles?.email || '',
+              name: candidateName,
+              email: candidateEmail,
               role: c.jobs?.job_title || 'Unknown Position',
               avatar: c.profiles?.profile_picture || undefined,
               appliedDate: c.applied_at 
                 ? formatRelativeDate(c.applied_at)
                 : 'Recently',
               rating: Math.min(5, Math.round((c.ai_score || 70) / 20)),
-              tags: c.jobs?.skills?.slice(0, 3) || [],
-              phone: c.profiles?.mobile || undefined,
-              location: c.profiles?.location || undefined,
+              tags: candidateSkills.slice(0, 3),
+              phone: candidatePhone,
+              location: candidateLocation,
               experience: c.profiles?.experience_level || undefined,
+              education: candidateEducation,
               resumeUrl: c.resume_url || undefined,
               currentStage: stage.id,
               interviewSteps,
               aiScore: c.ai_score || undefined,
+              skills: candidateSkills,
+              aiAnalysis: c.ai_analysis || undefined,
             };
           });
 
@@ -226,24 +253,36 @@ export const useInterviewPipeline = () => {
             status: index === 0 ? "current" as const : "pending" as const,
           }));
 
+          // Get candidate data from AI analysis first, fallback to profile
+          const candidateData = c.ai_analysis?.candidate_data;
+          const candidateName = candidateData?.name || c.profiles?.full_name || 'Unknown';
+          const candidateEmail = candidateData?.email || c.profiles?.email || '';
+          const candidatePhone = candidateData?.phone || c.profiles?.mobile || undefined;
+          const candidateLocation = candidateData?.location || c.profiles?.location || undefined;
+          const candidateEducation = candidateData?.education || undefined;
+          const candidateSkills = candidateData?.skills || c.jobs?.skills?.slice(0, 5) || [];
+
           return {
             id: c.candidate_id,
             interviewCandidateId: c.id,
             jobId: c.job_id,
-            name: c.profiles?.full_name || 'Unknown',
-            email: c.profiles?.email || '',
+            name: candidateName,
+            email: candidateEmail,
             role: c.jobs?.job_title || 'Unknown Position',
             avatar: c.profiles?.profile_picture || undefined,
             appliedDate: c.applied_at ? formatRelativeDate(c.applied_at) : 'Recently',
             rating: Math.min(5, Math.round((c.ai_score || 70) / 20)),
-            tags: c.jobs?.skills?.slice(0, 3) || [],
-            phone: c.profiles?.mobile || undefined,
-            location: c.profiles?.location || undefined,
+            tags: candidateSkills.slice(0, 3),
+            phone: candidatePhone,
+            location: candidateLocation,
             experience: c.profiles?.experience_level || undefined,
+            education: candidateEducation,
             resumeUrl: c.resume_url || undefined,
             currentStage: pipelineStages[0]?.id || '',
             interviewSteps,
             aiScore: c.ai_score || undefined,
+            skills: candidateSkills,
+            aiAnalysis: c.ai_analysis || undefined,
           };
         });
 
