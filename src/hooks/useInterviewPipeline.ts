@@ -39,11 +39,15 @@ export interface PipelineCandidate {
     interview_focus?: string[];
     candidate_data?: {
       name?: string;
+      full_name?: string;
       email?: string;
       phone?: string;
+      mobile?: string;
       skills?: string[];
       education?: string;
       location?: string;
+      experience_level?: string;
+      preferred_role?: string;
     };
   };
 }
@@ -202,9 +206,9 @@ export const useInterviewPipeline = () => {
 
             // Get candidate data from AI analysis first, fallback to profile
             const candidateData = c.ai_analysis?.candidate_data;
-            const candidateName = candidateData?.name || c.profiles?.full_name || 'Unknown';
+            const candidateName = candidateData?.full_name || candidateData?.name || c.profiles?.full_name || 'Unknown';
             const candidateEmail = candidateData?.email || c.profiles?.email || '';
-            const candidatePhone = candidateData?.phone || c.profiles?.mobile || undefined;
+            const candidatePhone = candidateData?.mobile || candidateData?.phone || c.profiles?.mobile || undefined;
             const candidateLocation = candidateData?.location || c.profiles?.location || undefined;
             const candidateEducation = candidateData?.education || undefined;
             const candidateSkills = candidateData?.skills || c.jobs?.skills?.slice(0, 5) || [];
@@ -255,9 +259,9 @@ export const useInterviewPipeline = () => {
 
           // Get candidate data from AI analysis first, fallback to profile
           const candidateData = c.ai_analysis?.candidate_data;
-          const candidateName = candidateData?.name || c.profiles?.full_name || 'Unknown';
+          const candidateName = candidateData?.full_name || candidateData?.name || c.profiles?.full_name || 'Unknown';
           const candidateEmail = candidateData?.email || c.profiles?.email || '';
-          const candidatePhone = candidateData?.phone || c.profiles?.mobile || undefined;
+          const candidatePhone = candidateData?.mobile || candidateData?.phone || c.profiles?.mobile || undefined;
           const candidateLocation = candidateData?.location || c.profiles?.location || undefined;
           const candidateEducation = candidateData?.education || undefined;
           const candidateSkills = candidateData?.skills || c.jobs?.skills?.slice(0, 5) || [];
