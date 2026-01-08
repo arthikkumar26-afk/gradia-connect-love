@@ -123,7 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { subject, html } = generateEmailContent(notificationData);
 
     const emailResponse = await resend.emails.send({
-      from: "Gradia Placements <onboarding@resend.dev>",
+      from: "Gradia Placements <notifications@gradia.co.in>",
       to: [notificationData.recipientEmail],
       subject,
       html,

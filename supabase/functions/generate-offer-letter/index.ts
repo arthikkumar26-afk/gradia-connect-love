@@ -171,7 +171,7 @@ Use the generate_letter function to return the content.`;
     
     try {
       const emailResponse = await sendEmail(RESEND_API_KEY, {
-        from: `${companyName} HR <onboarding@resend.dev>`,
+        from: `${companyName} HR <hr@gradia.co.in>`,
         to: [candidate.email],
         subject: letterContent.subject,
         html: `
