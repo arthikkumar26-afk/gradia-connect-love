@@ -127,7 +127,7 @@ export const JobApplicationModal = ({
           candidate_id: candidateId,
           job_id: job.id,
           resume_url: resumeUrl,
-          status: 'applied',
+          status: 'active',
         })
         .select()
         .single();
