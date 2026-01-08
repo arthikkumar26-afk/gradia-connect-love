@@ -13,8 +13,19 @@ interface ProgressRequest {
   autoProgressAll?: boolean;
 }
 
-// Send stage transition email notification
+interface CustomTemplate {
+  subject: string;
+  header_text: string;
+  body_text: string;
+  footer_text: string;
+  primary_color: string;
+  is_active: boolean;
+}
+
+// Send stage transition email notification with custom template support
 async function sendStageTransitionEmail(
+  supabase: any,
+  employerId: string,
   candidateEmail: string,
   candidateName: string,
   jobTitle: string,
@@ -28,6 +39,26 @@ async function sendStageTransitionEmail(
   if (!RESEND_API_KEY) {
     console.log('RESEND_API_KEY not configured, skipping email');
     return;
+  }
+
+  // Try to fetch custom template for this employer and stage
+  let customTemplate: CustomTemplate | null = null;
+  try {
+    const { data } = await supabase
+      .from('email_templates')
+      .select('*')
+      .eq('employer_id', employerId)
+      .eq('stage_name', stageName)
+      .eq('template_type', 'stage_transition')
+      .eq('is_active', true)
+      .single();
+    
+    if (data) {
+      customTemplate = data;
+      console.log(`Using custom template for stage: ${stageName}`);
+    }
+  } catch (e) {
+    console.log(`No custom template found for stage: ${stageName}, using default`);
   }
 
   const baseStyles = `
@@ -52,9 +83,39 @@ async function sendStageTransitionEmail(
   };
 
   const stageIcon = stageIcons[stageName] || '📋';
-  const headerColor = passed ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-  const statusText = passed ? 'Stage Completed!' : 'Application Update';
+  
+  // Use custom template colors or defaults
+  const primaryColor = customTemplate?.primary_color || (passed ? '#10b981' : '#ef4444');
+  const headerColor = passed 
+    ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)` 
+    : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+  
+  // Use custom header text or default
+  const headerText = customTemplate?.header_text || (passed ? 'Stage Completed!' : 'Application Update');
   const statusIcon = passed ? '✅' : '📋';
+
+  // Replace placeholders in custom template
+  const replacePlaceholders = (text: string) => {
+    return text
+      .replace(/\{\{candidateName\}\}/g, candidateName)
+      .replace(/\{\{jobTitle\}\}/g, jobTitle)
+      .replace(/\{\{companyName\}\}/g, companyName)
+      .replace(/\{\{stageName\}\}/g, stageName)
+      .replace(/\{\{score\}\}/g, String(score))
+      .replace(/\{\{nextStage\}\}/g, nextStageName || 'N/A');
+  };
+
+  // Use custom body text or default
+  const bodyContent = customTemplate?.body_text 
+    ? replacePlaceholders(customTemplate.body_text)
+    : (passed 
+        ? `Great news! You have successfully completed the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.`
+        : `Thank you for participating in the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.`);
+
+  // Use custom footer or default
+  const footerContent = customTemplate?.footer_text 
+    ? replacePlaceholders(customTemplate.footer_text)
+    : `Best regards,\nThe ${companyName} Hiring Team`;
 
   let emailHtml = `
     <!DOCTYPE html>
@@ -63,20 +124,16 @@ async function sendStageTransitionEmail(
     <body>
       <div class="container">
         <div class="header" style="background: ${headerColor}; color: white;">
-          <h1 style="margin: 0;">${statusIcon} ${statusText}</h1>
+          <h1 style="margin: 0;">${statusIcon} ${headerText}</h1>
           <p style="margin: 10px 0 0; opacity: 0.9;">${stageIcon} ${stageName}</p>
         </div>
         <div class="content">
           <p>Dear ${candidateName},</p>
-          ${passed ? `
-            <p>Great news! You have successfully completed the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.</p>
-          ` : `
-            <p>Thank you for participating in the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.</p>
-          `}
+          <p>${bodyContent}</p>
           
-          <div class="info-card" style="border-color: ${passed ? '#10b981' : '#64748b'}; text-align: center;">
-            <h3 style="margin-top: 0; color: ${passed ? '#10b981' : '#64748b'};">Your Score</h3>
-            <span class="score-badge" style="background: ${passed ? '#ecfdf5' : '#f1f5f9'}; color: ${passed ? '#059669' : '#475569'};">
+          <div class="info-card" style="border-color: ${passed ? primaryColor : '#64748b'}; text-align: center;">
+            <h3 style="margin-top: 0; color: ${passed ? primaryColor : '#64748b'};">Your Score</h3>
+            <span class="score-badge" style="background: ${passed ? `${primaryColor}15` : '#f1f5f9'}; color: ${passed ? primaryColor : '#475569'};">
               ${score}%
             </span>
           </div>
@@ -105,7 +162,7 @@ async function sendStageTransitionEmail(
           ` : ''}
         </div>
         <div class="footer">
-          <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
+          <p style="white-space: pre-line;">${footerContent}</p>
           <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
         </div>
       </div>
@@ -113,9 +170,12 @@ async function sendStageTransitionEmail(
     </html>
   `;
 
-  const subject = passed 
-    ? `${stageIcon} ${stageName} Complete - ${jobTitle} at ${companyName}`
-    : `Application Update: ${jobTitle} at ${companyName}`;
+  // Use custom subject or default
+  const subject = customTemplate?.subject 
+    ? replacePlaceholders(customTemplate.subject)
+    : (passed 
+        ? `${stageIcon} ${stageName} Complete - ${jobTitle} at ${companyName}`
+        : `Application Update: ${jobTitle} at ${companyName}`);
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -369,6 +429,8 @@ serve(async (req) => {
       // Send email notification for this stage transition
       if (candidateEmail) {
         await sendStageTransitionEmail(
+          supabase,
+          candidate.jobs?.employer_id,
           candidateEmail,
           candidateName,
           jobTitle,
