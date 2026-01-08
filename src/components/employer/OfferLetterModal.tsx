@@ -5,15 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { mockSendOfferLetter } from '@/utils/mockApi';
-import { Placement } from '@/contexts/EmployerContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OfferLetterModalProps {
   isOpen: boolean;
   onClose: () => void;
   placementId: string;
   candidateName: string;
-  onSuccess: (placement: Placement) => void;
+  candidateEmail?: string;
+  onSuccess: () => void;
 }
 
 export default function OfferLetterModal({
@@ -21,6 +21,7 @@ export default function OfferLetterModal({
   onClose,
   placementId,
   candidateName,
+  candidateEmail,
   onSuccess,
 }: OfferLetterModalProps) {
   const { toast } = useToast();
@@ -42,12 +43,33 @@ export default function OfferLetterModal({
 
     setLoading(true);
     try {
-      const updated = await mockSendOfferLetter(placementId, formData);
+      // Parse salary to number (remove currency symbols and commas)
+      const salaryNumber = parseFloat(formData.salary.replace(/[^0-9.]/g, ''));
       
-      toast({ title: 'Success', description: 'Offer letter sent successfully' });
-      onSuccess(updated);
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to send offer letter', variant: 'destructive' });
+      if (isNaN(salaryNumber)) {
+        throw new Error('Invalid salary format. Please enter a numeric value.');
+      }
+
+      // Call the edge function to generate and send offer letter
+      const { data, error } = await supabase.functions.invoke('generate-offer-letter', {
+        body: {
+          interviewCandidateId: placementId,
+          salaryOffered: salaryNumber,
+          startDate: formData.joiningDate,
+          customContent: formData.customNotes,
+        }
+      });
+
+      if (error || data?.error) {
+        throw new Error(data?.error || error?.message || 'Failed to send offer letter');
+      }
+
+      toast({ title: 'Success', description: 'Offer letter sent successfully to ' + (candidateEmail || candidateName) });
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      console.error('Offer letter error:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to send offer letter', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

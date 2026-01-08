@@ -429,9 +429,11 @@ export default function PlacementDetail({
         onClose={() => setShowOfferModal(false)}
         placementId={placement.id}
         candidateName={candidate.name}
-        onSuccess={(updated) => {
+        candidateEmail={candidate.email}
+        onSuccess={() => {
           setShowOfferModal(false);
-          onUpdate(updated);
+          // Refresh the placement data
+          onUpdate({ ...placement, stage: 'Offer Letter' });
         }}
       />
 
