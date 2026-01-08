@@ -19,6 +19,7 @@ import {
   Award,
   Menu,
   X,
+  GitBranch,
   QrCode,
   Bell,
   Mail
@@ -39,6 +40,7 @@ import { JobManagementContent } from "@/components/employer/JobManagementContent
 import TalentPoolContent from "@/components/employer/TalentPoolContent";
 import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
+import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
 import { EmailTemplatesEditor } from "@/components/employer/EmailTemplatesEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -143,6 +145,7 @@ const EmployerDashboard = () => {
     { id: "jobs", label: "Jobs", icon: Briefcase, path: "/employer/jobs" },
     { id: "talent-pool", label: "Talent Pool", icon: Users, path: "/employer/talent-pool" },
     { id: "teams", label: "Teams", icon: UsersRound, path: "/employer/teams" },
+    { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "placements", label: "Placements", icon: UserCheck, path: "/employer/placements" },
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
@@ -282,6 +285,7 @@ const EmployerDashboard = () => {
                    activeMenu === "jobs" ? "Jobs" :
                    activeMenu === "talent-pool" ? "Talent Pool" :
                    activeMenu === "teams" ? "Teams" :
+                   activeMenu === "interview-pipeline" ? "Interview Pipeline" :
                    activeMenu === "placements" ? "Placements" :
                    activeMenu === "email-templates" ? "Email Templates" :
                    activeMenu === "approvals" ? "Approvals" :
@@ -385,6 +389,7 @@ const EmployerDashboard = () => {
             {activeMenu === "talent-pool" && <TalentPoolContent />}
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
+            {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
           </div>
         </main>
