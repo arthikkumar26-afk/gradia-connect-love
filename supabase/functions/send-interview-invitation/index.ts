@@ -13,7 +13,7 @@ interface InvitationRequest {
   meetingLink?: string;
 }
 
-async function sendEmail(apiKey: string, params: { from: string; to: string[]; subject: string; html: string }) {
+async function sendEmail(apiKey: string, params: { from: string; to: string[]; reply_to?: string; subject: string; html: string }) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -122,6 +122,7 @@ serve(async (req) => {
     const emailResponse = await sendEmail(RESEND_API_KEY, {
       from: `${companyName} Hiring <noreply@gradia.co.in>`,
       to: [candidate.email],
+      reply_to: 'support@gradia.co.in',
       subject: `Interview Invitation: ${stageName} for ${job.job_title} at ${companyName}`,
       html: `
         <!DOCTYPE html>
@@ -140,8 +141,8 @@ serve(async (req) => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>🎉 Interview Invitation</h1>
-              <p>Congratulations on advancing to the next stage!</p>
+              <h1>Interview Invitation</h1>
+              <p>Congratulations on advancing to the next stage</p>
             </div>
             <div class="content">
               <p>Dear <strong>${candidate.full_name}</strong>,</p>
