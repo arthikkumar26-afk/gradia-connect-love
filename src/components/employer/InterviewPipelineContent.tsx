@@ -48,6 +48,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AIActionPanel } from "./AIActionPanel";
+import { InterviewRecordingPlayer } from "./InterviewRecordingPlayer";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 
 // Stage icon mapping
@@ -379,6 +380,11 @@ const CandidateProfileModal = ({
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Interview Recording & Results */}
+              <InterviewRecordingPlayer 
+                interviewCandidateId={candidate.interviewCandidateId} 
+              />
 
               {/* AI Action Panel */}
               <AIActionPanel
