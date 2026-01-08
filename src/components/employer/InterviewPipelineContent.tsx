@@ -44,6 +44,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AIActionPanel } from "./AIActionPanel";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
@@ -404,23 +406,38 @@ const CandidateCard = ({
   onMoveNext, 
   onSchedule, 
   onEmail,
-  onOpenProfile 
+  onOpenProfile,
+  isSelected,
+  onToggleSelect
 }: { 
   candidate: Candidate; 
   onMoveNext: () => void;
   onSchedule: () => void;
   onEmail: () => void;
   onOpenProfile: () => void;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }) => {
   return (
     <Card 
-      className="mb-3 bg-card border border-border hover:shadow-md transition-all cursor-pointer group"
+      className={`mb-3 bg-card border transition-all cursor-pointer group ${
+        isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:shadow-md'
+      }`}
       onClick={onOpenProfile}
     >
       <CardContent className="p-3">
         <div className="flex items-start gap-3">
-          <div className="cursor-grab opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          <div 
+            className="mt-0.5"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.();
+            }}
+          >
+            <Checkbox 
+              checked={isSelected} 
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            />
           </div>
           <Avatar className="h-10 w-10">
             <AvatarImage src={candidate.avatar} />
@@ -462,7 +479,9 @@ const CandidateCard = ({
             {/* Progress indicator */}
             <div className="mt-2">
               <div className="flex gap-0.5">
-                {candidate.interviewSteps.map((step) => (
+                {candidate.interviewSteps
+                  .filter(step => step.title !== "AI Phone Interview")
+                  .map((step) => (
                   <div 
                     key={step.id}
                     className={`h-1 flex-1 rounded-full ${
@@ -548,6 +567,55 @@ const PipelineColumn = ({
 export const InterviewPipelineContent = () => {
   const { stages, loading, error, refetch, moveCandidate, updateEventStatus } = useInterviewPipeline();
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkTargetStage, setBulkTargetStage] = useState<string>("");
+  const [isBulkMoving, setIsBulkMoving] = useState(false);
+
+  // Get all candidates from all stages
+  const allCandidates = stages.flatMap(stage => stage.candidates);
+
+  const handleToggleSelect = (candidateId: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(candidateId)) {
+        newSet.delete(candidateId);
+      } else {
+        newSet.add(candidateId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === allCandidates.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allCandidates.map(c => c.interviewCandidateId)));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkMove = async () => {
+    if (!bulkTargetStage || selectedIds.size === 0) return;
+    
+    setIsBulkMoving(true);
+    try {
+      // Move all selected candidates to the target stage
+      const promises = Array.from(selectedIds).map(id => 
+        moveCandidate(id, bulkTargetStage)
+      );
+      await Promise.all(promises);
+      setSelectedIds(new Set());
+      setBulkTargetStage("");
+    } catch (error) {
+      console.error("Bulk move failed:", error);
+    } finally {
+      setIsBulkMoving(false);
+    }
+  };
 
   const handleMoveCandidate = async (interviewCandidateId: string, fromStageId: string, direction: string) => {
     const fromStageIndex = stages.findIndex((s) => s.id === fromStageId);
@@ -580,6 +648,7 @@ export const InterviewPipelineContent = () => {
   );
 
   const isModalOpen = selectedCandidate !== null;
+  const filteredStages = stages.filter(s => s.title !== "AI Phone Interview");
 
   // Loading state
   if (loading) {
@@ -627,9 +696,6 @@ export const InterviewPipelineContent = () => {
     );
   }
 
-  // Get all candidates from all stages
-  const allCandidates = stages.flatMap(stage => stage.candidates);
-
   return (
     <div className="space-y-4">
       {/* Candidate Profile Modal */}
@@ -669,6 +735,65 @@ export const InterviewPipelineContent = () => {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Checkbox 
+                  checked={selectedIds.size === allCandidates.length}
+                  onCheckedChange={handleSelectAll}
+                />
+                <span className="text-sm font-medium text-foreground">
+                  {selectedIds.size} candidate{selectedIds.size > 1 ? 's' : ''} selected
+                </span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleClearSelection}
+                  className="text-muted-foreground"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select value={bulkTargetStage} onValueChange={setBulkTargetStage}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Move to stage..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredStages.map((stage) => (
+                      <SelectItem key={stage.id} value={stage.id}>
+                        {stage.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={handleBulkMove} 
+                  disabled={!bulkTargetStage || isBulkMoving}
+                  size="sm"
+                >
+                  {isBulkMoving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Moving...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronRight className="h-4 w-4 mr-2" />
+                      Move Selected
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Candidates Grid */}
       {allCandidates.length === 0 ? (
         <div className="flex items-center justify-center h-64">
@@ -690,6 +815,8 @@ export const InterviewPipelineContent = () => {
               onSchedule={() => console.log("Schedule interview for", candidate.name)}
               onEmail={() => console.log("Send email to", candidate.email)}
               onOpenProfile={() => handleOpenCandidate(candidate)}
+              isSelected={selectedIds.has(candidate.interviewCandidateId)}
+              onToggleSelect={() => handleToggleSelect(candidate.interviewCandidateId)}
             />
           ))}
         </div>
