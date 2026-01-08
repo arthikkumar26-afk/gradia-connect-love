@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AddCandidateModal } from './AddCandidateModal';
+import CandidateDetailModal from './CandidateDetailModal';
 
 interface AppliedCandidate {
   id: string;
@@ -48,6 +49,7 @@ export default function TalentPoolContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<AppliedCandidate | null>(null);
   const [jobs, setJobs] = useState<any[]>([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -261,6 +263,13 @@ export default function TalentPoolContent() {
         onCandidateAdded={loadAppliedCandidates}
       />
 
+      {/* Candidate Detail Modal */}
+      <CandidateDetailModal
+        isOpen={!!selectedCandidate}
+        onClose={() => setSelectedCandidate(null)}
+        candidate={selectedCandidate}
+      />
+
       {/* Candidates Table */}
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
         {loading ? (
@@ -350,14 +359,14 @@ export default function TalentPoolContent() {
                           </a>
                         </Button>
                       )}
-                      {candidate.resume_url && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">
-                            <Eye className="h-4 w-4 mr-1" />
-                            Resume
-                          </a>
-                        </Button>
-                      )}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedCandidate(candidate)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
