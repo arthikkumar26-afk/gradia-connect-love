@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { sampleJobs, Job } from "@/data/sampleJobs";
+import { supabase } from "@/integrations/supabase/client";
 import { JobApplicationFlow } from "@/components/jobs/JobApplicationFlow";
 import { 
   Search, 
@@ -16,8 +16,30 @@ import {
   Building2, 
   ArrowRight,
   Eye,
-  X
+  X,
+  Loader2
 } from "lucide-react";
+
+// Extended Job type that works with both DB and local jobs
+interface Job {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  type: "full-time" | "part-time" | "contract" | "internship" | "fresher" | "experienced" | string;
+  experience: string;
+  salary?: string;
+  description: string;
+  skills: string[];
+  requirements?: string[];
+  category?: string;
+  posted?: string;
+  applicants?: number;
+  featured?: boolean;
+  tags?: string[];
+  benefits?: string[];
+  companyDescription?: string;
+}
 
 const JobsResults = () => {
   const [searchParams] = useSearchParams();
@@ -27,14 +49,77 @@ const JobsResults = () => {
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>(sampleJobs);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch jobs from database
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setIsLoading(true);
+      try {
+        const { data: dbJobs, error } = await supabase
+          .from('jobs')
+          .select(`
+            id,
+            job_title,
+            description,
+            location,
+            job_type,
+            experience_required,
+            salary_range,
+            skills,
+            requirements,
+            department,
+            posted_date,
+            status,
+            employer:profiles!jobs_employer_id_fkey(company_name)
+          `)
+          .eq('status', 'active')
+          .order('posted_date', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching jobs:', error);
+          return;
+        }
+
+        // Transform DB jobs to match the Job interface
+        const transformedJobs: Job[] = (dbJobs || []).map((job: any) => ({
+          id: job.id,
+          title: job.job_title,
+          company: job.employer?.company_name || 'Unknown Company',
+          location: job.location || 'Remote',
+          type: job.job_type || 'full-time',
+          experience: job.experience_required || 'Not specified',
+          salary: job.salary_range,
+          description: job.description || 'No description provided',
+          skills: job.skills || [],
+          requirements: job.requirements ? job.requirements.split('\n') : [],
+          category: job.department === 'Education' ? 'education' : 'software',
+          posted: job.posted_date ? new Date(job.posted_date).toLocaleDateString() : 'Recently',
+          applicants: Math.floor(Math.random() * 50) + 5,
+          featured: false,
+          tags: job.job_type === 'full-time' ? ['Easy Apply'] : []
+        }));
+
+        setJobs(transformedJobs);
+        setFilteredJobs(transformedJobs);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   // Filter jobs based on search parameters
   useEffect(() => {
     const query = searchParams.get('q')?.toLowerCase() || '';
     const loc = searchParams.get('location')?.toLowerCase() || '';
     
-    const filtered = sampleJobs.filter(job => {
+    const filtered = jobs.filter(job => {
       const matchesQuery = !query || 
         job.title.toLowerCase().includes(query) ||
         job.company.toLowerCase().includes(query) ||
@@ -48,7 +133,7 @@ const JobsResults = () => {
     });
     
     setFilteredJobs(filtered);
-  }, [searchParams]);
+  }, [searchParams, jobs]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +217,12 @@ const JobsResults = () => {
           </div>
         </div>
 
-        {filteredJobs.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading job vacancies...</p>
+          </div>
+        ) : filteredJobs.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
@@ -278,7 +368,7 @@ const JobsResults = () => {
 
             {/* Job Application Flow Modal */}
             <JobApplicationFlow
-              job={applyingJob}
+              job={applyingJob as any}
               open={showApplicationModal}
               onOpenChange={setShowApplicationModal}
             />
