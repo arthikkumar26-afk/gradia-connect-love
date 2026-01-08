@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { useInterviewAutomation } from "@/hooks/useInterviewAutomation";
 import { useStatusNotification } from "@/hooks/useStatusNotification";
+import { PlayCircle } from "lucide-react";
 
 interface AIActionPanelProps {
   candidateId: string;
@@ -58,10 +59,11 @@ export const AIActionPanel = ({
   resumeUrl,
   onRefresh,
 }: AIActionPanelProps) => {
-  const { analyzeResume, processStage, sendInvitation, generateOfferLetter } = useInterviewAutomation();
+  const { analyzeResume, processStage, sendInvitation, generateOfferLetter, autoProgressPipeline } = useInterviewAutomation();
   const { notifyShortlisted, notifyInterviewScheduled, notifyOfferReceived, notifyRejected, notifyHired } = useStatusNotification();
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAutoProgressing, setIsAutoProgressing] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
@@ -124,6 +126,24 @@ export const AIActionPanel = ({
       console.error("Advance failed:", error);
     } finally {
       setIsAdvancing(false);
+    }
+  };
+
+  const handleAutoProgressAll = async () => {
+    if (!interviewCandidateId) {
+      toast.error("Candidate not in interview pipeline");
+      return;
+    }
+    
+    setIsAutoProgressing(true);
+    try {
+      const result = await autoProgressPipeline(interviewCandidateId, true);
+      console.log("Auto-progress result:", result);
+      onRefresh?.();
+    } catch (error) {
+      console.error("Auto-progress failed:", error);
+    } finally {
+      setIsAutoProgressing(false);
     }
   };
 
@@ -287,6 +307,26 @@ export const AIActionPanel = ({
             </div>
           )}
 
+          {/* AI Auto-Progress All Button */}
+          <Button
+            size="sm"
+            onClick={handleAutoProgressAll}
+            disabled={isAutoProgressing || !interviewCandidateId}
+            className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white"
+          >
+            {isAutoProgressing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                AI Processing All Stages...
+              </>
+            ) : (
+              <>
+                <PlayCircle className="h-4 w-4 mr-2" />
+                AI Auto-Progress Pipeline
+              </>
+            )}
+          </Button>
+
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-2">
             <Button
@@ -316,7 +356,7 @@ export const AIActionPanel = ({
               ) : (
                 <Zap className="h-3 w-3 mr-1" />
               )}
-              {isAdvancing ? "Advancing..." : "Auto-Advance"}
+              {isAdvancing ? "Advancing..." : "Next Stage"}
             </Button>
 
             <Button
