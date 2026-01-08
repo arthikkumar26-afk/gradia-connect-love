@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.send-application-email]
 verify_jwt = false
+
+[functions.start-interview]
+verify_jwt = false
+
+[functions.submit-interview]
+verify_jwt = false

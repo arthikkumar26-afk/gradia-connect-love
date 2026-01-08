@@ -73,6 +73,9 @@ serve(async (req) => {
     // Generate invitation token
     const invitationToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    
+    // Interview link for MCQ test
+    const interviewLink = `https://cybqlimobxpjygwcdojv.lovableproject.com/interview?token=${invitationToken}`;
 
     // Get current stage
     const { data: currentStage } = await supabase
@@ -156,17 +159,26 @@ serve(async (req) => {
               <p style="margin: 0 0 8px; font-size: 13px; color: #6b7280;">Interview Details</p>
               <p style="margin: 0 0 8px;"><strong>Stage:</strong> ${stageName}</p>
               <p style="margin: 0 0 8px;"><strong>Position:</strong> ${job.job_title}</p>
-              <p style="margin: 0 0 8px;"><strong>Date and Time:</strong> ${formattedDate} IST</p>
-              ${meetingLink ? `<p style="margin: 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #2563eb;">${meetingLink}</a></p>` : ''}
+              <p style="margin: 0 0 8px;"><strong>Format:</strong> Online Assessment (5 MCQ Questions, 60 seconds each)</p>
+              <p style="margin: 0 0 8px;"><strong>Deadline:</strong> ${formattedDate} IST</p>
             </td>
           </tr>
         </table>
         
-        <p style="margin: 0 0 8px; font-weight: 600;">Preparation tips:</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+          <tr>
+            <td align="center">
+              <a href="${interviewLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">Start Interview</a>
+            </td>
+          </tr>
+        </table>
+        
+        <p style="margin: 0 0 8px; font-weight: 600;">Important Instructions:</p>
         <ul style="margin: 0 0 24px; padding-left: 20px;">
-          <li style="margin-bottom: 4px;">Review the job description and requirements</li>
-          <li style="margin-bottom: 4px;">Prepare examples of your relevant experience</li>
-          <li style="margin-bottom: 4px;">Test your audio/video setup before the interview</li>
+          <li style="margin-bottom: 4px;">Use a desktop/laptop with a stable internet connection</li>
+          <li style="margin-bottom: 4px;">Your screen will be recorded during the interview</li>
+          <li style="margin-bottom: 4px;">Each question has a 60-second time limit</li>
+          <li style="margin-bottom: 4px;">You cannot pause or go back once started</li>
         </ul>
         
         <p style="margin: 0;">Best of luck,<br>The ${companyName} Hiring Team</p>

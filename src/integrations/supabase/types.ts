@@ -346,6 +346,56 @@ export type Database = {
           },
         ]
       }
+      interview_responses: {
+        Row: {
+          answers: Json
+          completed_at: string | null
+          correct_answers: number | null
+          created_at: string
+          id: string
+          interview_event_id: string
+          questions: Json
+          recording_url: string | null
+          score: number | null
+          time_taken_seconds: number | null
+          total_questions: number
+        }
+        Insert: {
+          answers?: Json
+          completed_at?: string | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          interview_event_id: string
+          questions?: Json
+          recording_url?: string | null
+          score?: number | null
+          time_taken_seconds?: number | null
+          total_questions?: number
+        }
+        Update: {
+          answers?: Json
+          completed_at?: string | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          interview_event_id?: string
+          questions?: Json
+          recording_url?: string | null
+          score?: number | null
+          time_taken_seconds?: number | null
+          total_questions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_responses_interview_event_id_fkey"
+            columns: ["interview_event_id"]
+            isOneToOne: false
+            referencedRelation: "interview_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_stages: {
         Row: {
           created_at: string | null
