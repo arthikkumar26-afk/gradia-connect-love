@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { 
   LayoutDashboard, 
@@ -41,9 +41,23 @@ import { TeamsContent } from "@/components/employer/TeamsContent";
 import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
 
 const EmployerDashboard = () => {
+  const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user, profile } = useAuth();
+  const { user, profile, isAuthenticated } = useAuth();
+
+  // Role-based access control
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/employer/login");
+      return;
+    }
+
+    if (profile?.role === "candidate") {
+      navigate("/candidate/dashboard");
+      return;
+    }
+  }, [isAuthenticated, profile, navigate]);
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
