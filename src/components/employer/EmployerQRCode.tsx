@@ -1,15 +1,17 @@
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, QrCode, Share2 } from "lucide-react";
+import { Download, QrCode, Share2, FileText } from "lucide-react";
 import { toast } from "sonner";
+import QRFlyerModal from "./QRFlyerModal";
 
 interface EmployerQRCodeProps {
   employerId: string;
   companyName?: string;
+  companyLogo?: string;
 }
 
-const EmployerQRCode = ({ employerId, companyName }: EmployerQRCodeProps) => {
+const EmployerQRCode = ({ employerId, companyName, companyLogo }: EmployerQRCodeProps) => {
   const qrUrl = `${window.location.origin}/company/${employerId}/jobs`;
 
   const handleDownload = () => {
@@ -79,15 +81,28 @@ const EmployerQRCode = ({ employerId, companyName }: EmployerQRCodeProps) => {
         <p className="text-sm text-muted-foreground text-center">
           Candidates can scan this QR code to view all your job openings and apply instantly with AI resume analysis.
         </p>
-        <div className="flex gap-2 w-full">
-          <Button variant="outline" className="flex-1" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-2" />
-            Download
-          </Button>
-          <Button variant="outline" className="flex-1" onClick={handleShare}>
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+        <div className="flex flex-col gap-2 w-full">
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={handleDownload}>
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={handleShare}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          </div>
+          <QRFlyerModal
+            employerId={employerId}
+            companyName={companyName}
+            companyLogo={companyLogo}
+            trigger={
+              <Button variant="default" className="w-full">
+                <FileText className="h-4 w-4 mr-2" />
+                Create Printable Flyer
+              </Button>
+            }
+          />
         </div>
       </CardContent>
     </Card>
