@@ -120,7 +120,7 @@ serve(async (req) => {
 
     // Send email
     const emailResponse = await sendEmail(RESEND_API_KEY, {
-      from: `${companyName} Hiring <onboarding@resend.dev>`,
+      from: `${companyName} Hiring <noreply@gradia.co.in>`,
       to: [candidate.email],
       subject: `Interview Invitation: ${stageName} for ${job.job_title} at ${companyName}`,
       html: `

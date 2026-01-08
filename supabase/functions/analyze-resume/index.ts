@@ -48,7 +48,7 @@ async function sendInterviewInvitationEmail(apiKey: string, params: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: `Gradia Hiring <onboarding@resend.dev>`,
+      from: `Gradia Hiring <noreply@gradia.co.in>`,
       to: [params.candidateEmail],
       subject: `🎉 Great News! You've Been Selected for ${params.jobTitle} at ${params.companyName}`,
       html: `
