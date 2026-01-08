@@ -220,7 +220,7 @@ serve(async (req) => {
       experience: candidateProfile.experience_level
     });
 
-    // Check if a profile with this email already exists (for existing auth users)
+    // Check if a profile with this email already exists, or create one
     let actualCandidateId = originalCandidateId;
     
     if (candidateProfile.email) {
@@ -228,7 +228,7 @@ serve(async (req) => {
         .from('profiles')
         .select('id, email, full_name')
         .eq('email', candidateProfile.email)
-        .single();
+        .maybeSingle();
 
       if (existingProfile) {
         // Use existing profile's ID
@@ -247,6 +247,30 @@ serve(async (req) => {
             resume_url: resumeUrl || undefined,
           })
           .eq('id', existingProfile.id);
+      } else {
+        // Create a new profile for this candidate (using service role bypasses RLS)
+        const newCandidateId = crypto.randomUUID();
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: newCandidateId,
+            email: candidateProfile.email,
+            full_name: candidateProfile.full_name,
+            role: 'candidate',
+            experience_level: candidateProfile.experience_level || null,
+            preferred_role: candidateProfile.preferred_role || null,
+            location: candidateProfile.location || null,
+            mobile: candidateProfile.mobile || null,
+            resume_url: resumeUrl || null,
+          });
+
+        if (profileError) {
+          console.error('Error creating candidate profile:', profileError);
+          throw new Error('Failed to create candidate profile');
+        }
+        
+        actualCandidateId = newCandidateId;
+        console.log('Created new profile for candidate:', candidateProfile.email, 'ID:', actualCandidateId);
       }
     }
 
