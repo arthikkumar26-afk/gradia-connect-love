@@ -342,7 +342,7 @@ export const JobApplicationFlow = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
         {/* Step 1: Job Description */}
         {flowStep === 'description' && (
           <>
@@ -461,75 +461,77 @@ export const JobApplicationFlow = ({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
-              {/* Error Alert */}
-              {error && (
-                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-destructive">{error}</div>
-                </div>
-              )}
+            <ScrollArea className="flex-1 max-h-[50vh] pr-4">
+              <div className="space-y-6 py-4">
+                {/* Error Alert */}
+                {error && (
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-destructive">{error}</div>
+                  </div>
+                )}
 
-              {/* Resume Upload */}
-              <div className="space-y-2">
-                <Label>Resume / CV *</Label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
-                    resumeFile
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                    onChange={handleFileChange}
-                    className="hidden"
+                {/* Resume Upload */}
+                <div className="space-y-2">
+                  <Label>Resume / CV *</Label>
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
+                      resumeFile
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                    }`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    {resumeFile ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <FileText className="h-10 w-10 text-primary" />
+                        <span className="font-medium text-primary">{resumeFile.name}</span>
+                        <span className="text-xs text-muted-foreground">Click to change file</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
+                        <p className="font-medium text-foreground">Click to upload or drag and drop</p>
+                        <p className="text-sm text-muted-foreground">
+                          PDF, Word document, or image (max 10MB)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Cover Letter */}
+                <div className="space-y-2">
+                  <Label htmlFor="coverLetter">Cover Letter (Optional)</Label>
+                  <Textarea
+                    id="coverLetter"
+                    placeholder="Tell us why you're interested in this position..."
+                    value={coverLetter}
+                    onChange={(e) => setCoverLetter(e.target.value)}
+                    rows={3}
                   />
-                  {resumeFile ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <FileText className="h-10 w-10 text-primary" />
-                      <span className="font-medium text-primary">{resumeFile.name}</span>
-                      <span className="text-xs text-muted-foreground">Click to change file</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Upload className="h-10 w-10 mx-auto text-muted-foreground" />
-                      <p className="font-medium text-foreground">Click to upload or drag and drop</p>
-                      <p className="text-sm text-muted-foreground">
-                        PDF, Word document, or image (max 10MB)
-                      </p>
-                    </div>
-                  )}
+                </div>
+
+                {/* AI Interview Info */}
+                <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 flex items-start gap-3">
+                  <Brain className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-foreground">AI-Powered Interview Process</p>
+                    <p className="text-muted-foreground mt-1">
+                      After uploading, our AI will analyze your resume, match your skills with job requirements, 
+                      and automatically schedule your interview process.
+                    </p>
+                  </div>
                 </div>
               </div>
-
-              {/* Cover Letter */}
-              <div className="space-y-2">
-                <Label htmlFor="coverLetter">Cover Letter (Optional)</Label>
-                <Textarea
-                  id="coverLetter"
-                  placeholder="Tell us why you're interested in this position..."
-                  value={coverLetter}
-                  onChange={(e) => setCoverLetter(e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              {/* AI Interview Info */}
-              <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 flex items-start gap-3">
-                <Brain className="h-6 w-6 text-primary mt-0.5 flex-shrink-0" />
-                <div className="text-sm">
-                  <p className="font-semibold text-foreground">AI-Powered Interview Process</p>
-                  <p className="text-muted-foreground mt-1">
-                    After uploading, our AI will analyze your resume, match your skills with job requirements, 
-                    and automatically schedule your interview process.
-                  </p>
-                </div>
-              </div>
-            </div>
+            </ScrollArea>
 
             <DialogFooter className="pt-4 border-t">
               <Button variant="ghost" onClick={handleBackToDescription} className="gap-2">
