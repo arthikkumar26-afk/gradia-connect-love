@@ -116,23 +116,30 @@ export const JobApplicationFlow = ({
     setError(null);
   };
 
-  const uploadResumeToStorage = async (candidateId: string): Promise<string | null> => {
+  const uploadResumeToStorage = async (): Promise<string | null> => {
     if (!resumeFile) return null;
 
-    const fileExt = resumeFile.name.split('.').pop();
-    const fileName = `${candidateId}/${Date.now()}.${fileExt}`;
+    // Use edge function to upload (bypasses storage RLS)
+    const formData = new FormData();
+    formData.append('file', resumeFile);
 
-    const { error: uploadError } = await supabase.storage
-      .from('resumes')
-      .upload(fileName, resumeFile, { upsert: true });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
 
-    if (uploadError) {
-      console.error('Resume upload error:', uploadError);
+    if (!accessToken) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await supabase.functions.invoke('upload-resume', {
+      body: formData,
+    });
+
+    if (response.error) {
+      console.error('Resume upload error:', response.error);
       throw new Error('Failed to upload resume');
     }
 
-    const { data } = supabase.storage.from('resumes').getPublicUrl(fileName);
-    return data.publicUrl;
+    return response.data?.url || null;
   };
 
   const handleSubmitResume = async () => {
@@ -160,7 +167,7 @@ export const JobApplicationFlow = ({
       // Step 1: Upload resume to storage
       let resumeUrl: string | null = null;
       try {
-        resumeUrl = await uploadResumeToStorage(user.id);
+        resumeUrl = await uploadResumeToStorage();
       } catch (uploadErr) {
         console.log('Resume upload failed, continuing without URL:', uploadErr);
       }
