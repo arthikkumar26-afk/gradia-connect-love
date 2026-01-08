@@ -185,7 +185,7 @@ async function sendStageTransitionEmail(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: `${companyName} Hiring <onboarding@resend.dev>`,
+        from: `${companyName} Hiring <hr@gradia.co.in>`,
         to: [candidateEmail],
         subject,
         html: emailHtml,
