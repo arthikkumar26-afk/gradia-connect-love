@@ -19,6 +19,7 @@ async function sendEmail(to: string, subject: string, html: string, fromName: st
     body: JSON.stringify({
       from: `${fromName} <noreply@gradia.co.in>`,
       to: [to],
+      reply_to: 'support@gradia.co.in',
       subject,
       html,
     }),
@@ -62,7 +63,7 @@ const getEmailContent = (
   switch (status) {
     case 'applied':
       return {
-        subject: `✅ Application Received: ${jobTitle} at ${companyName}`,
+        subject: `Application Received: ${jobTitle} at ${companyName}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -70,15 +71,15 @@ const getEmailContent = (
           <body>
             <div class="container">
               <div class="header" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white;">
-                <h1 style="margin: 0;">✅ Application Received!</h1>
+                <h1 style="margin: 0;">Application Received</h1>
                 <p style="margin: 10px 0 0; opacity: 0.9;">Thank you for applying</p>
               </div>
               <div class="content">
                 <p>Dear ${candidateName},</p>
-                <p>Thank you for applying for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>. We have received your application!</p>
+                <p>Thank you for applying for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>. We have received your application.</p>
                 
                 <div class="info-card" style="border-color: #6366f1;">
-                  <h3 style="margin-top: 0; color: #6366f1;">📋 What Happens Next</h3>
+                  <h3 style="margin-top: 0; color: #6366f1;">What Happens Next</h3>
                   <ul style="margin: 0; padding-left: 20px;">
                     <li>Our AI system will analyze your profile</li>
                     <li>Your skills will be matched with job requirements</li>
@@ -101,7 +102,7 @@ const getEmailContent = (
 
     case 'shortlisted':
       return {
-        subject: `🌟 Great News! You've Been Shortlisted for ${jobTitle}`,
+        subject: `Great News: You've Been Shortlisted for ${jobTitle}`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -109,8 +110,8 @@ const getEmailContent = (
           <body>
             <div class="container">
               <div class="header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
-                <h1 style="margin: 0;">🎉 Congratulations!</h1>
-                <p style="margin: 10px 0 0; opacity: 0.9;">You've been shortlisted!</p>
+                <h1 style="margin: 0;">Congratulations!</h1>
+                <p style="margin: 10px 0 0; opacity: 0.9;">You've been shortlisted</p>
               </div>
               <div class="content">
                 <p>Dear ${candidateName},</p>

@@ -44,7 +44,8 @@ async function sendInterviewInvitationEmail(apiKey: string, params: {
   const emailPayload = {
     from: 'Gradia Hiring <noreply@gradia.co.in>',
     to: [params.candidateEmail],
-    subject: `🎉 Great News! You've Been Selected for ${params.jobTitle} at ${params.companyName}`,
+    reply_to: 'support@gradia.co.in',
+    subject: `Application Update: You've Been Selected for ${params.jobTitle} at ${params.companyName}`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -68,8 +69,8 @@ async function sendInterviewInvitationEmail(apiKey: string, params: {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🎊 Congratulations, ${params.candidateName}!</h1>
-            <p style="margin: 0; opacity: 0.9;">Your application has been reviewed by our AI</p>
+            <h1>Congratulations, ${params.candidateName}!</h1>
+            <p style="margin: 0; opacity: 0.9;">Your application has been reviewed</p>
           </div>
           <div class="content">
             <p>We are thrilled to inform you that your profile has been <strong>successfully reviewed</strong> for the position of <strong>${params.jobTitle}</strong> at <strong>${params.companyName}</strong>.</p>
