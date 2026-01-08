@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { sampleJobs, Job } from "@/data/sampleJobs";
+import { JobApplicationFlow } from "@/components/jobs/JobApplicationFlow";
 import { 
   Search, 
   ArrowLeft, 
@@ -22,6 +23,8 @@ const JobsResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [applyingJob, setApplyingJob] = useState<Job | null>(null);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [filteredJobs, setFilteredJobs] = useState<Job[]>(sampleJobs);
@@ -61,6 +64,11 @@ const JobsResults = () => {
 
   const closeJobDetails = () => {
     setSelectedJob(null);
+  };
+
+  const handleApplyClick = (job: Job) => {
+    setApplyingJob(job);
+    setShowApplicationModal(true);
   };
 
   return (
@@ -257,7 +265,7 @@ const JobsResults = () => {
                         size="sm" 
                         onClick={(e) => {
                           e.stopPropagation();
-                          // Handle apply logic here
+                          handleApplyClick(job);
                         }}
                       >
                         Apply Now
@@ -267,6 +275,13 @@ const JobsResults = () => {
                 </Card>
               ))}
             </div>
+
+            {/* Job Application Flow Modal */}
+            <JobApplicationFlow
+              job={applyingJob}
+              open={showApplicationModal}
+              onOpenChange={setShowApplicationModal}
+            />
           </>
         )}
 
@@ -305,7 +320,15 @@ const JobsResults = () => {
                     <Button variant="outline" size="sm" onClick={closeJobDetails}>
                       <X className="h-4 w-4" />
                     </Button>
-                    <Button variant="default" size="lg" className="shadow-glow">
+                    <Button 
+                      variant="default" 
+                      size="lg" 
+                      className="shadow-glow"
+                      onClick={() => {
+                        closeJobDetails();
+                        handleApplyClick(selectedJob);
+                      }}
+                    >
                       Apply Now
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
