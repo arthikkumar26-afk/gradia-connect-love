@@ -293,10 +293,9 @@ export const JobApplicationFlow = ({
     // Parse resume to extract email and other info
     setAnalysisSubStep('analyzing');
     
-    let extractedEmail: string | null = null;
-    let extractedName: string | null = null;
+    let parsedData: any = null;
     
-    // Try to parse the resume to get email
+    // Try to parse the resume to get email and details
     if (resumeFile) {
       try {
         const formData = new FormData();
@@ -307,19 +306,119 @@ export const JobApplicationFlow = ({
         });
         
         if (parseResponse.data && !parseResponse.error) {
-          extractedEmail = parseResponse.data.email;
-          extractedName = parseResponse.data.full_name;
-          console.log('Extracted from resume:', { email: extractedEmail, name: extractedName });
+          parsedData = parseResponse.data;
+          console.log('Extracted from resume:', parsedData);
         }
       } catch (parseError) {
         console.error('Resume parsing error:', parseError);
       }
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     setAnalysisSubStep('matching');
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Check if this is a real job from the database
+    const { data: dbJob } = await supabase
+      .from('jobs')
+      .select('*, employer:profiles!jobs_employer_id_fkey(company_name)')
+      .eq('id', job?.id)
+      .maybeSingle();
+
+    // If it's a real job and we have parsed data, create profile and add to talent pool
+    if (dbJob && parsedData?.email) {
+      try {
+        // Check if profile exists for this email
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', parsedData.email)
+          .maybeSingle();
+
+        let candidateId: string;
+
+        if (existingProfile) {
+          candidateId = existingProfile.id;
+        } else {
+          // Create a new profile for this candidate
+          candidateId = crypto.randomUUID();
+          
+          // Upload resume first
+          let resumeUrl: string | null = null;
+          try {
+            const formData = new FormData();
+            formData.append('file', resumeFile!);
+            const uploadResponse = await supabase.functions.invoke('upload-resume', {
+              body: formData,
+            });
+            if (uploadResponse.data?.url) {
+              resumeUrl = uploadResponse.data.url;
+            }
+          } catch (uploadErr) {
+            console.log('Resume upload failed:', uploadErr);
+          }
+
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: candidateId,
+              email: parsedData.email,
+              full_name: parsedData.full_name || 'Unknown Candidate',
+              role: 'candidate',
+              experience_level: parsedData.experience_level || null,
+              preferred_role: parsedData.preferred_role || dbJob.job_title,
+              location: parsedData.location || null,
+              linkedin: parsedData.linkedin || null,
+              mobile: parsedData.mobile || null,
+              resume_url: resumeUrl,
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+          }
+        }
+
+        // Call analyze-resume to add to talent pool and send email
+        const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('analyze-resume', {
+          body: {
+            candidateId,
+            jobId: job!.id,
+            resumeUrl: null,
+            candidateProfile: {
+              full_name: parsedData.full_name || 'Candidate',
+              email: parsedData.email,
+              experience_level: parsedData.experience_level,
+              preferred_role: parsedData.preferred_role || dbJob.job_title,
+              location: parsedData.location,
+            },
+            jobDetails: {
+              job_title: dbJob.job_title,
+              description: dbJob.description,
+              requirements: dbJob.requirements,
+              skills: dbJob.skills,
+              experience_required: dbJob.experience_required,
+              location: dbJob.location,
+            },
+          },
+        });
+
+        if (!analysisError && analysisResult?.analysis) {
+          setAiAnalysis(analysisResult.analysis);
+          setEmailSent(analysisResult?.emailSent || false);
+          setNextStage(analysisResult?.nextStage || 'AI Phone Interview');
+          
+          setAnalysisSubStep('scheduling');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          setFlowStep('complete');
+          return;
+        }
+      } catch (talentPoolError) {
+        console.error('Failed to add to talent pool:', talentPoolError);
+        // Continue with mock analysis if talent pool fails
+      }
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 800));
     
     // Generate mock AI score and recommendations based on job
     const mockScore = Math.floor(Math.random() * 25) + 75; // 75-100
@@ -349,25 +448,26 @@ export const JobApplicationFlow = ({
     setAnalysisSubStep('scheduling');
     
     // Send confirmation email to extracted email address
-    if (extractedEmail && job) {
+    if (parsedData?.email && job) {
       try {
         await supabase.functions.invoke('send-application-email', {
           body: {
-            email: extractedEmail,
-            candidateName: extractedName || 'Candidate',
+            email: parsedData.email,
+            candidateName: parsedData.full_name || 'Candidate',
             jobTitle: job.title,
             companyName: job.company,
             aiScore: mockScore,
           },
         });
-        console.log('Application confirmation email sent to:', extractedEmail);
-        toast.success(`Confirmation email sent to ${extractedEmail}`);
+        console.log('Application confirmation email sent to:', parsedData.email);
+        setEmailSent(true);
+        toast.success(`Confirmation email sent to ${parsedData.email}`);
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError);
       }
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     setFlowStep('complete');
   };
