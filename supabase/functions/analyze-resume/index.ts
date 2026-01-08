@@ -41,86 +41,96 @@ async function sendInterviewInvitationEmail(apiKey: string, params: {
 }) {
   console.log('Sending interview invitation email to:', params.candidateEmail);
   
+  const emailPayload = {
+    from: 'Gradia Hiring <noreply@gradia.co.in>',
+    to: [params.candidateEmail],
+    subject: `🎉 Great News! You've Been Selected for ${params.jobTitle} at ${params.companyName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
+          .header h1 { margin: 0 0 10px; font-size: 28px; }
+          .content { background: #ffffff; padding: 30px; }
+          .score-card { background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #e0e7ff; }
+          .score { font-size: 48px; font-weight: bold; color: #667eea; }
+          .score-label { color: #666; font-size: 14px; margin-top: 5px; }
+          .highlight { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+          .next-steps { background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .next-steps h3 { color: #16a34a; margin-top: 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; }
+          .badge { display: inline-block; background: ${params.recommendation === 'strong_yes' ? '#16a34a' : params.recommendation === 'yes' ? '#2563eb' : '#f59e0b'}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎊 Congratulations, ${params.candidateName}!</h1>
+            <p style="margin: 0; opacity: 0.9;">Your application has been reviewed by our AI</p>
+          </div>
+          <div class="content">
+            <p>We are thrilled to inform you that your profile has been <strong>successfully reviewed</strong> for the position of <strong>${params.jobTitle}</strong> at <strong>${params.companyName}</strong>.</p>
+            
+            <div class="score-card">
+              <div class="score">${params.aiScore}%</div>
+              <div class="score-label">AI Match Score</div>
+              <div style="margin-top: 15px;">
+                <span class="badge">${params.recommendation === 'strong_yes' ? '⭐ Excellent Match' : params.recommendation === 'yes' ? '✓ Good Match' : '• Potential Match'}</span>
+              </div>
+            </div>
+            
+            <div class="highlight">
+              <h3 style="margin-top: 0; color: #667eea;">📋 Application Status</h3>
+              <p><strong>Current Stage:</strong> ${params.stageName}</p>
+              <p><strong>Position:</strong> ${params.jobTitle}</p>
+              <p><strong>Company:</strong> ${params.companyName}</p>
+              <p style="margin-bottom: 0;"><strong>Status:</strong> Under Review ✓</p>
+            </div>
+            
+            <div class="next-steps">
+              <h3>🚀 What Happens Next?</h3>
+              <ol style="margin: 0; padding-left: 20px;">
+                <li>Our hiring team will review your profile</li>
+                <li>If shortlisted, you'll receive an interview invitation</li>
+                <li>Prepare for potential technical assessments</li>
+                <li>Keep an eye on your inbox for updates!</li>
+              </ol>
+            </div>
+            
+            <p style="color: #666;">We appreciate your interest in joining our team. We'll be in touch soon with the next steps.</p>
+          </div>
+          <div class="footer">
+            <p>Best regards,<br><strong>The ${params.companyName} Hiring Team</strong></p>
+            <p style="font-size: 12px; color: #999;">This is an automated message from Gradia Job Portal</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+  
+  console.log('Sending email with payload:', JSON.stringify({ from: emailPayload.from, to: emailPayload.to, subject: emailPayload.subject }));
+  
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from: `Gradia Hiring <noreply@gradia.co.in>`,
-      to: [params.candidateEmail],
-      subject: `🎉 Great News! You've Been Selected for ${params.jobTitle} at ${params.companyName}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
-            .header h1 { margin: 0 0 10px; font-size: 28px; }
-            .content { background: #ffffff; padding: 30px; }
-            .score-card { background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #e0e7ff; }
-            .score { font-size: 48px; font-weight: bold; color: #667eea; }
-            .score-label { color: #666; font-size: 14px; margin-top: 5px; }
-            .highlight { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-            .next-steps { background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; }
-            .next-steps h3 { color: #16a34a; margin-top: 0; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; }
-            .badge { display: inline-block; background: ${params.recommendation === 'strong_yes' ? '#16a34a' : params.recommendation === 'yes' ? '#2563eb' : '#f59e0b'}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎊 Congratulations, ${params.candidateName}!</h1>
-              <p style="margin: 0; opacity: 0.9;">Your application has been reviewed by our AI</p>
-            </div>
-            <div class="content">
-              <p>We are thrilled to inform you that your profile has been <strong>successfully reviewed</strong> for the position of <strong>${params.jobTitle}</strong> at <strong>${params.companyName}</strong>.</p>
-              
-              <div class="score-card">
-                <div class="score">${params.aiScore}%</div>
-                <div class="score-label">AI Match Score</div>
-                <div style="margin-top: 15px;">
-                  <span class="badge">${params.recommendation === 'strong_yes' ? '⭐ Excellent Match' : params.recommendation === 'yes' ? '✓ Good Match' : '• Potential Match'}</span>
-                </div>
-              </div>
-              
-              <div class="highlight">
-                <h3 style="margin-top: 0; color: #667eea;">📋 Application Status</h3>
-                <p><strong>Current Stage:</strong> ${params.stageName}</p>
-                <p><strong>Position:</strong> ${params.jobTitle}</p>
-                <p><strong>Company:</strong> ${params.companyName}</p>
-                <p style="margin-bottom: 0;"><strong>Status:</strong> Under Review ✓</p>
-              </div>
-              
-              <div class="next-steps">
-                <h3>🚀 What Happens Next?</h3>
-                <ol style="margin: 0; padding-left: 20px;">
-                  <li>Our hiring team will review your profile</li>
-                  <li>If shortlisted, you'll receive an interview invitation</li>
-                  <li>Prepare for potential technical assessments</li>
-                  <li>Keep an eye on your inbox for updates!</li>
-                </ol>
-              </div>
-              
-              <p style="color: #666;">We appreciate your interest in joining our team. We'll be in touch soon with the next steps.</p>
-            </div>
-            <div class="footer">
-              <p>Best regards,<br><strong>The ${params.companyName} Hiring Team</strong></p>
-              <p style="font-size: 12px; color: #999;">This is an automated message from Gradia Job Portal</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-    }),
+    body: JSON.stringify(emailPayload),
   });
   
   const result = await response.json();
-  console.log('Email send result:', result);
+  
+  if (!response.ok) {
+    console.error('Resend API error:', response.status, JSON.stringify(result));
+    return { error: result };
+  }
+  
+  console.log('Email sent successfully! ID:', result.id);
   return result;
 }
 
