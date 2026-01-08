@@ -119,8 +119,8 @@ const CandidateProfileModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarImage src={candidate.avatar} />
@@ -143,7 +143,7 @@ const CandidateProfileModal = ({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <div className="flex-1 overflow-y-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
             {/* Left Column - Contact & Skills */}
             <div className="space-y-4">
@@ -393,7 +393,7 @@ const CandidateProfileModal = ({
               />
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
