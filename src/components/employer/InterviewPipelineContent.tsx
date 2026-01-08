@@ -10,7 +10,6 @@ import {
   Calendar,
   Mail,
   GripVertical,
-  ArrowLeft,
   Check,
   Clock,
   FileText,
@@ -25,7 +24,8 @@ import {
   Sparkles,
   Loader2,
   RefreshCw,
-  Database
+  Database,
+  X
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AIActionPanel } from "./AIActionPanel";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
@@ -79,124 +85,184 @@ const getStageColor = (title: string): string => {
   return stageColors[title] || 'bg-gray-500';
 };
 
-// Candidate Detail View Component
-const CandidateDetailView = ({ 
+// Candidate Profile Modal Component
+const CandidateProfileModal = ({ 
   candidate, 
-  onBack,
+  open,
+  onOpenChange,
   onUpdateStep,
   onRefresh
 }: { 
-  candidate: Candidate; 
-  onBack: () => void;
+  candidate: Candidate | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
   onRefresh?: () => void;
 }) => {
+  if (!candidate) return null;
+
   const completedSteps = candidate.interviewSteps.filter(s => s.status === "completed").length;
   const progress = (completedSteps / candidate.interviewSteps.length) * 100;
 
   const getStepIcon = (status: InterviewStep["status"]) => {
     switch (status) {
       case "completed":
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case "current":
-        return <Clock className="h-5 w-5 text-blue-500 animate-pulse" />;
+        return <Clock className="h-4 w-4 text-blue-500 animate-pulse" />;
       case "failed":
-        return <XCircle className="h-5 w-5 text-destructive" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />;
+        return <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />;
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            Candidate Profile
-            {candidate.aiScore && (
-              <Badge className="bg-primary/10 text-primary border-primary/20">
-                <Sparkles className="h-3 w-3 mr-1" />
-                AI Score: {candidate.aiScore}%
-              </Badge>
-            )}
-          </h2>
-          <p className="text-sm text-muted-foreground">Interview progress and details</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Candidate Info */}
-        <div className="lg:col-span-1 space-y-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col items-center text-center">
-                <Avatar className="h-20 w-20 mb-4">
-                  <AvatarImage src={candidate.avatar} />
-                  <AvatarFallback className="bg-accent/10 text-accent text-2xl">
-                    {getInitials(candidate.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <h3 className="text-lg font-semibold text-foreground">{candidate.name}</h3>
-                <p className="text-sm text-muted-foreground">{candidate.role}</p>
-                <div className="flex items-center gap-1 mt-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${i < candidate.rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30"}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center gap-3 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-foreground">{candidate.email || 'Not provided'}</span>
-                </div>
-                {candidate.phone && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">{candidate.phone}</span>
-                  </div>
-                )}
-                {candidate.location && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">{candidate.location}</span>
-                  </div>
-                )}
-                {candidate.experience && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">{candidate.experience} experience</span>
-                  </div>
-                )}
-                {candidate.education && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-foreground">{candidate.education}</span>
-                  </div>
-                )}
-                {candidate.resumeUrl && (
-                  <div className="flex items-center gap-3 text-sm">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <a 
-                      href={candidate.resumeUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      View Resume
-                    </a>
-                  </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={candidate.avatar} />
+              <AvatarFallback className="bg-accent/10 text-accent">
+                {getInitials(candidate.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span>{candidate.name}</span>
+                {candidate.aiScore && (
+                  <Badge className="bg-primary/10 text-primary border-primary/20">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    AI Score: {candidate.aiScore}%
+                  </Badge>
                 )}
               </div>
+              <p className="text-sm font-normal text-muted-foreground">{candidate.role}</p>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
 
-              <div className="mt-6 flex gap-2">
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            {/* Left Column - Contact & Skills */}
+            <div className="space-y-4">
+              {/* Contact Info */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Contact Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-foreground">{candidate.email || 'Not provided'}</span>
+                  </div>
+                  {candidate.phone && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{candidate.phone}</span>
+                    </div>
+                  )}
+                  {candidate.location && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{candidate.location}</span>
+                    </div>
+                  )}
+                  {candidate.experience && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{candidate.experience} experience</span>
+                    </div>
+                  )}
+                  {candidate.education && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-foreground">{candidate.education}</span>
+                    </div>
+                  )}
+                  {candidate.resumeUrl && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <a 
+                        href={candidate.resumeUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        View Resume
+                      </a>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Skills */}
+              {candidate.skills && candidate.skills.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Code className="h-4 w-4" />
+                      Skills
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-1.5">
+                      {candidate.skills.map((skill, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* AI Analysis */}
+              {candidate.aiAnalysis && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      AI Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {candidate.aiAnalysis.summary && (
+                      <p className="text-sm text-muted-foreground">{candidate.aiAnalysis.summary}</p>
+                    )}
+                    {candidate.aiAnalysis.strengths && candidate.aiAnalysis.strengths.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-green-600 mb-1">Strengths</p>
+                        <ul className="text-xs text-muted-foreground space-y-0.5">
+                          {candidate.aiAnalysis.strengths.slice(0, 3).map((s, i) => (
+                            <li key={i} className="flex items-start gap-1">
+                              <CheckCircle2 className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {candidate.aiAnalysis.concerns && candidate.aiAnalysis.concerns.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-amber-600 mb-1">Concerns</p>
+                        <ul className="text-xs text-muted-foreground space-y-0.5">
+                          {candidate.aiAnalysis.concerns.slice(0, 2).map((c, i) => (
+                            <li key={i} className="flex items-start gap-1">
+                              <XCircle className="h-3 w-3 text-amber-500 mt-0.5 flex-shrink-0" />
+                              {c}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2">
                 <Button className="flex-1" size="sm">
                   <Mail className="h-4 w-4 mr-2" />
                   Email
@@ -206,217 +272,130 @@ const CandidateDetailView = ({
                   Schedule
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Skills Section */}
-          {candidate.skills && candidate.skills.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Code className="h-4 w-4" />
-                  Skills
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-1.5">
-                  {candidate.skills.map((skill, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Quick Stats */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Interview Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Completion</span>
-                  <span className="font-medium text-foreground">{Math.round(progress)}%</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-accent transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {completedSteps} of {candidate.interviewSteps.length} steps completed
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AI Analysis Summary */}
-          {candidate.aiAnalysis && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  AI Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {candidate.aiAnalysis.summary && (
-                  <p className="text-sm text-muted-foreground">{candidate.aiAnalysis.summary}</p>
-                )}
-                {candidate.aiAnalysis.strengths && candidate.aiAnalysis.strengths.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-green-600 mb-1">Strengths</p>
-                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                      {candidate.aiAnalysis.strengths.slice(0, 3).map((s, i) => (
-                        <li key={i} className="flex items-start gap-1">
-                          <CheckCircle2 className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
-                          {s}
-                        </li>
-                      ))}
-                    </ul>
+            {/* Right Column - Interview Progress */}
+            <div className="space-y-4">
+              {/* Progress Card */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Interview Progress</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Completion</span>
+                      <span className="font-medium text-foreground">{Math.round(progress)}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-accent transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {completedSteps} of {candidate.interviewSteps.length} steps completed
+                    </p>
                   </div>
-                )}
-                {candidate.aiAnalysis.concerns && candidate.aiAnalysis.concerns.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-amber-600 mb-1">Concerns</p>
-                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                      {candidate.aiAnalysis.concerns.slice(0, 2).map((c, i) => (
-                        <li key={i} className="flex items-start gap-1">
-                          <XCircle className="h-3 w-3 text-amber-500 mt-0.5 flex-shrink-0" />
-                          {c}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
 
-          {/* AI Action Panel */}
-          <AIActionPanel
-            candidateId={candidate.id}
-            candidateName={candidate.name}
-            candidateEmail={candidate.email}
-            jobId={candidate.jobId}
-            jobTitle={candidate.role}
-            interviewCandidateId={candidate.interviewCandidateId}
-            currentStage={candidate.currentStage}
-            aiScore={candidate.aiScore}
-            resumeUrl={candidate.resumeUrl}
-            onRefresh={onRefresh}
-          />
-        </div>
-
-        {/* Right Column - Interview Steps */}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Interview Stages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="relative">
-                {/* Vertical line */}
-                <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border" />
-                
-                <div className="space-y-4">
-                  {candidate.interviewSteps.map((step, index) => (
-                    <div key={step.id} className="relative flex gap-4">
-                      {/* Step indicator */}
-                      <div className="relative z-10 bg-background">
-                        {getStepIcon(step.status)}
-                      </div>
-                      
-                      {/* Step content */}
-                      <Card className={`flex-1 ${step.status === "current" ? "border-accent ring-1 ring-accent/20" : ""}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-foreground">{step.title}</h4>
-                                {step.status === "current" && (
-                                  <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                                    In Progress
-                                  </Badge>
-                                )}
-                                {step.status === "completed" && (
-                                  <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
-                                    Completed
-                                  </Badge>
-                                )}
-                                {step.status === "failed" && (
-                                  <Badge variant="destructive">Failed</Badge>
-                                )}
-                              </div>
-                              
-                              {step.date && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  <Calendar className="h-3 w-3 inline mr-1" />
-                                  {step.date}
-                                  {step.interviewer && ` • ${step.interviewer}`}
-                                </p>
-                              )}
-                              
-                              {step.notes && (
-                                <p className="text-sm text-muted-foreground mt-2 flex items-start gap-1">
-                                  <MessageSquare className="h-3 w-3 mt-1 flex-shrink-0" />
-                                  {step.notes}
-                                </p>
-                              )}
-                              
-                              {step.score !== undefined && (
-                                <div className="flex items-center gap-1 mt-2">
-                                  <span className="text-xs text-muted-foreground">Score:</span>
-                                  <span className="text-sm font-medium text-foreground">{step.score}/10</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Action buttons */}
+              {/* Interview Stages */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Interview Stages</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {candidate.interviewSteps.map((step, index) => (
+                      <div key={step.id} className="flex items-start gap-3">
+                        <div className="mt-0.5">{getStepIcon(step.status)}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <h4 className="text-sm font-medium text-foreground truncate">{step.title}</h4>
                             {step.status === "current" && (
-                              <div className="flex gap-2">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => onUpdateStep(step.id, "failed")}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="sm"
-                                  onClick={() => onUpdateStep(step.id, "completed")}
-                                >
-                                  <Check className="h-4 w-4 mr-1" />
-                                  Complete
-                                </Button>
-                              </div>
+                              <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs shrink-0">
+                                In Progress
+                              </Badge>
                             )}
-                            {step.status === "pending" && index === candidate.interviewSteps.findIndex(s => s.status === "pending") && (
+                            {step.status === "completed" && (
+                              <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-xs shrink-0">
+                                Done
+                              </Badge>
+                            )}
+                            {step.status === "failed" && (
+                              <Badge variant="destructive" className="text-xs shrink-0">Failed</Badge>
+                            )}
+                          </div>
+                          {step.date && (
+                            <p className="text-xs text-muted-foreground">
+                              {step.date}
+                              {step.interviewer && ` • ${step.interviewer}`}
+                            </p>
+                          )}
+                          {step.notes && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{step.notes}</p>
+                          )}
+                          {step.score !== undefined && (
+                            <p className="text-xs text-muted-foreground">Score: {step.score}/10</p>
+                          )}
+                          {/* Action buttons for current step */}
+                          {step.status === "current" && (
+                            <div className="flex gap-2 mt-2">
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                onClick={() => onUpdateStep(step.id, "current")}
+                                onClick={() => onUpdateStep(step.id, "failed")}
+                                className="text-destructive hover:text-destructive h-7 text-xs"
                               >
-                                Start
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Fail
                               </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+                              <Button 
+                                size="sm"
+                                onClick={() => onUpdateStep(step.id, "completed")}
+                                className="h-7 text-xs"
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                Complete
+                              </Button>
+                            </div>
+                          )}
+                          {step.status === "pending" && index === candidate.interviewSteps.findIndex(s => s.status === "pending") && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => onUpdateStep(step.id, "current")}
+                              className="mt-2 h-7 text-xs"
+                            >
+                              Start
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* AI Action Panel */}
+              <AIActionPanel
+                candidateId={candidate.id}
+                candidateName={candidate.name}
+                candidateEmail={candidate.email}
+                jobId={candidate.jobId}
+                jobTitle={candidate.role}
+                interviewCandidateId={candidate.interviewCandidateId}
+                currentStage={candidate.currentStage}
+                aiScore={candidate.aiScore}
+                resumeUrl={candidate.resumeUrl}
+                onRefresh={onRefresh}
+              />
+            </div>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -600,17 +579,7 @@ export const InterviewPipelineContent = () => {
     0
   );
 
-  // If a candidate is selected, show the detail view
-  if (selectedCandidate) {
-    return (
-      <CandidateDetailView
-        candidate={selectedCandidate}
-        onBack={() => setSelectedCandidate(null)}
-        onUpdateStep={handleUpdateStep}
-        onRefresh={refetch}
-      />
-    );
-  }
+  const isModalOpen = selectedCandidate !== null;
 
   // Loading state
   if (loading) {
@@ -660,6 +629,17 @@ export const InterviewPipelineContent = () => {
 
   return (
     <div className="space-y-4">
+      {/* Candidate Profile Modal */}
+      <CandidateProfileModal
+        candidate={selectedCandidate}
+        open={isModalOpen}
+        onOpenChange={(open) => {
+          if (!open) setSelectedCandidate(null);
+        }}
+        onUpdateStep={handleUpdateStep}
+        onRefresh={refetch}
+      />
+
       {/* Header Stats */}
       <div className="flex items-center justify-between">
         <div>
