@@ -26,8 +26,12 @@ import {
   CheckCircle2,
   TrendingUp,
   AlertCircle,
+  Star,
+  XCircle,
+  UserCheck,
 } from "lucide-react";
 import { useInterviewAutomation } from "@/hooks/useInterviewAutomation";
+import { useStatusNotification } from "@/hooks/useStatusNotification";
 
 interface AIActionPanelProps {
   candidateId: string;
@@ -55,9 +59,11 @@ export const AIActionPanel = ({
   onRefresh,
 }: AIActionPanelProps) => {
   const { analyzeResume, processStage, sendInvitation, generateOfferLetter } = useInterviewAutomation();
+  const { notifyShortlisted, notifyInterviewScheduled, notifyOfferReceived, notifyRejected, notifyHired } = useStatusNotification();
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
+  const [isNotifying, setIsNotifying] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   
   // Schedule Interview Modal
@@ -72,6 +78,11 @@ export const AIActionPanel = ({
   const [startDate, setStartDate] = useState("");
   const [customContent, setCustomContent] = useState("");
   const [isGeneratingOffer, setIsGeneratingOffer] = useState(false);
+
+  // Rejection Modal
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
 
   const handleAIAnalysis = async () => {
     if (!jobId) {
@@ -117,7 +128,7 @@ export const AIActionPanel = ({
   };
 
   const handleSendInvitation = async () => {
-    if (!interviewCandidateId || !scheduleDate) {
+    if (!interviewCandidateId || !scheduleDate || !jobId) {
       toast.error("Please select a date and time");
       return;
     }
@@ -125,6 +136,16 @@ export const AIActionPanel = ({
     setIsSendingInvite(true);
     try {
       await sendInvitation(interviewCandidateId, currentStage, scheduleDate, meetingLink || undefined);
+      
+      // Also send status notification email
+      await notifyInterviewScheduled(
+        candidateId,
+        jobId,
+        scheduleDate,
+        currentStage.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        meetingLink || undefined
+      );
+      
       toast.success("Interview invitation sent!");
       setScheduleModalOpen(false);
       setScheduleDate("");
@@ -138,7 +159,7 @@ export const AIActionPanel = ({
   };
 
   const handleGenerateOffer = async () => {
-    if (!interviewCandidateId || !salary || !startDate) {
+    if (!interviewCandidateId || !salary || !startDate || !jobId) {
       toast.error("Please fill in salary and start date");
       return;
     }
@@ -151,6 +172,10 @@ export const AIActionPanel = ({
         startDate,
         customContent || undefined
       );
+      
+      // Also send offer notification email
+      await notifyOfferReceived(candidateId, jobId, salary, startDate);
+      
       toast.success("Offer letter generated and sent!");
       setOfferModalOpen(false);
       setSalary("");
@@ -161,6 +186,40 @@ export const AIActionPanel = ({
       console.error("Generate offer failed:", error);
     } finally {
       setIsGeneratingOffer(false);
+    }
+  };
+
+  const handleShortlist = async () => {
+    if (!jobId) return;
+    setIsNotifying(true);
+    try {
+      await notifyShortlisted(candidateId, jobId);
+    } finally {
+      setIsNotifying(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!jobId) return;
+    setIsRejecting(true);
+    try {
+      await notifyRejected(candidateId, jobId, rejectionReason || undefined);
+      setRejectModalOpen(false);
+      setRejectionReason("");
+      onRefresh?.();
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  const handleHire = async () => {
+    if (!jobId) return;
+    setIsNotifying(true);
+    try {
+      await notifyHired(candidateId, jobId);
+      onRefresh?.();
+    } finally {
+      setIsNotifying(false);
     }
   };
 
@@ -280,6 +339,50 @@ export const AIActionPanel = ({
             >
               <FileText className="h-3 w-3 mr-1" />
               Offer Letter
+            </Button>
+          </div>
+
+          {/* Status Action Buttons */}
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleShortlist}
+              disabled={isNotifying || !jobId}
+              className="text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+            >
+              {isNotifying ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Star className="h-3 w-3 mr-1" />
+              )}
+              Shortlist
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleHire}
+              disabled={isNotifying || !jobId}
+              className="text-xs text-primary hover:bg-primary/10"
+            >
+              {isNotifying ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <UserCheck className="h-3 w-3 mr-1" />
+              )}
+              Hire
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setRejectModalOpen(true)}
+              disabled={!jobId}
+              className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <XCircle className="h-3 w-3 mr-1" />
+              Reject
             </Button>
           </div>
 
@@ -416,6 +519,67 @@ export const AIActionPanel = ({
                 <>
                   <Sparkles className="h-4 w-4 mr-2" />
                   Generate & Send
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Modal */}
+      <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              Reject Candidate
+            </DialogTitle>
+            <DialogDescription>
+              Send a rejection notification to {candidateName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejectionReason">Reason (optional)</Label>
+              <Textarea
+                id="rejectionReason"
+                placeholder="Provide feedback to help the candidate in future applications..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="bg-yellow-50 rounded-lg p-3 flex items-start gap-2 border border-yellow-200">
+              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+              <div className="text-xs">
+                <p className="font-medium text-yellow-800">Note</p>
+                <p className="text-yellow-700">
+                  A professional rejection email will be sent to the candidate.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleReject} 
+              disabled={isRejecting}
+            >
+              {isRejecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Rejection
                 </>
               )}
             </Button>
