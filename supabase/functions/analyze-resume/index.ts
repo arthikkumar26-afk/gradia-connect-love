@@ -360,13 +360,47 @@ Provide your analysis using the suggest_analysis function.`;
     }
 
     const aiResponse = await response.json();
-    const toolCall = aiResponse.choices[0]?.message?.tool_calls?.[0];
+    console.log('AI response structure:', JSON.stringify(aiResponse.choices?.[0]?.message, null, 2));
     
-    if (!toolCall) {
-      throw new Error('No analysis returned from AI');
+    const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
+    let analysis;
+    
+    if (toolCall) {
+      // Standard tool call response
+      analysis = JSON.parse(toolCall.function.arguments);
+    } else {
+      // Fallback: Try to extract from content if tool call wasn't used
+      const content = aiResponse.choices?.[0]?.message?.content;
+      console.log('No tool call, trying content fallback:', content?.substring(0, 200));
+      
+      if (content) {
+        // Try to parse JSON from content
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            analysis = JSON.parse(jsonMatch[0]);
+          } catch (e) {
+            console.error('Failed to parse content as JSON:', e);
+          }
+        }
+      }
+      
+      // If still no analysis, create a default one
+      if (!analysis) {
+        console.log('Creating default analysis due to AI response format');
+        analysis = {
+          overall_score: 50,
+          skill_match_score: 50,
+          experience_match_score: 50,
+          location_match_score: 50,
+          recommendation: 'maybe',
+          strengths: ['Candidate profile submitted for review'],
+          concerns: ['Manual review recommended'],
+          summary: 'Automated analysis could not be completed. Please review the candidate profile manually.',
+          suggested_interview_focus: ['General skills assessment', 'Experience verification']
+        };
+      }
     }
-
-    const analysis = JSON.parse(toolCall.function.arguments);
     
     // Include parsed candidate profile data in the analysis for display in talent pool
     const enrichedAnalysis = {
