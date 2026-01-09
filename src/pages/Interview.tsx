@@ -247,41 +247,67 @@ const Interview = () => {
 
   const stopRecordingAndUpload = (): Promise<string | null> => {
     return new Promise((resolve) => {
-      if (!mediaRecorderRef.current || !isRecording) {
+      console.log('stopRecordingAndUpload called, mediaRecorder:', !!mediaRecorderRef.current, 'chunks:', chunksRef.current.length);
+      
+      if (!mediaRecorderRef.current) {
+        console.log('No mediaRecorder, resolving null');
+        resolve(null);
+        return;
+      }
+
+      // Check if recorder is in a valid state
+      if (mediaRecorderRef.current.state === 'inactive') {
+        console.log('MediaRecorder already inactive, checking if we have chunks');
+        // If we have chunks but recorder stopped, still try to upload
+        if (chunksRef.current.length > 0) {
+          const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+          uploadRecording(blob).then(resolve);
+          return;
+        }
         resolve(null);
         return;
       }
 
       mediaRecorderRef.current.onstop = async () => {
+        console.log('MediaRecorder stopped, chunks:', chunksRef.current.length);
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        let uploadedUrl: string | null = null;
-        
-        // Upload to storage
-        if (responseId) {
-          const fileName = `${responseId}/${Date.now()}.webm`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('interview-recordings')
-            .upload(fileName, blob);
-
-          if (!uploadError && uploadData) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('interview-recordings')
-              .getPublicUrl(fileName);
-            uploadedUrl = publicUrl;
-            setRecordingUrl(publicUrl);
-          }
-        }
-        
-        // Stop all tracks
-        screenStreamRef.current?.getTracks().forEach(track => track.stop());
-        webcamStreamRef.current?.getTracks().forEach(track => track.stop());
-        
+        const uploadedUrl = await uploadRecording(blob);
         resolve(uploadedUrl);
       };
 
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     });
+  };
+
+  const uploadRecording = async (blob: Blob): Promise<string | null> => {
+    let uploadedUrl: string | null = null;
+    
+    console.log('Uploading recording, blob size:', blob.size, 'responseId:', responseId);
+    
+    if (responseId && blob.size > 0) {
+      const fileName = `${responseId}/${Date.now()}.webm`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('interview-recordings')
+        .upload(fileName, blob);
+
+      console.log('Upload result:', uploadData, 'error:', uploadError);
+
+      if (!uploadError && uploadData) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('interview-recordings')
+          .getPublicUrl(fileName);
+        uploadedUrl = publicUrl;
+        setRecordingUrl(publicUrl);
+        console.log('Recording uploaded successfully:', publicUrl);
+      }
+    }
+    
+    // Stop all tracks
+    screenStreamRef.current?.getTracks().forEach(track => track.stop());
+    webcamStreamRef.current?.getTracks().forEach(track => track.stop());
+    
+    return uploadedUrl;
   };
 
   const handleStart = async () => {
