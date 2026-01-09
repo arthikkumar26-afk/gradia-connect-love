@@ -362,6 +362,22 @@ export const useInterviewPipeline = () => {
     notes?: string
   ) => {
     try {
+      // Get stage info
+      const { data: stageData } = await supabase
+        .from('interview_stages')
+        .select('*, next:interview_stages!stage_order(id, name, stage_order)')
+        .eq('id', stageId)
+        .single();
+
+      // Get all stages to find next stage
+      const { data: allStages } = await supabase
+        .from('interview_stages')
+        .select('id, name, stage_order')
+        .order('stage_order');
+
+      const currentStageOrder = stageData?.stage_order || 0;
+      const nextStage = allStages?.find(s => s.stage_order === currentStageOrder + 1);
+
       // Check if event exists
       const { data: existingEvent } = await supabase
         .from('interview_events')
@@ -395,6 +411,64 @@ export const useInterviewPipeline = () => {
           });
 
         if (error) throw error;
+      }
+
+      // If stage is completed, move to next stage and send invitation email
+      if (status === 'completed' && nextStage) {
+        // Move candidate to next stage
+        await supabase
+          .from('interview_candidates')
+          .update({ 
+            current_stage_id: nextStage.id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', interviewCandidateId);
+
+        // Send invitation email for next stage
+        try {
+          const scheduledDate = new Date();
+          scheduledDate.setDate(scheduledDate.getDate() + 2); // Schedule for 2 days from now
+          
+          const { error: inviteError } = await supabase.functions.invoke('send-interview-invitation', {
+            body: {
+              interviewCandidateId,
+              stageName: nextStage.name,
+              scheduledDate: scheduledDate.toISOString(),
+            }
+          });
+
+          if (inviteError) {
+            console.error('Failed to send invitation email:', inviteError);
+          } else {
+            toast.success(`Invitation email sent for ${nextStage.name}`);
+          }
+        } catch (emailErr) {
+          console.error('Error sending stage invitation:', emailErr);
+        }
+      }
+
+      // If starting a stage (in_progress), send invitation email for current stage
+      if (status === 'in_progress') {
+        try {
+          const scheduledDate = new Date();
+          scheduledDate.setHours(scheduledDate.getHours() + 1); // Schedule for 1 hour from now
+          
+          const { error: inviteError } = await supabase.functions.invoke('send-interview-invitation', {
+            body: {
+              interviewCandidateId,
+              stageName: stageData?.name || 'Interview',
+              scheduledDate: scheduledDate.toISOString(),
+            }
+          });
+
+          if (inviteError) {
+            console.error('Failed to send invitation email:', inviteError);
+          } else {
+            toast.success(`Interview invitation sent for ${stageData?.name}`);
+          }
+        } catch (emailErr) {
+          console.error('Error sending stage invitation:', emailErr);
+        }
       }
 
       await fetchPipelineData();
