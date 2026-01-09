@@ -5,11 +5,15 @@ import { toast } from "sonner";
 export interface InterviewStep {
   id: string;
   title: string;
-  status: "completed" | "current" | "pending" | "failed";
+  status: "completed" | "current" | "pending" | "failed" | "in_progress";
   date?: string;
   notes?: string;
   interviewer?: string;
   score?: number;
+  isLive?: boolean;
+  liveStatus?: "waiting" | "in_interview" | "submitting" | "completed";
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface PipelineCandidate {
@@ -106,6 +110,7 @@ interface DbInterviewEvent {
   status: string;
   scheduled_at: string | null;
   completed_at: string | null;
+  created_at: string | null;
   notes: string | null;
   ai_score: number | null;
 }
@@ -185,13 +190,25 @@ export const useInterviewPipeline = () => {
             const interviewSteps: InterviewStep[] = dbStages.map((s) => {
               const event = events.find((e) => e.stage_id === s.id);
               let status: InterviewStep["status"] = "pending";
+              let isLive = false;
+              let liveStatus: InterviewStep["liveStatus"] = undefined;
               
               if (event) {
-                if (event.status === "completed") status = "completed";
-                else if (event.status === "failed") status = "failed";
-                else if (event.status === "in_progress" || event.status === "scheduled") status = "current";
+                if (event.status === "completed") {
+                  status = "completed";
+                } else if (event.status === "failed") {
+                  status = "failed";
+                } else if (event.status === "in_progress") {
+                  status = "in_progress";
+                  isLive = true;
+                  liveStatus = "in_interview";
+                } else if (event.status === "scheduled" || event.status === "pending") {
+                  status = "current";
+                  liveStatus = "waiting";
+                }
               } else if (c.current_stage_id === s.id) {
                 status = "current";
+                liveStatus = "waiting";
               } else if (s.stage_order < (dbStages.find(st => st.id === c.current_stage_id)?.stage_order || 0)) {
                 status = "completed";
               }
@@ -200,11 +217,15 @@ export const useInterviewPipeline = () => {
                 id: s.id,
                 title: s.name,
                 status,
+                isLive,
+                liveStatus,
                 date: event?.scheduled_at 
                   ? new Date(event.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                   : undefined,
                 notes: event?.notes || undefined,
                 score: event?.ai_score || undefined,
+                startedAt: event?.created_at || undefined,
+                completedAt: event?.completed_at || undefined,
               };
             });
 
@@ -388,23 +409,50 @@ export const useInterviewPipeline = () => {
     fetchPipelineData();
   }, [fetchPipelineData]);
 
-  // Real-time subscription
+  // Real-time subscription for live updates
   useEffect(() => {
+    console.log('[Pipeline] Setting up real-time subscriptions...');
+    
     const channel = supabase
       .channel('interview-pipeline-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'interview_candidates' },
-        () => fetchPipelineData()
+        (payload) => {
+          console.log('[Pipeline] interview_candidates changed:', payload);
+          fetchPipelineData();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'interview_events' },
-        () => fetchPipelineData()
+        (payload) => {
+          console.log('[Pipeline] interview_events changed:', payload);
+          fetchPipelineData();
+        }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'interview_responses' },
+        (payload) => {
+          console.log('[Pipeline] interview_responses changed:', payload);
+          fetchPipelineData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'interview_invitations' },
+        (payload) => {
+          console.log('[Pipeline] interview_invitations changed:', payload);
+          fetchPipelineData();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Pipeline] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[Pipeline] Removing real-time channel');
       supabase.removeChannel(channel);
     };
   }, [fetchPipelineData]);

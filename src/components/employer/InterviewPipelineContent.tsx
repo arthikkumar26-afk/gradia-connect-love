@@ -120,8 +120,18 @@ const CandidateProfileModal = ({
   const completedSteps = candidate.interviewSteps.filter(s => s.status === "completed").length;
   const progress = (completedSteps / candidate.interviewSteps.length) * 100;
 
-  const getStepIcon = (status: InterviewStep["status"]) => {
-    switch (status) {
+  const getStepIcon = (step: InterviewStep) => {
+    // Show live pulsing indicator for active interviews
+    if (step.isLive || step.status === "in_progress") {
+      return (
+        <div className="relative">
+          <div className="h-4 w-4 rounded-full bg-red-500 animate-pulse" />
+          <div className="absolute inset-0 h-4 w-4 rounded-full bg-red-500 animate-ping opacity-75" />
+        </div>
+      );
+    }
+    
+    switch (step.status) {
       case "completed":
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case "current":
@@ -131,6 +141,42 @@ const CandidateProfileModal = ({
       default:
         return <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />;
     }
+  };
+  
+  const getStatusBadge = (step: InterviewStep) => {
+    if (step.isLive || step.status === "in_progress") {
+      return (
+        <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-xs shrink-0 animate-pulse">
+          <span className="relative flex h-2 w-2 mr-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+          </span>
+          LIVE
+        </Badge>
+      );
+    }
+    
+    if (step.status === "current") {
+      return (
+        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs shrink-0">
+          In Progress
+        </Badge>
+      );
+    }
+    
+    if (step.status === "completed") {
+      return (
+        <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-xs shrink-0">
+          Done
+        </Badge>
+      );
+    }
+    
+    if (step.status === "failed") {
+      return <Badge variant="destructive" className="text-xs shrink-0">Failed</Badge>;
+    }
+    
+    return null;
   };
 
   return (
@@ -340,25 +386,13 @@ const CandidateProfileModal = ({
                         const hasRecordingCapability = step.title === "Technical Assessment" || step.title === "HR Round";
                         
                         return (
-                          <div key={step.id} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                          <div key={step.id} className={`border-b border-border/50 pb-3 last:border-0 last:pb-0 ${step.isLive ? 'bg-red-500/5 -mx-4 px-4 py-2 rounded-lg' : ''}`}>
                             <div className="flex items-start gap-3">
-                              <div className="mt-0.5">{getStepIcon(step.status)}</div>
+                              <div className="mt-0.5">{getStepIcon(step)}</div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2">
                                   <h4 className="text-sm font-medium text-foreground truncate">{step.title}</h4>
-                                  {step.status === "current" && (
-                                    <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs shrink-0">
-                                      In Progress
-                                    </Badge>
-                                  )}
-                                  {step.status === "completed" && (
-                                    <Badge className="bg-green-500/10 text-green-500 border-green-500/20 text-xs shrink-0">
-                                      Done
-                                    </Badge>
-                                  )}
-                                  {step.status === "failed" && (
-                                    <Badge variant="destructive" className="text-xs shrink-0">Failed</Badge>
-                                  )}
+                                  {getStatusBadge(step)}
                                 </div>
                                 {step.date && (
                                   <p className="text-xs text-muted-foreground">
