@@ -236,8 +236,26 @@ const Interview = () => {
         }
       };
 
-      mediaRecorder.onstop = async () => {
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(1000);
+      toast.success("Recording started (Screen + Camera)");
+    } catch (err) {
+      console.error('Recording error:', err);
+      toast.error("Could not start recording. You can still proceed with the interview.");
+    }
+  };
+
+  const stopRecordingAndUpload = (): Promise<string | null> => {
+    return new Promise((resolve) => {
+      if (!mediaRecorderRef.current || !isRecording) {
+        resolve(null);
+        return;
+      }
+
+      mediaRecorderRef.current.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        let uploadedUrl: string | null = null;
+        
         // Upload to storage
         if (responseId) {
           const fileName = `${responseId}/${Date.now()}.webm`;
@@ -249,29 +267,21 @@ const Interview = () => {
             const { data: { publicUrl } } = supabase.storage
               .from('interview-recordings')
               .getPublicUrl(fileName);
+            uploadedUrl = publicUrl;
             setRecordingUrl(publicUrl);
           }
         }
+        
         // Stop all tracks
-        screenStream.getTracks().forEach(track => track.stop());
+        screenStreamRef.current?.getTracks().forEach(track => track.stop());
         webcamStreamRef.current?.getTracks().forEach(track => track.stop());
+        
+        resolve(uploadedUrl);
       };
 
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(1000);
-      toast.success("Recording started (Screen + Camera)");
-    } catch (err) {
-      console.error('Recording error:', err);
-      toast.error("Could not start recording. You can still proceed with the interview.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-    }
-    screenStreamRef.current?.getTracks().forEach(track => track.stop());
+    });
   };
 
   const handleStart = async () => {
@@ -296,13 +306,12 @@ const Interview = () => {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    stopRecording();
 
     const timeTaken = Math.floor((Date.now() - startTimeRef.current) / 1000);
     setTotalTime(timeTaken);
 
-    // Wait for recording upload
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Stop recording and wait for upload to complete
+    const uploadedRecordingUrl = await stopRecordingAndUpload();
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('submit-interview', {
@@ -310,7 +319,7 @@ const Interview = () => {
           responseId,
           answers: answers.map(a => a ?? -1),
           timeTaken,
-          recordingUrl,
+          recordingUrl: uploadedRecordingUrl,
         }
       });
 
