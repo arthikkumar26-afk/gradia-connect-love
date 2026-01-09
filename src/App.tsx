@@ -94,150 +94,154 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Layout>
             <Routes>
-            {/* Main Pages */}
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/companies" element={<Companies />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<PlaceholderPage title="Terms of Service" />} />
-            <Route path="/sitemap" element={<PlaceholderPage title="Sitemap" />} />
+              {/* Public Interview Page - Outside Layout for clean UX */}
+              <Route path="/interview" element={<Interview />} />
+              
+              {/* All other routes with Layout */}
+              <Route path="/*" element={
+                <Layout>
+                  <Routes>
+                    {/* Main Pages */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/careers" element={<Careers />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/companies" element={<Companies />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<PlaceholderPage title="Terms of Service" />} />
+                    <Route path="/sitemap" element={<PlaceholderPage title="Sitemap" />} />
 
-            {/* Candidate Routes */}
-            <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/jobs-results" element={<JobsResults />} />
-            <Route path="/jobs/software" element={<JobsSoftware />} />
-            <Route path="/jobs/education" element={<JobsEducation />} />
-            <Route path="/job/:id" element={<PlaceholderPage title="Job Details" />} />
-            <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
-            <Route path="/candidate/signup" element={<CandidateSignup />} />
-            <Route path="/candidate/login" element={<CandidateLogin />} />
-            <Route path="/candidate/create-profile" element={<CandidateCreateProfile />} />
-            <Route path="/candidate/apply" element={<CandidateCreateProfile />} />
-            <Route path="/create-profile" element={<CandidateCreateProfile />} />
-            <Route path="/signup" element={<CandidateSignup />} />
-            <Route path="/profile/success" element={<ProfileSuccess />} />
-            <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
-            <Route path="/profile/edit" element={<EditProfile />} />
-            <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
-            <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
-            <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
-            <Route path="/candidate/assessments" element={<PlaceholderPage title="Skill Assessments" />} />
-            <Route path="/candidate/mock-interviews" element={<PlaceholderPage title="Mock Interviews" />} />
-            <Route path="/candidate/salary-insights" element={<PlaceholderPage title="Salary Insights" />} />
-            <Route path="/candidate/coaching" element={<CareerCoaching />} />
+                    {/* Candidate Routes */}
+                    <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
+                    <Route path="/jobs" element={<Jobs />} />
+                    <Route path="/jobs-results" element={<JobsResults />} />
+                    <Route path="/jobs/software" element={<JobsSoftware />} />
+                    <Route path="/jobs/education" element={<JobsEducation />} />
+                    <Route path="/job/:id" element={<PlaceholderPage title="Job Details" />} />
+                    <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
+                    <Route path="/candidate/signup" element={<CandidateSignup />} />
+                    <Route path="/candidate/login" element={<CandidateLogin />} />
+                    <Route path="/candidate/create-profile" element={<CandidateCreateProfile />} />
+                    <Route path="/candidate/apply" element={<CandidateCreateProfile />} />
+                    <Route path="/create-profile" element={<CandidateCreateProfile />} />
+                    <Route path="/signup" element={<CandidateSignup />} />
+                    <Route path="/profile/success" element={<ProfileSuccess />} />
+                    <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
+                    <Route path="/profile/edit" element={<EditProfile />} />
+                    <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
+                    <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
+                    <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
+                    <Route path="/candidate/assessments" element={<PlaceholderPage title="Skill Assessments" />} />
+                    <Route path="/candidate/mock-interviews" element={<PlaceholderPage title="Mock Interviews" />} />
+                    <Route path="/candidate/salary-insights" element={<PlaceholderPage title="Salary Insights" />} />
+                    <Route path="/candidate/coaching" element={<CareerCoaching />} />
 
-            {/* Learning Platform Routes */}
-            <Route path="/learning/tech" element={<TechLearning />} />
-            <Route path="/learning/non-tech" element={<NonTechLearning />} />
-            <Route path="/learning/education" element={<EducationLearning />} />
-            <Route path="/learning/languages" element={<LanguagesLearning />} />
-            <Route path="/learning/all-categories" element={<AllCategories />} />
+                    {/* Learning Platform Routes */}
+                    <Route path="/learning/tech" element={<TechLearning />} />
+                    <Route path="/learning/non-tech" element={<NonTechLearning />} />
+                    <Route path="/learning/education" element={<EducationLearning />} />
+                    <Route path="/learning/languages" element={<LanguagesLearning />} />
+                    <Route path="/learning/all-categories" element={<AllCategories />} />
 
-            {/* Employer Routes */}
-            <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
-            <Route path="/employer/signup" element={<EmployerSignup />} />
-            <Route path="/employer/login" element={<EmployerLogin />} />
-            <Route path="/employer/create-profile" element={<EmployerCreateProfile />} />
-            <Route path="/employer/agreement" element={<Agreement />} />
-            <Route path="/employer/terms" element={<Terms />} />
-            <Route path="/employer/plans" element={<Plans />} />
-            <Route path="/employer/onboarding" element={<Onboarding />} />
-            <Route path="/employer/dashboard" element={<EmployerDashboard />} />
-            <Route path="/learning-platform" element={<LearningPlatform />} />
-            <Route path="/employer/post-job" element={<PostJob />} />
-            <Route path="/employer/job-requirements" element={<JobRequirements />} />
-            <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
-            <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
-            <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
-            <Route path="/employer/pricing" element={<Pricing />} />
-            <Route path="/employer/demo" element={<RequestDemo />} />
-            <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
+                    {/* Employer Routes */}
+                    <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
+                    <Route path="/employer/signup" element={<EmployerSignup />} />
+                    <Route path="/employer/login" element={<EmployerLogin />} />
+                    <Route path="/employer/create-profile" element={<EmployerCreateProfile />} />
+                    <Route path="/employer/agreement" element={<Agreement />} />
+                    <Route path="/employer/terms" element={<Terms />} />
+                    <Route path="/employer/plans" element={<Plans />} />
+                    <Route path="/employer/onboarding" element={<Onboarding />} />
+                    <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+                    <Route path="/learning-platform" element={<LearningPlatform />} />
+                    <Route path="/employer/post-job" element={<PostJob />} />
+                    <Route path="/employer/job-requirements" element={<JobRequirements />} />
+                    <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
+                    <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
+                    <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
+                    <Route path="/employer/pricing" element={<Pricing />} />
+                    <Route path="/employer/demo" element={<RequestDemo />} />
+                    <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
 
-            {/* Public Company Jobs (QR Code destination) */}
-            <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
-            
-            {/* Public Interview Page */}
-            <Route path="/interview" element={<Interview />} />
+                    {/* Public Company Jobs (QR Code destination) */}
+                    <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
 
-            {/* Service Routes */}
-            <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
-            <Route path="/services/fast-track" element={<PlaceholderPage title="Fast Track Hiring" />} />
-            <Route path="/services/volume-hiring" element={<PlaceholderPage title="Volume Hiring" />} />
-            <Route path="/services/staffing" element={<PlaceholderPage title="Staffing Solutions" />} />
-            <Route path="/services/training" element={<PlaceholderPage title="Training Programs" />} />
-            <Route path="/services/assessments" element={<PlaceholderPage title="Skills Assessments" />} />
-            <Route path="/services/background-checks" element={<PlaceholderPage title="Background Checks" />} />
+                    {/* Service Routes */}
+                    <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
+                    <Route path="/services/fast-track" element={<PlaceholderPage title="Fast Track Hiring" />} />
+                    <Route path="/services/volume-hiring" element={<PlaceholderPage title="Volume Hiring" />} />
+                    <Route path="/services/staffing" element={<PlaceholderPage title="Staffing Solutions" />} />
+                    <Route path="/services/training" element={<PlaceholderPage title="Training Programs" />} />
+                    <Route path="/services/assessments" element={<PlaceholderPage title="Skills Assessments" />} />
+                    <Route path="/services/background-checks" element={<PlaceholderPage title="Background Checks" />} />
 
-            {/* Resource Routes */}
-            <Route path="/events" element={<PlaceholderPage title="Events" />} />
-            <Route path="/workshops" element={<PlaceholderPage title="Workshops" />} />
-            <Route path="/library" element={<PlaceholderPage title="Resource Library" />} />
-            <Route path="/downloads" element={<PlaceholderPage title="Downloads" />} />
-            <Route path="/newsletter" element={<PlaceholderPage title="Newsletter" />} />
-            <Route path="/testimonials" element={<PlaceholderPage title="Video Testimonials" />} />
+                    {/* Resource Routes */}
+                    <Route path="/events" element={<PlaceholderPage title="Events" />} />
+                    <Route path="/workshops" element={<PlaceholderPage title="Workshops" />} />
+                    <Route path="/library" element={<PlaceholderPage title="Resource Library" />} />
+                    <Route path="/downloads" element={<PlaceholderPage title="Downloads" />} />
+                    <Route path="/newsletter" element={<PlaceholderPage title="Newsletter" />} />
+                    <Route path="/testimonials" element={<PlaceholderPage title="Video Testimonials" />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={<PlaceholderPage title="Admin Dashboard" />} />
-            <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
-            <Route path="/admin/reports" element={<PlaceholderPage title="Reports & Analytics" />} />
-            <Route path="/admin/audit" element={<PlaceholderPage title="Audit Logs" />} />
+                    {/* Admin Routes */}
+                    <Route path="/admin" element={<PlaceholderPage title="Admin Dashboard" />} />
+                    <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
+                    <Route path="/admin/reports" element={<PlaceholderPage title="Reports & Analytics" />} />
+                    <Route path="/admin/audit" element={<PlaceholderPage title="Audit Logs" />} />
 
-            {/* Support & Community Routes */}
-            <Route path="/support" element={<PlaceholderPage title="Support Center" />} />
-            <Route path="/ambassador" element={<PlaceholderPage title="Ambassador Program" />} />
-            <Route path="/referral" element={<PlaceholderPage title="Referral Program" />} />
-            <Route path="/partner-portal" element={<PlaceholderPage title="Partner Portal" />} />
-            <Route path="/api" element={<PlaceholderPage title="API Documentation" />} />
-            <Route path="/accessibility" element={<PlaceholderPage title="Accessibility" />} />
-            <Route path="/press" element={<PlaceholderPage title="Press & Media" />} />
-            <Route path="/community-guidelines" element={<PlaceholderPage title="Community Guidelines" />} />
+                    {/* Support & Community Routes */}
+                    <Route path="/support" element={<PlaceholderPage title="Support Center" />} />
+                    <Route path="/ambassador" element={<PlaceholderPage title="Ambassador Program" />} />
+                    <Route path="/referral" element={<PlaceholderPage title="Referral Program" />} />
+                    <Route path="/partner-portal" element={<PlaceholderPage title="Partner Portal" />} />
+                    <Route path="/api" element={<PlaceholderPage title="API Documentation" />} />
+                    <Route path="/accessibility" element={<PlaceholderPage title="Accessibility" />} />
+                    <Route path="/press" element={<PlaceholderPage title="Press & Media" />} />
+                    <Route path="/community-guidelines" element={<PlaceholderPage title="Community Guidelines" />} />
 
-            {/* Sponsor Portal Routes */}
-            <Route path="/sponsor/dashboard" element={<SponsorOverview />} />
-            <Route path="/sponsor/sponsorships" element={<Sponsorships />} />
-            <Route path="/sponsor/analytics" element={<SponsorAnalytics />} />
-            <Route path="/sponsor/resources" element={<BrandingResources />} />
-            <Route path="/sponsor/leads" element={<CandidateLeads />} />
-            <Route path="/sponsor/stalls" element={<MyStalls />} />
-            <Route path="/sponsor/event-report/:eventId" element={<EventReport />} />
-            <Route path="/sponsor/messages" element={<Messages />} />
-            <Route path="/sponsor/billing" element={<Billing />} />
-            <Route path="/sponsor/settings" element={<SponsorSettings />} />
-            <Route path="/sponsor/settings" element={<SponsorSettings />} />
-            
-            {/* Partnership & Sponsorship Pages */}
-            <Route path="/become-a-partner" element={<SponsorSignup />} />
-            <Route path="/sponsor/signup" element={<SponsorSignup />} />
-            <Route path="/sponsor/become-partner" element={<SponsorSignup />} />
-            <Route path="/sponsors/become-partner" element={<SponsorSignup />} />
-            <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
-            <Route path="/job-mela-calendar" element={<JobMelaCalendar />} />
-            <Route path="/sponsor/login" element={<SponsorLogin />} />
-            <Route path="/sponsor/benefits" element={<SponsorBenefits />} />
-            <Route path="/sponsors" element={<SponsorLanding />} />
-            <Route path="/collaboration-opportunities" element={<CollaborationOpportunities />} />
-            <Route path="/partnership-proposal" element={<SubmitProposal />} />
-            <Route path="/featured-clients" element={<FeaturedClients />} />
-            <Route path="/success-stories" element={<SuccessStories />} />
-            <Route path="/partner-testimonials" element={<PartnerTestimonials />} />
-            <Route path="/branding-guidelines" element={<BrandingGuidelines />} />
-            <Route path="/marketing-toolkit" element={<MarketingToolkit />} />
-            <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
-            <Route path="/sponsor-support-portal" element={<SupportPortal />} />
+                    {/* Sponsor Portal Routes */}
+                    <Route path="/sponsor/dashboard" element={<SponsorOverview />} />
+                    <Route path="/sponsor/sponsorships" element={<Sponsorships />} />
+                    <Route path="/sponsor/analytics" element={<SponsorAnalytics />} />
+                    <Route path="/sponsor/resources" element={<BrandingResources />} />
+                    <Route path="/sponsor/leads" element={<CandidateLeads />} />
+                    <Route path="/sponsor/stalls" element={<MyStalls />} />
+                    <Route path="/sponsor/event-report/:eventId" element={<EventReport />} />
+                    <Route path="/sponsor/messages" element={<Messages />} />
+                    <Route path="/sponsor/billing" element={<Billing />} />
+                    <Route path="/sponsor/settings" element={<SponsorSettings />} />
+                    
+                    {/* Partnership & Sponsorship Pages */}
+                    <Route path="/become-a-partner" element={<SponsorSignup />} />
+                    <Route path="/sponsor/signup" element={<SponsorSignup />} />
+                    <Route path="/sponsor/become-partner" element={<SponsorSignup />} />
+                    <Route path="/sponsors/become-partner" element={<SponsorSignup />} />
+                    <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
+                    <Route path="/job-mela-calendar" element={<JobMelaCalendar />} />
+                    <Route path="/sponsor/login" element={<SponsorLogin />} />
+                    <Route path="/sponsor/benefits" element={<SponsorBenefits />} />
+                    <Route path="/sponsors" element={<SponsorLanding />} />
+                    <Route path="/collaboration-opportunities" element={<CollaborationOpportunities />} />
+                    <Route path="/partnership-proposal" element={<SubmitProposal />} />
+                    <Route path="/featured-clients" element={<FeaturedClients />} />
+                    <Route path="/success-stories" element={<SuccessStories />} />
+                    <Route path="/partner-testimonials" element={<PartnerTestimonials />} />
+                    <Route path="/branding-guidelines" element={<BrandingGuidelines />} />
+                    <Route path="/marketing-toolkit" element={<MarketingToolkit />} />
+                    <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
+                    <Route path="/sponsor-support-portal" element={<SupportPortal />} />
 
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </Layout>
-        </BrowserRouter>
-      </TooltipProvider>
+                    {/* Catch-all route */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              } />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </EmployerProvider>
     </AuthProvider>
   </QueryClientProvider>
