@@ -114,7 +114,7 @@ Make questions progressively harder. Focus on practical knowledge.`;
     let aiError = null;
 
     try {
-      const aiResponse = await fetch('https://api.lovable.dev/v1/chat/completions', {
+      const aiResponse = await fetch('https://lovable.ai/api/chat', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${lovableApiKey}`,
