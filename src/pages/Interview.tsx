@@ -46,6 +46,7 @@ const Interview = () => {
   const [totalTime, setTotalTime] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [closeCountdown, setCloseCountdown] = useState(5);
   const [cameraReady, setCameraReady] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -356,6 +357,25 @@ const Interview = () => {
     );
   }
 
+  // Auto-close countdown effect
+  useEffect(() => {
+    if (!completed) return;
+    
+    const timer = setInterval(() => {
+      setCloseCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Try to close the window
+          window.close();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [completed]);
+
   if (completed) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -369,9 +389,18 @@ const Interview = () => {
             <p className="text-sm text-muted-foreground">
               The hiring team will review your submission and contact you with next steps.
             </p>
-            <p className="text-xs text-muted-foreground mt-6">
-              You can now close this window.
-            </p>
+            <div className="mt-6 p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                This window will close automatically in <span className="font-semibold text-foreground">{closeCountdown}</span> seconds
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="mt-4"
+              onClick={() => window.close()}
+            >
+              Close Now
+            </Button>
           </CardContent>
         </Card>
       </div>
