@@ -37,6 +37,8 @@ export interface PipelineCandidate {
     strengths?: string[];
     concerns?: string[];
     interview_focus?: string[];
+    autoProgressedTo?: string;
+    lastInterviewScore?: number;
     candidate_data?: {
       name?: string;
       full_name?: string;
@@ -50,6 +52,8 @@ export interface PipelineCandidate {
       preferred_role?: string;
     };
   };
+  autoProgressed?: boolean;
+  autoProgressedFrom?: string;
 }
 
 export interface PipelineStage {
@@ -236,6 +240,9 @@ export const useInterviewPipeline = () => {
               aiScore: c.ai_score || undefined,
               skills: candidateSkills,
               aiAnalysis: c.ai_analysis || undefined,
+              autoProgressed: !!c.ai_analysis?.autoProgressedTo,
+              autoProgressedFrom: c.ai_analysis?.autoProgressedTo ? 
+                dbStages.find(s => s.stage_order === (stage.stage_order - 1))?.name : undefined,
             };
           });
 
@@ -287,6 +294,8 @@ export const useInterviewPipeline = () => {
             aiScore: c.ai_score || undefined,
             skills: candidateSkills,
             aiAnalysis: c.ai_analysis || undefined,
+            autoProgressed: false,
+            autoProgressedFrom: undefined,
           };
         });
 
