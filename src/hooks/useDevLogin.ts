@@ -17,15 +17,18 @@ export const useDevLogin = (role: Role) => {
       const devPassword = "test123456";
       const displayName = role === 'candidate' ? 'Test Candidate' : 'Test Employer';
       
+      // First sign out any existing session to avoid conflicts
+      await supabase.auth.signOut();
+      
       // Try to sign in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: devEmail,
         password: devPassword,
       });
 
       if (signInError) {
         // If user doesn't exist, create it
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: devEmail,
           password: devPassword,
           options: {
@@ -46,10 +49,46 @@ export const useDevLogin = (role: Role) => {
         }
 
         // Try signing in again after signup
-        await supabase.auth.signInWithPassword({
+        const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
           email: devEmail,
           password: devPassword,
         });
+        
+        if (retryError) {
+          toast({
+            title: "Dev Login Failed",
+            description: retryError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        signInData = retryData;
+      }
+
+      // Ensure profile exists with correct role
+      if (signInData?.user) {
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id, role")
+          .eq("id", signInData.user.id)
+          .maybeSingle();
+
+        if (!existingProfile) {
+          // Create profile if it doesn't exist
+          await supabase.from("profiles").insert({
+            id: signInData.user.id,
+            email: devEmail,
+            full_name: displayName,
+            role: role,
+          });
+        } else if (existingProfile.role !== role) {
+          // Update role if it doesn't match
+          await supabase
+            .from("profiles")
+            .update({ role: role })
+            .eq("id", signInData.user.id);
+        }
       }
 
       toast({
