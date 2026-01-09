@@ -25,6 +25,7 @@ const jobFormSchema = z.object({
   requirements: z.string().min(20, "Requirements must be at least 20 characters").max(3000),
   skills: z.string().min(2, "Please add at least one skill"),
   closing_date: z.string().optional(),
+  interview_type: z.string().min(1, "Please select interview type"),
 });
 
 type JobFormValues = z.infer<typeof jobFormSchema>;
@@ -52,6 +53,7 @@ const PostJob = () => {
       requirements: "",
       skills: "",
       closing_date: "",
+      interview_type: "standard",
     },
   });
 
@@ -243,6 +245,7 @@ const PostJob = () => {
         skills: skillsArray,
         closing_date: values.closing_date || null,
         status: "active",
+        interview_type: values.interview_type,
       };
 
       const { error } = await supabase.from("jobs").insert([jobData]);
@@ -395,6 +398,39 @@ const PostJob = () => {
                     )}
                   />
                 </div>
+
+                {/* Interview Type */}
+                <FormField
+                  control={form.control}
+                  name="interview_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Interview Type *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select interview type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="standard">Standard (MCQ-based)</SelectItem>
+                          <SelectItem value="technical">Technical (Coding + MCQ)</SelectItem>
+                          <SelectItem value="education">Education (Includes Demo Video Round)</SelectItem>
+                          <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
+                          <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {field.value === 'education' && "📹 Includes Demo Video round for teachers/principals to record teaching demos"}
+                        {field.value === 'technical' && "💻 Includes technical coding assessments"}
+                        {field.value === 'sales' && "📊 Includes presentation skills assessment"}
+                        {field.value === 'management' && "📋 Includes case study analysis"}
+                        {field.value === 'standard' && "📝 Standard MCQ-based interviews across all stages"}
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 {/* Salary Range & Closing Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

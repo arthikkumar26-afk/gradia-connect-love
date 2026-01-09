@@ -27,6 +27,12 @@ const stageFormats: Record<string, { format: string; duration: string; descripti
     description: '10 multiple-choice questions covering technical skills, coding concepts, and problem-solving.',
     icon: '💻'
   },
+  'Demo Video': {
+    format: 'Teaching Demo Recording',
+    duration: '5-10 minutes',
+    description: 'Record a teaching demonstration video (5-10 min) showcasing your teaching methodology and subject expertise.',
+    icon: '🎥'
+  },
   'HR Round': {
     format: 'HR Assessment',
     duration: '10-15 minutes',
@@ -184,6 +190,13 @@ serve(async (req) => {
         'Your screen may be recorded during the assessment',
         'Each question has a time limit - read carefully',
         'You cannot pause or go back once started'
+      ],
+      'Demo Video': [
+        'Record a 5-10 minute teaching demonstration video',
+        'Choose a topic relevant to the position you applied for',
+        'Ensure good lighting and clear audio in your recording',
+        'Show your teaching methodology and engagement techniques',
+        'You can record multiple takes and upload your best version'
       ],
       'HR Round': [
         'Be prepared to answer behavioral questions',

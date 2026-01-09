@@ -9,7 +9,7 @@ const corsHeaders = {
 // Stage-specific question configurations
 interface StageConfig {
   questionCount: number;
-  questionType: 'mcq' | 'text' | 'mixed';
+  questionType: 'mcq' | 'text' | 'mixed' | 'video';
   timePerQuestion: number; // seconds
   promptTemplate: string;
 }
@@ -41,6 +41,12 @@ Focus on:
 - Real-world scenario questions
 
 Make questions progressively harder from basic to advanced.`
+  },
+  'Demo Video': {
+    questionCount: 0,
+    questionType: 'video',
+    timePerQuestion: 600,
+    promptTemplate: `This is a Demo Video round - no questions needed. The candidate will record a teaching demonstration video.`
   },
   'HR Round': {
     questionCount: 5,
@@ -154,6 +160,58 @@ serve(async (req) => {
 
     if (existingResponse && existingResponse.completed_at) {
       throw new Error('This interview has already been completed');
+    }
+
+    // Handle Demo Video stage - no questions needed
+    if (stageName === 'Demo Video') {
+      // Create response record for video submission if not exists
+      let responseRecord = existingResponse;
+      if (!responseRecord) {
+        const { data: newResponse, error: insertError } = await supabase
+          .from('interview_responses')
+          .insert({
+            interview_event_id: interviewEvent.id,
+            questions: [],
+            total_questions: 0,
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        responseRecord = newResponse;
+      }
+
+      // Update interview event status
+      await supabase
+        .from('interview_events')
+        .update({ status: 'in_progress' })
+        .eq('id', interviewEvent.id);
+
+      return new Response(JSON.stringify({
+        success: true,
+        responseId: responseRecord.id,
+        questions: [],
+        candidateName: candidate.full_name,
+        jobTitle: job.job_title,
+        stageName: stageName,
+        questionType: 'video',
+        timePerQuestion: 600,
+        totalQuestions: 0,
+        isVideoStage: true,
+        videoInstructions: {
+          title: 'Teaching Demo Video',
+          description: 'Record a 5-10 minute teaching demonstration video',
+          guidelines: [
+            'Choose a topic from your subject area',
+            'Demonstrate your teaching methodology',
+            'Show engagement techniques you use in the classroom',
+            'Speak clearly and maintain good audio quality',
+            'Ensure good lighting for visibility'
+          ]
+        }
+      }), {
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     if (existingResponse && existingResponse.questions?.length > 0) {
