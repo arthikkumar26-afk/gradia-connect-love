@@ -157,7 +157,7 @@ const Index = () => {
 
           <div className="text-center mt-12">
             <Button variant="cta" size="lg" asChild>
-              <Link to="/candidate/apply">
+              <Link to="/candidate/login">
                 Get Started Today
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Link>
@@ -310,14 +310,14 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="professional" size="xl" className="bg-background text-foreground hover:bg-background/90 shadow-large" asChild>
-              <Link to="/candidate/apply">
-                Find Your Dream Job
+              <Link to="/candidate/login">
+                Apply Now
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Link>
             </Button>
             <Button variant="outline" size="xl" className="border-2 border-background text-background hover:bg-background hover:text-foreground bg-transparent" asChild>
-              <Link to="/employer/post-job">
-                Hire Top Talent
+              <Link to="/employer/login">
+                Post Job Now
               </Link>
             </Button>
           </div>
