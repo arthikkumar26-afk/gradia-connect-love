@@ -58,7 +58,10 @@ const Interview = () => {
 
   // Initialize interview
   const initInterview = useCallback(async () => {
+    console.log('Interview: initInterview called with token:', token);
+    
     if (!token) {
+      console.log('Interview: No token found');
       setError("Invalid interview link. Please use the link from your email.");
       setLoading(false);
       return;
@@ -68,9 +71,12 @@ const Interview = () => {
     setError(null);
 
     try {
+      console.log('Interview: Calling start-interview function');
       const { data, error: fnError } = await supabase.functions.invoke('start-interview', {
         body: { token }
       });
+
+      console.log('Interview: Response received', { data, fnError });
 
       if (fnError || data?.error) {
         throw new Error(data?.error || fnError?.message || 'Failed to load interview');
@@ -82,14 +88,17 @@ const Interview = () => {
       setCandidateName(data.candidateName);
       setJobTitle(data.jobTitle);
       setStageName(data.stageName);
+      console.log('Interview: State set successfully, questions:', data.questions.length);
       setLoading(false);
     } catch (err: any) {
+      console.error('Interview: Error initializing', err);
       setError(err.message);
       setLoading(false);
     }
   }, [token]);
 
   useEffect(() => {
+    console.log('Interview: useEffect running, calling initInterview');
     initInterview();
   }, [initInterview]);
 
@@ -363,12 +372,15 @@ const Interview = () => {
     }
   };
 
+  console.log('Interview: Render state - loading:', loading, 'error:', error, 'started:', started, 'completed:', completed, 'questions:', questions.length);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="mt-4 text-muted-foreground">Loading interview...</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600" />
+          <p className="mt-4 text-gray-600 font-medium">Loading interview...</p>
+          <p className="mt-2 text-sm text-gray-400">Please wait while we prepare your questions</p>
         </div>
       </div>
     );
