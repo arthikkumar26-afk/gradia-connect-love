@@ -22,6 +22,7 @@ import {
   XCircle,
   CheckCircle2,
   Sparkles,
+  Zap,
   Loader2,
   RefreshCw,
   Database,
@@ -144,12 +145,18 @@ const CandidateProfileModal = ({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span>{candidate.name}</span>
                 {candidate.aiScore && (
                   <Badge className="bg-primary/10 text-primary border-primary/20">
                     <Sparkles className="h-3 w-3 mr-1" />
                     AI Score: {candidate.aiScore}%
+                  </Badge>
+                )}
+                {candidate.autoProgressed && (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Auto-Progressed
                   </Badge>
                 )}
               </div>
@@ -530,6 +537,15 @@ const CandidateCard = ({
               </DropdownMenu>
             </div>
             <p className="text-xs text-muted-foreground truncate">{candidate.role}</p>
+            
+            {/* Auto-progression badge */}
+            {candidate.autoProgressed && (
+              <Badge className="mt-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs">
+                <Zap className="h-3 w-3 mr-1" />
+                AI Auto-Progressed
+              </Badge>
+            )}
+            
             <p className="text-xs text-muted-foreground mt-1">{candidate.appliedDate}</p>
             
             {/* Progress indicator */}
