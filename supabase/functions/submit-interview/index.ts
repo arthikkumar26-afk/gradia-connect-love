@@ -99,18 +99,76 @@ serve(async (req) => {
 
     // Update interview candidate with latest score
     const interviewCandidate = response.interview_event.interview_candidate;
+    const currentStageId = response.interview_event.stage_id;
+    
+    // Get current stage order
+    const { data: currentStage } = await supabase
+      .from('interview_stages')
+      .select('stage_order')
+      .eq('id', currentStageId)
+      .single();
+
+    // Get next stage
+    const { data: nextStage } = await supabase
+      .from('interview_stages')
+      .select('*')
+      .gt('stage_order', currentStage?.stage_order || 0)
+      .order('stage_order', { ascending: true })
+      .limit(1)
+      .single();
+
+    // Auto-progress to next stage if score >= 50%
+    const shouldProgress = score >= 50 && nextStage;
+    
     await supabase
       .from('interview_candidates')
       .update({
         ai_score: score,
+        current_stage_id: shouldProgress ? nextStage.id : currentStageId,
         ai_analysis: {
           lastInterviewScore: score,
           correctAnswers: correctCount,
           totalQuestions: questions.length,
           completedAt: new Date().toISOString(),
+          autoProgressedTo: shouldProgress ? nextStage.name : null,
         }
       })
       .eq('id', interviewCandidate.id);
+
+    // If auto-progressed, create interview event for next stage
+    if (shouldProgress) {
+      console.log('Auto-progressing candidate to next stage:', nextStage.name);
+      
+      // Create interview event for next stage
+      const { data: newEvent } = await supabase
+        .from('interview_events')
+        .insert({
+          interview_candidate_id: interviewCandidate.id,
+          stage_id: nextStage.id,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      // If next stage is AI automated, create invitation
+      if (nextStage.is_ai_automated && newEvent) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+        
+        const invitationToken = crypto.randomUUID();
+        
+        await supabase
+          .from('interview_invitations')
+          .insert({
+            interview_event_id: newEvent.id,
+            invitation_token: invitationToken,
+            expires_at: expiresAt.toISOString(),
+            email_status: 'pending',
+          });
+
+        console.log('Created invitation for next AI stage:', nextStage.name);
+      }
+    }
 
     // Send notification email to employer
     if (resendApiKey) {
@@ -129,7 +187,7 @@ serve(async (req) => {
               from: 'Gradia Hiring <noreply@gradia.co.in>',
               to: [employer.email],
               reply_to: 'support@gradia.co.in',
-              subject: `Interview completed: ${candidate.full_name} scored ${score}%`,
+              subject: `Interview completed: ${candidate.full_name} scored ${score}%${shouldProgress ? ' - Auto-progressed to ' + nextStage.name : ''}`,
               html: `
 <!DOCTYPE html>
 <html>
@@ -139,7 +197,7 @@ serve(async (req) => {
 <body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; padding: 20px;">
   <h2 style="color: #111827; margin-bottom: 16px;">Interview Completed</h2>
   
-  <p><strong>${candidate.full_name}</strong> has completed their first round interview for <strong>${interviewCandidate.job?.job_title}</strong>.</p>
+  <p><strong>${candidate.full_name}</strong> has completed their interview for <strong>${interviewCandidate.job?.job_title}</strong>.</p>
   
   <table style="background: #f3f4f6; padding: 16px; border-radius: 6px; margin: 20px 0; width: 100%;">
     <tr><td><strong>Score:</strong> ${score}%</td></tr>
@@ -148,7 +206,17 @@ serve(async (req) => {
     ${recordingUrl ? `<tr><td><strong>Recording:</strong> Available in dashboard</td></tr>` : ''}
   </table>
   
-  <p>Log in to your employer dashboard to review the detailed results and ${recordingUrl ? 'watch the recording' : 'proceed with next steps'}.</p>
+  ${shouldProgress ? `
+  <div style="background: #d1fae5; border: 1px solid #10b981; padding: 16px; border-radius: 6px; margin: 20px 0;">
+    <p style="margin: 0; color: #065f46;"><strong>✓ Auto-Progressed:</strong> Candidate has been automatically moved to <strong>${nextStage.name}</strong> based on their score.</p>
+  </div>
+  ` : score < 50 ? `
+  <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 16px; border-radius: 6px; margin: 20px 0;">
+    <p style="margin: 0; color: #92400e;"><strong>⚠ Low Score:</strong> Candidate scored below 50%. Manual review recommended before progressing.</p>
+  </div>
+  ` : ''}
+  
+  <p>Log in to your employer dashboard to review the detailed results${recordingUrl ? ' and watch the recording' : ''}.</p>
   
   <p style="margin-top: 24px;">Best regards,<br>Gradia Hiring Team</p>
 </body>
