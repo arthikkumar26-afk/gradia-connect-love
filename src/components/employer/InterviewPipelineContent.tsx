@@ -368,10 +368,19 @@ const CandidateProfileModal = ({
                 </CardContent>
               </Card>
 
-              {/* Interview Stages */}
+              {/* Interview Stages with Live Updates */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Interview Stages</CardTitle>
+                  <CardTitle className="text-sm flex items-center justify-between">
+                    <span>Interview Stages</span>
+                    <Badge variant="outline" className="text-xs font-normal bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                      <span className="relative flex h-2 w-2 mr-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                      </span>
+                      Live
+                    </Badge>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -403,8 +412,20 @@ const CandidateProfileModal = ({
                                 {step.notes && (
                                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{step.notes}</p>
                                 )}
-                                {step.score !== undefined && (
-                                  <p className="text-xs text-muted-foreground">Score: {step.score}/10</p>
+                                {step.score !== undefined && step.score > 0 && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <p className="text-xs font-medium text-primary">Score: {step.score}%</p>
+                                    {step.score >= 50 && (
+                                      <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-[10px] py-0">
+                                        Passed
+                                      </Badge>
+                                    )}
+                                    {step.score < 50 && (
+                                      <Badge className="bg-red-500/10 text-red-600 border-red-500/20 text-[10px] py-0">
+                                        Below Threshold
+                                      </Badge>
+                                    )}
+                                  </div>
                                 )}
                                 
                                 {/* Show recording for completed stages OR interview link for current/pending stages */}
@@ -582,7 +603,7 @@ const CandidateCard = ({
             
             <p className="text-xs text-muted-foreground mt-1">{candidate.appliedDate}</p>
             
-            {/* Progress indicator */}
+            {/* Progress indicator with live status */}
             <div className="mt-2">
               <div className="flex gap-0.5">
                 {candidate.interviewSteps
@@ -590,15 +611,26 @@ const CandidateCard = ({
                   .map((step) => (
                   <div 
                     key={step.id}
-                    className={`h-1 flex-1 rounded-full ${
+                    className={`h-1.5 flex-1 rounded-full transition-all ${
                       step.status === "completed" ? "bg-green-500" :
+                      step.isLive || step.status === "in_progress" ? "bg-red-500 animate-pulse" :
                       step.status === "current" ? "bg-blue-500" :
                       step.status === "failed" ? "bg-destructive" :
                       "bg-muted"
                     }`}
+                    title={`${step.title}: ${step.isLive ? 'LIVE' : step.status}`}
                   />
                 ))}
               </div>
+              {candidate.interviewSteps.some(s => s.isLive || s.status === "in_progress") && (
+                <p className="text-[10px] text-red-500 font-medium mt-1 flex items-center gap-1">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                  </span>
+                  Candidate is in live interview
+                </p>
+              )}
             </div>
             
             <div className="flex flex-wrap gap-1 mt-2">
@@ -869,13 +901,25 @@ export const InterviewPipelineContent = () => {
         <div>
           <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             Interview Pipeline
-            <Badge variant="secondary" className="text-xs">
-              <Database className="h-3 w-3 mr-1" />
-              Live
+            <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+              <span className="relative flex h-2 w-2 mr-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              Live Connected
             </Badge>
+            {allCandidates.some(c => c.interviewSteps.some(s => s.isLive || s.status === "in_progress")) && (
+              <Badge className="text-xs bg-red-500/10 text-red-500 border-red-500/20 animate-pulse">
+                <span className="relative flex h-2 w-2 mr-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
+                Active Interview
+              </Badge>
+            )}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Track candidates through your hiring process
+            Track candidates through your hiring process • Auto-updates enabled
           </p>
         </div>
         <div className="flex items-center gap-4">
