@@ -118,9 +118,6 @@ const Interview = () => {
         audio: true
       });
       webcamStreamRef.current = stream;
-      if (webcamVideoRef.current) {
-        webcamVideoRef.current.srcObject = stream;
-      }
       setCameraReady(true);
       toast.success("Camera ready");
     } catch (err) {
@@ -128,6 +125,13 @@ const Interview = () => {
       toast.error("Could not access camera. Please allow camera permissions.");
     }
   };
+
+  // Attach stream to video element when ready
+  useEffect(() => {
+    if (cameraReady && webcamStreamRef.current && webcamVideoRef.current) {
+      webcamVideoRef.current.srcObject = webcamStreamRef.current;
+    }
+  }, [cameraReady]);
 
   // Start combined screen + webcam recording
   const startRecording = async () => {
