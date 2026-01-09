@@ -96,14 +96,14 @@ const Hero = () => {
           {/* Call to Actions */}
           <div className="animate-scale-in flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Button variant="cta" size="xl" className="shadow-glow" asChild>
-              <Link to="/candidate/apply">
-                Start Your Journey
+              <Link to="/candidate/login">
+                Apply Now
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Link>
             </Button>
             <Button variant="professional" size="xl" className="bg-background/90 text-foreground hover:bg-background shadow-medium" asChild>
-              <Link to="/employer/post-job">
-                Hire Top Talent
+              <Link to="/employer/login">
+                Post Job Now
               </Link>
             </Button>
           </div>
