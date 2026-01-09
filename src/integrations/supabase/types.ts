@@ -352,6 +352,7 @@ export type Database = {
           completed_at: string | null
           correct_answers: number | null
           created_at: string
+          demo_video_url: string | null
           id: string
           interview_event_id: string
           questions: Json
@@ -365,6 +366,7 @@ export type Database = {
           completed_at?: string | null
           correct_answers?: number | null
           created_at?: string
+          demo_video_url?: string | null
           id?: string
           interview_event_id: string
           questions?: Json
@@ -378,6 +380,7 @@ export type Database = {
           completed_at?: string | null
           correct_answers?: number | null
           created_at?: string
+          demo_video_url?: string | null
           id?: string
           interview_event_id?: string
           questions?: Json
@@ -429,6 +432,7 @@ export type Database = {
           employer_id: string
           experience_required: string | null
           id: string
+          interview_type: string | null
           job_title: string
           job_type: string | null
           location: string | null
@@ -447,6 +451,7 @@ export type Database = {
           employer_id: string
           experience_required?: string | null
           id?: string
+          interview_type?: string | null
           job_title: string
           job_type?: string | null
           location?: string | null
@@ -465,6 +470,7 @@ export type Database = {
           employer_id?: string
           experience_required?: string | null
           id?: string
+          interview_type?: string | null
           job_title?: string
           job_type?: string | null
           location?: string | null

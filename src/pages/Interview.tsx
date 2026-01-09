@@ -24,6 +24,12 @@ interface Result {
   isCorrect: boolean;
 }
 
+interface VideoInstructions {
+  title: string;
+  description: string;
+  guidelines: string[];
+}
+
 const Interview = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
@@ -48,6 +54,11 @@ const Interview = () => {
   const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
   const [closeCountdown, setCloseCountdown] = useState(5);
   const [cameraReady, setCameraReady] = useState(false);
+  const [isVideoStage, setIsVideoStage] = useState(false);
+  const [videoInstructions, setVideoInstructions] = useState<VideoInstructions | null>(null);
+  const [demoVideoFile, setDemoVideoFile] = useState<File | null>(null);
+  const [demoVideoPreview, setDemoVideoPreview] = useState<string | null>(null);
+  const [uploadingDemoVideo, setUploadingDemoVideo] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -83,12 +94,14 @@ const Interview = () => {
       }
 
       setResponseId(data.responseId);
-      setQuestions(data.questions);
-      setAnswers(new Array(data.questions.length).fill(null));
+      setQuestions(data.questions || []);
+      setAnswers(new Array((data.questions || []).length).fill(null));
       setCandidateName(data.candidateName);
       setJobTitle(data.jobTitle);
       setStageName(data.stageName);
-      console.log('Interview: State set successfully, questions:', data.questions.length);
+      setIsVideoStage(data.isVideoStage || false);
+      setVideoInstructions(data.videoInstructions || null);
+      console.log('Interview: State set successfully, questions:', (data.questions || []).length, 'isVideoStage:', data.isVideoStage);
       setLoading(false);
     } catch (err: any) {
       console.error('Interview: Error initializing', err);
@@ -372,6 +385,70 @@ const Interview = () => {
     }
   };
 
+  // Handle demo video file selection
+  const handleDemoVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (max 100MB)
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error("Video file is too large. Maximum size is 100MB.");
+        return;
+      }
+      setDemoVideoFile(file);
+      setDemoVideoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handle demo video submission
+  const handleDemoVideoSubmit = async () => {
+    if (!demoVideoFile || !responseId) {
+      toast.error("Please select a video file first");
+      return;
+    }
+
+    setUploadingDemoVideo(true);
+
+    try {
+      // Upload video to storage
+      const fileName = `${responseId}/${Date.now()}-demo.webm`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('demo-videos')
+        .upload(fileName, demoVideoFile);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('demo-videos')
+        .getPublicUrl(fileName);
+
+      // Submit interview with demo video URL
+      const { data, error: fnError } = await supabase.functions.invoke('submit-interview', {
+        body: {
+          responseId,
+          answers: [],
+          timeTaken: 0,
+          demoVideoUrl: publicUrl,
+          isVideoSubmission: true,
+        }
+      });
+
+      if (fnError || data?.error) {
+        throw new Error(data?.error || fnError?.message);
+      }
+
+      toast.success("Demo video submitted successfully!");
+      setCompleted(true);
+    } catch (err: any) {
+      console.error('Demo video upload error:', err);
+      toast.error(err.message || "Failed to upload demo video");
+    } finally {
+      setUploadingDemoVideo(false);
+    }
+  };
+
   console.log('Interview: Render state - loading:', loading, 'error:', error, 'started:', started, 'completed:', completed, 'questions:', questions.length);
 
   if (loading) {
@@ -447,6 +524,111 @@ const Interview = () => {
               onClick={() => window.close()}
             >
               Close Now
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Demo Video Stage UI
+  if (isVideoStage && !completed) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Video className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">🎥 Demo Video Round</CardTitle>
+            <p className="text-muted-foreground mt-2">
+              {stageName} for <span className="font-semibold text-foreground">{jobTitle}</span>
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {videoInstructions && (
+              <div className="bg-primary/5 p-4 rounded-lg space-y-3">
+                <h3 className="font-semibold text-primary">{videoInstructions.title}</h3>
+                <p className="text-sm text-muted-foreground">{videoInstructions.description}</p>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  {videoInstructions.guidelines.map((guideline, idx) => (
+                    <li key={idx}>• {guideline}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Video Upload Area */}
+            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
+              {!demoVideoPreview ? (
+                <div className="text-center">
+                  <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload your teaching demonstration video
+                  </p>
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleDemoVideoSelect}
+                      className="hidden"
+                    />
+                    <Button variant="outline" asChild>
+                      <span>
+                        <Video className="h-4 w-4 mr-2" />
+                        Select Video File
+                      </span>
+                    </Button>
+                  </label>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Max file size: 100MB | Formats: MP4, WebM, MOV
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <video
+                      src={demoVideoPreview}
+                      controls
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {demoVideoFile?.name} ({(demoVideoFile?.size || 0 / 1024 / 1024).toFixed(1)} MB)
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDemoVideoFile(null);
+                        setDemoVideoPreview(null);
+                      }}
+                    >
+                      Change Video
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={handleDemoVideoSubmit}
+              className="w-full"
+              size="lg"
+              disabled={!demoVideoFile || uploadingDemoVideo}
+            >
+              {uploadingDemoVideo ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading Video...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Submit Demo Video
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
