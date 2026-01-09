@@ -29,10 +29,11 @@ import {
   Star,
   XCircle,
   UserCheck,
+  PlayCircle,
 } from "lucide-react";
 import { useInterviewAutomation } from "@/hooks/useInterviewAutomation";
 import { useStatusNotification } from "@/hooks/useStatusNotification";
-import { PlayCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AIActionPanelProps {
   candidateId: string;
@@ -210,34 +211,114 @@ export const AIActionPanel = ({
   };
 
   const handleShortlist = async () => {
-    if (!jobId) return;
+    if (!jobId || !interviewCandidateId) return;
     setIsNotifying(true);
     try {
+      // Update candidate status in database
+      const { error } = await supabase
+        .from('interview_candidates')
+        .update({ status: 'shortlisted' })
+        .eq('id', interviewCandidateId);
+      
+      if (error) throw error;
+      
+      // Send notification email
       await notifyShortlisted(candidateId, jobId);
+      toast.success("Candidate shortlisted successfully!");
+      onRefresh?.();
+    } catch (error: any) {
+      console.error("Shortlist failed:", error);
+      toast.error(error.message || "Failed to shortlist candidate");
     } finally {
       setIsNotifying(false);
     }
   };
 
   const handleReject = async () => {
-    if (!jobId) return;
+    if (!jobId || !interviewCandidateId) return;
     setIsRejecting(true);
     try {
+      // Update candidate status in database
+      const { error } = await supabase
+        .from('interview_candidates')
+        .update({ status: 'rejected' })
+        .eq('id', interviewCandidateId);
+      
+      if (error) throw error;
+      
+      // Create rejection event for the current stage
+      const { data: candidate } = await supabase
+        .from('interview_candidates')
+        .select('current_stage_id')
+        .eq('id', interviewCandidateId)
+        .single();
+      
+      if (candidate?.current_stage_id) {
+        await supabase.from('interview_events').insert({
+          interview_candidate_id: interviewCandidateId,
+          stage_id: candidate.current_stage_id,
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+          notes: rejectionReason || 'Candidate rejected by employer'
+        });
+      }
+      
+      // Send notification email
       await notifyRejected(candidateId, jobId, rejectionReason || undefined);
+      toast.success("Candidate rejected");
       setRejectModalOpen(false);
       setRejectionReason("");
       onRefresh?.();
+    } catch (error: any) {
+      console.error("Reject failed:", error);
+      toast.error(error.message || "Failed to reject candidate");
     } finally {
       setIsRejecting(false);
     }
   };
 
   const handleHire = async () => {
-    if (!jobId) return;
+    if (!jobId || !interviewCandidateId) return;
     setIsNotifying(true);
     try {
+      // Move candidate to final stage and mark as hired
+      const { data: stages } = await supabase
+        .from('interview_stages')
+        .select('id')
+        .order('stage_order', { ascending: false })
+        .limit(1);
+      
+      const finalStageId = stages?.[0]?.id;
+      
+      // Update candidate status to hired and move to final stage
+      const { error } = await supabase
+        .from('interview_candidates')
+        .update({ 
+          status: 'hired',
+          current_stage_id: finalStageId 
+        })
+        .eq('id', interviewCandidateId);
+      
+      if (error) throw error;
+      
+      // Create completion event
+      if (finalStageId) {
+        await supabase.from('interview_events').insert({
+          interview_candidate_id: interviewCandidateId,
+          stage_id: finalStageId,
+          status: 'passed',
+          completed_at: new Date().toISOString(),
+          notes: 'Candidate hired!'
+        });
+      }
+      
+      // Send notification email
       await notifyHired(candidateId, jobId);
+      toast.success("🎉 Candidate hired successfully!");
       onRefresh?.();
+    } catch (error: any) {
+      console.error("Hire failed:", error);
+      toast.error(error.message || "Failed to hire candidate");
     } finally {
       setIsNotifying(false);
     }
