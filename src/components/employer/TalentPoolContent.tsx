@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus, Trash2 } from 'lucide-react';
+import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus, Trash2, LayoutGrid, List, MapPin, Briefcase, Download, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface AppliedCandidate {
   id: string;
@@ -63,6 +64,7 @@ export default function TalentPoolContent() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [deleteCandidate, setDeleteCandidate] = useState<AppliedCandidate | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [stats, setStats] = useState({
     total: 0,
     shortlisted: 0,
@@ -324,6 +326,24 @@ export default function TalentPoolContent() {
           />
         </div>
         <div className="flex gap-2">
+          <div className="flex border rounded-lg overflow-hidden">
+            <Button 
+              variant={viewMode === 'cards' ? 'default' : 'ghost'} 
+              size="sm"
+              className="rounded-none"
+              onClick={() => setViewMode('cards')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant={viewMode === 'table' ? 'default' : 'ghost'} 
+              size="sm"
+              className="rounded-none"
+              onClick={() => setViewMode('table')}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
           <Button onClick={() => setShowAddModal(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
             Add Candidate
@@ -353,7 +373,7 @@ export default function TalentPoolContent() {
         candidate={selectedCandidate}
       />
 
-      {/* Candidates Table */}
+      {/* Candidates Display */}
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-muted-foreground">Loading candidates...</div>
@@ -365,7 +385,213 @@ export default function TalentPoolContent() {
               Candidates who apply to your jobs will appear here with AI analysis
             </p>
           </div>
+        ) : viewMode === 'cards' ? (
+          /* Card View */
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCandidates.map((candidate) => {
+              const candidateData = getCandidateData(candidate);
+              const aiAnalysis = candidate.ai_analysis;
+              return (
+                <Card 
+                  key={candidate.id} 
+                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                  onClick={() => setSelectedCandidate(candidate)}
+                >
+                  {/* AI Score Banner */}
+                  <div className={`h-2 ${
+                    candidate.ai_score && candidate.ai_score >= 80 ? 'bg-green-500' :
+                    candidate.ai_score && candidate.ai_score >= 60 ? 'bg-blue-500' :
+                    candidate.ai_score && candidate.ai_score >= 40 ? 'bg-yellow-500' :
+                    candidate.ai_score ? 'bg-red-500' : 'bg-muted'
+                  }`} />
+                  
+                  <div className="p-5">
+                    {/* Header with Avatar and Score */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-14 w-14 border-2 border-background shadow-md">
+                          <AvatarImage src={candidateData.profile_picture || ''} alt={candidateData.full_name} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
+                            {candidateData.full_name?.charAt(0) || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-semibold text-foreground text-lg leading-tight">
+                            {candidateData.full_name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {candidateData.preferred_role || candidate.job?.job_title}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* AI Score Circle */}
+                      <div className={`flex items-center justify-center h-12 w-12 rounded-full text-white font-bold text-sm ${
+                        candidate.ai_score && candidate.ai_score >= 80 ? 'bg-green-500' :
+                        candidate.ai_score && candidate.ai_score >= 60 ? 'bg-blue-500' :
+                        candidate.ai_score && candidate.ai_score >= 40 ? 'bg-yellow-500' :
+                        candidate.ai_score ? 'bg-red-500' : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {candidate.ai_score ? `${candidate.ai_score}%` : 'N/A'}
+                      </div>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="space-y-1.5 mb-4 text-sm">
+                      <p className="text-muted-foreground truncate flex items-center gap-2">
+                        <Mail className="h-3.5 w-3.5" />
+                        {candidateData.email}
+                      </p>
+                      {candidateData.location && (
+                        <p className="text-muted-foreground flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {candidateData.location}
+                        </p>
+                      )}
+                      {candidateData.experience_level && (
+                        <p className="text-muted-foreground flex items-center gap-2">
+                          <Briefcase className="h-3.5 w-3.5" />
+                          {candidateData.experience_level}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Applied Job */}
+                    <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                      <p className="text-xs text-muted-foreground mb-1">Applied for</p>
+                      <p className="font-medium text-foreground text-sm">{candidate.job?.job_title}</p>
+                      {candidate.job?.department && (
+                        <p className="text-xs text-muted-foreground">{candidate.job.department}</p>
+                      )}
+                    </div>
+
+                    {/* Skills from AI Analysis */}
+                    {candidateData.skills && candidateData.skills.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {candidateData.skills.slice(0, 4).map((skill: string, idx: number) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {candidateData.skills.length > 4 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{candidateData.skills.length - 4}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* AI Recommendation */}
+                    {aiAnalysis?.recommendation && (
+                      <div className="mb-4">
+                        {getRecommendationBadge(aiAnalysis)}
+                      </div>
+                    )}
+
+                    {/* Resume Preview */}
+                    {candidate.resume_url && (
+                      <div className="border rounded-lg p-3 mb-4 bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium">Resume</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 px-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(candidate.resume_url!, '_blank');
+                              }}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 px-2"
+                              asChild
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <a href={candidate.resume_url} download>
+                                <Download className="h-3.5 w-3.5" />
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stage Progress */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <Badge variant="outline" className="text-xs">
+                          {candidate.current_stage?.name || 'Resume Screening'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Stage {candidate.current_stage?.stage_order || 1}/6
+                        </span>
+                      </div>
+                      <Progress 
+                        value={(candidate.current_stage?.stage_order || 1) / 6 * 100} 
+                        className="h-1.5"
+                      />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        Applied {formatDate(candidate.applied_at)}
+                      </p>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.location.href = `mailto:${candidateData.email}`;
+                          }}
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
+                        {candidateData.mobile && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = `tel:${candidateData.mobile}`;
+                            }}
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteCandidate(candidate);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
         ) : (
+          /* Table View */
           <Table>
             <TableHeader>
               <TableRow>
@@ -469,45 +695,6 @@ export default function TalentPoolContent() {
           </Table>
         )}
       </div>
-
-      {/* AI Analysis Details - Show for first candidate */}
-      {filteredCandidates.length > 0 && filteredCandidates[0].ai_analysis && (
-        <Card className="p-6">
-          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            Latest AI Analysis Preview
-          </h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-2">Strengths</h4>
-              <div className="flex flex-wrap gap-2">
-                {filteredCandidates[0].ai_analysis.strengths?.slice(0, 4).map((strength: string, idx: number) => (
-                  <Badge key={idx} variant="secondary" className="text-xs">
-                    ✓ {strength}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            {filteredCandidates[0].ai_analysis.concerns && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Areas to Explore</h4>
-                <div className="flex flex-wrap gap-2">
-                  {filteredCandidates[0].ai_analysis.concerns?.slice(0, 4).map((concern: string, idx: number) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {concern}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          {filteredCandidates[0].ai_analysis.summary && (
-            <p className="mt-4 text-sm text-muted-foreground border-t pt-4">
-              {filteredCandidates[0].ai_analysis.summary}
-            </p>
-          )}
-        </Card>
-      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteCandidate} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
