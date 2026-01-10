@@ -3,11 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Zap } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useDevLogin } from "@/hooks/useDevLogin";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { handleDevLogin, isLoading: isDevLoading } = useDevLogin('admin');
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -170,6 +172,28 @@ const AdminLogin = () => {
               disabled={isLoading}
             >
               {isLoading ? "Signing In..." : "Sign In as Admin"}
+            </Button>
+
+            {/* Dev Test Login */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Dev Testing</span>
+              </div>
+            </div>
+
+            <Button 
+              type="button"
+              variant="outline"
+              size="lg" 
+              className="w-full border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:hover:bg-orange-900/20" 
+              disabled={isDevLoading}
+              onClick={handleDevLogin}
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              {isDevLoading ? "Logging in..." : "Dev Test Login (Admin)"}
             </Button>
           </form>
 
