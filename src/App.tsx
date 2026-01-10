@@ -56,6 +56,12 @@ import PostJob from "./pages/employer/PostJob";
 import CompanyJobs from "./pages/CompanyJobs";
 import Interview from "./pages/Interview";
 
+// Admin & Owner Pages
+import AdminLogin from "./pages/admin/Login";
+import AdminDashboard from "./pages/admin/Dashboard";
+import OwnerLogin from "./pages/owner/Login";
+import OwnerDashboard from "./pages/owner/Dashboard";
+
 // Sponsor Pages
 import SponsorOverview from "./pages/sponsor/Overview";
 import Sponsorships from "./pages/sponsor/Sponsorships";
@@ -187,10 +193,17 @@ const App = () => (
                     <Route path="/testimonials" element={<PlaceholderPage title="Video Testimonials" />} />
 
                     {/* Admin Routes */}
-                    <Route path="/admin" element={<PlaceholderPage title="Admin Dashboard" />} />
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
                     <Route path="/admin/reports" element={<PlaceholderPage title="Reports & Analytics" />} />
                     <Route path="/admin/audit" element={<PlaceholderPage title="Audit Logs" />} />
+
+                    {/* Owner Routes */}
+                    <Route path="/owner/login" element={<OwnerLogin />} />
+                    <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+                    <Route path="/owner" element={<OwnerDashboard />} />
 
                     {/* Support & Community Routes */}
                     <Route path="/support" element={<PlaceholderPage title="Support Center" />} />
