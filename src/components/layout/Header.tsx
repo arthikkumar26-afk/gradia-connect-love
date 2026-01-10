@@ -24,6 +24,9 @@ import {
   Briefcase,
   Users,
   Settings as SettingsIcon,
+  User,
+  ShieldCheck,
+  Crown,
   Handshake,
   Award,
   FileText,
@@ -493,14 +496,63 @@ const Header = () => {
               </PopoverContent>
             </Popover>
 
-            {/* CTAs - Always visible */}
-            <div className="hidden lg:flex items-center space-x-3">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/candidate/login">Apply Now</Link>
-              </Button>
-              <Button variant="default" size="sm" asChild>
-                <Link to="/employer/login">Post Job</Link>
-              </Button>
+            {/* Login Dropdown */}
+            <div className="hidden lg:flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="sm" className="gap-2">
+                    Login
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-background z-50" align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/candidate/login" className="flex items-center gap-3 py-2">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <div className="font-medium">Candidate Login</div>
+                        <div className="text-xs text-muted-foreground">Job seekers & applicants</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/employer/login" className="flex items-center gap-3 py-2">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900">
+                        <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <div className="font-medium">Employer Login</div>
+                        <div className="text-xs text-muted-foreground">Post jobs & hire talent</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/login" className="flex items-center gap-3 py-2">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900">
+                        <ShieldCheck className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <div className="font-medium">Admin Login</div>
+                        <div className="text-xs text-muted-foreground">Platform management</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/owner/login" className="flex items-center gap-3 py-2">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
+                        <Crown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <div className="font-medium">Owner Login</div>
+                        <div className="text-xs text-muted-foreground">Full system access</div>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Mobile Menu Button */}
