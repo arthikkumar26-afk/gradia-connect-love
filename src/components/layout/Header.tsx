@@ -486,12 +486,20 @@ const Header = () => {
                   <p className="text-xs text-muted-foreground text-center">
                     Scan to browse all job vacancies
                   </p>
-                  <Button variant="outline" size="sm" asChild className="w-full">
-                    <Link to="/jobs" className="flex items-center gap-2">
-                      <ExternalLink className="h-3 w-3" />
-                      View All Jobs
-                    </Link>
-                  </Button>
+                  <div className="flex flex-col gap-2 w-full">
+                    <Button variant="default" size="sm" asChild className="w-full">
+                      <Link to="/candidate/signup" className="flex items-center gap-2">
+                        <User className="h-3 w-3" />
+                        Sign Up
+                      </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild className="w-full">
+                      <Link to="/jobs" className="flex items-center gap-2">
+                        <ExternalLink className="h-3 w-3" />
+                        View All Jobs
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </PopoverContent>
             </Popover>
