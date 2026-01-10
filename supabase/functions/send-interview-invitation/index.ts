@@ -11,10 +11,6 @@ interface InvitationRequest {
   stageName: string;
   scheduledDate: string;
   meetingLink?: string;
-  isManualInterview?: boolean;
-  panelAttendeeEmails?: string[];
-  assessmentMemberEmails?: string[];
-  additionalNotes?: string;
 }
 
 // Stage-specific interview formats
@@ -54,12 +50,6 @@ const stageFormats: Record<string, { format: string; duration: string; descripti
     duration: '15-20 minutes',
     description: 'Review and discussion of the offer details with the hiring team.',
     icon: '🎁'
-  },
-  'Panel Interview': {
-    format: 'Live Panel Interview',
-    duration: '30-45 minutes',
-    description: 'Live video interview with the hiring panel. Be prepared to discuss your experience and demonstrate your skills.',
-    icon: '👥'
   }
 };
 
@@ -96,25 +86,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { 
-      interviewCandidateId, 
-      stageName, 
-      scheduledDate, 
-      meetingLink,
-      isManualInterview,
-      panelAttendeeEmails,
-      assessmentMemberEmails,
-      additionalNotes
-    }: InvitationRequest = await req.json();
+    const { interviewCandidateId, stageName, scheduledDate, meetingLink }: InvitationRequest = await req.json();
 
-    console.log('Sending interview invitation:', { 
-      interviewCandidateId, 
-      stageName, 
-      scheduledDate, 
-      isManualInterview,
-      panelAttendeeEmails,
-      assessmentMemberEmails 
-    });
+    console.log('Sending interview invitation:', { interviewCandidateId, stageName, scheduledDate });
 
     // Get candidate and job details
     const { data: interviewCandidate, error: candidateError } = await supabase
@@ -136,25 +110,21 @@ serve(async (req) => {
     const employer = job?.employer;
     const companyName = employer?.company_name || 'Gradia';
 
-    // Get stage-specific format info - use Panel Interview for manual interviews
-    const stageFormat = isManualInterview 
-      ? stageFormats['Panel Interview']
-      : (stageFormats[stageName] || {
-          format: 'Online Assessment',
-          duration: '15-20 minutes',
-          description: 'Complete the assessment within the given time.',
-          icon: '📋'
-        });
+    // Get stage-specific format info
+    const stageFormat = stageFormats[stageName] || {
+      format: 'Online Assessment',
+      duration: '15-20 minutes',
+      description: 'Complete the assessment within the given time.',
+      icon: '📋'
+    };
 
     // Generate invitation token
     const invitationToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     
-    // Interview link - use provided meeting link for manual interviews, or generate app link
+    // Interview link - use the app domain
     const appDomain = Deno.env.get('APP_DOMAIN') || 'b06fa647-568a-470e-9033-ffe17071d8a6.lovableproject.com';
-    const interviewLink = isManualInterview && meetingLink 
-      ? meetingLink 
-      : `https://${appDomain}/interview?token=${invitationToken}`;
+    const interviewLink = `https://${appDomain}/interview?token=${invitationToken}`;
 
     // Get or create stage
     const { data: stageData } = await supabase
@@ -172,8 +142,7 @@ serve(async (req) => {
         interview_candidate_id: interviewCandidateId,
         stage_id: stageId,
         status: 'scheduled',
-        scheduled_at: scheduledDate,
-        notes: additionalNotes || null
+        scheduled_at: scheduledDate
       })
       .select()
       .single();
@@ -209,15 +178,7 @@ serve(async (req) => {
       timeZone: 'Asia/Kolkata'
     });
 
-    // Stage-specific instructions - different for manual interviews
-    const manualInterviewInstructions = [
-      'Join the video call at the scheduled time using the link provided',
-      'Ensure you have a stable internet connection and working camera/microphone',
-      'Be in a quiet, well-lit environment',
-      'Keep your resume and relevant documents ready',
-      'Be prepared to discuss your experience and answer questions from the panel'
-    ];
-
+    // Stage-specific instructions
     const stageInstructions: Record<string, string[]> = {
       'Resume Screening': [
         'Ensure your resume is up to date',
@@ -257,55 +218,18 @@ serve(async (req) => {
       ]
     };
 
-    const instructions = isManualInterview 
-      ? manualInterviewInstructions 
-      : (stageInstructions[stageName] || [
-          'Use a desktop/laptop with stable internet connection',
-          'Complete the assessment within the given time',
-          'Read all questions carefully before answering'
-        ]);
+    const instructions = stageInstructions[stageName] || [
+      'Use a desktop/laptop with stable internet connection',
+      'Complete the assessment within the given time',
+      'Read all questions carefully before answering'
+    ];
 
-    // Build panel details section for manual interviews
-    const panelDetailsSection = isManualInterview && (panelAttendeeEmails?.length || assessmentMemberEmails?.length) ? `
-      <!-- Panel Details -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f9ff; border-radius: 8px; margin: 16px 0; border: 1px solid #0ea5e9;">
-        <tr>
-          <td style="padding: 16px;">
-            <p style="margin: 0 0 8px; font-size: 12px; font-weight: 600; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px;">Interview Panel</p>
-            ${panelAttendeeEmails?.length ? `
-              <p style="margin: 4px 0; font-size: 13px; color: #374151;">
-                <strong>Panel Interviewers:</strong> ${panelAttendeeEmails.join(', ')}
-              </p>
-            ` : ''}
-            ${assessmentMemberEmails?.length ? `
-              <p style="margin: 4px 0; font-size: 13px; color: #374151;">
-                <strong>Assessment Team:</strong> ${assessmentMemberEmails.join(', ')}
-              </p>
-            ` : ''}
-          </td>
-        </tr>
-      </table>
-    ` : '';
-
-    // Additional notes section
-    const additionalNotesSection = additionalNotes ? `
-      <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-radius: 8px; margin: 16px 0;">
-        <tr>
-          <td style="padding: 16px;">
-            <p style="margin: 0; font-size: 13px; color: #92400e;">
-              <strong>📝 Additional Notes:</strong> ${additionalNotes}
-            </p>
-          </td>
-        </tr>
-      </table>
-    ` : '';
-
-    // Send email to candidate
-    const candidateEmailResponse = await sendEmail(RESEND_API_KEY, {
+    // Send email with stage-specific content
+    const emailResponse = await sendEmail(RESEND_API_KEY, {
       from: `${companyName} Hiring <noreply@gradia.co.in>`,
       to: [candidate.email],
       reply_to: 'support@gradia.co.in',
-      subject: `${stageFormat.icon} ${isManualInterview ? 'Panel Interview' : stageName} Round - ${job.job_title} at ${companyName}`,
+      subject: `${stageFormat.icon} ${stageName} Round - ${job.job_title} at ${companyName}`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -318,7 +242,7 @@ serve(async (req) => {
     <tr>
       <td style="padding: 32px 24px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px 8px 0 0;">
         <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">
-          ${stageFormat.icon} ${isManualInterview ? 'Panel Interview Scheduled' : stageName}
+          ${stageFormat.icon} ${stageName}
         </h1>
         <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">
           Interview Round for ${job.job_title}
@@ -329,7 +253,7 @@ serve(async (req) => {
       <td style="padding: 24px;">
         <p style="margin: 0 0 16px;">Dear <strong>${candidate.full_name}</strong>,</p>
         
-        <p style="margin: 0 0 16px;">Congratulations! You have been selected for the <strong style="color: #059669;">${isManualInterview ? 'Panel Interview' : stageName}</strong> round for the position of <strong>${job.job_title}</strong> at <strong>${companyName}</strong>.</p>
+        <p style="margin: 0 0 16px;">Congratulations! You have been selected for the <strong style="color: #059669;">${stageName}</strong> round for the position of <strong>${job.job_title}</strong> at <strong>${companyName}</strong>.</p>
         
         <!-- Interview Details Card -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ecfdf5; border-radius: 8px; margin: 24px 0; border: 1px solid #10b981;">
@@ -339,7 +263,7 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #d1fae5;">
-                    <strong style="color: #374151;">Stage:</strong> <span style="color: #059669;">${isManualInterview ? 'Panel Interview' : stageName}</span>
+                    <strong style="color: #374151;">Stage:</strong> <span style="color: #059669;">${stageName}</span>
                   </td>
                 </tr>
                 <tr>
@@ -359,15 +283,13 @@ serve(async (req) => {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0;">
-                    <strong style="color: #374151;">Scheduled:</strong> ${formattedDate} IST
+                    <strong style="color: #374151;">Complete By:</strong> ${formattedDate} IST
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
         </table>
-
-        ${panelDetailsSection}
 
         <!-- Stage Description -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; border-radius: 8px; margin: 16px 0;">
@@ -379,15 +301,13 @@ serve(async (req) => {
             </td>
           </tr>
         </table>
-
-        ${additionalNotesSection}
         
         <!-- CTA Button -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
           <tr>
             <td align="center">
               <a href="${interviewLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
-                ${isManualInterview ? 'Join Interview' : `Start ${stageName}`}
+                Start ${stageName}
               </a>
             </td>
           </tr>
@@ -420,217 +340,7 @@ serve(async (req) => {
       `,
     });
 
-    console.log("Candidate invitation sent successfully:", candidateEmailResponse);
-
-    // Send notification to panel attendees if manual interview
-    if (isManualInterview && panelAttendeeEmails?.length) {
-      const panelEmailResponse = await sendEmail(RESEND_API_KEY, {
-        from: `${companyName} Hiring <noreply@gradia.co.in>`,
-        to: panelAttendeeEmails,
-        reply_to: employer?.email || 'support@gradia.co.in',
-        subject: `📅 Panel Interview Scheduled - ${candidate.full_name} for ${job.job_title}`,
-        html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <tr>
-      <td style="padding: 32px 24px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border-radius: 8px 8px 0 0;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">
-          👥 Panel Interview Scheduled
-        </h1>
-        <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">
-          You are invited to interview ${candidate.full_name}
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px;">
-        <p style="margin: 0 0 16px;">Hello,</p>
-        
-        <p style="margin: 0 0 16px;">You have been added as a panel member for an upcoming interview. Please find the details below:</p>
-        
-        <!-- Interview Details Card -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f9ff; border-radius: 8px; margin: 24px 0; border: 1px solid #0ea5e9;">
-          <tr>
-            <td style="padding: 20px;">
-              <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px;">Interview Details</p>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #bae6fd;">
-                    <strong style="color: #374151;">Candidate:</strong> ${candidate.full_name}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #bae6fd;">
-                    <strong style="color: #374151;">Position:</strong> ${job.job_title}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #bae6fd;">
-                    <strong style="color: #374151;">Stage:</strong> ${stageName}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0;">
-                    <strong style="color: #374151;">Scheduled:</strong> ${formattedDate} IST
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-
-        ${additionalNotes ? `
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-radius: 8px; margin: 16px 0;">
-          <tr>
-            <td style="padding: 16px;">
-              <p style="margin: 0; font-size: 13px; color: #92400e;">
-                <strong>📝 Notes:</strong> ${additionalNotes}
-              </p>
-            </td>
-          </tr>
-        </table>
-        ` : ''}
-        
-        <!-- CTA Button -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-          <tr>
-            <td align="center">
-              <a href="${meetingLink || interviewLink}" style="display: inline-block; background-color: #0ea5e9; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(14, 165, 233, 0.3);">
-                Join Interview
-              </a>
-            </td>
-          </tr>
-        </table>
-        
-        <p style="margin: 0; color: #374151;">
-          Thank you,<br>
-          <strong>${companyName} Hiring Team</strong>
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
-        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-          This is an automated notification from Gradia Job Portal.
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-        `,
-      });
-      console.log("Panel notification sent:", panelEmailResponse);
-    }
-
-    // Send notification to assessment members if manual interview
-    if (isManualInterview && assessmentMemberEmails?.length) {
-      const assessmentEmailResponse = await sendEmail(RESEND_API_KEY, {
-        from: `${companyName} Hiring <noreply@gradia.co.in>`,
-        to: assessmentMemberEmails,
-        reply_to: employer?.email || 'support@gradia.co.in',
-        subject: `📋 Assessment Assignment - ${candidate.full_name} for ${job.job_title}`,
-        html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <tr>
-      <td style="padding: 32px 24px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 8px 8px 0 0;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">
-          📋 Assessment Assignment
-        </h1>
-        <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">
-          Please evaluate ${candidate.full_name}
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px;">
-        <p style="margin: 0 0 16px;">Hello,</p>
-        
-        <p style="margin: 0 0 16px;">You have been assigned to evaluate a candidate for an upcoming interview. Please find the details below:</p>
-        
-        <!-- Interview Details Card -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f3ff; border-radius: 8px; margin: 24px 0; border: 1px solid #8b5cf6;">
-          <tr>
-            <td style="padding: 20px;">
-              <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #6d28d9; text-transform: uppercase; letter-spacing: 0.5px;">Candidate Details</p>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #ddd6fe;">
-                    <strong style="color: #374151;">Candidate:</strong> ${candidate.full_name}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #ddd6fe;">
-                    <strong style="color: #374151;">Email:</strong> ${candidate.email}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #ddd6fe;">
-                    <strong style="color: #374151;">Position:</strong> ${job.job_title}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #ddd6fe;">
-                    <strong style="color: #374151;">Stage:</strong> ${stageName}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0;">
-                    <strong style="color: #374151;">Interview Date:</strong> ${formattedDate} IST
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-
-        ${additionalNotes ? `
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-radius: 8px; margin: 16px 0;">
-          <tr>
-            <td style="padding: 16px;">
-              <p style="margin: 0; font-size: 13px; color: #92400e;">
-                <strong>📝 Evaluation Notes:</strong> ${additionalNotes}
-              </p>
-            </td>
-          </tr>
-        </table>
-        ` : ''}
-        
-        <p style="margin: 24px 0 16px;">Please prepare your evaluation criteria and be ready to provide feedback after the interview.</p>
-        
-        <p style="margin: 0; color: #374151;">
-          Thank you,<br>
-          <strong>${companyName} Hiring Team</strong>
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
-        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-          This is an automated notification from Gradia Job Portal.
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-        `,
-      });
-      console.log("Assessment team notification sent:", assessmentEmailResponse);
-    }
+    console.log("Interview invitation sent successfully:", emailResponse);
 
     // Update invitation status
     await supabase
@@ -643,11 +353,10 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      emailResponse: candidateEmailResponse,
+      emailResponse,
       invitationToken,
       stageName,
-      format: stageFormat.format,
-      isManualInterview
+      format: stageFormat.format
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

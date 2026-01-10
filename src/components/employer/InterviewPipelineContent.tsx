@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   Users, 
   Phone,
@@ -62,7 +62,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AIActionPanel } from "./AIActionPanel";
 import { InterviewRecordingPlayer } from "./InterviewRecordingPlayer";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
-import { ManualInterviewScheduleModal } from "./ManualInterviewScheduleModal";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -116,26 +115,6 @@ const CandidateProfileModal = ({
   onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
   onRefresh?: () => void;
 }) => {
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [selectedStageForSchedule, setSelectedStageForSchedule] = useState<InterviewStep | null>(null);
-  const [jobInterviewType, setJobInterviewType] = useState<string | null>(null);
-  
-  // Fetch job interview type
-  useEffect(() => {
-    const fetchJobType = async () => {
-      if (!candidate?.jobId) return;
-      const { data } = await supabase
-        .from('jobs')
-        .select('interview_type')
-        .eq('id', candidate.jobId)
-        .single();
-      setJobInterviewType(data?.interview_type || null);
-    };
-    if (candidate) {
-      fetchJobType();
-    }
-  }, [candidate?.jobId]);
-  
   if (!candidate) return null;
 
   const completedSteps = candidate.interviewSteps.filter(s => s.status === "completed").length;
@@ -351,34 +330,15 @@ const CandidateProfileModal = ({
               )}
 
               {/* Actions */}
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <Button className="flex-1" size="sm">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email
-                  </Button>
-                  <Button variant="outline" className="flex-1" size="sm">
-                    <Video className="h-4 w-4 mr-2" />
-                    Schedule
-                  </Button>
-                </div>
-                
-                {/* Manual Interview Scheduling for Education jobs */}
-                {jobInterviewType === 'education' && (
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    className="w-full bg-orange-600 hover:bg-orange-700"
-                    onClick={() => {
-                      const currentStep = candidate.interviewSteps.find(s => s.status === 'current' || s.status === 'pending');
-                      setSelectedStageForSchedule(currentStep || null);
-                      setShowScheduleModal(true);
-                    }}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Manual Panel Interview
-                  </Button>
-                )}
+              <div className="flex gap-2">
+                <Button className="flex-1" size="sm">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email
+                </Button>
+                <Button variant="outline" className="flex-1" size="sm">
+                  <Video className="h-4 w-4 mr-2" />
+                  Schedule
+                </Button>
               </div>
             </div>
 
@@ -541,21 +501,6 @@ const CandidateProfileModal = ({
           </div>
         </div>
       </DialogContent>
-      
-      {/* Manual Interview Schedule Modal */}
-      <ManualInterviewScheduleModal
-        isOpen={showScheduleModal}
-        onClose={() => {
-          setShowScheduleModal(false);
-          setSelectedStageForSchedule(null);
-        }}
-        candidateName={candidate.name}
-        candidateEmail={candidate.email}
-        jobTitle={candidate.role}
-        interviewCandidateId={candidate.interviewCandidateId}
-        stageName={selectedStageForSchedule?.title || 'Panel Interview'}
-        onSuccess={onRefresh}
-      />
     </Dialog>
   );
 };
