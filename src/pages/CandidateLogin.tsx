@@ -23,16 +23,17 @@ const CandidateLogin = () => {
 
   useEffect(() => {
     if (isAuthenticated && profile) {
-      // Redirect based on actual role
+      // Always redirect candidates to candidate dashboard from this page
       if (profile.role === "candidate") {
-        navigate("/candidate/dashboard");
-      } else if (profile.role === "employer") {
-        // If employer tries to login here, redirect them to employer dashboard
+        navigate("/candidate/dashboard", { replace: true });
+      } else {
+        // Non-candidates should not use this login page - sign them out
         toast({
-          title: "Wrong Login Page",
-          description: "You have an employer account. Redirecting to employer dashboard.",
+          title: "Wrong Account Type",
+          description: "Please use the employer login page for employer accounts.",
+          variant: "destructive",
         });
-        navigate("/employer/dashboard");
+        supabase.auth.signOut();
       }
     }
   }, [isAuthenticated, profile, navigate, toast]);
