@@ -12,7 +12,8 @@ interface EmployerQRCodeProps {
 }
 
 const EmployerQRCode = ({ employerId, companyName, companyLogo }: EmployerQRCodeProps) => {
-  const qrUrl = `${window.location.origin}/company/${employerId}/jobs`;
+  // QR code now points to quick registration page for instant apply
+  const qrUrl = `${window.location.origin}/apply/${employerId}`;
 
   const handleDownload = () => {
     const svg = document.getElementById("employer-qr-code");

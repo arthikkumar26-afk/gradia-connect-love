@@ -55,6 +55,7 @@ import EditProfile from "./pages/EditProfile";
 import PostJob from "./pages/employer/PostJob";
 import CompanyJobs from "./pages/CompanyJobs";
 import Interview from "./pages/Interview";
+import QRRegistration from "./pages/QRRegistration";
 
 // Admin & Owner Pages
 import AdminLogin from "./pages/admin/Login";
@@ -175,6 +176,9 @@ const App = () => (
 
                     {/* Public Company Jobs (QR Code destination) */}
                     <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
+                    
+                    {/* QR Registration - Quick Apply for candidates */}
+                    <Route path="/apply/:employerId" element={<QRRegistration />} />
 
                     {/* Service Routes */}
                     <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
