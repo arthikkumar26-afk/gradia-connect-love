@@ -495,6 +495,18 @@ export const useInterviewPipeline = () => {
         (payload) => {
           console.log('[Pipeline] interview_candidates changed:', payload);
           fetchPipelineData();
+          
+          // Show toast for stage changes
+          if (payload.eventType === 'UPDATE' && payload.old && payload.new) {
+            const oldStageId = (payload.old as any).current_stage_id;
+            const newStageId = (payload.new as any).current_stage_id;
+            if (oldStageId !== newStageId) {
+              toast.info('🔄 Pipeline updated', { 
+                description: 'A candidate has progressed to a new stage',
+                duration: 3000
+              });
+            }
+          }
         }
       )
       .on(
@@ -503,6 +515,17 @@ export const useInterviewPipeline = () => {
         (payload) => {
           console.log('[Pipeline] interview_events changed:', payload);
           fetchPipelineData();
+          
+          // Show toast for interview completions
+          if (payload.eventType === 'UPDATE') {
+            const newEvent = payload.new as any;
+            if (newEvent.status === 'completed') {
+              toast.success('✅ Interview completed', {
+                description: 'A stage has been completed',
+                duration: 3000
+              });
+            }
+          }
         }
       )
       .on(
