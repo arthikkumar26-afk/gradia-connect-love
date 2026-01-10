@@ -56,6 +56,7 @@ import EditProfile from "./pages/EditProfile";
 import PostJob from "./pages/employer/PostJob";
 import CompanyJobs from "./pages/CompanyJobs";
 import Interview from "./pages/Interview";
+import CandidateProfilePage from "./pages/employer/CandidateProfile";
 
 // Admin & Owner Pages
 import AdminLogin from "./pages/admin/Login";
@@ -165,6 +166,7 @@ const App = () => (
                     <Route path="/employer/plans" element={<Plans />} />
                     <Route path="/employer/onboarding" element={<Onboarding />} />
                     <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+                    <Route path="/employer/candidate/:candidateId" element={<CandidateProfilePage />} />
                     <Route path="/learning-platform" element={<LearningPlatform />} />
                     <Route path="/employer/post-job" element={<PostJob />} />
                     <Route path="/employer/job-requirements" element={<JobRequirements />} />

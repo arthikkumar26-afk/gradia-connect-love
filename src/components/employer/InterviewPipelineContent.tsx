@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Users, 
   Phone,
@@ -761,6 +762,7 @@ const PipelineColumn = ({
 };
 
 export const InterviewPipelineContent = () => {
+  const navigate = useNavigate();
   const { stages, loading, error, refetch, moveCandidate, updateEventStatus } = useInterviewPipeline();
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -827,7 +829,8 @@ export const InterviewPipelineContent = () => {
   };
 
   const handleOpenCandidate = (candidate: Candidate) => {
-    setSelectedCandidate(candidate);
+    // Navigate to full profile page
+    navigate(`/employer/candidate/${candidate.interviewCandidateId}`);
   };
 
   const handleUpdateStep = async (stepId: string, status: InterviewStep["status"]) => {
