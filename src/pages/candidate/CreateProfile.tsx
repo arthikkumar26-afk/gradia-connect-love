@@ -59,6 +59,7 @@ const CandidateCreateProfile = () => {
 
   useEffect(() => {
     const checkAndRedirect = async () => {
+      // Allow authenticated users without a profile to create one
       if (!user) {
         navigate("/candidate/signup");
         return;
@@ -73,30 +74,29 @@ const CandidateCreateProfile = () => {
           .maybeSingle();
 
         if (existingProfile) {
-          toast({
-            title: "Profile Already Exists",
-            description: "Redirecting to your dashboard",
-          });
-          navigate("/candidate/dashboard");
+          // Profile exists - redirect to appropriate dashboard
+          if (existingProfile.role === 'candidate') {
+            navigate("/candidate/dashboard");
+          } else if (existingProfile.role === 'employer') {
+            navigate("/employer/dashboard");
+          } else {
+            navigate("/");
+          }
           return;
+        }
+        
+        // No profile exists - user can proceed to create one
+        // Pre-fill email from user data
+        if (user.email && user.user_metadata?.full_name) {
+          setFullName(user.user_metadata.full_name);
         }
       } catch (error) {
         console.error('Error checking profile:', error);
       }
-
-      // Only redirect if explicitly an employer (not if role is missing)
-      const params = new URLSearchParams(window.location.search);
-      const override = params.get('role');
-      if (!override) {
-        const role = user.user_metadata?.role;
-        if (role === 'employer') {
-          navigate("/employer/create-profile");
-        }
-      }
     };
 
     checkAndRedirect();
-  }, [user, navigate, toast]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

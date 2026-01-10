@@ -122,13 +122,23 @@ const CandidateDashboard = () => {
   };
 
   useEffect(() => {
+    // Wait for auth loading to complete
+    if (authLoading) {
+      return;
+    }
+
     if (!isAuthenticated) {
       navigate("/candidate/login");
       return;
     }
 
-    // Wait for profile to load before checking role
+    // If authenticated but no profile exists, redirect to create profile
     if (!profile) {
+      toast({
+        title: "Profile Required",
+        description: "Please complete your profile to continue.",
+      });
+      navigate("/candidate/create-profile");
       return;
     }
 
