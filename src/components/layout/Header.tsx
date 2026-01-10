@@ -17,7 +17,6 @@ import {
   X,
   Sun,
   Moon,
-  QrCode,
   ChevronDown,
   LogOut,
   LayoutDashboard,
@@ -46,7 +45,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { learningCategories } from "@/data/learningCategories";
@@ -463,46 +461,13 @@ const Header = () => {
               )}
             </Button>
 
-            {/* Job Vacancies QR Code */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative">
-                  <QrCode className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-4" align="end">
-                <div className="flex flex-col items-center gap-3">
-                  <h4 className="font-semibold text-sm text-foreground">Scan for Job Vacancies</h4>
-                  <div className="bg-white p-3 rounded-lg shadow-sm">
-                    <QRCodeSVG
-                      value={`${window.location.origin}/jobs`}
-                      size={140}
-                      level="H"
-                      includeMargin
-                      bgColor="#ffffff"
-                      fgColor="#000000"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Scan to browse all job vacancies
-                  </p>
-                  <div className="flex flex-col gap-2 w-full">
-                    <Button variant="default" size="sm" asChild className="w-full">
-                      <Link to="/candidate/signup" className="flex items-center gap-2">
-                        <User className="h-3 w-3" />
-                        Sign Up
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild className="w-full">
-                      <Link to="/jobs" className="flex items-center gap-2">
-                        <ExternalLink className="h-3 w-3" />
-                        View All Jobs
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+            {/* Sign Up Button */}
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/candidate/signup" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Sign Up
+              </Link>
+            </Button>
 
             {/* Login Dropdown */}
             <div className="hidden lg:flex items-center">
