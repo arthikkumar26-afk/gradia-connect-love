@@ -79,6 +79,52 @@ export default function TalentPoolContent() {
     }
   }, [user?.id]);
 
+  // Real-time subscription for auto-refresh when new candidates apply
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('talent-pool-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'interview_candidates'
+        },
+        async (payload) => {
+          console.log('Real-time update received:', payload.eventType);
+          
+          // Reload candidates on any change
+          loadAppliedCandidates();
+          
+          // Show toast for new applications
+          if (payload.eventType === 'INSERT') {
+            const newCandidate = payload.new as any;
+            
+            // Check if this is for one of our jobs
+            const { data: job } = await supabase
+              .from('jobs')
+              .select('job_title, employer_id')
+              .eq('id', newCandidate.job_id)
+              .single();
+            
+            if (job?.employer_id === user.id) {
+              toast({
+                title: '🎉 New Application',
+                description: `A candidate just applied for ${job.job_title}`,
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const loadJobs = async () => {
     const { data } = await supabase
       .from('jobs')
