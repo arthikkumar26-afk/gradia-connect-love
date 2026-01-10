@@ -15,12 +15,14 @@ import {
   Shield,
   Database,
   DollarSign,
-  Globe
+  Globe,
+  Activity
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import UserRoleManagement from "@/components/owner/UserRoleManagement";
+import LiveActivityMonitor from "@/components/owner/LiveActivityMonitor";
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
@@ -135,6 +137,14 @@ const OwnerDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="live-activity" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Live Activity
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              </span>
+            </TabsTrigger>
             <TabsTrigger value="user-roles">User Roles</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -183,6 +193,10 @@ const OwnerDashboard = () => {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="live-activity">
+            <LiveActivityMonitor />
           </TabsContent>
 
           <TabsContent value="user-roles">
