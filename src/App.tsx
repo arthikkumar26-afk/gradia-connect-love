@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound";
 import EmployerLogin from "./pages/EmployerLogin";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import CandidateLogin from "./pages/CandidateLogin";
+import Login from "./pages/Login";
 import ProfileSuccess from "./pages/ProfileSuccess";
 import JobRequirements from "./pages/JobRequirements";
 import Registration from "./pages/employer/Registration";
@@ -111,6 +112,7 @@ const App = () => (
                   <Routes>
                     {/* Main Pages */}
                     <Route path="/" element={<Index />} />
+                    <Route path="/login" element={<Login />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/careers" element={<Careers />} />
