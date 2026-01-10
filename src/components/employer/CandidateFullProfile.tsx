@@ -26,7 +26,13 @@ import {
   Play,
   ChevronDown,
   ChevronUp,
-  Loader2
+  Loader2,
+  Bot,
+  Zap,
+  ArrowRight,
+  UserCheck,
+  Ban,
+  FileSignature
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +110,7 @@ export const CandidateFullProfile = () => {
   const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<InterviewStage | null>(null);
+  const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
 
   const fetchCandidateData = async () => {
     if (!candidateId) return;
@@ -250,6 +257,153 @@ export const CandidateFullProfile = () => {
     window.open(`mailto:${candidate.email}?subject=Interview Update: ${stage.name} - ${candidate.jobTitle}`);
   };
 
+  // AI Automation Actions
+  const handleAiAutoProgress = async () => {
+    if (!candidate) return;
+    setAiActionLoading('auto-progress');
+    try {
+      const { error } = await supabase.functions.invoke('auto-progress-pipeline', {
+        body: { candidateId: candidate.interviewCandidateId }
+      });
+      if (error) throw error;
+      toast.success('AI Auto-Progress initiated successfully');
+      fetchCandidateData();
+    } catch (error: any) {
+      console.error('Auto-progress error:', error);
+      toast.error('Failed to auto-progress candidate');
+    } finally {
+      setAiActionLoading(null);
+    }
+  };
+
+  const handleAiAnalyze = async () => {
+    if (!candidate) return;
+    setAiActionLoading('analyze');
+    try {
+      const { error } = await supabase.functions.invoke('analyze-resume', {
+        body: { 
+          candidateId: candidate.interviewCandidateId,
+          resumeUrl: candidate.resumeUrl 
+        }
+      });
+      if (error) throw error;
+      toast.success('AI Analysis completed');
+      fetchCandidateData();
+    } catch (error: any) {
+      console.error('AI analyze error:', error);
+      toast.error('Failed to analyze candidate');
+    } finally {
+      setAiActionLoading(null);
+    }
+  };
+
+  const handleNextStage = async () => {
+    if (!candidate) return;
+    setAiActionLoading('next-stage');
+    try {
+      const currentStage = stages.find(s => s.status === 'current');
+      const currentIndex = stages.findIndex(s => s.status === 'current');
+      const nextStage = stages[currentIndex + 1];
+
+      if (!nextStage) {
+        toast.info('Candidate is already at the final stage');
+        setAiActionLoading(null);
+        return;
+      }
+
+      // Update current stage to completed
+      if (currentStage) {
+        await supabase
+          .from('interview_events')
+          .update({ status: 'passed', completed_at: new Date().toISOString() })
+          .eq('interview_candidate_id', candidate.interviewCandidateId)
+          .eq('stage_id', currentStage.id);
+      }
+
+      // Update candidate's current stage
+      await supabase
+        .from('interview_candidates')
+        .update({ current_stage_id: nextStage.id })
+        .eq('id', candidate.interviewCandidateId);
+
+      // Create new interview event for next stage
+      await supabase
+        .from('interview_events')
+        .insert({
+          interview_candidate_id: candidate.interviewCandidateId,
+          stage_id: nextStage.id,
+          status: 'pending'
+        });
+
+      toast.success(`Moved to ${nextStage.name}`);
+      fetchCandidateData();
+    } catch (error: any) {
+      console.error('Next stage error:', error);
+      toast.error('Failed to move to next stage');
+    } finally {
+      setAiActionLoading(null);
+    }
+  };
+
+  const handleSendInvite = () => {
+    const currentStage = stages.find(s => s.status === 'current');
+    if (currentStage) {
+      setSelectedStage(currentStage);
+      setScheduleModalOpen(true);
+    } else {
+      toast.info('No active stage to send invite for');
+    }
+  };
+
+  const handleOfferLetter = () => {
+    if (!candidate) return;
+    navigate(`/employer/candidate/${candidate.interviewCandidateId}?action=offer`);
+    toast.info('Opening offer letter generator...');
+  };
+
+  const handleStatusUpdate = async (newStatus: 'shortlisted' | 'hired' | 'rejected') => {
+    if (!candidate) return;
+    setAiActionLoading(newStatus);
+    try {
+      const { error } = await supabase
+        .from('interview_candidates')
+        .update({ status: newStatus })
+        .eq('id', candidate.interviewCandidateId);
+
+      if (error) throw error;
+
+      const statusMessages = {
+        shortlisted: 'Candidate shortlisted successfully',
+        hired: 'Candidate marked as hired! 🎉',
+        rejected: 'Candidate rejected'
+      };
+
+      toast.success(statusMessages[newStatus]);
+      fetchCandidateData();
+    } catch (error: any) {
+      console.error('Status update error:', error);
+      toast.error('Failed to update candidate status');
+    } finally {
+      setAiActionLoading(null);
+    }
+  };
+
+  const getScoreLabel = (score: number | undefined) => {
+    if (!score) return 'Not Analyzed';
+    if (score >= 80) return 'Excellent Match';
+    if (score >= 60) return 'Good Fit';
+    if (score >= 40) return 'Review Needed';
+    return 'Low Match';
+  };
+
+  const getScoreBadgeColor = (score: number | undefined) => {
+    if (!score) return 'bg-muted text-muted-foreground';
+    if (score >= 80) return 'bg-green-500/10 text-green-600 border-green-500/20';
+    if (score >= 60) return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+    if (score >= 40) return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+    return 'bg-red-500/10 text-red-600 border-red-500/20';
+  };
+
   const getStageIcon = (status: InterviewStage['status']) => {
     switch (status) {
       case 'completed':
@@ -343,6 +497,152 @@ export const CandidateFullProfile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Candidate Info */}
           <div className="space-y-6">
+            {/* AI Automation Panel */}
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  AI Automation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* AI Match Score */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">AI Match Score</span>
+                    <Badge className={getScoreBadgeColor(candidate.aiScore)}>
+                      {getScoreLabel(candidate.aiScore)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl font-bold text-foreground">
+                      {candidate.aiScore || 0}%
+                    </span>
+                    <Progress 
+                      value={candidate.aiScore || 0} 
+                      className="flex-1 h-2"
+                    />
+                  </div>
+                </div>
+
+                {/* AI Auto-Progress Button */}
+                <Button 
+                  className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white"
+                  onClick={handleAiAutoProgress}
+                  disabled={aiActionLoading === 'auto-progress'}
+                >
+                  {aiActionLoading === 'auto-progress' ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
+                  AI Auto-Progress Pipeline
+                </Button>
+
+                {/* Action Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={handleAiAnalyze}
+                    disabled={aiActionLoading === 'analyze'}
+                  >
+                    {aiActionLoading === 'analyze' ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Bot className="h-4 w-4 mr-2" />
+                    )}
+                    AI Analyze
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={handleNextStage}
+                    disabled={aiActionLoading === 'next-stage'}
+                  >
+                    {aiActionLoading === 'next-stage' ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Zap className="h-4 w-4 mr-2" />
+                    )}
+                    Next Stage
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={handleSendInvite}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Send Invite
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start"
+                    onClick={handleOfferLetter}
+                  >
+                    <FileSignature className="h-4 w-4 mr-2" />
+                    Offer Letter
+                  </Button>
+                </div>
+
+                {/* Status Actions */}
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1 border-amber-500/30 text-amber-600 hover:bg-amber-500/10"
+                    onClick={() => handleStatusUpdate('shortlisted')}
+                    disabled={aiActionLoading === 'shortlisted' || candidate.status === 'shortlisted'}
+                  >
+                    {aiActionLoading === 'shortlisted' ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Star className="h-4 w-4 mr-1" />
+                    )}
+                    Shortlist
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1 border-green-500/30 text-green-600 hover:bg-green-500/10"
+                    onClick={() => handleStatusUpdate('hired')}
+                    disabled={aiActionLoading === 'hired' || candidate.status === 'hired'}
+                  >
+                    {aiActionLoading === 'hired' ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <UserCheck className="h-4 w-4 mr-1" />
+                    )}
+                    Hire
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="flex-1 border-red-500/30 text-red-600 hover:bg-red-500/10"
+                    onClick={() => handleStatusUpdate('rejected')}
+                    disabled={aiActionLoading === 'rejected' || candidate.status === 'rejected'}
+                  >
+                    {aiActionLoading === 'rejected' ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Ban className="h-4 w-4 mr-1" />
+                    )}
+                    Reject
+                  </Button>
+                </div>
+
+                {/* Current Stage Info */}
+                {stages.find(s => s.status === 'current') && (
+                  <div className="pt-2 border-t">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <ArrowRight className="h-3 w-3" />
+                      Stage: {stages.find(s => s.status === 'current')?.name}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Contact Info */}
             <Card>
               <CardHeader className="pb-3">
