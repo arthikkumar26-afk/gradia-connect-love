@@ -135,6 +135,49 @@ const CandidateDashboard = () => {
     fetchJobs();
     fetchApplicationCount();
     fetchInterviewCount();
+
+    // Subscribe to real-time job updates
+    const channel = supabase
+      .channel('jobs-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'jobs'
+        },
+        (payload) => {
+          console.log('Real-time job update:', payload);
+          
+          if (payload.eventType === 'INSERT' && payload.new.status === 'active') {
+            // Add new active job to the list
+            setJobs(prev => [payload.new as Job, ...prev].slice(0, 10));
+          } else if (payload.eventType === 'UPDATE') {
+            if (payload.new.status === 'active') {
+              // Update existing job or add if newly activated
+              setJobs(prev => {
+                const exists = prev.some(job => job.id === payload.new.id);
+                if (exists) {
+                  return prev.map(job => job.id === payload.new.id ? payload.new as Job : job);
+                } else {
+                  return [payload.new as Job, ...prev].slice(0, 10);
+                }
+              });
+            } else {
+              // Remove job if no longer active
+              setJobs(prev => prev.filter(job => job.id !== payload.new.id));
+            }
+          } else if (payload.eventType === 'DELETE') {
+            // Remove deleted job
+            setJobs(prev => prev.filter(job => job.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isAuthenticated, profile, navigate]);
 
   const handleApply = (job: Job) => {
