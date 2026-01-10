@@ -29,6 +29,7 @@ import {
   X,
   Trash2
 } from "lucide-react";
+import { CandidateStageModal } from "./CandidateStageModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -940,13 +941,11 @@ export const InterviewPipelineContent = () => {
 
   return (
     <div className="space-y-4">
-      {/* Candidate Profile Modal */}
-      <CandidateProfileModal
+      {/* Candidate Stage Modal with Sidebar */}
+      <CandidateStageModal
+        isOpen={isModalOpen}
+        onClose={() => setSelectedCandidate(null)}
         candidate={selectedCandidate}
-        open={isModalOpen}
-        onOpenChange={(open) => {
-          if (!open) setSelectedCandidate(null);
-        }}
         onUpdateStep={handleUpdateStep}
         onRefresh={refetch}
       />
