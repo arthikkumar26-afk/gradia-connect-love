@@ -116,7 +116,7 @@ export const useDevLogin = (role: Role) => {
             .eq("id", signInData.user.id);
         }
 
-        // For admin/owner roles, also add to user_roles table
+        // For admin/owner roles, use edge function to bypass RLS
         if (role === 'admin' || role === 'owner') {
           const { data: existingRole } = await supabase
             .from("user_roles")
@@ -126,10 +126,25 @@ export const useDevLogin = (role: Role) => {
             .maybeSingle();
 
           if (!existingRole) {
-            await supabase.from("user_roles").insert({
-              user_id: signInData.user.id,
-              role: role,
+            // Use edge function to assign role (bypasses RLS)
+            const { data: session } = await supabase.auth.getSession();
+            const response = await supabase.functions.invoke('manage-user-roles', {
+              body: {
+                action: 'dev-seed-role',
+                targetUserId: signInData.user.id,
+                role: role,
+              },
             });
+            
+            if (response.error) {
+              console.error('Failed to assign role:', response.error);
+              // Continue anyway - show warning but don't block
+              toast({
+                title: "Role Assignment Warning",
+                description: "Role may not be assigned. Use /owner/setup first.",
+                variant: "destructive",
+              });
+            }
           }
         }
       }

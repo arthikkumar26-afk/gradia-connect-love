@@ -38,7 +38,59 @@ Deno.serve(async (req) => {
     // Create admin client for privileged operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if the requesting user is an owner
+    const { action, targetUserId, targetEmail, role } = await req.json();
+
+    // Handle dev-seed-role action BEFORE owner check (for bootstrapping)
+    if (action === "dev-seed-role") {
+      // Check if there are any owners in the system
+      const { data: existingOwners } = await supabaseAdmin
+        .from("user_roles")
+        .select("id")
+        .eq("role", "owner");
+
+      // Only allow dev seeding if no owners exist (bootstrap scenario)
+      if (existingOwners && existingOwners.length > 0) {
+        return new Response(
+          JSON.stringify({ error: "System already has owners. Use /owner/setup or owner dashboard." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!targetUserId || !role) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId and role are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate role for dev seeding
+      const validDevRoles = ["admin", "owner"];
+      if (!validDevRoles.includes(role)) {
+        return new Response(
+          JSON.stringify({ error: "Only admin and owner roles can be seeded" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Insert the role
+      const { error: insertError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert(
+          { user_id: targetUserId, role },
+          { onConflict: "user_id,role" }
+        );
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Dev role ${role} assigned successfully` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // For all other actions, require owner privileges
     const { data: ownerRole } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -52,8 +104,6 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const { action, targetUserId, targetEmail, role } = await req.json();
 
     if (action === "list-users") {
       // Get all users with their roles
