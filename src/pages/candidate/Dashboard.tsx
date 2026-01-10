@@ -127,8 +127,19 @@ const CandidateDashboard = () => {
       return;
     }
 
-    if (profile?.role !== "candidate") {
-      navigate("/employer/dashboard");
+    // Wait for profile to load before checking role
+    if (!profile) {
+      return;
+    }
+
+    if (profile.role !== "candidate") {
+      // Non-candidates should not access this page
+      toast({
+        title: "Access Denied",
+        description: "This dashboard is for candidates only.",
+        variant: "destructive",
+      });
+      navigate("/login");
       return;
     }
 
@@ -241,6 +252,18 @@ const CandidateDashboard = () => {
       default: return "Dashboard";
     }
   };
+
+  // Show loading state while profile is loading
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-subtle">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-subtle flex min-h-[calc(100vh-64px)]">
