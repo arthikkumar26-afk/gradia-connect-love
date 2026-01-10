@@ -6,7 +6,7 @@ interface Profile {
   id: string;
   full_name: string;
   email: string;
-  role: "employer" | "candidate";
+  role: "employer" | "candidate" | "sponsor" | "admin" | "owner";
   mobile?: string;
   location?: string;
   linkedin?: string;
@@ -24,6 +24,7 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -34,16 +35,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
+    console.log("Fetching profile for user:", userId);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (data && !error) {
-      setProfile(data as Profile);
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+
+      if (data) {
+        console.log("Profile fetched successfully:", data.role);
+        setProfile(data as Profile);
+      } else {
+        console.log("No profile found for user");
+        setProfile(null);
+      }
+    } catch (err) {
+      console.error("Exception fetching profile:", err);
     }
   };
 
@@ -54,29 +70,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Use setTimeout to prevent deadlock
           setTimeout(() => {
-            fetchProfile(session.user.id);
+            fetchProfile(session.user.id).finally(() => {
+              setIsLoading(false);
+            });
           }, 0);
         } else {
           setProfile(null);
+          setIsLoading(false);
         }
       }
     );
 
-    // Check for existing session
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id).finally(() => {
+          setIsLoading(false);
+        });
+      } else {
+        setIsLoading(false);
       }
     });
 
@@ -97,6 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profile,
         session,
         isAuthenticated: !!session,
+        isLoading,
         logout,
         refreshProfile,
       }}

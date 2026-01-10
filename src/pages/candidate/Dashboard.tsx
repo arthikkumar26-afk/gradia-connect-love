@@ -50,7 +50,7 @@ interface Job {
 
 const CandidateDashboard = () => {
   const navigate = useNavigate();
-  const { profile, isAuthenticated, logout } = useAuth();
+  const { profile, isAuthenticated, logout, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -253,8 +253,8 @@ const CandidateDashboard = () => {
     }
   };
 
-  // Show loading state while profile is loading
-  if (!profile) {
+  // Show loading state while auth is loading
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-subtle">
         <div className="text-center">
@@ -263,6 +263,11 @@ const CandidateDashboard = () => {
         </div>
       </div>
     );
+  }
+
+  // If not authenticated or no profile after loading, the useEffect will handle redirect
+  if (!profile) {
+    return null;
   }
 
   return (
