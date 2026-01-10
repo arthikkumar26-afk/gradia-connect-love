@@ -3,7 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-type Role = 'candidate' | 'employer';
+type Role = 'candidate' | 'employer' | 'admin' | 'owner';
+
+const roleConfig = {
+  candidate: {
+    email: "candidate@test.com",
+    displayName: "Test Candidate",
+    dashboard: "/candidate/dashboard",
+  },
+  employer: {
+    email: "employer@test.com",
+    displayName: "Test Employer",
+    dashboard: "/employer/dashboard",
+  },
+  admin: {
+    email: "admin@test.com",
+    displayName: "Test Admin",
+    dashboard: "/admin/dashboard",
+  },
+  owner: {
+    email: "owner@test.com",
+    displayName: "Test Owner",
+    dashboard: "/owner/dashboard",
+  },
+};
 
 export const useDevLogin = (role: Role) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,9 +36,10 @@ export const useDevLogin = (role: Role) => {
   const handleDevLogin = async () => {
     setIsLoading(true);
     try {
-      const devEmail = role === 'candidate' ? "candidate@test.com" : "employer@test.com";
+      const config = roleConfig[role];
+      const devEmail = config.email;
       const devPassword = "test123456";
-      const displayName = role === 'candidate' ? 'Test Candidate' : 'Test Employer';
+      const displayName = config.displayName;
       
       // First sign out any existing session to avoid conflicts
       await supabase.auth.signOut();
@@ -74,20 +98,39 @@ export const useDevLogin = (role: Role) => {
           .eq("id", signInData.user.id)
           .maybeSingle();
 
+        const baseRole = role === 'admin' || role === 'owner' ? 'employer' : role;
+
         if (!existingProfile) {
           // Create profile if it doesn't exist
           await supabase.from("profiles").insert({
             id: signInData.user.id,
             email: devEmail,
             full_name: displayName,
-            role: role,
+            role: baseRole,
           });
-        } else if (existingProfile.role !== role) {
+        } else if (existingProfile.role !== baseRole) {
           // Update role if it doesn't match
           await supabase
             .from("profiles")
-            .update({ role: role })
+            .update({ role: baseRole })
             .eq("id", signInData.user.id);
+        }
+
+        // For admin/owner roles, also add to user_roles table
+        if (role === 'admin' || role === 'owner') {
+          const { data: existingRole } = await supabase
+            .from("user_roles")
+            .select("id")
+            .eq("user_id", signInData.user.id)
+            .eq("role", role)
+            .maybeSingle();
+
+          if (!existingRole) {
+            await supabase.from("user_roles").insert({
+              user_id: signInData.user.id,
+              role: role,
+            });
+          }
         }
       }
 
@@ -97,8 +140,7 @@ export const useDevLogin = (role: Role) => {
       });
 
       // Navigate to the appropriate dashboard
-      const destination = role === 'candidate' ? '/candidate/dashboard' : '/employer/dashboard';
-      navigate(destination);
+      navigate(config.dashboard);
     } catch (error: any) {
       toast({
         title: "Error",
