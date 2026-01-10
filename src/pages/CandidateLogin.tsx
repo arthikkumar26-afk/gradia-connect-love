@@ -22,10 +22,20 @@ const CandidateLogin = () => {
   const { handleDevLogin, isLoading: isDevLoginLoading } = useDevLogin('candidate');
 
   useEffect(() => {
-    if (isAuthenticated && profile?.role === "candidate") {
-      navigate("/candidate/dashboard");
+    if (isAuthenticated && profile) {
+      // Redirect based on actual role
+      if (profile.role === "candidate") {
+        navigate("/candidate/dashboard");
+      } else if (profile.role === "employer") {
+        // If employer tries to login here, redirect them to employer dashboard
+        toast({
+          title: "Wrong Login Page",
+          description: "You have an employer account. Redirecting to employer dashboard.",
+        });
+        navigate("/employer/dashboard");
+      }
     }
-  }, [isAuthenticated, profile, navigate]);
+  }, [isAuthenticated, profile, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
