@@ -61,6 +61,7 @@ import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import OwnerLogin from "./pages/owner/Login";
 import OwnerDashboard from "./pages/owner/Dashboard";
+import OwnerInitialSetup from "./pages/owner/InitialSetup";
 
 // Sponsor Pages
 import SponsorOverview from "./pages/sponsor/Overview";
@@ -203,6 +204,7 @@ const App = () => (
                     {/* Owner Routes */}
                     <Route path="/owner/login" element={<OwnerLogin />} />
                     <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+                    <Route path="/owner/setup" element={<OwnerInitialSetup />} />
                     <Route path="/owner" element={<OwnerDashboard />} />
 
                     {/* Support & Community Routes */}
