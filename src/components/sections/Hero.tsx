@@ -80,12 +80,6 @@ const Hero = () => {
         {/* Trending Jobs Section */}
         <div className="mt-16">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 mb-4">
-              <Briefcase className="h-6 w-6 text-accent" />
-              <span className="text-sm font-medium text-accent uppercase tracking-wide">
-                Featured Opportunities
-              </span>
-            </div>
             <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
               Trending Jobs This Week
             </h2>
