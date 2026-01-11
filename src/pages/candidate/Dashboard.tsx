@@ -466,13 +466,35 @@ const CandidateDashboard = () => {
                             </div>
                           </div>
 
-                          {/* Date of Birth */}
+                          {/* Current State */}
                           <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
                             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                             <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Date of Birth</span>
+                              <span className="text-xs text-muted-foreground block">Current State</span>
                               <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
+                                {profile?.current_state || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Current District */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Current District</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.current_district || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Gender */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Gender</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.gender || 'Not specified'}
                               </span>
                             </div>
                           </div>
@@ -488,13 +510,145 @@ const CandidateDashboard = () => {
                             </div>
                           </div>
 
-                          {/* Gender */}
+                          {/* Date of Birth */}
                           <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
                             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                             <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Gender</span>
+                              <span className="text-xs text-muted-foreground block">Date of Birth</span>
                               <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.gender || 'Not specified'}
+                                {profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Alternate Number */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Alternate Number</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.alternate_number || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Highest Qualification */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Highest Qualification</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.highest_qualification || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Office Type */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Office Type</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.office_type || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Preferred State */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Preferred State</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.preferred_state || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Preferred District */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Preferred District</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.preferred_district || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Preferred State 2 */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Preferred State 2</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.preferred_state_2 || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Preferred District 2 */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Preferred District 2</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.preferred_district_2 || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Segment */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Segment</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.segment || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Program */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Program</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.program || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Classes Handled */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Classes Handled</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.classes_handled || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Batch */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Batch</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.batch || 'Not specified'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Primary Subject */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Primary Subject</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.primary_subject || 'Not specified'}
                               </span>
                             </div>
                           </div>
