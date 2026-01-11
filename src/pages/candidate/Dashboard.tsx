@@ -252,14 +252,14 @@ const CandidateDashboard = () => {
 
   const getPageTitle = () => {
     switch (activeMenu) {
-      case "dashboard": return "Dashboard";
+      case "dashboard": return `Welcome, ${profile?.full_name || 'User'}`;
       case "applications": return "My Applications";
       case "pipeline": return "Interview Pipeline";
       case "jobs": return "Browse Jobs";
       case "resume": return "Resume Builder";
       case "learning": return "Learning";
       case "settings": return "Settings";
-      default: return "Dashboard";
+      default: return `Welcome, ${profile?.full_name || 'User'}`;
     }
   };
 
