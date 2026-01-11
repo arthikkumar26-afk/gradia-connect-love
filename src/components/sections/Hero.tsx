@@ -42,10 +42,6 @@ const Hero = () => {
                 Dream Career
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-primary-foreground/90 mb-8 max-w-3xl mx-auto text-balance">
-              Gradia bridges exceptional talent with leading software companies and educational institutions. 
-              Your next career opportunity is just one click away.
-            </p>
           </div>
 
           {/* Search Bar */}
