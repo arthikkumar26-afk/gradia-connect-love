@@ -555,10 +555,13 @@ export type Database = {
           company_description: string | null
           company_name: string | null
           created_at: string | null
+          date_of_birth: string | null
           email: string
           experience_level: string | null
           full_name: string
+          gender: string | null
           id: string
+          languages: string[] | null
           linkedin: string | null
           location: string | null
           mobile: string | null
@@ -573,10 +576,13 @@ export type Database = {
           company_description?: string | null
           company_name?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email: string
           experience_level?: string | null
           full_name: string
+          gender?: string | null
           id: string
+          languages?: string[] | null
           linkedin?: string | null
           location?: string | null
           mobile?: string | null
@@ -591,10 +597,13 @@ export type Database = {
           company_description?: string | null
           company_name?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           email?: string
           experience_level?: string | null
           full_name?: string
+          gender?: string | null
           id?: string
+          languages?: string[] | null
           linkedin?: string | null
           location?: string | null
           mobile?: string | null
