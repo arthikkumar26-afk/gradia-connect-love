@@ -51,6 +51,25 @@ const EditProfile = () => {
   const [companyDescription, setCompanyDescription] = useState("");
   const [companyWebsite, setCompanyWebsite] = useState("");
   
+  // New candidate fields
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [gender, setGender] = useState("");
+  const [languages, setLanguages] = useState("");
+  const [currentState, setCurrentState] = useState("");
+  const [currentDistrict, setCurrentDistrict] = useState("");
+  const [alternateNumber, setAlternateNumber] = useState("");
+  const [highestQualification, setHighestQualification] = useState("");
+  const [officeType, setOfficeType] = useState("");
+  const [preferredState, setPreferredState] = useState("");
+  const [preferredDistrict, setPreferredDistrict] = useState("");
+  const [preferredState2, setPreferredState2] = useState("");
+  const [preferredDistrict2, setPreferredDistrict2] = useState("");
+  const [segment, setSegment] = useState("");
+  const [program, setProgram] = useState("");
+  const [classesHandled, setClassesHandled] = useState("");
+  const [batch, setBatch] = useState("");
+  const [primarySubject, setPrimarySubject] = useState("");
+  
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
   const [tempImageForCrop, setTempImageForCrop] = useState<string | null>(null);
@@ -76,6 +95,25 @@ const EditProfile = () => {
     setCompanyWebsite(profile.website || "");
     setProfilePicturePreview(profile.profile_picture || null);
     setCurrentResumeUrl(profile.resume_url || null);
+    
+    // Load new candidate fields
+    setDateOfBirth(profile.date_of_birth || "");
+    setGender(profile.gender || "");
+    setLanguages(profile.languages?.join(", ") || "");
+    setCurrentState(profile.current_state || "");
+    setCurrentDistrict(profile.current_district || "");
+    setAlternateNumber(profile.alternate_number || "");
+    setHighestQualification(profile.highest_qualification || "");
+    setOfficeType(profile.office_type || "");
+    setPreferredState(profile.preferred_state || "");
+    setPreferredDistrict(profile.preferred_district || "");
+    setPreferredState2(profile.preferred_state_2 || "");
+    setPreferredDistrict2(profile.preferred_district_2 || "");
+    setSegment(profile.segment || "");
+    setProgram(profile.program || "");
+    setClassesHandled(profile.classes_handled || "");
+    setBatch(profile.batch || "");
+    setPrimarySubject(profile.primary_subject || "");
   }, [user, profile, navigate]);
 
   const handleProfilePictureChange = (file: File) => {
@@ -265,20 +303,43 @@ const EditProfile = () => {
       }
 
       // Update profile
+      const updateData: Record<string, any> = {
+        full_name: fullName,
+        mobile,
+        location,
+        linkedin,
+        website: profile.role === 'employer' ? companyWebsite : profile.website,
+        profile_picture: profilePictureUrl,
+        resume_url: resumeUrl,
+        experience_level: profile.role === 'candidate' ? experienceLevel : profile.experience_level,
+        company_name: profile.role === 'employer' ? companyName : profile.company_name,
+        company_description: profile.role === 'employer' ? companyDescription : profile.company_description,
+      };
+
+      // Add candidate-specific fields
+      if (profile.role === 'candidate') {
+        updateData.date_of_birth = dateOfBirth || null;
+        updateData.gender = gender || null;
+        updateData.languages = languages ? languages.split(',').map(l => l.trim()).filter(l => l) : null;
+        updateData.current_state = currentState || null;
+        updateData.current_district = currentDistrict || null;
+        updateData.alternate_number = alternateNumber || null;
+        updateData.highest_qualification = highestQualification || null;
+        updateData.office_type = officeType || null;
+        updateData.preferred_state = preferredState || null;
+        updateData.preferred_district = preferredDistrict || null;
+        updateData.preferred_state_2 = preferredState2 || null;
+        updateData.preferred_district_2 = preferredDistrict2 || null;
+        updateData.segment = segment || null;
+        updateData.program = program || null;
+        updateData.classes_handled = classesHandled || null;
+        updateData.batch = batch || null;
+        updateData.primary_subject = primarySubject || null;
+      }
+
       const { error } = await supabase
         .from("profiles")
-        .update({
-          full_name: fullName,
-          mobile,
-          location,
-          linkedin,
-          website: profile.role === 'employer' ? companyWebsite : profile.website,
-          profile_picture: profilePictureUrl,
-          resume_url: resumeUrl,
-          experience_level: profile.role === 'candidate' ? experienceLevel : profile.experience_level,
-          company_name: profile.role === 'employer' ? companyName : profile.company_name,
-          company_description: profile.role === 'employer' ? companyDescription : profile.company_description,
-        })
+        .update(updateData)
         .eq("id", user.id);
 
       if (error) throw error;
@@ -466,6 +527,375 @@ const EditProfile = () => {
             {/* Candidate-specific fields */}
             {profile.role === 'candidate' && (
               <>
+                {/* Row 1: Gender, Date of Birth */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      Gender *
+                    </Label>
+                    <div className="flex items-center gap-4 h-12">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="Male"
+                          checked={gender === "Male"}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="w-4 h-4 text-accent"
+                        />
+                        <span>Male</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="Female"
+                          checked={gender === "Female"}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="w-4 h-4 text-accent"
+                        />
+                        <span>Female</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={(e) => setDateOfBirth(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 2: Current State, Current District */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentState">Current State *</Label>
+                    <Select value={currentState} onValueChange={setCurrentState}>
+                      <SelectTrigger id="currentState" className="h-12">
+                        <SelectValue placeholder="Select State" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Andhra Pradesh">Andhra Pradesh</SelectItem>
+                        <SelectItem value="Arunachal Pradesh">Arunachal Pradesh</SelectItem>
+                        <SelectItem value="Assam">Assam</SelectItem>
+                        <SelectItem value="Bihar">Bihar</SelectItem>
+                        <SelectItem value="Chhattisgarh">Chhattisgarh</SelectItem>
+                        <SelectItem value="Delhi">Delhi</SelectItem>
+                        <SelectItem value="Goa">Goa</SelectItem>
+                        <SelectItem value="Gujarat">Gujarat</SelectItem>
+                        <SelectItem value="Haryana">Haryana</SelectItem>
+                        <SelectItem value="Himachal Pradesh">Himachal Pradesh</SelectItem>
+                        <SelectItem value="Jharkhand">Jharkhand</SelectItem>
+                        <SelectItem value="Karnataka">Karnataka</SelectItem>
+                        <SelectItem value="Kerala">Kerala</SelectItem>
+                        <SelectItem value="Madhya Pradesh">Madhya Pradesh</SelectItem>
+                        <SelectItem value="Maharashtra">Maharashtra</SelectItem>
+                        <SelectItem value="Manipur">Manipur</SelectItem>
+                        <SelectItem value="Meghalaya">Meghalaya</SelectItem>
+                        <SelectItem value="Mizoram">Mizoram</SelectItem>
+                        <SelectItem value="Nagaland">Nagaland</SelectItem>
+                        <SelectItem value="Odisha">Odisha</SelectItem>
+                        <SelectItem value="Punjab">Punjab</SelectItem>
+                        <SelectItem value="Rajasthan">Rajasthan</SelectItem>
+                        <SelectItem value="Sikkim">Sikkim</SelectItem>
+                        <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
+                        <SelectItem value="Telangana">Telangana</SelectItem>
+                        <SelectItem value="Tripura">Tripura</SelectItem>
+                        <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
+                        <SelectItem value="Uttarakhand">Uttarakhand</SelectItem>
+                        <SelectItem value="West Bengal">West Bengal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="currentDistrict">Current District</Label>
+                    <Input
+                      id="currentDistrict"
+                      type="text"
+                      placeholder="Enter your district"
+                      value={currentDistrict}
+                      onChange={(e) => setCurrentDistrict(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: Alternate Number, Highest Qualification, Office Type */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="alternateNumber">Alternate Number (WhatsApp)</Label>
+                    <Input
+                      id="alternateNumber"
+                      type="tel"
+                      placeholder="Alternate Number"
+                      value={alternateNumber}
+                      onChange={(e) => setAlternateNumber(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="highestQualification">Highest Qualification *</Label>
+                    <Select value={highestQualification} onValueChange={setHighestQualification}>
+                      <SelectTrigger id="highestQualification" className="h-12">
+                        <SelectValue placeholder="Select Qualification" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10th">10th</SelectItem>
+                        <SelectItem value="12th">12th</SelectItem>
+                        <SelectItem value="Diploma">Diploma</SelectItem>
+                        <SelectItem value="Graduate">Graduate</SelectItem>
+                        <SelectItem value="Post Graduate">Post Graduate</SelectItem>
+                        <SelectItem value="PhD">PhD</SelectItem>
+                        <SelectItem value="B.Ed">B.Ed</SelectItem>
+                        <SelectItem value="M.Ed">M.Ed</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="officeType">Office Type *</Label>
+                    <Select value={officeType} onValueChange={setOfficeType}>
+                      <SelectTrigger id="officeType" className="h-12">
+                        <SelectValue placeholder="Select Office Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Head Office">Head Office</SelectItem>
+                        <SelectItem value="Branch Office">Branch Office</SelectItem>
+                        <SelectItem value="Regional Office">Regional Office</SelectItem>
+                        <SelectItem value="Remote">Remote</SelectItem>
+                        <SelectItem value="Hybrid">Hybrid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Row 4: Preferred State, Preferred District, Preferred State 2 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredState">Preferred State *</Label>
+                    <Select value={preferredState} onValueChange={setPreferredState}>
+                      <SelectTrigger id="preferredState" className="h-12">
+                        <SelectValue placeholder="Select State" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Andhra Pradesh">Andhra Pradesh</SelectItem>
+                        <SelectItem value="Arunachal Pradesh">Arunachal Pradesh</SelectItem>
+                        <SelectItem value="Assam">Assam</SelectItem>
+                        <SelectItem value="Bihar">Bihar</SelectItem>
+                        <SelectItem value="Chhattisgarh">Chhattisgarh</SelectItem>
+                        <SelectItem value="Delhi">Delhi</SelectItem>
+                        <SelectItem value="Goa">Goa</SelectItem>
+                        <SelectItem value="Gujarat">Gujarat</SelectItem>
+                        <SelectItem value="Haryana">Haryana</SelectItem>
+                        <SelectItem value="Himachal Pradesh">Himachal Pradesh</SelectItem>
+                        <SelectItem value="Jharkhand">Jharkhand</SelectItem>
+                        <SelectItem value="Karnataka">Karnataka</SelectItem>
+                        <SelectItem value="Kerala">Kerala</SelectItem>
+                        <SelectItem value="Madhya Pradesh">Madhya Pradesh</SelectItem>
+                        <SelectItem value="Maharashtra">Maharashtra</SelectItem>
+                        <SelectItem value="Manipur">Manipur</SelectItem>
+                        <SelectItem value="Meghalaya">Meghalaya</SelectItem>
+                        <SelectItem value="Mizoram">Mizoram</SelectItem>
+                        <SelectItem value="Nagaland">Nagaland</SelectItem>
+                        <SelectItem value="Odisha">Odisha</SelectItem>
+                        <SelectItem value="Punjab">Punjab</SelectItem>
+                        <SelectItem value="Rajasthan">Rajasthan</SelectItem>
+                        <SelectItem value="Sikkim">Sikkim</SelectItem>
+                        <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
+                        <SelectItem value="Telangana">Telangana</SelectItem>
+                        <SelectItem value="Tripura">Tripura</SelectItem>
+                        <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
+                        <SelectItem value="Uttarakhand">Uttarakhand</SelectItem>
+                        <SelectItem value="West Bengal">West Bengal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredDistrict">Preferred District *</Label>
+                    <Input
+                      id="preferredDistrict"
+                      type="text"
+                      placeholder="Enter preferred district"
+                      value={preferredDistrict}
+                      onChange={(e) => setPreferredDistrict(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredState2">Preferred State 2 *</Label>
+                    <Select value={preferredState2} onValueChange={setPreferredState2}>
+                      <SelectTrigger id="preferredState2" className="h-12">
+                        <SelectValue placeholder="Select State" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Andhra Pradesh">Andhra Pradesh</SelectItem>
+                        <SelectItem value="Arunachal Pradesh">Arunachal Pradesh</SelectItem>
+                        <SelectItem value="Assam">Assam</SelectItem>
+                        <SelectItem value="Bihar">Bihar</SelectItem>
+                        <SelectItem value="Chhattisgarh">Chhattisgarh</SelectItem>
+                        <SelectItem value="Delhi">Delhi</SelectItem>
+                        <SelectItem value="Goa">Goa</SelectItem>
+                        <SelectItem value="Gujarat">Gujarat</SelectItem>
+                        <SelectItem value="Haryana">Haryana</SelectItem>
+                        <SelectItem value="Himachal Pradesh">Himachal Pradesh</SelectItem>
+                        <SelectItem value="Jharkhand">Jharkhand</SelectItem>
+                        <SelectItem value="Karnataka">Karnataka</SelectItem>
+                        <SelectItem value="Kerala">Kerala</SelectItem>
+                        <SelectItem value="Madhya Pradesh">Madhya Pradesh</SelectItem>
+                        <SelectItem value="Maharashtra">Maharashtra</SelectItem>
+                        <SelectItem value="Manipur">Manipur</SelectItem>
+                        <SelectItem value="Meghalaya">Meghalaya</SelectItem>
+                        <SelectItem value="Mizoram">Mizoram</SelectItem>
+                        <SelectItem value="Nagaland">Nagaland</SelectItem>
+                        <SelectItem value="Odisha">Odisha</SelectItem>
+                        <SelectItem value="Punjab">Punjab</SelectItem>
+                        <SelectItem value="Rajasthan">Rajasthan</SelectItem>
+                        <SelectItem value="Sikkim">Sikkim</SelectItem>
+                        <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
+                        <SelectItem value="Telangana">Telangana</SelectItem>
+                        <SelectItem value="Tripura">Tripura</SelectItem>
+                        <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
+                        <SelectItem value="Uttarakhand">Uttarakhand</SelectItem>
+                        <SelectItem value="West Bengal">West Bengal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Row 5: Preferred District 2, Segment, Program */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredDistrict2">Preferred District 2 *</Label>
+                    <Input
+                      id="preferredDistrict2"
+                      type="text"
+                      placeholder="Enter preferred district"
+                      value={preferredDistrict2}
+                      onChange={(e) => setPreferredDistrict2(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="segment">Segment *</Label>
+                    <Select value={segment} onValueChange={setSegment}>
+                      <SelectTrigger id="segment" className="h-12">
+                        <SelectValue placeholder="Select Segment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Education">Education</SelectItem>
+                        <SelectItem value="Healthcare">Healthcare</SelectItem>
+                        <SelectItem value="IT">IT</SelectItem>
+                        <SelectItem value="Finance">Finance</SelectItem>
+                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                        <SelectItem value="Retail">Retail</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="program">Program</Label>
+                    <Select value={program} onValueChange={setProgram}>
+                      <SelectTrigger id="program" className="h-12">
+                        <SelectValue placeholder="Select Program" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Full Time">Full Time</SelectItem>
+                        <SelectItem value="Part Time">Part Time</SelectItem>
+                        <SelectItem value="Contract">Contract</SelectItem>
+                        <SelectItem value="Internship">Internship</SelectItem>
+                        <SelectItem value="Freelance">Freelance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Row 6: Classes Handled, Batch, Primary Subject */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="classesHandled">Classes Handled *</Label>
+                    <Select value={classesHandled} onValueChange={setClassesHandled}>
+                      <SelectTrigger id="classesHandled" className="h-12">
+                        <SelectValue placeholder="Select Classes Handled" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pre-Primary">Pre-Primary</SelectItem>
+                        <SelectItem value="Primary (1-5)">Primary (1-5)</SelectItem>
+                        <SelectItem value="Middle (6-8)">Middle (6-8)</SelectItem>
+                        <SelectItem value="Secondary (9-10)">Secondary (9-10)</SelectItem>
+                        <SelectItem value="Higher Secondary (11-12)">Higher Secondary (11-12)</SelectItem>
+                        <SelectItem value="Graduation">Graduation</SelectItem>
+                        <SelectItem value="Post Graduation">Post Graduation</SelectItem>
+                        <SelectItem value="All Classes">All Classes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="batch">Batch</Label>
+                    <Select value={batch} onValueChange={setBatch}>
+                      <SelectTrigger id="batch" className="h-12">
+                        <SelectValue placeholder="Select Batch" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Morning">Morning</SelectItem>
+                        <SelectItem value="Afternoon">Afternoon</SelectItem>
+                        <SelectItem value="Evening">Evening</SelectItem>
+                        <SelectItem value="Flexible">Flexible</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="primarySubject">Primary Subject *</Label>
+                    <Select value={primarySubject} onValueChange={setPrimarySubject}>
+                      <SelectTrigger id="primarySubject" className="h-12">
+                        <SelectValue placeholder="Select Subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Mathematics">Mathematics</SelectItem>
+                        <SelectItem value="Science">Science</SelectItem>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Hindi">Hindi</SelectItem>
+                        <SelectItem value="Social Studies">Social Studies</SelectItem>
+                        <SelectItem value="Physics">Physics</SelectItem>
+                        <SelectItem value="Chemistry">Chemistry</SelectItem>
+                        <SelectItem value="Biology">Biology</SelectItem>
+                        <SelectItem value="Computer Science">Computer Science</SelectItem>
+                        <SelectItem value="Commerce">Commerce</SelectItem>
+                        <SelectItem value="Arts">Arts</SelectItem>
+                        <SelectItem value="Physical Education">Physical Education</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Languages Known */}
+                <div className="space-y-2">
+                  <Label htmlFor="languages">Languages Known</Label>
+                  <Input
+                    id="languages"
+                    type="text"
+                    placeholder="Enter languages separated by comma (e.g., English, Hindi, Telugu)"
+                    value={languages}
+                    onChange={(e) => setLanguages(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
+
+                {/* Experience Level */}
                 <div className="space-y-2">
                   <Label htmlFor="experience" className="flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
@@ -485,6 +915,7 @@ const EditProfile = () => {
                   </Select>
                 </div>
 
+                {/* Resume Upload */}
                 <div className="space-y-2">
                   <Label htmlFor="resume" className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />

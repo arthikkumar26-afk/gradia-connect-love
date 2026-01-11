@@ -20,6 +20,20 @@ interface Profile {
   date_of_birth?: string;
   gender?: string;
   languages?: string[];
+  current_state?: string;
+  current_district?: string;
+  alternate_number?: string;
+  highest_qualification?: string;
+  office_type?: string;
+  preferred_state?: string;
+  preferred_district?: string;
+  preferred_state_2?: string;
+  preferred_district_2?: string;
+  segment?: string;
+  program?: string;
+  classes_handled?: string;
+  batch?: string;
+  primary_subject?: string;
 }
 
 interface AuthContextType {
