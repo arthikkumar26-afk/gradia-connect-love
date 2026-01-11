@@ -146,6 +146,37 @@ const Header = () => {
               Home
             </Link>
 
+            {/* Show Candidates dropdown only if not logged in as employer */}
+            {userRole !== 'employer' && (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
+                  Candidates
+                  <ChevronDown className="ml-1 h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-background z-50">
+                  {candidateMenuItems.map((item) => (
+                    <DropdownMenuItem key={item.path} asChild>
+                      <Link to={item.path} className="flex items-center justify-between">
+                        <span>{item.name}</span>
+                        {item.badge && (
+                          <span className="text-xs text-muted-foreground ml-2">*</span>
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                  {isAuthenticated && userRole === 'candidate' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {/* Show Employers dropdown only if not logged in as candidate */}
             {userRole !== 'candidate' && (
               <DropdownMenu>
@@ -184,37 +215,6 @@ const Header = () => {
                           </DropdownMenuItem>
                         );
                       })}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {/* Show Candidates dropdown only if not logged in as employer */}
-            {userRole !== 'employer' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                  Candidates
-                  <ChevronDown className="ml-1 h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-background z-50">
-                  {candidateMenuItems.map((item) => (
-                    <DropdownMenuItem key={item.path} asChild>
-                      <Link to={item.path} className="flex items-center justify-between">
-                        <span>{item.name}</span>
-                        {item.badge && (
-                          <span className="text-xs text-muted-foreground ml-2">*</span>
-                        )}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                  {isAuthenticated && userRole === 'candidate' && (
-                    <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
                         <LogOut className="h-4 w-4" />
