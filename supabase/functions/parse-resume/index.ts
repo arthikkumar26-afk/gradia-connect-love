@@ -105,14 +105,28 @@ Extract these fields:
 - full_name: The candidate's full name
 - mobile: Phone number (with country code if available)  
 - email: Email address (MUST extract this - look for @ symbol)
-- experience_level: One of "entry", "mid", "senior", "expert" based on years of experience
+- date_of_birth: Date of birth if mentioned (format: YYYY-MM-DD)
+- gender: Male or Female if mentioned
+- experience_level: One of "fresher", "0-1", "1-3", "3-5", "5+" based on years of experience
 - location: City, State/Country
+- current_state: The state where candidate currently resides (Indian states)
+- current_district: The district/city where candidate currently resides
 - linkedin: LinkedIn profile URL if available
 - preferred_role: The job title they're seeking or their current role
 - skills: List of technical and soft skills
-- education: Highest degree and institution
+- languages: Languages known by the candidate as an array
+- alternate_number: Secondary phone number if available
+- highest_qualification: Highest education qualification (10th, 12th, Diploma, Graduate, Post Graduate, PhD, B.Ed, M.Ed, etc.)
+- preferred_state: Preferred work location state
+- preferred_district: Preferred work location district
+- segment: Work segment/industry (Education, Healthcare, IT, Finance, Manufacturing, Retail, etc.)
+- program: Employment type (Full Time, Part Time, Contract, Internship, Freelance)
+- classes_handled: If teacher - classes they can teach (Pre-Primary, Primary 1-5, Middle 6-8, Secondary 9-10, Higher Secondary 11-12, Graduation, Post Graduation)
+- batch: Preferred work timing (Morning, Afternoon, Evening, Flexible)
+- primary_subject: Primary subject expertise for teaching roles
+- office_type: Office preference (Head Office, Branch Office, Regional Office, Remote, Hybrid)
 
-Be thorough - scan the entire document for contact information.`;
+Be thorough - scan the entire document for contact information and educational/professional details.`;
 
     // Check if it's a DOCX file (by extension or mime type)
     const isDocx = fileName.endsWith(".docx") || 
@@ -227,12 +241,16 @@ Be thorough - scan the entire document for contact information.`;
                   full_name: { type: "string", description: "Candidate's full name" },
                   mobile: { type: "string", description: "Phone number" },
                   email: { type: "string", description: "Email address - look for @ symbol" },
+                  date_of_birth: { type: "string", description: "Date of birth in YYYY-MM-DD format" },
+                  gender: { type: "string", enum: ["Male", "Female"], description: "Gender" },
                   experience_level: { 
                     type: "string", 
-                    enum: ["entry", "mid", "senior", "expert"],
+                    enum: ["fresher", "0-1", "1-3", "3-5", "5+"],
                     description: "Experience level based on years"
                   },
                   location: { type: "string", description: "City and country/state" },
+                  current_state: { type: "string", description: "Current state of residence" },
+                  current_district: { type: "string", description: "Current district/city" },
                   linkedin: { type: "string", description: "LinkedIn URL" },
                   preferred_role: { type: "string", description: "Current or desired job title" },
                   skills: { 
@@ -240,7 +258,21 @@ Be thorough - scan the entire document for contact information.`;
                     items: { type: "string" },
                     description: "List of skills from the resume"
                   },
-                  education: { type: "string", description: "Education details" },
+                  languages: { 
+                    type: "array", 
+                    items: { type: "string" },
+                    description: "Languages known"
+                  },
+                  alternate_number: { type: "string", description: "Secondary phone number" },
+                  highest_qualification: { type: "string", description: "Highest education (10th, 12th, Diploma, Graduate, Post Graduate, PhD, B.Ed, M.Ed, Other)" },
+                  preferred_state: { type: "string", description: "Preferred work state" },
+                  preferred_district: { type: "string", description: "Preferred work district" },
+                  segment: { type: "string", description: "Industry segment (Education, Healthcare, IT, Finance, Manufacturing, Retail, Other)" },
+                  program: { type: "string", description: "Employment type (Full Time, Part Time, Contract, Internship, Freelance)" },
+                  classes_handled: { type: "string", description: "Classes taught (Pre-Primary, Primary 1-5, Middle 6-8, Secondary 9-10, Higher Secondary 11-12, Graduation, Post Graduation, All Classes)" },
+                  batch: { type: "string", description: "Work timing preference (Morning, Afternoon, Evening, Flexible)" },
+                  primary_subject: { type: "string", description: "Primary teaching subject" },
+                  office_type: { type: "string", description: "Office type (Head Office, Branch Office, Regional Office, Remote, Hybrid)" },
                 },
                 required: ["full_name"],
                 additionalProperties: false

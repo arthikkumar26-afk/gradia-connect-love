@@ -40,6 +40,7 @@ const EditProfile = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [isParsingResume, setIsParsingResume] = useState(false);
   const [detectedLogo, setDetectedLogo] = useState<{ file: File; preview: string } | null>(null);
   const [showLogoConfirmation, setShowLogoConfirmation] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -174,9 +175,71 @@ const EditProfile = () => {
     setDetectedLogo(null);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setResume(e.target.files[0]);
+      const file = e.target.files[0];
+      setResume(file);
+      
+      // Auto-parse resume with AI
+      if (profile?.role === 'candidate') {
+        setIsParsingResume(true);
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+            {
+              method: 'POST',
+              body: formData,
+            }
+          );
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to parse resume');
+          }
+          
+          const data = await response.json();
+          console.log('AI parsed resume data:', data);
+          
+          // Auto-fill form fields from parsed data
+          if (data.full_name) setFullName(data.full_name);
+          if (data.mobile) setMobile(data.mobile);
+          if (data.date_of_birth) setDateOfBirth(data.date_of_birth);
+          if (data.gender) setGender(data.gender);
+          if (data.languages && Array.isArray(data.languages)) setLanguages(data.languages.join(', '));
+          if (data.current_state) setCurrentState(data.current_state);
+          if (data.current_district) setCurrentDistrict(data.current_district);
+          if (data.alternate_number) setAlternateNumber(data.alternate_number);
+          if (data.highest_qualification) setHighestQualification(data.highest_qualification);
+          if (data.office_type) setOfficeType(data.office_type);
+          if (data.preferred_state) setPreferredState(data.preferred_state);
+          if (data.preferred_district) setPreferredDistrict(data.preferred_district);
+          if (data.segment) setSegment(data.segment);
+          if (data.program) setProgram(data.program);
+          if (data.classes_handled) setClassesHandled(data.classes_handled);
+          if (data.batch) setBatch(data.batch);
+          if (data.primary_subject) setPrimarySubject(data.primary_subject);
+          if (data.experience_level) setExperienceLevel(data.experience_level);
+          if (data.location) setLocation(data.location);
+          if (data.linkedin) setLinkedin(data.linkedin);
+          
+          toast({
+            title: "Resume Parsed Successfully!",
+            description: "Profile details have been auto-filled from your resume. Please review and update if needed.",
+          });
+        } catch (error: any) {
+          console.error('Error parsing resume:', error);
+          toast({
+            title: "Resume Parsing",
+            description: error.message || "Could not auto-fill details. You can enter them manually.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsParsingResume(false);
+        }
+      }
     }
   };
 
@@ -919,8 +982,11 @@ const EditProfile = () => {
                 <div className="space-y-2">
                   <Label htmlFor="resume" className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
-                    Resume
+                    Resume (AI Auto-fill)
                   </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Upload your resume and AI will automatically extract and fill your profile details.
+                  </p>
                   {currentResumeUrl && !resume && (
                     <div className="mb-2">
                       <a
@@ -940,15 +1006,31 @@ const EditProfile = () => {
                       accept=".pdf,.doc,.docx"
                       onChange={handleFileChange}
                       className="hidden"
+                      disabled={isParsingResume}
                     />
                     <label
                       htmlFor="resume"
-                      className="flex items-center justify-center gap-2 h-12 px-4 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors"
+                      className={`flex items-center justify-center gap-2 h-12 px-4 border-2 border-dashed rounded-md transition-colors ${
+                        isParsingResume 
+                          ? 'border-accent bg-accent/10 cursor-wait' 
+                          : 'border-input cursor-pointer hover:border-accent hover:bg-accent/5'
+                      }`}
                     >
-                      <Upload className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {resume ? resume.name : "Upload new resume (PDF, DOC, DOCX)"}
-                      </span>
+                      {isParsingResume ? (
+                        <>
+                          <Loader2 className="h-5 w-5 text-accent animate-spin" />
+                          <span className="text-sm text-accent font-medium">
+                            AI is parsing your resume...
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {resume ? resume.name : "Upload resume (PDF, DOC, DOCX) - AI will auto-fill details"}
+                          </span>
+                        </>
+                      )}
                     </label>
                   </div>
                 </div>
