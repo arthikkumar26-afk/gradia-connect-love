@@ -146,243 +146,26 @@ const Header = () => {
               Home
             </Link>
 
-            {/* Candidates Dropdown - always visible */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Candidates
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-background z-50">
-                {candidateMenuItems.map((item) => (
-                  <DropdownMenuItem key={item.path} asChild>
-                    <Link to={item.path} className="flex items-center justify-between">
-                      <span>{item.name}</span>
-                      {item.badge && (
-                        <span className="text-xs text-muted-foreground ml-2">*</span>
-                      )}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                {isAuthenticated && userRole === 'candidate' && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
-                      <LogOut className="h-4 w-4" />
-                      Logout
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link
+              to="/candidate/login"
+              className="text-sm font-medium text-foreground hover:text-accent transition-colors"
+            >
+              Candidates
+            </Link>
 
-            {/* Show Employers dropdown only if not logged in as candidate */}
-            {userRole !== 'candidate' && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                  Employers
-                  <ChevronDown className="ml-1 h-3 w-3" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48 bg-background z-50">
-                  {!isAuthenticated || userRole !== 'employer' ? (
-                    <>
-                      {publicEmployerPages.map((page) => (
-                        <DropdownMenuItem
-                          key={page.path}
-                          onClick={() => {
-                            if (page.protected) {
-                              handleProtectedNavigation(page.path);
-                            } else {
-                              navigate(page.path);
-                            }
-                          }}
-                        >
-                          {page.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      {authenticatedEmployerPages.map((page) => {
-                        const Icon = page.icon;
-                        return (
-                          <DropdownMenuItem key={page.path} asChild>
-                            <Link to={page.path} className="flex items-center gap-2">
-                              <Icon className="h-4 w-4" />
-                              {page.name}
-                            </Link>
-                          </DropdownMenuItem>
-                        );
-                      })}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 text-destructive">
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <Link
+              to="/employer/login"
+              className="text-sm font-medium text-foreground hover:text-accent transition-colors"
+            >
+              Employers
+            </Link>
 
-
-            {/* Sponsors Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Sponsors
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[680px] p-6 bg-background z-50 shadow-lg" align="start">
-                {/* Header with Sign In on the right */}
-                <div className="flex justify-end mb-4">
-                  <Button asChild variant="default" size="sm">
-                    <Link to="/sponsor/login" className="flex items-center gap-2">
-                      <LogOut className="h-3.5 w-3.5" />
-                      Sign In
-                    </Link>
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-6">
-                  {/* Sponsor Programs Section */}
-                  <div>
-                    <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-primary" />
-                      Sponsor Programs
-                    </h3>
-                    <div className="flex flex-col space-y-2">
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/become-a-partner"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Handshake className="h-3.5 w-3.5 opacity-70" />
-                          <span>Become a Partner</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/sponsorship-tiers"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Award className="h-3.5 w-3.5 opacity-70" />
-                          <span>Sponsorship Tiers</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/job-mela-calendar"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Calendar className="h-3.5 w-3.5 opacity-70" />
-                          <span>Job Mela Calendar</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/collaboration-opportunities"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Users className="h-3.5 w-3.5 opacity-70" />
-                          <span>Collaboration Opportunities</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/partnership-proposal"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Send className="h-3.5 w-3.5 opacity-70" />
-                          <span>Submit Partnership Proposal</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </div>
-                  </div>
-
-                  {/* Our Clients & Partners Section */}
-                  <div>
-                    <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                      <Handshake className="h-4 w-4 text-primary" />
-                      Our Clients & Partners
-                    </h3>
-                    <div className="flex flex-col space-y-2">
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/featured-clients"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Star className="h-3.5 w-3.5 opacity-70" />
-                          <span>Featured Clients</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/success-stories"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Award className="h-3.5 w-3.5 opacity-70" />
-                          <span>Success Stories</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/partner-testimonials"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <MessageSquare className="h-3.5 w-3.5 opacity-70" />
-                          <span>Partner Testimonials</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </div>
-                  </div>
-
-                  {/* Resources for Sponsors Section */}
-                  <div>
-                    <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary" />
-                      Resources for Sponsors
-                    </h3>
-                    <div className="flex flex-col space-y-2">
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/branding-guidelines"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Palette className="h-3.5 w-3.5 opacity-70" />
-                          <span>Branding Guidelines</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/marketing-toolkit"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Package className="h-3.5 w-3.5 opacity-70" />
-                          <span>Marketing Toolkit</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/event-sponsorship-deck"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <Calendar className="h-3.5 w-3.5 opacity-70" />
-                          <span>Event Sponsorship Deck</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/sponsor-support-portal"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 group"
-                        >
-                          <HelpCircle className="h-3.5 w-3.5 opacity-70" />
-                          <span>Sponsor Support Portal</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    </div>
-                  </div>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link
+              to="/sponsor/landing"
+              className="text-sm font-medium text-foreground hover:text-accent transition-colors"
+            >
+              Sponsors
+            </Link>
 
             <Link
               to="/about"
