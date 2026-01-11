@@ -387,7 +387,7 @@ serve(async (req) => {
           <tr>
             <td align="center">
               <a href="${interviewLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);">
-                ${isManualInterview ? 'Join Interview' : `Start ${stageName}`}
+                ${isManualInterview ? 'Join Interview' : 'Start Interview'}
               </a>
             </td>
           </tr>
