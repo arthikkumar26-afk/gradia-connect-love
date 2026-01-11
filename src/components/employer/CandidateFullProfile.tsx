@@ -46,6 +46,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StageInterviewScheduleModal } from "./StageInterviewScheduleModal";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
+import { useStatusNotification } from "@/hooks/useStatusNotification";
 
 interface InterviewStage {
   id: string;
@@ -111,6 +112,13 @@ export const CandidateFullProfile = () => {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<InterviewStage | null>(null);
   const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
+  
+  const { 
+    notifyShortlisted, 
+    notifyHired, 
+    notifyRejected,
+    notifyOfferReceived 
+  } = useStatusNotification();
 
   const fetchCandidateData = async () => {
     if (!candidateId) return;
@@ -355,10 +363,23 @@ export const CandidateFullProfile = () => {
     }
   };
 
-  const handleOfferLetter = () => {
+  const handleOfferLetter = async () => {
     if (!candidate) return;
-    navigate(`/employer/candidate/${candidate.interviewCandidateId}?action=offer`);
-    toast.info('Opening offer letter generator...');
+    setAiActionLoading('offer');
+    try {
+      // Send offer notification email
+      await notifyOfferReceived(
+        candidate.id,
+        candidate.jobId,
+        undefined, // salary - will be filled in offer letter modal
+        undefined  // start date - will be filled in offer letter modal
+      );
+      navigate(`/employer/candidate/${candidate.interviewCandidateId}?action=offer`);
+    } catch (error) {
+      console.error('Offer letter error:', error);
+    } finally {
+      setAiActionLoading(null);
+    }
   };
 
   const handleStatusUpdate = async (newStatus: 'shortlisted' | 'hired' | 'rejected') => {
@@ -372,10 +393,19 @@ export const CandidateFullProfile = () => {
 
       if (error) throw error;
 
+      // Send email notification based on status
+      if (newStatus === 'shortlisted') {
+        await notifyShortlisted(candidate.id, candidate.jobId);
+      } else if (newStatus === 'hired') {
+        await notifyHired(candidate.id, candidate.jobId);
+      } else if (newStatus === 'rejected') {
+        await notifyRejected(candidate.id, candidate.jobId, 'We have decided to move forward with other candidates');
+      }
+
       const statusMessages = {
-        shortlisted: 'Candidate shortlisted successfully',
-        hired: 'Candidate marked as hired! 🎉',
-        rejected: 'Candidate rejected'
+        shortlisted: 'Candidate shortlisted & email sent',
+        hired: 'Candidate hired & congratulations email sent! 🎉',
+        rejected: 'Candidate rejected & notification sent'
       };
 
       toast.success(statusMessages[newStatus]);
