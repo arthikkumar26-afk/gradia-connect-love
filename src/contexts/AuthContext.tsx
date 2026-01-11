@@ -17,6 +17,9 @@ interface Profile {
   preferred_role?: string;
   company_name?: string;
   company_description?: string;
+  date_of_birth?: string;
+  gender?: string;
+  languages?: string[];
 }
 
 interface AuthContextType {

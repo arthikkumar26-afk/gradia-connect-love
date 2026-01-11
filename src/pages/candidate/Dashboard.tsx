@@ -472,7 +472,7 @@ const CandidateDashboard = () => {
                             <div className="min-w-0">
                               <span className="text-xs text-muted-foreground block">Date of Birth</span>
                               <span className="text-sm font-medium text-foreground truncate block">
-                                Not specified
+                                {profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
                               </span>
                             </div>
                           </div>
@@ -494,7 +494,7 @@ const CandidateDashboard = () => {
                             <div className="min-w-0">
                               <span className="text-xs text-muted-foreground block">Gender</span>
                               <span className="text-sm font-medium text-foreground truncate block">
-                                Not specified
+                                {profile?.gender || 'Not specified'}
                               </span>
                             </div>
                           </div>
@@ -505,7 +505,7 @@ const CandidateDashboard = () => {
                             <div className="min-w-0">
                               <span className="text-xs text-muted-foreground block">Languages Known</span>
                               <span className="text-sm font-medium text-foreground truncate block">
-                                English, Hindi
+                                {profile?.languages?.length ? profile.languages.join(', ') : 'Not specified'}
                               </span>
                             </div>
                           </div>
