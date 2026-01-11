@@ -433,9 +433,11 @@ export type Database = {
           experience_required: string | null
           id: string
           interview_type: string | null
+          is_featured: boolean | null
           job_title: string
           job_type: string | null
           location: string | null
+          moderation_status: string | null
           posted_date: string | null
           requirements: string | null
           salary_range: string | null
@@ -452,9 +454,11 @@ export type Database = {
           experience_required?: string | null
           id?: string
           interview_type?: string | null
+          is_featured?: boolean | null
           job_title: string
           job_type?: string | null
           location?: string | null
+          moderation_status?: string | null
           posted_date?: string | null
           requirements?: string | null
           salary_range?: string | null
@@ -471,9 +475,11 @@ export type Database = {
           experience_required?: string | null
           id?: string
           interview_type?: string | null
+          is_featured?: boolean | null
           job_title?: string
           job_type?: string | null
           location?: string | null
+          moderation_status?: string | null
           posted_date?: string | null
           requirements?: string | null
           salary_range?: string | null
