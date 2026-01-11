@@ -4,10 +4,6 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { 
   Search, 
-  TrendingUp, 
-  Users, 
-  Building2, 
-  Award,
   ArrowRight 
 } from "lucide-react";
 const Hero = () => {
@@ -15,12 +11,6 @@ const Hero = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   
-  const stats = [
-    { icon: Users, label: "Active Candidates", value: "50K+" },
-    { icon: Building2, label: "Partner Companies", value: "2,500+" },
-    { icon: TrendingUp, label: "Successful Placements", value: "25K+" },
-    { icon: Award, label: "Years of Excellence", value: "10+" },
-  ];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,18 +79,6 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="animate-slide-up grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-4xl mx-auto">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-accent/20 rounded-lg mb-3">
-                  <stat.icon className="h-6 w-6 text-accent" />
-                </div>
-                <div className="text-2xl md:text-3xl font-bold mb-1">{stat.value}</div>
-                <div className="text-sm text-primary-foreground/80">{stat.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
