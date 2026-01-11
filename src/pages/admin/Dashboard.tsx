@@ -20,7 +20,8 @@ import {
   Activity,
   UserCheck,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +40,34 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { formatDistanceToNow } from "date-fns";
+
+interface AdminStats {
+  totalUsers: number;
+  totalCandidates: number;
+  totalCompanies: number;
+  activeJobs: number;
+  totalJobs: number;
+  placements: number;
+  pendingJobs: number;
+  totalSponsors: number;
+  activeSponsors: number;
+  totalApplications: number;
+  recentUsers: Array<{
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+    created_at: string;
+  }>;
+  recentJobs: Array<{
+    id: string;
+    job_title: string;
+    employer_id: string;
+    created_at: string;
+    status: string;
+  }>;
+}
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -47,6 +76,8 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -81,6 +112,43 @@ const AdminDashboard = () => {
     checkAuthorization();
   }, [navigate, toast]);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!isAuthorized) return;
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const response = await supabase.functions.invoke('admin-stats', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (response.error) {
+          console.error('Error fetching stats:', response.error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch dashboard statistics.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setStats(response.data);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    if (isAuthorized) {
+      fetchStats();
+    }
+  }, [isAuthorized, toast]);
+
   const handleLogout = async () => {
     await logout();
     navigate("/");
@@ -93,7 +161,7 @@ const AdminDashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -102,11 +170,35 @@ const AdminDashboard = () => {
     return null;
   }
 
-  const stats = [
-    { title: "Total Users", value: "12,450", change: "+12%", icon: Users, color: "bg-blue-500/10 text-blue-600" },
-    { title: "Active Jobs", value: "1,234", change: "+8%", icon: Briefcase, color: "bg-green-500/10 text-green-600" },
-    { title: "Companies", value: "456", change: "+15%", icon: Building2, color: "bg-purple-500/10 text-purple-600" },
-    { title: "Placements", value: "3,210", change: "+22%", icon: TrendingUp, color: "bg-orange-500/10 text-orange-600" },
+  const statsCards = [
+    { 
+      title: "Total Users", 
+      value: statsLoading ? "..." : stats?.totalUsers?.toLocaleString() || "0", 
+      subtitle: `${stats?.totalCandidates || 0} candidates`,
+      icon: Users, 
+      color: "bg-blue-500/10 text-blue-600" 
+    },
+    { 
+      title: "Active Jobs", 
+      value: statsLoading ? "..." : stats?.activeJobs?.toLocaleString() || "0", 
+      subtitle: `${stats?.totalJobs || 0} total`,
+      icon: Briefcase, 
+      color: "bg-green-500/10 text-green-600" 
+    },
+    { 
+      title: "Companies", 
+      value: statsLoading ? "..." : stats?.totalCompanies?.toLocaleString() || "0", 
+      subtitle: "Registered employers",
+      icon: Building2, 
+      color: "bg-purple-500/10 text-purple-600" 
+    },
+    { 
+      title: "Placements", 
+      value: statsLoading ? "..." : stats?.placements?.toLocaleString() || "0", 
+      subtitle: `${stats?.totalApplications || 0} applications`,
+      icon: TrendingUp, 
+      color: "bg-orange-500/10 text-orange-600" 
+    },
   ];
 
   const menuItems = [
@@ -120,20 +212,21 @@ const AdminDashboard = () => {
     { title: "Settings", icon: Settings, path: "/admin/settings" },
   ];
 
-  const recentActivities = [
-    { action: "New user registered", user: "john@example.com", time: "2 min ago", type: "user" },
-    { action: "Job posting approved", user: "TCS Careers", time: "15 min ago", type: "job" },
-    { action: "Company verified", user: "Infosys Ltd", time: "1 hour ago", type: "company" },
-    { action: "Report generated", user: "System", time: "2 hours ago", type: "system" },
-    { action: "User role updated", user: "admin@gradia.com", time: "3 hours ago", type: "user" },
+  const pendingActions = [
+    { title: "Pending Job Approvals", count: stats?.pendingJobs || 0, icon: Briefcase, status: "warning" },
+    { title: "Active Sponsors", count: stats?.activeSponsors || 0, icon: Building2, status: "success" },
+    { title: "Total Applications", count: stats?.totalApplications || 0, icon: FileText, status: "info" },
+    { title: "Successful Placements", count: stats?.placements || 0, icon: CheckCircle2, status: "success" },
   ];
 
-  const pendingActions = [
-    { title: "Pending Job Approvals", count: 12, icon: Briefcase, status: "warning" },
-    { title: "Unverified Companies", count: 5, icon: Building2, status: "warning" },
-    { title: "User Reports", count: 3, icon: AlertTriangle, status: "error" },
-    { title: "Completed Today", count: 28, icon: CheckCircle2, status: "success" },
-  ];
+  const getActivityType = (role: string) => {
+    switch (role) {
+      case 'candidate': return 'user';
+      case 'employer': return 'company';
+      case 'sponsor': return 'sponsor';
+      default: return 'system';
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -210,9 +303,11 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center">
-                  3
-                </span>
+                {(stats?.pendingJobs || 0) > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center">
+                    {stats?.pendingJobs || 0}
+                  </span>
+                )}
               </Button>
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
                 A
@@ -230,14 +325,20 @@ const AdminDashboard = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              {stats.map((stat, index) => (
+              {statsCards.map((stat, index) => (
                 <Card key={index} className="border-0 shadow-sm">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.title}</p>
-                        <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                        <p className="text-xs text-green-600 mt-1">{stat.change} this month</p>
+                        <p className="text-2xl font-bold text-foreground mt-1">
+                          {statsLoading ? (
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          ) : (
+                            stat.value
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{stat.subtitle}</p>
                       </div>
                       <div className={`p-3 rounded-xl ${stat.color}`}>
                         <stat.icon className="h-5 w-5" />
@@ -253,8 +354,8 @@ const AdminDashboard = () => {
               {/* Pending Actions */}
               <Card className="lg:col-span-1 border-0 shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold">Pending Actions</CardTitle>
-                  <CardDescription>Items requiring your attention</CardDescription>
+                  <CardTitle className="text-base font-semibold">Platform Overview</CardTitle>
+                  <CardDescription>Key metrics at a glance</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {pendingActions.map((item, index) => (
@@ -266,6 +367,7 @@ const AdminDashboard = () => {
                         <div className={`p-2 rounded-lg ${
                           item.status === 'warning' ? 'bg-yellow-500/10 text-yellow-600' :
                           item.status === 'error' ? 'bg-red-500/10 text-red-600' :
+                          item.status === 'info' ? 'bg-blue-500/10 text-blue-600' :
                           'bg-green-500/10 text-green-600'
                         }`}>
                           <item.icon className="h-4 w-4" />
@@ -273,7 +375,7 @@ const AdminDashboard = () => {
                         <span className="text-sm font-medium">{item.title}</span>
                       </div>
                       <Badge variant={item.status === 'success' ? 'default' : 'secondary'} className="text-xs">
-                        {item.count}
+                        {statsLoading ? "..." : item.count}
                       </Badge>
                     </div>
                   ))}
@@ -285,80 +387,105 @@ const AdminDashboard = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-                      <CardDescription>Latest actions on the platform</CardDescription>
+                      <CardTitle className="text-base font-semibold">Recent Users</CardTitle>
+                      <CardDescription>Latest registrations on the platform</CardDescription>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-xs gap-1">
+                    <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => navigate('/admin/users')}>
                       View All <ChevronRight className="h-3 w-3" />
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {recentActivities.map((activity, index) => (
-                      <div key={index} className="flex items-center gap-4">
-                        <div className={`p-2 rounded-full ${
-                          activity.type === 'user' ? 'bg-blue-500/10 text-blue-600' :
-                          activity.type === 'job' ? 'bg-green-500/10 text-green-600' :
-                          activity.type === 'company' ? 'bg-purple-500/10 text-purple-600' :
-                          'bg-muted text-muted-foreground'
-                        }`}>
-                          <Activity className="h-3 w-3" />
+                  {statsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : stats?.recentUsers && stats.recentUsers.length > 0 ? (
+                    <div className="space-y-4">
+                      {stats.recentUsers.map((user) => (
+                        <div key={user.id} className="flex items-center gap-4">
+                          <div className={`p-2 rounded-full ${
+                            getActivityType(user.role) === 'user' ? 'bg-blue-500/10 text-blue-600' :
+                            getActivityType(user.role) === 'company' ? 'bg-purple-500/10 text-purple-600' :
+                            'bg-muted text-muted-foreground'
+                          }`}>
+                            {user.role === 'employer' ? (
+                              <Building2 className="h-3 w-3" />
+                            ) : (
+                              <Users className="h-3 w-3" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground">{user.full_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                          </div>
+                          <Badge variant="outline" className="text-xs capitalize">{user.role}</Badge>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground">{activity.action}</p>
-                          <p className="text-xs text-muted-foreground truncate">{activity.user}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">{activity.time}</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No recent users</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Quick Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-blue-500/10">
-                      <UserCheck className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">89%</p>
-                      <p className="text-xs text-muted-foreground">User Verification Rate</p>
-                    </div>
+            {/* Recent Jobs */}
+            <Card className="mt-6 border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-semibold">Recent Job Postings</CardTitle>
+                    <CardDescription>Latest jobs posted on the platform</CardDescription>
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-green-500/10">
-                      <Briefcase className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">156</p>
-                      <p className="text-xs text-muted-foreground">Jobs Posted This Week</p>
-                    </div>
+                  <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => navigate('/admin/jobs')}>
+                    View All <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {statsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-purple-500/10">
-                      <TrendingUp className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">42</p>
-                      <p className="text-xs text-muted-foreground">Successful Placements</p>
-                    </div>
+                ) : stats?.recentJobs && stats.recentJobs.length > 0 ? (
+                  <div className="space-y-3">
+                    {stats.recentJobs.map((job) => (
+                      <div key={job.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-green-500/10 text-green-600">
+                            <Briefcase className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{job.job_title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={job.status === 'active' ? 'default' : 'secondary'} 
+                          className="text-xs capitalize"
+                        >
+                          {job.status}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No recent job postings</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </main>
         </div>
       </div>
