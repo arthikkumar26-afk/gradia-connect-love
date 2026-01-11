@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import jsPDF from "jspdf";
 import { 
   Plus, 
   Trash2, 
@@ -25,7 +26,8 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
-  GripVertical
+  GripVertical,
+  FileDown
 } from "lucide-react";
 
 interface VivaCriteria {
@@ -80,6 +82,7 @@ export function VivaContent() {
   const [recommendation, setRecommendation] = useState<string>("");
   const [evaluatorName, setEvaluatorName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   
   const [newCriteria, setNewCriteria] = useState({
     name: "",
@@ -369,6 +372,199 @@ export function VivaContent() {
     setSaving(false);
   };
 
+  const exportCandidateReport = async (candidate: VivaCandidate) => {
+    setExporting(true);
+    try {
+      // Fetch full evaluation data
+      const { data: session } = await supabase
+        .from('viva_sessions')
+        .select('*')
+        .eq('interview_candidate_id', candidate.id)
+        .single();
+
+      const { data: evalData } = await supabase
+        .from('viva_evaluations')
+        .select('*, viva_criteria(*)')
+        .eq('interview_candidate_id', candidate.id);
+
+      if (!session) {
+        toast.error("No evaluation data found for this candidate");
+        setExporting(false);
+        return;
+      }
+
+      // Create PDF
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let yPos = 20;
+
+      // Header
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("Viva Evaluation Report", pageWidth / 2, yPos, { align: "center" });
+      yPos += 15;
+
+      // Candidate Info Box
+      doc.setFillColor(245, 247, 250);
+      doc.rect(14, yPos - 5, pageWidth - 28, 35, "F");
+      
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Candidate Information", 20, yPos + 5);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Name: ${candidate.candidate_name}`, 20, yPos + 15);
+      doc.text(`Position: ${candidate.job_title}`, 20, yPos + 22);
+      doc.text(`Evaluation Date: ${session.completed_at ? new Date(session.completed_at).toLocaleDateString() : 'N/A'}`, pageWidth / 2, yPos + 15);
+      doc.text(`Evaluator: ${session.evaluator_name || 'N/A'}`, pageWidth / 2, yPos + 22);
+      yPos += 40;
+
+      // Overall Score Section
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Overall Assessment", 20, yPos);
+      yPos += 10;
+
+      // Score box
+      const scoreColor = session.overall_score >= 70 ? [34, 197, 94] : session.overall_score >= 50 ? [234, 179, 8] : [239, 68, 68];
+      doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
+      doc.roundedRect(20, yPos - 5, 50, 25, 3, 3, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.text(`${session.overall_score?.toFixed(0) || 0}%`, 45, yPos + 10, { align: "center" });
+      doc.setTextColor(0, 0, 0);
+
+      // Recommendation
+      const recLabels: Record<string, string> = {
+        strong_hire: "STRONG HIRE",
+        hire: "HIRE",
+        maybe: "MAYBE",
+        no_hire: "NO HIRE"
+      };
+      const recColors: Record<string, number[]> = {
+        strong_hire: [34, 197, 94],
+        hire: [16, 185, 129],
+        maybe: [234, 179, 8],
+        no_hire: [239, 68, 68]
+      };
+      
+      if (session.recommendation) {
+        const recColor = recColors[session.recommendation] || [100, 100, 100];
+        doc.setFillColor(recColor[0], recColor[1], recColor[2]);
+        doc.roundedRect(80, yPos - 5, 60, 25, 3, 3, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(11);
+        doc.text(recLabels[session.recommendation] || session.recommendation.toUpperCase(), 110, yPos + 10, { align: "center" });
+        doc.setTextColor(0, 0, 0);
+      }
+      yPos += 35;
+
+      // Criteria Scores Section
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Criteria Scores", 20, yPos);
+      yPos += 10;
+
+      // Table header
+      doc.setFillColor(229, 231, 235);
+      doc.rect(14, yPos - 3, pageWidth - 28, 10, "F");
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("Criterion", 20, yPos + 4);
+      doc.text("Category", 90, yPos + 4);
+      doc.text("Score", 140, yPos + 4);
+      doc.text("Notes", 160, yPos + 4);
+      yPos += 12;
+
+      // Table rows
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      
+      if (evalData && evalData.length > 0) {
+        evalData.forEach((evaluation: any, index: number) => {
+          if (yPos > 260) {
+            doc.addPage();
+            yPos = 20;
+          }
+          
+          if (index % 2 === 0) {
+            doc.setFillColor(249, 250, 251);
+            doc.rect(14, yPos - 4, pageWidth - 28, 12, "F");
+          }
+          
+          const criteriaData = evaluation.viva_criteria;
+          const criteriaName = criteriaData?.name || 'Unknown';
+          const category = criteriaData?.category || 'general';
+          const maxScore = criteriaData?.max_score || 10;
+          const scoreText = `${evaluation.score}/${maxScore}`;
+          const notes = evaluation.notes || '-';
+          
+          doc.text(criteriaName.substring(0, 30), 20, yPos + 3);
+          doc.text(category, 90, yPos + 3);
+          doc.text(scoreText, 140, yPos + 3);
+          doc.text(notes.substring(0, 25) + (notes.length > 25 ? '...' : ''), 160, yPos + 3);
+          yPos += 12;
+        });
+      } else {
+        doc.text("No detailed scores available", 20, yPos + 3);
+        yPos += 12;
+      }
+      yPos += 10;
+
+      // Overall Feedback Section
+      if (session.overall_feedback) {
+        if (yPos > 230) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Overall Feedback", 20, yPos);
+        yPos += 10;
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        
+        // Word wrap the feedback
+        const feedbackLines = doc.splitTextToSize(session.overall_feedback, pageWidth - 40);
+        feedbackLines.forEach((line: string) => {
+          if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+          }
+          doc.text(line, 20, yPos);
+          yPos += 6;
+        });
+      }
+
+      // Footer
+      const pageCount = doc.internal.pages.length - 1;
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text(
+          `Generated on ${new Date().toLocaleDateString()} | Page ${i} of ${pageCount}`,
+          pageWidth / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: "center" }
+        );
+        doc.setTextColor(0, 0, 0);
+      }
+
+      // Save PDF
+      const fileName = `Viva_Report_${candidate.candidate_name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+      toast.success("Report exported successfully");
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      toast.error("Failed to export report");
+    }
+    setExporting(false);
+  };
+
   const getRecommendationBadge = (rec: string) => {
     const styles: Record<string, string> = {
       strong_hire: "bg-green-500/10 text-green-600 border-green-500/20",
@@ -460,12 +656,30 @@ export function VivaContent() {
                           </Badge>
                         )}
                         
-                        <Button 
-                          onClick={() => openEvaluateModal(candidate)}
-                          variant={candidate.session_status === 'completed' ? "outline" : "default"}
-                        >
-                          {candidate.session_status === 'completed' ? 'View/Edit' : 'Evaluate'}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            onClick={() => openEvaluateModal(candidate)}
+                            variant={candidate.session_status === 'completed' ? "outline" : "default"}
+                          >
+                            {candidate.session_status === 'completed' ? 'View/Edit' : 'Evaluate'}
+                          </Button>
+                          
+                          {candidate.session_status === 'completed' && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => exportCandidateReport(candidate)}
+                              disabled={exporting}
+                              title="Export PDF Report"
+                            >
+                              {exporting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <FileDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
