@@ -7,7 +7,7 @@ import { EmployerProvider } from "./contexts/EmployerContext";
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Layout
-import Layout from "./components/layout/Layout";
+import LayoutWrapper from "./components/layout/LayoutWrapper";
 
 // Main Pages
 import Index from "./pages/Index";
@@ -110,9 +110,9 @@ const App = () => (
               <Route path="/interview" element={<Interview />} />
               
               {/* All other routes with Layout */}
-              <Route path="/*" element={
-                <Layout>
-                  <Routes>
+              <Route element={<LayoutWrapper />}>
+                    {/* Interview Route - also inside layout for fallback */}
+                    <Route path="/interview" element={<Interview />} />
                     {/* Main Pages */}
                     <Route path="/" element={<Index />} />
                     <Route path="/login" element={<Login />} />
@@ -259,9 +259,7 @@ const App = () => (
 
                     {/* Catch-all route */}
                     <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
-              } />
+              </Route>
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

@@ -156,6 +156,24 @@ const Interview = () => {
     return () => clearInterval(timer);
   }, [started, completed, currentIndex]);
 
+  // Auto-close countdown effect - must be before conditional returns
+  useEffect(() => {
+    if (!completed) return;
+    
+    const timer = setInterval(() => {
+      setCloseCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          window.close();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [completed]);
+
   // Initialize webcam preview
   const initWebcam = async () => {
     try {
@@ -525,24 +543,6 @@ const Interview = () => {
     );
   }
 
-  // Auto-close countdown effect
-  useEffect(() => {
-    if (!completed) return;
-    
-    const timer = setInterval(() => {
-      setCloseCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          // Try to close the window
-          window.close();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [completed]);
 
   if (completed) {
     return (
