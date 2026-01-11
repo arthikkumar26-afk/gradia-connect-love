@@ -451,229 +451,89 @@ const CandidateDashboard = () => {
                         </div>
                       </div>
 
-                      {/* Detected Profile Details */}
+                      {/* Detected Profile Details - Table Format */}
                       <div className="flex-1">
                         <h4 className="text-sm font-semibold text-foreground mb-3">AI Detected Details</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {/* Name */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Name</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.full_name || 'Not detected'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Current State */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Current State</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.current_state || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Current District */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Current District</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.current_district || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Gender */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Gender</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.gender || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Email */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Email</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.email || 'Not detected'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Date of Birth */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Date of Birth</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Alternate Number */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Alternate Number</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.alternate_number || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Highest Qualification */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Highest Qualification</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.highest_qualification || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Office Type */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Office Type</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.office_type || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Preferred State */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Preferred State</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.preferred_state || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Preferred District */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Preferred District</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.preferred_district || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Preferred State 2 */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Preferred State 2</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.preferred_state_2 || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Preferred District 2 */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Preferred District 2</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.preferred_district_2 || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Segment */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Segment</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.segment || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Program */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Program</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.program || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Classes Handled */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Classes Handled</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.classes_handled || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Batch */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Batch</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.batch || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Primary Subject */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Primary Subject</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.primary_subject || 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Languages Known */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Languages Known</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.languages?.length ? profile.languages.join(', ') : 'Not specified'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Mobile Number */}
-                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <span className="text-xs text-muted-foreground block">Mobile Number</span>
-                              <span className="text-sm font-medium text-foreground truncate block">
-                                {profile?.mobile || 'Not detected'}
-                              </span>
-                            </div>
-                          </div>
+                        <div className="border border-border rounded-lg overflow-hidden">
+                          <table className="w-full text-sm">
+                            <tbody>
+                              {/* Row 1: Name and Date */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground w-1/4">NAME</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.full_name || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground w-1/6">Date</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN') : '-'}</td>
+                              </tr>
+                              {/* Row 2: Current State and Current District */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CURRENT STATE</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.current_state || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CURRENT DISTRICT</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.current_district || '-'}</td>
+                              </tr>
+                              {/* Row 3: DOB and Gender */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">DOB</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">GENDER</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.gender || '-'}</td>
+                              </tr>
+                              {/* Row 4: Qualification and Office Type */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">QUALIFICATION</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.highest_qualification || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">OFFICE TYPE</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.office_type || '-'}</td>
+                              </tr>
+                              {/* Row 5: Segment and Program */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">SEGMENT</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.segment || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PROGRAM</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.program || '-'}</td>
+                              </tr>
+                              {/* Row 6: Classes Handled and Languages Known */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CLASSES HANDLED</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.classes_handled || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">LANGUAGES KNOWN</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.languages?.length ? profile.languages.join(', ') : '-'}</td>
+                              </tr>
+                              {/* Row 7: Primary Subject and Batch */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PRIMARY SUBJECT</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.primary_subject || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">BATCH</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.batch || '-'}</td>
+                              </tr>
+                              {/* Row 8: Preferred State 1 and District 1 */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PREFERRED STATE</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.preferred_state || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PREFERRED DISTRICT</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.preferred_district || '-'}</td>
+                              </tr>
+                              {/* Row 9: Preferred State 2 and District 2 */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PREFERRED STATE 2</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.preferred_state_2 || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PREFERRED DISTRICT 2</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.preferred_district_2 || '-'}</td>
+                              </tr>
+                              {/* Row 10: Mobile 1 and Mobile 2 */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">MOBILE-1</td>
+                                <td className="px-3 py-2 text-foreground">{profile?.mobile || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">MOBILE-2</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.alternate_number || '-'}</td>
+                              </tr>
+                              {/* Row 11: Email */}
+                              <tr>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">e-Mail</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={4}>{profile?.email || '-'}</td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </div>
 
                         {/* Action Button */}
