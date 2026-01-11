@@ -1030,6 +1030,146 @@ export type Database = {
         }
         Relationships: []
       }
+      viva_criteria: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          employer_id: string
+          id: string
+          is_active: boolean | null
+          max_score: number
+          name: string
+          updated_at: string | null
+          weight: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          employer_id: string
+          id?: string
+          is_active?: boolean | null
+          max_score?: number
+          name: string
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          employer_id?: string
+          id?: string
+          is_active?: boolean | null
+          max_score?: number
+          name?: string
+          updated_at?: string | null
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      viva_evaluations: {
+        Row: {
+          created_at: string | null
+          criteria_id: string
+          evaluated_at: string | null
+          evaluator_name: string | null
+          id: string
+          interview_candidate_id: string
+          notes: string | null
+          score: number
+        }
+        Insert: {
+          created_at?: string | null
+          criteria_id: string
+          evaluated_at?: string | null
+          evaluator_name?: string | null
+          id?: string
+          interview_candidate_id: string
+          notes?: string | null
+          score: number
+        }
+        Update: {
+          created_at?: string | null
+          criteria_id?: string
+          evaluated_at?: string | null
+          evaluator_name?: string | null
+          id?: string
+          interview_candidate_id?: string
+          notes?: string | null
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viva_evaluations_criteria_id_fkey"
+            columns: ["criteria_id"]
+            isOneToOne: false
+            referencedRelation: "viva_criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viva_evaluations_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      viva_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          evaluator_name: string | null
+          id: string
+          interview_candidate_id: string
+          overall_feedback: string | null
+          overall_score: number | null
+          recommendation: string | null
+          scheduled_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          evaluator_name?: string | null
+          id?: string
+          interview_candidate_id: string
+          overall_feedback?: string | null
+          overall_score?: number | null
+          recommendation?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          evaluator_name?: string | null
+          id?: string
+          interview_candidate_id?: string
+          overall_feedback?: string | null
+          overall_score?: number | null
+          recommendation?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viva_sessions_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
