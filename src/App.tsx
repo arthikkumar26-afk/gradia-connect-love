@@ -98,15 +98,7 @@ import EventReport from "./pages/sponsor/EventReport";
 const queryClient = new QueryClient();
 
 // Main Routes Component with Layout
-const MainRoutes = () => {
-  const location = useLocation();
-  
-  // Don't render layout for interview page
-  if (location.pathname === '/interview') {
-    return <Interview />;
-  }
-  
-  return (
+const MainRoutes = () => (
   <Layout>
     <Routes>
       {/* Main Pages */}
@@ -253,18 +245,14 @@ const MainRoutes = () => {
       <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
       <Route path="/sponsor-support-portal" element={<SupportPortal />} />
 
+      {/* Interview page - standalone */}
+      <Route path="/interview" element={<Interview />} />
+
       {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Layout>
-  );
-};
-
-// Simple wrapper to ensure Interview renders
-const InterviewPage = () => {
-  console.log('InterviewPage rendering');
-  return <Interview />;
-};
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -274,18 +262,12 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              {/* Interview Page - Standalone without header/footer - MUST be before catch-all */}
-              <Route path="/interview" element={<InterviewPage />} />
-              
-              {/* All other routes with Layout */}
-              <Route path="/*" element={<MainRoutes />} />
-            </Routes>
+            <MainRoutes />
           </BrowserRouter>
         </TooltipProvider>
       </EmployerProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+
 
 export default App;

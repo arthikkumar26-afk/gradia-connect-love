@@ -10,6 +10,11 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   
+  // For interview page, render children only (no header/footer)
+  if (location.pathname === '/interview') {
+    return <>{children}</>;
+  }
+  
   // Hide footer for employer, candidate, and sponsor logged-in pages
   const hideFooter = location.pathname.startsWith('/employer/dashboard') || 
                      location.pathname.startsWith('/candidate/dashboard') ||
