@@ -286,7 +286,7 @@ const CandidateDashboard = () => {
       <aside 
         className={`${
           sidebarOpen ? "w-64" : "w-0"
-        } bg-card border-r border-border transition-all duration-300 overflow-hidden flex flex-col`}
+        } bg-card border-r border-border transition-all duration-300 overflow-hidden flex flex-col sticky top-0 h-screen`}
       >
         {/* User Info */}
         <div className="p-4 border-b border-border">
