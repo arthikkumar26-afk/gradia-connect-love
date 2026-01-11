@@ -226,56 +226,6 @@ const Header = () => {
               </DropdownMenu>
             )}
 
-            {/* Learning Dropdown - Multi-column */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center text-sm font-medium text-foreground hover:text-accent transition-colors">
-                Training
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[800px] p-6 bg-background z-50" align="start">
-                <div className="grid grid-cols-4 gap-6">
-                  {learningCategories.map((category) => (
-                    <div key={category.name}>
-                      <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
-                        <span>{category.icon}</span>
-                        {category.name}
-                      </h3>
-                      <div className="flex flex-col space-y-2">
-                        {category.subcategories.map((sub) => (
-                          <DropdownMenuItem key={sub.name} asChild>
-                            <Link
-                              to={sub.path}
-                              className="text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                            >
-                              <div className="flex items-start gap-1">
-                                <span className="flex-1">{sub.name}</span>
-                                <span className="text-xs opacity-60">{sub.count}</span>
-                              </div>
-                            </Link>
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to={category.subcategories[0]?.path || "/learning"}
-                            className="text-xs text-accent hover:text-accent/80 transition-colors mt-1"
-                          >
-                            View All →
-                          </Link>
-                        </DropdownMenuItem>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <DropdownMenuSeparator className="my-4" />
-                <div className="flex justify-center">
-                  <Button asChild variant="default" className="w-full max-w-md">
-                    <Link to="/learning/all-categories">
-                      View All Categories of Learning
-                    </Link>
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             {/* Sponsors Dropdown */}
             <DropdownMenu>
