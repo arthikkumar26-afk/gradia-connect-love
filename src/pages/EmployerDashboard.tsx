@@ -22,7 +22,9 @@ import {
   GitBranch,
   QrCode,
   Bell,
-  Mail
+  Mail,
+  LogOut,
+  User
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -51,7 +53,7 @@ const EmployerDashboard = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [newApplications, setNewApplications] = useState(0);
-  const { user, profile, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated, logout } = useAuth();
 
   // Role-based access control
   useEffect(() => {
@@ -140,6 +142,11 @@ const EmployerDashboard = () => {
     };
   }, [user?.id]);
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
     { id: "jobs", label: "Jobs", icon: Briefcase, path: "/employer/jobs" },
@@ -192,6 +199,23 @@ const EmployerDashboard = () => {
           sidebarOpen ? "w-64 min-w-64" : "w-16 min-w-16"
         } bg-card border-r border-border transition-all duration-300 flex flex-col flex-shrink-0`}
       >
+        {/* User Info */}
+        {sidebarOpen && (
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {profile?.full_name || profile?.company_name || "Employer"}
+                </p>
+                <p className="text-xs text-muted-foreground">Employer</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <nav className="flex-1 p-4 space-y-1 pt-6">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -220,19 +244,32 @@ const EmployerDashboard = () => {
                   <>
                     <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
                     {showBadge && (
-                      <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5 animate-pulse">
+                      <Badge className="bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 animate-pulse">
                         {newApplications}
                       </Badge>
                     )}
                   </>
                 )}
                 {!sidebarOpen && showBadge && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-destructive rounded-full animate-pulse" />
                 )}
               </button>
             );
           })}
         </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-border">
+          <Button 
+            variant="ghost" 
+            className={`${sidebarOpen ? "w-full justify-start" : "w-full justify-center"}`} 
+            onClick={handleLogout}
+            title={!sidebarOpen ? "Logout" : undefined}
+          >
+            <LogOut className="h-4 w-4" />
+            {sidebarOpen && <span className="ml-2">Logout</span>}
+          </Button>
+        </div>
       </aside>
 
       {/* Main Content */}
