@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,8 +30,9 @@ interface VideoInstructions {
 }
 
 const Interview = () => {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  // Get token from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get("token");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
