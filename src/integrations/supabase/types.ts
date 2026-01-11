@@ -552,65 +552,107 @@ export type Database = {
       }
       profiles: {
         Row: {
+          alternate_number: string | null
+          batch: string | null
+          classes_handled: string | null
           company_description: string | null
           company_name: string | null
           created_at: string | null
+          current_district: string | null
+          current_state: string | null
           date_of_birth: string | null
           email: string
           experience_level: string | null
           full_name: string
           gender: string | null
+          highest_qualification: string | null
           id: string
           languages: string[] | null
           linkedin: string | null
           location: string | null
           mobile: string | null
+          office_type: string | null
+          preferred_district: string | null
+          preferred_district_2: string | null
           preferred_role: string | null
+          preferred_state: string | null
+          preferred_state_2: string | null
+          primary_subject: string | null
           profile_picture: string | null
+          program: string | null
           resume_url: string | null
           role: string
+          segment: string | null
           updated_at: string | null
           website: string | null
         }
         Insert: {
+          alternate_number?: string | null
+          batch?: string | null
+          classes_handled?: string | null
           company_description?: string | null
           company_name?: string | null
           created_at?: string | null
+          current_district?: string | null
+          current_state?: string | null
           date_of_birth?: string | null
           email: string
           experience_level?: string | null
           full_name: string
           gender?: string | null
+          highest_qualification?: string | null
           id: string
           languages?: string[] | null
           linkedin?: string | null
           location?: string | null
           mobile?: string | null
+          office_type?: string | null
+          preferred_district?: string | null
+          preferred_district_2?: string | null
           preferred_role?: string | null
+          preferred_state?: string | null
+          preferred_state_2?: string | null
+          primary_subject?: string | null
           profile_picture?: string | null
+          program?: string | null
           resume_url?: string | null
           role: string
+          segment?: string | null
           updated_at?: string | null
           website?: string | null
         }
         Update: {
+          alternate_number?: string | null
+          batch?: string | null
+          classes_handled?: string | null
           company_description?: string | null
           company_name?: string | null
           created_at?: string | null
+          current_district?: string | null
+          current_state?: string | null
           date_of_birth?: string | null
           email?: string
           experience_level?: string | null
           full_name?: string
           gender?: string | null
+          highest_qualification?: string | null
           id?: string
           languages?: string[] | null
           linkedin?: string | null
           location?: string | null
           mobile?: string | null
+          office_type?: string | null
+          preferred_district?: string | null
+          preferred_district_2?: string | null
           preferred_role?: string | null
+          preferred_state?: string | null
+          preferred_state_2?: string | null
+          primary_subject?: string | null
           profile_picture?: string | null
+          program?: string | null
           resume_url?: string | null
           role?: string
+          segment?: string | null
           updated_at?: string | null
           website?: string | null
         }
