@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { EmployerProvider } from "./contexts/EmployerContext";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -98,7 +98,15 @@ import EventReport from "./pages/sponsor/EventReport";
 const queryClient = new QueryClient();
 
 // Main Routes Component with Layout
-const MainRoutes = () => (
+const MainRoutes = () => {
+  const location = useLocation();
+  
+  // Don't render layout for interview page
+  if (location.pathname === '/interview') {
+    return <Interview />;
+  }
+  
+  return (
   <Layout>
     <Routes>
       {/* Main Pages */}
@@ -249,7 +257,14 @@ const MainRoutes = () => (
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Layout>
-);
+  );
+};
+
+// Simple wrapper to ensure Interview renders
+const InterviewPage = () => {
+  console.log('InterviewPage rendering');
+  return <Interview />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -260,8 +275,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Interview Page - Standalone without header/footer */}
-              <Route path="/interview" element={<Interview />} />
+              {/* Interview Page - Standalone without header/footer - MUST be before catch-all */}
+              <Route path="/interview" element={<InterviewPage />} />
               
               {/* All other routes with Layout */}
               <Route path="/*" element={<MainRoutes />} />
