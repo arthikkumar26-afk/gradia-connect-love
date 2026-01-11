@@ -9,7 +9,7 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useDevLogin } from "@/hooks/useDevLogin";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 
 const companyCategories = [
   "IT & Technology",
@@ -43,7 +43,6 @@ const EmployerSignup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { handleDevLogin, isLoading: isDevLoginLoading } = useDevLogin('employer');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -392,7 +391,7 @@ const EmployerSignup = () => {
               <Input
                 id="password"
                 type="password"
-                placeholder="At least 8 characters"
+                placeholder="Create a strong password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -402,6 +401,7 @@ const EmployerSignup = () => {
                 aria-invalid={!!errors.password}
                 aria-describedby={errors.password ? "password-error" : undefined}
               />
+              <PasswordStrengthIndicator password={password} />
               {errors.password && (
                 <p id="password-error" className="text-sm text-destructive">{errors.password}</p>
               )}
@@ -433,31 +433,6 @@ const EmployerSignup = () => {
             </Button>
           </form>
 
-          {/* Dev Login Section */}
-          {import.meta.env.DEV && (
-            <>
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-card px-4 text-muted-foreground">
-                    Quick Test
-                  </span>
-                </div>
-              </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="lg" 
-                className="w-full" 
-                onClick={handleDevLogin}
-                disabled={isLoading || isDevLoginLoading}
-              >
-                🚀 Dev Login (Test Employer)
-              </Button>
-            </>
-          )}
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
