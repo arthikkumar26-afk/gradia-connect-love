@@ -8,8 +8,10 @@ const FeaturedJobs = () => {
   const featuredJobs = getFeaturedJobs();
 
   return (
-    <section className="py-16 bg-subtle">
-      <div className="container mx-auto px-4">
+    <section className="relative bg-subtle">
+      {/* Extended gradient from hero */}
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-hero" />
+      <div className="relative z-10 container mx-auto px-4 pt-24 pb-16">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4">
             <Briefcase className="h-6 w-6 text-accent" />
