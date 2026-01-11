@@ -127,9 +127,9 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center flex-shrink-0">
+        <div className="flex h-16 items-center">
+          {/* Logo - Fixed width for balance */}
+          <Link to="/" className="flex items-center flex-shrink-0 w-48">
             <img 
               src={gradiaLogo} 
               alt="Gradia - Your Next Step" 
@@ -137,7 +137,7 @@ const Header = () => {
             />
           </Link>
 
-          {/* Desktop Navigation - Centered */}
+          {/* Desktop Navigation - Truly Centered */}
           <nav className="hidden lg:flex items-center justify-center flex-1 space-x-8">
             <Link
               to="/"
@@ -181,8 +181,8 @@ const Header = () => {
             </Link>
           </nav>
 
-          {/* Right side - Theme toggle, Language, CTAs */}
-          <div className="flex items-center space-x-4">
+          {/* Right side - Theme toggle, Language, CTAs - Fixed width for balance */}
+          <div className="flex items-center justify-end space-x-4 w-48">
             {/* Theme Toggle */}
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {isDark ? (
