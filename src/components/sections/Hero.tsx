@@ -24,6 +24,13 @@ const Hero = () => {
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
       <div className="relative z-10 container mx-auto px-4 py-12 lg:py-16">
         <div className="max-w-4xl mx-auto">
+          {/* Headline - Centered, above search */}
+          <div className="animate-fade-in text-center mb-8">
+            <h1 className="text-lg md:text-xl font-semibold text-primary-foreground/90">
+              Connect with Your <span className="text-transparent bg-gradient-to-r from-accent to-secondary bg-clip-text">Dream Career</span>
+            </h1>
+          </div>
+
           {/* Search Bar */}
           <div className="animate-slide-up max-w-2xl mx-auto mb-6">
             <div className="bg-background/95 backdrop-blur rounded-xl p-6 shadow-large">
@@ -67,13 +74,6 @@ const Hero = () => {
                 </Button>
               </div>
             </div>
-          </div>
-
-          {/* Headline - Small, left-aligned, below search */}
-          <div className="animate-fade-in text-left max-w-2xl mb-8 pl-4">
-            <h1 className="text-lg md:text-xl font-semibold text-primary-foreground/90">
-              Connect with Your <span className="text-transparent bg-gradient-to-r from-accent to-secondary bg-clip-text">Dream Career</span>
-            </h1>
           </div>
         </div>
 
