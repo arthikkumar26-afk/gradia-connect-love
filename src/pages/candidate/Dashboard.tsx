@@ -371,28 +371,6 @@ const CandidateDashboard = () => {
           </div>
         </header>
 
-        {/* Breadcrumbs */}
-        <div className="bg-background px-6 py-3 border-b border-border">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/">Home</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/candidate/dashboard">Candidate</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{getPageTitle()}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
 
         {/* Dashboard Content */}
         <main className="flex-1 p-6 overflow-y-auto">
