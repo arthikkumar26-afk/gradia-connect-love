@@ -22,7 +22,7 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
-      <div className="relative z-10 container mx-auto px-4 py-20 lg:py-32">
+      <div className="relative z-10 container mx-auto px-4 py-12 lg:py-16">
         <div className="max-w-4xl mx-auto text-center">
           {/* Main Headline */}
           <div className="animate-fade-in">
