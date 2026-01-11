@@ -261,8 +261,33 @@ export const CandidateFullProfile = () => {
 
   const handleSendEmail = async (stage: InterviewStage) => {
     if (!candidate) return;
-    toast.info(`Opening email composer for ${stage.name} stage...`);
-    window.open(`mailto:${candidate.email}?subject=Interview Update: ${stage.name} - ${candidate.jobTitle}`);
+    
+    try {
+      toast.loading(`Sending interview invitation for ${stage.name}...`);
+      
+      // Schedule for 2 days from now if not already scheduled
+      const scheduledDate = stage.scheduledAt 
+        ? new Date(stage.scheduledAt) 
+        : new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+      
+      const { error } = await supabase.functions.invoke('send-interview-invitation', {
+        body: {
+          interviewCandidateId: candidate.interviewCandidateId,
+          stageName: stage.name,
+          scheduledDate: scheduledDate.toISOString(),
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.dismiss();
+      toast.success(`Interview invitation sent to ${candidate.email}`);
+      fetchCandidateData();
+    } catch (error: any) {
+      toast.dismiss();
+      console.error('Send email error:', error);
+      toast.error(error.message || 'Failed to send interview invitation');
+    }
   };
 
   // AI Automation Actions
