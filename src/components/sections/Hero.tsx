@@ -1,49 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
-import { 
-  Search, 
-  ArrowRight,
-  TrendingUp,
-  Loader2
-} from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-interface TrendingJob {
-  id: string;
-  job_title: string;
-  search_count: number;
-}
+import { useState } from "react";
+import { Search, ArrowRight } from "lucide-react";
 
 const Hero = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
-  const [trendingJobs, setTrendingJobs] = useState<TrendingJob[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTrendingJobs = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('trending_jobs')
-          .select('id, job_title, search_count')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true })
-          .limit(6);
-
-        if (error) throw error;
-        setTrendingJobs(data || []);
-      } catch (error) {
-        console.error('Error fetching trending jobs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTrendingJobs();
-  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,10 +15,6 @@ const Hero = () => {
     if (searchTerm) params.set('q', searchTerm);
     if (location) params.set('location', location);
     navigate(`/jobs-results?${params.toString()}`);
-  };
-
-  const handleTrendingClick = (jobTitle: string) => {
-    navigate(`/jobs-results?q=${encodeURIComponent(jobTitle)}`);
   };
 
   return (
@@ -112,36 +72,6 @@ const Hero = () => {
                 <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
                   Entry Level
                 </Button>
-              </div>
-            </div>
-
-            {/* Trending Jobs This Week */}
-            <div className="mt-6 pt-6 border-t border-border/30">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <TrendingUp className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-foreground">Trending Jobs This Week</span>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {loading ? (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Loading trending jobs...</span>
-                  </div>
-                ) : trendingJobs.length > 0 ? (
-                  trendingJobs.map((job) => (
-                    <Button 
-                      key={job.id}
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
-                      onClick={() => handleTrendingClick(job.job_title)}
-                    >
-                      {job.job_title}
-                    </Button>
-                  ))
-                ) : (
-                  <span className="text-sm text-muted-foreground">No trending jobs available</span>
-                )}
               </div>
             </div>
           </div>
