@@ -319,15 +319,15 @@ const CandidateDashboard = () => {
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                <span className="text-sm whitespace-nowrap">{item.label}</span>
                 {item.id === "applications" && applicationCount > 0 && (
-                  <Badge variant="secondary" className="ml-auto text-xs">
+                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">
                     {applicationCount}
                   </Badge>
                 )}
                 {item.id === "pipeline" && interviewCount > 0 && (
-                  <Badge variant="secondary" className="ml-auto text-xs">
+                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">
                     {interviewCount}
                   </Badge>
                 )}
