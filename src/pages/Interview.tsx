@@ -453,11 +453,11 @@ const Interview = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600" />
-          <p className="mt-4 text-gray-600 font-medium">Loading interview...</p>
-          <p className="mt-2 text-sm text-gray-400">Please wait while we prepare your questions</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center bg-card p-8 rounded-lg shadow-lg border">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-foreground font-medium">Loading interview...</p>
+          <p className="mt-2 text-sm text-muted-foreground">Please wait while we prepare your questions</p>
         </div>
       </div>
     );
@@ -505,7 +505,7 @@ const Interview = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-8 pb-8 text-center">
-            <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
+            <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
             <h2 className="text-2xl font-semibold mb-2">Interview Completed!</h2>
             <p className="text-muted-foreground mb-4">
               Thank you for completing the {stageName} for {jobTitle}
@@ -677,7 +677,7 @@ const Interview = () => {
                 </Button>
               )}
               {cameraReady && (
-                <Badge className="absolute top-2 right-2 bg-green-600">
+                <Badge className="absolute top-2 right-2 bg-success">
                   <Camera className="h-3 w-3 mr-1" />
                   Camera Ready
                 </Badge>
@@ -696,8 +696,8 @@ const Interview = () => {
               </ul>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-amber-50 p-3 rounded-lg">
-              <Video className="h-4 w-4 text-amber-600" />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-warning/10 p-3 rounded-lg">
+              <Video className="h-4 w-4 text-warning" />
               <span>You'll be prompted to share your screen and camera when you start</span>
             </div>
 
@@ -751,7 +751,7 @@ const Interview = () => {
                 REC
               </Badge>
             )}
-            <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${timeLeft <= 10 ? 'bg-red-100 text-red-700' : 'bg-muted'}`}>
+            <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${timeLeft <= 10 ? 'bg-destructive/10 text-destructive' : 'bg-muted'}`}>
               <Clock className="h-4 w-4" />
               <span className="font-mono font-semibold">{timeLeft}s</span>
             </div>
