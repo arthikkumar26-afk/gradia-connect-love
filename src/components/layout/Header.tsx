@@ -157,7 +157,7 @@ const Header = () => {
               to="/employer/login"
               className="text-sm font-medium text-foreground hover:text-accent transition-colors"
             >
-              Employers
+              Employer
             </Link>
 
             <Link
