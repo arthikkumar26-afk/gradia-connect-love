@@ -89,10 +89,6 @@ const Hero = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
               Trending Jobs This Week
             </h2>
-            <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
-              Discover hand-picked opportunities from our top partner companies. 
-              These roles are actively hiring and perfect for your career growth.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
