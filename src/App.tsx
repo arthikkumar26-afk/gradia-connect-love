@@ -62,6 +62,7 @@ import CandidateProfilePage from "./pages/employer/CandidateProfile";
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import TrendingJobsAdmin from "./pages/admin/TrendingJobs";
+import JobModeration from "./pages/admin/JobModeration";
 import OwnerLogin from "./pages/owner/Login";
 import OwnerDashboard from "./pages/owner/Dashboard";
 import OwnerInitialSetup from "./pages/owner/InitialSetup";
@@ -203,6 +204,7 @@ const App = () => (
                     <Route path="/admin/dashboard" element={<AdminDashboard />} />
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/trending-jobs" element={<TrendingJobsAdmin />} />
+                    <Route path="/admin/jobs" element={<JobModeration />} />
                     <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
                     <Route path="/admin/reports" element={<PlaceholderPage title="Reports & Analytics" />} />
                     <Route path="/admin/audit" element={<PlaceholderPage title="Audit Logs" />} />
