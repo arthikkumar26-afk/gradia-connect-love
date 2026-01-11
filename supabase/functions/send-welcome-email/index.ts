@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -7,6 +8,20 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation
+const MAX_NAME_LENGTH = 200;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(email: string): boolean {
+  return typeof email === 'string' && EMAIL_REGEX.test(email) && email.length <= 320;
+}
+
+function sanitizeInput(input: unknown, maxLength: number): string {
+  if (typeof input !== 'string') return '';
+  // Remove any HTML tags to prevent injection
+  return input.replace(/<[^>]*>/g, '').trim().slice(0, maxLength);
+}
 
 interface WelcomeEmailRequest {
   email: string;
@@ -224,25 +239,61 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, fullName, role, companyName }: WelcomeEmailRequest = await req.json();
-
-    if (!email || !fullName || !role) {
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: email, fullName, or role" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        JSON.stringify({ error: "Unauthorized - No valid token provided" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user for welcome email:", userId);
+
+    const rawData = await req.json();
+    
+    // Validate and sanitize input
+    const email = rawData.email;
+    const fullName = sanitizeInput(rawData.fullName, MAX_NAME_LENGTH);
+    const role = rawData.role;
+    const companyName = sanitizeInput(rawData.companyName, MAX_NAME_LENGTH);
+
+    if (!isValidEmail(email)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email address" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!fullName) {
+      return new Response(
+        JSON.stringify({ error: "Full name is required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     if (role !== "candidate" && role !== "employer" && role !== "sponsor") {
       return new Response(
         JSON.stringify({ error: "Invalid role. Must be 'candidate', 'employer', or 'sponsor'" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -267,7 +318,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: emailTemplate,
     });
 
-    console.log(`Welcome email sent successfully to ${email} (${role}):`, emailResponse);
+    console.log(`Welcome email sent successfully to ${email} (${role}) by user:`, userId);
 
     return new Response(
       JSON.stringify({ 
@@ -285,7 +336,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-welcome-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to send welcome email" }),
+      JSON.stringify({ error: "Failed to send welcome email" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

@@ -1,9 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation
+const MAX_TEXT_LENGTH = 5000;
+const MAX_TITLE_LENGTH = 200;
+
+function sanitizeInput(input: unknown, maxLength: number): string {
+  if (typeof input !== 'string') return '';
+  return input.trim().slice(0, maxLength);
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,19 +21,72 @@ serve(async (req) => {
   }
 
   try {
-    const { 
-      jobTitle, 
-      department, 
-      jobType, 
-      location, 
-      experienceRequired, 
-      skills: inputSkills,
-      isRefinement,
-      currentDescription,
-      currentRequirements,
-      currentSkills,
-      feedback
-    } = await req.json();
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - No valid token provided" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+
+    // Check if user has employer role
+    const { data: roleData } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'employer')
+      .single();
+
+    if (!roleData) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden - Only employers can generate job descriptions" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Authenticated employer:", userId);
+
+    const requestBody = await req.json();
+    
+    // Sanitize and validate all inputs
+    const jobTitle = sanitizeInput(requestBody.jobTitle, MAX_TITLE_LENGTH);
+    const department = sanitizeInput(requestBody.department, MAX_TITLE_LENGTH);
+    const jobType = sanitizeInput(requestBody.jobType, 50);
+    const location = sanitizeInput(requestBody.location, MAX_TITLE_LENGTH);
+    const experienceRequired = sanitizeInput(requestBody.experienceRequired, 100);
+    const inputSkills = sanitizeInput(requestBody.skills, 500);
+    const isRefinement = requestBody.isRefinement === true;
+    const currentDescription = sanitizeInput(requestBody.currentDescription, MAX_TEXT_LENGTH);
+    const currentRequirements = sanitizeInput(requestBody.currentRequirements, MAX_TEXT_LENGTH);
+    const currentSkills = sanitizeInput(requestBody.currentSkills, 500);
+    const feedback = sanitizeInput(requestBody.feedback, MAX_TEXT_LENGTH);
+
+    if (!jobTitle) {
+      return new Response(
+        JSON.stringify({ error: "Job title is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     console.log("Request type:", isRefinement ? "Refinement" : "Generation");
     console.log("Job details:", { jobTitle, department, jobType, location });
@@ -122,7 +185,7 @@ Format the response as JSON with three fields: "description", "requirements", an
     }
 
     const data = await response.json();
-    console.log("AI Response received");
+    console.log("AI Response received for user:", userId);
 
     const content = data.choices[0].message.content;
     
