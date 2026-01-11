@@ -129,7 +129,7 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center flex-shrink-0">
             <img 
               src={gradiaLogo} 
               alt="Gradia - Your Next Step" 
@@ -137,8 +137,8 @@ const Header = () => {
             />
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          {/* Desktop Navigation - Centered */}
+          <nav className="hidden lg:flex items-center justify-center flex-1 space-x-8">
             <Link
               to="/"
               className="text-sm font-medium text-foreground hover:text-accent transition-colors"
