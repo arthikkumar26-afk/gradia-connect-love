@@ -16,6 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { sponsorSignupSchema, type SponsorSignupFormData } from "@/lib/validations/sponsorSignup";
 import { signUpSponsor } from "@/lib/sponsorAuth";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 
 export default function SponsorSignup() {
   const [step, setStep] = useState(1);
@@ -282,7 +283,7 @@ export default function SponsorSignup() {
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
                   {/* Password */}
                   <FormField
                     control={form.control}
@@ -295,12 +296,13 @@ export default function SponsorSignup() {
                             <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                             <Input
                               type="password"
-                              placeholder="Create a password"
+                              placeholder="Create a strong password"
                               className="pl-10"
                               {...field}
                             />
                           </div>
                         </FormControl>
+                        <PasswordStrengthIndicator password={field.value} />
                         <FormMessage />
                       </FormItem>
                     )}

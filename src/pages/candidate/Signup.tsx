@@ -3,12 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Briefcase, FileText, TrendingUp, CheckCircle } from "lucide-react";
+import { ArrowLeft, Briefcase, FileText, TrendingUp } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useDevLogin } from "@/hooks/useDevLogin";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 
 const CandidateSignup = () => {
   const navigate = useNavigate();
@@ -18,7 +18,6 @@ const CandidateSignup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { handleDevLogin, isLoading: isDevLoginLoading } = useDevLogin('candidate');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -226,13 +225,14 @@ const CandidateSignup = () => {
               <Input
                 id="password"
                 type="password"
-                placeholder="At least 6 characters"
+                placeholder="Create a strong password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full"
               />
+              <PasswordStrengthIndicator password={password} />
             </div>
 
             <div className="space-y-2">
@@ -254,31 +254,6 @@ const CandidateSignup = () => {
             </Button>
           </form>
 
-          {/* Dev Login Section */}
-          {import.meta.env.DEV && (
-            <>
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-card px-4 text-muted-foreground">
-                    Quick Test
-                  </span>
-                </div>
-              </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="lg" 
-                className="w-full" 
-                onClick={handleDevLogin}
-                disabled={isLoading || isDevLoginLoading}
-              >
-                🚀 Dev Login (Test Candidate)
-              </Button>
-            </>
-          )}
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
