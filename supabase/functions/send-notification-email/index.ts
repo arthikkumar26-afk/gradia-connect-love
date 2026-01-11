@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -8,6 +9,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation
+const MAX_NAME_LENGTH = 200;
+const MAX_COMMENT_LENGTH = 2000;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function isValidEmail(email: string): boolean {
+  return typeof email === 'string' && EMAIL_REGEX.test(email) && email.length <= 320;
+}
+
+function sanitizeInput(input: unknown, maxLength: number): string {
+  if (typeof input !== 'string') return '';
+  // Remove any HTML tags to prevent injection
+  return input.replace(/<[^>]*>/g, '').trim().slice(0, maxLength);
+}
 
 interface NotificationRequest {
   type: 'stage_change' | 'comment_added' | 'document_uploaded' | 'offer_response';
@@ -116,9 +132,71 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const notificationData: NotificationRequest = await req.json();
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - No valid token provided" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
     
-    console.log('Sending email notification:', notificationData.type);
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user for notification:", userId);
+
+    const rawData = await req.json();
+
+    // Validate and sanitize input
+    const recipientEmail = rawData.recipientEmail;
+    if (!isValidEmail(recipientEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid recipient email" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const validTypes = ['stage_change', 'comment_added', 'document_uploaded', 'offer_response'];
+    if (!validTypes.includes(rawData.type)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid notification type" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const notificationData: NotificationRequest = {
+      type: rawData.type,
+      recipientEmail: recipientEmail,
+      recipientName: sanitizeInput(rawData.recipientName, MAX_NAME_LENGTH),
+      candidateName: sanitizeInput(rawData.candidateName, MAX_NAME_LENGTH),
+      jobTitle: sanitizeInput(rawData.jobTitle, MAX_NAME_LENGTH),
+      companyName: sanitizeInput(rawData.companyName, MAX_NAME_LENGTH) || "Gradia",
+      stage: sanitizeInput(rawData.stage, 100),
+      previousStage: sanitizeInput(rawData.previousStage, 100),
+      comment: sanitizeInput(rawData.comment, MAX_COMMENT_LENGTH),
+      commentAuthor: sanitizeInput(rawData.commentAuthor, MAX_NAME_LENGTH),
+      documentName: sanitizeInput(rawData.documentName, MAX_NAME_LENGTH),
+      offerAction: ['accepted', 'rejected', 'deferred'].includes(rawData.offerAction) ? rawData.offerAction : undefined,
+      deferredDate: sanitizeInput(rawData.deferredDate, 20),
+    };
+    
+    console.log('Sending email notification:', notificationData.type, 'for user:', userId);
 
     const { subject, html } = generateEmailContent(notificationData);
 
@@ -141,7 +219,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-notification-email function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Failed to send notification" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

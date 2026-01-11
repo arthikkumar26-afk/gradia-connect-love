@@ -1,10 +1,58 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation helpers
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.docx', '.doc'];
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword'
+];
+
+// PDF magic bytes
+const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46]; // %PDF
+// PNG magic bytes
+const PNG_MAGIC = [0x89, 0x50, 0x4E, 0x47];
+// JPEG magic bytes
+const JPEG_MAGIC = [0xFF, 0xD8, 0xFF];
+// DOCX is a ZIP file
+const ZIP_MAGIC = [0x50, 0x4B, 0x03, 0x04];
+
+function validateFileMagicBytes(buffer: ArrayBuffer, fileName: string): boolean {
+  const bytes = new Uint8Array(buffer.slice(0, 8));
+  const ext = fileName.toLowerCase();
+  
+  if (ext.endsWith('.pdf')) {
+    return bytes[0] === PDF_MAGIC[0] && bytes[1] === PDF_MAGIC[1] && 
+           bytes[2] === PDF_MAGIC[2] && bytes[3] === PDF_MAGIC[3];
+  }
+  if (ext.endsWith('.png')) {
+    return bytes[0] === PNG_MAGIC[0] && bytes[1] === PNG_MAGIC[1] && 
+           bytes[2] === PNG_MAGIC[2] && bytes[3] === PNG_MAGIC[3];
+  }
+  if (ext.endsWith('.jpg') || ext.endsWith('.jpeg')) {
+    return bytes[0] === JPEG_MAGIC[0] && bytes[1] === JPEG_MAGIC[1] && bytes[2] === JPEG_MAGIC[2];
+  }
+  if (ext.endsWith('.docx')) {
+    return bytes[0] === ZIP_MAGIC[0] && bytes[1] === ZIP_MAGIC[1] && 
+           bytes[2] === ZIP_MAGIC[2] && bytes[3] === ZIP_MAGIC[3];
+  }
+  // DOC files have various signatures, allow them through with MIME check
+  if (ext.endsWith('.doc')) {
+    return true;
+  }
+  return false;
+}
 
 // Extract text from DOCX file
 async function extractDocxText(arrayBuffer: ArrayBuffer): Promise<string> {
@@ -65,6 +113,35 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - No valid token provided" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log("Authenticated user:", userId);
+
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
@@ -84,16 +161,40 @@ serve(async (req) => {
     const mimeType = file.type || "application/octet-stream";
     const fileName = file.name.toLowerCase();
 
-    // Enforce 20MB limit
-    const MAX_SIZE = 20 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
       return new Response(JSON.stringify({ error: "File too large. Max size is 20MB." }), {
         status: 413,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("Processing file:", file.name, "Type:", mimeType, "Size:", file.size);
+    // Validate file extension
+    const hasValidExtension = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    if (!hasValidExtension) {
+      return new Response(
+        JSON.stringify({ error: `Invalid file type. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate MIME type
+    if (!ALLOWED_MIME_TYPES.includes(mimeType) && mimeType !== "application/octet-stream") {
+      return new Response(
+        JSON.stringify({ error: "Invalid file MIME type" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate file magic bytes to prevent spoofed extensions
+    if (!validateFileMagicBytes(arrayBuffer, fileName)) {
+      return new Response(
+        JSON.stringify({ error: "File content does not match file extension" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Processing file:", file.name, "Type:", mimeType, "Size:", file.size, "User:", userId);
 
     let messageContent: any[];
     
@@ -314,7 +415,7 @@ Be thorough - scan the entire document for contact information and educational/p
     }
 
     const extractedData = JSON.parse(toolCall.function.arguments);
-    console.log("Extracted data:", JSON.stringify(extractedData));
+    console.log("Extracted data for user:", userId);
 
     return new Response(JSON.stringify(extractedData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
