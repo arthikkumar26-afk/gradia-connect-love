@@ -89,23 +89,46 @@ const Interview = () => {
 
       console.log('Interview: Response received', { data, fnError });
 
-      if (fnError || data?.error) {
-        throw new Error(data?.error || fnError?.message || 'Failed to load interview');
+      if (fnError) {
+        console.error('Interview: Function error', fnError);
+        throw new Error(fnError.message || 'Failed to connect to interview service');
+      }
+
+      if (data?.error) {
+        console.error('Interview: Data error', data.error);
+        throw new Error(data.error);
+      }
+
+      if (!data) {
+        throw new Error('No response received from interview service');
+      }
+
+      // Validate required fields
+      if (!data.responseId) {
+        console.error('Interview: Missing responseId in data', data);
+        throw new Error('Invalid interview response - missing response ID');
       }
 
       setResponseId(data.responseId);
       setQuestions(data.questions || []);
       setAnswers(new Array((data.questions || []).length).fill(null));
-      setCandidateName(data.candidateName);
-      setJobTitle(data.jobTitle);
-      setStageName(data.stageName);
+      setCandidateName(data.candidateName || 'Candidate');
+      setJobTitle(data.jobTitle || 'Position');
+      setStageName(data.stageName || 'Interview');
       setIsVideoStage(data.isVideoStage || false);
       setVideoInstructions(data.videoInstructions || null);
-      console.log('Interview: State set successfully, questions:', (data.questions || []).length, 'isVideoStage:', data.isVideoStage);
+      
+      console.log('Interview: State set successfully', {
+        questionsCount: (data.questions || []).length,
+        isVideoStage: data.isVideoStage,
+        stageName: data.stageName,
+        responseId: data.responseId
+      });
+      
       setLoading(false);
     } catch (err: any) {
       console.error('Interview: Error initializing', err);
-      setError(err.message);
+      setError(err.message || 'Failed to load interview. Please try again.');
       setLoading(false);
     }
   }, [token]);
@@ -449,7 +472,7 @@ const Interview = () => {
     }
   };
 
-  console.log('Interview: Render state - loading:', loading, 'error:', error, 'started:', started, 'completed:', completed, 'questions:', questions.length);
+  console.log('Interview: Render state - loading:', loading, 'error:', error, 'started:', started, 'completed:', completed, 'questions:', questions.length, 'isVideoStage:', isVideoStage);
 
   if (loading) {
     return (
@@ -459,6 +482,27 @@ const Interview = () => {
           <p className="mt-4 text-foreground font-medium">Loading interview...</p>
           <p className="mt-2 text-sm text-muted-foreground">Please wait while we prepare your questions</p>
         </div>
+      </div>
+    );
+  }
+
+  // Handle case where no questions loaded and it's not a video stage
+  if (!loading && !error && !isVideoStage && questions.length === 0 && !completed) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="h-12 w-12 text-warning mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Interview Setup</h2>
+            <p className="text-muted-foreground mb-6">
+              We're preparing your interview questions. Please wait a moment and try again.
+            </p>
+            <Button onClick={initInterview} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Load Interview
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
