@@ -77,13 +77,8 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Trending Jobs Section */}
+        {/* Jobs Section */}
         <div className="mt-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-              Trending Jobs This Week
-            </h2>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
             {featuredJobs.map((job) => (
