@@ -390,99 +390,155 @@ const CandidateDashboard = () => {
                         <Sparkles className="h-5 w-5 text-accent" />
                       </div>
                       <CardTitle className="text-lg font-semibold text-foreground">
-                        AI Resume Analysis
+                        AI Detected Profile Details
                       </CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      {/* Resume Preview */}
-                      <div className="flex-shrink-0">
-                        {profile?.resume_url ? (
-                          <div className="w-32 h-40 bg-muted rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden">
-                            <FileText className="h-12 w-12 text-muted-foreground mb-2" />
-                            <span className="text-xs text-muted-foreground text-center px-2">Resume Uploaded</span>
-                          </div>
-                        ) : (
-                          <div className="w-32 h-40 bg-muted/50 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:bg-muted transition-colors">
-                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                            <span className="text-xs text-muted-foreground text-center px-2">Upload Resume</span>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      {/* Profile Picture & Resume Score */}
+                      <div className="flex flex-col sm:flex-row lg:flex-col items-center gap-4">
+                        {/* Profile Picture */}
+                        <div className="flex-shrink-0">
+                          {profile?.profile_picture ? (
+                            <div className="w-28 h-28 rounded-full border-4 border-accent/30 overflow-hidden shadow-lg">
+                              <img 
+                                src={profile.profile_picture} 
+                                alt={profile?.full_name || 'Profile'} 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-28 h-28 rounded-full border-4 border-dashed border-border bg-muted flex items-center justify-center">
+                              <User className="h-12 w-12 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
 
-                      {/* Resume Score & Details */}
-                      <div className="flex-1 flex flex-col md:flex-row gap-6">
-                        {/* Circular Score */}
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="relative w-24 h-24">
-                            <svg className="w-24 h-24 transform -rotate-90">
+                        {/* Resume Score */}
+                        <div className="flex flex-col items-center">
+                          <div className="relative w-20 h-20">
+                            <svg className="w-20 h-20 transform -rotate-90">
                               <circle
-                                cx="48"
-                                cy="48"
-                                r="40"
+                                cx="40"
+                                cy="40"
+                                r="32"
                                 stroke="currentColor"
-                                strokeWidth="8"
+                                strokeWidth="6"
                                 fill="transparent"
                                 className="text-muted"
                               />
                               <circle
-                                cx="48"
-                                cy="48"
-                                r="40"
+                                cx="40"
+                                cy="40"
+                                r="32"
                                 stroke="currentColor"
-                                strokeWidth="8"
+                                strokeWidth="6"
                                 fill="transparent"
-                                strokeDasharray={251.2}
-                                strokeDashoffset={251.2 * (1 - (profile?.resume_url ? 0.78 : 0))}
+                                strokeDasharray={201}
+                                strokeDashoffset={201 * (1 - (profile?.resume_url ? 0.78 : 0))}
                                 className="text-accent transition-all duration-1000"
                                 strokeLinecap="round"
                               />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <span className="text-2xl font-bold text-foreground">
+                              <span className="text-xl font-bold text-foreground">
                                 {profile?.resume_url ? '78' : '0'}%
                               </span>
                             </div>
                           </div>
-                          <span className="text-sm font-medium text-muted-foreground mt-2">Resume Score</span>
+                          <span className="text-xs font-medium text-muted-foreground mt-1">Resume Score</span>
+                        </div>
+                      </div>
+
+                      {/* Detected Profile Details */}
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-foreground mb-3">AI Detected Details</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {/* Name */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Name</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.full_name || 'Not detected'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Date of Birth */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Date of Birth</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                Not specified
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Email */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Email</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.email || 'Not detected'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Gender */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Gender</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                Not specified
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Languages Known */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Languages Known</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                English, Hindi
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Mobile Number */}
+                          <div className="flex items-center gap-2 p-2.5 bg-muted/50 rounded-lg">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <span className="text-xs text-muted-foreground block">Mobile Number</span>
+                              <span className="text-sm font-medium text-foreground truncate block">
+                                {profile?.mobile || 'Not detected'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Detected Details */}
-                        <div className="flex-1 space-y-3">
-                          <h4 className="text-sm font-semibold text-foreground">Detected Details</h4>
-                          {profile?.resume_url ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              <div className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span className="text-muted-foreground">Experience: {profile?.experience_level || 'Entry'}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span className="text-muted-foreground">Role: {profile?.preferred_role || 'Not specified'}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span className="text-muted-foreground">Location: {profile?.location || 'Not specified'}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span className="text-muted-foreground">Contact: Verified</span>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">
-                              Upload your resume to get AI-powered analysis and improve your job match score.
-                            </p>
-                          )}
+                        {/* Action Button */}
+                        <div className="mt-4 flex gap-2">
                           <Button 
                             variant="outline" 
-                            size="sm" 
-                            className="mt-2"
+                            size="sm"
                             onClick={() => setActiveMenu("resume")}
                           >
                             <FileText className="h-4 w-4 mr-2" />
                             {profile?.resume_url ? 'Update Resume' : 'Upload Resume'}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => navigate("/profile/edit")}
+                          >
+                            <User className="h-4 w-4 mr-2" />
+                            Edit Profile
                           </Button>
                         </div>
                       </div>
