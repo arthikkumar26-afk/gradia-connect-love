@@ -23,19 +23,9 @@ const Hero = () => {
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
       <div className="relative z-10 container mx-auto px-4 py-12 lg:py-16">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Main Headline */}
-          <div className="animate-fade-in">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-balance">
-              Connect with Your
-              <span className="block text-transparent bg-gradient-to-r from-accent to-secondary bg-clip-text">
-                Dream Career
-              </span>
-            </h1>
-          </div>
-
+        <div className="max-w-4xl mx-auto">
           {/* Search Bar */}
-          <div className="animate-slide-up max-w-2xl mx-auto mb-12">
+          <div className="animate-slide-up max-w-2xl mx-auto mb-6">
             <div className="bg-background/95 backdrop-blur rounded-xl p-6 shadow-large">
               <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
@@ -77,6 +67,13 @@ const Hero = () => {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Headline - Small, left-aligned, below search */}
+          <div className="animate-fade-in text-left max-w-2xl mx-auto mb-8">
+            <h1 className="text-lg md:text-xl font-semibold text-primary-foreground/90">
+              Connect with Your <span className="text-transparent bg-gradient-to-r from-accent to-secondary bg-clip-text">Dream Career</span>
+            </h1>
           </div>
         </div>
 
