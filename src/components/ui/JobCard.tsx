@@ -5,12 +5,9 @@ import { Button } from "@/components/ui/button";
 import { 
   MapPin, 
   Clock, 
-  DollarSign, 
   Building2, 
-  Users, 
   Bookmark, 
-  BookmarkCheck,
-  ExternalLink 
+  BookmarkCheck
 } from "lucide-react";
 import { useState } from "react";
 
@@ -37,12 +34,8 @@ const JobCard = ({
   location,
   type,
   category,
-  salary,
   experience,
-  posted,
-  description,
   skills,
-  applicants,
   featured = false
 }: JobCardProps) => {
   const [isSaved, setIsSaved] = useState(false);
@@ -69,110 +62,87 @@ const JobCard = ({
   };
 
   return (
-    <Card className={`group hover:shadow-medium transition-all duration-200 hover:-translate-y-1 ${featured ? 'ring-2 ring-accent shadow-glow' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">{getCategoryIcon(category)}</span>
+    <Card className={`group hover:shadow-medium transition-all duration-200 hover:-translate-y-1 h-full flex flex-col ${featured ? 'ring-2 ring-accent shadow-glow' : ''}`}>
+      <CardHeader className="p-3 pb-2">
+        <div className="flex items-start justify-between gap-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+              <span className="text-sm">{getCategoryIcon(category)}</span>
               {featured && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                   Featured
                 </Badge>
               )}
-              <Badge className={getTypeColor(type)}>
+              <Badge className={`${getTypeColor(type)} text-[10px] px-1.5 py-0`}>
                 {type === "fresher" ? "Fresher" : 
                  type === "experienced" ? "Experienced" :
                  type.replace("-", " ")}
               </Badge>
             </div>
-            <CardTitle className="text-lg group-hover:text-accent transition-colors">
+            <CardTitle className="text-sm font-semibold group-hover:text-accent transition-colors line-clamp-2 leading-tight">
               <Link to={`/job/${id}`} className="hover:underline">
                 {title}
               </Link>
             </CardTitle>
-            <CardDescription className="flex items-center gap-1 mt-1">
-              <Building2 className="h-4 w-4" />
-              {company}
+            <CardDescription className="flex items-center gap-1 mt-1 text-xs">
+              <Building2 className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{company}</span>
             </CardDescription>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleSave}
-            className="text-muted-foreground hover:text-accent"
+            className="text-muted-foreground hover:text-accent h-6 w-6 p-0"
           >
             {isSaved ? (
-              <BookmarkCheck className="h-4 w-4" />
+              <BookmarkCheck className="h-3.5 w-3.5" />
             ) : (
-              <Bookmark className="h-4 w-4" />
+              <Bookmark className="h-3.5 w-3.5" />
             )}
           </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="p-3 pt-0 flex-1 flex flex-col gap-2">
         {/* Job Details */}
-        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
-            {location}
+            <MapPin className="h-3 w-3" />
+            <span className="truncate max-w-[80px]">{location}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            {experience}
+            <Clock className="h-3 w-3" />
+            <span>{experience}</span>
           </div>
-          {salary && (
-            <div className="flex items-center gap-1">
-              <DollarSign className="h-4 w-4" />
-              {salary}
-            </div>
-          )}
-          {applicants && (
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {applicants} applicants
-            </div>
-          )}
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {description}
-        </p>
-
         {/* Skills */}
-        <div className="flex flex-wrap gap-2">
-          {skills.slice(0, 4).map((skill) => (
-            <Badge key={skill} variant="outline" className="text-xs">
+        <div className="flex flex-wrap gap-1 flex-1">
+          {skills.slice(0, 3).map((skill) => (
+            <Badge key={skill} variant="outline" className="text-[10px] px-1.5 py-0 h-5">
               {skill}
             </Badge>
           ))}
-          {skills.length > 4 && (
-            <Badge variant="outline" className="text-xs">
-              +{skills.length - 4} more
+          {skills.length > 3 && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
+              +{skills.length - 3}
             </Badge>
           )}
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-xs text-muted-foreground">
-            Posted {posted}
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/job/${id}`}>
-                View Details
-                <ExternalLink className="h-3 w-3 ml-1" />
-              </Link>
-            </Button>
-            <Button variant="default" size="sm" asChild>
-              <Link to={`/job/${id}/apply`}>
-                Apply Now
-              </Link>
-            </Button>
-          </div>
+        <div className="flex gap-1.5 mt-auto">
+          <Button variant="outline" size="sm" className="flex-1 h-7 text-xs px-2" asChild>
+            <Link to={`/job/${id}`}>
+              Details
+            </Link>
+          </Button>
+          <Button variant="default" size="sm" className="flex-1 h-7 text-xs px-2" asChild>
+            <Link to={`/job/${id}/apply`}>
+              Apply
+            </Link>
+          </Button>
         </div>
       </CardContent>
     </Card>
