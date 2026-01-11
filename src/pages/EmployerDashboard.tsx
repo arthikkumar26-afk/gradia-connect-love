@@ -24,7 +24,8 @@ import {
   Bell,
   Mail,
   LogOut,
-  User
+  User,
+  Mic
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -153,6 +154,7 @@ const EmployerDashboard = () => {
     { id: "talent-pool", label: "Talent Pool", icon: Users, path: "/employer/talent-pool" },
     { id: "teams", label: "Teams", icon: UsersRound, path: "/employer/teams" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
+    { id: "viva", label: "Viva", icon: Mic, path: "/employer/viva" },
     { id: "placements", label: "Placements", icon: UserCheck, path: "/employer/placements" },
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
@@ -323,6 +325,7 @@ const EmployerDashboard = () => {
                    activeMenu === "talent-pool" ? "Talent Pool" :
                    activeMenu === "teams" ? "Teams" :
                    activeMenu === "interview-pipeline" ? "Interview Pipeline" :
+                   activeMenu === "viva" ? "Viva" :
                    activeMenu === "placements" ? "Placements" :
                    activeMenu === "email-templates" ? "Email Templates" :
                    activeMenu === "approvals" ? "Approvals" :
@@ -427,6 +430,12 @@ const EmployerDashboard = () => {
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
             {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
+            {activeMenu === "viva" && (
+              <div className="bg-card rounded-xl border border-border p-6 shadow-soft">
+                <h2 className="text-xl font-semibold text-foreground mb-4">Viva</h2>
+                <p className="text-muted-foreground">Viva interview management coming soon.</p>
+              </div>
+            )}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
           </div>
         </main>
