@@ -26,6 +26,24 @@ Focus on:
 - Basic skill assessment
 - Career progression understanding`
   },
+  'AI Phone Interview': {
+    questionCount: 10,
+    questionType: 'mcq',
+    timePerQuestion: 90,
+    promptTemplate: `Generate 10 MCQ questions for an AI phone screening interview for a {jobTitle} position.
+Skills required: {skills}
+Requirements: {requirements}
+
+This is an automated AI-conducted phone interview. Focus on:
+- Role-specific knowledge and skills
+- Problem-solving abilities
+- Situational judgment scenarios
+- Communication and professionalism
+- Critical thinking questions
+
+Questions should be appropriate for an automated phone interview format.
+Make questions progressively harder from moderate to challenging.`
+  },
   'Technical Assessment': {
     questionCount: 10,
     questionType: 'mcq',
@@ -401,6 +419,80 @@ function getFallbackQuestions(stageName: string, skills: string[], jobTitle: str
           options: ["On-site only", "Remote only", "Hybrid", "Flexible - any arrangement"],
           correctAnswer: null,
           explanation: "Work preference"
+        }
+      ];
+
+    case 'AI Phone Interview':
+      return [
+        {
+          question: `What motivated you to apply for the ${jobTitle} position?`,
+          type: "mcq",
+          options: ["Career growth opportunity", "Passion for the field", "Salary and benefits", "Company reputation"],
+          correctAnswer: null,
+          explanation: "Understanding candidate motivation"
+        },
+        {
+          question: "How do you stay updated with the latest developments in your field?",
+          type: "mcq",
+          options: ["Professional courses and certifications", "Industry publications and journals", "Networking and conferences", "All of the above"],
+          correctAnswer: 3,
+          explanation: "Professional development approach"
+        },
+        {
+          question: "When faced with a challenging problem, what is your typical approach?",
+          type: "mcq",
+          options: ["Ask for help immediately", "Break it down and analyze systematically", "Avoid and move to easier tasks", "Work on it alone without consulting anyone"],
+          correctAnswer: 1,
+          explanation: "Problem-solving approach"
+        },
+        {
+          question: "How would you handle a situation where you disagree with your supervisor's decision?",
+          type: "mcq",
+          options: ["Follow silently without questioning", "Express concerns respectfully and provide alternatives", "Ignore and do what you think is right", "Complain to colleagues"],
+          correctAnswer: 1,
+          explanation: "Professional communication skills"
+        },
+        {
+          question: "What do you consider your greatest professional strength?",
+          type: "mcq",
+          options: ["Technical expertise", "Communication and teamwork", "Problem-solving ability", "Adaptability and learning"],
+          correctAnswer: null,
+          explanation: "Self-awareness assessment"
+        },
+        {
+          question: "How do you prioritize when you have multiple urgent tasks?",
+          type: "mcq",
+          options: ["Work on the easiest task first", "Assess impact and deadlines systematically", "Ask supervisor to decide", "Work overtime to complete everything at once"],
+          correctAnswer: 1,
+          explanation: "Time management skills"
+        },
+        {
+          question: "Describe your ideal work environment.",
+          type: "mcq",
+          options: ["Highly structured with clear guidelines", "Flexible with autonomy", "Collaborative team setting", "A mix of structure and flexibility"],
+          correctAnswer: null,
+          explanation: "Work preference understanding"
+        },
+        {
+          question: "How do you handle constructive criticism?",
+          type: "mcq",
+          options: ["Take it personally and get defensive", "Listen, reflect, and implement improvements", "Ignore if you disagree", "Only accept from senior management"],
+          correctAnswer: 1,
+          explanation: "Growth mindset assessment"
+        },
+        {
+          question: "What would you do if you realized you made a mistake that could affect the team?",
+          type: "mcq",
+          options: ["Hide it and hope no one notices", "Admit it immediately and work on a solution", "Blame external factors", "Wait to see if it becomes a problem"],
+          correctAnswer: 1,
+          explanation: "Accountability and integrity"
+        },
+        {
+          question: "Where do you see yourself professionally in the next 2-3 years?",
+          type: "mcq",
+          options: ["In a leadership position", "Deepening technical expertise", "Exploring different roles", "Growing with the organization"],
+          correctAnswer: null,
+          explanation: "Career aspiration alignment"
         }
       ];
 
