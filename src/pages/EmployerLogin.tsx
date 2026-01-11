@@ -9,7 +9,6 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useDevLogin } from "@/hooks/useDevLogin";
 
 const EmployerLogin = () => {
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ const EmployerLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { handleDevLogin, isLoading: isDevLoginLoading } = useDevLogin('employer');
   
   const from = (location.state as any)?.from || "/employer/dashboard";
 
@@ -155,28 +153,6 @@ const EmployerLogin = () => {
               {isLoading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
-
-          {/* Dev Login Section */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-card px-4 text-muted-foreground">
-                Quick Test
-              </span>
-            </div>
-          </div>
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="lg" 
-            className="w-full" 
-            onClick={handleDevLogin}
-            disabled={isLoading || isDevLoginLoading}
-          >
-            🚀 Dev Login (Test Employer)
-          </Button>
 
           {/* Divider */}
           <div className="relative my-6">
