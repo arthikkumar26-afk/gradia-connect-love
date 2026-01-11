@@ -46,6 +46,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StageInterviewScheduleModal } from "./StageInterviewScheduleModal";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
+import { InterviewProgressTracker } from "./InterviewProgressTracker";
 import { useStatusNotification } from "@/hooks/useStatusNotification";
 
 interface InterviewStage {
@@ -697,6 +698,12 @@ export const CandidateFullProfile = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Real-time Interview Progress Tracker */}
+            <InterviewProgressTracker 
+              interviewCandidateId={candidate.interviewCandidateId}
+              candidateName={candidate.name}
+            />
 
             {/* Contact Info */}
             <Card>
