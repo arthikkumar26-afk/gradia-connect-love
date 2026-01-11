@@ -23,17 +23,27 @@ const EmployerLogin = () => {
   const from = (location.state as any)?.from || "/employer/dashboard";
 
   useEffect(() => {
-    if (isAuthenticated && profile?.role === "employer") {
-      navigate(from);
+    if (isAuthenticated && profile) {
+      if (profile.role === "employer") {
+        navigate(from);
+      } else {
+        // User logged in but is not an employer - show error and logout
+        toast({
+          title: "Access Denied",
+          description: "This login is for employers only. Please use the candidate login instead.",
+          variant: "destructive",
+        });
+        supabase.auth.signOut();
+      }
     }
-  }, [isAuthenticated, profile, navigate, from]);
+  }, [isAuthenticated, profile, navigate, from, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -44,6 +54,36 @@ const EmployerLogin = () => {
           description: error.message,
           variant: "destructive",
         });
+        setIsLoading(false);
+        return;
+      }
+
+      // Check the user's role from profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        toast({
+          title: "Profile Not Found",
+          description: "Please complete your employer registration first.",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      if (profileData.role !== "employer") {
+        toast({
+          title: "Access Denied",
+          description: `This login is for employers only. Your account is registered as a ${profileData.role}. Please use the correct login page.`,
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        setIsLoading(false);
         return;
       }
 
@@ -51,6 +91,9 @@ const EmployerLogin = () => {
         title: "Login Successful",
         description: "Welcome back!",
       });
+      
+      // Navigate to employer dashboard
+      navigate(from);
     } catch (error: any) {
       toast({
         title: "Error",
