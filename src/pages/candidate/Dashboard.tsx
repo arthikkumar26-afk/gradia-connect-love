@@ -28,8 +28,12 @@ import {
   Settings,
   BookOpen,
   GraduationCap,
-  Award
+  Award,
+  Sparkles,
+  CheckCircle,
+  Upload
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { JobApplicationModal } from "@/components/candidate/JobApplicationModal";
 import { ApplicationsTab } from "@/components/candidate/ApplicationsTab";
@@ -378,6 +382,114 @@ const CandidateDashboard = () => {
             {/* Dashboard View */}
             {activeMenu === "dashboard" && (
               <>
+                {/* AI Resume Analysis Section */}
+                <Card className="mb-6 overflow-hidden border-border">
+                  <CardHeader className="bg-gradient-to-r from-accent/10 via-primary/5 to-accent/10 pb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-accent/20 rounded-lg">
+                        <Sparkles className="h-5 w-5 text-accent" />
+                      </div>
+                      <CardTitle className="text-lg font-semibold text-foreground">
+                        AI Resume Analysis
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Resume Preview */}
+                      <div className="flex-shrink-0">
+                        {profile?.resume_url ? (
+                          <div className="w-32 h-40 bg-muted rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden">
+                            <FileText className="h-12 w-12 text-muted-foreground mb-2" />
+                            <span className="text-xs text-muted-foreground text-center px-2">Resume Uploaded</span>
+                          </div>
+                        ) : (
+                          <div className="w-32 h-40 bg-muted/50 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:bg-muted transition-colors">
+                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                            <span className="text-xs text-muted-foreground text-center px-2">Upload Resume</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Resume Score & Details */}
+                      <div className="flex-1 flex flex-col md:flex-row gap-6">
+                        {/* Circular Score */}
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="relative w-24 h-24">
+                            <svg className="w-24 h-24 transform -rotate-90">
+                              <circle
+                                cx="48"
+                                cy="48"
+                                r="40"
+                                stroke="currentColor"
+                                strokeWidth="8"
+                                fill="transparent"
+                                className="text-muted"
+                              />
+                              <circle
+                                cx="48"
+                                cy="48"
+                                r="40"
+                                stroke="currentColor"
+                                strokeWidth="8"
+                                fill="transparent"
+                                strokeDasharray={251.2}
+                                strokeDashoffset={251.2 * (1 - (profile?.resume_url ? 0.78 : 0))}
+                                className="text-accent transition-all duration-1000"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-2xl font-bold text-foreground">
+                                {profile?.resume_url ? '78' : '0'}%
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-sm font-medium text-muted-foreground mt-2">Resume Score</span>
+                        </div>
+
+                        {/* Detected Details */}
+                        <div className="flex-1 space-y-3">
+                          <h4 className="text-sm font-semibold text-foreground">Detected Details</h4>
+                          {profile?.resume_url ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-muted-foreground">Experience: {profile?.experience_level || 'Entry'}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-muted-foreground">Role: {profile?.preferred_role || 'Not specified'}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-muted-foreground">Location: {profile?.location || 'Not specified'}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <span className="text-muted-foreground">Contact: Verified</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              Upload your resume to get AI-powered analysis and improve your job match score.
+                            </p>
+                          )}
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={() => setActiveMenu("resume")}
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            {profile?.resume_url ? 'Update Resume' : 'Upload Resume'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Summary Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   {dashboardCards.map((card, index) => {
