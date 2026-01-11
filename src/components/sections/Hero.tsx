@@ -98,37 +98,52 @@ const Hero = () => {
                 </Button>
               </form>
               
-              {/* Trending Jobs This Week - Below Search */}
-              <div className="mt-4 pt-4 border-t border-border/20">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <TrendingUp className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-medium text-foreground">Trending Jobs This Week</span>
-                </div>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {loading ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm">Loading trending jobs...</span>
-                    </div>
-                  ) : trendingJobs.length > 0 ? (
-                    trendingJobs.map((job) => (
-                      <Button 
-                        key={job.id}
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
-                        onClick={() => handleTrendingClick(job.job_title)}
-                      >
-                        {job.job_title}
-                      </Button>
-                    ))
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No trending jobs available</span>
-                  )}
-                </div>
+              {/* Quick Filters */}
+              <div className="flex flex-wrap gap-2 mt-4 justify-center">
+                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
+                  Software Engineering
+                </Button>
+                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
+                  Education
+                </Button>
+                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
+                  Remote
+                </Button>
+                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
+                  Entry Level
+                </Button>
               </div>
             </div>
 
+            {/* Trending Jobs This Week */}
+            <div className="mt-6 pt-6 border-t border-border/30">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <TrendingUp className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-foreground">Trending Jobs This Week</span>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {loading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">Loading trending jobs...</span>
+                  </div>
+                ) : trendingJobs.length > 0 ? (
+                  trendingJobs.map((job) => (
+                    <Button 
+                      key={job.id}
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
+                      onClick={() => handleTrendingClick(job.job_title)}
+                    >
+                      {job.job_title}
+                    </Button>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">No trending jobs available</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
