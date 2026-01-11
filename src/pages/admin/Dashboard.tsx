@@ -12,7 +12,7 @@ import {
   Settings,
   BarChart3,
   FileText,
-  Bell
+  
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -87,12 +87,12 @@ const AdminDashboard = () => {
   ];
 
   const quickActions = [
-    { title: "User Management", description: "Manage platform users", icon: Users },
-    { title: "Job Moderation", description: "Review and moderate jobs", icon: Briefcase },
-    { title: "Reports", description: "View analytics reports", icon: BarChart3 },
-    { title: "Audit Logs", description: "View system activities", icon: FileText },
-    { title: "Notifications", description: "System notifications", icon: Bell },
-    { title: "Settings", description: "Platform settings", icon: Settings },
+    { title: "User Management", description: "Manage platform users", icon: Users, path: "/admin/users" },
+    { title: "Trending Jobs", description: "Manage homepage trending jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
+    { title: "Job Moderation", description: "Review and moderate jobs", icon: Briefcase, path: "/admin/jobs" },
+    { title: "Reports", description: "View analytics reports", icon: BarChart3, path: "/admin/reports" },
+    { title: "Audit Logs", description: "View system activities", icon: FileText, path: "/admin/audit" },
+    { title: "Settings", description: "Platform settings", icon: Settings, path: "/admin/settings" },
   ];
 
   return (
@@ -142,7 +142,11 @@ const AdminDashboard = () => {
         <h2 className="text-2xl font-bold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {quickActions.map((action, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card 
+              key={index} 
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => navigate(action.path)}
+            >
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-muted">
