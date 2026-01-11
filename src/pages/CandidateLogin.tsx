@@ -41,7 +41,7 @@ const CandidateLogin = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -52,6 +52,36 @@ const CandidateLogin = () => {
           description: error.message,
           variant: "destructive",
         });
+        setIsLoading(false);
+        return;
+      }
+
+      // Check the user's role from profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        toast({
+          title: "Profile Not Found",
+          description: "Please complete your profile registration first.",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        return;
+      }
+
+      if (profileData.role !== "candidate") {
+        toast({
+          title: "Access Denied",
+          description: `This login is for candidates only. Your account is registered as ${profileData.role}. Please use the correct login page.`,
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        setIsLoading(false);
         return;
       }
 
@@ -59,6 +89,9 @@ const CandidateLogin = () => {
         title: "Login Successful",
         description: "Welcome back!",
       });
+      
+      // Navigate to candidate dashboard
+      navigate("/candidate/dashboard", { replace: true });
     } catch (error: any) {
       toast({
         title: "Error",
