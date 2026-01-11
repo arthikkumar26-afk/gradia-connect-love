@@ -742,11 +742,32 @@ const Interview = () => {
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground bg-warning/10 p-3 rounded-lg">
               <Video className="h-4 w-4 text-warning" />
-              <span>You'll be prompted to share your screen and camera when you start</span>
+              <span>You'll be prompted to share your screen when you start. Camera is optional but recommended.</span>
             </div>
 
-            <Button onClick={handleStart} className="w-full" size="lg" disabled={!cameraReady}>
-              {cameraReady ? 'Start Interview' : 'Enable Camera First'}
+            <Button onClick={handleStart} className="w-full" size="lg">
+              {cameraReady ? 'Start Interview' : 'Start Interview (Camera Optional)'}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Safety check for questions
+  if (!questions || questions.length === 0 || currentIndex >= questions.length) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="h-12 w-12 text-warning mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Loading Questions</h2>
+            <p className="text-muted-foreground mb-6">
+              Please wait while we prepare your interview questions...
+            </p>
+            <Button onClick={initInterview} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Reload Interview
             </Button>
           </CardContent>
         </Card>
@@ -755,6 +776,28 @@ const Interview = () => {
   }
 
   const currentQuestion = questions[currentIndex];
+  
+  // Additional safety check for current question
+  if (!currentQuestion || !currentQuestion.options) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Question Error</h2>
+            <p className="text-muted-foreground mb-6">
+              There was an issue loading this question. Please try again.
+            </p>
+            <Button onClick={initInterview} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Reload Interview
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   const progress = ((currentIndex + 1) / questions.length) * 100;
 
   return (
@@ -812,7 +855,7 @@ const Interview = () => {
               onValueChange={(val) => handleAnswer(parseInt(val))}
               className="space-y-3"
             >
-              {currentQuestion.options.map((option, idx) => (
+              {(currentQuestion.options || []).map((option, idx) => (
                 <div
                   key={idx}
                   className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
@@ -825,7 +868,7 @@ const Interview = () => {
                   <RadioGroupItem value={idx.toString()} id={`option-${idx}`} />
                   <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
                     <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
-                    {option}
+                    {typeof option === 'string' ? option : JSON.stringify(option)}
                   </Label>
                 </div>
               ))}

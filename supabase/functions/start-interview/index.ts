@@ -257,21 +257,37 @@ serve(async (req) => {
 The candidate applied for: ${job.job_title}
 Candidate name: ${candidate.full_name}
 
-Return ONLY a valid JSON array with this format:
+CRITICAL: Return ONLY a valid JSON array. Each question MUST have these exact fields:
 [
   {
-    "question": "The question text...",
-    "type": "${stageConfig.questionType === 'mixed' ? 'mcq or text' : stageConfig.questionType}",
-    "options": ["Option A", "Option B", "Option C", "Option D"], // only for MCQ
-    "correctAnswer": 0, // index 0-3 for MCQ, null for text
-    "explanation": "Brief explanation",
-    "expectedLength": "short/medium/long" // only for text questions
+    "question": "A clear, standalone question WITHOUT option letters (A/B/C/D) embedded in the text",
+    "type": "mcq",
+    "options": ["First complete option text", "Second complete option text", "Third complete option text", "Fourth complete option text"],
+    "correctAnswer": 0,
+    "explanation": "Why this is correct"
   }
 ]
 
-Generate exactly ${stageConfig.questionCount} questions.
-For MCQ, correctAnswer should be the index (0-3) of the correct option.
-For text questions, set options to null and correctAnswer to null.`;
+IMPORTANT RULES:
+1. The "question" field should ONLY contain the question text, NOT the options
+2. The "options" array must contain 4 COMPLETE answer options as full sentences
+3. Do NOT put A), B), C), D) prefixes in the options array
+4. The "correctAnswer" is the index (0, 1, 2, or 3) of the correct option
+5. Generate exactly ${stageConfig.questionCount} questions
+
+EXAMPLE of CORRECT format:
+{
+  "question": "What is the most effective classroom management technique?",
+  "type": "mcq", 
+  "options": [
+    "Establishing clear expectations and routines from day one",
+    "Ignoring disruptive behavior completely",
+    "Using only punitive measures for discipline",
+    "Allowing students to set all classroom rules without guidance"
+  ],
+  "correctAnswer": 0,
+  "explanation": "Clear expectations and routines help prevent behavioral issues"
+}`;
 
     console.log(`Generating ${stageConfig.questionCount} ${stageConfig.questionType} questions for ${stageName}`);
 
@@ -289,7 +305,12 @@ For text questions, set options to null and correctAnswer to null.`;
           messages: [
             { 
               role: 'system', 
-              content: `You are an expert interviewer conducting the "${stageName}" round. Generate assessment questions appropriate for this stage. Always respond with valid JSON only.` 
+              content: `You are an expert interviewer conducting the "${stageName}" round. Generate assessment questions appropriate for this stage. 
+
+CRITICAL: You MUST return a valid JSON array where:
+- Each question's "question" field contains ONLY the question text (no A/B/C/D options embedded)
+- Each question's "options" array contains 4 complete answer choices as full text
+- Response must be valid JSON only, no markdown formatting.` 
             },
             { role: 'user', content: prompt }
           ],
@@ -309,7 +330,30 @@ For text questions, set options to null and correctAnswer to null.`;
       if (content) {
         const jsonMatch = content.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
-          questions = JSON.parse(jsonMatch[0]);
+          const parsedQuestions = JSON.parse(jsonMatch[0]);
+          
+          // Validate and clean questions
+          questions = parsedQuestions.map((q: any) => {
+            // Check if options are just letters like ["A", "B", "C", "D"]
+            const hasInvalidOptions = q.options?.every((opt: string) => 
+              typeof opt === 'string' && opt.length <= 2
+            );
+            
+            if (hasInvalidOptions || !q.options || q.options.length !== 4) {
+              console.log('Invalid question format detected, skipping:', q.question?.substring(0, 50));
+              return null; // Will be filtered out
+            }
+            
+            return {
+              question: q.question,
+              type: q.type || 'mcq',
+              options: q.options.map((opt: string) => 
+                opt.replace(/^[A-D]\)\s*/i, '').replace(/^[A-D]\.\s*/i, '').trim()
+              ),
+              correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
+              explanation: q.explanation || 'Correct answer based on best practices.'
+            };
+          }).filter(Boolean);
         }
       }
     } catch (parseError) {
