@@ -161,13 +161,6 @@ const Header = () => {
             </Link>
 
             <Link
-              to="/sponsor/landing"
-              className="text-sm font-medium text-foreground hover:text-accent transition-colors"
-            >
-              Sponsors
-            </Link>
-
-            <Link
               to="/about"
               className="text-sm font-medium text-foreground hover:text-accent transition-colors"
             >
