@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { 
   Search, 
-  ArrowRight 
+  ArrowRight,
+  TrendingUp
 } from "lucide-react";
 const Hero = () => {
   const navigate = useNavigate();
@@ -77,11 +78,59 @@ const Hero = () => {
                 </Button>
               </div>
             </div>
-          </div>
 
+            {/* Trending Jobs This Week */}
+            <div className="mt-6 pt-6 border-t border-border/30">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <TrendingUp className="h-4 w-4 text-accent" />
+                <span className="text-sm font-medium text-foreground">Trending Jobs This Week</span>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
+                  onClick={() => navigate('/jobs-results?q=React Developer')}
+                >
+                  React Developer
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
+                  onClick={() => navigate('/jobs-results?q=Data Analyst')}
+                >
+                  Data Analyst
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
+                  onClick={() => navigate('/jobs-results?q=Product Manager')}
+                >
+                  Product Manager
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
+                  onClick={() => navigate('/jobs-results?q=UX Designer')}
+                >
+                  UX Designer
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/10"
+                  onClick={() => navigate('/jobs-results?q=DevOps Engineer')}
+                >
+                  DevOps Engineer
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
     </section>
   );
 };
