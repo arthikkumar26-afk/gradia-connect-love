@@ -17,13 +17,18 @@ serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { responseId, answers, timeTaken, recordingUrl } = await req.json();
+    const { responseId, answers, timeTaken, recordingUrl, demoVideoUrl, isVideoSubmission } = await req.json();
 
-    if (!responseId || !answers) {
+    if (!responseId) {
+      throw new Error('Response ID is required');
+    }
+
+    // Allow empty answers for video submission stages
+    if (!isVideoSubmission && !answers) {
       throw new Error('Response ID and answers are required');
     }
 
-    console.log('Submitting interview:', { responseId, answersCount: answers.length });
+    console.log('Submitting interview:', { responseId, answersCount: answers?.length || 0, isVideoSubmission, hasDemoVideo: !!demoVideoUrl });
 
     // Get the response record with questions
     const { data: response, error: fetchError } = await supabase
@@ -52,15 +57,59 @@ serve(async (req) => {
 
     const questions = response.questions as any[];
     let correctCount = 0;
+    let score = 0;
 
-    // Calculate score
+    // Handle video submission (demo video stage)
+    if (isVideoSubmission) {
+      // For video submissions, we don't calculate a score - just mark as submitted
+      const { error: updateError } = await supabase
+        .from('interview_responses')
+        .update({
+          demo_video_url: demoVideoUrl,
+          recording_url: demoVideoUrl, // Also store in recording_url for backwards compatibility
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', responseId);
+
+      if (updateError) {
+        console.error('Error updating response:', updateError);
+        throw updateError;
+      }
+
+      // Update interview event status
+      await supabase
+        .from('interview_events')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          notes: 'Demo video submitted for review',
+          ai_feedback: {
+            isVideoSubmission: true,
+            demoVideoUrl: demoVideoUrl,
+            submittedAt: new Date().toISOString(),
+          }
+        })
+        .eq('id', response.interview_event_id);
+
+      console.log('Demo video submission completed');
+
+      return new Response(JSON.stringify({
+        success: true,
+        isVideoSubmission: true,
+        message: 'Demo video submitted successfully',
+      }), {
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Calculate score for MCQ submissions
     answers.forEach((answer: number, index: number) => {
       if (questions[index] && answer === questions[index].correctAnswer) {
         correctCount++;
       }
     });
 
-    const score = Math.round((correctCount / questions.length) * 100);
+    score = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
     // Update response record
     const { error: updateError } = await supabase
