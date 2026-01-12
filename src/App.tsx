@@ -268,6 +268,6 @@ const App = () => (
       </EmployerProvider>
     </AuthProvider>
   </QueryClientProvider>
-
+);
 
 export default App;
