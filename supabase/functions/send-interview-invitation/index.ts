@@ -20,16 +20,16 @@ interface InvitationRequest {
 // Stage-specific interview formats
 const stageFormats: Record<string, { format: string; duration: string; description: string; icon: string }> = {
   'Resume Screening': {
-    format: 'AI Resume Analysis',
-    duration: '5-10 minutes',
-    description: 'Your resume will be evaluated by our AI system for skill matching and experience assessment.',
-    icon: '📄'
-  },
-  'Technical Assessment': {
     format: 'Technical MCQ Test',
     duration: '15-20 minutes',
-    description: '10 multiple-choice questions covering technical skills, coding concepts, and problem-solving.',
+    description: '10 multiple-choice questions covering technical skills, coding concepts, and problem-solving abilities.',
     icon: '💻'
+  },
+  'Technical Assessment': {
+    format: 'Live Panel Interview',
+    duration: '30-45 minutes',
+    description: 'Live video interview with the hiring panel. Be prepared to discuss your experience and demonstrate your skills.',
+    icon: '👥'
   },
   'Demo Video': {
     format: 'Teaching Demo Recording',
@@ -220,15 +220,18 @@ serve(async (req) => {
 
     const stageInstructions: Record<string, string[]> = {
       'Resume Screening': [
-        'Ensure your resume is up to date',
-        'Your profile will be evaluated automatically',
-        'Results will be shared within 24 hours'
+        'Use a desktop/laptop with stable internet connection',
+        'This is a technical MCQ assessment with 10 questions',
+        'Each question has a time limit - read carefully before answering',
+        'Your screen may be recorded during the assessment',
+        'You cannot pause or go back once started'
       ],
       'Technical Assessment': [
-        'Use a desktop/laptop with stable internet connection',
-        'Your screen may be recorded during the assessment',
-        'Each question has a time limit - read carefully',
-        'You cannot pause or go back once started'
+        'Join the video call at the scheduled time using the link provided',
+        'Ensure you have a stable internet connection and working camera/microphone',
+        'Be in a quiet, well-lit environment',
+        'Keep your resume and relevant documents ready',
+        'Be prepared to discuss your experience and answer technical questions'
       ],
       'Demo Video': [
         'Record a 5-10 minute teaching demonstration video',

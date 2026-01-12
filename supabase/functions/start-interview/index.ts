@@ -16,15 +16,21 @@ interface StageConfig {
 
 const stageConfigs: Record<string, StageConfig> = {
   'Resume Screening': {
-    questionCount: 5,
+    questionCount: 10,
     questionType: 'mcq',
-    timePerQuestion: 60,
-    promptTemplate: `Generate 5 MCQ questions to verify the candidate's resume claims and basic qualifications.
+    timePerQuestion: 90,
+    promptTemplate: `Generate 10 technical MCQ questions for a {jobTitle} position.
+Skills required: {skills}
+Requirements: {requirements}
+
 Focus on:
-- Educational background verification
-- Work experience validation
-- Basic skill assessment
-- Career progression understanding`
+- Core technical concepts and knowledge
+- Problem-solving abilities
+- Best practices and design patterns
+- Real-world scenario questions
+
+Make questions progressively harder from basic to advanced.
+This is the primary technical assessment round to evaluate the candidate's technical skills.`
   },
   'AI Phone Interview': {
     questionCount: 10,
@@ -45,20 +51,10 @@ Questions should be appropriate for an automated phone interview format.
 Make questions progressively harder from moderate to challenging.`
   },
   'Technical Assessment': {
-    questionCount: 10,
-    questionType: 'mcq',
-    timePerQuestion: 90,
-    promptTemplate: `Generate 10 technical MCQ questions for a {jobTitle} position.
-Skills required: {skills}
-Requirements: {requirements}
-
-Focus on:
-- Core technical concepts
-- Problem-solving abilities
-- Best practices and design patterns
-- Real-world scenario questions
-
-Make questions progressively harder from basic to advanced.`
+    questionCount: 0,
+    questionType: 'video', // Using video type to indicate manual/meeting stage
+    timePerQuestion: 0,
+    promptTemplate: `This is a manual interview stage - no AI questions needed. The candidate will attend a live meeting with the interviewer.`
   },
   'Demo Video': {
     questionCount: 0,
@@ -428,43 +424,83 @@ CRITICAL: You MUST return a valid JSON array where:
 function getFallbackQuestions(stageName: string, skills: string[], jobTitle: string): any[] {
   switch (stageName) {
     case 'Resume Screening':
+      // Technical MCQ questions for Resume Screening stage
       return [
         {
-          question: "How many years of professional experience do you have?",
+          question: `Which of the following best describes a key responsibility in a ${jobTitle} role?`,
           type: "mcq",
-          options: ["Less than 1 year", "1-3 years", "3-5 years", "More than 5 years"],
-          correctAnswer: null,
-          explanation: "Experience level assessment"
+          options: ["Managing daily operations", "Developing technical solutions", "Handling customer complaints", "All of the above depending on context"],
+          correctAnswer: 3,
+          explanation: "Role responsibilities vary based on context"
         },
         {
-          question: "What is your highest level of education?",
+          question: "What is the most effective approach to problem-solving in a professional environment?",
           type: "mcq",
-          options: ["High School", "Bachelor's Degree", "Master's Degree", "PhD or higher"],
-          correctAnswer: null,
-          explanation: "Education verification"
+          options: ["Jump to solutions immediately", "Analyze the problem, identify root causes, then develop solutions", "Wait for someone else to solve it", "Avoid the problem if possible"],
+          correctAnswer: 1,
+          explanation: "Systematic problem-solving is most effective"
         },
         {
-          question: `Which of these skills are you most proficient in for the ${jobTitle} role?`,
+          question: "When working on a complex project, which is the most important first step?",
           type: "mcq",
-          options: skills.slice(0, 4).length ? skills.slice(0, 4) : ["Technical Skills", "Communication", "Problem Solving", "Leadership"],
-          correctAnswer: null,
-          explanation: "Skill assessment"
+          options: ["Start coding immediately", "Define clear requirements and objectives", "Ask a colleague to help", "Skip planning and figure it out later"],
+          correctAnswer: 1,
+          explanation: "Clear requirements are essential for project success"
         },
         {
-          question: "Are you available to start within 30 days?",
+          question: "What is the best practice for handling tight deadlines?",
           type: "mcq",
-          options: ["Yes, immediately", "Within 2 weeks", "Within 30 days", "Need more than 30 days"],
-          correctAnswer: null,
-          explanation: "Availability check"
+          options: ["Work overtime every day", "Prioritize tasks and communicate proactively", "Compromise on quality", "Ignore less important tasks"],
+          correctAnswer: 1,
+          explanation: "Prioritization and communication are key to deadline management"
         },
         {
-          question: "What type of work arrangement are you seeking?",
+          question: "In a team environment, what is the most important factor for success?",
           type: "mcq",
-          options: ["On-site only", "Remote only", "Hybrid", "Flexible - any arrangement"],
-          correctAnswer: null,
-          explanation: "Work preference"
+          options: ["Working independently", "Clear communication and collaboration", "Competing with teammates", "Avoiding conflicts at all costs"],
+          correctAnswer: 1,
+          explanation: "Communication and collaboration drive team success"
+        },
+        {
+          question: "What approach should you take when learning a new technology or skill?",
+          type: "mcq",
+          options: ["Wait until someone teaches you", "Practice hands-on with documentation and projects", "Only learn what's absolutely necessary", "Avoid new technologies"],
+          correctAnswer: 1,
+          explanation: "Hands-on practice is the most effective learning method"
+        },
+        {
+          question: "How should you handle feedback from supervisors or peers?",
+          type: "mcq",
+          options: ["Ignore it if you disagree", "Listen, reflect, and implement improvements", "Argue to defend your position", "Only accept positive feedback"],
+          correctAnswer: 1,
+          explanation: "Constructive feedback helps professional growth"
+        },
+        {
+          question: "What is the most important quality for continuous professional development?",
+          type: "mcq",
+          options: ["Having many certifications", "Curiosity and willingness to learn", "Only focusing on current job requirements", "Avoiding challenging tasks"],
+          correctAnswer: 1,
+          explanation: "Curiosity drives continuous improvement"
+        },
+        {
+          question: "When faced with an unfamiliar problem, what is the best approach?",
+          type: "mcq",
+          options: ["Give up immediately", "Research, analyze, and try different solutions", "Wait for instructions", "Blame external factors"],
+          correctAnswer: 1,
+          explanation: "Research and analysis help solve unfamiliar problems"
+        },
+        {
+          question: "What makes a professional stand out in their career?",
+          type: "mcq",
+          options: ["Only doing what's asked", "Taking initiative and exceeding expectations", "Staying in comfort zone", "Avoiding responsibility"],
+          correctAnswer: 1,
+          explanation: "Initiative and excellence lead to career growth"
         }
       ];
+
+    case 'Technical Assessment':
+      // This is now a manual interview stage - return empty for MCQ
+      return [];
 
     case 'AI Phone Interview':
       return [
