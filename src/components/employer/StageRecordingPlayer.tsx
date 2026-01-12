@@ -14,6 +14,7 @@ interface InterviewResponse {
   correct_answers: number;
   time_taken_seconds: number | null;
   recording_url: string | null;
+  demo_video_url: string | null;
   completed_at: string | null;
   interview_event_id: string;
 }
@@ -183,46 +184,89 @@ export const StageRecordingPlayer = ({
     return null;
   }
 
+  // Get the video URL (demo video or regular recording)
+  const videoUrl = response.demo_video_url || response.recording_url;
+  const isDemoVideo = !!response.demo_video_url;
+  const hasMCQResults = response.total_questions > 0 && response.questions?.length > 0;
+
   const scorePercentage = response.score || 0;
   const scoreColor = scorePercentage >= 60 ? 'text-green-600' : scorePercentage >= 40 ? 'text-yellow-600' : 'text-red-600';
   const scoreBg = scorePercentage >= 60 ? 'bg-green-50' : scorePercentage >= 40 ? 'bg-yellow-50' : 'bg-red-50';
 
   return (
     <div className="mt-2 space-y-2">
-      {/* Score Summary Row */}
-      <div className={`flex items-center gap-3 p-2 rounded-lg ${scoreBg} border`}>
-        <div className={`font-bold ${scoreColor}`}>
-          {scorePercentage}%
+      {/* Score Summary Row - Only show for MCQ interviews */}
+      {hasMCQResults && (
+        <div className={`flex items-center gap-3 p-2 rounded-lg ${scoreBg} border`}>
+          <div className={`font-bold ${scoreColor}`}>
+            {scorePercentage}%
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {response.correct_answers}/{response.total_questions} correct
+          </div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            {formatTime(response.time_taken_seconds)}
+          </div>
+          {videoUrl && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 text-xs ml-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowVideo(!showVideo);
+              }}
+            >
+              <Video className="h-3 w-3 mr-1" />
+              {showVideo ? 'Hide' : 'View'} Recording
+              {showVideo ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+            </Button>
+          )}
         </div>
-        <div className="text-xs text-muted-foreground">
-          {response.correct_answers}/{response.total_questions} correct
+      )}
+
+      {/* Demo Video Card - Show for video submission stages */}
+      {isDemoVideo && !hasMCQResults && (
+        <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-800">Demo Video Submitted</span>
+              <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-[10px]">
+                For Review
+              </Badge>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 text-xs text-purple-700 hover:bg-purple-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowVideo(!showVideo);
+              }}
+            >
+              <Play className="h-3 w-3 mr-1" />
+              {showVideo ? 'Hide' : 'Watch'} Video
+              {showVideo ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
+            </Button>
+          </div>
+          {response.completed_at && (
+            <p className="text-xs text-purple-600">
+              Submitted: {new Date(response.completed_at).toLocaleString('en-IN', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              })}
+            </p>
+          )}
         </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {formatTime(response.time_taken_seconds)}
-        </div>
-        {response.recording_url && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 text-xs ml-auto"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowVideo(!showVideo);
-            }}
-          >
-            <Video className="h-3 w-3 mr-1" />
-            {showVideo ? 'Hide' : 'View'} Recording
-            {showVideo ? <ChevronUp className="h-3 w-3 ml-1" /> : <ChevronDown className="h-3 w-3 ml-1" />}
-          </Button>
-        )}
-      </div>
+      )}
 
       {/* Video Player */}
-      {showVideo && response.recording_url && (
+      {showVideo && videoUrl && (
         <div className="space-y-2 border rounded-lg p-2 bg-background">
           <video 
-            src={response.recording_url} 
+            src={videoUrl} 
             controls 
             className="w-full rounded-lg bg-black aspect-video max-h-48"
             preload="metadata"
@@ -236,29 +280,31 @@ export const StageRecordingPlayer = ({
               className="flex-1 h-7 text-xs"
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(response.recording_url!, '_blank');
+                window.open(videoUrl, '_blank');
               }}
             >
               <ExternalLink className="h-3 w-3 mr-1" />
               Full Screen
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDetails(!showDetails);
-              }}
-            >
-              {showDetails ? 'Hide' : 'Show'} Answers
-            </Button>
+            {hasMCQResults && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDetails(!showDetails);
+                }}
+              >
+                {showDetails ? 'Hide' : 'Show'} Answers
+              </Button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Question Details */}
-      {showDetails && response.questions && (
+      {/* Question Details - Only show for MCQ interviews */}
+      {showDetails && hasMCQResults && response.questions && (
         <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-2 bg-background">
           {response.questions.map((q: any, idx: number) => {
             const userAnswer = response.answers?.[idx];
