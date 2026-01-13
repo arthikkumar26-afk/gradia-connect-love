@@ -1,285 +1,136 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ArrowLeft, Briefcase, FileText, TrendingUp } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { SignupWizard } from "@/components/candidate/signup/SignupWizard";
 
 const CandidateSignup = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
+  const { isAuthenticated, profile } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/candidate/create-profile");
+    if (isAuthenticated && profile) {
+      navigate("/candidate/dashboard");
     }
-  }, [isAuthenticated, navigate]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      const redirectUrl = `${window.location.origin}/candidate/create-profile`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            role: 'candidate'
-          }
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Signup Failed",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Account Created!",
-        description: "Please complete your profile to start applying",
-      });
-
-      navigate("/candidate/create-profile");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred during signup",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isAuthenticated, profile, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
-        {/* Left Side - Benefits */}
-        <div className="hidden md:block space-y-6 animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-b from-subtle to-background">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground py-12">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-secondary/80" />
+        
+        <div className="relative z-10 container mx-auto px-4">
           <Link 
             to="/" 
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors"
+            className="inline-flex items-center text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
           </Link>
           
-          <div>
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Start Your Career Journey
-            </h2>
-            <p className="text-muted-foreground text-lg mb-8">
-              Join thousands of candidates finding their dream jobs through Gradia
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Briefcase className="h-6 w-6 text-accent" />
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Access Top Jobs</h3>
-                <p className="text-sm text-muted-foreground">
-                  Browse thousands of verified job openings from leading companies
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-accent" />
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">AI-Powered Tools</h3>
-                <p className="text-sm text-muted-foreground">
-                  Resume builder, interview prep, and career coaching at your fingertips
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-accent" />
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">Track Your Progress</h3>
-                <p className="text-sm text-muted-foreground">
-                  Monitor applications and get real-time updates on your job search
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Onboarding Steps */}
-          <div className="mt-8 p-4 bg-card/50 rounded-lg border border-border">
-            <h4 className="font-medium text-foreground mb-3">Your Onboarding Journey</h4>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold">1</div>
-                <span className="font-medium">Create Account</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">2</div>
-                <span>Complete Profile</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">3</div>
-                <span>Upload Resume</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="w-6 h-6 rounded-full border-2 border-border flex items-center justify-center text-xs">4</div>
-                <span>Start Applying</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - Form */}
-        <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in">
-          {/* Mobile back button */}
-          <Link 
-            to="/" 
-            className="md:hidden inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
-          
-          <div className="flex justify-center mb-6">
+          <div className="flex items-center justify-center mb-4">
             <img 
               src={gradiaLogo} 
-              alt="Gradia - Your Next Step" 
-              className="h-20 w-auto object-contain"
+              alt="Gradia" 
+              className="h-16 w-auto object-contain bg-white/10 rounded-lg p-2"
             />
           </div>
-
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Create Candidate Account
+          
+          <div className="text-center max-w-2xl mx-auto">
+            <h1 className="text-3xl md:text-4xl font-bold mb-3">
+              Create Your Candidate Account
             </h1>
-            <p className="text-muted-foreground">
-              Join Gradia to find your next opportunity
+            <p className="text-lg text-primary-foreground/90">
+              Join thousands of professionals finding their dream jobs
             </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Create a strong password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                className="w-full"
-              />
-              <PasswordStrengthIndicator password={password} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full"
-              />
-            </div>
-
-            <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
-            </Button>
-          </form>
-
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-card px-4 text-muted-foreground">
-                Already have an account?
-              </span>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Button variant="outline" size="lg" className="w-full" asChild>
-              <Link to="/candidate/login">Sign In</Link>
-            </Button>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>
-            Are you an employer?{" "}
-            <Link to="/employer/signup" className="text-accent hover:text-accent-hover transition-colors font-medium">
-              Create employer account
-            </Link>
-          </p>
+        {/* Bottom Wave */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg
+            viewBox="0 0 1200 120"
+            preserveAspectRatio="none"
+            className="relative block w-full h-10"
+          >
+            <path
+              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
+              opacity=".5"
+              className="fill-background"
+            ></path>
+            <path
+              d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"
+              className="fill-background"
+            ></path>
+          </svg>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left Sidebar - Benefits */}
+          <div className="hidden lg:block lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
+              <div className="bg-card rounded-xl p-6 shadow-medium border">
+                <h3 className="font-semibold text-foreground mb-4">Why Join Gradia?</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Briefcase className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">Access Top Jobs</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Verified openings from leading companies
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <FileText className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">AI-Powered Tools</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Resume parsing & interview prep
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="h-5 w-5 text-accent" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">Track Progress</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Real-time application updates
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center text-sm text-muted-foreground">
+                <p>
+                  Are you an employer?{" "}
+                  <Link to="/employer/signup" className="text-accent hover:underline font-medium">
+                    Create employer account
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Form Area */}
+          <div className="lg:col-span-3">
+            <SignupWizard />
+          </div>
         </div>
       </div>
     </div>
