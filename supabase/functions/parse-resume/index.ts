@@ -208,26 +208,32 @@ Extract these fields:
 - email: Email address (MUST extract this - look for @ symbol)
 - date_of_birth: Date of birth if mentioned (format: YYYY-MM-DD)
 - gender: Male or Female if mentioned
-- experience_level: One of "fresher", "0-1", "1-3", "3-5", "5+" based on years of experience
-- location: City, State/Country
+- experience_level: One of "Fresher (0-1 years)", "Junior (1-3 years)", "Mid-Level (3-5 years)", "Senior (5-8 years)", "Lead (8-12 years)", "Expert (12+ years)" based on total years
+- location: City, State/Country (for preferred location)
 - current_state: The state where candidate currently resides (Indian states)
 - current_district: The district/city where candidate currently resides
 - linkedin: LinkedIn profile URL if available
 - preferred_role: The job title they're seeking or their current role
-- skills: List of technical and soft skills
+- skills: List of technical and soft skills as array
 - languages: Languages known by the candidate as an array
 - alternate_number: Secondary phone number if available
-- highest_qualification: Highest education qualification (10th, 12th, Diploma, Graduate, Post Graduate, PhD, B.Ed, M.Ed, etc.)
+- highest_qualification: One of "High School", "Diploma", "Bachelor's Degree", "Master's Degree", "PhD", "Other"
+- field_of_study: Field of study/major (e.g., Computer Science, Engineering, Commerce)
+- institution: Name of university/college
+- graduation_year: Year of graduation
+- current_company: Current or most recent employer name
+- current_role: Current or most recent job title
+- total_experience: Total years of experience as number (e.g., "3")
 - preferred_state: Preferred work location state
 - preferred_district: Preferred work location district
 - segment: Work segment/industry (Education, Healthcare, IT, Finance, Manufacturing, Retail, etc.)
 - program: Employment type (Full Time, Part Time, Contract, Internship, Freelance)
-- classes_handled: If teacher - classes they can teach (Pre-Primary, Primary 1-5, Middle 6-8, Secondary 9-10, Higher Secondary 11-12, Graduation, Post Graduation)
+- classes_handled: If teacher - classes they can teach
 - batch: Preferred work timing (Morning, Afternoon, Evening, Flexible)
 - primary_subject: Primary subject expertise for teaching roles
 - office_type: Office preference (Head Office, Branch Office, Regional Office, Remote, Hybrid)
 
-Be thorough - scan the entire document for contact information and educational/professional details.`;
+Be thorough - scan the entire document for contact information, educational and professional details.`;
 
     // Check if it's a DOCX file (by extension or mime type)
     const isDocx = fileName.endsWith(".docx") || 
@@ -343,13 +349,13 @@ Be thorough - scan the entire document for contact information and educational/p
                   mobile: { type: "string", description: "Phone number" },
                   email: { type: "string", description: "Email address - look for @ symbol" },
                   date_of_birth: { type: "string", description: "Date of birth in YYYY-MM-DD format" },
-                  gender: { type: "string", enum: ["Male", "Female"], description: "Gender" },
+                  gender: { type: "string", enum: ["male", "female", "other"], description: "Gender" },
                   experience_level: { 
                     type: "string", 
-                    enum: ["fresher", "0-1", "1-3", "3-5", "5+"],
-                    description: "Experience level based on years"
+                    enum: ["Fresher (0-1 years)", "Junior (1-3 years)", "Mid-Level (3-5 years)", "Senior (5-8 years)", "Lead (8-12 years)", "Expert (12+ years)"],
+                    description: "Experience level based on total years"
                   },
-                  location: { type: "string", description: "City and country/state" },
+                  location: { type: "string", description: "Preferred work location - City and state" },
                   current_state: { type: "string", description: "Current state of residence" },
                   current_district: { type: "string", description: "Current district/city" },
                   linkedin: { type: "string", description: "LinkedIn URL" },
@@ -365,15 +371,25 @@ Be thorough - scan the entire document for contact information and educational/p
                     description: "Languages known"
                   },
                   alternate_number: { type: "string", description: "Secondary phone number" },
-                  highest_qualification: { type: "string", description: "Highest education (10th, 12th, Diploma, Graduate, Post Graduate, PhD, B.Ed, M.Ed, Other)" },
+                  highest_qualification: { 
+                    type: "string", 
+                    enum: ["High School", "Diploma", "Bachelor's Degree", "Master's Degree", "PhD", "Other"],
+                    description: "Highest education qualification"
+                  },
+                  field_of_study: { type: "string", description: "Field of study/major" },
+                  institution: { type: "string", description: "Name of university/college" },
+                  graduation_year: { type: "string", description: "Year of graduation" },
+                  current_company: { type: "string", description: "Current or most recent employer" },
+                  current_role: { type: "string", description: "Current or most recent job title" },
+                  total_experience: { type: "string", description: "Total years of experience" },
                   preferred_state: { type: "string", description: "Preferred work state" },
                   preferred_district: { type: "string", description: "Preferred work district" },
-                  segment: { type: "string", description: "Industry segment (Education, Healthcare, IT, Finance, Manufacturing, Retail, Other)" },
-                  program: { type: "string", description: "Employment type (Full Time, Part Time, Contract, Internship, Freelance)" },
-                  classes_handled: { type: "string", description: "Classes taught (Pre-Primary, Primary 1-5, Middle 6-8, Secondary 9-10, Higher Secondary 11-12, Graduation, Post Graduation, All Classes)" },
-                  batch: { type: "string", description: "Work timing preference (Morning, Afternoon, Evening, Flexible)" },
+                  segment: { type: "string", description: "Industry segment" },
+                  program: { type: "string", description: "Employment type" },
+                  classes_handled: { type: "string", description: "Classes taught" },
+                  batch: { type: "string", description: "Work timing preference" },
                   primary_subject: { type: "string", description: "Primary teaching subject" },
-                  office_type: { type: "string", description: "Office type (Head Office, Branch Office, Regional Office, Remote, Hybrid)" },
+                  office_type: { type: "string", description: "Office type preference" },
                 },
                 required: ["full_name"],
                 additionalProperties: false
