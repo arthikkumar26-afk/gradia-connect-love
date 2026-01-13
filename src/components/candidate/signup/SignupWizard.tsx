@@ -98,12 +98,21 @@ export const SignupWizard = () => {
       const formDataToSend = new FormData();
       formDataToSend.append("file", file);
 
+      console.log("Calling parse-resume function...");
       const { data, error } = await supabase.functions.invoke("parse-resume", {
         body: formDataToSend,
       });
 
+      console.log("Parse resume response:", data, error);
+
       if (error) {
+        console.error("Parse resume error:", error);
         throw new Error(error.message || "Failed to parse resume");
+      }
+
+      if (!data || data.error) {
+        console.error("Parse resume data error:", data?.error);
+        throw new Error(data?.error || "Failed to parse resume");
       }
 
       if (data.note === "parsing_skipped") {
@@ -121,6 +130,8 @@ export const SignupWizard = () => {
       if (data.full_name) updates.fullName = data.full_name;
       if (data.mobile) updates.mobile = data.mobile;
       if (data.email) updates.email = data.email;
+      if (data.date_of_birth) updates.dateOfBirth = data.date_of_birth;
+      if (data.gender) updates.gender = data.gender;
       if (data.experience_level) updates.experienceLevel = data.experience_level;
       if (data.location) updates.preferredLocation = data.location;
       if (data.highest_qualification) updates.highestQualification = data.highest_qualification;
@@ -133,6 +144,7 @@ export const SignupWizard = () => {
       if (data.skills && Array.isArray(data.skills)) updates.skills = data.skills;
       if (data.preferred_role) updates.preferredRole = data.preferred_role;
 
+      console.log("Auto-filling fields:", updates);
       updateFormData(updates);
 
       toast({
