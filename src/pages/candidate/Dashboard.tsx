@@ -735,7 +735,7 @@ const CandidateDashboard = () => {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "applications", label: "My Applications", icon: ClipboardList },
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
-    { id: "jobs", label: "Browse Jobs", icon: Briefcase },
+    { id: "jobs", label: "Suitable Jobs", icon: Briefcase },
     { id: "resume", label: "Resume Builder", icon: FileText },
     { id: "learning", label: "Learning", icon: BookOpen },
     { id: "settings", label: "Settings", icon: Settings },
@@ -891,11 +891,66 @@ const CandidateDashboard = () => {
         .from("jobs")
         .select("*")
         .eq("status", "active")
-        .order("posted_date", { ascending: false })
-        .limit(10);
+        .order("posted_date", { ascending: false });
 
       if (error) throw error;
-      setJobs(data || []);
+      
+      // Filter jobs based on candidate's profile preferences
+      let suitableJobs = data || [];
+      
+      if (profile) {
+        suitableJobs = suitableJobs.filter((job) => {
+          let matches = false;
+          
+          // Match by preferred role (job title contains preferred role)
+          if (profile.preferred_role && job.job_title) {
+            const preferredRoleLower = profile.preferred_role.toLowerCase();
+            const jobTitleLower = job.job_title.toLowerCase();
+            const jobDeptLower = job.department?.toLowerCase() || '';
+            if (jobTitleLower.includes(preferredRoleLower) || preferredRoleLower.includes(jobTitleLower) || jobDeptLower.includes(preferredRoleLower)) {
+              matches = true;
+            }
+          }
+          
+          // Match by location (preferred district/state)
+          if (job.location) {
+            const jobLocationLower = job.location.toLowerCase();
+            if (profile.preferred_district && jobLocationLower.includes(profile.preferred_district.toLowerCase())) {
+              matches = true;
+            }
+            if (profile.preferred_state && jobLocationLower.includes(profile.preferred_state.toLowerCase())) {
+              matches = true;
+            }
+            if (profile.preferred_district_2 && jobLocationLower.includes(profile.preferred_district_2.toLowerCase())) {
+              matches = true;
+            }
+            if (profile.preferred_state_2 && jobLocationLower.includes(profile.preferred_state_2.toLowerCase())) {
+              matches = true;
+            }
+            if (profile.current_district && jobLocationLower.includes(profile.current_district.toLowerCase())) {
+              matches = true;
+            }
+            if (profile.current_state && jobLocationLower.includes(profile.current_state.toLowerCase())) {
+              matches = true;
+            }
+          }
+          
+          // Match by primary subject for education jobs
+          if (profile.primary_subject && job.job_title) {
+            const subjectLower = profile.primary_subject.toLowerCase();
+            const jobTitleLower = job.job_title.toLowerCase();
+            const descLower = job.description?.toLowerCase() || '';
+            if (jobTitleLower.includes(subjectLower) || descLower.includes(subjectLower)) {
+              matches = true;
+            }
+          }
+          
+          return matches;
+        });
+      }
+      
+      // Limit to 10 suitable jobs
+      setJobs(suitableJobs.slice(0, 10));
     } catch (error: any) {
       toast({
         title: "Error",
@@ -925,7 +980,7 @@ const CandidateDashboard = () => {
       case "dashboard": return `Welcome, ${profile?.full_name || 'User'}`;
       case "applications": return "My Applications";
       case "pipeline": return "Interview Pipeline";
-      case "jobs": return "Browse Jobs";
+      case "jobs": return "Suitable Jobs";
       case "resume": return "Resume Builder";
       case "learning": return "Learning";
       case "settings": return "Settings";
@@ -1875,8 +1930,8 @@ const CandidateDashboard = () => {
                     >
                       <Briefcase className="h-5 w-5 mr-3" />
                       <div className="text-left">
-                        <div className="font-medium">Browse Jobs</div>
-                        <div className="text-xs text-muted-foreground">Find opportunities</div>
+                        <div className="font-medium">Suitable Jobs</div>
+                        <div className="text-xs text-muted-foreground">Jobs matching your profile</div>
                       </div>
                     </Button>
                     
@@ -1976,13 +2031,13 @@ const CandidateDashboard = () => {
               </div>
             )}
 
-            {/* Browse Jobs View */}
+            {/* Suitable Jobs View */}
             {activeMenu === "jobs" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-foreground">Browse Jobs</h2>
-                    <p className="text-sm text-muted-foreground">Find your next opportunity</p>
+                    <h2 className="text-lg font-semibold text-foreground">Suitable Jobs</h2>
+                    <p className="text-sm text-muted-foreground">Jobs matching your profile preferences</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate('/jobs-results')}>
                     View All Jobs
@@ -1997,11 +2052,14 @@ const CandidateDashboard = () => {
                   <Card className="p-12 text-center">
                     <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      No Jobs Available
+                      No Suitable Jobs Found
                     </h3>
-                    <p className="text-muted-foreground">
-                      Check back later for new opportunities
+                    <p className="text-muted-foreground mb-4">
+                      No jobs matching your profile preferences right now. Complete your profile or browse all jobs.
                     </p>
+                    <Button variant="outline" onClick={() => navigate('/jobs-results')}>
+                      Browse All Jobs
+                    </Button>
                   </Card>
                 ) : (
                   <div className="grid gap-4">
