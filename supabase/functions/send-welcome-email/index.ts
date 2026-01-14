@@ -28,9 +28,10 @@ interface WelcomeEmailRequest {
   fullName: string;
   role: "candidate" | "employer" | "sponsor";
   companyName?: string;
+  registrationNumber?: string;
 }
 
-const getCandidateEmailTemplate = (name: string) => `
+const getCandidateEmailTemplate = (name: string, registrationNumber?: string) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -44,6 +45,8 @@ const getCandidateEmailTemplate = (name: string) => `
     .feature-item { margin: 15px 0; padding-left: 25px; position: relative; }
     .feature-item:before { content: "✓"; position: absolute; left: 0; color: #667eea; font-weight: bold; }
     .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+    .reg-number-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0; }
+    .reg-number { font-size: 28px; font-weight: bold; letter-spacing: 2px; margin: 10px 0; }
   </style>
 </head>
 <body>
@@ -55,6 +58,14 @@ const getCandidateEmailTemplate = (name: string) => `
       <p style="font-size: 18px;">Hi ${name},</p>
       
       <p>Congratulations on taking the first step toward your next career opportunity! We're thrilled to have you join the Gradia community.</p>
+      
+      ${registrationNumber ? `
+      <div class="reg-number-box">
+        <p style="margin: 0; font-size: 14px; opacity: 0.9;">Your Unique Registration Number</p>
+        <p class="reg-number">${registrationNumber}</p>
+        <p style="margin: 0; font-size: 12px; opacity: 0.8;">Keep this number safe - employers will use it to find your profile</p>
+      </div>
+      ` : ''}
       
       <p><strong>Your journey starts here:</strong></p>
       
@@ -275,6 +286,7 @@ const handler = async (req: Request): Promise<Response> => {
     const fullName = sanitizeInput(rawData.fullName, MAX_NAME_LENGTH);
     const role = rawData.role;
     const companyName = sanitizeInput(rawData.companyName, MAX_NAME_LENGTH);
+    const registrationNumber = rawData.registrationNumber;
 
     if (!isValidEmail(email)) {
       return new Response(
@@ -301,8 +313,8 @@ const handler = async (req: Request): Promise<Response> => {
     let subject: string;
 
     if (role === "candidate") {
-      emailTemplate = getCandidateEmailTemplate(fullName);
-      subject = "Welcome to Gradia - Start Your Career Journey! 🎯";
+      emailTemplate = getCandidateEmailTemplate(fullName, registrationNumber);
+      subject = `Welcome to Gradia - Your Registration Number: ${registrationNumber || 'Pending'} 🎯`;
     } else if (role === "employer") {
       emailTemplate = getEmployerEmailTemplate(fullName);
       subject = "Welcome to Gradia - Let's Build Your Dream Team! 🚀";

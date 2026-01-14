@@ -584,6 +584,7 @@ export type Database = {
           primary_subject: string | null
           profile_picture: string | null
           program: string | null
+          registration_number: string | null
           resume_url: string | null
           role: string
           segment: string | null
@@ -623,6 +624,7 @@ export type Database = {
           primary_subject?: string | null
           profile_picture?: string | null
           program?: string | null
+          registration_number?: string | null
           resume_url?: string | null
           role: string
           segment?: string | null
@@ -662,6 +664,7 @@ export type Database = {
           primary_subject?: string | null
           profile_picture?: string | null
           program?: string | null
+          registration_number?: string | null
           resume_url?: string | null
           role?: string
           segment?: string | null
