@@ -214,17 +214,17 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding-bottom: 15px;">
-                    <a href="https://gradia-link-shine.lovable.app/candidate/dashboard" 
+                    <a href="https://gradia-link-shine.lovable.app/candidate/signup?email=${encodeURIComponent(registrationData.email)}&name=${encodeURIComponent(registrationData.fullName)}" 
                        style="display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      🚀 Go to Dashboard
+                      🚀 Create Account & Access Dashboard
                     </a>
                   </td>
                 </tr>
                 <tr>
                   <td align="center">
-                    <a href="https://gradia-link-shine.lovable.app/edit-profile" 
+                    <a href="https://gradia-link-shine.lovable.app/candidate/login" 
                        style="display: inline-block; background-color: #ffffff; color: #1e3a5f; text-decoration: none; padding: 12px 35px; border-radius: 8px; font-weight: 600; font-size: 14px; border: 2px solid #1e3a5f;">
-                      ✏️ Edit Details
+                      🔑 Already have an account? Login
                     </a>
                   </td>
                 </tr>

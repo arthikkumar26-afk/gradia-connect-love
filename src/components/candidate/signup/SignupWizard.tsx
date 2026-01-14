@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PersonalInfoStep } from "./PersonalInfoStep";
@@ -75,11 +75,49 @@ const steps = [
 
 export const SignupWizard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<CandidateFormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
+
+  // Pre-fill form from URL params (from registration email)
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    const nameParam = searchParams.get('name');
+    
+    if (emailParam || nameParam) {
+      const storedData = localStorage.getItem('quickRegistrationData');
+      let updates: Partial<CandidateFormData> = {};
+      
+      if (emailParam) updates.email = emailParam;
+      if (nameParam) updates.fullName = nameParam;
+      
+      // Try to load more data from localStorage
+      if (storedData) {
+        try {
+          const parsed = JSON.parse(storedData);
+          if (parsed.mobile) updates.mobile = parsed.mobile;
+          if (parsed.date_of_birth) updates.dateOfBirth = parsed.date_of_birth;
+          if (parsed.highest_qualification) updates.highestQualification = parsed.highest_qualification;
+          if (parsed.total_experience) updates.totalExperience = parsed.total_experience;
+          if (parsed.experience_level) updates.experienceLevel = parsed.experience_level;
+          if (parsed.location) updates.preferredLocation = parsed.location;
+          if (parsed.skills) updates.skills = parsed.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+        } catch (e) {
+          console.error('Error parsing stored registration data:', e);
+        }
+      }
+      
+      setFormData(prev => ({ ...prev, ...updates }));
+      
+      toast({
+        title: "Welcome back! 👋",
+        description: "Your registration details have been pre-filled. Just set a password to create your account.",
+      });
+    }
+  }, [searchParams, toast]);
 
   const updateFormData = (updates: Partial<CandidateFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
