@@ -856,24 +856,20 @@ const CandidateDashboard = () => {
 
       if (emailError) {
         console.error('Email error:', emailError);
-        // Continue anyway - show toast but let user proceed
         toast({
           title: "Email Failed",
-          description: "Could not send invitation email, but you can still take the test.",
+          description: "Could not send invitation email. Please try again.",
           variant: "destructive"
         });
       } else {
         toast({
           title: "Invitation Sent! 📧",
-          description: "Check your email for the mock interview link."
+          description: "Check your email to start the mock interview test."
         });
       }
 
       // Refresh the list
       fetchMockTestSessions();
-
-      // Also navigate directly to the test
-      navigate(`/candidate/mock-test/${session.id}`);
     } catch (error: any) {
       console.error('Error starting mock test:', error);
       toast({
