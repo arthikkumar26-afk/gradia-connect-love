@@ -139,6 +139,8 @@ const CandidateDashboard = () => {
   // Mock test state
   const [mockTestSessions, setMockTestSessions] = useState<any[]>([]);
   const [isStartingMockTest, setIsStartingMockTest] = useState(false);
+  const [courseSuggestions, setCourseSuggestions] = useState<{[key: string]: any}>({});
+  const [loadingCourseSuggestions, setLoadingCourseSuggestions] = useState<{[key: string]: boolean}>({});
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -879,6 +881,43 @@ const CandidateDashboard = () => {
       });
     } finally {
       setIsStartingMockTest(false);
+    }
+  };
+
+  // Fetch course suggestions for a completed mock test
+  const fetchCourseSuggestions = async (session: any) => {
+    if (session.status !== 'completed' || courseSuggestions[session.id]) return;
+    
+    setLoadingCourseSuggestions(prev => ({ ...prev, [session.id]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-courses', {
+        body: {
+          testResults: {
+            score: session.score,
+            total_questions: session.total_questions,
+            correct_answers: session.correct_answers,
+            questions: session.questions,
+            answers: session.answers
+          },
+          candidateProfile: {
+            preferred_role: profile?.preferred_role,
+            primary_subject: profile?.primary_subject
+          }
+        }
+      });
+
+      if (error) throw error;
+      
+      setCourseSuggestions(prev => ({ ...prev, [session.id]: data }));
+    } catch (error: any) {
+      console.error('Error fetching course suggestions:', error);
+      toast({
+        title: "Could not load suggestions",
+        description: error.message || "Unable to fetch course recommendations.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingCourseSuggestions(prev => ({ ...prev, [session.id]: false }));
     }
   };
 
@@ -2358,57 +2397,173 @@ const CandidateDashboard = () => {
                   </div>
                 </Card>
 
-                {/* Completed Mock Tests with Recordings */}
+                {/* Completed Mock Tests with Results and Course Suggestions */}
                 {mockTestSessions.length > 0 && (
                   <Card className="p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <Video className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-foreground">Your Mock Test Recordings</h3>
+                      <Award className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Your Test Results</h3>
                     </div>
-                    <div className="space-y-4">
-                      {mockTestSessions.map((session) => (
-                        <div key={session.id} className="border border-border rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
-                              <p className="font-medium text-foreground">
-                                Mock Test - {new Date(session.completed_at || session.created_at).toLocaleDateString()}
-                              </p>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                <span className="flex items-center gap-1">
-                                  <Award className="h-4 w-4" />
-                                  Score: {session.score?.toFixed(0) || 0}%
-                                </span>
-                                <span>
-                                  {session.correct_answers || 0}/{session.total_questions} correct
-                                </span>
+                    <div className="space-y-6">
+                      {mockTestSessions.filter(s => s.status === 'completed').map((session) => (
+                        <div key={session.id} className="border border-border rounded-lg overflow-hidden">
+                          {/* Test Result Header */}
+                          <div className="p-4 bg-muted/30">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <p className="font-medium text-foreground">
+                                  Mock Test - {new Date(session.completed_at || session.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <Badge variant={session.score >= 70 ? 'default' : session.score >= 50 ? 'secondary' : 'destructive'}>
+                                {session.score >= 70 ? 'Excellent' : session.score >= 50 ? 'Good' : 'Needs Improvement'}
+                              </Badge>
+                            </div>
+                            
+                            {/* Score Display */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                              <div className="bg-card p-3 rounded-lg border border-border">
+                                <p className="text-xs text-muted-foreground mb-1">Score</p>
+                                <p className="text-2xl font-bold text-primary">{session.score?.toFixed(0) || 0}%</p>
+                              </div>
+                              <div className="bg-card p-3 rounded-lg border border-border">
+                                <p className="text-xs text-muted-foreground mb-1">Correct Answers</p>
+                                <p className="text-2xl font-bold text-foreground">{session.correct_answers || 0}/{session.total_questions}</p>
+                              </div>
+                              <div className="bg-card p-3 rounded-lg border border-border">
+                                <p className="text-xs text-muted-foreground mb-1">Time Taken</p>
+                                <p className="text-2xl font-bold text-foreground">
+                                  {session.time_taken_seconds ? `${Math.floor(session.time_taken_seconds / 60)}m ${session.time_taken_seconds % 60}s` : 'N/A'}
+                                </p>
                               </div>
                             </div>
-                            <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
-                              {session.status === 'completed' ? 'Completed' : session.status}
-                            </Badge>
+
+                            {/* Score Progress Bar */}
+                            <div className="mt-4">
+                              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                                <span>Performance</span>
+                                <span>{session.score?.toFixed(0) || 0}%</span>
+                              </div>
+                              <Progress value={session.score || 0} className="h-2" />
+                            </div>
                           </div>
-                          {session.recording_url ? (
-                            <div className="mt-3">
+
+                          {/* Recording Section */}
+                          {session.recording_url && (
+                            <div className="p-4 border-t border-border">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Video className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium text-foreground">Recording</span>
+                              </div>
                               <video 
                                 src={session.recording_url} 
                                 controls 
                                 className="w-full rounded-lg max-h-64"
                               />
                             </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground italic">No recording available</p>
                           )}
-                          <div className="mt-3 flex gap-2">
+
+                          {/* Course Suggestions Section */}
+                          <div className="p-4 border-t border-border bg-muted/10">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <GraduationCap className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-medium text-foreground">Recommended Courses</span>
+                              </div>
+                              {!courseSuggestions[session.id] && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => fetchCourseSuggestions(session)}
+                                  disabled={loadingCourseSuggestions[session.id]}
+                                >
+                                  {loadingCourseSuggestions[session.id] ? (
+                                    <>
+                                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                      Analyzing...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Sparkles className="h-4 w-4 mr-2" />
+                                      Get AI Suggestions
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+
+                            {courseSuggestions[session.id] ? (
+                              <div className="space-y-3">
+                                {/* Overall Advice */}
+                                {courseSuggestions[session.id].overallAdvice && (
+                                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                                    <p className="text-sm text-foreground">
+                                      <Lightbulb className="h-4 w-4 inline mr-2 text-primary" />
+                                      {courseSuggestions[session.id].overallAdvice}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Course List */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {courseSuggestions[session.id].courses?.map((course: any, idx: number) => (
+                                    <div key={idx} className="p-3 bg-card rounded-lg border border-border hover:border-primary/30 transition-colors">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1">
+                                          <h5 className="font-medium text-foreground text-sm">{course.title}</h5>
+                                          <div className="flex items-center gap-2 mt-1">
+                                            <Badge variant="outline" className="text-xs">{course.platform}</Badge>
+                                            <span className="text-xs text-muted-foreground">{course.duration}</span>
+                                          </div>
+                                          <p className="text-xs text-muted-foreground mt-2">{course.description}</p>
+                                          <p className="text-xs text-primary mt-1">Improves: {course.skillArea}</p>
+                                        </div>
+                                        {course.url && (
+                                          <a href={course.url} target="_blank" rel="noopener noreferrer">
+                                            <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                                          </a>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                Click "Get AI Suggestions" to receive personalized course recommendations based on your test results.
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="p-4 border-t border-border flex gap-2">
                             <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => navigate(`/candidate/mock-test/${session.id}`)}
                             >
-                              View Results
+                              View Detailed Results
                             </Button>
                           </div>
                         </div>
                       ))}
+
+                      {/* Pending/In-progress tests */}
+                      {mockTestSessions.filter(s => s.status !== 'completed').length > 0 && (
+                        <div className="border-t border-border pt-4">
+                          <p className="text-sm font-medium text-muted-foreground mb-3">Pending Tests</p>
+                          {mockTestSessions.filter(s => s.status !== 'completed').map((session) => (
+                            <div key={session.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                              <div>
+                                <p className="text-sm text-foreground">
+                                  Mock Test - {new Date(session.created_at).toLocaleDateString()}
+                                </p>
+                                <Badge variant="secondary" className="mt-1">{session.status}</Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </Card>
                 )}
