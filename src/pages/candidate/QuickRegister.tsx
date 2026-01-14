@@ -691,6 +691,10 @@ const QuickRegister = () => {
                         <SelectItem value="Maths">Maths</SelectItem>
                         <SelectItem value="Science">Science</SelectItem>
                         <SelectItem value="Social Studies">Social Studies</SelectItem>
+                        <SelectItem value="Physics">Physics</SelectItem>
+                        <SelectItem value="Chemistry">Chemistry</SelectItem>
+                        <SelectItem value="Biology">Biology</SelectItem>
+                        <SelectItem value="Computer Science">Computer Science</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
