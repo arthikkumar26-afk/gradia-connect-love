@@ -39,6 +39,15 @@ import { JobApplicationModal } from "@/components/candidate/JobApplicationModal"
 import { ApplicationsTab } from "@/components/candidate/ApplicationsTab";
 import { InterviewPipelineTab } from "@/components/candidate/InterviewPipelineTab";
 
+interface ResumeAnalysis {
+  overall_score: number;
+  strengths: string[];
+  improvements: string[];
+  experience_summary: string;
+  skill_highlights: string[];
+  career_level: string;
+}
+
 interface Job {
   id: string;
   job_title: string;
@@ -64,6 +73,19 @@ const CandidateDashboard = () => {
   const [interviewCount, setInterviewCount] = useState(0);
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
+
+  // Load resume analysis from localStorage on mount
+  useEffect(() => {
+    const storedAnalysis = localStorage.getItem('resumeAnalysis');
+    if (storedAnalysis) {
+      try {
+        setResumeAnalysis(JSON.parse(storedAnalysis));
+      } catch (e) {
+        console.error('Error parsing resume analysis:', e);
+      }
+    }
+  }, []);
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -587,6 +609,89 @@ const CandidateDashboard = () => {
                             </tbody>
                           </table>
                         </div>
+
+                        {/* AI Resume Score & Summary Table */}
+                        {resumeAnalysis && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                              <Sparkles className="h-4 w-4 text-green-600" />
+                              AI Resume Analysis
+                            </h4>
+                            <div className="border border-green-200 dark:border-green-800 rounded-lg overflow-hidden bg-green-50/50 dark:bg-green-950/20">
+                              <table className="w-full text-sm">
+                                <tbody>
+                                  {/* Overall Score */}
+                                  <tr className="border-b border-green-200 dark:border-green-800 bg-green-100/50 dark:bg-green-900/30">
+                                    <td className="px-3 py-3 font-medium text-green-700 dark:text-green-400 w-1/4">OVERALL SCORE</td>
+                                    <td className="px-3 py-3" colSpan={3}>
+                                      <div className="flex items-center gap-3">
+                                        <div className="text-2xl font-bold text-green-600">
+                                          {resumeAnalysis.overall_score}<span className="text-sm text-muted-foreground">/100</span>
+                                        </div>
+                                        <Progress value={resumeAnalysis.overall_score} className="flex-1 h-2" />
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  {/* Career Level */}
+                                  {resumeAnalysis.career_level && (
+                                    <tr className="border-b border-green-200 dark:border-green-800">
+                                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CAREER LEVEL</td>
+                                      <td className="px-3 py-2 text-foreground" colSpan={3}>{resumeAnalysis.career_level}</td>
+                                    </tr>
+                                  )}
+                                  {/* Experience Summary */}
+                                  {resumeAnalysis.experience_summary && (
+                                    <tr className="border-b border-green-200 dark:border-green-800">
+                                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">EXPERIENCE SUMMARY</td>
+                                      <td className="px-3 py-2 text-foreground" colSpan={3}>{resumeAnalysis.experience_summary}</td>
+                                    </tr>
+                                  )}
+                                  {/* Strengths */}
+                                  {resumeAnalysis.strengths && resumeAnalysis.strengths.length > 0 && (
+                                    <tr className="border-b border-green-200 dark:border-green-800">
+                                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground align-top">STRENGTHS</td>
+                                      <td className="px-3 py-2" colSpan={3}>
+                                        <ul className="list-disc list-inside space-y-1">
+                                          {resumeAnalysis.strengths.map((strength, idx) => (
+                                            <li key={idx} className="text-green-700 dark:text-green-400">{strength}</li>
+                                          ))}
+                                        </ul>
+                                      </td>
+                                    </tr>
+                                  )}
+                                  {/* Areas for Improvement */}
+                                  {resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 && (
+                                    <tr className="border-b border-green-200 dark:border-green-800">
+                                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground align-top">AREAS TO IMPROVE</td>
+                                      <td className="px-3 py-2" colSpan={3}>
+                                        <ul className="list-disc list-inside space-y-1">
+                                          {resumeAnalysis.improvements.map((item, idx) => (
+                                            <li key={idx} className="text-amber-700 dark:text-amber-400">{item}</li>
+                                          ))}
+                                        </ul>
+                                      </td>
+                                    </tr>
+                                  )}
+                                  {/* Skill Highlights */}
+                                  {resumeAnalysis.skill_highlights && resumeAnalysis.skill_highlights.length > 0 && (
+                                    <tr>
+                                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground align-top">KEY SKILLS</td>
+                                      <td className="px-3 py-2" colSpan={3}>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {resumeAnalysis.skill_highlights.map((skill, idx) => (
+                                            <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                              {skill}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Action Button */}
                         <div className="mt-4 flex gap-2">
