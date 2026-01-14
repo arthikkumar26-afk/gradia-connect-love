@@ -46,7 +46,8 @@ import { InterviewPipelineTab } from "@/components/candidate/InterviewPipelineTa
 import { EducationModal, EducationRecord } from "@/components/candidate/EducationModal";
 import ExperienceModal from "@/components/candidate/ExperienceModal";
 import FamilyModal from "@/components/candidate/FamilyModal";
-import { Briefcase as BriefcaseIcon, Users } from "lucide-react";
+import AddressModal, { AddressData } from "@/components/candidate/AddressModal";
+import { Briefcase as BriefcaseIcon, Users, MapPin as MapPinIcon } from "lucide-react";
 
 interface FamilyRecord {
   id?: string;
@@ -126,6 +127,10 @@ const CandidateDashboard = () => {
   const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
   const [editingFamily, setEditingFamily] = useState<FamilyRecord | null>(null);
   const [isFamilyLoading, setIsFamilyLoading] = useState(false);
+
+  // Address state
+  const [addressData, setAddressData] = useState<AddressData | null>(null);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -533,6 +538,108 @@ const CandidateDashboard = () => {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to delete family member",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  // Fetch address details
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (!profile?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('address_details')
+          .select('*')
+          .eq('user_id', profile.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching address:', error);
+          return;
+        }
+        
+        if (data) {
+          setAddressData(data);
+        }
+      } catch (e) {
+        console.error('Error fetching address:', e);
+      }
+    };
+    
+    fetchAddress();
+  }, [profile?.id]);
+
+  // Handle save address
+  const handleSaveAddress = async (data: AddressData) => {
+    if (!profile?.id) return;
+    
+    try {
+      if (data.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('address_details')
+          .update({
+            present_door_flat_no: data.present_door_flat_no,
+            present_street: data.present_street,
+            present_village_area: data.present_village_area,
+            present_mandal: data.present_mandal,
+            present_district: data.present_district,
+            present_state: data.present_state,
+            present_pin_code: data.present_pin_code,
+            permanent_door_flat_no: data.permanent_door_flat_no,
+            permanent_street: data.permanent_street,
+            permanent_village_area: data.permanent_village_area,
+            permanent_mandal: data.permanent_mandal,
+            permanent_district: data.permanent_district,
+            permanent_state: data.permanent_state,
+            permanent_pin_code: data.permanent_pin_code,
+            same_as_present: data.same_as_present,
+          })
+          .eq('id', data.id);
+        
+        if (error) throw error;
+        
+        setAddressData({ ...data });
+        toast({ title: "Success", description: "Address updated successfully" });
+      } else {
+        // Insert new
+        const { data: newRecord, error } = await supabase
+          .from('address_details')
+          .insert({
+            user_id: profile.id,
+            present_door_flat_no: data.present_door_flat_no,
+            present_street: data.present_street,
+            present_village_area: data.present_village_area,
+            present_mandal: data.present_mandal,
+            present_district: data.present_district,
+            present_state: data.present_state,
+            present_pin_code: data.present_pin_code,
+            permanent_door_flat_no: data.permanent_door_flat_no,
+            permanent_street: data.permanent_street,
+            permanent_village_area: data.permanent_village_area,
+            permanent_mandal: data.permanent_mandal,
+            permanent_district: data.permanent_district,
+            permanent_state: data.permanent_state,
+            permanent_pin_code: data.permanent_pin_code,
+            same_as_present: data.same_as_present,
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        setAddressData(newRecord);
+        toast({ title: "Success", description: "Address saved successfully" });
+      }
+      
+      setIsAddressModalOpen(false);
+    } catch (error: any) {
+      console.error('Error saving address:', error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to save address",
         variant: "destructive" 
       });
     }
@@ -1642,6 +1749,106 @@ const CandidateDashboard = () => {
                   </CardContent>
                 </Card>
 
+                {/* Address Details Table */}
+                <Card className="overflow-hidden border-border shadow-soft">
+                  <CardHeader className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 border-b border-teal-200 dark:border-teal-800">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-teal-100 dark:bg-teal-900/50 rounded-lg">
+                          <MapPinIcon className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg text-foreground">Address Details</CardTitle>
+                          <p className="text-sm text-muted-foreground">Your present and permanent address</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => setIsAddressModalOpen(true)}
+                        className="gap-1"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        {addressData ? "Edit" : "Add"}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4 overflow-x-auto">
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border w-1/4"></th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">PRESENT ADDRESS</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">PERMANENT ADDRESS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {addressData ? (
+                            <>
+                              <tr className="border-b border-border">
+                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">D.No. / Flat No.</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.present_door_flat_no || <span className="text-muted-foreground italic">-</span>}</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.permanent_door_flat_no || <span className="text-muted-foreground italic">-</span>}</td>
+                              </tr>
+                              <tr className="border-b border-border">
+                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">Street</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.present_street || <span className="text-muted-foreground italic">-</span>}</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.permanent_street || <span className="text-muted-foreground italic">-</span>}</td>
+                              </tr>
+                              <tr className="border-b border-border">
+                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">Village / Area</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.present_village_area || <span className="text-muted-foreground italic">-</span>}</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.permanent_village_area || <span className="text-muted-foreground italic">-</span>}</td>
+                              </tr>
+                              <tr className="border-b border-border">
+                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">Mandal</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.present_mandal || <span className="text-muted-foreground italic">-</span>}</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.permanent_mandal || <span className="text-muted-foreground italic">-</span>}</td>
+                              </tr>
+                              <tr className="border-b border-border">
+                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">District</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.present_district || <span className="text-muted-foreground italic">-</span>}</td>
+                                <td className="px-4 py-3 text-foreground">{addressData.permanent_district || <span className="text-muted-foreground italic">-</span>}</td>
+                              </tr>
+                              <tr className="border-b-0">
+                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">State & Pin Code</td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {addressData.present_state || addressData.present_pin_code ? (
+                                    <>{addressData.present_state}{addressData.present_state && addressData.present_pin_code ? " - " : ""}{addressData.present_pin_code}</>
+                                  ) : (
+                                    <span className="text-muted-foreground italic">-</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {addressData.permanent_state || addressData.permanent_pin_code ? (
+                                    <>{addressData.permanent_state}{addressData.permanent_state && addressData.permanent_pin_code ? " - " : ""}{addressData.permanent_pin_code}</>
+                                  ) : (
+                                    <span className="text-muted-foreground italic">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            </>
+                          ) : (
+                            <tr>
+                              <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                                <MapPinIcon className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                                <p>No address details added yet.</p>
+                                <Button
+                                  variant="link"
+                                  onClick={() => setIsAddressModalOpen(true)}
+                                  className="mt-1"
+                                >
+                                  Add your address
+                                </Button>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   {dashboardCards.map((card, index) => {
                     const Icon = card.icon;
@@ -1944,6 +2151,14 @@ const CandidateDashboard = () => {
         }}
         onSave={handleSaveFamily}
         editingRecord={editingFamily}
+      />
+
+      {/* Address Modal */}
+      <AddressModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSave={handleSaveAddress}
+        existingData={addressData}
       />
     </div>
   );
