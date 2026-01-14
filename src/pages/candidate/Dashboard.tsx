@@ -2312,9 +2312,6 @@ const CandidateDashboard = () => {
                 </div>
                 <Card className="p-8">
                   <div className="text-center space-y-6">
-                    <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                      <Target className="h-10 w-10 text-primary" />
-                    </div>
                     <div>
                       <h3 className="text-xl font-semibold text-foreground mb-2">Ready to Test Your Skills?</h3>
                       <p className="text-muted-foreground max-w-md mx-auto">
