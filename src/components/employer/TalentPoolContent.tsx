@@ -44,6 +44,7 @@ interface AppliedCandidate {
     profile_picture: string | null;
     expected_salary: number | null;
     available_from: string | null;
+    registration_number: string | null;
   } | null;
   job: {
     job_title: string;
@@ -162,7 +163,8 @@ export default function TalentPoolContent() {
             preferred_role,
             profile_picture,
             expected_salary,
-            available_from
+            available_from,
+            registration_number
           ),
           job:jobs!interview_candidates_job_id_fkey (
             job_title,
@@ -227,6 +229,7 @@ export default function TalentPoolContent() {
       profile_picture: profile?.profile_picture || null,
       expected_salary: profile?.expected_salary || null,
       available_from: profile?.available_from || null,
+      registration_number: profile?.registration_number || null,
     };
   };
 
@@ -241,11 +244,13 @@ export default function TalentPoolContent() {
 
   const filteredCandidates = candidates.filter((candidate) => {
     const data = getCandidateData(candidate);
+    const searchLower = searchTerm.toLowerCase();
     return (
-      data.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      data.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.job?.job_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (data.location && data.location.toLowerCase().includes(searchTerm.toLowerCase()))
+      data.full_name?.toLowerCase().includes(searchLower) ||
+      data.email?.toLowerCase().includes(searchLower) ||
+      candidate.job?.job_title?.toLowerCase().includes(searchLower) ||
+      (data.location && data.location.toLowerCase().includes(searchLower)) ||
+      (data.registration_number && data.registration_number.toLowerCase().includes(searchLower))
     );
   });
 
@@ -380,7 +385,7 @@ export default function TalentPoolContent() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search candidates, jobs..."
+            placeholder="Search by name, email, registration number (GRAD-XXXX)..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -480,6 +485,11 @@ export default function TalentPoolContent() {
                           <h3 className="font-semibold text-foreground text-lg leading-tight">
                             {candidateData.full_name}
                           </h3>
+                          {candidateData.registration_number && (
+                            <p className="text-xs text-accent font-medium">
+                              {candidateData.registration_number}
+                            </p>
+                          )}
                           <p className="text-sm text-muted-foreground">
                             {candidateData.preferred_role || candidate.job?.job_title}
                           </p>
@@ -669,6 +679,7 @@ export default function TalentPoolContent() {
             <TableHeader>
               <TableRow>
                 <TableHead>Candidate</TableHead>
+                <TableHead>Reg. Number</TableHead>
                 <TableHead>Applied For</TableHead>
                 <TableHead>Expected Salary</TableHead>
                 <TableHead>Available From</TableHead>
@@ -707,6 +718,15 @@ export default function TalentPoolContent() {
                           </p>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {candidateData.registration_number ? (
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {candidateData.registration_number}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div>

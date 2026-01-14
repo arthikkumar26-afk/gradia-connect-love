@@ -34,6 +34,7 @@ interface Profile {
   classes_handled?: string;
   batch?: string;
   primary_subject?: string;
+  registration_number?: string;
 }
 
 interface AuthContextType {

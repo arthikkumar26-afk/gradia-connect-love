@@ -187,13 +187,21 @@ const CandidateCreateProfile = () => {
 
       await refreshProfile();
       
-      // Send welcome email in background
+      // Fetch the newly created profile to get registration number
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .select('registration_number')
+        .eq('id', user.id)
+        .single();
+      
+      // Send welcome email with registration number
       try {
         await supabase.functions.invoke('send-welcome-email', {
           body: { 
             email: user.email,
             fullName: fullName,
-            role: 'candidate'
+            role: 'candidate',
+            registrationNumber: newProfile?.registration_number
           }
         });
       } catch (emailError) {
