@@ -412,10 +412,18 @@ const QuickRegister = () => {
 
       localStorage.setItem('quickRegistrationData', JSON.stringify(registrationData));
 
-      toast({
-        title: "Registration Complete! 🎉",
-        description: `Your profile score is ${result.score}/100. Check your email for details!`,
-      });
+      // Show appropriate message based on email status
+      if (result.emailSent) {
+        toast({
+          title: "Registration Complete! 🎉",
+          description: `Your profile score is ${result.score}/100. Check your email for details!`,
+        });
+      } else {
+        toast({
+          title: "Registration Saved! 🎉",
+          description: `Your profile score is ${result.score}/100. ${result.message}`,
+        });
+      }
 
       // Navigate to candidate signup
       navigate("/candidate/signup");

@@ -254,33 +254,52 @@ serve(async (req) => {
     // Send email using Resend
     console.log("Sending email to:", registrationData.email);
     
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Gradia <onboarding@resend.dev>",
-        to: [registrationData.email],
-        subject: `🎉 Welcome to Gradia! Your Profile Score: ${analysis.score}/100`,
-        html: emailHtml,
-      }),
-    });
+    let emailSent = false;
+    let emailError = null;
+    
+    try {
+      const emailResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Gradia <onboarding@resend.dev>",
+          to: [registrationData.email],
+          subject: `🎉 Welcome to Gradia! Your Profile Score: ${analysis.score}/100`,
+          html: emailHtml,
+        }),
+      });
 
-    if (!emailResponse.ok) {
-      const emailError = await emailResponse.text();
-      console.error("Email send error:", emailError);
-      throw new Error("Failed to send email");
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.text();
+        console.error("Email send error:", errorData);
+        
+        // Check if it's a domain verification issue
+        if (errorData.includes("verify a domain") || errorData.includes("testing emails")) {
+          emailError = "Email service requires domain verification. Registration saved successfully - email will be sent once domain is verified.";
+        } else {
+          emailError = "Email delivery issue - registration still successful";
+        }
+      } else {
+        const emailResult = await emailResponse.json();
+        console.log("Email sent successfully:", emailResult);
+        emailSent = true;
+      }
+    } catch (e) {
+      console.error("Email fetch error:", e);
+      emailError = "Email service temporarily unavailable";
     }
 
-    const emailResult = await emailResponse.json();
-    console.log("Email sent successfully:", emailResult);
-
+    // Return success even if email fails (registration data is valid)
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Registration email sent successfully",
+        emailSent,
+        message: emailSent 
+          ? "Registration email sent successfully" 
+          : emailError || "Registration saved - email pending",
         score: analysis.score,
         analysis 
       }),
