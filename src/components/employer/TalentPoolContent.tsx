@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus, Trash2, LayoutGrid, List, MapPin, Briefcase, Download, ExternalLink } from 'lucide-react';
+import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus, Trash2, LayoutGrid, List, MapPin, Briefcase, Download, ExternalLink, IndianRupee, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +42,8 @@ interface AppliedCandidate {
     experience_level: string | null;
     preferred_role: string | null;
     profile_picture: string | null;
+    expected_salary: number | null;
+    available_from: string | null;
   } | null;
   job: {
     job_title: string;
@@ -158,7 +160,9 @@ export default function TalentPoolContent() {
             location,
             experience_level,
             preferred_role,
-            profile_picture
+            profile_picture,
+            expected_salary,
+            available_from
           ),
           job:jobs!interview_candidates_job_id_fkey (
             job_title,
@@ -221,7 +225,18 @@ export default function TalentPoolContent() {
       skills: aiData?.skills || [],
       education: aiData?.education || null,
       profile_picture: profile?.profile_picture || null,
+      expected_salary: profile?.expected_salary || null,
+      available_from: profile?.available_from || null,
     };
+  };
+
+  const formatCurrency = (amount: number | null) => {
+    if (!amount) return null;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
   };
 
   const filteredCandidates = candidates.filter((candidate) => {
@@ -500,6 +515,18 @@ export default function TalentPoolContent() {
                           {candidateData.experience_level}
                         </p>
                       )}
+                      {candidateData.expected_salary && (
+                        <p className="text-muted-foreground flex items-center gap-2">
+                          <IndianRupee className="h-3.5 w-3.5" />
+                          Expected: {formatCurrency(candidateData.expected_salary)}
+                        </p>
+                      )}
+                      {candidateData.available_from && (
+                        <p className="text-muted-foreground flex items-center gap-2">
+                          <Calendar className="h-3.5 w-3.5" />
+                          Available: {formatDate(candidateData.available_from)}
+                        </p>
+                      )}
                     </div>
 
                     {/* Applied Job */}
@@ -643,8 +670,9 @@ export default function TalentPoolContent() {
               <TableRow>
                 <TableHead>Candidate</TableHead>
                 <TableHead>Applied For</TableHead>
+                <TableHead>Expected Salary</TableHead>
+                <TableHead>Available From</TableHead>
                 <TableHead>AI Score</TableHead>
-                <TableHead>Recommendation</TableHead>
                 <TableHead>Stage</TableHead>
                 <TableHead>Applied</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -686,8 +714,25 @@ export default function TalentPoolContent() {
                         <p className="text-sm text-muted-foreground">{candidate.job?.department}</p>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      {candidateData.expected_salary ? (
+                        <span className="font-medium text-green-600">
+                          {formatCurrency(candidateData.expected_salary)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Not specified</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {candidateData.available_from ? (
+                        <span className="text-foreground">
+                          {formatDate(candidateData.available_from)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Immediate</span>
+                      )}
+                    </TableCell>
                     <TableCell>{getScoreBadge(candidate.ai_score)}</TableCell>
-                    <TableCell>{getRecommendationBadge(candidate.ai_analysis)}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         <Badge variant="outline" className="text-xs">
