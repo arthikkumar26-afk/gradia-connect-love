@@ -83,7 +83,7 @@ const QuickRegister = () => {
     designation: "",
     currentSalary: "",
     expectedSalary: "",
-    dateOfJoining: "",
+    noticePeriod: "",
     experienceLevel: "",
     // Step 2 - Personal Details
     fullName: "",
@@ -383,7 +383,7 @@ const QuickRegister = () => {
         experience_level: formData.experienceLevel,
         current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
         expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
-        available_from: formData.dateOfJoining || null,
+        notice_period: formData.noticePeriod || null,
         full_name: formData.fullName,
         date_of_birth: formData.dateOfBirth,
         mobile: formData.mobile,
@@ -790,16 +790,26 @@ const QuickRegister = () => {
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="dateOfJoining">
+                        <Label htmlFor="noticePeriod">
                           <Calendar className="inline h-3.5 w-3.5 mr-1" />
-                          Date of Joining
+                          Notice Period
                         </Label>
-                        <Input
-                          id="dateOfJoining"
-                          type="date"
-                          value={formData.dateOfJoining}
-                          onChange={(e) => setFormData(prev => ({ ...prev, dateOfJoining: e.target.value }))}
-                        />
+                        <Select
+                          value={formData.noticePeriod}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, noticePeriod: value }))}
+                        >
+                          <SelectTrigger className="w-full bg-background">
+                            <SelectValue placeholder="Select Notice Period" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="Immediate">Immediate</SelectItem>
+                            <SelectItem value="15 Days">15 Days</SelectItem>
+                            <SelectItem value="30 Days">30 Days</SelectItem>
+                            <SelectItem value="45 Days">45 Days</SelectItem>
+                            <SelectItem value="60 Days">60 Days</SelectItem>
+                            <SelectItem value="90 Days">90 Days</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
