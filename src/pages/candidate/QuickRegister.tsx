@@ -79,13 +79,11 @@ const QuickRegister = () => {
     state2: "",
     district2: "",
     city2: "",
-    // Education only
-    designation: "",
+    // Category
+    category: "",
     currentSalary: "",
     expectedSalary: "",
     dateOfJoining: "",
-    password: "",
-    confirmPassword: "",
     experienceLevel: ""
   });
 
@@ -229,10 +227,10 @@ const QuickRegister = () => {
       return;
     }
 
-    if (!formData.designation) {
+    if (!formData.category) {
       toast({
-        title: "Designation Required",
-        description: "Please select your preferred designation.",
+        title: "Category Required",
+        description: "Please select a category.",
         variant: "destructive"
       });
       return;
@@ -244,8 +242,7 @@ const QuickRegister = () => {
       // Store registration data (can be extended to save to database when user creates account later)
       const registrationData = {
         segment: "Education",
-        category: "Education",
-        preferred_role: formData.designation,
+        category: formData.category,
         preferred_state: formData.state,
         preferred_district: formData.district,
         preferred_state_2: formData.state2 || null,
@@ -498,40 +495,26 @@ const QuickRegister = () => {
                 </div>
               </div>
 
-              {/* Interested In (Education Only) */}
+              {/* Category */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <GraduationCap className="h-4 w-4" />
-                  Interested In
+                  Category *
                 </h3>
                 
-                <div className="p-4 bg-muted/30 rounded-lg border">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <GraduationCap className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Education Domain</p>
-                      <p className="text-sm text-muted-foreground">Select your preferred designation</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Designation *</Label>
-                    <Select
-                      value={formData.designation}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, designation: value }))}
+                <div className="grid grid-cols-2 gap-3">
+                  {["Academic", "Non-Academic"].map((cat) => (
+                    <Button
+                      key={cat}
+                      type="button"
+                      variant={formData.category === cat ? "default" : "outline"}
+                      className={`h-auto py-4 flex flex-col items-center gap-1 ${formData.category === cat ? "" : "hover:bg-accent/10"}`}
+                      onClick={() => setFormData(prev => ({ ...prev, category: cat }))}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select designation" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {educationDesignations.map((des) => (
-                          <SelectItem key={des} value={des}>{des}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <GraduationCap className="h-5 w-5" />
+                      <span className="text-sm">{cat}</span>
+                    </Button>
+                  ))}
                 </div>
               </div>
 
@@ -585,7 +568,7 @@ const QuickRegister = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isSubmitting || !formData.designation || !formData.state}
+                  disabled={isSubmitting || !formData.category || !formData.state}
                 >
                   {isSubmitting ? "Registering..." : "Complete Registration"}
                 </Button>
