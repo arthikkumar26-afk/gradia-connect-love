@@ -328,7 +328,48 @@ const QuickRegister = () => {
     setIsSubmitting(true);
 
     try {
-      // Store registration data (can be extended to save to database when user creates account later)
+      // Prepare data for email
+      const emailData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        mobile: formData.mobile,
+        dateOfBirth: formData.dateOfBirth,
+        category: formData.category,
+        segment: formData.segment,
+        department: formData.department,
+        designation: formData.designation,
+        location: `${formData.city}, ${formData.district}, ${formData.state}${formData.city2 ? ` | ${formData.city2}, ${formData.district2}, ${formData.state2}` : ''}`,
+        currentSalary: formData.currentSalary,
+        expectedSalary: formData.expectedSalary,
+        highestQualification: formData.highestQualification,
+        specialization: formData.specialization,
+        totalExperience: formData.totalExperience,
+        currentOrganization: formData.currentOrganization,
+        skills: formData.skills
+      };
+
+      // Send registration email with AI analysis
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-registration-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(emailData),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Service is busy. Please try again in a moment.");
+        }
+        throw new Error(result.error || "Failed to complete registration");
+      }
+
+      // Store registration data for later use
       const registrationData = {
         segment: formData.segment,
         category: formData.category,
@@ -338,37 +379,34 @@ const QuickRegister = () => {
         preferred_district: formData.district,
         preferred_state_2: formData.state2 || null,
         preferred_district_2: formData.district2 || null,
-        location: `${formData.city}, ${formData.district}, ${formData.state}${formData.city2 ? ` | ${formData.city2}, ${formData.district2}, ${formData.state2}` : ''}`,
+        location: emailData.location,
         experience_level: formData.experienceLevel,
         current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
         expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
         available_from: formData.dateOfJoining || null,
-        // Personal details
         full_name: formData.fullName,
         date_of_birth: formData.dateOfBirth,
         mobile: formData.mobile,
         email: formData.email,
-        // Educational details
         highest_qualification: formData.highestQualification,
         specialization: formData.specialization,
         university: formData.university,
         year_of_passing: formData.yearOfPassing,
-        // Professional details
         total_experience: formData.totalExperience,
         current_organization: formData.currentOrganization,
         current_designation: formData.currentDesignation,
-        skills: formData.skills
+        skills: formData.skills,
+        profile_score: result.score
       };
 
-      // Save to localStorage for later use during full registration
       localStorage.setItem('quickRegistrationData', JSON.stringify(registrationData));
 
       toast({
-        title: "Registration Saved!",
-        description: "Your preferences have been saved. Complete your profile to apply for jobs.",
+        title: "Registration Complete! 🎉",
+        description: `Your profile score is ${result.score}/100. Check your email for details!`,
       });
 
-      // Navigate to full signup with pre-filled data
+      // Navigate to candidate signup
       navigate("/candidate/signup");
     } catch (error: any) {
       console.error("Registration error:", error);

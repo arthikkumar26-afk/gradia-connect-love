@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.submit-interview]
 verify_jwt = false
+
+[functions.send-registration-email]
+verify_jwt = false
