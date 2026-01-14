@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,12 +38,33 @@ import {
   Trash2,
   ArrowUp,
   ArrowDown,
-  ArrowLeft,
   Loader2,
   ShieldCheck,
+  Users,
+  Briefcase,
+  Building2,
+  Settings,
+  BarChart3,
+  FileText,
+  Home,
+  Menu,
+  LogOut,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 interface TrendingJob {
   id: string;
@@ -56,6 +77,8 @@ interface TrendingJob {
 
 const TrendingJobsAdmin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [trendingJobs, setTrendingJobs] = useState<TrendingJob[]>([]);
@@ -96,11 +119,11 @@ const TrendingJobsAdmin = () => {
     }
 
     setIsAuthorized(true);
+    setIsLoading(false);
     fetchTrendingJobs();
   };
 
   const fetchTrendingJobs = async () => {
-    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('trending_jobs')
@@ -112,8 +135,6 @@ const TrendingJobsAdmin = () => {
     } catch (error) {
       console.error('Error fetching trending jobs:', error);
       toast.error("Failed to load trending jobs");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -214,7 +235,6 @@ const TrendingJobsAdmin = () => {
     const otherJob = trendingJobs[newIndex];
 
     try {
-      // Swap display orders
       await supabase
         .from('trending_jobs')
         .update({ display_order: otherJob.display_order })
@@ -249,7 +269,13 @@ const TrendingJobsAdmin = () => {
     }
   };
 
-  if (!isAuthorized) {
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+    toast.success("You have been successfully logged out.");
+  };
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -257,171 +283,234 @@ const TrendingJobsAdmin = () => {
     );
   }
 
+  if (!isAuthorized) {
+    return null;
+  }
+
+  const menuItems = [
+    { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
+    { title: "Users", icon: Users, path: "/admin/users" },
+    { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
+    { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
+    { title: "Companies", icon: Building2, path: "/admin/companies" },
+    { title: "Reports", icon: BarChart3, path: "/admin/reports" },
+    { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
+    { title: "Settings", icon: Settings, path: "/admin/settings" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
-              <ShieldCheck className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Trending Jobs Management</h1>
-              <p className="text-sm text-muted-foreground">Manage homepage trending jobs</p>
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full bg-muted/30">
+        {/* Sidebar */}
+        <Sidebar className="border-r border-border">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary">
+                <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-bold text-foreground">Gradia Admin</h1>
+                <p className="text-xs text-muted-foreground">Management Panel</p>
+              </div>
             </div>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Trending Job
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingJob ? 'Edit Trending Job' : 'Add Trending Job'}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="job_title">Job Title</Label>
-                  <Input
-                    id="job_title"
-                    placeholder="e.g., React Developer"
-                    value={formData.job_title}
-                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="search_count">Search Count (for display)</Label>
-                  <Input
-                    id="search_count"
-                    type="number"
-                    placeholder="0"
-                    value={formData.search_count}
-                    onChange={(e) => setFormData({ ...formData, search_count: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="is_active">Active</Label>
-                  <Switch
-                    id="is_active"
-                    checked={formData.is_active}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={isSaving}>
-                  {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  {editingJob ? 'Update' : 'Add'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Trending Jobs ({trendingJobs.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : trendingJobs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No trending jobs found. Add your first one!
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">Order</TableHead>
-                    <TableHead>Job Title</TableHead>
-                    <TableHead className="w-32">Search Count</TableHead>
-                    <TableHead className="w-24">Status</TableHead>
-                    <TableHead className="w-48 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {trendingJobs.map((job, index) => (
-                    <TableRow key={job.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            disabled={index === 0}
-                            onClick={() => handleReorder(job, 'up')}
-                          >
-                            <ArrowUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            disabled={index === trendingJobs.length - 1}
-                            onClick={() => handleReorder(job, 'down')}
-                          >
-                            <ArrowDown className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{job.job_title}</TableCell>
-                      <TableCell>{job.search_count.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Switch
-                          checked={job.is_active}
-                          onCheckedChange={() => handleToggleActive(job)}
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(job)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              setJobToDelete(job);
-                              setIsDeleteDialogOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+          
+          <SidebarContent className="p-2">
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-2">
+                Main Menu
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {menuItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          to={item.path}
+                          className={`w-full justify-start gap-3 px-3 py-2 rounded-lg transition-colors ${
+                            location.pathname === item.path 
+                              ? "bg-primary text-primary-foreground" 
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <div className="mt-auto p-4 border-t border-border">
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout} 
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </div>
+        </Sidebar>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Header */}
+          <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 lg:px-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger>
+                <Menu className="h-5 w-5" />
+              </SidebarTrigger>
+              <h1 className="text-lg font-semibold">Trending Jobs Management</h1>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => handleOpenDialog()} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Trending Job
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingJob ? 'Edit Trending Job' : 'Add Trending Job'}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="job_title">Job Title</Label>
+                    <Input
+                      id="job_title"
+                      placeholder="e.g., React Developer"
+                      value={formData.job_title}
+                      onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="search_count">Search Count (for display)</Label>
+                    <Input
+                      id="search_count"
+                      type="number"
+                      placeholder="0"
+                      value={formData.search_count}
+                      onChange={(e) => setFormData({ ...formData, search_count: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="is_active">Active</Label>
+                    <Switch
+                      id="is_active"
+                      checked={formData.is_active}
+                      onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} disabled={isSaving}>
+                    {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {editingJob ? 'Update' : 'Add'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </header>
+
+          {/* Page Content */}
+          <main className="flex-1 p-4 lg:p-6 overflow-auto">
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Trending Jobs ({trendingJobs.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {trendingJobs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No trending jobs found. Add your first one!
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-16">Order</TableHead>
+                        <TableHead>Job Title</TableHead>
+                        <TableHead className="w-32">Search Count</TableHead>
+                        <TableHead className="w-24">Status</TableHead>
+                        <TableHead className="w-48 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {trendingJobs.map((job, index) => (
+                        <TableRow key={job.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={index === 0}
+                                onClick={() => handleReorder(job, 'up')}
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                disabled={index === trendingJobs.length - 1}
+                                onClick={() => handleReorder(job, 'down')}
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">{job.job_title}</TableCell>
+                          <TableCell>{job.search_count.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Switch
+                              checked={job.is_active}
+                              onCheckedChange={() => handleToggleActive(job)}
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOpenDialog(job)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  setJobToDelete(job);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -440,7 +529,7 @@ const TrendingJobsAdmin = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </SidebarProvider>
   );
 };
 

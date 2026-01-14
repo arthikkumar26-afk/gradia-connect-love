@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -199,7 +199,7 @@ const Companies = () => {
   const totalJobs = companies.reduce((acc, c) => acc + (c.jobCount || 0), 0);
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full bg-muted/30">
         {/* Sidebar */}
         <Sidebar className="border-r border-border">
@@ -224,16 +224,18 @@ const Companies = () => {
                 <SidebarMenu>
                   {menuItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        onClick={() => navigate(item.path)}
-                        className={`w-full justify-start gap-3 px-3 py-2 rounded-lg transition-colors ${
-                          location.pathname === item.path 
-                            ? "bg-primary text-primary-foreground" 
-                            : "hover:bg-muted"
-                        }`}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span className="text-sm">{item.title}</span>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          to={item.path}
+                          className={`w-full justify-start gap-3 px-3 py-2 rounded-lg transition-colors ${
+                            location.pathname === item.path 
+                              ? "bg-primary text-primary-foreground" 
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
