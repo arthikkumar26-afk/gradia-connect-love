@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.save-resume-analysis]
 verify_jwt = false
+
+[functions.generate-mock-test]
+verify_jwt = false
+
+[functions.send-mock-test-invitation]
+verify_jwt = false

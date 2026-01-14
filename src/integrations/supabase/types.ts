@@ -644,6 +644,68 @@ export type Database = {
           },
         ]
       }
+      mock_test_sessions: {
+        Row: {
+          answers: Json | null
+          candidate_id: string
+          completed_at: string | null
+          correct_answers: number | null
+          created_at: string
+          id: string
+          invitation_sent_at: string | null
+          questions: Json | null
+          recording_url: string | null
+          score: number | null
+          started_at: string | null
+          status: string
+          time_taken_seconds: number | null
+          total_questions: number
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json | null
+          candidate_id: string
+          completed_at?: string | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          invitation_sent_at?: string | null
+          questions?: Json | null
+          recording_url?: string | null
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          time_taken_seconds?: number | null
+          total_questions?: number
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json | null
+          candidate_id?: string
+          completed_at?: string | null
+          correct_answers?: number | null
+          created_at?: string
+          id?: string
+          invitation_sent_at?: string | null
+          questions?: Json | null
+          recording_url?: string | null
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          time_taken_seconds?: number | null
+          total_questions?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mock_test_sessions_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_letters: {
         Row: {
           created_at: string | null

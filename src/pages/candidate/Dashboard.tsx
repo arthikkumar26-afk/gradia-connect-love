@@ -135,6 +135,10 @@ const CandidateDashboard = () => {
   const [addressData, setAddressData] = useState<AddressData | null>(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
+  // Mock test state
+  const [mockTestSessions, setMockTestSessions] = useState<any[]>([]);
+  const [isStartingMockTest, setIsStartingMockTest] = useState(false);
+
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
     const fetchResumeAnalysis = async () => {

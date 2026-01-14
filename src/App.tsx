@@ -42,6 +42,7 @@ import EmployerSignup from "./pages/employer/Signup";
 import LearningPlatform from "./pages/LearningPlatform";
 import ResumeBuilder from "./pages/candidate/ResumeBuilder";
 import InterviewPrep from "./pages/candidate/InterviewPrep";
+import MockTest from "./pages/candidate/MockTest";
 import CareerCoaching from "./pages/candidate/CareerCoaching";
 import CandidateSignup from "./pages/candidate/Signup";
 import QuickRegister from "./pages/candidate/QuickRegister";
@@ -141,6 +142,7 @@ const MainRoutes = () => (
       <Route path="/edit-profile" element={<EditProfile />} />
       <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
       <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
+      <Route path="/candidate/mock-test/:sessionId" element={<MockTest />} />
       <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
       <Route path="/candidate/assessments" element={<PlaceholderPage title="Skill Assessments" />} />
       <Route path="/candidate/mock-interviews" element={<PlaceholderPage title="Mock Interviews" />} />
