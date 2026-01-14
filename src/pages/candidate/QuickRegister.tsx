@@ -444,8 +444,10 @@ const QuickRegister = () => {
   // Success Screen - Show after registration complete
   if (registrationComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-subtle to-background flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full text-center shadow-large border-0">
+      <div className="min-h-screen bg-gradient-to-b from-subtle to-background py-8 px-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Success Header */}
+          <Card className="text-center shadow-large border-0">
             <CardHeader className="pb-4">
               <div className="mx-auto mb-4 w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
                 <CheckCircle2 className="h-12 w-12 text-white" />
@@ -457,7 +459,7 @@ const QuickRegister = () => {
                 Thank you for registering with Gradia
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               {/* Score Display */}
               {registrationScore && (
                 <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-xl p-6">
@@ -470,7 +472,98 @@ const QuickRegister = () => {
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
 
+          {/* AI Detected Profile Details Table */}
+          <Card className="overflow-hidden border-border shadow-medium">
+            <CardHeader className="bg-gradient-to-r from-accent/10 via-primary/5 to-accent/10 pb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-accent/20 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-accent" />
+                </div>
+                <CardTitle className="text-lg font-semibold text-foreground">
+                  AI Detected Profile Details
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {/* Row 1: Name */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground w-1/4">NAME</td>
+                      <td className="px-3 py-2 text-foreground" colSpan={3}>{formData.fullName || '-'}</td>
+                    </tr>
+                    {/* Row 2: Date of Birth and Mobile */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">DOB</td>
+                      <td className="px-3 py-2 text-foreground">{formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</td>
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">MOBILE</td>
+                      <td className="px-3 py-2 text-foreground">{formData.mobile || '-'}</td>
+                    </tr>
+                    {/* Row 3: Email */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">EMAIL</td>
+                      <td className="px-3 py-2 text-foreground" colSpan={3}>{formData.email || '-'}</td>
+                    </tr>
+                    {/* Row 4: Category and Segment */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CATEGORY</td>
+                      <td className="px-3 py-2 text-foreground">{formData.category || '-'}</td>
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">SEGMENT</td>
+                      <td className="px-3 py-2 text-foreground">{formData.segment || '-'}</td>
+                    </tr>
+                    {/* Row 5: Department and Designation */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">DEPARTMENT</td>
+                      <td className="px-3 py-2 text-foreground">{formData.department || '-'}</td>
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">DESIGNATION</td>
+                      <td className="px-3 py-2 text-foreground">{formData.designation || '-'}</td>
+                    </tr>
+                    {/* Row 6: Qualification and Experience */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">QUALIFICATION</td>
+                      <td className="px-3 py-2 text-foreground">{formData.highestQualification || '-'}</td>
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">EXPERIENCE</td>
+                      <td className="px-3 py-2 text-foreground">{formData.experienceLevel || '-'}</td>
+                    </tr>
+                    {/* Row 7: Current Salary and Expected Salary */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CURRENT SALARY</td>
+                      <td className="px-3 py-2 text-foreground">{formData.currentSalary ? `₹${Number(formData.currentSalary).toLocaleString('en-IN')}` : '-'}</td>
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">EXPECTED SALARY</td>
+                      <td className="px-3 py-2 text-foreground">{formData.expectedSalary ? `₹${Number(formData.expectedSalary).toLocaleString('en-IN')}` : '-'}</td>
+                    </tr>
+                    {/* Row 8: Location 1 */}
+                    <tr className="border-b border-border">
+                      <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PREFERRED LOCATION 1</td>
+                      <td className="px-3 py-2 text-foreground" colSpan={3}>{formData.city && formData.district && formData.state ? `${formData.city}, ${formData.district}, ${formData.state}` : '-'}</td>
+                    </tr>
+                    {/* Row 9: Location 2 */}
+                    {formData.city2 && (
+                      <tr className="border-b border-border">
+                        <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PREFERRED LOCATION 2</td>
+                        <td className="px-3 py-2 text-foreground" colSpan={3}>{`${formData.city2}, ${formData.district2}, ${formData.state2}`}</td>
+                      </tr>
+                    )}
+                    {/* Row 10: Skills */}
+                    {formData.skills && (
+                      <tr>
+                        <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">SKILLS</td>
+                        <td className="px-3 py-2 text-foreground" colSpan={3}>{formData.skills}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Actions Card */}
+          <Card className="shadow-medium">
+            <CardContent className="pt-6 space-y-4">
               {/* Email Sent Notice */}
               <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4 flex items-start gap-3">
                 <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -496,7 +589,7 @@ const QuickRegister = () => {
               </div>
 
               {/* Auto-close notice */}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground text-center">
                 This page will close automatically in a few seconds...
               </p>
 
@@ -511,6 +604,7 @@ const QuickRegister = () => {
             </CardContent>
           </Card>
         </div>
+      </div>
     );
   }
 
