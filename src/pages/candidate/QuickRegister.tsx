@@ -259,7 +259,7 @@ const QuickRegister = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create profile with additional fields
+        // Create profile with all registration fields
         const { error: profileError } = await supabase
           .from("profiles")
           .upsert({
@@ -269,10 +269,14 @@ const QuickRegister = () => {
             mobile: formData.mobile,
             role: "candidate",
             segment: formData.domain,
+            category: formData.category,
             preferred_role: formData.designation,
             preferred_state: formData.preferredLocations.join(", "),
-            experience_level: formData.segment,
-            primary_subject: formData.department
+            experience_level: formData.experienceLevel || formData.segment,
+            primary_subject: formData.department,
+            current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
+            expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
+            available_from: formData.dateOfJoining || null
           });
 
         if (profileError) {

@@ -485,10 +485,24 @@ const CandidateDashboard = () => {
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">OFFICE TYPE</td>
                                 <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.office_type || '-'}</td>
                               </tr>
-                              {/* Row 5: Segment and Program */}
+                              {/* Row 5: Segment and Category */}
                               <tr className="border-b border-border">
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">SEGMENT</td>
                                 <td className="px-3 py-2 text-foreground">{profile?.segment || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CATEGORY</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{(profile as any)?.category || '-'}</td>
+                              </tr>
+                              {/* Row 5b: Current Salary and Expected Salary */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CURRENT SALARY</td>
+                                <td className="px-3 py-2 text-foreground">{(profile as any)?.current_salary ? `₹${Number((profile as any).current_salary).toLocaleString('en-IN')}` : '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">EXPECTED SALARY</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{(profile as any)?.expected_salary ? `₹${Number((profile as any).expected_salary).toLocaleString('en-IN')}` : '-'}</td>
+                              </tr>
+                              {/* Row 5c: Available From and Program */}
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">AVAILABLE FROM</td>
+                                <td className="px-3 py-2 text-foreground">{(profile as any)?.available_from ? new Date((profile as any).available_from).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</td>
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PROGRAM</td>
                                 <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.program || '-'}</td>
                               </tr>
