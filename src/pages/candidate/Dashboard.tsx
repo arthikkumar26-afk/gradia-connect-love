@@ -768,27 +768,6 @@ const CandidateDashboard = () => {
                             <FileText className="h-4 w-4 mr-2" />
                             {profile?.resume_url ? 'Update Resume' : 'Upload Resume'}
                           </Button>
-                          {profile?.resume_url && (
-                            <Button 
-                              variant="default"
-                              size="sm"
-                              onClick={handleReanalyzeResume}
-                              disabled={isReanalyzing}
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              {isReanalyzing ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Analyzing...
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw className="h-4 w-4 mr-2" />
-                                  Re-analyze Resume
-                                </>
-                              )}
-                            </Button>
-                          )}
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -803,116 +782,122 @@ const CandidateDashboard = () => {
                   </CardContent>
                 </Card>
 
-                {/* AI Resume Analysis - Separate Card */}
-                {resumeAnalysis && (
-                  <Card className="mb-6 overflow-hidden border-green-200 dark:border-green-800">
-                    <CardHeader className="bg-gradient-to-r from-green-100 via-emerald-50 to-green-100 dark:from-green-950 dark:via-emerald-950 dark:to-green-950 pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="p-2 bg-green-500/20 rounded-lg">
-                            <Sparkles className="h-5 w-5 text-green-600" />
-                          </div>
-                          <CardTitle className="text-lg font-semibold text-foreground">
-                            AI Resume Analysis
-                          </CardTitle>
+                {/* AI Resume Analysis - Separate Card (Always Visible) */}
+                <Card className="mb-6 overflow-hidden border-green-200 dark:border-green-800">
+                  <CardHeader className="bg-gradient-to-r from-green-100 via-emerald-50 to-green-100 dark:from-green-950 dark:via-emerald-950 dark:to-green-950 pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-green-500/20 rounded-lg">
+                          <Sparkles className="h-5 w-5 text-green-600" />
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-right">
-                            <div className="text-3xl font-bold text-green-600">
-                              {resumeAnalysis.overall_score}<span className="text-sm text-muted-foreground">/100</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">Overall Score</p>
+                        <CardTitle className="text-lg font-semibold text-foreground">
+                          AI Resume Analysis
+                        </CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <div className="text-3xl font-bold text-green-600">
+                            {resumeAnalysis?.overall_score ?? '-'}<span className="text-sm text-muted-foreground">/100</span>
                           </div>
+                          <p className="text-xs text-muted-foreground">Overall Score</p>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="border border-green-200 dark:border-green-800 rounded-lg overflow-hidden">
-                        <table className="w-full text-sm">
-                          <tbody>
-                            {/* Score Progress */}
-                            <tr className="border-b border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
-                              <td className="px-4 py-3 font-medium text-green-700 dark:text-green-400 w-1/4">SCORE</td>
-                              <td className="px-4 py-3" colSpan={3}>
-                                <div className="flex items-center gap-3">
-                                  <Progress value={resumeAnalysis.overall_score} className="flex-1 h-3" />
-                                  <span className="text-sm font-semibold text-green-600 min-w-[50px] text-right">
-                                    {resumeAnalysis.overall_score}%
-                                  </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="border border-green-200 dark:border-green-800 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <tbody>
+                          {/* Score Progress */}
+                          <tr className="border-b border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
+                            <td className="px-4 py-3 font-medium text-green-700 dark:text-green-400 w-1/4">SCORE</td>
+                            <td className="px-4 py-3" colSpan={3}>
+                              <div className="flex items-center gap-3">
+                                <Progress value={resumeAnalysis?.overall_score ?? 0} className="flex-1 h-3" />
+                                <span className="text-sm font-semibold text-green-600 min-w-[50px] text-right">
+                                  {resumeAnalysis?.overall_score ?? 0}%
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                          {/* Career Level */}
+                          <tr className="border-b border-green-200 dark:border-green-800">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">CAREER LEVEL</td>
+                            <td className="px-4 py-3 text-foreground" colSpan={3}>
+                              {resumeAnalysis?.career_level ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                                  {resumeAnalysis.career_level}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground italic">Not analyzed yet</span>
+                              )}
+                            </td>
+                          </tr>
+                          {/* Experience Summary */}
+                          <tr className="border-b border-green-200 dark:border-green-800">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">EXPERIENCE SUMMARY</td>
+                            <td className="px-4 py-3 text-foreground" colSpan={3}>
+                              {resumeAnalysis?.experience_summary || <span className="text-muted-foreground italic">Not analyzed yet</span>}
+                            </td>
+                          </tr>
+                          {/* Strengths */}
+                          <tr className="border-b border-green-200 dark:border-green-800">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">STRENGTHS</td>
+                            <td className="px-4 py-3" colSpan={3}>
+                              {resumeAnalysis?.strengths && resumeAnalysis.strengths.length > 0 ? (
+                                <ul className="space-y-1.5">
+                                  {resumeAnalysis.strengths.map((strength, idx) => (
+                                    <li key={idx} className="flex items-start gap-2">
+                                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                      <span className="text-foreground">{strength}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-muted-foreground italic">Not analyzed yet</span>
+                              )}
+                            </td>
+                          </tr>
+                          {/* Areas for Improvement */}
+                          <tr className="border-b border-green-200 dark:border-green-800">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">AREAS TO IMPROVE</td>
+                            <td className="px-4 py-3" colSpan={3}>
+                              {resumeAnalysis?.improvements && resumeAnalysis.improvements.length > 0 ? (
+                                <ul className="space-y-1.5">
+                                  {resumeAnalysis.improvements.map((item, idx) => (
+                                    <li key={idx} className="flex items-start gap-2">
+                                      <TrendingUp className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                      <span className="text-foreground">{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-muted-foreground italic">Not analyzed yet</span>
+                              )}
+                            </td>
+                          </tr>
+                          {/* Skill Highlights */}
+                          <tr>
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">KEY SKILLS</td>
+                            <td className="px-4 py-3" colSpan={3}>
+                              {resumeAnalysis?.skill_highlights && resumeAnalysis.skill_highlights.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {resumeAnalysis.skill_highlights.map((skill, idx) => (
+                                    <Badge key={idx} variant="outline" className="bg-primary/5 text-primary border-primary/30">
+                                      {skill}
+                                    </Badge>
+                                  ))}
                                 </div>
-                              </td>
-                            </tr>
-                            {/* Career Level */}
-                            {resumeAnalysis.career_level && (
-                              <tr className="border-b border-green-200 dark:border-green-800">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">CAREER LEVEL</td>
-                                <td className="px-4 py-3 text-foreground" colSpan={3}>
-                                  <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                                    {resumeAnalysis.career_level}
-                                  </Badge>
-                                </td>
-                              </tr>
-                            )}
-                            {/* Experience Summary */}
-                            {resumeAnalysis.experience_summary && (
-                              <tr className="border-b border-green-200 dark:border-green-800">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">EXPERIENCE SUMMARY</td>
-                                <td className="px-4 py-3 text-foreground" colSpan={3}>{resumeAnalysis.experience_summary}</td>
-                              </tr>
-                            )}
-                            {/* Strengths */}
-                            {resumeAnalysis.strengths && resumeAnalysis.strengths.length > 0 && (
-                              <tr className="border-b border-green-200 dark:border-green-800">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">STRENGTHS</td>
-                                <td className="px-4 py-3" colSpan={3}>
-                                  <ul className="space-y-1.5">
-                                    {resumeAnalysis.strengths.map((strength, idx) => (
-                                      <li key={idx} className="flex items-start gap-2">
-                                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                        <span className="text-foreground">{strength}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </td>
-                              </tr>
-                            )}
-                            {/* Areas for Improvement */}
-                            {resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 && (
-                              <tr className="border-b border-green-200 dark:border-green-800">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">AREAS TO IMPROVE</td>
-                                <td className="px-4 py-3" colSpan={3}>
-                                  <ul className="space-y-1.5">
-                                    {resumeAnalysis.improvements.map((item, idx) => (
-                                      <li key={idx} className="flex items-start gap-2">
-                                        <TrendingUp className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                                        <span className="text-foreground">{item}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </td>
-                              </tr>
-                            )}
-                            {/* Skill Highlights */}
-                            {resumeAnalysis.skill_highlights && resumeAnalysis.skill_highlights.length > 0 && (
-                              <tr>
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top">KEY SKILLS</td>
-                                <td className="px-4 py-3" colSpan={3}>
-                                  <div className="flex flex-wrap gap-2">
-                                    {resumeAnalysis.skill_highlights.map((skill, idx) => (
-                                      <Badge key={idx} variant="outline" className="bg-primary/5 text-primary border-primary/30">
-                                        {skill}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                              ) : (
+                                <span className="text-muted-foreground italic">Not analyzed yet</span>
+                              )}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Summary Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
