@@ -1180,12 +1180,14 @@ const CandidateDashboard = () => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => navigate("/profile/edit")}>
-              <User className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
-          </div>
+          {activeMenu === "dashboard" && (
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => navigate("/profile/edit")}>
+                <User className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            </div>
+          )}
         </header>
 
 
