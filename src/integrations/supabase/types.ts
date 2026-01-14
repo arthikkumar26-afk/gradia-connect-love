@@ -673,6 +673,48 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_analyses: {
+        Row: {
+          analyzed_at: string
+          career_level: string | null
+          created_at: string
+          experience_summary: string | null
+          id: string
+          improvements: string[] | null
+          overall_score: number | null
+          skill_highlights: string[] | null
+          strengths: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analyzed_at?: string
+          career_level?: string | null
+          created_at?: string
+          experience_summary?: string | null
+          id?: string
+          improvements?: string[] | null
+          overall_score?: number | null
+          skill_highlights?: string[] | null
+          strengths?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analyzed_at?: string
+          career_level?: string | null
+          created_at?: string
+          experience_summary?: string | null
+          id?: string
+          improvements?: string[] | null
+          overall_score?: number | null
+          skill_highlights?: string[] | null
+          strengths?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sponsor_analytics: {
         Row: {
           created_at: string | null

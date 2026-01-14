@@ -75,17 +75,75 @@ const CandidateDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
 
-  // Load resume analysis from localStorage on mount
+  // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
-    const storedAnalysis = localStorage.getItem('resumeAnalysis');
-    if (storedAnalysis) {
+    const fetchResumeAnalysis = async () => {
+      if (!profile?.id) return;
+      
       try {
-        setResumeAnalysis(JSON.parse(storedAnalysis));
+        const { data, error } = await supabase
+          .from('resume_analyses')
+          .select('*')
+          .eq('user_id', profile.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching resume analysis:', error);
+          // Fallback to localStorage if database fetch fails
+          const storedAnalysis = localStorage.getItem('resumeAnalysis');
+          if (storedAnalysis) {
+            setResumeAnalysis(JSON.parse(storedAnalysis));
+          }
+          return;
+        }
+        
+        if (data) {
+          setResumeAnalysis({
+            overall_score: data.overall_score || 0,
+            career_level: data.career_level || '',
+            experience_summary: data.experience_summary || '',
+            strengths: data.strengths || [],
+            improvements: data.improvements || [],
+            skill_highlights: data.skill_highlights || []
+          });
+        } else {
+          // Check localStorage for users who registered before database storage
+          const storedAnalysis = localStorage.getItem('resumeAnalysis');
+          if (storedAnalysis) {
+            const parsedAnalysis = JSON.parse(storedAnalysis);
+            setResumeAnalysis(parsedAnalysis);
+            
+            // Migrate localStorage data to database
+            try {
+              const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-resume-analysis`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    user_id: profile.id,
+                    analysis: parsedAnalysis
+                  })
+                }
+              );
+              
+              if (response.ok) {
+                console.log('Successfully migrated resume analysis to database');
+                // Clear localStorage after successful migration
+                localStorage.removeItem('resumeAnalysis');
+              }
+            } catch (migrationError) {
+              console.error('Error migrating resume analysis:', migrationError);
+            }
+          }
+        }
       } catch (e) {
-        console.error('Error parsing resume analysis:', e);
+        console.error('Error fetching resume analysis:', e);
       }
-    }
-  }, []);
+    };
+    
+    fetchResumeAnalysis();
+  }, [profile?.id]);
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
