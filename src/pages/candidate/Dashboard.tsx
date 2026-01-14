@@ -899,7 +899,75 @@ const CandidateDashboard = () => {
                   </CardContent>
                 </Card>
 
-                {/* Summary Cards Grid */}
+                {/* Educational Qualification Table */}
+                <Card className="overflow-hidden border-border shadow-soft">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                          <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg text-foreground">Educational Qualification</CardTitle>
+                          <p className="text-sm text-muted-foreground">Your academic background</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4 overflow-x-auto">
+                    <div className="border border-border rounded-lg overflow-hidden min-w-[600px]">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">EDUCATION</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">SCHOOL/COLLEGE NAME</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">SPECIALIZATION</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">BOARD/UNIVERSITY</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">YEAR OF PASSING</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">% OF MARKS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Highest Qualification Row */}
+                          <tr className="border-b border-border hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-3 text-foreground font-medium">
+                              {profile?.highest_qualification || <span className="text-muted-foreground italic">-</span>}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              <span className="italic">-</span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              <span className="italic">-</span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              <span className="italic">-</span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              <span className="italic">-</span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              <span className="italic">-</span>
+                            </td>
+                          </tr>
+                          {/* Empty rows for additional qualifications */}
+                          {[1, 2, 3].map((row) => (
+                            <tr key={row} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
+                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
+                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
+                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
+                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
+                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                      Educational details can be updated by editing your profile
+                    </p>
+                  </CardContent>
+                </Card>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   {dashboardCards.map((card, index) => {
                     const Icon = card.icon;
