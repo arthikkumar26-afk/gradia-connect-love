@@ -44,6 +44,7 @@ import ResumeBuilder from "./pages/candidate/ResumeBuilder";
 import InterviewPrep from "./pages/candidate/InterviewPrep";
 import CareerCoaching from "./pages/candidate/CareerCoaching";
 import CandidateSignup from "./pages/candidate/Signup";
+import QuickRegister from "./pages/candidate/QuickRegister";
 import CandidateCreateProfile from "./pages/candidate/CreateProfile";
 import EmployerCreateProfile from "./pages/employer/CreateProfile";
 import TechLearning from "./pages/learning/TechLearning";
@@ -128,6 +129,7 @@ const MainRoutes = () => (
       <Route path="/candidate/apply" element={<CandidateCreateProfile />} />
       <Route path="/create-profile" element={<CandidateCreateProfile />} />
       <Route path="/signup" element={<CandidateSignup />} />
+      <Route path="/candidate/quick-register" element={<QuickRegister />} />
       <Route path="/profile/success" element={<ProfileSuccess />} />
       <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
       <Route path="/profile/edit" element={<EditProfile />} />

@@ -40,6 +40,7 @@ import {
   HelpCircle,
   ExternalLink,
 } from "lucide-react";
+import SignupQRButton from "./SignupQRButton";
 import {
   Popover,
   PopoverContent,
@@ -184,6 +185,9 @@ const Header = () => {
                 <Moon className="h-4 w-4" />
               )}
             </Button>
+
+            {/* QR Code Button */}
+            <SignupQRButton variant="icon" />
 
             {/* Sign Up Button */}
             <Button variant="outline" size="sm" asChild>
