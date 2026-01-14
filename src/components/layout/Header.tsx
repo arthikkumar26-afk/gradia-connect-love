@@ -189,72 +189,107 @@ const Header = () => {
             {/* QR Code Button */}
             <SignupQRButton variant="icon" />
 
-            {/* Sign Up Button */}
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/candidate/signup" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Sign Up
-              </Link>
-            </Button>
+            {/* Sign Up Button - Only show when not authenticated */}
+            {!isAuthenticated && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/candidate/signup" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Sign Up
+                </Link>
+              </Button>
+            )}
 
-            {/* Login Dropdown */}
-            <div className="hidden lg:flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="gap-2">
-                    Login
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-background z-50" align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/candidate/login" className="flex items-center gap-3 py-2">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
-                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Candidate Login</div>
-                        <div className="text-xs text-muted-foreground">Job seekers & applicants</div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/employer/login" className="flex items-center gap-3 py-2">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900">
-                        <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Employer Login</div>
-                        <div className="text-xs text-muted-foreground">Post jobs & hire talent</div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin/login" className="flex items-center gap-3 py-2">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900">
-                        <ShieldCheck className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Admin Login</div>
-                        <div className="text-xs text-muted-foreground">Platform management</div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/owner/login" className="flex items-center gap-3 py-2">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
-                        <Crown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium">Owner Login</div>
-                        <div className="text-xs text-muted-foreground">Full system access</div>
-                      </div>
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {/* Login Dropdown - Only show when not authenticated */}
+            {!isAuthenticated && (
+              <div className="hidden lg:flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="default" size="sm" className="gap-2">
+                      Login
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-background z-50" align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/candidate/login" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                          <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Candidate Login</div>
+                          <div className="text-xs text-muted-foreground">Job seekers & applicants</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/employer/login" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900">
+                          <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Employer Login</div>
+                          <div className="text-xs text-muted-foreground">Post jobs & hire talent</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/login" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900">
+                          <ShieldCheck className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Admin Login</div>
+                          <div className="text-xs text-muted-foreground">Platform management</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/owner/login" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
+                          <Crown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Owner Login</div>
+                          <div className="text-xs text-muted-foreground">Full system access</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+
+            {/* User Menu - Only show when authenticated */}
+            {isAuthenticated && (
+              <div className="hidden lg:flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="default" size="sm" className="gap-2">
+                      <User className="h-4 w-4" />
+                      {profile?.full_name?.split(' ')[0] || 'Account'}
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-background z-50" align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to={userRole === 'employer' ? '/employer/dashboard' : '/candidate/dashboard'} className="flex items-center gap-3 py-2">
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      className="flex items-center gap-3 py-2 text-destructive cursor-pointer"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
