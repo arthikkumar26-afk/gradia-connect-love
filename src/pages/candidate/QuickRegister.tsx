@@ -79,9 +79,10 @@ const QuickRegister = () => {
     state2: "",
     district2: "",
     city2: "",
-    // Category & Segment
+    // Category, Segment & Department
     category: "",
     segment: "",
+    department: "",
     currentSalary: "",
     expectedSalary: "",
     dateOfJoining: "",
@@ -536,6 +537,28 @@ const QuickRegister = () => {
                       onClick={() => setFormData(prev => ({ ...prev, segment: seg }))}
                     >
                       <span className="text-sm">{seg}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Department */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  Department *
+                </h3>
+                
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                  {["T", "H", "E", "M", "S", "SS"].map((dept) => (
+                    <Button
+                      key={dept}
+                      type="button"
+                      variant={formData.department === dept ? "default" : "outline"}
+                      className={`h-auto py-3 ${formData.department === dept ? "" : "hover:bg-accent/10"}`}
+                      onClick={() => setFormData(prev => ({ ...prev, department: dept }))}
+                    >
+                      <span className="text-sm font-medium">{dept}</span>
                     </Button>
                   ))}
                 </div>
