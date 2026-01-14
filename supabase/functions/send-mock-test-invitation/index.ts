@@ -29,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
     const testLink = `${baseUrl}/candidate/mock-test/${sessionId}`;
 
     const emailResponse = await resend.emails.send({
-      from: "Gradia <onboarding@resend.dev>",
+      from: "Gradia <noreply@gradia.co.in>",
       to: [candidateEmail],
       subject: "Your Mock Interview Test is Ready! 🎯",
       html: `
