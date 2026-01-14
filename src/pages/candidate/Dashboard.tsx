@@ -31,7 +31,9 @@ import {
   Award,
   Sparkles,
   CheckCircle,
-  Upload
+  Upload,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -74,6 +76,7 @@ const CandidateDashboard = () => {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -144,6 +147,93 @@ const CandidateDashboard = () => {
     
     fetchResumeAnalysis();
   }, [profile?.id]);
+
+  // Re-analyze resume function
+  const handleReanalyzeResume = async () => {
+    if (!profile?.resume_url || !profile?.id) {
+      toast({
+        title: "No Resume Found",
+        description: "Please upload a resume first to analyze it.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsReanalyzing(true);
+    
+    try {
+      // Fetch the resume file from the URL
+      const response = await fetch(profile.resume_url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch resume file");
+      }
+      
+      const blob = await response.blob();
+      const fileName = profile.resume_url.split('/').pop() || 'resume.pdf';
+      const file = new File([blob], fileName, { type: blob.type || 'application/pdf' });
+      
+      // Create form data and send to parse-resume function
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const parseResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      
+      if (!parseResponse.ok) {
+        const errorData = await parseResponse.json();
+        throw new Error(errorData.error || "Failed to analyze resume");
+      }
+      
+      const analysisData = await parseResponse.json();
+      
+      // Save the new analysis to the database
+      const saveResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-resume-analysis`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: profile.id,
+            analysis: analysisData
+          })
+        }
+      );
+      
+      if (!saveResponse.ok) {
+        console.error('Failed to save analysis to database');
+      }
+      
+      // Update local state
+      setResumeAnalysis({
+        overall_score: analysisData.overall_score || 0,
+        career_level: analysisData.career_level || '',
+        experience_summary: analysisData.experience_summary || '',
+        strengths: analysisData.strengths || [],
+        improvements: analysisData.improvements || [],
+        skill_highlights: analysisData.skill_highlights || []
+      });
+      
+      toast({
+        title: "Resume Re-analyzed!",
+        description: `Your new AI score is ${analysisData.overall_score}/100`,
+      });
+      
+    } catch (error: any) {
+      console.error('Error re-analyzing resume:', error);
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Could not re-analyze your resume. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReanalyzing(false);
+    }
+  };
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -751,8 +841,8 @@ const CandidateDashboard = () => {
                           </div>
                         )}
 
-                        {/* Action Button */}
-                        <div className="mt-4 flex gap-2">
+                        {/* Action Buttons */}
+                        <div className="mt-4 flex flex-wrap gap-2">
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -761,6 +851,27 @@ const CandidateDashboard = () => {
                             <FileText className="h-4 w-4 mr-2" />
                             {profile?.resume_url ? 'Update Resume' : 'Upload Resume'}
                           </Button>
+                          {profile?.resume_url && (
+                            <Button 
+                              variant="default"
+                              size="sm"
+                              onClick={handleReanalyzeResume}
+                              disabled={isReanalyzing}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {isReanalyzing ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Analyzing...
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshCw className="h-4 w-4 mr-2" />
+                                  Re-analyze Resume
+                                </>
+                              )}
+                            </Button>
+                          )}
                           <Button 
                             variant="outline" 
                             size="sm"
