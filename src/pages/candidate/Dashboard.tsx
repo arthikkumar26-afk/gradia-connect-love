@@ -2111,115 +2111,98 @@ const CandidateDashboard = () => {
                   </div>
                 )}
 
-                {/* Attend Mock Test Section - Below Jobs */}
-                <div className="mt-8">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Target className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold text-foreground">Attend Mock Test</h3>
-                  </div>
-                  <Card className="p-6">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                      <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Target className="h-8 w-8 text-primary" />
-                      </div>
-                      <div className="flex-1 text-center md:text-left">
-                        <h4 className="font-semibold text-foreground mb-1">Ready to Test Your Skills?</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Take a mock interview to practice and get feedback before the real interview.
-                        </p>
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
+                {/* Mock Test & Upskill Sections - Side by Side */}
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Attend Mock Test */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Target className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-semibold text-foreground">Attend Mock Test</h3>
+                    </div>
+                    <Card className="p-6 h-full">
+                      <div className="flex flex-col items-center gap-4 text-center">
+                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Target className="h-8 w-8 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground mb-1">Ready to Test Your Skills?</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Take a mock interview to practice and get feedback before the real interview.
+                          </p>
+                        </div>
                         <Button 
                           variant="cta" 
                           onClick={() => navigate('/candidate/interview-prep')}
-                          className="gap-2"
+                          className="gap-2 mt-2"
                         >
                           <Target className="h-4 w-4" />
                           Start Mock Interview
                         </Button>
                       </div>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Upskill Yourself Section - Below Mock Test */}
-                <div className="mt-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Lightbulb className="h-5 w-5 text-amber-500" />
-                    <h3 className="text-lg font-semibold text-foreground">Upskill Yourself</h3>
+                    </Card>
                   </div>
-                  
-                  {/* Skill Improvement Areas */}
-                  {resumeAnalysis && resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 && (
-                    <Card className="p-4 mb-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-sm font-medium text-foreground">Areas to Improve:</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {resumeAnalysis.improvements.slice(0, 3).map((improvement: string, index: number) => (
-                          <Badge key={index} variant="outline" className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
-                            {improvement.length > 40 ? improvement.substring(0, 40) + '...' : improvement}
-                          </Badge>
-                        ))}
+
+                  {/* Upskill Yourself */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Lightbulb className="h-5 w-5 text-amber-500" />
+                      <h3 className="text-lg font-semibold text-foreground">Upskill Yourself</h3>
+                    </div>
+                    <Card className="p-6 h-full">
+                      <div className="flex flex-col items-center gap-4 text-center">
+                        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                          <GraduationCap className="h-8 w-8 text-amber-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground mb-1">Improve Your Weak Points</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Recommended platforms to enhance your skills
+                          </p>
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            <a 
+                              href="https://www.coursera.org" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                            >
+                              Coursera <ExternalLink className="h-3 w-3" />
+                            </a>
+                            <a 
+                              href="https://www.udemy.com" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                            >
+                              Udemy <ExternalLink className="h-3 w-3" />
+                            </a>
+                            <a 
+                              href="https://www.linkedin.com/learning" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                            >
+                              LinkedIn Learning <ExternalLink className="h-3 w-3" />
+                            </a>
+                            <a 
+                              href="https://www.edx.org" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
+                            >
+                              edX <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => navigate('/learning')}
+                          className="gap-2 mt-2"
+                        >
+                          Explore Courses
+                        </Button>
                       </div>
                     </Card>
-                  )}
-
-                  {/* Course Recommendations */}
-                  <Card className="p-6">
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                      <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-                        <GraduationCap className="h-8 w-8 text-amber-600" />
-                      </div>
-                      <div className="flex-1 text-center md:text-left">
-                        <h4 className="font-semibold text-foreground mb-1">Improve Your Weak Points</h4>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          Recommended platforms to enhance your skills
-                        </p>
-                        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                          <a 
-                            href="https://www.coursera.org" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                          >
-                            Coursera <ExternalLink className="h-3 w-3" />
-                          </a>
-                          <a 
-                            href="https://www.udemy.com" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                          >
-                            Udemy <ExternalLink className="h-3 w-3" />
-                          </a>
-                          <a 
-                            href="https://www.linkedin.com/learning" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                          >
-                            LinkedIn Learning <ExternalLink className="h-3 w-3" />
-                          </a>
-                          <a 
-                            href="https://www.edx.org" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                          >
-                            edX <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => navigate('/learning')}
-                        className="gap-2"
-                      >
-                        Explore Courses
-                      </Button>
-                    </div>
-                  </Card>
+                  </div>
                 </div>
               </div>
             )}
