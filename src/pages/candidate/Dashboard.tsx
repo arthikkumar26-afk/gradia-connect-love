@@ -1783,66 +1783,48 @@ const CandidateDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {addressData ? (
-                            <>
-                              <tr className="border-b border-border">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">D.No. / Flat No.</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.present_door_flat_no || <span className="text-muted-foreground italic">-</span>}</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.permanent_door_flat_no || <span className="text-muted-foreground italic">-</span>}</td>
-                              </tr>
-                              <tr className="border-b border-border">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">Street</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.present_street || <span className="text-muted-foreground italic">-</span>}</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.permanent_street || <span className="text-muted-foreground italic">-</span>}</td>
-                              </tr>
-                              <tr className="border-b border-border">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">Village / Area</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.present_village_area || <span className="text-muted-foreground italic">-</span>}</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.permanent_village_area || <span className="text-muted-foreground italic">-</span>}</td>
-                              </tr>
-                              <tr className="border-b border-border">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">Mandal</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.present_mandal || <span className="text-muted-foreground italic">-</span>}</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.permanent_mandal || <span className="text-muted-foreground italic">-</span>}</td>
-                              </tr>
-                              <tr className="border-b border-border">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">District</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.present_district || <span className="text-muted-foreground italic">-</span>}</td>
-                                <td className="px-4 py-3 text-foreground">{addressData.permanent_district || <span className="text-muted-foreground italic">-</span>}</td>
-                              </tr>
-                              <tr className="border-b-0">
-                                <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground">State & Pin Code</td>
-                                <td className="px-4 py-3 text-foreground">
-                                  {addressData.present_state || addressData.present_pin_code ? (
-                                    <>{addressData.present_state}{addressData.present_state && addressData.present_pin_code ? " - " : ""}{addressData.present_pin_code}</>
-                                  ) : (
-                                    <span className="text-muted-foreground italic">-</span>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-foreground">
-                                  {addressData.permanent_state || addressData.permanent_pin_code ? (
-                                    <>{addressData.permanent_state}{addressData.permanent_state && addressData.permanent_pin_code ? " - " : ""}{addressData.permanent_pin_code}</>
-                                  ) : (
-                                    <span className="text-muted-foreground italic">-</span>
-                                  )}
-                                </td>
-                              </tr>
-                            </>
-                          ) : (
-                            <tr>
-                              <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
-                                <MapPinIcon className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                                <p>No address details added yet.</p>
-                                <Button
-                                  variant="link"
-                                  onClick={() => setIsAddressModalOpen(true)}
-                                  className="mt-1"
-                                >
-                                  Add your address
-                                </Button>
-                              </td>
-                            </tr>
-                          )}
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-primary">D.No. / Flat No.</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.present_door_flat_no || <span className="text-muted-foreground italic">-</span>}</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.permanent_door_flat_no || <span className="text-muted-foreground italic">-</span>}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-primary">Street</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.present_street || <span className="text-muted-foreground italic">-</span>}</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.permanent_street || <span className="text-muted-foreground italic">-</span>}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-primary">Village / Area</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.present_village_area || <span className="text-muted-foreground italic">-</span>}</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.permanent_village_area || <span className="text-muted-foreground italic">-</span>}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-primary">Mandal</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.present_mandal || <span className="text-muted-foreground italic">-</span>}</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.permanent_mandal || <span className="text-muted-foreground italic">-</span>}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-primary">District</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.present_district || <span className="text-muted-foreground italic">-</span>}</td>
+                            <td className="px-4 py-3 text-foreground">{addressData?.permanent_district || <span className="text-muted-foreground italic">-</span>}</td>
+                          </tr>
+                          <tr className="border-b-0">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-primary">State & Pin Code</td>
+                            <td className="px-4 py-3 text-foreground">
+                              {addressData?.present_state || addressData?.present_pin_code ? (
+                                <>{addressData.present_state}{addressData.present_state && addressData.present_pin_code ? " - " : ""}{addressData.present_pin_code}</>
+                              ) : (
+                                <span className="text-muted-foreground italic">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-foreground">
+                              {addressData?.permanent_state || addressData?.permanent_pin_code ? (
+                                <>{addressData.permanent_state}{addressData.permanent_state && addressData.permanent_pin_code ? " - " : ""}{addressData.permanent_pin_code}</>
+                              ) : (
+                                <span className="text-muted-foreground italic">-</span>
+                              )}
+                            </td>
+                          </tr>
                         </tbody>
                       </table>
                     </div>
