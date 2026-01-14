@@ -314,6 +314,13 @@ Be thorough - scan the entire document for contact information, educational and 
 
     console.log("Sending to AI for parsing...");
 
+    // Simplified prompt for text extraction
+    const extractionPrompt = `${prompt}
+
+Return the extracted data as a JSON object with these keys: full_name, mobile, email, date_of_birth, gender, experience_level, location, current_state, current_district, linkedin, preferred_role, skills (array), languages (array), alternate_number, highest_qualification, field_of_study, institution, graduation_year, current_company, current_role, total_experience, preferred_state, preferred_district, segment, program, classes_handled, batch, primary_subject, office_type.
+
+Return ONLY valid JSON, no explanation.`;
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -325,71 +332,14 @@ Be thorough - scan the entire document for contact information, educational and 
         messages: [
           {
             role: "user",
-            content: messageContent,
+            content: messageContent[0].type === "text" && messageContent.length === 1 
+              ? extractionPrompt + "\n\n" + messageContent[0].text.replace(prompt, "")
+              : [
+                  { type: "text", text: extractionPrompt },
+                  ...messageContent.filter((m: any) => m.type === "image_url")
+                ],
           },
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "extract_resume_data",
-              description: "Extract structured data from a resume",
-              parameters: {
-                type: "object",
-                properties: {
-                  full_name: { type: "string", description: "Candidate's full name" },
-                  mobile: { type: "string", description: "Phone number" },
-                  email: { type: "string", description: "Email address - look for @ symbol" },
-                  date_of_birth: { type: "string", description: "Date of birth in YYYY-MM-DD format" },
-                  gender: { type: "string", enum: ["male", "female", "other"], description: "Gender" },
-                  experience_level: { 
-                    type: "string", 
-                    enum: ["Fresher (0-1 years)", "Junior (1-3 years)", "Mid-Level (3-5 years)", "Senior (5-8 years)", "Lead (8-12 years)", "Expert (12+ years)"],
-                    description: "Experience level based on total years"
-                  },
-                  location: { type: "string", description: "Preferred work location - City and state" },
-                  current_state: { type: "string", description: "Current state of residence" },
-                  current_district: { type: "string", description: "Current district/city" },
-                  linkedin: { type: "string", description: "LinkedIn URL" },
-                  preferred_role: { type: "string", description: "Current or desired job title" },
-                  skills: { 
-                    type: "array", 
-                    items: { type: "string" },
-                    description: "List of skills from the resume"
-                  },
-                  languages: { 
-                    type: "array", 
-                    items: { type: "string" },
-                    description: "Languages known"
-                  },
-                  alternate_number: { type: "string", description: "Secondary phone number" },
-                  highest_qualification: { 
-                    type: "string", 
-                    enum: ["High School", "Diploma", "Bachelor's Degree", "Master's Degree", "PhD", "Other"],
-                    description: "Highest education qualification"
-                  },
-                  field_of_study: { type: "string", description: "Field of study/major" },
-                  institution: { type: "string", description: "Name of university/college" },
-                  graduation_year: { type: "string", description: "Year of graduation" },
-                  current_company: { type: "string", description: "Current or most recent employer" },
-                  current_role: { type: "string", description: "Current or most recent job title" },
-                  total_experience: { type: "string", description: "Total years of experience" },
-                  preferred_state: { type: "string", description: "Preferred work state" },
-                  preferred_district: { type: "string", description: "Preferred work district" },
-                  segment: { type: "string", description: "Industry segment" },
-                  program: { type: "string", description: "Employment type" },
-                  classes_handled: { type: "string", description: "Classes taught" },
-                  batch: { type: "string", description: "Work timing preference" },
-                  primary_subject: { type: "string", description: "Primary teaching subject" },
-                  office_type: { type: "string", description: "Office type preference" },
-                },
-                required: ["full_name"],
-                additionalProperties: false
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "extract_resume_data" } },
       }),
     });
 
@@ -415,14 +365,34 @@ Be thorough - scan the entire document for contact information, educational and 
     const data = await response.json();
     console.log("AI response received");
     
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    const content = data.choices?.[0]?.message?.content;
     
-    if (!toolCall) {
-      console.error("No tool call in response:", JSON.stringify(data));
-      throw new Error("No structured data returned from AI");
+    if (!content) {
+      console.error("No content in response:", JSON.stringify(data));
+      throw new Error("No data returned from AI");
     }
 
-    const extractedData = JSON.parse(toolCall.function.arguments);
+    // Parse JSON from the response (handle markdown code blocks)
+    let extractedData;
+    try {
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        extractedData = JSON.parse(jsonMatch[1]);
+      } else {
+        // Try parsing as plain JSON
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}');
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          extractedData = JSON.parse(content.slice(jsonStart, jsonEnd + 1));
+        } else {
+          throw new Error("Could not find JSON in response");
+        }
+      }
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", content);
+      throw new Error("Failed to parse resume data");
+    }
+
     console.log("Extracted data for user:", userId);
 
     return new Response(JSON.stringify(extractedData), {
