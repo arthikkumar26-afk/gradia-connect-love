@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Calendar, MapPin, GraduationCap, Users, Upload, Loader2, CheckCircle2, Sparkles, IndianRupee, Search, Briefcase, User, Mail, Phone, BookOpen, Award } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, MapPin, GraduationCap, Users, Upload, Loader2, CheckCircle2, Sparkles, IndianRupee, Search, Briefcase, User, Mail, Phone, BookOpen, Award, TrendingUp, AlertCircle, Star } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+
+interface ResumeAnalysis {
+  overall_score: number;
+  strengths: string[];
+  improvements: string[];
+  experience_summary: string;
+  skill_highlights: string[];
+  career_level: string;
+}
 
 // Education designations only
 const educationDesignations = ["Teacher", "Vice Principal", "Principal"];
@@ -63,6 +73,7 @@ const QuickRegister = () => {
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeParsed, setResumeParsed] = useState(false);
+  const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [locationSearch, setLocationSearch] = useState("");
   const [locationSearch2, setLocationSearch2] = useState("");
@@ -204,13 +215,14 @@ const QuickRegister = () => {
       const analysisData = await response.json();
       console.log("Resume analysis data:", analysisData);
 
-      // Store analysis data for later use in email
+      // Store analysis data for later use in email and display
       localStorage.setItem('resumeAnalysis', JSON.stringify(analysisData));
+      setResumeAnalysis(analysisData);
 
       setResumeParsed(true);
       toast({
         title: `Resume Analyzed - Score: ${analysisData.overall_score || 70}/100`,
-        description: "Your resume has been analyzed. Complete registration to receive detailed score via email.",
+        description: "View your detailed score breakdown below.",
       });
     } catch (error: any) {
       console.error("Resume analysis error:", error);
@@ -491,7 +503,7 @@ const QuickRegister = () => {
                   <div className="space-y-4">
                     <h3 className="font-semibold text-foreground flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-primary" />
-                      Quick Fill with Resume (Optional)
+                      Resume Analysis (Optional)
                     </h3>
                     
                     <div 
@@ -511,13 +523,13 @@ const QuickRegister = () => {
                       {isParsingResume ? (
                         <div className="flex flex-col items-center gap-3">
                           <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                          <p className="text-sm text-muted-foreground">AI is parsing your resume...</p>
+                          <p className="text-sm text-muted-foreground">AI is analyzing your resume...</p>
                         </div>
                       ) : resumeParsed ? (
                         <div className="flex flex-col items-center gap-3">
                           <CheckCircle2 className="h-10 w-10 text-green-500" />
                           <div>
-                            <p className="font-medium text-green-700">Resume Parsed Successfully!</p>
+                            <p className="font-medium text-green-700">Resume Analyzed Successfully!</p>
                             <p className="text-sm text-muted-foreground">{resumeFile?.name}</p>
                             <p className="text-xs text-muted-foreground mt-1">Click to upload a different resume</p>
                           </div>
@@ -528,12 +540,126 @@ const QuickRegister = () => {
                             <Upload className="h-8 w-8 text-primary" />
                           </div>
                           <div>
-                            <p className="font-medium">Upload your resume to auto-fill details</p>
+                            <p className="font-medium">Upload your resume for AI analysis</p>
                             <p className="text-sm text-muted-foreground">PDF, Word, or Image (max 10MB)</p>
                           </div>
                         </div>
                       )}
                     </div>
+
+                    {/* Resume Score Display */}
+                    {resumeAnalysis && resumeParsed && (
+                      <div className="space-y-4 p-4 bg-gradient-to-br from-primary/5 to-accent/10 rounded-xl border border-primary/20">
+                        {/* Score Header */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center ${
+                              resumeAnalysis.overall_score >= 80 ? 'bg-green-100' :
+                              resumeAnalysis.overall_score >= 60 ? 'bg-yellow-100' : 'bg-red-100'
+                            }`}>
+                              <span className={`text-xl font-bold ${
+                                resumeAnalysis.overall_score >= 80 ? 'text-green-700' :
+                                resumeAnalysis.overall_score >= 60 ? 'text-yellow-700' : 'text-red-700'
+                              }`}>
+                                {resumeAnalysis.overall_score}
+                              </span>
+                              <span className="text-xs text-muted-foreground absolute -bottom-1">/100</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground">Resume Score</h4>
+                              <p className="text-sm text-muted-foreground">{resumeAnalysis.career_level || 'Professional'}</p>
+                            </div>
+                          </div>
+                          <Star className={`h-6 w-6 ${
+                            resumeAnalysis.overall_score >= 80 ? 'text-green-500 fill-green-500' :
+                            resumeAnalysis.overall_score >= 60 ? 'text-yellow-500 fill-yellow-500' : 'text-red-500'
+                          }`} />
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-1">
+                          <Progress 
+                            value={resumeAnalysis.overall_score} 
+                            className="h-2"
+                          />
+                          <p className="text-xs text-muted-foreground text-right">
+                            {resumeAnalysis.overall_score >= 80 ? 'Excellent' :
+                             resumeAnalysis.overall_score >= 60 ? 'Good' : 'Needs Improvement'}
+                          </p>
+                        </div>
+
+                        {/* Experience Summary */}
+                        {resumeAnalysis.experience_summary && (
+                          <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-3">
+                            {resumeAnalysis.experience_summary}
+                          </p>
+                        )}
+
+                        {/* Strengths */}
+                        {resumeAnalysis.strengths && resumeAnalysis.strengths.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-medium text-green-700 flex items-center gap-2">
+                              <TrendingUp className="h-4 w-4" />
+                              Key Strengths
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              {resumeAnalysis.strengths.slice(0, 4).map((strength, index) => (
+                                <span 
+                                  key={index}
+                                  className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full"
+                                >
+                                  {strength}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Areas for Improvement */}
+                        {resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-medium text-amber-700 flex items-center gap-2">
+                              <AlertCircle className="h-4 w-4" />
+                              Areas to Improve
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              {resumeAnalysis.improvements.slice(0, 3).map((improvement, index) => (
+                                <span 
+                                  key={index}
+                                  className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded-full"
+                                >
+                                  {improvement}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Top Skills */}
+                        {resumeAnalysis.skill_highlights && resumeAnalysis.skill_highlights.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-medium text-primary flex items-center gap-2">
+                              <Award className="h-4 w-4" />
+                              Top Skills Detected
+                            </h5>
+                            <div className="flex flex-wrap gap-2">
+                              {resumeAnalysis.skill_highlights.slice(0, 6).map((skill, index) => (
+                                <span 
+                                  key={index}
+                                  className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-muted-foreground text-center pt-2 border-t border-primary/10">
+                          Complete registration to receive detailed analysis via email
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Basic Info */}
