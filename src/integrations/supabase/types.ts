@@ -1269,6 +1269,63 @@ export type Database = {
           },
         ]
       }
+      work_experience: {
+        Row: {
+          created_at: string
+          department: string | null
+          designation: string | null
+          display_order: number | null
+          from_date: string | null
+          id: string
+          narayana_emp_id: string | null
+          organization: string
+          place: string | null
+          reference_mobile: string | null
+          reference_name: string | null
+          salary_per_month: number | null
+          to_date: string | null
+          updated_at: string
+          user_id: string
+          worked_with_narayana: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          display_order?: number | null
+          from_date?: string | null
+          id?: string
+          narayana_emp_id?: string | null
+          organization: string
+          place?: string | null
+          reference_mobile?: string | null
+          reference_name?: string | null
+          salary_per_month?: number | null
+          to_date?: string | null
+          updated_at?: string
+          user_id: string
+          worked_with_narayana?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          display_order?: number | null
+          from_date?: string | null
+          id?: string
+          narayana_emp_id?: string | null
+          organization?: string
+          place?: string | null
+          reference_mobile?: string | null
+          reference_name?: string | null
+          salary_per_month?: number | null
+          to_date?: string | null
+          updated_at?: string
+          user_id?: string
+          worked_with_narayana?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
