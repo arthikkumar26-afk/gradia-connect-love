@@ -36,7 +36,10 @@ import {
   Loader2,
   Plus,
   Pencil,
-  Trash2
+  Trash2,
+  Target,
+  Lightbulb,
+  ExternalLink
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -736,6 +739,8 @@ const CandidateDashboard = () => {
     { id: "applications", label: "My Applications", icon: ClipboardList },
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "jobs", label: "Suitable Jobs", icon: Briefcase },
+    { id: "mocktest", label: "Attend Mock Test", icon: Target },
+    { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "resume", label: "Resume Builder", icon: FileText },
     { id: "learning", label: "Learning", icon: BookOpen },
     { id: "settings", label: "Settings", icon: Settings },
@@ -2107,6 +2112,203 @@ const CandidateDashboard = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Attend Mock Test Section */}
+            {activeMenu === "mocktest" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Attend Mock Test</h2>
+                  <p className="text-sm text-muted-foreground">Prepare for your interviews with mock tests</p>
+                </div>
+                
+                <Card className="p-8">
+                  <div className="text-center space-y-6">
+                    <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                      <Target className="h-10 w-10 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">Ready to Test Your Skills?</h3>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                        Take a mock interview to practice your skills and get feedback before the real interview.
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Button 
+                        variant="cta" 
+                        size="lg"
+                        onClick={() => navigate('/candidate/interview-prep')}
+                        className="gap-2"
+                      >
+                        <Target className="h-5 w-5" />
+                        Start Mock Interview
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="lg"
+                        onClick={() => navigate('/interview')}
+                        className="gap-2"
+                      >
+                        Practice Questions
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <h4 className="font-medium text-foreground">Technical Questions</h4>
+                        <p className="text-sm text-muted-foreground">Test your subject knowledge</p>
+                      </div>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <h4 className="font-medium text-foreground">Behavioral Questions</h4>
+                        <p className="text-sm text-muted-foreground">Practice situational responses</p>
+                      </div>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <h4 className="font-medium text-foreground">Instant Feedback</h4>
+                        <p className="text-sm text-muted-foreground">Get AI-powered insights</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Upskill Yourself Section */}
+            {activeMenu === "upskill" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Upskill Yourself</h2>
+                  <p className="text-sm text-muted-foreground">Improve your weak areas with recommended courses</p>
+                </div>
+
+                {/* Skill Analysis from Resume */}
+                {resumeAnalysis && resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 ? (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Lightbulb className="h-5 w-5 text-amber-500" />
+                      <h3 className="font-semibold text-foreground">Areas to Improve</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {resumeAnalysis.improvements.map((improvement: string, index: number) => (
+                        <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                          <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            {index + 1}
+                          </div>
+                          <p className="text-sm text-foreground">{improvement}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ) : (
+                  <Card className="p-6">
+                    <div className="text-center py-4">
+                      <Lightbulb className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                      <h3 className="font-semibold text-foreground mb-2">Upload Your Resume</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Upload your resume to get personalized skill improvement suggestions
+                      </p>
+                      <Button variant="outline" onClick={() => setActiveMenu("dashboard")}>
+                        Go to Dashboard
+                      </Button>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Recommended Courses */}
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Recommended Courses</h3>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <a 
+                      href="https://www.coursera.org" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground">Coursera</h4>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">World-class courses from top universities</p>
+                    </a>
+                    <a 
+                      href="https://www.udemy.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground">Udemy</h4>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Affordable courses on any topic</p>
+                    </a>
+                    <a 
+                      href="https://www.linkedin.com/learning" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground">LinkedIn Learning</h4>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Professional skills development</p>
+                    </a>
+                    <a 
+                      href="https://www.edx.org" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground">edX</h4>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Free courses from Harvard, MIT & more</p>
+                    </a>
+                    <a 
+                      href="https://www.skillshare.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground">Skillshare</h4>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Creative & business skills</p>
+                    </a>
+                    <a 
+                      href="https://www.khanacademy.org" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium text-foreground">Khan Academy</h4>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Free education for everyone</p>
+                    </a>
+                  </div>
+                </Card>
+
+                {/* Internal Learning Platform */}
+                <Card className="p-6 bg-gradient-to-r from-primary/5 to-accent/5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-1">Explore Our Learning Platform</h3>
+                      <p className="text-sm text-muted-foreground">Access curated courses tailored for education professionals</p>
+                    </div>
+                    <Button variant="cta" onClick={() => navigate('/learning')}>
+                      Explore Courses
+                    </Button>
+                  </div>
+                </Card>
               </div>
             )}
 
