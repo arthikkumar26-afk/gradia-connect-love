@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface ExperienceRecord {
@@ -94,28 +93,6 @@ const ExperienceModal = ({ isOpen, onClose, onSave, editingRecord }: ExperienceM
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center space-x-4 p-3 bg-muted rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="worked_with_narayana"
-                checked={formData.worked_with_narayana}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, worked_with_narayana: checked, narayana_emp_id: checked ? formData.narayana_emp_id : "" })
-                }
-              />
-              <Label htmlFor="worked_with_narayana">Worked with Narayana</Label>
-            </div>
-            {formData.worked_with_narayana && (
-              <div className="flex-1">
-                <Input
-                  placeholder="Employee ID"
-                  value={formData.narayana_emp_id}
-                  onChange={(e) => setFormData({ ...formData, narayana_emp_id: e.target.value })}
-                />
-              </div>
-            )}
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="organization">Organization *</Label>
