@@ -145,6 +145,48 @@ export type Database = {
           },
         ]
       }
+      educational_qualifications: {
+        Row: {
+          board_university: string | null
+          created_at: string
+          display_order: number | null
+          education_level: string
+          id: string
+          percentage_marks: number | null
+          school_college_name: string | null
+          specialization: string | null
+          updated_at: string
+          user_id: string
+          year_of_passing: number | null
+        }
+        Insert: {
+          board_university?: string | null
+          created_at?: string
+          display_order?: number | null
+          education_level: string
+          id?: string
+          percentage_marks?: number | null
+          school_college_name?: string | null
+          specialization?: string | null
+          updated_at?: string
+          user_id: string
+          year_of_passing?: number | null
+        }
+        Update: {
+          board_university?: string | null
+          created_at?: string
+          display_order?: number | null
+          education_level?: string
+          id?: string
+          percentage_marks?: number | null
+          school_college_name?: string | null
+          specialization?: string | null
+          updated_at?: string
+          user_id?: string
+          year_of_passing?: number | null
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           body_text: string

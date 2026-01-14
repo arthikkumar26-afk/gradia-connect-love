@@ -33,13 +33,17 @@ import {
   CheckCircle,
   Upload,
   RefreshCw,
-  Loader2
+  Loader2,
+  Plus,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { JobApplicationModal } from "@/components/candidate/JobApplicationModal";
 import { ApplicationsTab } from "@/components/candidate/ApplicationsTab";
 import { InterviewPipelineTab } from "@/components/candidate/InterviewPipelineTab";
+import { EducationModal, EducationRecord } from "@/components/candidate/EducationModal";
 
 interface ResumeAnalysis {
   overall_score: number;
@@ -77,6 +81,12 @@ const CandidateDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  
+  // Education state
+  const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
+  const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
+  const [editingEducation, setEditingEducation] = useState<EducationRecord | null>(null);
+  const [isEducationLoading, setIsEducationLoading] = useState(false);
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -148,7 +158,117 @@ const CandidateDashboard = () => {
     fetchResumeAnalysis();
   }, [profile?.id]);
 
-  // Re-analyze resume function
+  // Fetch educational qualifications
+  useEffect(() => {
+    const fetchEducation = async () => {
+      if (!profile?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('educational_qualifications')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('display_order', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching education:', error);
+          return;
+        }
+        
+        setEducationRecords(data || []);
+      } catch (e) {
+        console.error('Error fetching education:', e);
+      }
+    };
+    
+    fetchEducation();
+  }, [profile?.id]);
+
+  // Handle save education
+  const handleSaveEducation = async (data: EducationRecord) => {
+    if (!profile?.id) return;
+    
+    setIsEducationLoading(true);
+    try {
+      if (data.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('educational_qualifications')
+          .update({
+            education_level: data.education_level,
+            school_college_name: data.school_college_name,
+            specialization: data.specialization,
+            board_university: data.board_university,
+            year_of_passing: data.year_of_passing,
+            percentage_marks: data.percentage_marks,
+          })
+          .eq('id', data.id);
+        
+        if (error) throw error;
+        
+        setEducationRecords(prev => 
+          prev.map(rec => rec.id === data.id ? { ...rec, ...data } : rec)
+        );
+        toast({ title: "Success", description: "Education updated successfully" });
+      } else {
+        // Insert new
+        const { data: newRecord, error } = await supabase
+          .from('educational_qualifications')
+          .insert({
+            user_id: profile.id,
+            education_level: data.education_level,
+            school_college_name: data.school_college_name,
+            specialization: data.specialization,
+            board_university: data.board_university,
+            year_of_passing: data.year_of_passing,
+            percentage_marks: data.percentage_marks,
+            display_order: educationRecords.length,
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        setEducationRecords(prev => [...prev, newRecord]);
+        toast({ title: "Success", description: "Education added successfully" });
+      }
+      
+      setIsEducationModalOpen(false);
+      setEditingEducation(null);
+    } catch (error: any) {
+      console.error('Error saving education:', error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to save education",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsEducationLoading(false);
+    }
+  };
+
+  // Handle delete education
+  const handleDeleteEducation = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('educational_qualifications')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setEducationRecords(prev => prev.filter(rec => rec.id !== id));
+      toast({ title: "Success", description: "Education deleted successfully" });
+    } catch (error: any) {
+      console.error('Error deleting education:', error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to delete education",
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleReanalyzeResume = async () => {
     if (!profile?.resume_url || !profile?.id) {
       toast({
@@ -912,10 +1032,21 @@ const CandidateDashboard = () => {
                           <p className="text-sm text-muted-foreground">Your academic background</p>
                         </div>
                       </div>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setEditingEducation(null);
+                          setIsEducationModalOpen(true);
+                        }}
+                        className="gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4 overflow-x-auto">
-                    <div className="border border-border rounded-lg overflow-hidden min-w-[600px]">
+                    <div className="border border-border rounded-lg overflow-hidden min-w-[700px]">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="bg-muted/50">
@@ -923,49 +1054,79 @@ const CandidateDashboard = () => {
                             <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">SCHOOL/COLLEGE NAME</th>
                             <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">SPECIALIZATION</th>
                             <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">BOARD/UNIVERSITY</th>
-                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">YEAR OF PASSING</th>
-                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">% OF MARKS</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">YEAR</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">% MARKS</th>
+                            <th className="px-4 py-3 text-center font-semibold text-foreground border-b border-border">ACTIONS</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {/* Highest Qualification Row */}
-                          <tr className="border-b border-border hover:bg-muted/30 transition-colors">
-                            <td className="px-4 py-3 text-foreground font-medium">
-                              {profile?.highest_qualification || <span className="text-muted-foreground italic">-</span>}
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              <span className="italic">-</span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              <span className="italic">-</span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              <span className="italic">-</span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              <span className="italic">-</span>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              <span className="italic">-</span>
-                            </td>
-                          </tr>
-                          {/* Empty rows for additional qualifications */}
-                          {[1, 2, 3].map((row) => (
-                            <tr key={row} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
-                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
-                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
-                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
-                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
-                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
-                              <td className="px-4 py-3 text-muted-foreground italic">-</td>
+                          {educationRecords.length > 0 ? (
+                            educationRecords.map((record) => (
+                              <tr key={record.id} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-3 text-foreground font-medium">
+                                  {record.education_level}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {record.school_college_name || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {record.specialization || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {record.board_university || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {record.year_of_passing || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {record.percentage_marks !== null ? `${record.percentage_marks}%` : <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        setEditingEducation(record);
+                                        setIsEducationModalOpen(true);
+                                      }}
+                                    >
+                                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                      onClick={() => record.id && handleDeleteEducation(record.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                                <GraduationCap className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                                <p>No education records added yet.</p>
+                                <Button
+                                  variant="link"
+                                  onClick={() => {
+                                    setEditingEducation(null);
+                                    setIsEducationModalOpen(true);
+                                  }}
+                                  className="mt-1"
+                                >
+                                  Add your first qualification
+                                </Button>
+                              </td>
                             </tr>
-                          ))}
+                          )}
                         </tbody>
                       </table>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-3 text-center">
-                      Educational details can be updated by editing your profile
-                    </p>
                   </CardContent>
                 </Card>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -1236,6 +1397,18 @@ const CandidateDashboard = () => {
         candidateId={profile?.id || ''}
         candidateProfile={profile}
         onApplicationSubmitted={handleApplicationSubmitted}
+      />
+
+      {/* Education Modal */}
+      <EducationModal
+        isOpen={isEducationModalOpen}
+        onClose={() => {
+          setIsEducationModalOpen(false);
+          setEditingEducation(null);
+        }}
+        onSave={handleSaveEducation}
+        editingRecord={editingEducation}
+        isLoading={isEducationLoading}
       />
     </div>
   );
