@@ -1147,9 +1147,17 @@ const CandidateDashboard = () => {
         {/* User Info */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-5 w-5 text-primary" />
-            </div>
+            {profile?.profile_picture ? (
+              <img 
+                src={profile.profile_picture} 
+                alt={profile.full_name || 'Profile'} 
+                className="h-10 w-10 rounded-full object-cover border-2 border-primary/20"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground truncate">
                 {profile?.full_name}
