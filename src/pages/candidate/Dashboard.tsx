@@ -39,7 +39,8 @@ import {
   Trash2,
   Target,
   Lightbulb,
-  ExternalLink
+  ExternalLink,
+  Video
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -800,6 +801,91 @@ const CandidateDashboard = () => {
     setInterviewCount(count || 0);
   };
 
+  // Fetch mock test sessions
+  const fetchMockTestSessions = async () => {
+    if (!profile?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('mock_test_sessions')
+        .select('*')
+        .eq('candidate_id', profile.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setMockTestSessions(data || []);
+    } catch (e) {
+      console.error('Error fetching mock test sessions:', e);
+    }
+  };
+
+  // Handle starting a mock test
+  const handleStartMockTest = async () => {
+    if (!profile?.id || !profile?.email) {
+      toast({
+        title: "Profile Required",
+        description: "Please complete your profile first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsStartingMockTest(true);
+    try {
+      // Create a new mock test session
+      const { data: session, error: sessionError } = await supabase
+        .from('mock_test_sessions')
+        .insert({
+          candidate_id: profile.id,
+          status: 'pending',
+          total_questions: 10
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      // Send email invitation
+      const { error: emailError } = await supabase.functions.invoke('send-mock-test-invitation', {
+        body: {
+          candidateEmail: profile.email,
+          candidateName: profile.full_name,
+          sessionId: session.id,
+          appUrl: window.location.origin
+        }
+      });
+
+      if (emailError) {
+        console.error('Email error:', emailError);
+        // Continue anyway - show toast but let user proceed
+        toast({
+          title: "Email Failed",
+          description: "Could not send invitation email, but you can still take the test.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Invitation Sent! 📧",
+          description: "Check your email for the mock interview link."
+        });
+      }
+
+      // Refresh the list
+      fetchMockTestSessions();
+
+      // Also navigate directly to the test
+      navigate(`/candidate/mock-test/${session.id}`);
+    } catch (error: any) {
+      console.error('Error starting mock test:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Could not start mock test. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsStartingMockTest(false);
+    }
+  };
+
   useEffect(() => {
     // Wait for auth loading to complete
     if (authLoading) {
@@ -835,6 +921,7 @@ const CandidateDashboard = () => {
     fetchJobs();
     fetchApplicationCount();
     fetchInterviewCount();
+    fetchMockTestSessions();
 
     // Subscribe to real-time job updates
     const channel = supabase
@@ -2138,11 +2225,21 @@ const CandidateDashboard = () => {
                         </div>
                         <Button 
                           variant="cta" 
-                          onClick={() => navigate('/candidate/interview-prep')}
+                          onClick={handleStartMockTest}
+                          disabled={isStartingMockTest}
                           className="gap-2 mt-2"
                         >
-                          <Target className="h-4 w-4" />
-                          Start Mock Interview
+                          {isStartingMockTest ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Target className="h-4 w-4" />
+                              Start Mock Interview
+                            </>
+                          )}
                         </Button>
                       </div>
                     </Card>
@@ -2235,11 +2332,21 @@ const CandidateDashboard = () => {
                       <Button 
                         variant="cta" 
                         size="lg"
-                        onClick={() => navigate('/candidate/interview-prep')}
+                        onClick={handleStartMockTest}
+                        disabled={isStartingMockTest}
                         className="gap-2"
                       >
-                        <Target className="h-5 w-5" />
-                        Start Mock Interview
+                        {isStartingMockTest ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Sending Invitation...
+                          </>
+                        ) : (
+                          <>
+                            <Target className="h-5 w-5" />
+                            Start Mock Interview
+                          </>
+                        )}
                       </Button>
                       <Button 
                         variant="outline" 
@@ -2266,6 +2373,61 @@ const CandidateDashboard = () => {
                     </div>
                   </div>
                 </Card>
+
+                {/* Completed Mock Tests with Recordings */}
+                {mockTestSessions.length > 0 && (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Video className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Your Mock Test Recordings</h3>
+                    </div>
+                    <div className="space-y-4">
+                      {mockTestSessions.map((session) => (
+                        <div key={session.id} className="border border-border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <p className="font-medium text-foreground">
+                                Mock Test - {new Date(session.completed_at || session.created_at).toLocaleDateString()}
+                              </p>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                                <span className="flex items-center gap-1">
+                                  <Award className="h-4 w-4" />
+                                  Score: {session.score?.toFixed(0) || 0}%
+                                </span>
+                                <span>
+                                  {session.correct_answers || 0}/{session.total_questions} correct
+                                </span>
+                              </div>
+                            </div>
+                            <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
+                              {session.status === 'completed' ? 'Completed' : session.status}
+                            </Badge>
+                          </div>
+                          {session.recording_url ? (
+                            <div className="mt-3">
+                              <video 
+                                src={session.recording_url} 
+                                controls 
+                                className="w-full rounded-lg max-h-64"
+                              />
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">No recording available</p>
+                          )}
+                          <div className="mt-3 flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => navigate(`/candidate/mock-test/${session.id}`)}
+                            >
+                              View Results
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
               </div>
             )}
 

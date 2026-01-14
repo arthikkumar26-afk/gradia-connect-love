@@ -20,11 +20,13 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { candidateEmail, candidateName, sessionId }: MockTestInvitationRequest = await req.json();
+    const { candidateEmail, candidateName, sessionId, appUrl }: MockTestInvitationRequest & { appUrl?: string } = await req.json();
 
     console.log('Sending mock test invitation to:', candidateEmail);
 
-    const testLink = `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/candidate/mock-test/${sessionId}`;
+    // Use provided appUrl or construct from environment
+    const baseUrl = appUrl || 'https://gradia-link-shine.lovable.app';
+    const testLink = `${baseUrl}/candidate/mock-test/${sessionId}`;
 
     const emailResponse = await resend.emails.send({
       from: "Gradia <onboarding@resend.dev>",
