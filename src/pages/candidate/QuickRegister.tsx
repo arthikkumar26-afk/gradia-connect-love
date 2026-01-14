@@ -198,31 +198,25 @@ const QuickRegister = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to parse resume: ${response.status}`);
+        throw new Error(errorData.error || `Failed to analyze resume: ${response.status}`);
       }
 
-      const parsedData = await response.json();
-      console.log("Parsed resume data:", parsedData);
+      const analysisData = await response.json();
+      console.log("Resume analysis data:", analysisData);
 
-      // Auto-fill form fields from parsed data
-      setFormData(prev => ({
-        ...prev,
-        fullName: parsedData.full_name || prev.fullName,
-        email: parsedData.email || prev.email,
-        mobile: parsedData.phone || prev.mobile,
-        experienceLevel: parsedData.years_of_experience || prev.experienceLevel
-      }));
+      // Store analysis data for later use in email
+      localStorage.setItem('resumeAnalysis', JSON.stringify(analysisData));
 
       setResumeParsed(true);
       toast({
-        title: "Resume Parsed Successfully",
-        description: "Your details have been auto-filled. Please verify and complete the remaining fields.",
+        title: `Resume Analyzed - Score: ${analysisData.overall_score || 70}/100`,
+        description: "Your resume has been analyzed. Complete registration to receive detailed score via email.",
       });
     } catch (error: any) {
-      console.error("Resume parsing error:", error);
+      console.error("Resume analysis error:", error);
       toast({
-        title: "Parsing Failed",
-        description: error.message || "Could not parse resume. Please fill in your details manually.",
+        title: "Analysis Failed",
+        description: error.message || "Could not analyze resume. Please try again.",
         variant: "destructive"
       });
     } finally {
