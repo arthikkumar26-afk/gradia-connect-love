@@ -7,7 +7,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.parse-resume]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-notification-email]
 verify_jwt = false
