@@ -219,15 +219,6 @@ const QuickRegister = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match. Please try again.",
-        variant: "destructive"
-      });
-      return;
-    }
 
     if (!formData.state || !formData.district || !formData.city) {
       toast({
@@ -250,56 +241,32 @@ const QuickRegister = () => {
     setIsSubmitting(true);
 
     try {
-      // Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: formData.fullName,
-            role: "candidate"
-          }
-        }
-      });
+      // Store registration data (can be extended to save to database when user creates account later)
+      const registrationData = {
+        segment: "Education",
+        category: "Education",
+        preferred_role: formData.designation,
+        preferred_state: formData.state,
+        preferred_district: formData.district,
+        preferred_state_2: formData.state2 || null,
+        preferred_district_2: formData.district2 || null,
+        location: `${formData.city}, ${formData.district}, ${formData.state}${formData.city2 ? ` | ${formData.city2}, ${formData.district2}, ${formData.state2}` : ''}`,
+        experience_level: formData.experienceLevel,
+        current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
+        expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
+        available_from: formData.dateOfJoining || null
+      };
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Create profile with all registration fields
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({
-            id: authData.user.id,
-            email: formData.email,
-            full_name: formData.fullName,
-            mobile: formData.mobile,
-            role: "candidate",
-            segment: "Education",
-            category: "Education",
-            preferred_role: formData.designation,
-            preferred_state: formData.state,
-            preferred_district: formData.district,
-            preferred_state_2: formData.state2 || null,
-            preferred_district_2: formData.district2 || null,
-            location: `${formData.city}, ${formData.district}, ${formData.state}${formData.city2 ? ` | ${formData.city2}, ${formData.district2}, ${formData.state2}` : ''}`,
-            experience_level: formData.experienceLevel,
-            current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
-            expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
-            available_from: formData.dateOfJoining || null
-          });
-
-        if (profileError) {
-          console.error("Profile error:", profileError);
-        }
-      }
+      // Save to localStorage for later use during full registration
+      localStorage.setItem('quickRegistrationData', JSON.stringify(registrationData));
 
       toast({
-        title: "Registration Successful!",
-        description: "Your account has been created. You can now login.",
+        title: "Registration Saved!",
+        description: "Your preferences have been saved. Complete your profile to apply for jobs.",
       });
 
-      navigate("/candidate/login");
+      // Navigate to full signup with pre-filled data
+      navigate("/candidate/signup");
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
@@ -417,30 +384,15 @@ const QuickRegister = () => {
                   Basic Information
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="mobile">Mobile Number *</Label>
-                    <Input
-                      id="mobile"
-                      type="tel"
-                      value={formData.mobile}
-                      onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value }))}
-                      placeholder="+91 9876543210"
-                      required
-                      className={resumeParsed && formData.mobile ? "border-green-300 bg-green-50/30" : ""}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="experienceLevel">Experience</Label>
-                    <Input
-                      id="experienceLevel"
-                      value={formData.experienceLevel}
-                      onChange={(e) => setFormData(prev => ({ ...prev, experienceLevel: e.target.value }))}
-                      placeholder="e.g., 3 years"
-                      className={resumeParsed && formData.experienceLevel ? "border-green-300 bg-green-50/30" : ""}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="experienceLevel">Experience</Label>
+                  <Input
+                    id="experienceLevel"
+                    value={formData.experienceLevel}
+                    onChange={(e) => setFormData(prev => ({ ...prev, experienceLevel: e.target.value }))}
+                    placeholder="e.g., 3 years"
+                    className={resumeParsed && formData.experienceLevel ? "border-green-300 bg-green-50/30" : ""}
+                  />
                 </div>
               </div>
 
@@ -623,39 +575,6 @@ const QuickRegister = () => {
                       type="date"
                       value={formData.dateOfJoining}
                       onChange={(e) => setFormData(prev => ({ ...prev, dateOfJoining: e.target.value }))}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Password */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground">Create Password</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="Min 6 characters"
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="Re-enter password"
-                      minLength={6}
-                      required
                     />
                   </div>
                 </div>
