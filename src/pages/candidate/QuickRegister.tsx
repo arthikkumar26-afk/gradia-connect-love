@@ -63,16 +63,22 @@ const QuickRegister = () => {
   const [resumeParsed, setResumeParsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [locationSearch, setLocationSearch] = useState("");
+  const [locationSearch2, setLocationSearch2] = useState("");
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [showLocationSuggestions2, setShowLocationSuggestions2] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     mobile: "",
-    // Location fields
+    // Location 1 fields
     state: "",
     district: "",
     city: "",
+    // Location 2 fields
+    state2: "",
+    district2: "",
+    city2: "",
     // Education only
     designation: "",
     currentSalary: "",
@@ -84,10 +90,10 @@ const QuickRegister = () => {
   });
 
   // Get AI-powered location suggestions based on search
-  const getLocationSuggestions = () => {
-    if (!locationSearch.trim()) return [];
+  const getLocationSuggestions = (searchText: string) => {
+    if (!searchText.trim()) return [];
     
-    const search = locationSearch.toLowerCase();
+    const search = searchText.toLowerCase();
     const suggestions: { state: string; district: string; city: string; display: string }[] = [];
     
     Object.entries(locationData).forEach(([state, districts]) => {
@@ -123,6 +129,17 @@ const QuickRegister = () => {
     }));
     setLocationSearch(suggestion.display);
     setShowLocationSuggestions(false);
+  };
+
+  const handleLocationSelect2 = (suggestion: { state: string; district: string; city: string; display: string }) => {
+    setFormData(prev => ({
+      ...prev,
+      state2: suggestion.state,
+      district2: suggestion.district,
+      city2: suggestion.city
+    }));
+    setLocationSearch2(suggestion.display);
+    setShowLocationSuggestions2(false);
   };
 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,7 +280,9 @@ const QuickRegister = () => {
             preferred_role: formData.designation,
             preferred_state: formData.state,
             preferred_district: formData.district,
-            location: `${formData.city}, ${formData.district}, ${formData.state}`,
+            preferred_state_2: formData.state2 || null,
+            preferred_district_2: formData.district2 || null,
+            location: `${formData.city}, ${formData.district}, ${formData.state}${formData.city2 ? ` | ${formData.city2}, ${formData.district2}, ${formData.state2}` : ''}`,
             experience_level: formData.experienceLevel,
             current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
             expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
@@ -293,7 +312,8 @@ const QuickRegister = () => {
     }
   };
 
-  const locationSuggestions = getLocationSuggestions();
+  const locationSuggestions = getLocationSuggestions(locationSearch);
+  const locationSuggestions2 = getLocationSuggestions(locationSearch2);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-subtle to-background">
@@ -424,55 +444,105 @@ const QuickRegister = () => {
                 </div>
               </div>
 
-              {/* Preferred Location - AI Search */}
+              {/* Preferred Locations - AI Search */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Preferred Location *
+                  Preferred Locations *
                 </h3>
                 
-                <div className="space-y-3">
-                  <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Location 1 */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Location 1 *</Label>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={locationSearch}
-                        onChange={(e) => {
-                          setLocationSearch(e.target.value);
-                          setShowLocationSuggestions(true);
-                        }}
-                        onFocus={() => setShowLocationSuggestions(true)}
-                        placeholder="Search area (e.g., Hyderabad, Gachibowli, Bengaluru...)"
-                        className="pl-10"
-                      />
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={locationSearch}
+                          onChange={(e) => {
+                            setLocationSearch(e.target.value);
+                            setShowLocationSuggestions(true);
+                          }}
+                          onFocus={() => setShowLocationSuggestions(true)}
+                          placeholder="Search area..."
+                          className="pl-10"
+                        />
+                      </div>
+                      
+                      {showLocationSuggestions && locationSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {locationSuggestions.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
+                              onClick={() => handleLocationSelect(suggestion)}
+                            >
+                              <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                              <div>
+                                <p className="font-medium text-sm">{suggestion.city}</p>
+                                <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     
-                    {showLocationSuggestions && locationSuggestions.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {locationSuggestions.map((suggestion, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
-                            onClick={() => handleLocationSelect(suggestion)}
-                          >
-                            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                            <div>
-                              <p className="font-medium text-sm">{suggestion.city}</p>
-                              <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
-                            </div>
-                          </button>
-                        ))}
+                    {formData.state && (
+                      <div className="flex flex-wrap gap-2 p-2 bg-primary/5 rounded-lg border border-primary/20">
+                        <span className="text-xs font-medium text-primary">Selected:</span>
+                        <span className="text-xs">{formData.city}, {formData.district}, {formData.state}</span>
                       </div>
                     )}
                   </div>
-                  
-                  {formData.state && (
-                    <div className="flex flex-wrap gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                      <span className="text-sm font-medium text-primary">Selected:</span>
-                      <span className="text-sm">{formData.city}, {formData.district}, {formData.state}</span>
+
+                  {/* Location 2 */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Location 2 (Optional)</Label>
+                    <div className="relative">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={locationSearch2}
+                          onChange={(e) => {
+                            setLocationSearch2(e.target.value);
+                            setShowLocationSuggestions2(true);
+                          }}
+                          onFocus={() => setShowLocationSuggestions2(true)}
+                          placeholder="Search area..."
+                          className="pl-10"
+                        />
+                      </div>
+                      
+                      {showLocationSuggestions2 && locationSuggestions2.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                          {locationSuggestions2.map((suggestion, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
+                              onClick={() => handleLocationSelect2(suggestion)}
+                            >
+                              <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                              <div>
+                                <p className="font-medium text-sm">{suggestion.city}</p>
+                                <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    
+                    {formData.state2 && (
+                      <div className="flex flex-wrap gap-2 p-2 bg-primary/5 rounded-lg border border-primary/20">
+                        <span className="text-xs font-medium text-primary">Selected:</span>
+                        <span className="text-xs">{formData.city2}, {formData.district2}, {formData.state2}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
