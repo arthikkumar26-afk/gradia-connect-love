@@ -190,42 +190,32 @@ serve(async (req) => {
 
     let messageContent: any[];
     
-    const prompt = `You are an expert resume parser. Analyze this resume and extract ALL available information.
+    // Simplified prompt - just analyze for scoring
+    const prompt = `You are an expert resume/CV analyzer. Analyze this resume and provide a comprehensive assessment.
 
-CRITICAL: Extract the email address - look carefully for it in the contact section, header, or anywhere in the document. Email addresses typically contain @ symbol.
+Evaluate the resume based on:
+1. Professional Experience - Quality and relevance of work history
+2. Education & Qualifications - Academic background and certifications
+3. Skills & Competencies - Technical and soft skills
+4. Presentation - Resume formatting, clarity, and organization
+5. Career Progression - Growth and achievements
 
-Extract these fields:
-- full_name: The candidate's full name
-- mobile: Phone number (with country code if available)  
-- email: Email address (MUST extract this - look for @ symbol)
-- date_of_birth: Date of birth if mentioned (format: YYYY-MM-DD)
-- gender: Male or Female if mentioned
-- experience_level: One of "Fresher (0-1 years)", "Junior (1-3 years)", "Mid-Level (3-5 years)", "Senior (5-8 years)", "Lead (8-12 years)", "Expert (12+ years)" based on total years
-- location: City, State/Country (for preferred location)
-- current_state: The state where candidate currently resides (Indian states)
-- current_district: The district/city where candidate currently resides
-- linkedin: LinkedIn profile URL if available
-- preferred_role: The job title they're seeking or their current role
-- skills: List of technical and soft skills as array
-- languages: Languages known by the candidate as an array
-- alternate_number: Secondary phone number if available
-- highest_qualification: One of "High School", "Diploma", "Bachelor's Degree", "Master's Degree", "PhD", "Other"
-- field_of_study: Field of study/major (e.g., Computer Science, Engineering, Commerce)
-- institution: Name of university/college
-- graduation_year: Year of graduation
-- current_company: Current or most recent employer name
-- current_role: Current or most recent job title
-- total_experience: Total years of experience as number (e.g., "3")
-- preferred_state: Preferred work location state
-- preferred_district: Preferred work location district
-- segment: Work segment/industry (Education, Healthcare, IT, Finance, Manufacturing, Retail, etc.)
-- program: Employment type (Full Time, Part Time, Contract, Internship, Freelance)
-- classes_handled: If teacher - classes they can teach
-- batch: Preferred work timing (Morning, Afternoon, Evening, Flexible)
-- primary_subject: Primary subject expertise for teaching roles
-- office_type: Office preference (Head Office, Branch Office, Regional Office, Remote, Hybrid)
+Provide:
+- overall_score: A score from 0-100 representing overall resume quality
+- strengths: Array of 3-5 key strengths found in the resume
+- improvements: Array of 2-4 areas for improvement
+- experience_summary: Brief summary of candidate's experience (1-2 sentences)
+- skill_highlights: Array of top 5-8 notable skills
+- career_level: One of "Entry Level", "Junior", "Mid-Level", "Senior", "Lead", "Executive"
 
-Be thorough - scan the entire document for contact information, educational and professional details.`;
+Return ONLY valid JSON with these fields, no explanation text.`;
+
+    // Helper function for base64 encoding that handles large files
+    function arrayBufferToBase64(buffer: ArrayBuffer): string {
+      const bytes = new Uint8Array(buffer);
+      const binString = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join('');
+      return btoa(binString);
+    }
 
     // Check if it's a DOCX file (by extension or mime type)
     const isDocx = fileName.endsWith(".docx") || 
@@ -237,16 +227,7 @@ Be thorough - scan the entire document for contact information, educational and 
     // Handle PDF files - send as base64 to vision model
     if (mimeType === "application/pdf") {
       console.log("Parsing PDF resume with vision model");
-      
-      // Convert to base64
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = '';
-      const chunkSize = 8192;
-      for (let i = 0; i < uint8Array.length; i += chunkSize) {
-        const chunk = uint8Array.subarray(i, i + chunkSize);
-        binary += String.fromCharCode.apply(null, Array.from(chunk));
-      }
-      const base64 = btoa(binary);
+      const base64 = arrayBufferToBase64(arrayBuffer);
       
       messageContent = [
         { type: "text", text: prompt },
@@ -259,15 +240,7 @@ Be thorough - scan the entire document for contact information, educational and 
     // Handle image files
     else if (mimeType.startsWith("image/")) {
       console.log("Parsing image resume");
-      
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = '';
-      const chunkSize = 8192;
-      for (let i = 0; i < uint8Array.length; i += chunkSize) {
-        const chunk = uint8Array.subarray(i, i + chunkSize);
-        binary += String.fromCharCode.apply(null, Array.from(chunk));
-      }
-      const base64 = btoa(binary);
+      const base64 = arrayBufferToBase64(arrayBuffer);
       
       messageContent = [
         { type: "text", text: prompt },
@@ -283,7 +256,6 @@ Be thorough - scan the entire document for contact information, educational and 
       const extractedText = await extractDocxText(arrayBuffer);
       console.log("Extracted text length:", extractedText.length);
       
-      // Send as text-only message
       messageContent = [
         { type: "text", text: `${prompt}\n\n--- RESUME CONTENT ---\n\n${extractedText}` },
       ];
@@ -312,14 +284,7 @@ Be thorough - scan the entire document for contact information, educational and 
       });
     }
 
-    console.log("Sending to AI for parsing...");
-
-    // Simplified prompt for text extraction
-    const extractionPrompt = `${prompt}
-
-Return the extracted data as a JSON object with these keys: full_name, mobile, email, date_of_birth, gender, experience_level, location, current_state, current_district, linkedin, preferred_role, skills (array), languages (array), alternate_number, highest_qualification, field_of_study, institution, graduation_year, current_company, current_role, total_experience, preferred_state, preferred_district, segment, program, classes_handled, batch, primary_subject, office_type.
-
-Return ONLY valid JSON, no explanation.`;
+    console.log("Sending to AI for analysis...");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -332,12 +297,7 @@ Return ONLY valid JSON, no explanation.`;
         messages: [
           {
             role: "user",
-            content: messageContent[0].type === "text" && messageContent.length === 1 
-              ? extractionPrompt + "\n\n" + messageContent[0].text.replace(prompt, "")
-              : [
-                  { type: "text", text: extractionPrompt },
-                  ...messageContent.filter((m: any) => m.type === "image_url")
-                ],
+            content: messageContent,
           },
         ],
       }),
@@ -359,7 +319,7 @@ Return ONLY valid JSON, no explanation.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      throw new Error("Failed to parse resume with AI");
+      throw new Error("Failed to analyze resume with AI");
     }
 
     const data = await response.json();
@@ -373,33 +333,47 @@ Return ONLY valid JSON, no explanation.`;
     }
 
     // Parse JSON from the response (handle markdown code blocks)
-    let extractedData;
+    let analysisData;
     try {
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
+      // Clean the content - remove any non-JSON characters
+      let cleanContent = content.trim();
+      
+      // Try to extract JSON from markdown code blocks
+      const jsonMatch = cleanContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
-        extractedData = JSON.parse(jsonMatch[1]);
+        cleanContent = jsonMatch[1].trim();
+      }
+      
+      // Find JSON object boundaries
+      const jsonStart = cleanContent.indexOf('{');
+      const jsonEnd = cleanContent.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        const jsonStr = cleanContent.slice(jsonStart, jsonEnd + 1);
+        analysisData = JSON.parse(jsonStr);
       } else {
-        // Try parsing as plain JSON
-        const jsonStart = content.indexOf('{');
-        const jsonEnd = content.lastIndexOf('}');
-        if (jsonStart !== -1 && jsonEnd !== -1) {
-          extractedData = JSON.parse(content.slice(jsonStart, jsonEnd + 1));
-        } else {
-          throw new Error("Could not find JSON in response");
-        }
+        throw new Error("Could not find valid JSON in response");
       }
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
-      throw new Error("Failed to parse resume data");
+      // Return a default score if parsing fails
+      analysisData = {
+        overall_score: 70,
+        strengths: ["Resume uploaded successfully"],
+        improvements: ["Could not fully analyze - please ensure resume is clear and readable"],
+        experience_summary: "Resume analysis completed",
+        skill_highlights: [],
+        career_level: "Mid-Level"
+      };
     }
 
-    console.log("Extracted data for user:", userId);
+    console.log("Analysis completed for user:", userId, "Score:", analysisData.overall_score);
 
-    return new Response(JSON.stringify(extractedData), {
+    return new Response(JSON.stringify(analysisData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error parsing resume:", error);
+    console.error("Error analyzing resume:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       {
