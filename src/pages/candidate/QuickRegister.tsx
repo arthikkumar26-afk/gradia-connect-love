@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, GraduationCap, Users, Upload, Loader2, CheckCircle2, Sparkles, IndianRupee, Search, Briefcase } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, MapPin, GraduationCap, Users, Upload, Loader2, CheckCircle2, Sparkles, IndianRupee, Search, Briefcase, User, Mail, Phone, BookOpen, Award } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Textarea } from "@/components/ui/textarea";
 
 // Education designations only
 const educationDesignations = ["Teacher", "Vice Principal", "Principal"];
@@ -57,6 +58,7 @@ const locationData: Record<string, Record<string, string[]>> = {
 const QuickRegister = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -68,18 +70,13 @@ const QuickRegister = () => {
   const [showLocationSuggestions2, setShowLocationSuggestions2] = useState(false);
   
   const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    mobile: "",
-    // Location 1 fields
+    // Step 1 fields
     state: "",
     district: "",
     city: "",
-    // Location 2 fields
     state2: "",
     district2: "",
     city2: "",
-    // Category, Segment, Department & Designation
     category: "",
     segment: "",
     department: "",
@@ -87,7 +84,22 @@ const QuickRegister = () => {
     currentSalary: "",
     expectedSalary: "",
     dateOfJoining: "",
-    experienceLevel: ""
+    experienceLevel: "",
+    // Step 2 - Personal Details
+    fullName: "",
+    dateOfBirth: "",
+    mobile: "",
+    email: "",
+    // Educational Details
+    highestQualification: "",
+    specialization: "",
+    university: "",
+    yearOfPassing: "",
+    // Professional Details
+    totalExperience: "",
+    currentOrganization: "",
+    currentDesignation: "",
+    skills: ""
   });
 
   // Get AI-powered location suggestions based on search
@@ -218,26 +230,100 @@ const QuickRegister = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const validateStep1 = () => {
     if (!formData.state || !formData.district || !formData.city) {
       toast({
         title: "Location Required",
         description: "Please select your preferred location.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
-
     if (!formData.category) {
       toast({
         title: "Category Required",
         description: "Please select a category.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
+    if (!formData.segment) {
+      toast({
+        title: "Segment Required",
+        description: "Please select a segment.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (!formData.department) {
+      toast({
+        title: "Department Required",
+        description: "Please select a department.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (!formData.designation) {
+      toast({
+        title: "Designation Required",
+        description: "Please select a designation.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
+    if (!formData.fullName.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter your full name as per Aadhar.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (!formData.dateOfBirth) {
+      toast({
+        title: "Date of Birth Required",
+        description: "Please enter your date of birth.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (!formData.mobile.trim()) {
+      toast({
+        title: "Mobile Number Required",
+        description: "Please enter your mobile number.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    if (!formData.email.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address.",
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep1()) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(1);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateStep2()) return;
 
     setIsSubmitting(true);
 
@@ -246,6 +332,8 @@ const QuickRegister = () => {
       const registrationData = {
         segment: formData.segment,
         category: formData.category,
+        department: formData.department,
+        designation: formData.designation,
         preferred_state: formData.state,
         preferred_district: formData.district,
         preferred_state_2: formData.state2 || null,
@@ -254,7 +342,22 @@ const QuickRegister = () => {
         experience_level: formData.experienceLevel,
         current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
         expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
-        available_from: formData.dateOfJoining || null
+        available_from: formData.dateOfJoining || null,
+        // Personal details
+        full_name: formData.fullName,
+        date_of_birth: formData.dateOfBirth,
+        mobile: formData.mobile,
+        email: formData.email,
+        // Educational details
+        highest_qualification: formData.highestQualification,
+        specialization: formData.specialization,
+        university: formData.university,
+        year_of_passing: formData.yearOfPassing,
+        // Professional details
+        total_experience: formData.totalExperience,
+        current_organization: formData.currentOrganization,
+        current_designation: formData.currentDesignation,
+        skills: formData.skills
       };
 
       // Save to localStorage for later use during full registration
@@ -316,342 +419,574 @@ const QuickRegister = () => {
         </div>
       </section>
 
+      {/* Step Indicator */}
+      <div className="container mx-auto px-4 pt-6 max-w-2xl">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${currentStep === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+            <span className="font-semibold">1</span>
+            <span className="text-sm">Job Preferences</span>
+          </div>
+          <div className="h-1 w-8 bg-muted rounded-full overflow-hidden">
+            <div className={`h-full bg-primary transition-all ${currentStep === 2 ? 'w-full' : 'w-0'}`} />
+          </div>
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${currentStep === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+            <span className="font-semibold">2</span>
+            <span className="text-sm">Personal Details</span>
+          </div>
+        </div>
+      </div>
+
       {/* Form Content */}
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className="container mx-auto px-4 py-4 max-w-2xl">
         <Card className="shadow-medium">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">Registration Form</CardTitle>
+            <CardTitle className="text-xl">
+              {currentStep === 1 ? "Job Preferences" : "Personal Details"}
+            </CardTitle>
             <CardDescription>
-              Complete your profile to find the best education job opportunities
+              {currentStep === 1 
+                ? "Select your preferred job category, segment, and location"
+                : "Enter your personal, educational, and professional details"
+              }
             </CardDescription>
           </CardHeader>
           
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Resume Upload Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Quick Fill with Resume (Optional)
-                </h3>
-                
-                <div 
-                  className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer hover:border-primary/50 hover:bg-accent/5 ${
-                    resumeParsed ? 'border-green-500 bg-green-50/50' : 'border-muted-foreground/25'
-                  }`}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    onChange={handleResumeUpload}
-                    className="hidden"
-                  />
-                  
-                  {isParsingResume ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                      <p className="text-sm text-muted-foreground">AI is parsing your resume...</p>
-                    </div>
-                  ) : resumeParsed ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <CheckCircle2 className="h-10 w-10 text-green-500" />
-                      <div>
-                        <p className="font-medium text-green-700">Resume Parsed Successfully!</p>
-                        <p className="text-sm text-muted-foreground">{resumeFile?.name}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Click to upload a different resume</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="p-3 bg-primary/10 rounded-full">
-                        <Upload className="h-8 w-8 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Upload your resume to auto-fill details</p>
-                        <p className="text-sm text-muted-foreground">PDF, Word, or Image (max 10MB)</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Basic Info */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Basic Information
-                </h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="experienceLevel">Experience</Label>
-                  <Input
-                    id="experienceLevel"
-                    value={formData.experienceLevel}
-                    onChange={(e) => setFormData(prev => ({ ...prev, experienceLevel: e.target.value }))}
-                    placeholder="e.g., 3 years"
-                    className={resumeParsed && formData.experienceLevel ? "border-green-300 bg-green-50/30" : ""}
-                  />
-                </div>
-              </div>
-
-              {/* Preferred Locations - AI Search */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Preferred Locations *
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Location 1 */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">Location 1 *</Label>
-                    <div className="relative">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          value={locationSearch}
-                          onChange={(e) => {
-                            setLocationSearch(e.target.value);
-                            setShowLocationSuggestions(true);
-                          }}
-                          onFocus={() => setShowLocationSuggestions(true)}
-                          placeholder="Search area..."
-                          className="pl-10"
-                        />
-                      </div>
+              {currentStep === 1 ? (
+                <>
+                  {/* Resume Upload Section */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      Quick Fill with Resume (Optional)
+                    </h3>
+                    
+                    <div 
+                      className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer hover:border-primary/50 hover:bg-accent/5 ${
+                        resumeParsed ? 'border-green-500 bg-green-50/50' : 'border-muted-foreground/25'
+                      }`}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={handleResumeUpload}
+                        className="hidden"
+                      />
                       
-                      {showLocationSuggestions && locationSuggestions.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {locationSuggestions.map((suggestion, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
-                              onClick={() => handleLocationSelect(suggestion)}
-                            >
-                              <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                              <div>
-                                <p className="font-medium text-sm">{suggestion.city}</p>
-                                <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
-                              </div>
-                            </button>
-                          ))}
+                      {isParsingResume ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                          <p className="text-sm text-muted-foreground">AI is parsing your resume...</p>
+                        </div>
+                      ) : resumeParsed ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <CheckCircle2 className="h-10 w-10 text-green-500" />
+                          <div>
+                            <p className="font-medium text-green-700">Resume Parsed Successfully!</p>
+                            <p className="text-sm text-muted-foreground">{resumeFile?.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Click to upload a different resume</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="p-3 bg-primary/10 rounded-full">
+                            <Upload className="h-8 w-8 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Upload your resume to auto-fill details</p>
+                            <p className="text-sm text-muted-foreground">PDF, Word, or Image (max 10MB)</p>
+                          </div>
                         </div>
                       )}
                     </div>
-                    
-                    {formData.state && (
-                      <div className="flex flex-wrap gap-2 p-2 bg-primary/5 rounded-lg border border-primary/20">
-                        <span className="text-xs font-medium text-primary">Selected:</span>
-                        <span className="text-xs">{formData.city}, {formData.district}, {formData.state}</span>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Location 2 */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">Location 2 (Optional)</Label>
-                    <div className="relative">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  {/* Basic Info */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Basic Information
+                    </h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="experienceLevel">Experience</Label>
+                      <Input
+                        id="experienceLevel"
+                        value={formData.experienceLevel}
+                        onChange={(e) => setFormData(prev => ({ ...prev, experienceLevel: e.target.value }))}
+                        placeholder="e.g., 3 years"
+                        className={resumeParsed && formData.experienceLevel ? "border-green-300 bg-green-50/30" : ""}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preferred Locations - AI Search */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Preferred Locations *
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Location 1 */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Location 1 *</Label>
+                        <div className="relative">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              value={locationSearch}
+                              onChange={(e) => {
+                                setLocationSearch(e.target.value);
+                                setShowLocationSuggestions(true);
+                              }}
+                              onFocus={() => setShowLocationSuggestions(true)}
+                              placeholder="Search area..."
+                              className="pl-10"
+                            />
+                          </div>
+                          
+                          {showLocationSuggestions && locationSuggestions.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {locationSuggestions.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
+                                  onClick={() => handleLocationSelect(suggestion)}
+                                >
+                                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-sm">{suggestion.city}</p>
+                                    <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {formData.state && (
+                          <div className="flex flex-wrap gap-2 p-2 bg-primary/5 rounded-lg border border-primary/20">
+                            <span className="text-xs font-medium text-primary">Selected:</span>
+                            <span className="text-xs">{formData.city}, {formData.district}, {formData.state}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Location 2 */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Location 2 (Optional)</Label>
+                        <div className="relative">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              value={locationSearch2}
+                              onChange={(e) => {
+                                setLocationSearch2(e.target.value);
+                                setShowLocationSuggestions2(true);
+                              }}
+                              onFocus={() => setShowLocationSuggestions2(true)}
+                              placeholder="Search area..."
+                              className="pl-10"
+                            />
+                          </div>
+                          
+                          {showLocationSuggestions2 && locationSuggestions2.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                              {locationSuggestions2.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
+                                  onClick={() => handleLocationSelect2(suggestion)}
+                                >
+                                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium text-sm">{suggestion.city}</p>
+                                    <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {formData.state2 && (
+                          <div className="flex flex-wrap gap-2 p-2 bg-primary/5 rounded-lg border border-primary/20">
+                            <span className="text-xs font-medium text-primary">Selected:</span>
+                            <span className="text-xs">{formData.city2}, {formData.district2}, {formData.state2}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Category *
+                    </h3>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      {["Academic", "Non-Academic"].map((cat) => (
+                        <Button
+                          key={cat}
+                          type="button"
+                          variant={formData.category === cat ? "default" : "outline"}
+                          className={`h-auto py-4 flex flex-col items-center gap-1 ${formData.category === cat ? "" : "hover:bg-accent/10"}`}
+                          onClick={() => setFormData(prev => ({ ...prev, category: cat }))}
+                        >
+                          <GraduationCap className="h-5 w-5" />
+                          <span className="text-sm">{cat}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Segment */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Segment *
+                    </h3>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {["Pre-Primary", "Primary", "HSC", "Competitive"].map((seg) => (
+                        <Button
+                          key={seg}
+                          type="button"
+                          variant={formData.segment === seg ? "default" : "outline"}
+                          className={`h-auto py-3 ${formData.segment === seg ? "" : "hover:bg-accent/10"}`}
+                          onClick={() => setFormData(prev => ({ ...prev, segment: seg }))}
+                        >
+                          <span className="text-sm">{seg}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Department */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Department *
+                    </h3>
+                    
+                    <Select
+                      value={formData.department}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
+                    >
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="Telugu">Telugu</SelectItem>
+                        <SelectItem value="Hindi">Hindi</SelectItem>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Maths">Maths</SelectItem>
+                        <SelectItem value="Science">Science</SelectItem>
+                        <SelectItem value="Social Studies">Social Studies</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Designation */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Designation *
+                    </h3>
+                    
+                    <Select
+                      value={formData.designation}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, designation: value }))}
+                    >
+                      <SelectTrigger className="w-full bg-background">
+                        <SelectValue placeholder="Select Designation" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="Teacher">Teacher</SelectItem>
+                        <SelectItem value="Vice Principal">Vice Principal</SelectItem>
+                        <SelectItem value="Principal">Principal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Salary & Joining */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <IndianRupee className="h-4 w-4" />
+                      Salary & Date of Joining
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentSalary">Current Salary (₹)</Label>
                         <Input
-                          value={locationSearch2}
-                          onChange={(e) => {
-                            setLocationSearch2(e.target.value);
-                            setShowLocationSuggestions2(true);
-                          }}
-                          onFocus={() => setShowLocationSuggestions2(true)}
-                          placeholder="Search area..."
-                          className="pl-10"
+                          id="currentSalary"
+                          type="number"
+                          value={formData.currentSalary}
+                          onChange={(e) => setFormData(prev => ({ ...prev, currentSalary: e.target.value }))}
+                          placeholder="e.g., 500000"
                         />
                       </div>
                       
-                      {showLocationSuggestions2 && locationSuggestions2.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {locationSuggestions2.map((suggestion, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
-                              onClick={() => handleLocationSelect2(suggestion)}
-                            >
-                              <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                              <div>
-                                <p className="font-medium text-sm">{suggestion.city}</p>
-                                <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        <Label htmlFor="expectedSalary">Expected Salary (₹)</Label>
+                        <Input
+                          id="expectedSalary"
+                          type="number"
+                          value={formData.expectedSalary}
+                          onChange={(e) => setFormData(prev => ({ ...prev, expectedSalary: e.target.value }))}
+                          placeholder="e.g., 700000"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="dateOfJoining">
+                          <Calendar className="inline h-3.5 w-3.5 mr-1" />
+                          Date of Joining
+                        </Label>
+                        <Input
+                          id="dateOfJoining"
+                          type="date"
+                          value={formData.dateOfJoining}
+                          onChange={(e) => setFormData(prev => ({ ...prev, dateOfJoining: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Next Button */}
+                  <div className="pt-4">
+                    <Button 
+                      type="button" 
+                      className="w-full"
+                      onClick={handleNext}
+                    >
+                      Next
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Step 2: Personal Details */}
+                  
+                  {/* Personal Information */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Personal Information *
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName">Full Name (as per Aadhar) *</Label>
+                        <Input
+                          id="fullName"
+                          value={formData.fullName}
+                          onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                          placeholder="Enter your full name"
+                          className={resumeParsed && formData.fullName ? "border-green-300 bg-green-50/30" : ""}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                        <Input
+                          id="dateOfBirth"
+                          type="date"
+                          value={formData.dateOfBirth}
+                          onChange={(e) => setFormData(prev => ({ ...prev, dateOfBirth: e.target.value }))}
+                        />
+                      </div>
                     </div>
                     
-                    {formData.state2 && (
-                      <div className="flex flex-wrap gap-2 p-2 bg-primary/5 rounded-lg border border-primary/20">
-                        <span className="text-xs font-medium text-primary">Selected:</span>
-                        <span className="text-xs">{formData.city2}, {formData.district2}, {formData.state2}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="mobile">
+                          <Phone className="inline h-3.5 w-3.5 mr-1" />
+                          Mobile Number *
+                        </Label>
+                        <Input
+                          id="mobile"
+                          type="tel"
+                          value={formData.mobile}
+                          onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value }))}
+                          placeholder="Enter mobile number"
+                          className={resumeParsed && formData.mobile ? "border-green-300 bg-green-50/30" : ""}
+                        />
                       </div>
-                    )}
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">
+                          <Mail className="inline h-3.5 w-3.5 mr-1" />
+                          Email Address *
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="Enter email address"
+                          className={resumeParsed && formData.email ? "border-green-300 bg-green-50/30" : ""}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Category */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  Category *
-                </h3>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {["Academic", "Non-Academic"].map((cat) => (
-                    <Button
-                      key={cat}
-                      type="button"
-                      variant={formData.category === cat ? "default" : "outline"}
-                      className={`h-auto py-4 flex flex-col items-center gap-1 ${formData.category === cat ? "" : "hover:bg-accent/10"}`}
-                      onClick={() => setFormData(prev => ({ ...prev, category: cat }))}
+                  {/* Educational Details */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <BookOpen className="h-4 w-4" />
+                      Educational Details
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="highestQualification">Highest Qualification</Label>
+                        <Select
+                          value={formData.highestQualification}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, highestQualification: value }))}
+                        >
+                          <SelectTrigger className="w-full bg-background">
+                            <SelectValue placeholder="Select Qualification" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background z-50">
+                            <SelectItem value="B.Ed">B.Ed</SelectItem>
+                            <SelectItem value="M.Ed">M.Ed</SelectItem>
+                            <SelectItem value="B.A">B.A</SelectItem>
+                            <SelectItem value="M.A">M.A</SelectItem>
+                            <SelectItem value="B.Sc">B.Sc</SelectItem>
+                            <SelectItem value="M.Sc">M.Sc</SelectItem>
+                            <SelectItem value="B.Com">B.Com</SelectItem>
+                            <SelectItem value="M.Com">M.Com</SelectItem>
+                            <SelectItem value="Ph.D">Ph.D</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="specialization">Specialization</Label>
+                        <Input
+                          id="specialization"
+                          value={formData.specialization}
+                          onChange={(e) => setFormData(prev => ({ ...prev, specialization: e.target.value }))}
+                          placeholder="e.g., Mathematics, Physics"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="university">University / Board</Label>
+                        <Input
+                          id="university"
+                          value={formData.university}
+                          onChange={(e) => setFormData(prev => ({ ...prev, university: e.target.value }))}
+                          placeholder="Enter university name"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="yearOfPassing">Year of Passing</Label>
+                        <Input
+                          id="yearOfPassing"
+                          value={formData.yearOfPassing}
+                          onChange={(e) => setFormData(prev => ({ ...prev, yearOfPassing: e.target.value }))}
+                          placeholder="e.g., 2020"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Professional Details */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <Award className="h-4 w-4" />
+                      Professional Details
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="totalExperience">Total Experience</Label>
+                        <Input
+                          id="totalExperience"
+                          value={formData.totalExperience}
+                          onChange={(e) => setFormData(prev => ({ ...prev, totalExperience: e.target.value }))}
+                          placeholder="e.g., 5 years"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="currentOrganization">Current Organization</Label>
+                        <Input
+                          id="currentOrganization"
+                          value={formData.currentOrganization}
+                          onChange={(e) => setFormData(prev => ({ ...prev, currentOrganization: e.target.value }))}
+                          placeholder="Enter current school/institution"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentDesignation">Current Designation</Label>
+                        <Input
+                          id="currentDesignation"
+                          value={formData.currentDesignation}
+                          onChange={(e) => setFormData(prev => ({ ...prev, currentDesignation: e.target.value }))}
+                          placeholder="e.g., Senior Teacher"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="skills">Key Skills</Label>
+                        <Input
+                          id="skills"
+                          value={formData.skills}
+                          onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value }))}
+                          placeholder="e.g., Teaching, Curriculum Design"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation Buttons */}
+                  <div className="pt-4 flex gap-3">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      className="flex-1"
+                      onClick={handleBack}
                     >
-                      <GraduationCap className="h-5 w-5" />
-                      <span className="text-sm">{cat}</span>
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back
                     </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Segment */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  Segment *
-                </h3>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {["Pre-Primary", "Primary", "HSC", "Competitive"].map((seg) => (
-                    <Button
-                      key={seg}
-                      type="button"
-                      variant={formData.segment === seg ? "default" : "outline"}
-                      className={`h-auto py-3 ${formData.segment === seg ? "" : "hover:bg-accent/10"}`}
-                      onClick={() => setFormData(prev => ({ ...prev, segment: seg }))}
+                    <Button 
+                      type="submit" 
+                      className="flex-1"
+                      disabled={isSubmitting}
                     >
-                      <span className="text-sm">{seg}</span>
+                      {isSubmitting ? "Registering..." : "Complete Registration"}
                     </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Department */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  Department *
-                </h3>
-                
-                <Select
-                  value={formData.department}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
-                >
-                  <SelectTrigger className="w-full bg-background">
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="Telugu">Telugu</SelectItem>
-                    <SelectItem value="Hindi">Hindi</SelectItem>
-                    <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Maths">Maths</SelectItem>
-                    <SelectItem value="Science">Science</SelectItem>
-                    <SelectItem value="Social Studies">Social Studies</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Designation */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  Designation *
-                </h3>
-                
-                <Select
-                  value={formData.designation}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, designation: value }))}
-                >
-                  <SelectTrigger className="w-full bg-background">
-                    <SelectValue placeholder="Select Designation" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="Teacher">Teacher</SelectItem>
-                    <SelectItem value="Vice Principal">Vice Principal</SelectItem>
-                    <SelectItem value="Principal">Principal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Salary & Joining */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <IndianRupee className="h-4 w-4" />
-                  Salary & Date of Joining
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentSalary">Current Salary (₹)</Label>
-                    <Input
-                      id="currentSalary"
-                      type="number"
-                      value={formData.currentSalary}
-                      onChange={(e) => setFormData(prev => ({ ...prev, currentSalary: e.target.value }))}
-                      placeholder="e.g., 500000"
-                    />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="expectedSalary">Expected Salary (₹)</Label>
-                    <Input
-                      id="expectedSalary"
-                      type="number"
-                      value={formData.expectedSalary}
-                      onChange={(e) => setFormData(prev => ({ ...prev, expectedSalary: e.target.value }))}
-                      placeholder="e.g., 700000"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfJoining">
-                      <Calendar className="inline h-3.5 w-3.5 mr-1" />
-                      Date of Joining
-                    </Label>
-                    <Input
-                      id="dateOfJoining"
-                      type="date"
-                      value={formData.dateOfJoining}
-                      onChange={(e) => setFormData(prev => ({ ...prev, dateOfJoining: e.target.value }))}
-                    />
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
 
-              {/* Submit */}
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={isSubmitting || !formData.category || !formData.state}
-                >
-                  {isSubmitting ? "Registering..." : "Complete Registration"}
-                </Button>
-                
-                <p className="text-center text-sm text-muted-foreground mt-4">
-                  Already have an account?{" "}
-                  <Link to="/candidate/login" className="text-accent hover:underline font-medium">
-                    Login here
-                  </Link>
-                </p>
-              </div>
+              <p className="text-center text-sm text-muted-foreground mt-4">
+                Already have an account?{" "}
+                <Link to="/candidate/login" className="text-accent hover:underline font-medium">
+                  Login here
+                </Link>
+              </p>
             </form>
           </CardContent>
         </Card>
