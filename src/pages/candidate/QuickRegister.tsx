@@ -334,6 +334,10 @@ const QuickRegister = () => {
     setIsSubmitting(true);
 
     try {
+      // Get stored resume analysis if available
+      const storedAnalysis = localStorage.getItem('resumeAnalysis');
+      const parsedResumeAnalysis = storedAnalysis ? JSON.parse(storedAnalysis) : null;
+
       // Prepare data for email
       const emailData = {
         fullName: formData.fullName,
@@ -351,10 +355,11 @@ const QuickRegister = () => {
         specialization: formData.specialization,
         totalExperience: formData.totalExperience,
         currentOrganization: formData.currentOrganization,
-        skills: formData.skills
+        skills: formData.skills,
+        resumeAnalysis: parsedResumeAnalysis || resumeAnalysis
       };
 
-      // Send registration email with AI analysis
+      // Send registration email with resume analysis
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-registration-email`,
         {
