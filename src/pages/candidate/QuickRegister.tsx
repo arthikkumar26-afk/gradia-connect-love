@@ -74,6 +74,9 @@ const QuickRegister = () => {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeParsed, setResumeParsed] = useState(false);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [registrationScore, setRegistrationScore] = useState<number | null>(null);
+  const [userEmail, setUserEmail] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [locationSearch, setLocationSearch] = useState("");
   const [locationSearch2, setLocationSearch2] = useState("");
@@ -412,21 +415,17 @@ const QuickRegister = () => {
 
       localStorage.setItem('quickRegistrationData', JSON.stringify(registrationData));
 
-      // Show appropriate message based on email status
-      if (result.emailSent) {
-        toast({
-          title: "Registration Complete! 🎉",
-          description: `Your profile score is ${result.score}/100. Check your email for details!`,
-        });
-      } else {
-        toast({
-          title: "Registration Saved! 🎉",
-          description: `Your profile score is ${result.score}/100. ${result.message}`,
-        });
-      }
+      // Store user email and score for success screen
+      setUserEmail(formData.email);
+      setRegistrationScore(result.score);
+      setRegistrationComplete(true);
 
-      // Navigate to candidate signup
-      navigate("/candidate/signup");
+      // Auto-close tab after 10 seconds
+      setTimeout(() => {
+        window.close();
+        // If window.close() doesn't work (opened directly), redirect to home
+        window.location.href = '/';
+      }, 10000);
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({
@@ -441,6 +440,79 @@ const QuickRegister = () => {
 
   const locationSuggestions = getLocationSuggestions(locationSearch);
   const locationSuggestions2 = getLocationSuggestions(locationSearch2);
+
+  // Success Screen - Show after registration complete
+  if (registrationComplete) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-subtle to-background flex items-center justify-center p-4">
+        <Card className="max-w-lg w-full text-center shadow-large border-0">
+            <CardHeader className="pb-4">
+              <div className="mx-auto mb-4 w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                <CheckCircle2 className="h-12 w-12 text-white" />
+              </div>
+              <CardTitle className="text-2xl md:text-3xl text-foreground">
+                Registration Complete! 🎉
+              </CardTitle>
+              <CardDescription className="text-base mt-2">
+                Thank you for registering with Gradia
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Score Display */}
+              {registrationScore && (
+                <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-xl p-6">
+                  <p className="text-sm text-muted-foreground mb-2">Your Profile Score</p>
+                  <div className="text-5xl font-bold text-primary mb-2">
+                    {registrationScore}<span className="text-2xl text-muted-foreground">/100</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {registrationScore >= 80 ? '🌟 Excellent!' : registrationScore >= 60 ? '👍 Good start!' : '📈 Room to grow!'}
+                  </p>
+                </div>
+              )}
+
+              {/* Email Sent Notice */}
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4 flex items-start gap-3">
+                <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-left">
+                  <p className="font-medium text-blue-900 dark:text-blue-100">Check Your Email</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    We've sent your registration details and profile analysis to <strong>{userEmail}</strong>
+                  </p>
+                </div>
+              </div>
+
+              {/* Next Steps */}
+              <div className="bg-muted/50 rounded-xl p-4 text-left space-y-2">
+                <p className="font-medium text-foreground flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  What's Next?
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1.5 ml-6">
+                  <li>✓ Create your account from the email link</li>
+                  <li>✓ Complete your full profile</li>
+                  <li>✓ Start applying to jobs</li>
+                </ul>
+              </div>
+
+              {/* Auto-close notice */}
+              <p className="text-xs text-muted-foreground">
+                This page will close automatically in a few seconds...
+              </p>
+
+              {/* Manual close button */}
+              <Button 
+                onClick={() => window.close()} 
+                className="w-full"
+                size="lg"
+              >
+                Close This Page
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-subtle to-background">
