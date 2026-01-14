@@ -399,31 +399,6 @@ const QuickRegister = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input
-                      id="fullName"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                      placeholder="Enter your full name"
-                      required
-                      className={resumeParsed && formData.fullName ? "border-green-300 bg-green-50/30" : ""}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="your@email.com"
-                      required
-                      className={resumeParsed && formData.email ? "border-green-300 bg-green-50/30" : ""}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
                     <Label htmlFor="mobile">Mobile Number *</Label>
                     <Input
                       id="mobile"
