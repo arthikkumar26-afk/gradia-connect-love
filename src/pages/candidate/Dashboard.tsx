@@ -44,6 +44,23 @@ import { JobApplicationModal } from "@/components/candidate/JobApplicationModal"
 import { ApplicationsTab } from "@/components/candidate/ApplicationsTab";
 import { InterviewPipelineTab } from "@/components/candidate/InterviewPipelineTab";
 import { EducationModal, EducationRecord } from "@/components/candidate/EducationModal";
+import ExperienceModal from "@/components/candidate/ExperienceModal";
+import { Briefcase as BriefcaseIcon } from "lucide-react";
+
+interface ExperienceRecord {
+  id?: string;
+  organization: string;
+  department: string;
+  designation: string;
+  from_date: string;
+  to_date: string;
+  salary_per_month: number | null;
+  place: string;
+  reference_name: string;
+  reference_mobile: string;
+  worked_with_narayana: boolean;
+  narayana_emp_id: string;
+}
 
 interface ResumeAnalysis {
   overall_score: number;
@@ -87,6 +104,12 @@ const CandidateDashboard = () => {
   const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
   const [editingEducation, setEditingEducation] = useState<EducationRecord | null>(null);
   const [isEducationLoading, setIsEducationLoading] = useState(false);
+
+  // Experience state
+  const [experienceRecords, setExperienceRecords] = useState<ExperienceRecord[]>([]);
+  const [isExperienceModalOpen, setIsExperienceModalOpen] = useState(false);
+  const [editingExperience, setEditingExperience] = useState<ExperienceRecord | null>(null);
+  const [isExperienceLoading, setIsExperienceLoading] = useState(false);
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -264,6 +287,127 @@ const CandidateDashboard = () => {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to delete education",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  // Fetch work experience
+  useEffect(() => {
+    const fetchExperience = async () => {
+      if (!profile?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('work_experience')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('display_order', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching experience:', error);
+          return;
+        }
+        
+        setExperienceRecords(data || []);
+      } catch (e) {
+        console.error('Error fetching experience:', e);
+      }
+    };
+    
+    fetchExperience();
+  }, [profile?.id]);
+
+  // Handle save experience
+  const handleSaveExperience = async (data: ExperienceRecord) => {
+    if (!profile?.id) return;
+    
+    setIsExperienceLoading(true);
+    try {
+      if (data.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('work_experience')
+          .update({
+            organization: data.organization,
+            department: data.department,
+            designation: data.designation,
+            from_date: data.from_date || null,
+            to_date: data.to_date || null,
+            salary_per_month: data.salary_per_month,
+            place: data.place,
+            reference_name: data.reference_name,
+            reference_mobile: data.reference_mobile,
+            worked_with_narayana: data.worked_with_narayana,
+            narayana_emp_id: data.narayana_emp_id,
+          })
+          .eq('id', data.id);
+        
+        if (error) throw error;
+        
+        setExperienceRecords(prev => 
+          prev.map(rec => rec.id === data.id ? { ...rec, ...data } : rec)
+        );
+        toast({ title: "Success", description: "Experience updated successfully" });
+      } else {
+        // Insert new
+        const { data: newRecord, error } = await supabase
+          .from('work_experience')
+          .insert({
+            user_id: profile.id,
+            organization: data.organization,
+            department: data.department,
+            designation: data.designation,
+            from_date: data.from_date || null,
+            to_date: data.to_date || null,
+            salary_per_month: data.salary_per_month,
+            place: data.place,
+            reference_name: data.reference_name,
+            reference_mobile: data.reference_mobile,
+            worked_with_narayana: data.worked_with_narayana,
+            narayana_emp_id: data.narayana_emp_id,
+            display_order: experienceRecords.length,
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        setExperienceRecords(prev => [...prev, newRecord]);
+        toast({ title: "Success", description: "Experience added successfully" });
+      }
+      
+      setIsExperienceModalOpen(false);
+      setEditingExperience(null);
+    } catch (error: any) {
+      console.error('Error saving experience:', error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to save experience",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsExperienceLoading(false);
+    }
+  };
+
+  // Handle delete experience
+  const handleDeleteExperience = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('work_experience')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setExperienceRecords(prev => prev.filter(rec => rec.id !== id));
+      toast({ title: "Success", description: "Experience deleted successfully" });
+    } catch (error: any) {
+      console.error('Error deleting experience:', error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to delete experience",
         variant: "destructive" 
       });
     }
@@ -1129,6 +1273,141 @@ const CandidateDashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Previous Experience Table */}
+                <Card className="overflow-hidden border-border shadow-soft">
+                  <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30 border-b border-orange-200 dark:border-orange-800">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg">
+                          <BriefcaseIcon className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg text-foreground">Previous Experience</CardTitle>
+                          <p className="text-sm text-muted-foreground">Your work history</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setEditingExperience(null);
+                          setIsExperienceModalOpen(true);
+                        }}
+                        className="gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4 overflow-x-auto">
+                    <div className="border border-border rounded-lg overflow-hidden min-w-[900px]">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="px-3 py-3 text-left font-semibold text-foreground border-b border-border">ORGANIZATION</th>
+                            <th className="px-3 py-3 text-left font-semibold text-foreground border-b border-border">DEPT & DESIGNATION</th>
+                            <th className="px-3 py-3 text-left font-semibold text-foreground border-b border-border">FROM DATE</th>
+                            <th className="px-3 py-3 text-left font-semibold text-foreground border-b border-border">TO DATE</th>
+                            <th className="px-3 py-3 text-left font-semibold text-foreground border-b border-border">SALARY (PM)</th>
+                            <th className="px-3 py-3 text-left font-semibold text-foreground border-b border-border">PLACE</th>
+                            <th className="px-3 py-3 text-left font-semibold text-foreground border-b border-border">REF. NAME & MOBILE</th>
+                            <th className="px-3 py-3 text-center font-semibold text-foreground border-b border-border">ACTIONS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {experienceRecords.length > 0 ? (
+                            experienceRecords.map((record) => (
+                              <tr key={record.id} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                                <td className="px-3 py-3 text-foreground font-medium">
+                                  <div>{record.organization}</div>
+                                  {record.worked_with_narayana && (
+                                    <Badge variant="outline" className="text-xs mt-1 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                                      Narayana {record.narayana_emp_id && `(${record.narayana_emp_id})`}
+                                    </Badge>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3 text-foreground">
+                                  {record.department || record.designation ? (
+                                    <div>
+                                      {record.department && <div className="text-muted-foreground text-xs">{record.department}</div>}
+                                      {record.designation && <div>{record.designation}</div>}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground italic">-</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3 text-foreground">
+                                  {record.from_date || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-3 py-3 text-foreground">
+                                  {record.to_date || <span className="text-muted-foreground italic">Present</span>}
+                                </td>
+                                <td className="px-3 py-3 text-foreground">
+                                  {record.salary_per_month !== null ? `₹${record.salary_per_month.toLocaleString()}` : <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-3 py-3 text-foreground">
+                                  {record.place || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-3 py-3 text-foreground">
+                                  {record.reference_name || record.reference_mobile ? (
+                                    <div>
+                                      {record.reference_name && <div>{record.reference_name}</div>}
+                                      {record.reference_mobile && <div className="text-muted-foreground text-xs">{record.reference_mobile}</div>}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground italic">-</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        setEditingExperience(record);
+                                        setIsExperienceModalOpen(true);
+                                      }}
+                                    >
+                                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                      onClick={() => record.id && handleDeleteExperience(record.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                                <BriefcaseIcon className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                                <p>No experience records added yet.</p>
+                                <Button
+                                  variant="link"
+                                  onClick={() => {
+                                    setEditingExperience(null);
+                                    setIsExperienceModalOpen(true);
+                                  }}
+                                  className="mt-1"
+                                >
+                                  Add your first work experience
+                                </Button>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   {dashboardCards.map((card, index) => {
                     const Icon = card.icon;
@@ -1409,6 +1688,17 @@ const CandidateDashboard = () => {
         onSave={handleSaveEducation}
         editingRecord={editingEducation}
         isLoading={isEducationLoading}
+      />
+
+      {/* Experience Modal */}
+      <ExperienceModal
+        isOpen={isExperienceModalOpen}
+        onClose={() => {
+          setIsExperienceModalOpen(false);
+          setEditingExperience(null);
+        }}
+        onSave={handleSaveExperience}
+        editingRecord={editingExperience}
       />
     </div>
   );
