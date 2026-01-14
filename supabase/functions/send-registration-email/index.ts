@@ -265,7 +265,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Gradia <onboarding@resend.dev>",
+          from: "Gradia <noreply@gradia.co.in>",
           to: [registrationData.email],
           subject: `🎉 Welcome to Gradia! Your Profile Score: ${analysis.score}/100`,
           html: emailHtml,
