@@ -490,6 +490,11 @@ const CandidateDashboard = () => {
                         <div className="border border-border rounded-lg overflow-hidden">
                           <table className="w-full text-sm">
                             <tbody>
+                              {/* Row 0: Registration Number */}
+                              <tr className="border-b border-border bg-accent/5">
+                                <td className="px-3 py-2 bg-accent/10 font-medium text-accent w-1/4">REG. NUMBER</td>
+                                <td className="px-3 py-2 text-accent font-bold tracking-wider" colSpan={4}>{profile?.registration_number || '-'}</td>
+                              </tr>
                               {/* Row 1: Name and Date */}
                               <tr className="border-b border-border">
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground w-1/4">NAME</td>
