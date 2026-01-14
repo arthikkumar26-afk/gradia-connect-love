@@ -549,19 +549,22 @@ const QuickRegister = () => {
                   Department *
                 </h3>
                 
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                  {["T", "H", "E", "M", "S", "SS"].map((dept) => (
-                    <Button
-                      key={dept}
-                      type="button"
-                      variant={formData.department === dept ? "default" : "outline"}
-                      className={`h-auto py-3 ${formData.department === dept ? "" : "hover:bg-accent/10"}`}
-                      onClick={() => setFormData(prev => ({ ...prev, department: dept }))}
-                    >
-                      <span className="text-sm font-medium">{dept}</span>
-                    </Button>
-                  ))}
-                </div>
+                <Select
+                  value={formData.department}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
+                >
+                  <SelectTrigger className="w-full bg-background">
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="Telugu">Telugu</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Maths">Maths</SelectItem>
+                    <SelectItem value="Science">Science</SelectItem>
+                    <SelectItem value="Social Studies">Social Studies</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Salary & Joining */}
