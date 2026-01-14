@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, Briefcase, GraduationCap, Building2, Users } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Briefcase, GraduationCap, Building2, Users, Upload, FileText, Loader2, CheckCircle2, Sparkles } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,6 +93,10 @@ const QuickRegister = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeParsed, setResumeParsed] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -108,8 +112,84 @@ const QuickRegister = () => {
     expectedSalary: "",
     dateOfJoining: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    experienceLevel: ""
   });
+
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload a PDF, Word document, or image file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 10MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setResumeFile(file);
+    setIsParsingResume(true);
+    setResumeParsed(false);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', file);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        {
+          method: 'POST',
+          body: formDataToSend,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to parse resume: ${response.status}`);
+      }
+
+      const parsedData = await response.json();
+      console.log("Parsed resume data:", parsedData);
+
+      // Auto-fill form fields from parsed data
+      setFormData(prev => ({
+        ...prev,
+        fullName: parsedData.full_name || prev.fullName,
+        email: parsedData.email || prev.email,
+        mobile: parsedData.phone || prev.mobile,
+        experienceLevel: parsedData.years_of_experience || prev.experienceLevel
+      }));
+
+      setResumeParsed(true);
+      toast({
+        title: "Resume Parsed Successfully",
+        description: "Your details have been auto-filled. Please verify and complete the remaining fields.",
+      });
+    } catch (error: any) {
+      console.error("Resume parsing error:", error);
+      toast({
+        title: "Parsing Failed",
+        description: error.message || "Could not parse resume. Please fill in your details manually.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsParsingResume(false);
+    }
+  };
 
   const selectedDomain = formData.domain as keyof typeof domainConfig;
   const domainOptions = selectedDomain ? domainConfig[selectedDomain] : null;
@@ -264,6 +344,55 @@ const QuickRegister = () => {
           
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Resume Upload Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Quick Fill with Resume (Optional)
+                </h3>
+                
+                <div 
+                  className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer hover:border-primary/50 hover:bg-accent/5 ${
+                    resumeParsed ? 'border-green-500 bg-green-50/50' : 'border-muted-foreground/25'
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={handleResumeUpload}
+                    className="hidden"
+                  />
+                  
+                  {isParsingResume ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                      <p className="text-sm text-muted-foreground">AI is parsing your resume...</p>
+                    </div>
+                  ) : resumeParsed ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <CheckCircle2 className="h-10 w-10 text-green-500" />
+                      <div>
+                        <p className="font-medium text-green-700">Resume Parsed Successfully!</p>
+                        <p className="text-sm text-muted-foreground">{resumeFile?.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Click to upload a different resume</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="p-3 bg-primary/10 rounded-full">
+                        <Upload className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Upload your resume to auto-fill details</p>
+                        <p className="text-sm text-muted-foreground">PDF, Word, or Image (max 10MB)</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Basic Info */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -280,6 +409,7 @@ const QuickRegister = () => {
                       onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                       placeholder="Enter your full name"
                       required
+                      className={resumeParsed && formData.fullName ? "border-green-300 bg-green-50/30" : ""}
                     />
                   </div>
                   
@@ -292,6 +422,7 @@ const QuickRegister = () => {
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="your@email.com"
                       required
+                      className={resumeParsed && formData.email ? "border-green-300 bg-green-50/30" : ""}
                     />
                   </div>
                   
@@ -304,6 +435,18 @@ const QuickRegister = () => {
                       onChange={(e) => setFormData(prev => ({ ...prev, mobile: e.target.value }))}
                       placeholder="+91 9876543210"
                       required
+                      className={resumeParsed && formData.mobile ? "border-green-300 bg-green-50/30" : ""}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="experienceLevel">Experience</Label>
+                    <Input
+                      id="experienceLevel"
+                      value={formData.experienceLevel}
+                      onChange={(e) => setFormData(prev => ({ ...prev, experienceLevel: e.target.value }))}
+                      placeholder="e.g., 3 years"
+                      className={resumeParsed && formData.experienceLevel ? "border-green-300 bg-green-50/30" : ""}
                     />
                   </div>
                 </div>
