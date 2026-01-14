@@ -2338,14 +2338,6 @@ const CandidateDashboard = () => {
                           </>
                         )}
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="lg"
-                        onClick={() => navigate('/interview')}
-                        className="gap-2"
-                      >
-                        Practice Questions
-                      </Button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                       <div className="p-4 bg-muted/50 rounded-lg">
