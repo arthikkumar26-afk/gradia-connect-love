@@ -561,6 +561,97 @@ const QuickRegister = () => {
             </CardContent>
           </Card>
 
+          {/* AI Resume Score & Summary Card */}
+          {resumeAnalysis && (
+            <Card className="overflow-hidden border-border shadow-medium">
+              <CardHeader className="bg-gradient-to-r from-green-500/10 via-primary/5 to-green-500/10 pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-green-500/20">
+                    <Star className="h-5 w-5 text-green-600" />
+                  </div>
+                  <CardTitle className="text-lg font-semibold text-foreground">
+                    AI Resume Analysis
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <tbody className="divide-y divide-border">
+                      {/* Overall Score */}
+                      <tr className="bg-green-50 dark:bg-green-950/20">
+                        <td className="px-3 py-3 font-medium text-green-700 dark:text-green-400 w-1/3">OVERALL SCORE</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="text-2xl font-bold text-green-600">
+                              {resumeAnalysis.overall_score}<span className="text-sm text-muted-foreground">/100</span>
+                            </div>
+                            <Progress value={resumeAnalysis.overall_score} className="flex-1 h-2" />
+                          </div>
+                        </td>
+                      </tr>
+                      {/* Career Level */}
+                      {resumeAnalysis.career_level && (
+                        <tr>
+                          <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CAREER LEVEL</td>
+                          <td className="px-3 py-2 text-foreground">{resumeAnalysis.career_level}</td>
+                        </tr>
+                      )}
+                      {/* Experience Summary */}
+                      {resumeAnalysis.experience_summary && (
+                        <tr>
+                          <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">EXPERIENCE SUMMARY</td>
+                          <td className="px-3 py-2 text-foreground">{resumeAnalysis.experience_summary}</td>
+                        </tr>
+                      )}
+                      {/* Strengths */}
+                      {resumeAnalysis.strengths && resumeAnalysis.strengths.length > 0 && (
+                        <tr>
+                          <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground align-top">STRENGTHS</td>
+                          <td className="px-3 py-2 text-foreground">
+                            <ul className="list-disc list-inside space-y-1">
+                              {resumeAnalysis.strengths.map((strength, idx) => (
+                                <li key={idx} className="text-green-700 dark:text-green-400">{strength}</li>
+                              ))}
+                            </ul>
+                          </td>
+                        </tr>
+                      )}
+                      {/* Areas for Improvement */}
+                      {resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 && (
+                        <tr>
+                          <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground align-top">AREAS TO IMPROVE</td>
+                          <td className="px-3 py-2 text-foreground">
+                            <ul className="list-disc list-inside space-y-1">
+                              {resumeAnalysis.improvements.map((item, idx) => (
+                                <li key={idx} className="text-amber-700 dark:text-amber-400">{item}</li>
+                              ))}
+                            </ul>
+                          </td>
+                        </tr>
+                      )}
+                      {/* Skill Highlights */}
+                      {resumeAnalysis.skill_highlights && resumeAnalysis.skill_highlights.length > 0 && (
+                        <tr>
+                          <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground align-top">KEY SKILLS</td>
+                          <td className="px-3 py-2">
+                            <div className="flex flex-wrap gap-1.5">
+                              {resumeAnalysis.skill_highlights.map((skill, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Actions Card */}
           <Card className="shadow-medium">
             <CardContent className="pt-6 space-y-4">
