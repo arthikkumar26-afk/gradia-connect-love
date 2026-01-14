@@ -1,93 +1,58 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, Briefcase, GraduationCap, Building2, Users, Upload, FileText, Loader2, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, GraduationCap, Users, Upload, Loader2, CheckCircle2, Sparkles, IndianRupee, Search } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Domain configuration with their specific options
-const domainConfig = {
-  education: {
-    label: "Education",
-    icon: GraduationCap,
-    categories: ["Academic", "Non-Academic"],
-    segments: ["Pre-Primary", "Primary", "HSC", "Competitive"],
-    departments: [
-      "Telugu",
-      "Hindi",
-      "English",
-      "Mathematics",
-      "Science",
-      "Social Studies",
-      "Physical Education",
-      "Computer Science",
-      "Arts",
-      "Music"
-    ],
-    designations: ["Teacher", "Vice Principal", "Principal", "HOD", "Coordinator", "Counselor"]
+// Education designations only
+const educationDesignations = ["Teacher", "Vice Principal", "Principal"];
+
+// India states and districts data
+const locationData: Record<string, Record<string, string[]>> = {
+  "Telangana": {
+    "Hyderabad": ["Secunderabad", "Gachibowli", "Kukatpally", "Madhapur", "Ameerpet", "Dilsukhnagar", "LB Nagar", "Banjara Hills", "Jubilee Hills", "Begumpet", "Himayat Nagar", "Kondapur"],
+    "Rangareddy": ["Shamshabad", "Mehdipatnam", "Rajendranagar", "Chevella", "Ibrahimpatnam", "Vikarabad"],
+    "Medchal-Malkajgiri": ["Kompally", "Alwal", "Bowenpally", "Quthbullapur", "Medchal"],
+    "Warangal": ["Hanamkonda", "Kazipet", "Warangal City"],
+    "Nizamabad": ["Nizamabad City", "Armoor", "Bodhan"],
+    "Karimnagar": ["Karimnagar City", "Ramagundam", "Peddapalli"]
   },
-  it: {
-    label: "IT",
-    icon: Building2,
-    categories: ["Development", "Infrastructure", "Support"],
-    segments: ["Frontend", "Backend", "Full Stack", "DevOps", "QA"],
-    departments: [
-      "Web Development",
-      "Mobile Development",
-      "Data Science",
-      "Cloud Computing",
-      "Cybersecurity",
-      "AI/ML"
-    ],
-    designations: ["Junior Developer", "Senior Developer", "Team Lead", "Manager", "Architect"]
+  "Andhra Pradesh": {
+    "Visakhapatnam": ["Visakhapatnam City", "Gajuwaka", "Madhurawada", "Seethammadhara", "MVP Colony"],
+    "Vijayawada": ["Vijayawada City", "Benz Circle", "Labbipet", "Governorpet"],
+    "Guntur": ["Guntur City", "Narasaraopet", "Tenali"],
+    "Tirupati": ["Tirupati City", "Tirumala", "Renigunta"],
+    "Nellore": ["Nellore City", "Kavali"],
+    "Kurnool": ["Kurnool City", "Nandyal"]
   },
-  "non-it": {
-    label: "Non-IT",
-    icon: Users,
-    categories: ["Operations", "Sales", "HR", "Finance"],
-    segments: ["Entry Level", "Mid Level", "Senior Level", "Executive"],
-    departments: [
-      "Human Resources",
-      "Marketing",
-      "Sales",
-      "Operations",
-      "Finance",
-      "Administration"
-    ],
-    designations: ["Executive", "Manager", "Senior Manager", "Director", "VP"]
+  "Karnataka": {
+    "Bengaluru Urban": ["Whitefield", "Koramangala", "HSR Layout", "Marathahalli", "Electronic City", "Indiranagar", "Jayanagar", "BTM Layout", "Hebbal"],
+    "Bengaluru Rural": ["Devanahalli", "Hoskote", "Nelamangala"],
+    "Mysuru": ["Mysuru City", "Gokulam", "Vijayanagar"],
+    "Mangaluru": ["Mangaluru City", "Surathkal", "Kankanady"],
+    "Hubli-Dharwad": ["Hubli", "Dharwad"]
   },
-  healthcare: {
-    label: "Healthcare",
-    icon: Briefcase,
-    categories: ["Clinical", "Non-Clinical"],
-    segments: ["Hospital", "Clinic", "Diagnostics", "Pharma"],
-    departments: [
-      "Nursing",
-      "Pharmacy",
-      "Lab Technician",
-      "Radiology",
-      "Administration"
-    ],
-    designations: ["Nurse", "Pharmacist", "Technician", "Doctor", "Specialist"]
+  "Tamil Nadu": {
+    "Chennai": ["T Nagar", "Adyar", "Anna Nagar", "Velachery", "Porur", "Nungambakkam", "Mylapore", "Guindy"],
+    "Coimbatore": ["Coimbatore City", "RS Puram", "Gandhipuram", "Peelamedu"],
+    "Madurai": ["Madurai City", "Anna Nagar", "KK Nagar"],
+    "Tiruchirappalli": ["Trichy City", "Srirangam", "Thillai Nagar"],
+    "Salem": ["Salem City", "Fairlands"]
+  },
+  "Maharashtra": {
+    "Mumbai": ["Andheri", "Bandra", "Powai", "Dadar", "Worli", "Malad", "Goregaon", "Borivali"],
+    "Pune": ["Kothrud", "Hinjewadi", "Koregaon Park", "Viman Nagar", "Hadapsar", "Baner"],
+    "Nagpur": ["Nagpur City", "Dharampeth", "Civil Lines"],
+    "Nashik": ["Nashik City", "College Road"],
+    "Aurangabad": ["Aurangabad City", "CIDCO"]
   }
 };
-
-const preferredLocations = [
-  "Area-1 (Hyderabad)",
-  "Area-2 (Secunderabad)",
-  "Area-3 (Gachibowli)",
-  "Area-4 (Kukatpally)",
-  "Area-5 (Madhapur)",
-  "Area-6 (Ameerpet)",
-  "Area-7 (Dilsukhnagar)",
-  "Area-8 (LB Nagar)"
-];
 
 const QuickRegister = () => {
   const navigate = useNavigate();
@@ -97,16 +62,18 @@ const QuickRegister = () => {
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeParsed, setResumeParsed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [locationSearch, setLocationSearch] = useState("");
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     mobile: "",
-    preferredLocations: [] as string[],
-    domain: "",
-    category: "",
-    segment: "",
-    department: "",
+    // Location fields
+    state: "",
+    district: "",
+    city: "",
+    // Education only
     designation: "",
     currentSalary: "",
     expectedSalary: "",
@@ -115,6 +82,48 @@ const QuickRegister = () => {
     confirmPassword: "",
     experienceLevel: ""
   });
+
+  // Get AI-powered location suggestions based on search
+  const getLocationSuggestions = () => {
+    if (!locationSearch.trim()) return [];
+    
+    const search = locationSearch.toLowerCase();
+    const suggestions: { state: string; district: string; city: string; display: string }[] = [];
+    
+    Object.entries(locationData).forEach(([state, districts]) => {
+      Object.entries(districts).forEach(([district, cities]) => {
+        cities.forEach(city => {
+          const fullLocation = `${city}, ${district}, ${state}`;
+          if (
+            city.toLowerCase().includes(search) ||
+            district.toLowerCase().includes(search) ||
+            state.toLowerCase().includes(search) ||
+            fullLocation.toLowerCase().includes(search)
+          ) {
+            suggestions.push({
+              state,
+              district,
+              city,
+              display: fullLocation
+            });
+          }
+        });
+      });
+    });
+    
+    return suggestions.slice(0, 8);
+  };
+
+  const handleLocationSelect = (suggestion: { state: string; district: string; city: string; display: string }) => {
+    setFormData(prev => ({
+      ...prev,
+      state: suggestion.state,
+      district: suggestion.district,
+      city: suggestion.city
+    }));
+    setLocationSearch(suggestion.display);
+    setShowLocationSuggestions(false);
+  };
 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -191,34 +200,6 @@ const QuickRegister = () => {
     }
   };
 
-  const selectedDomain = formData.domain as keyof typeof domainConfig;
-  const domainOptions = selectedDomain ? domainConfig[selectedDomain] : null;
-
-  const handleLocationChange = (location: string, checked: boolean) => {
-    if (checked) {
-      setFormData(prev => ({
-        ...prev,
-        preferredLocations: [...prev.preferredLocations, location]
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        preferredLocations: prev.preferredLocations.filter(l => l !== location)
-      }));
-    }
-  };
-
-  const handleDomainChange = (domain: string) => {
-    setFormData(prev => ({
-      ...prev,
-      domain,
-      category: "",
-      segment: "",
-      department: "",
-      designation: ""
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -231,10 +212,19 @@ const QuickRegister = () => {
       return;
     }
 
-    if (formData.preferredLocations.length === 0) {
+    if (!formData.state || !formData.district || !formData.city) {
       toast({
         title: "Location Required",
-        description: "Please select at least one preferred location.",
+        description: "Please select your preferred location.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.designation) {
+      toast({
+        title: "Designation Required",
+        description: "Please select your preferred designation.",
         variant: "destructive"
       });
       return;
@@ -268,12 +258,13 @@ const QuickRegister = () => {
             full_name: formData.fullName,
             mobile: formData.mobile,
             role: "candidate",
-            segment: formData.domain,
-            category: formData.category,
+            segment: "Education",
+            category: "Education",
             preferred_role: formData.designation,
-            preferred_state: formData.preferredLocations.join(", "),
-            experience_level: formData.experienceLevel || formData.segment,
-            primary_subject: formData.department,
+            preferred_state: formData.state,
+            preferred_district: formData.district,
+            location: `${formData.city}, ${formData.district}, ${formData.state}`,
+            experience_level: formData.experienceLevel,
             current_salary: formData.currentSalary ? parseFloat(formData.currentSalary) : null,
             expected_salary: formData.expectedSalary ? parseFloat(formData.expectedSalary) : null,
             available_from: formData.dateOfJoining || null
@@ -301,6 +292,8 @@ const QuickRegister = () => {
       setIsSubmitting(false);
     }
   };
+
+  const locationSuggestions = getLocationSuggestions();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-subtle to-background">
@@ -342,7 +335,7 @@ const QuickRegister = () => {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl">Registration Form</CardTitle>
             <CardDescription>
-              Complete your profile to find the best job opportunities
+              Complete your profile to find the best education job opportunities
             </CardDescription>
           </CardHeader>
           
@@ -456,140 +449,100 @@ const QuickRegister = () => {
                 </div>
               </div>
 
-              {/* Preferred Locations */}
+              {/* Preferred Location - AI Search */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Preferred Locations *
+                  Preferred Location *
                 </h3>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {preferredLocations.map((location) => (
-                    <div key={location} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={location}
-                        checked={formData.preferredLocations.includes(location)}
-                        onCheckedChange={(checked) => handleLocationChange(location, checked as boolean)}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={locationSearch}
+                        onChange={(e) => {
+                          setLocationSearch(e.target.value);
+                          setShowLocationSuggestions(true);
+                        }}
+                        onFocus={() => setShowLocationSuggestions(true)}
+                        placeholder="Search area (e.g., Hyderabad, Gachibowli, Bengaluru...)"
+                        className="pl-10"
                       />
-                      <Label htmlFor={location} className="text-sm cursor-pointer">
-                        {location.split(" ")[0]}
-                      </Label>
                     </div>
-                  ))}
+                    
+                    {showLocationSuggestions && locationSuggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {locationSuggestions.map((suggestion, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b last:border-b-0 flex items-center gap-3"
+                            onClick={() => handleLocationSelect(suggestion)}
+                          >
+                            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-sm">{suggestion.city}</p>
+                              <p className="text-xs text-muted-foreground">{suggestion.district}, {suggestion.state}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {formData.state && (
+                    <div className="flex flex-wrap gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      <span className="text-sm font-medium text-primary">Selected:</span>
+                      <span className="text-sm">{formData.city}, {formData.district}, {formData.state}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Interested In (Domain) */}
+              {/* Interested In (Education Only) */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  Interested In *
+                  <GraduationCap className="h-4 w-4" />
+                  Interested In
                 </h3>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {Object.entries(domainConfig).map(([key, config]) => {
-                    const Icon = config.icon;
-                    const isSelected = formData.domain === key;
-                    return (
-                      <Button
-                        key={key}
-                        type="button"
-                        variant={isSelected ? "default" : "outline"}
-                        className={`h-auto py-3 flex flex-col items-center gap-1 ${isSelected ? "" : "hover:bg-accent/10"}`}
-                        onClick={() => handleDomainChange(key)}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span className="text-xs">{config.label}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Domain-specific fields */}
-              {domainOptions && (
-                <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
-                  <h3 className="font-semibold text-foreground">
-                    {domainOptions.label} Details
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Category *</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {domainOptions.categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <div className="p-4 bg-muted/30 rounded-lg border">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <GraduationCap className="h-5 w-5 text-primary" />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Segment *</Label>
-                      <Select
-                        value={formData.segment}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, segment: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select segment" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {domainOptions.segments.map((seg) => (
-                            <SelectItem key={seg} value={seg}>{seg}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Department *</Label>
-                      <Select
-                        value={formData.department}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, department: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {domainOptions.departments.map((dept) => (
-                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Designation *</Label>
-                      <Select
-                        value={formData.designation}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, designation: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select designation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {domainOptions.designations.map((des) => (
-                            <SelectItem key={des} value={des}>{des}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div>
+                      <p className="font-medium">Education Domain</p>
+                      <p className="text-sm text-muted-foreground">Select your preferred designation</p>
                     </div>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Designation *</Label>
+                    <Select
+                      value={formData.designation}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, designation: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select designation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {educationDesignations.map((des) => (
+                          <SelectItem key={des} value={des}>{des}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
+              </div>
 
               {/* Salary & Joining */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Salary & Availability
+                  <IndianRupee className="h-4 w-4" />
+                  Salary & Date of Joining
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -616,7 +569,10 @@ const QuickRegister = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="dateOfJoining">Available from</Label>
+                    <Label htmlFor="dateOfJoining">
+                      <Calendar className="inline h-3.5 w-3.5 mr-1" />
+                      Date of Joining
+                    </Label>
                     <Input
                       id="dateOfJoining"
                       type="date"
@@ -665,7 +621,7 @@ const QuickRegister = () => {
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isSubmitting || !formData.domain}
+                  disabled={isSubmitting || !formData.designation || !formData.state}
                 >
                   {isSubmitting ? "Registering..." : "Complete Registration"}
                 </Button>
