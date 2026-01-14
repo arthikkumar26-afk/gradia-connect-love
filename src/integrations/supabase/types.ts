@@ -232,6 +232,45 @@ export type Database = {
         }
         Relationships: []
       }
+      family_details: {
+        Row: {
+          age: number | null
+          blood_relation: string
+          created_at: string
+          date_of_birth: string | null
+          display_order: number | null
+          id: string
+          is_dependent: boolean | null
+          name_as_per_aadhar: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          blood_relation: string
+          created_at?: string
+          date_of_birth?: string | null
+          display_order?: number | null
+          id?: string
+          is_dependent?: boolean | null
+          name_as_per_aadhar?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          blood_relation?: string
+          created_at?: string
+          date_of_birth?: string | null
+          display_order?: number | null
+          id?: string
+          is_dependent?: boolean | null
+          name_as_per_aadhar?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       interview_candidates: {
         Row: {
           ai_analysis: Json | null

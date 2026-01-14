@@ -45,7 +45,17 @@ import { ApplicationsTab } from "@/components/candidate/ApplicationsTab";
 import { InterviewPipelineTab } from "@/components/candidate/InterviewPipelineTab";
 import { EducationModal, EducationRecord } from "@/components/candidate/EducationModal";
 import ExperienceModal from "@/components/candidate/ExperienceModal";
-import { Briefcase as BriefcaseIcon } from "lucide-react";
+import FamilyModal from "@/components/candidate/FamilyModal";
+import { Briefcase as BriefcaseIcon, Users } from "lucide-react";
+
+interface FamilyRecord {
+  id?: string;
+  blood_relation: string;
+  name_as_per_aadhar: string;
+  date_of_birth: string;
+  is_dependent: boolean;
+  age: number | null;
+}
 
 interface ExperienceRecord {
   id?: string;
@@ -110,6 +120,12 @@ const CandidateDashboard = () => {
   const [isExperienceModalOpen, setIsExperienceModalOpen] = useState(false);
   const [editingExperience, setEditingExperience] = useState<ExperienceRecord | null>(null);
   const [isExperienceLoading, setIsExperienceLoading] = useState(false);
+
+  // Family state
+  const [familyRecords, setFamilyRecords] = useState<FamilyRecord[]>([]);
+  const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
+  const [editingFamily, setEditingFamily] = useState<FamilyRecord | null>(null);
+  const [isFamilyLoading, setIsFamilyLoading] = useState(false);
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -408,6 +424,115 @@ const CandidateDashboard = () => {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to delete experience",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  // Fetch family details
+  useEffect(() => {
+    const fetchFamily = async () => {
+      if (!profile?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('family_details')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('display_order', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching family:', error);
+          return;
+        }
+        
+        setFamilyRecords(data || []);
+      } catch (e) {
+        console.error('Error fetching family:', e);
+      }
+    };
+    
+    fetchFamily();
+  }, [profile?.id]);
+
+  // Handle save family
+  const handleSaveFamily = async (data: FamilyRecord) => {
+    if (!profile?.id) return;
+    
+    setIsFamilyLoading(true);
+    try {
+      if (data.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('family_details')
+          .update({
+            blood_relation: data.blood_relation,
+            name_as_per_aadhar: data.name_as_per_aadhar,
+            date_of_birth: data.date_of_birth || null,
+            is_dependent: data.is_dependent,
+            age: data.age,
+          })
+          .eq('id', data.id);
+        
+        if (error) throw error;
+        
+        setFamilyRecords(prev => 
+          prev.map(rec => rec.id === data.id ? { ...rec, ...data } : rec)
+        );
+        toast({ title: "Success", description: "Family member updated successfully" });
+      } else {
+        // Insert new
+        const { data: newRecord, error } = await supabase
+          .from('family_details')
+          .insert({
+            user_id: profile.id,
+            blood_relation: data.blood_relation,
+            name_as_per_aadhar: data.name_as_per_aadhar,
+            date_of_birth: data.date_of_birth || null,
+            is_dependent: data.is_dependent,
+            age: data.age,
+            display_order: familyRecords.length,
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        setFamilyRecords(prev => [...prev, newRecord]);
+        toast({ title: "Success", description: "Family member added successfully" });
+      }
+      
+      setIsFamilyModalOpen(false);
+      setEditingFamily(null);
+    } catch (error: any) {
+      console.error('Error saving family:', error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to save family member",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsFamilyLoading(false);
+    }
+  };
+
+  // Handle delete family
+  const handleDeleteFamily = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('family_details')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setFamilyRecords(prev => prev.filter(rec => rec.id !== id));
+      toast({ title: "Success", description: "Family member deleted successfully" });
+    } catch (error: any) {
+      console.error('Error deleting family:', error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to delete family member",
         variant: "destructive" 
       });
     }
@@ -1408,6 +1533,115 @@ const CandidateDashboard = () => {
                   </CardContent>
                 </Card>
 
+                {/* Family Details Table */}
+                <Card className="overflow-hidden border-border shadow-soft">
+                  <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 border-b border-purple-200 dark:border-purple-800">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                          <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg text-foreground">Family Details</CardTitle>
+                          <p className="text-sm text-muted-foreground">Your family members information</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setEditingFamily(null);
+                          setIsFamilyModalOpen(true);
+                        }}
+                        className="gap-1"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4 overflow-x-auto">
+                    <div className="border border-border rounded-lg overflow-hidden min-w-[600px]">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">BLOOD RELATION</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">NAME AS PER AADHAR</th>
+                            <th className="px-4 py-3 text-left font-semibold text-foreground border-b border-border">DOB</th>
+                            <th className="px-4 py-3 text-center font-semibold text-foreground border-b border-border">IS DEPENDENT</th>
+                            <th className="px-4 py-3 text-center font-semibold text-foreground border-b border-border">AGE</th>
+                            <th className="px-4 py-3 text-center font-semibold text-foreground border-b border-border">ACTIONS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {familyRecords.length > 0 ? (
+                            familyRecords.map((record) => (
+                              <tr key={record.id} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-3 text-foreground font-medium">
+                                  {record.blood_relation}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {record.name_as_per_aadhar || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3 text-foreground">
+                                  {record.date_of_birth || <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <Badge variant={record.is_dependent ? "default" : "outline"} className={record.is_dependent ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : ""}>
+                                    {record.is_dependent ? "Yes" : "No"}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3 text-center text-foreground">
+                                  {record.age !== null ? record.age : <span className="text-muted-foreground italic">-</span>}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => {
+                                        setEditingFamily(record);
+                                        setIsFamilyModalOpen(true);
+                                      }}
+                                    >
+                                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:text-destructive"
+                                      onClick={() => record.id && handleDeleteFamily(record.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                                <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                                <p>No family members added yet.</p>
+                                <Button
+                                  variant="link"
+                                  onClick={() => {
+                                    setEditingFamily(null);
+                                    setIsFamilyModalOpen(true);
+                                  }}
+                                  className="mt-1"
+                                >
+                                  Add your first family member
+                                </Button>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                   {dashboardCards.map((card, index) => {
                     const Icon = card.icon;
@@ -1699,6 +1933,17 @@ const CandidateDashboard = () => {
         }}
         onSave={handleSaveExperience}
         editingRecord={editingExperience}
+      />
+
+      {/* Family Modal */}
+      <FamilyModal
+        isOpen={isFamilyModalOpen}
+        onClose={() => {
+          setIsFamilyModalOpen(false);
+          setEditingFamily(null);
+        }}
+        onSave={handleSaveFamily}
+        editingRecord={editingFamily}
       />
     </div>
   );
