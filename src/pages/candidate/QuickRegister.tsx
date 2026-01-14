@@ -79,8 +79,9 @@ const QuickRegister = () => {
     state2: "",
     district2: "",
     city2: "",
-    // Category
+    // Category & Segment
     category: "",
+    segment: "",
     currentSalary: "",
     expectedSalary: "",
     dateOfJoining: "",
@@ -241,7 +242,7 @@ const QuickRegister = () => {
     try {
       // Store registration data (can be extended to save to database when user creates account later)
       const registrationData = {
-        segment: "Education",
+        segment: formData.segment,
         category: formData.category,
         preferred_state: formData.state,
         preferred_district: formData.district,
@@ -513,6 +514,28 @@ const QuickRegister = () => {
                     >
                       <GraduationCap className="h-5 w-5" />
                       <span className="text-sm">{cat}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Segment */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  Segment *
+                </h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {["Pre-Primary", "Primary", "HSC", "Competitive"].map((seg) => (
+                    <Button
+                      key={seg}
+                      type="button"
+                      variant={formData.segment === seg ? "default" : "outline"}
+                      className={`h-auto py-3 ${formData.segment === seg ? "" : "hover:bg-accent/10"}`}
+                      onClick={() => setFormData(prev => ({ ...prev, segment: seg }))}
+                    >
+                      <span className="text-sm">{seg}</span>
                     </Button>
                   ))}
                 </div>
