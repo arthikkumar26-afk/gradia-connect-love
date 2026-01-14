@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.send-registration-email]
 verify_jwt = false
+
+[functions.save-resume-analysis]
+verify_jwt = false
