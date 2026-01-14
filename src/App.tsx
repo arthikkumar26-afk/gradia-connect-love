@@ -133,6 +133,7 @@ const MainRoutes = () => (
       <Route path="/profile/success" element={<ProfileSuccess />} />
       <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
       <Route path="/profile/edit" element={<EditProfile />} />
+      <Route path="/edit-profile" element={<EditProfile />} />
       <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
       <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
       <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
