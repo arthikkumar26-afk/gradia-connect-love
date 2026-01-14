@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, GraduationCap, Users, Upload, Loader2, CheckCircle2, Sparkles, IndianRupee, Search } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, GraduationCap, Users, Upload, Loader2, CheckCircle2, Sparkles, IndianRupee, Search, Briefcase } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,10 +79,11 @@ const QuickRegister = () => {
     state2: "",
     district2: "",
     city2: "",
-    // Category, Segment & Department
+    // Category, Segment, Department & Designation
     category: "",
     segment: "",
     department: "",
+    designation: "",
     currentSalary: "",
     expectedSalary: "",
     dateOfJoining: "",
@@ -563,6 +564,28 @@ const QuickRegister = () => {
                     <SelectItem value="Maths">Maths</SelectItem>
                     <SelectItem value="Science">Science</SelectItem>
                     <SelectItem value="Social Studies">Social Studies</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Designation */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Designation *
+                </h3>
+                
+                <Select
+                  value={formData.designation}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, designation: value }))}
+                >
+                  <SelectTrigger className="w-full bg-background">
+                    <SelectValue placeholder="Select Designation" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="Teacher">Teacher</SelectItem>
+                    <SelectItem value="Vice Principal">Vice Principal</SelectItem>
+                    <SelectItem value="Principal">Principal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
