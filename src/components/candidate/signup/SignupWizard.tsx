@@ -81,6 +81,14 @@ export const SignupWizard = () => {
   const [formData, setFormData] = useState<CandidateFormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
+  const [resumeAnalysis, setResumeAnalysis] = useState<{
+    overall_score?: number;
+    strengths?: string[];
+    improvements?: string[];
+    experience_summary?: string;
+    skill_highlights?: string[];
+    career_level?: string;
+  } | null>(null);
 
   // Pre-fill form from URL params (from registration email)
   useEffect(() => {
@@ -160,6 +168,18 @@ export const SignupWizard = () => {
         });
         setIsParsingResume(false);
         return;
+      }
+
+      // Store AI analysis data for saving after signup
+      if (data.overall_score !== undefined) {
+        setResumeAnalysis({
+          overall_score: data.overall_score,
+          strengths: data.strengths || [],
+          improvements: data.improvements || [],
+          experience_summary: data.experience_summary || "",
+          skill_highlights: data.skill_highlights || [],
+          career_level: data.career_level || "Mid-Level",
+        });
       }
 
       // Auto-fill form fields from AI parsing
@@ -333,6 +353,30 @@ export const SignupWizard = () => {
       if (profileError) {
         toast({ title: "Error", description: profileError.message, variant: "destructive" });
         return;
+      }
+
+      // Save resume analysis if available
+      if (resumeAnalysis && resumeAnalysis.overall_score !== undefined) {
+        try {
+          const { error: analysisError } = await supabase.from("resume_analyses").upsert({
+            user_id: userId,
+            overall_score: resumeAnalysis.overall_score,
+            strengths: resumeAnalysis.strengths || [],
+            improvements: resumeAnalysis.improvements || [],
+            experience_summary: resumeAnalysis.experience_summary || "",
+            skill_highlights: resumeAnalysis.skill_highlights || [],
+            career_level: resumeAnalysis.career_level || "Mid-Level",
+            analyzed_at: new Date().toISOString(),
+          }, { onConflict: "user_id" });
+
+          if (analysisError) {
+            console.error("Error saving resume analysis:", analysisError);
+          } else {
+            console.log("Resume analysis saved successfully");
+          }
+        } catch (analysisErr) {
+          console.error("Failed to save resume analysis:", analysisErr);
+        }
       }
 
       // Send welcome email
