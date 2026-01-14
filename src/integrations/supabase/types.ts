@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      address_details: {
+        Row: {
+          created_at: string
+          id: string
+          permanent_district: string | null
+          permanent_door_flat_no: string | null
+          permanent_mandal: string | null
+          permanent_pin_code: string | null
+          permanent_state: string | null
+          permanent_street: string | null
+          permanent_village_area: string | null
+          present_district: string | null
+          present_door_flat_no: string | null
+          present_mandal: string | null
+          present_pin_code: string | null
+          present_state: string | null
+          present_street: string | null
+          present_village_area: string | null
+          same_as_present: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permanent_district?: string | null
+          permanent_door_flat_no?: string | null
+          permanent_mandal?: string | null
+          permanent_pin_code?: string | null
+          permanent_state?: string | null
+          permanent_street?: string | null
+          permanent_village_area?: string | null
+          present_district?: string | null
+          present_door_flat_no?: string | null
+          present_mandal?: string | null
+          present_pin_code?: string | null
+          present_state?: string | null
+          present_street?: string | null
+          present_village_area?: string | null
+          same_as_present?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permanent_district?: string | null
+          permanent_door_flat_no?: string | null
+          permanent_mandal?: string | null
+          permanent_pin_code?: string | null
+          permanent_state?: string | null
+          permanent_street?: string | null
+          permanent_village_area?: string | null
+          present_district?: string | null
+          present_door_flat_no?: string | null
+          present_mandal?: string | null
+          present_pin_code?: string | null
+          present_state?: string | null
+          present_street?: string | null
+          present_village_area?: string | null
+          same_as_present?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       agreements: {
         Row: {
           admin_email: string
