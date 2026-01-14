@@ -553,15 +553,19 @@ export type Database = {
       profiles: {
         Row: {
           alternate_number: string | null
+          available_from: string | null
           batch: string | null
+          category: string | null
           classes_handled: string | null
           company_description: string | null
           company_name: string | null
           created_at: string | null
           current_district: string | null
+          current_salary: number | null
           current_state: string | null
           date_of_birth: string | null
           email: string
+          expected_salary: number | null
           experience_level: string | null
           full_name: string
           gender: string | null
@@ -588,15 +592,19 @@ export type Database = {
         }
         Insert: {
           alternate_number?: string | null
+          available_from?: string | null
           batch?: string | null
+          category?: string | null
           classes_handled?: string | null
           company_description?: string | null
           company_name?: string | null
           created_at?: string | null
           current_district?: string | null
+          current_salary?: number | null
           current_state?: string | null
           date_of_birth?: string | null
           email: string
+          expected_salary?: number | null
           experience_level?: string | null
           full_name: string
           gender?: string | null
@@ -623,15 +631,19 @@ export type Database = {
         }
         Update: {
           alternate_number?: string | null
+          available_from?: string | null
           batch?: string | null
+          category?: string | null
           classes_handled?: string | null
           company_description?: string | null
           company_name?: string | null
           created_at?: string | null
           current_district?: string | null
+          current_salary?: number | null
           current_state?: string | null
           date_of_birth?: string | null
           email?: string
+          expected_salary?: number | null
           experience_level?: string | null
           full_name?: string
           gender?: string | null
