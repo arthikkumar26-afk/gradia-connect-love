@@ -2027,38 +2027,6 @@ const CandidateDashboard = () => {
                   </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  {dashboardCards.map((card, index) => {
-                    const Icon = card.icon;
-                    
-                    return (
-                      <Card 
-                        key={index}
-                        className="overflow-hidden hover:shadow-lg transition-all duration-300 animate-fade-in border-border"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <CardHeader className={`bg-gradient-to-br ${card.gradient} pb-2`}>
-                          <div className="flex items-start justify-between">
-                            <CardTitle className="text-sm font-semibold text-foreground">
-                              {card.title}
-                            </CardTitle>
-                            <div className="p-1.5 bg-background/50 rounded-lg">
-                              <Icon className="h-4 w-4 text-accent" />
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-3 pb-3">
-                          <div className="text-3xl font-bold text-foreground mb-0.5">
-                            {card.value}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {card.subtitle}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
 
 
                 {/* Recent Jobs Preview */}
