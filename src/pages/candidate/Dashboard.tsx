@@ -1144,28 +1144,6 @@ const CandidateDashboard = () => {
           sidebarOpen ? "w-64" : "w-0"
         } bg-card border-r border-border transition-all duration-300 overflow-hidden flex flex-col fixed top-[64px] left-0 h-[calc(100vh-64px)] z-40`}
       >
-        {/* User Info */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            {profile?.profile_picture ? (
-              <img 
-                src={profile.profile_picture} 
-                alt={profile.full_name || 'Profile'} 
-                className="h-10 w-10 rounded-full object-cover border-2 border-primary/20"
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {profile?.full_name}
-              </p>
-              <p className="text-xs text-muted-foreground">Candidate</p>
-            </div>
-          </div>
-        </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
