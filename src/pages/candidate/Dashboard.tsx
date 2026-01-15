@@ -1222,6 +1222,24 @@ const CandidateDashboard = () => {
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
+            {/* Profile Badge */}
+            <div className="flex items-center gap-3 mr-4">
+              {profile?.profile_picture ? (
+                <img 
+                  src={profile.profile_picture} 
+                  alt={profile.full_name || 'Profile'} 
+                  className="h-10 w-10 rounded-full object-cover border-2 border-border"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-foreground">{profile?.full_name || 'User'}</p>
+                <p className="text-xs text-muted-foreground">Candidate</p>
+              </div>
+            </div>
             <h1 className="text-2xl font-bold text-foreground">
               {getPageTitle()}
             </h1>
