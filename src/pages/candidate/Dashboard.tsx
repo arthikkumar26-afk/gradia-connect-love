@@ -2157,6 +2157,92 @@ const CandidateDashboard = () => {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Mock Test & Upskill Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                  {/* Attend Mock Test */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Target className="h-5 w-5 text-foreground" />
+                      <h3 className="text-lg font-semibold text-foreground">Attend Mock Test</h3>
+                    </div>
+                    <Card className="border-border h-full">
+                      <CardContent className="pt-8 pb-8 text-center">
+                        <h4 className="text-lg font-semibold text-foreground mb-2">Ready to Test Your Skills?</h4>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          Take a mock interview to practice and get feedback before the real interview.
+                        </p>
+                        <Button 
+                          variant="cta" 
+                          onClick={() => setActiveMenu("mocktest")}
+                          className="gap-2"
+                        >
+                          <Target className="h-4 w-4" />
+                          Start Mock Interview
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Upskill Yourself */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Lightbulb className="h-5 w-5 text-foreground" />
+                      <h3 className="text-lg font-semibold text-foreground">Upskill Yourself</h3>
+                    </div>
+                    <Card className="border-border h-full">
+                      <CardContent className="pt-6 pb-6 text-center">
+                        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <GraduationCap className="h-8 w-8 text-amber-500" />
+                        </div>
+                        <h4 className="text-lg font-semibold text-foreground mb-2">Improve Your Weak Points</h4>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Recommended platforms to enhance your skills
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-2 mb-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-1"
+                            onClick={() => window.open('https://www.coursera.org', '_blank')}
+                          >
+                            Coursera <ExternalLink className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-1"
+                            onClick={() => window.open('https://www.udemy.com', '_blank')}
+                          >
+                            Udemy <ExternalLink className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-1"
+                            onClick={() => window.open('https://www.linkedin.com/learning', '_blank')}
+                          >
+                            LinkedIn Learning <ExternalLink className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-1"
+                            onClick={() => window.open('https://www.edx.org', '_blank')}
+                          >
+                            edX <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setActiveMenu("upskill")}
+                        >
+                          Explore Courses
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </>
             )}
 
