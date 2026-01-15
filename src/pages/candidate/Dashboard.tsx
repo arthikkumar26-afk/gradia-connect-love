@@ -2060,47 +2060,6 @@ const CandidateDashboard = () => {
                   })}
                 </div>
 
-                {/* Quick Actions Section */}
-                <div className="bg-card rounded-xl border border-border p-6 shadow-soft">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Button 
-                      variant="outline" 
-                      className="justify-start h-auto py-4" 
-                      onClick={() => setActiveMenu("jobs")}
-                    >
-                      <Briefcase className="h-5 w-5 mr-3" />
-                      <div className="text-left">
-                        <div className="font-medium">Suitable Jobs</div>
-                        <div className="text-xs text-muted-foreground">Jobs matching your profile</div>
-                      </div>
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="justify-start h-auto py-4"
-                      onClick={() => setActiveMenu("applications")}
-                    >
-                      <ClipboardList className="h-5 w-5 mr-3" />
-                      <div className="text-left">
-                        <div className="font-medium">View Applications</div>
-                        <div className="text-xs text-muted-foreground">Track your progress</div>
-                      </div>
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="justify-start h-auto py-4"
-                      onClick={() => setActiveMenu("pipeline")}
-                    >
-                      <TrendingUp className="h-5 w-5 mr-3" />
-                      <div className="text-left">
-                        <div className="font-medium">Interview Pipeline</div>
-                        <div className="text-xs text-muted-foreground">See interview stages</div>
-                      </div>
-                    </Button>
-                  </div>
-                </div>
 
                 {/* Recent Jobs Preview */}
                 <div className="mt-6">
