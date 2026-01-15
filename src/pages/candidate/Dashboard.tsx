@@ -2159,25 +2159,26 @@ const CandidateDashboard = () => {
                 </Card>
 
                 {/* Mock Test & Upskill Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                   {/* Attend Mock Test */}
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <Target className="h-5 w-5 text-foreground" />
-                      <h3 className="text-lg font-semibold text-foreground">Attend Mock Test</h3>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Target className="h-4 w-4 text-foreground" />
+                      <h3 className="text-sm font-semibold text-foreground">Attend Mock Test</h3>
                     </div>
-                    <Card className="border-border h-full">
-                      <CardContent className="pt-8 pb-8 text-center">
-                        <h4 className="text-lg font-semibold text-foreground mb-2">Ready to Test Your Skills?</h4>
-                        <p className="text-sm text-muted-foreground mb-6">
-                          Take a mock interview to practice and get feedback before the real interview.
+                    <Card className="border-border">
+                      <CardContent className="py-4 text-center">
+                        <h4 className="text-sm font-semibold text-foreground mb-1">Ready to Test Your Skills?</h4>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Take a mock interview to practice and get feedback.
                         </p>
                         <Button 
                           variant="cta" 
+                          size="sm"
                           onClick={() => setActiveMenu("mocktest")}
-                          className="gap-2"
+                          className="gap-1.5"
                         >
-                          <Target className="h-4 w-4" />
+                          <Target className="h-3 w-3" />
                           Start Mock Interview
                         </Button>
                       </CardContent>
@@ -2186,55 +2187,56 @@ const CandidateDashboard = () => {
 
                   {/* Upskill Yourself */}
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <Lightbulb className="h-5 w-5 text-foreground" />
-                      <h3 className="text-lg font-semibold text-foreground">Upskill Yourself</h3>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Lightbulb className="h-4 w-4 text-foreground" />
+                      <h3 className="text-sm font-semibold text-foreground">Upskill Yourself</h3>
                     </div>
-                    <Card className="border-border h-full">
-                      <CardContent className="pt-6 pb-6 text-center">
-                        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <GraduationCap className="h-8 w-8 text-amber-500" />
+                    <Card className="border-border">
+                      <CardContent className="py-4 text-center">
+                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <GraduationCap className="h-5 w-5 text-amber-500" />
                         </div>
-                        <h4 className="text-lg font-semibold text-foreground mb-2">Improve Your Weak Points</h4>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <h4 className="text-sm font-semibold text-foreground mb-1">Improve Your Weak Points</h4>
+                        <p className="text-xs text-muted-foreground mb-2">
                           Recommended platforms to enhance your skills
                         </p>
-                        <div className="flex flex-wrap justify-center gap-2 mb-4">
+                        <div className="flex flex-wrap justify-center gap-1.5 mb-3">
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="gap-1"
+                            className="gap-1 h-7 text-xs px-2"
                             onClick={() => window.open('https://www.coursera.org', '_blank')}
                           >
-                            Coursera <ExternalLink className="h-3 w-3" />
+                            Coursera <ExternalLink className="h-2.5 w-2.5" />
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="gap-1"
+                            className="gap-1 h-7 text-xs px-2"
                             onClick={() => window.open('https://www.udemy.com', '_blank')}
                           >
-                            Udemy <ExternalLink className="h-3 w-3" />
+                            Udemy <ExternalLink className="h-2.5 w-2.5" />
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="gap-1"
+                            className="gap-1 h-7 text-xs px-2"
                             onClick={() => window.open('https://www.linkedin.com/learning', '_blank')}
                           >
-                            LinkedIn Learning <ExternalLink className="h-3 w-3" />
+                            LinkedIn Learning <ExternalLink className="h-2.5 w-2.5" />
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="gap-1"
+                            className="gap-1 h-7 text-xs px-2"
                             onClick={() => window.open('https://www.edx.org', '_blank')}
                           >
-                            edX <ExternalLink className="h-3 w-3" />
+                            edX <ExternalLink className="h-2.5 w-2.5" />
                           </Button>
                         </div>
                         <Button 
                           variant="outline"
+                          size="sm"
                           onClick={() => setActiveMenu("upskill")}
                         >
                           Explore Courses
