@@ -1245,37 +1245,6 @@ const CandidateDashboard = () => {
             {activeMenu === "dashboard" && (
               <>
                 {/* Registration Number Banner */}
-                {profile?.registration_number && (
-                  <Card className="mb-6 overflow-hidden border-accent/30 bg-gradient-to-r from-accent/10 via-primary/5 to-accent/10">
-                    <CardContent className="py-4">
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-accent/20 rounded-lg">
-                            <Award className="h-6 w-6 text-accent" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Your Registration Number</p>
-                            <p className="text-2xl font-bold text-accent tracking-wider">{profile.registration_number}</p>
-                          </div>
-                        </div>
-                        <div className="text-center sm:text-right">
-                          <p className="text-xs text-muted-foreground">Share this with employers</p>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => {
-                              navigator.clipboard.writeText(profile.registration_number || '');
-                              toast({ title: "Copied!", description: "Registration number copied to clipboard" });
-                            }}
-                            className="mt-1"
-                          >
-                            Copy Number
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
 
                 {/* AI Resume Analysis Section */}
                 <Card className="mb-6 overflow-hidden border-border">
@@ -1355,7 +1324,20 @@ const CandidateDashboard = () => {
                               {/* Row 0: Registration Number */}
                               <tr className="border-b border-border bg-accent/5">
                                 <td className="px-3 py-2 bg-accent/10 font-medium text-accent w-1/4">REG. NUMBER</td>
-                                <td className="px-3 py-2 text-accent font-bold tracking-wider" colSpan={4}>{profile?.registration_number || '-'}</td>
+                                <td className="px-3 py-2 text-accent font-bold tracking-wider" colSpan={3}>{profile?.registration_number || '-'}</td>
+                                <td className="px-3 py-2 text-right">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="h-7 text-xs"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(profile?.registration_number || '');
+                                      toast({ title: "Copied!", description: "Registration number copied to clipboard" });
+                                    }}
+                                  >
+                                    Copy
+                                  </Button>
+                                </td>
                               </tr>
                               {/* Row 1: Name and Date */}
                               <tr className="border-b border-border">
