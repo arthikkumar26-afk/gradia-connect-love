@@ -2029,39 +2029,156 @@ const CandidateDashboard = () => {
 
 
 
-                {/* Recent Jobs Preview */}
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-foreground">Recent Job Openings</h3>
-                    <Button variant="link" onClick={() => setActiveMenu("jobs")}>
-                      View All
-                    </Button>
-                  </div>
-                  <div className="grid gap-4">
-                    {jobs.slice(0, 3).map((job) => (
-                      <Card key={job.id} className="p-4 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium text-foreground">{job.job_title}</h4>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                              <span className="flex items-center gap-1">
-                                <Briefcase className="h-3 w-3" />
-                                {job.department}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {job.location}
-                              </span>
-                            </div>
-                          </div>
-                          <Button variant="cta" size="sm" onClick={() => handleApply(job)}>
-                            Apply
-                          </Button>
+                {/* Personalized Job Recommendations */}
+                <Card className="mt-6 overflow-hidden border-border">
+                  <CardHeader className="bg-gradient-to-r from-accent/10 via-primary/5 to-accent/10 pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-accent/20 rounded-lg">
+                          <Sparkles className="h-5 w-5 text-accent" />
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+                        <div>
+                          <CardTitle className="text-lg font-semibold text-foreground">
+                            Personalized Job Recommendations
+                          </CardTitle>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Jobs matching your skills and preferences
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setActiveMenu("jobs")}>
+                        View All Jobs
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    {jobs.length > 0 ? (
+                      <div className="grid gap-4">
+                        {jobs.slice(0, 4).map((job) => {
+                          // Calculate match reasons
+                          const matchReasons: string[] = [];
+                          
+                          if (profile?.preferred_role && job.job_title) {
+                            const preferredRoleLower = profile.preferred_role.toLowerCase();
+                            const jobTitleLower = job.job_title.toLowerCase();
+                            const jobDeptLower = job.department?.toLowerCase() || '';
+                            if (jobTitleLower.includes(preferredRoleLower) || preferredRoleLower.includes(jobTitleLower) || jobDeptLower.includes(preferredRoleLower)) {
+                              matchReasons.push(`Matches your preferred role: ${profile.preferred_role}`);
+                            }
+                          }
+                          
+                          if (job.location && profile) {
+                            const jobLocationLower = job.location.toLowerCase();
+                            if (profile.preferred_district && jobLocationLower.includes(profile.preferred_district.toLowerCase())) {
+                              matchReasons.push(`Located in your preferred district: ${profile.preferred_district}`);
+                            } else if (profile.preferred_state && jobLocationLower.includes(profile.preferred_state.toLowerCase())) {
+                              matchReasons.push(`Located in your preferred state: ${profile.preferred_state}`);
+                            } else if (profile.current_district && jobLocationLower.includes(profile.current_district.toLowerCase())) {
+                              matchReasons.push(`Near your current location`);
+                            }
+                          }
+                          
+                          if (profile?.primary_subject && job.job_title) {
+                            const subjectLower = profile.primary_subject.toLowerCase();
+                            const jobTitleLower = job.job_title.toLowerCase();
+                            const descLower = job.description?.toLowerCase() || '';
+                            if (jobTitleLower.includes(subjectLower) || descLower.includes(subjectLower)) {
+                              matchReasons.push(`Related to your subject: ${profile.primary_subject}`);
+                            }
+                          }
+                          
+                          // Calculate match percentage based on reasons
+                          const matchScore = Math.min(95, 60 + (matchReasons.length * 12));
+                          
+                          return (
+                            <Card 
+                              key={job.id} 
+                              className="p-4 hover:shadow-lg transition-all duration-300 border-border hover:border-accent/30 bg-gradient-to-r from-background to-muted/20"
+                            >
+                              <div className="flex flex-col sm:flex-row justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-start gap-3">
+                                    <div className="p-2 bg-accent/10 rounded-lg shrink-0">
+                                      <Briefcase className="h-5 w-5 text-accent" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <h4 className="font-semibold text-foreground">{job.job_title}</h4>
+                                        <Badge variant="secondary" className="bg-accent/10 text-accent text-xs">
+                                          {matchScore}% Match
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1 flex-wrap">
+                                        {job.department && (
+                                          <span className="flex items-center gap-1">
+                                            <BriefcaseIcon className="h-3 w-3" />
+                                            {job.department}
+                                          </span>
+                                        )}
+                                        {job.location && (
+                                          <span className="flex items-center gap-1">
+                                            <MapPin className="h-3 w-3" />
+                                            {job.location}
+                                          </span>
+                                        )}
+                                        {job.salary_range && (
+                                          <span className="text-accent font-medium">
+                                            {job.salary_range}
+                                          </span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Match Reasons */}
+                                      {matchReasons.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                          {matchReasons.slice(0, 2).map((reason, idx) => (
+                                            <span 
+                                              key={idx}
+                                              className="inline-flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-0.5 rounded-full"
+                                            >
+                                              <CheckCircle className="h-3 w-3" />
+                                              {reason}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center sm:items-start gap-2 sm:flex-col">
+                                  <Button 
+                                    variant="cta" 
+                                    size="sm" 
+                                    onClick={() => handleApply(job)}
+                                    className="w-full sm:w-auto"
+                                  >
+                                    Apply Now
+                                  </Button>
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                    Posted {new Date(job.posted_date).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-3">
+                          <Briefcase className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <h4 className="font-medium text-foreground mb-1">No matching jobs found</h4>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Update your profile preferences to see personalized job recommendations
+                        </p>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/candidate/edit-profile')}>
+                          Update Preferences
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </>
             )}
 
