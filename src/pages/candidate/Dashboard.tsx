@@ -1348,7 +1348,7 @@ const CandidateDashboard = () => {
 
                       {/* Detected Profile Details - Table Format */}
                       <div className="flex-1">
-                        <h4 className="text-sm font-semibold text-foreground mb-3">AI Detected Details</h4>
+                        
                         <div className="border border-border rounded-lg overflow-hidden">
                           <table className="w-full text-sm">
                             <tbody>
