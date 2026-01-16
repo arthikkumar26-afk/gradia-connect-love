@@ -1087,17 +1087,12 @@ export const MockInterviewTab = () => {
                         {isExpanded ? 'Hide Booking' : 'Book Slot'}
                       </Button>
                     )}
-                    {/* For Technical Assessment (stage 3) in progress, show Start Assessment button */}
+                    {/* For Technical Assessment (stage 3) in progress, show email sent indicator */}
                     {status === 'current' && stage.order === 3 && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => goToStage(3)}
-                        className="gap-1"
-                      >
-                        <Play className="h-4 w-4" />
-                        Start Assessment
-                      </Button>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        <Mail className="h-3 w-3 mr-1" />
+                        Check Email to Start
+                      </Badge>
                     )}
                     {/* For Demo Slot Booking (stage 4) in progress, show Book Slot button */}
                     {status === 'current' && stage.order === 4 && (
