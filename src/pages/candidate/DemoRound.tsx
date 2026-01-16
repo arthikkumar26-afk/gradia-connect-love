@@ -404,7 +404,7 @@ export default function DemoRound() {
       <div className="container max-w-4xl space-y-6">
         {/* Header */}
         <div className="text-center">
-          <Badge className="mb-4">Stage {stageOrder} of 5</Badge>
+          <Badge className="mb-4">Stage {stageOrder} of 3</Badge>
           <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
             <Monitor className="h-8 w-8 text-primary" />
             Demo Round
