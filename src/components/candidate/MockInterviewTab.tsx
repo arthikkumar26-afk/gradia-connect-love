@@ -109,24 +109,23 @@ export const MockInterviewTab = () => {
         .maybeSingle();
       setProfile(profileData);
 
-      // Get current in-progress session
-      const { data: sessionData } = await supabase
+      // Get the most recent session (any status) for display
+      const { data: recentSession } = await supabase
         .from('mock_interview_sessions')
         .select('*')
         .eq('candidate_id', user?.id)
-        .eq('status', 'in_progress')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (sessionData) {
-        setCurrentSession(sessionData);
+      if (recentSession) {
+        setCurrentSession(recentSession);
         
-        // Get stage results for current session
+        // Get stage results for this session
         const { data: resultsData } = await supabase
           .from('mock_interview_stage_results')
           .select('*')
-          .eq('session_id', sessionData.id)
+          .eq('session_id', recentSession.id)
           .order('stage_order', { ascending: true });
         
         if (resultsData) {
@@ -360,13 +359,24 @@ export const MockInterviewTab = () => {
         </Card>
       )}
 
-      {/* Stages Pipeline - Only show when there's an active session */}
-      {currentSession && currentSession.status === 'in_progress' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Interview Progress</CardTitle>
+      {/* Stages Pipeline - Show for any session (in_progress, completed, or failed) */}
+      {currentSession && (
+        <Card className={currentSession.status === 'failed' ? 'border-red-500/50' : currentSession.status === 'completed' ? 'border-green-500/50' : ''}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle>Interview Progress</CardTitle>
+              {currentSession.status !== 'in_progress' && (
+                <Badge variant={currentSession.status === 'completed' ? 'default' : 'destructive'}>
+                  {currentSession.status === 'completed' ? 'Completed' : 'Failed'}
+                </Badge>
+              )}
+            </div>
             <CardDescription>
-              Your current interview progress. Complete each stage to advance.
+              {currentSession.status === 'in_progress' 
+                ? 'Complete each stage to advance to the next round.'
+                : currentSession.status === 'completed'
+                  ? 'Congratulations! You completed all stages.'
+                  : 'This interview session has ended. Start a new one to try again.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
