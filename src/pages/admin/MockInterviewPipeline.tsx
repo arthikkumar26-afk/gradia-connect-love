@@ -697,6 +697,36 @@ export default function MockInterviewPipeline() {
               </div>
             </div>
 
+            {/* Extracted Questions Preview */}
+            {extractedQuestionsSets.some(set => set.length > 0) && (
+              <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
+                <Label className="flex items-center gap-2 text-base font-semibold">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  Extracted Questions Preview
+                </Label>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {extractedQuestionsSets.map((questions, setIndex) => (
+                    questions.length > 0 && (
+                      <div key={setIndex} className="space-y-2">
+                        <h4 className="font-medium text-sm text-muted-foreground">Set {setIndex + 1} ({questions.length} questions)</h4>
+                        <div className="grid gap-2">
+                          {questions.slice(0, 5).map((q: any, qIndex: number) => (
+                            <div key={qIndex} className="bg-background border rounded p-2 text-sm">
+                              <span className="font-medium text-primary">Q{q.question_number || qIndex + 1}:</span>{' '}
+                              <span className="text-foreground">{q.question_text?.substring(0, 150)}{q.question_text?.length > 150 ? '...' : ''}</span>
+                            </div>
+                          ))}
+                          {questions.length > 5 && (
+                            <p className="text-xs text-muted-foreground italic">+ {questions.length - 5} more questions...</p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Answer Key and Solutions Upload */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Answer Key Upload */}
