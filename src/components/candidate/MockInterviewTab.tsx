@@ -57,6 +57,13 @@ interface StageResult {
   completed_at?: string;
   strengths?: string[];
   improvements?: string[];
+  question_scores?: {
+    teachingClarity?: { score: number; feedback: string };
+    subjectKnowledge?: { score: number; feedback: string };
+    presentationSkills?: { score: number; feedback: string };
+    timeManagement?: { score: number; feedback: string };
+    overallPotential?: { score: number; feedback: string };
+  };
 }
 
 interface MockInterviewSession {
@@ -83,6 +90,7 @@ export const MockInterviewTab = () => {
   const [showSlotBooking, setShowSlotBooking] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
+  const [isAcknowledgingFeedback, setIsAcknowledgingFeedback] = useState(false);
 
   // Load data on mount and when user changes
   useEffect(() => {
@@ -490,6 +498,79 @@ export const MockInterviewTab = () => {
     }
   };
 
+  // Acknowledge feedback and proceed to next stage
+  const acknowledgeFeedbackAndProceed = async () => {
+    if (!currentSession || !profile) return;
+    
+    setIsAcknowledgingFeedback(true);
+    try {
+      // Get Demo Round result for email
+      const demoResult = stageResults.find(r => r.stage_order === 4);
+      
+      // Create stage result for Demo Feedback review
+      await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: currentSession.id,
+          stage_name: 'Demo Feedback',
+          stage_order: 5,
+          ai_score: 100,
+          ai_feedback: 'Candidate reviewed demo feedback and acknowledged areas for improvement.',
+          passed: true,
+          completed_at: new Date().toISOString()
+        });
+
+      // Update session to next stage
+      await supabase
+        .from('mock_interview_sessions')
+        .update({ current_stage_order: 6 })
+        .eq('id', currentSession.id);
+
+      // Send feedback summary email
+      await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId: currentSession.id,
+          stageOrder: 5,
+          stageName: 'Demo Feedback Summary',
+          stageDescription: 'Your Demo Round feedback summary',
+          appUrl: window.location.origin,
+          feedbackData: demoResult ? {
+            score: demoResult.ai_score,
+            passed: demoResult.passed,
+            feedback: demoResult.ai_feedback,
+            strengths: demoResult.strengths,
+            improvements: demoResult.improvements,
+            questionScores: demoResult.question_scores
+          } : null
+        }
+      });
+
+      // Send next stage email (HR Documents)
+      await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId: currentSession.id,
+          stageOrder: 6,
+          stageName: 'HR Documents',
+          stageDescription: 'Submit required documents for verification and final review.',
+          appUrl: window.location.origin
+        }
+      });
+
+      toast.success('Feedback acknowledged! Check email for HR Documents stage.');
+      setExpandedStage(null);
+      loadData();
+    } catch (error) {
+      console.error('Error acknowledging feedback:', error);
+      toast.error('Failed to proceed to next stage');
+    } finally {
+      setIsAcknowledgingFeedback(false);
+    }
+  };
+
   const getStageStatus = (stageOrder: number) => {
     if (!currentSession) return 'locked';
     const result = stageResults.find(r => r.stage_order === stageOrder);
@@ -721,16 +802,16 @@ export const MockInterviewTab = () => {
                         Book Slot
                       </Button>
                     )}
-                    {/* For Demo Feedback (stage 5) in progress, show View Feedback button */}
+                    {/* For Demo Feedback (stage 5) in progress, show View Feedback button to expand inline */}
                     {status === 'current' && stage.order === 5 && currentSession && (
                       <Button 
                         variant="default" 
                         size="sm"
-                        onClick={() => navigate(`/candidate/demo-feedback?session=${currentSession.id}`)}
+                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
                         className="gap-1"
                       >
                         <BarChart3 className="h-4 w-4" />
-                        View Feedback
+                        {isExpanded ? 'Hide Feedback' : 'View Feedback'}
                       </Button>
                     )}
                     {/* For completed stages with results, show expand/collapse button */}
@@ -760,6 +841,37 @@ export const MockInterviewTab = () => {
                     {result.ai_feedback && (
                       <div className="p-3 rounded-lg bg-muted/50">
                         <p className="text-sm text-foreground">{result.ai_feedback}</p>
+                      </div>
+                    )}
+
+                    {/* Criteria Breakdown for Demo Round (stage 4) */}
+                    {result.question_scores && Object.keys(result.question_scores).length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-semibold text-muted-foreground">Criteria Breakdown</h4>
+                        {Object.entries(result.question_scores).map(([key, value]) => {
+                          const labels: Record<string, string> = {
+                            teachingClarity: 'Teaching Clarity',
+                            subjectKnowledge: 'Subject Knowledge',
+                            presentationSkills: 'Presentation Skills',
+                            timeManagement: 'Time Management',
+                            overallPotential: 'Overall Potential'
+                          };
+                          const scoreColor = value.score >= 80 ? 'text-green-600' : value.score >= 65 ? 'text-amber-600' : 'text-red-600';
+                          const progressColor = value.score >= 80 ? 'bg-green-500' : value.score >= 65 ? 'bg-amber-500' : 'bg-red-500';
+                          
+                          return (
+                            <div key={key} className="p-3 rounded-lg border bg-card">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium">{labels[key] || key}</span>
+                                <span className={`text-sm font-bold ${scoreColor}`}>{value.score}%</span>
+                              </div>
+                              <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+                                <div className={`h-full ${progressColor}`} style={{ width: `${value.score}%` }} />
+                              </div>
+                              <p className="text-xs text-muted-foreground">{value.feedback}</p>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -802,14 +914,156 @@ export const MockInterviewTab = () => {
                       )}
                     </div>
 
-                    {/* Full Results Button */}
+                    {/* Action Button - Full details or Acknowledge */}
                     <div className="flex justify-center pt-2">
-                      <Button variant="outline" size="sm" onClick={() => goToStage(stage.order)}>
-                        View Full Details
-                      </Button>
+                      {stage.order === 4 && getStageStatus(5) === 'current' && (
+                        <Button 
+                          onClick={acknowledgeFeedbackAndProceed}
+                          disabled={isAcknowledgingFeedback}
+                          className="gap-2"
+                        >
+                          {isAcknowledgingFeedback ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                          Acknowledge & Proceed to HR Documents
+                        </Button>
+                      )}
+                      {stage.order !== 4 && (
+                        <Button variant="outline" size="sm" onClick={() => goToStage(stage.order)}>
+                          View Full Details
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
+
+                {/* Demo Feedback Stage (5) - Show Demo Round results inline */}
+                {isExpanded && status === 'current' && stage.order === 5 && !hasResults && (() => {
+                  const demoResult = stageResults.find(r => r.stage_order === 4);
+                  if (!demoResult) return null;
+                  
+                  return (
+                    <div className="mt-4 pt-4 border-t space-y-4">
+                      {/* Overall Score */}
+                      <div className={`p-4 rounded-lg border-2 ${demoResult.ai_score >= 80 ? 'bg-green-50 border-green-200' : demoResult.ai_score >= 65 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-medium text-muted-foreground">Demo Round Score</h4>
+                            <div className={`text-3xl font-bold ${demoResult.ai_score >= 80 ? 'text-green-600' : demoResult.ai_score >= 65 ? 'text-amber-600' : 'text-red-600'}`}>
+                              {demoResult.ai_score}%
+                            </div>
+                            <Badge variant={demoResult.passed ? 'default' : 'destructive'} className="mt-1">
+                              {demoResult.passed ? '✓ Passed' : '✗ Below Threshold'}
+                            </Badge>
+                          </div>
+                          <div className="flex-1 max-w-[200px] ml-6">
+                            <div className="h-3 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full ${demoResult.ai_score >= 80 ? 'bg-green-500' : demoResult.ai_score >= 65 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                style={{ width: `${demoResult.ai_score}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">Min: 65%</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* AI Feedback */}
+                      {demoResult.ai_feedback && (
+                        <div className="p-3 rounded-lg bg-muted/50">
+                          <p className="text-sm text-foreground">{demoResult.ai_feedback}</p>
+                        </div>
+                      )}
+
+                      {/* Criteria Breakdown */}
+                      {demoResult.question_scores && Object.keys(demoResult.question_scores).length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-muted-foreground">Criteria Breakdown</h4>
+                          {Object.entries(demoResult.question_scores).map(([key, value]) => {
+                            const labels: Record<string, string> = {
+                              teachingClarity: 'Teaching Clarity',
+                              subjectKnowledge: 'Subject Knowledge',
+                              presentationSkills: 'Presentation Skills',
+                              timeManagement: 'Time Management',
+                              overallPotential: 'Overall Potential'
+                            };
+                            const scoreColor = value.score >= 80 ? 'text-green-600' : value.score >= 65 ? 'text-amber-600' : 'text-red-600';
+                            const progressColor = value.score >= 80 ? 'bg-green-500' : value.score >= 65 ? 'bg-amber-500' : 'bg-red-500';
+                            
+                            return (
+                              <div key={key} className="p-3 rounded-lg border bg-card">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-sm font-medium">{labels[key] || key}</span>
+                                  <span className={`text-sm font-bold ${scoreColor}`}>{value.score}%</span>
+                                </div>
+                                <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+                                  <div className={`h-full ${progressColor}`} style={{ width: `${value.score}%` }} />
+                                </div>
+                                <p className="text-xs text-muted-foreground">{value.feedback}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Strengths & Improvements Grid */}
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {demoResult.strengths && demoResult.strengths.length > 0 && (
+                          <div className="p-3 rounded-lg border border-green-500/30 bg-green-50/50 dark:bg-green-900/10">
+                            <h4 className="text-sm font-semibold flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
+                              <TrendingUp className="h-4 w-4" />
+                              Strengths
+                            </h4>
+                            <ul className="space-y-2">
+                              {demoResult.strengths.map((strength, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                  <span className="text-foreground">{strength}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {demoResult.improvements && demoResult.improvements.length > 0 && (
+                          <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/10">
+                            <h4 className="text-sm font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400 mb-2">
+                              <TrendingDown className="h-4 w-4" />
+                              Areas to Improve
+                            </h4>
+                            <ul className="space-y-2">
+                              {demoResult.improvements.map((improvement, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                  <Target className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                  <span className="text-foreground">{improvement}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Acknowledge Button */}
+                      <div className="flex justify-center pt-2">
+                        <Button 
+                          onClick={acknowledgeFeedbackAndProceed}
+                          disabled={isAcknowledgingFeedback}
+                          className="gap-2"
+                          size="lg"
+                        >
+                          {isAcknowledgingFeedback ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArrowRight className="h-4 w-4" />
+                          )}
+                          Acknowledge & Proceed to HR Documents
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           );
