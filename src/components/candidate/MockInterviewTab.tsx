@@ -538,17 +538,18 @@ export const MockInterviewTab = () => {
 
                   {/* Action */}
                   <div className="flex-shrink-0 flex items-center gap-2">
-                    {status === 'current' && (
-                      <Button onClick={() => goToStage(stage.order)} className="gap-2">
-                        <ArrowRight className="h-4 w-4" />
-                        Continue
-                      </Button>
-                    )}
                     {/* For stage 1 (Interview Instructions), don't show View Results - just show email sent indicator */}
                     {status === 'completed' && stage.order === 1 && (
                       <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                         <Mail className="h-3 w-3 mr-1" />
                         Email Sent
+                      </Badge>
+                    )}
+                    {/* For Technical Assessment (stage 2) in progress, show email sent indicator instead of Continue button */}
+                    {status === 'current' && stage.order === 2 && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        <Mail className="h-3 w-3 mr-1" />
+                        Check Email to Start
                       </Badge>
                     )}
                     {/* For completed stages with results, show expand/collapse button */}
