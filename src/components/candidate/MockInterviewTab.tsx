@@ -22,7 +22,12 @@ import {
   Lock,
   ArrowRight,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  TrendingUp,
+  TrendingDown,
+  ChevronDown,
+  ChevronUp,
+  Target
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
@@ -46,6 +51,8 @@ interface StageResult {
   passed: boolean;
   recording_url?: string;
   completed_at?: string;
+  strengths?: string[];
+  improvements?: string[];
 }
 
 interface MockInterviewSession {
@@ -68,6 +75,7 @@ export const MockInterviewTab = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [expandedStage, setExpandedStage] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -149,6 +157,28 @@ export const MockInterviewTab = () => {
     }
   };
 
+  const sendTechnicalAssessmentEmail = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile.email,
+          candidateName: profile.full_name,
+          sessionId: sessionId,
+          stageOrder: 2,
+          stageName: 'Technical Assessment',
+          stageDescription: 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.'
+        }
+      });
+
+      if (error) throw error;
+      console.log('Technical Assessment email sent:', data);
+      return true;
+    } catch (error) {
+      console.error('Error sending Technical Assessment email:', error);
+      return false;
+    }
+  };
+
   const completeInstructionsStage = async (sessionId: string) => {
     try {
       // Create stage result for Interview Instructions
@@ -200,11 +230,14 @@ export const MockInterviewTab = () => {
       if (error) throw error;
 
       // Send interview instructions email
-      const emailSent = await sendInterviewInstructionsEmail(session.id);
+      const instructionsEmailSent = await sendInterviewInstructionsEmail(session.id);
       
-      if (emailSent) {
+      if (instructionsEmailSent) {
         // Complete stage 1 and move to stage 2
         await completeInstructionsStage(session.id);
+        
+        // Automatically send Technical Assessment email
+        await sendTechnicalAssessmentEmail(session.id);
         
         // Reload session data
         const { data: updatedSession } = await supabase
@@ -221,7 +254,7 @@ export const MockInterviewTab = () => {
 
         setCurrentSession(updatedSession);
         setStageResults(resultsData as StageResult[] || []);
-        toast.success("Interview instructions sent to your email! Proceed to Technical Assessment.");
+        toast.success("Instructions & Technical Assessment invitation sent to your email!");
       } else {
         setCurrentSession(session);
         setStageResults([]);
@@ -259,11 +292,14 @@ export const MockInterviewTab = () => {
       if (error) throw error;
 
       // Send interview instructions email
-      const emailSent = await sendInterviewInstructionsEmail(session.id);
+      const instructionsEmailSent = await sendInterviewInstructionsEmail(session.id);
       
-      if (emailSent) {
+      if (instructionsEmailSent) {
         // Complete stage 1 and move to stage 2
         await completeInstructionsStage(session.id);
+        
+        // Automatically send Technical Assessment email
+        await sendTechnicalAssessmentEmail(session.id);
         
         // Reload session data
         const { data: updatedSession } = await supabase
@@ -280,7 +316,7 @@ export const MockInterviewTab = () => {
 
         setCurrentSession(updatedSession);
         setStageResults(resultsData as StageResult[] || []);
-        toast.success("New interview started! Instructions sent to your email.");
+        toast.success("New interview started! Emails sent.");
       } else {
         setCurrentSession(session);
         setStageResults([]);
@@ -451,6 +487,8 @@ export const MockInterviewTab = () => {
           const status = getStageStatus(stage.order);
           const Icon = getStageIcon(stage.order);
           const result = stageResults.find(r => r.stage_order === stage.order);
+          const isExpanded = expandedStage === stage.order;
+          const hasResults = result?.completed_at && stage.order !== 1;
 
           return (
             <Card 
@@ -496,17 +534,10 @@ export const MockInterviewTab = () => {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{stage.description}</p>
-                    
-                    {/* Feedback for completed stages - exclude Interview Instructions (stage 1) */}
-                    {result?.ai_feedback && stage.order !== 1 && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                        {result.ai_feedback}
-                      </p>
-                    )}
                   </div>
 
                   {/* Action */}
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex items-center gap-2">
                     {status === 'current' && (
                       <Button onClick={() => goToStage(stage.order)} className="gap-2">
                         <ArrowRight className="h-4 w-4" />
@@ -520,9 +551,16 @@ export const MockInterviewTab = () => {
                         Email Sent
                       </Badge>
                     )}
-                    {status === 'completed' && stage.order !== 1 && (
-                      <Button variant="outline" onClick={() => goToStage(stage.order)} size="sm">
-                        View Results
+                    {/* For completed stages with results, show expand/collapse button */}
+                    {hasResults && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
+                        className="gap-1"
+                      >
+                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {isExpanded ? 'Hide Results' : 'View Results'}
                       </Button>
                     )}
                     {status === 'locked' && (
@@ -532,6 +570,64 @@ export const MockInterviewTab = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Expanded Results Section */}
+                {isExpanded && hasResults && result && (
+                  <div className="mt-4 pt-4 border-t space-y-4">
+                    {/* AI Feedback */}
+                    {result.ai_feedback && (
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <p className="text-sm text-foreground">{result.ai_feedback}</p>
+                      </div>
+                    )}
+
+                    {/* Strengths & Improvements Grid */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* Positive Points (Strengths) */}
+                      {result.strengths && result.strengths.length > 0 && (
+                        <div className="p-3 rounded-lg border border-green-500/30 bg-green-50/50 dark:bg-green-900/10">
+                          <h4 className="text-sm font-semibold flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
+                            <TrendingUp className="h-4 w-4" />
+                            Positive Points
+                          </h4>
+                          <ul className="space-y-2">
+                            {result.strengths.map((strength, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm">
+                                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                <span className="text-foreground">{strength}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Negative Points (Areas to Improve) */}
+                      {result.improvements && result.improvements.length > 0 && (
+                        <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/10">
+                          <h4 className="text-sm font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400 mb-2">
+                            <TrendingDown className="h-4 w-4" />
+                            Areas to Improve
+                          </h4>
+                          <ul className="space-y-2">
+                            {result.improvements.map((improvement, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm">
+                                <Target className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                <span className="text-foreground">{improvement}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Full Results Button */}
+                    <div className="flex justify-center pt-2">
+                      <Button variant="outline" size="sm" onClick={() => goToStage(stage.order)}>
+                        View Full Details
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
