@@ -1,18 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
-  FileText, 
-  Phone, 
   Code, 
   Users, 
   MessageSquare, 
@@ -21,26 +17,18 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
-  Timer,
-  ArrowRight,
   Award,
   RotateCcw,
   Brain,
   Video,
-  Circle,
-  Square
+  Mail,
+  Clock,
+  TrendingUp,
+  ThumbsUp,
+  ThumbsDown,
+  Eye
 } from "lucide-react";
-import { useVideoRecorder } from "@/hooks/useVideoRecorder";
-import { MockInterviewResults } from "./MockInterviewResults";
-
-interface StageQuestion {
-  id: number;
-  question: string;
-  type: 'text' | 'multiple_choice' | 'scenario';
-  options?: string[];
-  expectedPoints?: string[];
-  category: string;
-}
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface InterviewStage {
   name: string;
@@ -52,21 +40,14 @@ interface InterviewStage {
 }
 
 interface StageResult {
+  id: string;
   stage_name: string;
   stage_order: number;
   ai_score: number;
   ai_feedback: string;
   passed: boolean;
   recording_url?: string;
-}
-
-interface EvaluationResult {
-  overallScore: number;
-  passed: boolean;
-  feedback: string;
-  strengths: string[];
-  improvements: string[];
-  questionScores?: Array<{ questionId: number; score: number; feedback: string }>;
+  completed_at?: string;
 }
 
 interface MockInterviewSession {
@@ -76,6 +57,8 @@ interface MockInterviewSession {
   overall_score: number;
   overall_feedback: string;
   recording_url?: string;
+  created_at: string;
+  completed_at?: string;
 }
 
 export const MockInterviewTab = () => {
@@ -85,41 +68,11 @@ export const MockInterviewTab = () => {
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
-  const [currentStage, setCurrentStage] = useState<InterviewStage | null>(null);
-  const [questions, setQuestions] = useState<StageQuestion[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [currentAnswer, setCurrentAnswer] = useState("");
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isEvaluating, setIsEvaluating] = useState(false);
-  const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
-  const [showStageResult, setShowStageResult] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [pastSessions, setPastSessions] = useState<MockInterviewSession[]>([]);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [stageRecordingUrl, setStageRecordingUrl] = useState<string | null>(null);
-
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const videoPreviewRef = useRef<HTMLVideoElement>(null);
-
-  const {
-    isRecording,
-    isPaused,
-    isUploading,
-    previewUrl,
-    recordedBlob,
-    error: recordingError,
-    startRecording,
-    stopRecording,
-    pauseRecording,
-    resumeRecording,
-    uploadRecording,
-    resetRecording,
-    setVideoElement,
-    stream
-  } = useVideoRecorder();
+  const [selectedSession, setSelectedSession] = useState<MockInterviewSession | null>(null);
+  const [selectedStageResults, setSelectedStageResults] = useState<StageResult[]>([]);
+  const [viewingRecording, setViewingRecording] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -127,57 +80,11 @@ export const MockInterviewTab = () => {
     }
   }, [user]);
 
-  // Recording duration timer
-  useEffect(() => {
-    if (isRecording && !isPaused) {
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
-      }, 1000);
-    } else if (recordingTimerRef.current) {
-      clearInterval(recordingTimerRef.current);
-    }
-
-    return () => {
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-      }
-    };
-  }, [isRecording, isPaused]);
-
-  useEffect(() => {
-    if (timeLeft > 0 && currentStage && !showStageResult) {
-      timerRef.current = setTimeout(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && currentStage && questions.length > 0 && !showStageResult) {
-      handleNextQuestion();
-    }
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [timeLeft, currentStage, showStageResult]);
-
-  // Set video element for recording
-  useEffect(() => {
-    if (videoPreviewRef.current) {
-      setVideoElement(videoPreviewRef.current);
-    }
-  }, [setVideoElement]);
-
-  // Update video preview with stream
-  useEffect(() => {
-    if (videoPreviewRef.current && stream) {
-      videoPreviewRef.current.srcObject = stream;
-      videoPreviewRef.current.muted = true;
-      videoPreviewRef.current.play();
-    }
-  }, [stream]);
-
   const loadData = async () => {
     try {
       setIsLoading(true);
 
+      // Get stages
       const { data: stagesData } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: { action: 'get_stages' }
       });
@@ -185,6 +92,7 @@ export const MockInterviewTab = () => {
         setStages(stagesData.stages);
       }
 
+      // Get profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -192,6 +100,7 @@ export const MockInterviewTab = () => {
         .maybeSingle();
       setProfile(profileData);
 
+      // Get current in-progress session
       const { data: sessionData } = await supabase
         .from('mock_interview_sessions')
         .select('*')
@@ -204,6 +113,7 @@ export const MockInterviewTab = () => {
       if (sessionData) {
         setCurrentSession(sessionData);
         
+        // Get stage results for current session
         const { data: resultsData } = await supabase
           .from('mock_interview_stage_results')
           .select('*')
@@ -215,13 +125,14 @@ export const MockInterviewTab = () => {
         }
       }
 
+      // Get past completed/failed sessions
       const { data: pastData } = await supabase
         .from('mock_interview_sessions')
         .select('*')
         .eq('candidate_id', user?.id)
         .in('status', ['completed', 'failed'])
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       if (pastData) {
         setPastSessions(pastData);
@@ -236,10 +147,14 @@ export const MockInterviewTab = () => {
   };
 
   const startNewSession = async () => {
-    if (!user) return;
+    if (!user || !profile) {
+      toast.error("Please complete your profile first");
+      return;
+    }
 
     setIsStarting(true);
     try {
+      // Create new session
       const { data: session, error } = await supabase
         .from('mock_interview_sessions')
         .insert({
@@ -253,11 +168,29 @@ export const MockInterviewTab = () => {
 
       if (error) throw error;
 
+      // Send email invitation for Stage 1
+      const stage1 = stages[0];
+      const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile.email,
+          candidateName: profile.full_name,
+          sessionId: session.id,
+          stageOrder: 1,
+          stageName: stage1.name,
+          stageDescription: stage1.description,
+          appUrl: window.location.origin
+        }
+      });
+
+      if (emailError) {
+        console.error('Email error:', emailError);
+        toast.error("Could not send invitation email. Please try again.");
+        return;
+      }
+
       setCurrentSession(session);
       setStageResults([]);
-      toast.success("Mock interview session started!");
-      
-      await startStage(1, session.id);
+      toast.success("Invitation sent! Check your email to start the interview.");
 
     } catch (error) {
       console.error('Error starting session:', error);
@@ -267,147 +200,56 @@ export const MockInterviewTab = () => {
     }
   };
 
-  const startStage = async (stageOrder: number, sessionId?: string) => {
-    const stage = stages.find(s => s.order === stageOrder);
-    if (!stage) return;
+  const resendInvitation = async () => {
+    if (!currentSession || !profile || !stages.length) return;
 
-    setCurrentStage(stage);
-    setIsGenerating(true);
-    setQuestions([]);
-    setAnswers([]);
-    setCurrentQuestionIndex(0);
-    setCurrentAnswer("");
-    setShowStageResult(false);
-    setEvaluation(null);
-    setRecordingDuration(0);
-    setStageRecordingUrl(null);
-    resetRecording();
-
+    setIsStarting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
+      const currentStageOrder = currentSession.current_stage_order;
+      const currentStage = stages.find(s => s.order === currentStageOrder);
+
+      if (!currentStage) return;
+
+      const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
         body: {
-          action: 'generate_questions',
-          sessionId: sessionId || currentSession?.id,
-          stageOrder,
-          candidateProfile: profile
+          candidateEmail: profile.email,
+          candidateName: profile.full_name,
+          sessionId: currentSession.id,
+          stageOrder: currentStageOrder,
+          stageName: currentStage.name,
+          stageDescription: currentStage.description,
+          appUrl: window.location.origin
         }
       });
 
-      if (error) throw error;
+      if (emailError) throw emailError;
 
-      if (data?.questions) {
-        setQuestions(data.questions);
-        setTimeLeft(data.timePerQuestion || 120);
-        // Auto-start recording when questions load
-        setTimeout(() => {
-          startRecording();
-        }, 500);
-      }
-
+      toast.success("Invitation resent! Check your email.");
     } catch (error) {
-      console.error('Error generating questions:', error);
-      toast.error("Failed to generate questions");
+      console.error('Error resending invitation:', error);
+      toast.error("Failed to resend invitation");
     } finally {
-      setIsGenerating(false);
+      setIsStarting(false);
     }
   };
 
-  const handleNextQuestion = () => {
-    const newAnswers = [...answers];
-    newAnswers[currentQuestionIndex] = currentAnswer;
-    setAnswers(newAnswers);
-
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setCurrentAnswer("");
-      setTimeLeft(currentStage?.timePerQuestion || 120);
-    } else {
-      // Stop recording and submit stage
-      if (isRecording) {
-        stopRecording();
-      }
-      submitStage(newAnswers);
-    }
-  };
-
-  const submitStage = async (finalAnswers: string[]) => {
-    setIsEvaluating(true);
-    
+  const loadSessionResults = async (session: MockInterviewSession) => {
     try {
-      // Upload recording if available
-      let recordingUrl: string | null = null;
-      if (recordedBlob && currentSession && currentStage) {
-        recordingUrl = await uploadRecording(currentSession.id, currentStage.order);
-        setStageRecordingUrl(recordingUrl);
-      }
-
-      const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
-        body: {
-          action: 'evaluate_answers',
-          sessionId: currentSession?.id,
-          stageOrder: currentStage?.order,
-          answers: finalAnswers,
-          candidateProfile: profile,
-          recordingUrl
-        }
-      });
-
-      if (error) throw error;
-
-      setEvaluation(data.evaluation);
-      setShowStageResult(true);
-
       const { data: resultsData } = await supabase
         .from('mock_interview_stage_results')
         .select('*')
-        .eq('session_id', currentSession?.id)
+        .eq('session_id', session.id)
         .order('stage_order', { ascending: true });
       
-      if (resultsData) {
-        setStageResults(resultsData as StageResult[]);
-      }
-
-      if (data.isComplete) {
-        setCurrentSession(prev => prev ? { ...prev, status: 'completed' } : null);
-        toast.success("Congratulations! You've completed all stages!");
-      } else if (data.isFailed) {
-        setCurrentSession(prev => prev ? { ...prev, status: 'failed' } : null);
-      }
-
+      setSelectedSession(session);
+      setSelectedStageResults((resultsData || []) as StageResult[]);
     } catch (error) {
-      console.error('Error evaluating answers:', error);
-      toast.error("Failed to evaluate answers");
-    } finally {
-      setIsEvaluating(false);
+      console.error('Error loading session results:', error);
     }
-  };
-
-  const continueToNextStage = () => {
-    if (currentStage && currentStage.order < stages.length) {
-      startStage(currentStage.order + 1);
-    }
-  };
-
-  const resetSession = () => {
-    setCurrentSession(null);
-    setCurrentStage(null);
-    setQuestions([]);
-    setAnswers([]);
-    setEvaluation(null);
-    setShowStageResult(false);
-    setStageResults([]);
-    setRecordingDuration(0);
-    setStageRecordingUrl(null);
-    resetRecording();
-    loadData();
   };
 
   const getStageIcon = (stageName: string) => {
     switch (stageName) {
-      case 'Resume Screening':
-        return FileText;
-      case 'AI Phone Interview':
-        return Phone;
       case 'Technical Assessment':
         return Code;
       case 'HR Round':
@@ -424,11 +266,11 @@ export const MockInterviewTab = () => {
   const getStageStatus = (stageOrder: number) => {
     if (!currentSession) return 'locked';
     const result = stageResults.find(r => r.stage_order === stageOrder);
-    if (result) {
+    if (result?.completed_at) {
       return result.passed ? 'passed' : 'failed';
     }
     if (stageOrder === currentSession.current_stage_order) {
-      return 'current';
+      return 'pending';
     }
     if (stageOrder < currentSession.current_stage_order) {
       return 'passed';
@@ -436,10 +278,14 @@ export const MockInterviewTab = () => {
     return 'locked';
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (isLoading) {
@@ -450,361 +296,343 @@ export const MockInterviewTab = () => {
     );
   }
 
-  // Show stage result with enhanced display
-  if (showStageResult && evaluation && currentStage) {
-    return (
-      <MockInterviewResults
-        stageName={currentStage.name}
-        overallScore={evaluation.overallScore}
-        passed={evaluation.passed}
-        passingScore={currentStage.passingScore}
-        feedback={evaluation.feedback}
-        strengths={evaluation.strengths || []}
-        improvements={evaluation.improvements || []}
-        questionScores={evaluation.questionScores}
-        questions={questions}
-        answers={answers}
-        recordingUrl={stageRecordingUrl}
-        onContinue={evaluation.passed && currentStage.order < stages.length ? continueToNextStage : undefined}
-        onRetry={resetSession}
-        isLastStage={currentStage.order >= stages.length}
-      />
-    );
-  }
+  return (
+    <div className="space-y-6">
+      <Tabs defaultValue="current" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="current">Current Interview</TabsTrigger>
+          <TabsTrigger value="history">Interview History</TabsTrigger>
+        </TabsList>
 
-  // Show active interview with recording
-  if (currentStage && questions.length > 0) {
-    const currentQuestion = questions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-
-    return (
-      <div className="space-y-6">
-        {/* Stage Header */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {(() => {
-                  const Icon = getStageIcon(currentStage.name);
-                  return <Icon className="h-6 w-6 text-primary" />;
-                })()}
-                <div>
-                  <h3 className="font-semibold">{currentStage.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Question {currentQuestionIndex + 1} of {questions.length}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                {/* Recording Indicator */}
-                {isRecording && (
-                  <Badge variant="destructive" className={`flex items-center gap-1.5 ${isPaused ? 'bg-amber-500' : 'animate-pulse'}`}>
-                    <Circle className="h-2 w-2 fill-current" />
-                    {isPaused ? 'PAUSED' : 'REC'} {formatTime(recordingDuration)}
-                  </Badge>
-                )}
-                <div className={`flex items-center gap-2 ${timeLeft <= 30 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                  <Timer className="h-5 w-5" />
-                  <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
-                </div>
-              </div>
+        <TabsContent value="current" className="space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Brain className="h-6 w-6 text-primary" />
+                AI Mock Interview
+              </h2>
+              <p className="text-muted-foreground">
+                Complete all stages via email invitations - just like a real interview process
+              </p>
             </div>
-            <Progress value={progress} className="mt-4" />
-          </CardContent>
-        </Card>
+            {!currentSession && (
+              <Button onClick={startNewSession} disabled={isStarting} className="gap-2">
+                {isStarting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                Start Mock Interview
+              </Button>
+            )}
+          </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Video Preview */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Video className="h-4 w-4" />
-                Recording Preview
-              </CardTitle>
+          {/* Email Instructions */}
+          {currentSession && currentSession.status === 'in_progress' && (
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="py-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">Check Your Email!</h3>
+                    <p className="text-muted-foreground mt-1">
+                      An invitation for <strong>Stage {currentSession.current_stage_order}</strong> has been sent to <strong>{profile?.email}</strong>. 
+                      Click the link in the email to start your interview.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3 gap-2"
+                      onClick={resendInvitation}
+                      disabled={isStarting}
+                    >
+                      {isStarting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                      Resend Invitation
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Stages Pipeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Interview Stages</CardTitle>
+              <CardDescription>
+                Complete all 4 stages. You'll receive an email for each stage after passing the previous one.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                {previewUrl ? (
-                  <video
-                    src={previewUrl}
-                    controls
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <video
-                    ref={videoPreviewRef}
-                    className="w-full h-full object-cover"
-                    playsInline
-                    muted
-                  />
-                )}
-                {isRecording && !isPaused && (
-                  <div className="absolute top-2 left-2">
-                    <Badge variant="destructive" className="animate-pulse flex items-center gap-1">
-                      <Circle className="h-2 w-2 fill-current" />
-                      LIVE
-                    </Badge>
-                  </div>
-                )}
+              <div className="grid gap-4">
+                {stages.map((stage) => {
+                  const Icon = getStageIcon(stage.name);
+                  const status = getStageStatus(stage.order);
+                  const result = stageResults.find(r => r.stage_order === stage.order);
+
+                  return (
+                    <div
+                      key={stage.order}
+                      className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
+                        status === 'pending' ? 'border-primary bg-primary/5' :
+                        status === 'passed' ? 'border-green-500 bg-green-50 dark:bg-green-900/10' :
+                        status === 'failed' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
+                        'border-border bg-muted/30'
+                      }`}
+                    >
+                      <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
+                        status === 'pending' ? 'bg-primary text-primary-foreground' :
+                        status === 'passed' ? 'bg-green-500 text-white' :
+                        status === 'failed' ? 'bg-red-500 text-white' :
+                        'bg-muted text-muted-foreground'
+                      }`}>
+                        {status === 'passed' ? <CheckCircle2 className="h-6 w-6" /> :
+                         status === 'failed' ? <XCircle className="h-6 w-6" /> :
+                         status === 'pending' ? <Clock className="h-6 w-6" /> :
+                         <Icon className="h-6 w-6" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-semibold">{stage.name}</h4>
+                          {result?.completed_at && (
+                            <>
+                              <Badge variant={result.passed ? 'default' : 'destructive'}>
+                                {result.ai_score?.toFixed(0)}%
+                              </Badge>
+                              {result.recording_url && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="gap-1 h-6 text-xs">
+                                      <Video className="h-3 w-3" />
+                                      View Recording
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-4xl">
+                                    <DialogHeader>
+                                      <DialogTitle>{stage.name} - Recording</DialogTitle>
+                                    </DialogHeader>
+                                    <video 
+                                      src={result.recording_url} 
+                                      controls 
+                                      className="w-full rounded-lg"
+                                    />
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                            </>
+                          )}
+                          {status === 'pending' && (
+                            <Badge variant="outline" className="gap-1">
+                              <Mail className="h-3 w-3" />
+                              Awaiting Response
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{stage.description}</p>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span>{stage.questionCount} questions</span>
+                          <span>•</span>
+                          <span>{stage.timePerQuestion}s per question</span>
+                          <span>•</span>
+                          <span>Passing: {stage.passingScore}%</span>
+                        </div>
+                        
+                        {/* Show feedback for completed stages */}
+                        {result?.completed_at && result.ai_feedback && (
+                          <div className="mt-3 p-3 bg-background rounded border">
+                            <p className="text-sm">{result.ai_feedback}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex justify-center gap-2 mt-3">
-                {!isRecording && !previewUrl && (
-                  <Button size="sm" onClick={startRecording} className="gap-1">
-                    <Circle className="h-3 w-3 fill-red-500 text-red-500" />
-                    Start
-                  </Button>
-                )}
-                {isRecording && (
-                  <>
-                    {isPaused ? (
-                      <Button size="sm" variant="outline" onClick={resumeRecording}>
-                        <Play className="h-3 w-3" />
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={pauseRecording}>
-                        Pause
-                      </Button>
-                    )}
-                    <Button size="sm" variant="destructive" onClick={stopRecording}>
-                      <Square className="h-3 w-3" />
-                    </Button>
-                  </>
-                )}
-              </div>
-              {recordingError && (
-                <p className="text-xs text-destructive mt-2 text-center">{recordingError}</p>
-              )}
             </CardContent>
           </Card>
 
-          {/* Question Card */}
-          <Card className="lg:col-span-2">
-            <CardContent className="py-6 space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Brain className="h-5 w-5 text-primary" />
+          {/* Session Complete/Failed State */}
+          {currentSession && (currentSession.status === 'completed' || currentSession.status === 'failed') && (
+            <Card className={currentSession.status === 'completed' ? 'border-green-500' : 'border-red-500'}>
+              <CardContent className="py-6 text-center">
+                <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                  currentSession.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                }`}>
+                  {currentSession.status === 'completed' ? (
+                    <Award className="h-8 w-8" />
+                  ) : (
+                    <XCircle className="h-8 w-8" />
+                  )}
                 </div>
-                <div className="flex-1">
-                  <Badge variant="outline" className="mb-2">{currentQuestion.category}</Badge>
-                  <p className="text-lg font-medium text-foreground">{currentQuestion.question}</p>
+                <h3 className="text-xl font-semibold mb-2">
+                  {currentSession.status === 'completed' ? 'Congratulations!' : 'Interview Not Passed'}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {currentSession.overall_feedback || (currentSession.status === 'completed' 
+                    ? 'You have successfully completed all interview stages!' 
+                    : 'Keep practicing and try again!')}
+                </p>
+                <div className="text-3xl font-bold text-primary mb-4">
+                  {currentSession.overall_score?.toFixed(0)}%
                 </div>
-              </div>
+                <Button onClick={() => { setCurrentSession(null); loadData(); }} className="gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Start New Interview
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-              {currentQuestion.type === 'multiple_choice' && currentQuestion.options ? (
-                <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
-                  <div className="space-y-3">
-                    {currentQuestion.options.map((option, idx) => (
-                      <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                        <RadioGroupItem value={option} id={`option-${idx}`} />
-                        <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
-                          {option}
-                        </Label>
+        <TabsContent value="history" className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold mb-2">Interview History</h2>
+            <p className="text-muted-foreground">View your past mock interviews with recordings and feedback</p>
+          </div>
+
+          {pastSessions.length === 0 ? (
+            <Card className="py-12 text-center">
+              <CardContent>
+                <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="font-semibold mb-2">No Past Interviews</h3>
+                <p className="text-muted-foreground">Complete a mock interview to see your history here.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {pastSessions.map((session) => (
+                <Card 
+                  key={session.id} 
+                  className={`cursor-pointer hover:shadow-md transition-shadow ${
+                    selectedSession?.id === session.id ? 'ring-2 ring-primary' : ''
+                  }`}
+                  onClick={() => loadSessionResults(session)}
+                >
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
+                          session.status === 'completed' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {session.status === 'completed' ? (
+                            <Award className="h-6 w-6" />
+                          ) : (
+                            <XCircle className="h-6 w-6" />
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">
+                            Mock Interview - {formatDate(session.created_at)}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {session.status === 'completed' ? 'All stages completed' : `Failed at stage ${session.current_stage_order}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-primary">
+                            {session.overall_score?.toFixed(0)}%
+                          </div>
+                          <Badge variant={session.status === 'completed' ? 'default' : 'destructive'}>
+                            {session.status}
+                          </Badge>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Selected Session Details */}
+          {selectedSession && selectedStageResults.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Session Details - {formatDate(selectedSession.created_at)}</CardTitle>
+                <CardDescription>{selectedSession.overall_feedback}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-4">
+                    {selectedStageResults.map((result) => (
+                      <div key={result.id} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                              result.passed ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                            }`}>
+                              {result.passed ? <CheckCircle2 className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">{result.stage_name}</h4>
+                              <p className="text-xs text-muted-foreground">
+                                {result.completed_at ? formatDate(result.completed_at) : 'Not completed'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={result.passed ? 'default' : 'destructive'}>
+                              {result.ai_score?.toFixed(0)}%
+                            </Badge>
+                            {result.recording_url && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="gap-1">
+                                    <Video className="h-3 w-3" />
+                                    Recording
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl">
+                                  <DialogHeader>
+                                    <DialogTitle>{result.stage_name} - Recording</DialogTitle>
+                                  </DialogHeader>
+                                  <video 
+                                    src={result.recording_url} 
+                                    controls 
+                                    className="w-full rounded-lg"
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Feedback */}
+                        {result.ai_feedback && (
+                          <div className="p-3 bg-muted/50 rounded-lg">
+                            <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                              <Brain className="h-4 w-4" />
+                              AI Feedback
+                            </h5>
+                            <p className="text-sm text-muted-foreground">{result.ai_feedback}</p>
+                          </div>
+                        )}
+
+                        {/* Score Progress */}
+                        <div className="mt-3">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Score</span>
+                            <span className="font-medium">{result.ai_score?.toFixed(0)}%</span>
+                          </div>
+                          <Progress value={result.ai_score || 0} className="h-2" />
+                        </div>
                       </div>
                     ))}
                   </div>
-                </RadioGroup>
-              ) : (
-                <Textarea
-                  placeholder="Type your answer here..."
-                  value={currentAnswer}
-                  onChange={(e) => setCurrentAnswer(e.target.value)}
-                  className="min-h-[150px]"
-                />
-              )}
-
-              <div className="flex justify-between items-center pt-4">
-                <p className="text-sm text-muted-foreground">
-                  {currentQuestionIndex < questions.length - 1 
-                    ? `${questions.length - currentQuestionIndex - 1} questions remaining`
-                    : 'This is the last question'}
-                </p>
-                <Button 
-                  onClick={handleNextQuestion} 
-                  disabled={!currentAnswer.trim()}
-                  className="gap-2"
-                >
-                  {currentQuestionIndex < questions.length - 1 ? (
-                    <>
-                      Next Question
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      Submit Stage
-                      <CheckCircle2 className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Show generating state
-  if (isGenerating || isEvaluating) {
-    return (
-      <Card className="min-h-[400px] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <div>
-            <h3 className="font-semibold text-lg">
-              {isGenerating ? 'Preparing Interview Questions...' : 'AI is Evaluating Your Answers...'}
-            </h3>
-            <p className="text-muted-foreground">
-              {isGenerating 
-                ? 'Our AI is generating personalized questions based on your profile' 
-                : 'Please wait while we analyze your responses'}
-            </p>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  // Show stages overview
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Brain className="h-6 w-6 text-primary" />
-            AI Mock Interview
-          </h2>
-          <p className="text-muted-foreground">
-            Practice all interview stages with AI-powered evaluation and video recording
-          </p>
-        </div>
-        {!currentSession && (
-          <Button onClick={startNewSession} disabled={isStarting} className="gap-2">
-            {isStarting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            Start Mock Interview
-          </Button>
-        )}
-      </div>
-
-      {/* Stages Pipeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Interview Stages</CardTitle>
-          <CardDescription>
-            Complete all 6 stages to finish the mock interview. Your responses will be recorded.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            {stages.map((stage) => {
-              const Icon = getStageIcon(stage.name);
-              const status = getStageStatus(stage.order);
-              const result = stageResults.find(r => r.stage_order === stage.order);
-
-              return (
-                <div
-                  key={stage.order}
-                  className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
-                    status === 'current' ? 'border-primary bg-primary/5' :
-                    status === 'passed' ? 'border-green-500 bg-green-50 dark:bg-green-900/10' :
-                    status === 'failed' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
-                    'border-border bg-muted/30'
-                  }`}
-                >
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                    status === 'current' ? 'bg-primary text-primary-foreground' :
-                    status === 'passed' ? 'bg-green-500 text-white' :
-                    status === 'failed' ? 'bg-red-500 text-white' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {status === 'passed' ? <CheckCircle2 className="h-6 w-6" /> :
-                     status === 'failed' ? <XCircle className="h-6 w-6" /> :
-                     <Icon className="h-6 w-6" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold">{stage.name}</h4>
-                      {result && (
-                        <>
-                          <Badge variant={result.passed ? 'default' : 'destructive'}>
-                            {result.ai_score?.toFixed(0)}%
-                          </Badge>
-                          {result.recording_url && (
-                            <Badge variant="outline" className="gap-1">
-                              <Video className="h-3 w-3" />
-                              Recorded
-                            </Badge>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{stage.description}</p>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                      <span>{stage.questionCount} questions</span>
-                      <span>•</span>
-                      <span>{stage.timePerQuestion}s per question</span>
-                      <span>•</span>
-                      <span>Passing: {stage.passingScore}%</span>
-                    </div>
-                  </div>
-                  {status === 'current' && currentSession && (
-                    <Button onClick={() => startStage(stage.order)} size="sm" className="gap-2">
-                      <Play className="h-4 w-4" />
-                      Start
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Past Sessions */}
-      {pastSessions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Past Sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {pastSessions.map((session) => (
-                <div key={session.id} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    {session.status === 'completed' ? (
-                      <Award className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    )}
-                    <div>
-                      <p className="font-medium">
-                        {session.status === 'completed' ? 'Completed' : 'Not Completed'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Score: {session.overall_score?.toFixed(0)}%
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {session.recording_url && (
-                      <Badge variant="outline" className="gap-1">
-                        <Video className="h-3 w-3" />
-                        Has Recording
-                      </Badge>
-                    )}
-                    <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
-                      {session.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
