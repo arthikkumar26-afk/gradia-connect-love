@@ -33,7 +33,9 @@ import {
   Target,
   Upload,
   X,
-  File
+  File,
+  UserPlus,
+  Award
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
@@ -92,6 +94,7 @@ export const MockInterviewTab = () => {
   const [showSlotBooking, setShowSlotBooking] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
+  const [selectedInterviewType, setSelectedInterviewType] = useState<'new_employee' | 'promotions' | null>(null);
   
   // HR Documents state
   const [hrDocuments, setHrDocuments] = useState<{
@@ -764,7 +767,7 @@ export const MockInterviewTab = () => {
     );
   }
 
-  // No session - Show start screen
+  // No session - Show start screen with interview type selection
   if (!currentSession) {
     return (
       <div className="space-y-6">
@@ -779,66 +782,186 @@ export const MockInterviewTab = () => {
           </p>
         </div>
 
-        {/* Main Card */}
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader className="text-center pb-4">
-            <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <GraduationCap className="h-10 w-10 text-primary" />
-            </div>
-            <CardTitle className="text-xl">AI Mock Test</CardTitle>
-            <CardDescription className="text-base">
-              Complete a comprehensive 7-stage interview simulation
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* 7 Stages Preview */}
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm text-muted-foreground">Interview Stages:</h4>
-              <div className="grid gap-2">
-                {[
-                  { order: 1, name: "Interview Instructions", icon: Mail },
-                  { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
-                  { order: 3, name: "Technical Assessment", icon: Code },
-                  { order: 4, name: "Demo Slot Booking", icon: Calendar },
-                  { order: 5, name: "Demo Round", icon: Monitor },
-                  { order: 6, name: "Demo Feedback", icon: BarChart3 },
-                  { order: 7, name: "Final Review (HR)", icon: FileText },
-                  { order: 8, name: "All Reviews", icon: ListChecks },
-                ].map((stage) => (
-                  <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <stage.icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
-                  </div>
-                ))}
+        {/* Interview Type Selection */}
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* New Employee Card */}
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-lg ${
+              selectedInterviewType === 'new_employee' 
+                ? 'border-2 border-primary ring-2 ring-primary/20' 
+                : 'border hover:border-primary/50'
+            }`}
+            onClick={() => setSelectedInterviewType('new_employee')}
+          >
+            <CardHeader className="text-center pb-4">
+              <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                selectedInterviewType === 'new_employee' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-primary/10'
+              }`}>
+                <UserPlus className={`h-8 w-8 ${selectedInterviewType === 'new_employee' ? 'text-primary-foreground' : 'text-primary'}`} />
               </div>
-            </div>
+              <CardTitle className="text-lg">New Employee</CardTitle>
+              <CardDescription>
+                For new candidates joining the organization
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    Basic technical assessment
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    Teaching demonstration
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    HR document verification
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    Entry-level evaluation
+                  </li>
+                </ul>
+              </div>
+              {selectedInterviewType === 'new_employee' && (
+                <Badge className="w-full justify-center bg-primary">Selected</Badge>
+              )}
+            </CardContent>
+          </Card>
 
-            {/* Action Button */}
-            <div className="pt-4">
-              <Button 
-                onClick={startMockTest} 
-                disabled={isStarting} 
-                className="w-full gap-2" 
-                size="lg"
-              >
-                {isStarting ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+          {/* Promotions Card */}
+          <Card 
+            className={`cursor-pointer transition-all hover:shadow-lg ${
+              selectedInterviewType === 'promotions' 
+                ? 'border-2 border-primary ring-2 ring-primary/20' 
+                : 'border hover:border-primary/50'
+            }`}
+            onClick={() => setSelectedInterviewType('promotions')}
+          >
+            <CardHeader className="text-center pb-4">
+              <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                selectedInterviewType === 'promotions' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-amber-100 dark:bg-amber-900/30'
+              }`}>
+                <Award className={`h-8 w-8 ${selectedInterviewType === 'promotions' ? 'text-primary-foreground' : 'text-amber-600 dark:text-amber-400'}`} />
+              </div>
+              <CardTitle className="text-lg">Promotions</CardTitle>
+              <CardDescription>
+                For existing employees seeking promotion
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
+                    Advanced technical assessment
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
+                    Leadership demonstration
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
+                    Performance review
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
+                    Senior-level evaluation
+                  </li>
+                </ul>
+              </div>
+              {selectedInterviewType === 'promotions' && (
+                <Badge className="w-full justify-center bg-primary">Selected</Badge>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Interview Stages Preview - Show when type is selected */}
+        {selectedInterviewType && (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader className="text-center pb-4">
+              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                {selectedInterviewType === 'new_employee' ? (
+                  <UserPlus className="h-6 w-6 text-primary" />
                 ) : (
-                  <Play className="h-5 w-5" />
+                  <Award className="h-6 w-6 text-primary" />
                 )}
-                Attend Mock Test
-              </Button>
-            </div>
+              </div>
+              <CardTitle className="text-lg">
+                {selectedInterviewType === 'new_employee' ? 'New Employee' : 'Promotions'} Interview
+              </CardTitle>
+              <CardDescription>
+                Complete a comprehensive 8-stage interview simulation
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* 8 Stages Preview */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm text-muted-foreground">Interview Stages:</h4>
+                <div className="grid gap-2">
+                  {[
+                    { order: 1, name: "Interview Instructions", icon: Mail },
+                    { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
+                    { order: 3, name: "Technical Assessment", icon: Code },
+                    { order: 4, name: "Demo Slot Booking", icon: Calendar },
+                    { order: 5, name: "Demo Round", icon: Monitor },
+                    { order: 6, name: "Demo Feedback", icon: BarChart3 },
+                    { order: 7, name: "Final Review (HR)", icon: FileText },
+                    { order: 8, name: "All Reviews", icon: ListChecks },
+                  ].map((stage) => (
+                    <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <stage.icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-            <div className="flex justify-center">
-              <Badge variant="secondary" className="text-xs">
-                Estimated time: 45-60 minutes
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Action Button */}
+              <div className="pt-4">
+                <Button 
+                  onClick={startMockTest} 
+                  disabled={isStarting} 
+                  className="w-full gap-2" 
+                  size="lg"
+                >
+                  {isStarting ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Play className="h-5 w-5" />
+                  )}
+                  Attend Mock Test
+                </Button>
+              </div>
+
+              <div className="flex justify-center">
+                <Badge variant="secondary" className="text-xs">
+                  Estimated time: 45-60 minutes
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Prompt to select if nothing selected */}
+        {!selectedInterviewType && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Please select an interview type above to continue
+            </p>
+          </div>
+        )}
       </div>
     );
   }
