@@ -244,7 +244,9 @@ const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="default" size="sm" className="gap-2">
                       <User className="h-4 w-4" />
-                      {profile?.full_name?.split(' ')[0] || 'Account'}
+                      {userRole === 'admin' ? 'Admin' : 
+                       userRole === 'owner' ? 'Owner' : 
+                       profile?.full_name?.split(' ')[0] || 'Account'}
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
