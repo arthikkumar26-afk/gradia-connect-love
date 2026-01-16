@@ -135,10 +135,12 @@ export default function MockInterviewPipeline() {
     return designationOptions[newPaper.segment]?.[newPaper.category] || [];
   };
 
-  const [questionPdfFile, setQuestionPdfFile] = useState<File | null>(null);
+  // 5 sets of question papers
+  const [questionPdfFiles, setQuestionPdfFiles] = useState<(File | null)[]>([null, null, null, null, null]);
+  const [extractedQuestionsSets, setExtractedQuestionsSets] = useState<any[][]>([[], [], [], [], []]);
+  
   const [answerPdfFile, setAnswerPdfFile] = useState<File | null>(null);
   const [solutionPdfFile, setSolutionPdfFile] = useState<File | null>(null);
-  const [extractedQuestions, setExtractedQuestions] = useState<any[]>([]);
   const [extractedAnswers, setExtractedAnswers] = useState<any[]>([]);
   const [extractedSolutions, setExtractedSolutions] = useState<any[]>([]);
 
@@ -201,11 +203,19 @@ export default function MockInterviewPipeline() {
     }
   };
 
-  const handleQuestionPdfChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuestionPdfChange = (setIndex: number) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setQuestionPdfFile(file);
-      setExtractedQuestions([]);
+      setQuestionPdfFiles(prev => {
+        const newFiles = [...prev];
+        newFiles[setIndex] = file;
+        return newFiles;
+      });
+      setExtractedQuestionsSets(prev => {
+        const newSets = [...prev];
+        newSets[setIndex] = [];
+        return newSets;
+      });
     }
   };
 
@@ -236,7 +246,7 @@ export default function MockInterviewPipeline() {
       const text = await solutionPdfFile.text();
       
       const { data, error } = await supabase.functions.invoke('parse-answer-key', {
-        body: { pdfText: text, questionCount: extractedQuestions.length, isSolution: true }
+        body: { pdfText: text, questionCount: extractedQuestionsSets.flat().length, isSolution: true }
       });
 
       if (error) throw error;
@@ -255,9 +265,10 @@ export default function MockInterviewPipeline() {
     }
   };
 
-  const parseQuestionPdf = async () => {
+  const parseQuestionPdf = (setIndex: number) => async () => {
+    const questionPdfFile = questionPdfFiles[setIndex];
     if (!questionPdfFile) {
-      toast.error('Please select a question PDF first');
+      toast.error(`Please select a question PDF for Set ${setIndex + 1} first`);
       return;
     }
 
@@ -272,14 +283,18 @@ export default function MockInterviewPipeline() {
       if (error) throw error;
       
       if (data.questions && data.questions.length > 0) {
-        setExtractedQuestions(data.questions);
-        toast.success(`Extracted ${data.questions.length} questions`);
+        setExtractedQuestionsSets(prev => {
+          const newSets = [...prev];
+          newSets[setIndex] = data.questions;
+          return newSets;
+        });
+        toast.success(`Set ${setIndex + 1}: Extracted ${data.questions.length} questions`);
       } else {
-        toast.warning('No questions found in the PDF. Please check the format.');
+        toast.warning(`Set ${setIndex + 1}: No questions found in the PDF. Please check the format.`);
       }
     } catch (error) {
       console.error('Error parsing question PDF:', error);
-      toast.error('Failed to parse question PDF');
+      toast.error(`Set ${setIndex + 1}: Failed to parse question PDF`);
     } finally {
       setIsParsing(false);
     }
@@ -296,7 +311,7 @@ export default function MockInterviewPipeline() {
       const text = await answerPdfFile.text();
       
       const { data, error } = await supabase.functions.invoke('parse-answer-key', {
-        body: { pdfText: text, questionCount: extractedQuestions.length }
+        body: { pdfText: text, questionCount: extractedQuestionsSets.flat().length }
       });
 
       if (error) throw error;
@@ -328,127 +343,134 @@ export default function MockInterviewPipeline() {
       toast.error('Please select a designation');
       return;
     }
-    if (!questionPdfFile) {
-      toast.error('Please upload a question paper PDF');
-      return;
-    }
-    if (extractedQuestions.length === 0) {
-      toast.error('Please extract questions from PDF first');
+    
+    // Check if at least one set has a file and extracted questions
+    const validSets = questionPdfFiles.map((file, index) => ({
+      file,
+      questions: extractedQuestionsSets[index],
+      setNumber: index + 1
+    })).filter(set => set.file && set.questions.length > 0);
+    
+    if (validSets.length === 0) {
+      toast.error('Please upload and extract at least one question paper');
       return;
     }
 
     setIsUploading(true);
     try {
-      // Upload question PDF to storage
-      let pdfUrl = '';
-      if (questionPdfFile) {
-        const fileName = `${Date.now()}-${questionPdfFile.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('resumes')
-          .upload(`question-papers/${fileName}`, questionPdfFile);
-
-        if (uploadError) throw uploadError;
-        
-        const { data: urlData } = supabase.storage
-          .from('resumes')
-          .getPublicUrl(`question-papers/${fileName}`);
-        pdfUrl = urlData.publicUrl;
-      }
-
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Auto-generate title from segment, category, designation
-      const autoTitle = `${newPaper.segment} - ${newPaper.category} - ${newPaper.designation}`;
+      // Save each valid set as a separate paper
+      for (const set of validSets) {
+        // Upload question PDF to storage
+        let pdfUrl = '';
+        if (set.file) {
+          const fileName = `${Date.now()}-set${set.setNumber}-${set.file.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('resumes')
+            .upload(`question-papers/${fileName}`, set.file);
 
-      const { data: paperData, error: paperError } = await supabase
-        .from('interview_question_papers')
-        .insert({
-          title: autoTitle,
-          description: newPaper.description || null,
-          stage_type: newPaper.stage_type,
-          pdf_url: pdfUrl || 'manual-entry',
-          created_by: user?.id,
-          segment: newPaper.segment || null,
-          category: newPaper.category || null,
-          designation: newPaper.designation || null
-        })
-        .select()
-        .single();
+          if (uploadError) throw uploadError;
+          
+          const { data: urlData } = supabase.storage
+            .from('resumes')
+            .getPublicUrl(`question-papers/${fileName}`);
+          pdfUrl = urlData.publicUrl;
+        }
 
-      if (paperError) throw paperError;
+        // Auto-generate title from segment, category, designation, and set number
+        const autoTitle = `${newPaper.segment} - ${newPaper.category} - ${newPaper.designation} - Set ${set.setNumber}`;
 
-      const questionsToInsert = extractedQuestions.map((q, index) => ({
-        paper_id: paperData.id,
-        question_number: q.question_number || index + 1,
-        question_text: q.question_text,
-        question_type: q.question_type || 'text',
-        options: q.options || null,
-        marks: 1,
-        display_order: index
-      }));
+        const { data: paperData, error: paperError } = await supabase
+          .from('interview_question_papers')
+          .insert({
+            title: autoTitle,
+            description: newPaper.description || null,
+            stage_type: newPaper.stage_type,
+            pdf_url: pdfUrl || 'manual-entry',
+            created_by: user?.id,
+            segment: newPaper.segment || null,
+            category: newPaper.category || null,
+            designation: newPaper.designation || null
+          })
+          .select()
+          .single();
 
-      const { data: insertedQuestions, error: questionsError } = await supabase
-        .from('interview_questions')
-        .insert(questionsToInsert)
-        .select();
+        if (paperError) throw paperError;
 
-      if (questionsError) throw questionsError;
+        const questionsToInsert = set.questions.map((q: any, index: number) => ({
+          paper_id: paperData.id,
+          question_number: q.question_number || index + 1,
+          question_text: q.question_text,
+          question_type: q.question_type || 'text',
+          options: q.options || null,
+          marks: 1,
+          display_order: index
+        }));
 
-      if (extractedAnswers.length > 0 && insertedQuestions) {
-        const answerKeysToInsert = extractedAnswers.map(a => {
-          const matchingQuestion = insertedQuestions.find(
-            q => q.question_number === a.question_number
-          );
-          if (!matchingQuestion) return null;
+        const { data: insertedQuestions, error: questionsError } = await supabase
+          .from('interview_questions')
+          .insert(questionsToInsert)
+          .select();
 
-          return {
-            question_id: matchingQuestion.id,
-            answer_text: a.answer_text,
-            keywords: a.keywords || [],
-            is_case_sensitive: false,
-            min_keyword_match_percent: 50
-          };
-        }).filter(Boolean);
+        if (questionsError) throw questionsError;
 
-        if (answerKeysToInsert.length > 0) {
-          const { error: answersError } = await supabase
-            .from('interview_answer_keys')
-            .insert(answerKeysToInsert);
+        if (extractedAnswers.length > 0 && insertedQuestions) {
+          const answerKeysToInsert = extractedAnswers.map(a => {
+            const matchingQuestion = insertedQuestions.find(
+              q => q.question_number === a.question_number
+            );
+            if (!matchingQuestion) return null;
 
-          if (answersError) {
-            console.error('Error inserting answer keys:', answersError);
+            return {
+              question_id: matchingQuestion.id,
+              answer_text: a.answer_text,
+              keywords: a.keywords || [],
+              is_case_sensitive: false,
+              min_keyword_match_percent: 50
+            };
+          }).filter(Boolean);
+
+          if (answerKeysToInsert.length > 0) {
+            const { error: answersError } = await supabase
+              .from('interview_answer_keys')
+              .insert(answerKeysToInsert);
+
+            if (answersError) {
+              console.error('Error inserting answer keys:', answersError);
+            }
+          }
+        }
+
+        // Insert solutions if available
+        if (extractedSolutions.length > 0 && insertedQuestions) {
+          const solutionsToInsert = extractedSolutions.map(s => {
+            const matchingQuestion = insertedQuestions.find(
+              q => q.question_number === s.question_number
+            );
+            if (!matchingQuestion) return null;
+
+            return {
+              question_id: matchingQuestion.id,
+              solution_text: s.solution_text || s.answer_text || '',
+              step_by_step: s.step_by_step || [],
+              explanation: s.explanation || null
+            };
+          }).filter(Boolean);
+
+          if (solutionsToInsert.length > 0) {
+            const { error: solutionsError } = await supabase
+              .from('interview_solutions')
+              .insert(solutionsToInsert);
+
+            if (solutionsError) {
+              console.error('Error inserting solutions:', solutionsError);
+            }
           }
         }
       }
 
-      // Insert solutions if available
-      if (extractedSolutions.length > 0 && insertedQuestions) {
-        const solutionsToInsert = extractedSolutions.map(s => {
-          const matchingQuestion = insertedQuestions.find(
-            q => q.question_number === s.question_number
-          );
-          if (!matchingQuestion) return null;
-
-          return {
-            question_id: matchingQuestion.id,
-            solution_text: s.solution_text || s.answer_text || '',
-            step_by_step: s.step_by_step || [],
-            explanation: s.explanation || null
-          };
-        }).filter(Boolean);
-
-        if (solutionsToInsert.length > 0) {
-          const { error: solutionsError } = await supabase
-            .from('interview_solutions')
-            .insert(solutionsToInsert);
-
-          if (solutionsError) {
-            console.error('Error inserting solutions:', solutionsError);
-          }
-        }
-      }
-
-      toast.success('Question paper saved successfully!');
+      toast.success(`${validSets.length} question paper(s) saved successfully!`);
       resetForm();
       loadPapers();
     } catch (error) {
@@ -461,10 +483,10 @@ export default function MockInterviewPipeline() {
 
   const resetForm = () => {
     setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', designation: '' });
-    setQuestionPdfFile(null);
+    setQuestionPdfFiles([null, null, null, null, null]);
     setAnswerPdfFile(null);
     setSolutionPdfFile(null);
-    setExtractedQuestions([]);
+    setExtractedQuestionsSets([[], [], [], [], []]);
     setExtractedAnswers([]);
     setExtractedSolutions([]);
   };
@@ -634,41 +656,47 @@ export default function MockInterviewPipeline() {
               </div>
             </div>
 
-            {/* File Upload Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Question Paper Upload */}
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
-                  Question Paper *
-                </Label>
-                <div className="flex gap-2">
-                  <Input 
-                    type="file" 
-                    accept=".pdf,.txt"
-                    onChange={handleQuestionPdfChange}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={parseQuestionPdf} 
-                    disabled={!questionPdfFile || isParsing}
-                    variant="secondary"
-                    size="sm"
-                  >
-                    {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    <span className="ml-1">Extract</span>
-                  </Button>
-                </div>
-                {extractedQuestions.length > 0 && (
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 text-sm">
-                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>{extractedQuestions.length} questions extracted</span>
-                    </div>
+            {/* File Upload Section - 5 Question Paper Sets */}
+            <div className="space-y-4">
+              <Label className="flex items-center gap-2 text-base font-semibold">
+                <BookOpen className="h-5 w-5" />
+                Question Papers (5 Sets) *
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                {[0, 1, 2, 3, 4].map((setIndex) => (
+                  <div key={setIndex} className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                    <Label className="text-sm font-medium">Set {setIndex + 1}</Label>
+                    <Input 
+                      type="file" 
+                      accept=".pdf,.txt"
+                      onChange={handleQuestionPdfChange(setIndex)}
+                      className="text-xs"
+                    />
+                    <Button 
+                      onClick={parseQuestionPdf(setIndex)} 
+                      disabled={!questionPdfFiles[setIndex] || isParsing}
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                    >
+                      {isParsing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                      Extract
+                    </Button>
+                    {extractedQuestionsSets[setIndex]?.length > 0 && (
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded p-1.5 text-xs">
+                        <div className="flex items-center gap-1 text-green-700 dark:text-green-400">
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>{extractedQuestionsSets[setIndex].length} Qs</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
+            </div>
 
+            {/* Answer Key and Solutions Upload */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Answer Key Upload */}
               <div className="space-y-3">
                 <Label className="flex items-center gap-2">
@@ -743,7 +771,7 @@ export default function MockInterviewPipeline() {
               </Button>
               <Button 
                 onClick={savePaperWithQuestionsAndAnswers}
-                disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || extractedQuestions.length === 0}
+                disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || extractedQuestionsSets.every(set => set.length === 0)}
               >
                 {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 Save Question Paper
