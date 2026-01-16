@@ -462,12 +462,10 @@ export const MockInterviewTab = () => {
                 : 'Complete each stage to advance to the next round.'}
           </p>
         </div>
-        {(currentSession.status === 'completed' || currentSession.status === 'failed') && (
-          <Button onClick={startNewSession} disabled={isStarting} variant="outline" className="gap-2">
-            {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-            Start New Interview
-          </Button>
-        )}
+        <Button onClick={startNewSession} disabled={isStarting} variant="default" className="gap-2">
+          {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+          Start Mock Interview
+        </Button>
       </div>
 
       {/* Progress Tracker */}
