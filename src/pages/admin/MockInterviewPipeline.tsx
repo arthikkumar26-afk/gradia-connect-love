@@ -26,6 +26,9 @@ interface QuestionPaper {
   pdf_url: string;
   is_active: boolean;
   created_at: string;
+  segment: string | null;
+  category: string | null;
+  designation: string | null;
 }
 
 interface Question {
@@ -65,7 +68,72 @@ export default function MockInterviewPipeline() {
     title: '',
     description: '',
     stage_type: 'all' as string,
+    segment: '',
+    category: '',
+    designation: '',
   });
+
+  // Role-based options
+  const segmentOptions = [
+    'Pre-Primary', 'Primary', 'Secondary', 'Senior Secondary', 'Foundation', 'JEE', 'NEET'
+  ];
+
+  const categoryOptions: Record<string, string[]> = {
+    'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
+    'Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
+    'Secondary': ['Teaching', 'Admin', 'Non-Teaching'],
+    'Senior Secondary': ['Teaching', 'Admin', 'Non-Teaching'],
+    'Foundation': ['Teaching', 'Admin', 'Academic Support'],
+    'JEE': ['Teaching', 'Admin', 'Academic Support'],
+    'NEET': ['Teaching', 'Admin', 'Academic Support'],
+  };
+
+  const designationOptions: Record<string, Record<string, string[]>> = {
+    'Pre-Primary': {
+      'Teaching': ['MOTHER TEACHER', 'ASSO.TEACHER'],
+      'Helping/Supporting': ['CARE TAKER', 'ATTENDER'],
+      'Admin': ['VICE PRINCIPAL', 'COORDINATOR']
+    },
+    'Primary': {
+      'Teaching': ['PRT', 'TGT', 'ASSO.TEACHER'],
+      'Helping/Supporting': ['LAB ASSISTANT', 'ATTENDER'],
+      'Admin': ['VICE PRINCIPAL', 'COORDINATOR', 'ADMIN EXECUTIVE']
+    },
+    'Secondary': {
+      'Teaching': ['TGT', 'PGT', 'SENIOR TEACHER'],
+      'Admin': ['VICE PRINCIPAL', 'COORDINATOR', 'ADMIN MANAGER'],
+      'Non-Teaching': ['LAB ASSISTANT', 'LIBRARIAN', 'COUNSELOR']
+    },
+    'Senior Secondary': {
+      'Teaching': ['PGT', 'SENIOR LECTURER', 'HOD'],
+      'Admin': ['PRINCIPAL', 'VICE PRINCIPAL', 'ADMIN MANAGER'],
+      'Non-Teaching': ['LAB ASSISTANT', 'LIBRARIAN', 'COUNSELOR']
+    },
+    'Foundation': {
+      'Teaching': ['FACULTY', 'SENIOR FACULTY', 'HOD'],
+      'Admin': ['CENTER HEAD', 'ADMIN EXECUTIVE'],
+      'Academic Support': ['ACADEMIC COORDINATOR', 'TEST ANALYST']
+    },
+    'JEE': {
+      'Teaching': ['FACULTY', 'SENIOR FACULTY', 'HOD'],
+      'Admin': ['CENTER HEAD', 'ADMIN EXECUTIVE'],
+      'Academic Support': ['ACADEMIC COORDINATOR', 'CONTENT DEVELOPER']
+    },
+    'NEET': {
+      'Teaching': ['FACULTY', 'SENIOR FACULTY', 'HOD'],
+      'Admin': ['CENTER HEAD', 'ADMIN EXECUTIVE'],
+      'Academic Support': ['ACADEMIC COORDINATOR', 'CONTENT DEVELOPER']
+    }
+  };
+
+  const getCurrentCategories = () => {
+    return newPaper.segment ? categoryOptions[newPaper.segment] || [] : [];
+  };
+
+  const getCurrentDesignations = () => {
+    if (!newPaper.segment || !newPaper.category) return [];
+    return designationOptions[newPaper.segment]?.[newPaper.category] || [];
+  };
   const [questionPdfFile, setQuestionPdfFile] = useState<File | null>(null);
   const [answerPdfFile, setAnswerPdfFile] = useState<File | null>(null);
   const [extractedQuestions, setExtractedQuestions] = useState<any[]>([]);
@@ -262,7 +330,10 @@ export default function MockInterviewPipeline() {
           description: newPaper.description || null,
           stage_type: newPaper.stage_type,
           pdf_url: pdfUrl || 'manual-entry',
-          created_by: user?.id
+          created_by: user?.id,
+          segment: newPaper.segment || null,
+          category: newPaper.category || null,
+          designation: newPaper.designation || null
         })
         .select()
         .single();
@@ -329,7 +400,7 @@ export default function MockInterviewPipeline() {
   };
 
   const resetForm = () => {
-    setNewPaper({ title: '', description: '', stage_type: 'all' });
+    setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', designation: '' });
     setQuestionPdfFile(null);
     setAnswerPdfFile(null);
     setExtractedQuestions([]);
@@ -463,6 +534,68 @@ export default function MockInterviewPipeline() {
                       onChange={(e) => setNewPaper(p => ({ ...p, description: e.target.value }))}
                     />
                   </div>
+
+                  {/* Role-based Assignment */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Role-Based Assignment</CardTitle>
+                      <CardDescription>Assign this paper to specific roles (optional)</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Segment</Label>
+                          <Select 
+                            value={newPaper.segment} 
+                            onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', designation: '' }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select segment" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {segmentOptions.map(seg => (
+                                <SelectItem key={seg} value={seg}>{seg}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Category</Label>
+                          <Select 
+                            value={newPaper.category} 
+                            onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, designation: '' }))}
+                            disabled={!newPaper.segment}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getCurrentCategories().map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Designation</Label>
+                          <Select 
+                            value={newPaper.designation} 
+                            onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
+                            disabled={!newPaper.category}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select designation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getCurrentDesignations().map(des => (
+                                <SelectItem key={des} value={des}>{des}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Question PDF Upload */}
                   <Card>
@@ -603,14 +736,24 @@ export default function MockInterviewPipeline() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium truncate">{paper.title}</h4>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="outline" className="text-xs">
                               {getStageLabel(paper.stage_type)}
                             </Badge>
                             <Badge variant={paper.is_active ? "default" : "secondary"} className="text-xs">
                               {paper.is_active ? 'Active' : 'Inactive'}
                             </Badge>
+                            {paper.segment && (
+                              <Badge variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                {paper.segment}
+                              </Badge>
+                            )}
                           </div>
+                          {(paper.category || paper.designation) && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {paper.category}{paper.category && paper.designation && ' → '}{paper.designation}
+                            </div>
+                          )}
                         </div>
                         <div className="flex gap-1 ml-2">
                           <Button 
@@ -653,7 +796,7 @@ export default function MockInterviewPipeline() {
               </CardTitle>
               <CardDescription>
                 {selectedPaper 
-                  ? `${questions.length} questions • ${getStageLabel(selectedPaper.stage_type)}`
+                  ? `${questions.length} questions • ${getStageLabel(selectedPaper.stage_type)}${selectedPaper.segment ? ` • ${selectedPaper.segment}` : ''}${selectedPaper.designation ? ` • ${selectedPaper.designation}` : ''}`
                   : 'Click on a paper to view its questions and answer keys'
                 }
               </CardDescription>
