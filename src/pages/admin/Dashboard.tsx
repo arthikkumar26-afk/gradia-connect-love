@@ -21,7 +21,8 @@ import {
   UserCheck,
   AlertTriangle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  ClipboardList
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -207,6 +208,7 @@ const AdminDashboard = () => {
     { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
     { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
     { title: "Companies", icon: Building2, path: "/admin/companies" },
+    { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
     { title: "Reports", icon: BarChart3, path: "/admin/reports" },
     { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
     { title: "Settings", icon: Settings, path: "/admin/settings" },
