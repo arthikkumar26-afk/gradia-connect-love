@@ -721,6 +721,18 @@ export const MockInterviewTab = () => {
                         Book Slot
                       </Button>
                     )}
+                    {/* For Demo Feedback (stage 5) in progress, show View Feedback button */}
+                    {status === 'current' && stage.order === 5 && currentSession && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => navigate(`/candidate/demo-feedback?session=${currentSession.id}`)}
+                        className="gap-1"
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        View Feedback
+                      </Button>
+                    )}
                     {/* For completed stages with results, show expand/collapse button */}
                     {hasResults && (
                       <Button 
