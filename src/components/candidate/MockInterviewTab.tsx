@@ -382,7 +382,8 @@ export const MockInterviewTab = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{stage.name}</h3>
-                      {result?.ai_score !== undefined && (
+                      {/* Only show score for stages other than Interview Instructions (stage 1) */}
+                      {result?.ai_score !== undefined && stage.order !== 1 && (
                         <Badge variant="default" className="bg-green-500">
                           {result.ai_score.toFixed(0)}%
                         </Badge>
@@ -396,8 +397,8 @@ export const MockInterviewTab = () => {
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{stage.description}</p>
                     
-                    {/* Feedback for completed stages */}
-                    {result?.ai_feedback && (
+                    {/* Feedback for completed stages - exclude Interview Instructions (stage 1) */}
+                    {result?.ai_feedback && stage.order !== 1 && (
                       <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
                         {result.ai_feedback}
                       </p>
@@ -412,7 +413,14 @@ export const MockInterviewTab = () => {
                         Continue
                       </Button>
                     )}
-                    {status === 'completed' && (
+                    {/* For stage 1 (Interview Instructions), don't show View Results - just show email sent indicator */}
+                    {status === 'completed' && stage.order === 1 && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <Mail className="h-3 w-3 mr-1" />
+                        Email Sent
+                      </Badge>
+                    )}
+                    {status === 'completed' && stage.order !== 1 && (
                       <Button variant="outline" onClick={() => goToStage(stage.order)} size="sm">
                         View Results
                       </Button>
