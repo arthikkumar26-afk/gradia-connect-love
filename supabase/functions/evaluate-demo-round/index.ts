@@ -145,27 +145,56 @@ Return your evaluation as a JSON object with this structure:
 
     console.log('Demo evaluation result:', evaluation);
 
-    // Save stage result
-    const { error: saveError } = await supabase
+    // Check if stage result already exists
+    const { data: existingResult } = await supabase
       .from('mock_interview_stage_results')
-      .upsert({
-        session_id: sessionId,
-        stage_name: 'Demo Round',
-        stage_order: stageOrder,
-        ai_score: evaluation.overallScore,
-        ai_feedback: evaluation.detailedFeedback,
-        strengths: evaluation.strengths,
-        improvements: evaluation.improvements,
-        passed: evaluation.overallScore >= 65,
-        recording_url: recordingUrl,
-        questions: [{ type: 'demo', topic: demoTopic }],
-        answers: [{ demoCompleted: true, duration: durationSeconds }],
-        question_scores: evaluation.criteria,
-        completed_at: new Date().toISOString(),
-        time_taken_seconds: durationSeconds
-      }, {
-        onConflict: 'session_id,stage_order'
-      });
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('stage_order', stageOrder)
+      .maybeSingle();
+
+    let saveError;
+    if (existingResult) {
+      // Update existing
+      const { error } = await supabase
+        .from('mock_interview_stage_results')
+        .update({
+          ai_score: evaluation.overallScore,
+          ai_feedback: evaluation.detailedFeedback,
+          strengths: evaluation.strengths,
+          improvements: evaluation.improvements,
+          passed: evaluation.overallScore >= 65,
+          recording_url: recordingUrl,
+          questions: [{ type: 'demo', topic: demoTopic }],
+          answers: [{ demoCompleted: true, duration: durationSeconds }],
+          question_scores: evaluation.criteria,
+          completed_at: new Date().toISOString(),
+          time_taken_seconds: durationSeconds
+        })
+        .eq('id', existingResult.id);
+      saveError = error;
+    } else {
+      // Insert new
+      const { error } = await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: sessionId,
+          stage_name: 'Demo Round',
+          stage_order: stageOrder,
+          ai_score: evaluation.overallScore,
+          ai_feedback: evaluation.detailedFeedback,
+          strengths: evaluation.strengths,
+          improvements: evaluation.improvements,
+          passed: evaluation.overallScore >= 65,
+          recording_url: recordingUrl,
+          questions: [{ type: 'demo', topic: demoTopic }],
+          answers: [{ demoCompleted: true, duration: durationSeconds }],
+          question_scores: evaluation.criteria,
+          completed_at: new Date().toISOString(),
+          time_taken_seconds: durationSeconds
+        });
+      saveError = error;
+    }
 
     if (saveError) {
       console.error('Error saving demo result:', saveError);
@@ -173,7 +202,7 @@ Return your evaluation as a JSON object with this structure:
 
     // Update session to next stage
     const nextStageOrder = stageOrder + 1;
-    const isLastStage = stageOrder >= 5;
+    const isLastStage = stageOrder >= 3; // Now only 3 stages
 
     if (!isLastStage) {
       await supabase
@@ -206,13 +235,11 @@ Return your evaluation as a JSON object with this structure:
         .eq('id', sessionId);
     }
 
-    // Get next stage info for email
+    // Get next stage info for email (updated to 3 stages)
     const INTERVIEW_STAGES = [
       { name: 'Technical Assessment', order: 1, description: 'Technical questions' },
-      { name: 'HR Round', order: 2, description: 'Behavioral assessment' },
-      { name: 'Viva', order: 3, description: 'In-depth discussion' },
-      { name: 'Demo Round', order: 4, description: 'Teaching demonstration' },
-      { name: 'Final Review', order: 5, description: 'Final evaluation' }
+      { name: 'Demo Round', order: 2, description: 'Teaching demonstration' },
+      { name: 'Final Review', order: 3, description: 'Final evaluation' }
     ];
     
     const nextStage = !isLastStage ? INTERVIEW_STAGES.find(s => s.order === nextStageOrder) : null;
