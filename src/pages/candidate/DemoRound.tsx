@@ -1,0 +1,546 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
+import { 
+  Video, 
+  VideoOff, 
+  Mic, 
+  MicOff, 
+  Play, 
+  Square, 
+  Clock, 
+  Brain, 
+  CheckCircle2,
+  Loader2,
+  Monitor,
+  BookOpen,
+  ArrowRight,
+  AlertCircle
+} from 'lucide-react';
+import { useVideoRecorder } from '@/hooks/useVideoRecorder';
+
+interface DemoEvaluation {
+  overallScore: number;
+  criteria: {
+    teachingClarity: { score: number; feedback: string };
+    subjectKnowledge: { score: number; feedback: string };
+    presentationSkills: { score: number; feedback: string };
+    timeManagement: { score: number; feedback: string };
+    overallPotential: { score: number; feedback: string };
+  };
+  strengths: string[];
+  improvements: string[];
+  recommendation: string;
+  detailedFeedback: string;
+}
+
+export default function DemoRound() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionId = searchParams.get('session');
+  const stageOrder = searchParams.get('stage') || '4';
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [demoTopic, setDemoTopic] = useState('');
+  const [isStarted, setIsStarted] = useState(false);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluation, setEvaluation] = useState<DemoEvaluation | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [hasPermissions, setHasPermissions] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const {
+    isRecording,
+    recordedBlob,
+    startRecording,
+    stopRecording,
+    uploadRecording,
+  } = useVideoRecorder();
+
+  const MAX_DURATION = 600; // 10 minutes
+
+  useEffect(() => {
+    loadData();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isRecording) {
+      timerRef.current = setInterval(() => {
+        setTimeElapsed(prev => {
+          if (prev >= MAX_DURATION) {
+            handleStopDemo();
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isRecording]);
+
+  const loadData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/candidate/login');
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      setProfile(profileData);
+      
+      // Set default topic based on profile
+      if (profileData?.primary_subject) {
+        setDemoTopic(`Introduction to ${profileData.primary_subject}`);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast.error('Failed to load data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const requestPermissions = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      
+      setHasPermissions(true);
+      toast.success('Camera and microphone ready!');
+    } catch (error) {
+      console.error('Permission error:', error);
+      toast.error('Please allow camera and microphone access');
+    }
+  };
+
+  const handleStartDemo = async () => {
+    if (!demoTopic.trim()) {
+      toast.error('Please enter your demo topic');
+      return;
+    }
+
+    if (!hasPermissions) {
+      await requestPermissions();
+      return;
+    }
+
+    try {
+      await startRecording();
+      setIsStarted(true);
+      setTimeElapsed(0);
+      toast.success('Demo started! Teach your topic now.');
+    } catch (error) {
+      console.error('Error starting demo:', error);
+      toast.error('Failed to start recording');
+    }
+  };
+
+  const handleStopDemo = async () => {
+    stopRecording();
+    setIsStarted(false);
+    
+    // Stop video preview
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  useEffect(() => {
+    if (recordedBlob && !isRecording && timeElapsed > 30) {
+      submitDemo();
+    }
+  }, [recordedBlob, isRecording]);
+
+  const submitDemo = async () => {
+    if (!recordedBlob || !sessionId) return;
+    
+    setIsEvaluating(true);
+    
+    try {
+      // Upload recording
+      const recordingUrl = await uploadRecording(sessionId, parseInt(stageOrder));
+      
+      console.log('Submitting demo for evaluation:', { 
+        sessionId, 
+        stageOrder, 
+        demoTopic, 
+        duration: timeElapsed 
+      });
+
+      // Call evaluation function
+      const { data, error } = await supabase.functions.invoke('evaluate-demo-round', {
+        body: {
+          sessionId,
+          stageOrder: parseInt(stageOrder),
+          recordingUrl,
+          demoTopic,
+          candidateProfile: profile,
+          durationSeconds: timeElapsed
+        }
+      });
+
+      if (error) throw error;
+
+      console.log('Evaluation result:', data);
+      setEvaluation(data.evaluation);
+      setShowResult(true);
+
+      // Send next stage email if not complete
+      if (!data.isComplete && data.nextStage) {
+        await supabase.functions.invoke('send-mock-interview-invitation', {
+          body: {
+            candidateEmail: profile?.email,
+            candidateName: profile?.full_name || 'Candidate',
+            sessionId,
+            stageOrder: data.nextStageOrder,
+            stageName: data.nextStage.name,
+            stageDescription: data.nextStage.description,
+            appUrl: window.location.origin
+          }
+        });
+        toast.success(`Demo completed! Check email for ${data.nextStage.name} invitation.`);
+      } else if (data.isComplete) {
+        toast.success('🎊 Congratulations! You completed all interview stages!');
+      }
+
+    } catch (error) {
+      console.error('Error submitting demo:', error);
+      toast.error('Failed to evaluate demo. Please try again.');
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-500';
+    if (score >= 60) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (showResult && evaluation) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="container max-w-4xl">
+          <Card className="border-primary/20">
+            <CardHeader className="text-center">
+              <div className={`h-20 w-20 mx-auto rounded-full flex items-center justify-center mb-4 ${
+                evaluation.overallScore >= 65 ? 'bg-green-500' : 'bg-red-500'
+              }`}>
+                <CheckCircle2 className="h-10 w-10 text-white" />
+              </div>
+              <CardTitle className="text-2xl">Demo Round Complete!</CardTitle>
+              <CardDescription>AI Teaching Skills Evaluation</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Overall Score */}
+              <div className="text-center p-6 bg-muted/50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
+                <p className={`text-5xl font-bold ${getScoreColor(evaluation.overallScore)}`}>
+                  {evaluation.overallScore}%
+                </p>
+                <Badge variant={evaluation.overallScore >= 65 ? 'default' : 'destructive'} className="mt-2">
+                  {evaluation.recommendation}
+                </Badge>
+              </div>
+
+              {/* Criteria Breakdown */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Evaluation Breakdown</h3>
+                
+                {Object.entries(evaluation.criteria).map(([key, value]) => (
+                  <div key={key} className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      <span className={getScoreColor(value.score)}>{value.score}%</span>
+                    </div>
+                    <Progress value={value.score} className="h-2" />
+                    <p className="text-xs text-muted-foreground">{value.feedback}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Strengths & Improvements */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-green-50 dark:bg-green-900/10 rounded-lg">
+                  <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">Strengths</h4>
+                  <ul className="space-y-1">
+                    {evaluation.strengths.map((s, i) => (
+                      <li key={i} className="text-sm text-green-600 dark:text-green-400">• {s}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg">
+                  <h4 className="font-medium text-amber-700 dark:text-amber-400 mb-2">Areas to Improve</h4>
+                  <ul className="space-y-1">
+                    {evaluation.improvements.map((s, i) => (
+                      <li key={i} className="text-sm text-amber-600 dark:text-amber-400">• {s}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Detailed Feedback */}
+              <div className="p-4 bg-muted/30 rounded-lg">
+                <h4 className="font-medium mb-2">AI Feedback</h4>
+                <p className="text-sm text-muted-foreground">{evaluation.detailedFeedback}</p>
+              </div>
+
+              <Button onClick={() => navigate('/candidate/dashboard')} className="w-full gap-2">
+                Return to Dashboard
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEvaluating) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="py-12 text-center">
+            <div className="relative w-24 h-24 mx-auto mb-6">
+              <div className="absolute inset-0 border-4 border-primary/30 rounded-full animate-ping" />
+              <div className="absolute inset-2 border-4 border-primary/50 rounded-full animate-pulse" />
+              <div className="absolute inset-4 bg-primary rounded-full flex items-center justify-center">
+                <Brain className="h-8 w-8 text-primary-foreground animate-pulse" />
+              </div>
+            </div>
+            <h3 className="text-xl font-semibold mb-2">AI is Evaluating Your Demo</h3>
+            <p className="text-muted-foreground">
+              Analyzing teaching clarity, subject knowledge, and presentation skills...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background py-8">
+      <div className="container max-w-4xl space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <Badge className="mb-4">Stage {stageOrder} of 5</Badge>
+          <h1 className="text-3xl font-bold flex items-center justify-center gap-3">
+            <Monitor className="h-8 w-8 text-primary" />
+            Demo Round
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Demonstrate your teaching skills in a 5-10 minute live demo
+          </p>
+        </div>
+
+        {/* Instructions */}
+        {!isStarted && !hasPermissions && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                How It Works
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">1</div>
+                  <div>
+                    <p className="font-medium">Choose Your Topic</p>
+                    <p className="text-sm text-muted-foreground">Select a topic you're comfortable teaching</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">2</div>
+                  <div>
+                    <p className="font-medium">Start Demo</p>
+                    <p className="text-sm text-muted-foreground">AI will monitor your teaching demonstration (5-10 minutes)</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">3</div>
+                  <div>
+                    <p className="font-medium">Get AI Review</p>
+                    <p className="text-sm text-muted-foreground">Receive detailed feedback on teaching clarity, knowledge & presentation</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-700 dark:text-amber-400">Tips for a Great Demo</p>
+                  <ul className="text-sm text-amber-600 dark:text-amber-400 mt-1 space-y-1">
+                    <li>• Speak clearly and at a moderate pace</li>
+                    <li>• Explain concepts step by step</li>
+                    <li>• Use examples to illustrate points</li>
+                    <li>• Maintain eye contact with the camera</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Demo Interface */}
+        <Card className={isStarted ? 'border-primary' : ''}>
+          <CardContent className="py-6 space-y-6">
+            {/* Topic Input */}
+            {!isStarted && (
+              <div className="space-y-2">
+                <Label htmlFor="topic">Demo Topic *</Label>
+                <Input
+                  id="topic"
+                  value={demoTopic}
+                  onChange={(e) => setDemoTopic(e.target.value)}
+                  placeholder="e.g., Introduction to Algebra, Basic English Grammar, etc."
+                  className="text-lg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Choose a topic you're confident teaching (5-10 minute explanation)
+                </p>
+              </div>
+            )}
+
+            {/* Video Preview */}
+            <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              
+              {!hasPermissions && (
+                <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                  <div className="text-center">
+                    <Video className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-muted-foreground">Camera preview will appear here</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Recording indicator */}
+              {isRecording && (
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-full">
+                  <div className="h-3 w-3 bg-white rounded-full animate-pulse" />
+                  <span className="text-sm font-medium">RECORDING</span>
+                </div>
+              )}
+
+              {/* Timer */}
+              {isStarted && (
+                <div className="absolute top-4 right-4 bg-black/70 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-mono text-lg">{formatTime(timeElapsed)}</span>
+                  <span className="text-sm text-white/70">/ {formatTime(MAX_DURATION)}</span>
+                </div>
+              )}
+
+              {/* Progress bar */}
+              {isStarted && (
+                <div className="absolute bottom-0 left-0 right-0">
+                  <Progress value={(timeElapsed / MAX_DURATION) * 100} className="h-1 rounded-none" />
+                </div>
+              )}
+            </div>
+
+            {/* Controls */}
+            <div className="flex justify-center gap-4">
+              {!isStarted ? (
+                <>
+                  {!hasPermissions && (
+                    <Button onClick={requestPermissions} variant="outline" className="gap-2">
+                      <Video className="h-4 w-4" />
+                      Enable Camera
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={handleStartDemo} 
+                    disabled={!demoTopic.trim()}
+                    size="lg" 
+                    className="gap-2"
+                  >
+                    <Play className="h-5 w-5" />
+                    Start Demo
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  onClick={handleStopDemo} 
+                  variant="destructive" 
+                  size="lg" 
+                  className="gap-2"
+                  disabled={timeElapsed < 30}
+                >
+                  <Square className="h-5 w-5" />
+                  End Demo {timeElapsed < 30 && `(${30 - timeElapsed}s min)`}
+                </Button>
+              )}
+            </div>
+
+            {isStarted && (
+              <div className="text-center">
+                <p className="text-lg font-medium">Teaching: {demoTopic}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  AI is monitoring your teaching demonstration
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

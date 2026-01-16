@@ -37,11 +37,12 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Sending mock interview invitation:', { candidateEmail, stageName, stageOrder });
 
     const baseUrl = appUrl || 'https://gradia-link-shine.lovable.app';
-    const interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
-
-    // Different email content based on stage
-    const isStage1 = stageOrder === 1;
-    const isDemoStage = stageOrder === 2;
+    
+    // Demo Round is stage 4, use different URL
+    const isDemoStage = stageOrder === 4 && stageName === 'Demo Round';
+    const interviewLink = isDemoStage 
+      ? `${baseUrl}/candidate/demo-round?session=${sessionId}&stage=${stageOrder}`
+      : `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
 
     const stageEmoji = isDemoStage ? '🎬' : '📝';
     const stageTitle = isDemoStage ? 'Demo Teaching Session' : stageName;
@@ -70,8 +71,8 @@ const handler = async (req: Request): Promise<Response> => {
       <div class="info-box">
         <h3>📋 Interview Details:</h3>
         <ul>
-          <li><strong>Stage:</strong> ${stageName} (Stage ${stageOrder} of 4)</li>
-          <li><strong>Format:</strong> ${stageOrder === 1 ? '8 Questions' : stageOrder === 3 ? '5 Questions' : stageOrder === 4 ? '4 Questions' : '6 Questions'}</li>
+          <li><strong>Stage:</strong> ${stageName} (Stage ${stageOrder} of 5)</li>
+          <li><strong>Format:</strong> ${stageOrder === 1 ? '8 Questions' : stageOrder === 3 ? '5 Questions' : stageOrder === 5 ? '4 Questions' : '6 Questions'}</li>
           <li><strong>Time:</strong> ${stageOrder === 1 ? '150' : stageOrder === 3 ? '180' : '120'} seconds per question</li>
           <li><strong>Recording:</strong> Your responses will be video recorded</li>
         </ul>
@@ -89,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Gradia <noreply@gradia.co.in>",
       to: [candidateEmail],
-      subject: `${stageEmoji} Your ${stageTitle} is Ready - Stage ${stageOrder}`,
+      subject: `${stageEmoji} Your ${stageTitle} is Ready - Stage ${stageOrder} of 5`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -105,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
             .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0d9488; }
             .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
             .progress { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
-            .progress-step { width: 30px; height: 30px; border-radius: 50%; background: ${stageOrder === 1 ? '#0d9488' : '#ccc'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+            .progress-step { width: 24px; height: 24px; border-radius: 50%; background: #ccc; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
             .progress-step.active { background: #0d9488; }
             .progress-step.completed { background: #22c55e; }
           </style>
@@ -114,9 +115,9 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="container">
             <div class="header">
               <h1>${stageEmoji} ${stageTitle}</h1>
-              <div class="stage-badge">Stage ${stageOrder} of 4</div>
+              <div class="stage-badge">Stage ${stageOrder} of 5</div>
               <div class="progress">
-                ${[1, 2, 3, 4].map(i => `<div class="progress-step ${i < stageOrder ? 'completed' : i === stageOrder ? 'active' : ''}">${i}</div>`).join('')}
+                ${[1, 2, 3, 4, 5].map(i => `<div class="progress-step ${i < stageOrder ? 'completed' : i === stageOrder ? 'active' : ''}">${i}</div>`).join('')}
               </div>
             </div>
             <div class="content">
