@@ -275,15 +275,16 @@ export const MockInterviewTab = () => {
     if (!currentSession) return 'locked';
     const result = stageResults.find(r => r.stage_order === stageOrder);
     if (result?.completed_at) {
-      return result.passed ? 'passed' : 'failed';
+      return 'completed'; // Always show completed, not passed/failed
     }
     if (stageOrder === currentSession.current_stage_order) {
       return 'pending';
     }
     if (stageOrder < currentSession.current_stage_order) {
-      return 'passed';
+      return 'completed';
     }
-    return 'locked';
+    // Show as available (not locked) for future stages
+    return stageOrder <= currentSession.current_stage_order ? 'pending' : 'awaiting';
   };
 
   const formatDate = (dateString: string) => {
@@ -391,20 +392,20 @@ export const MockInterviewTab = () => {
                     key={stage.order}
                     className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
                       status === 'pending' ? 'border-primary bg-primary/5' :
-                      status === 'passed' ? 'border-green-500 bg-green-50 dark:bg-green-900/10' :
-                      status === 'failed' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
+                      status === 'completed' ? 'border-green-500 bg-green-50 dark:bg-green-900/10' :
+                      status === 'awaiting' ? 'border-amber-500/50 bg-amber-50/50 dark:bg-amber-900/10' :
                       'border-border bg-muted/20 opacity-50'
                     }`}
                   >
                     <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
                       status === 'pending' ? 'bg-primary text-primary-foreground' :
-                      status === 'passed' ? 'bg-green-500 text-white' :
-                      status === 'failed' ? 'bg-red-500 text-white' :
+                      status === 'completed' ? 'bg-green-500 text-white' :
+                      status === 'awaiting' ? 'bg-amber-500 text-white' :
                       'bg-muted text-muted-foreground'
                     }`}>
-                      {status === 'passed' ? <CheckCircle2 className="h-5 w-5" /> :
-                       status === 'failed' ? <XCircle className="h-5 w-5" /> :
+                      {status === 'completed' ? <CheckCircle2 className="h-5 w-5" /> :
                        status === 'pending' ? <Clock className="h-5 w-5 animate-pulse" /> :
+                       status === 'awaiting' ? <Clock className="h-5 w-5" /> :
                        <Icon className="h-5 w-5" />}
                     </div>
                     <div className="flex-1">
@@ -412,8 +413,11 @@ export const MockInterviewTab = () => {
                         <h4 className="font-semibold text-sm">{stage.name}</h4>
                         {result?.completed_at && (
                           <>
-                            <Badge variant={result.passed ? 'default' : 'destructive'} className="text-xs">
+                            <Badge variant="default" className="text-xs">
                               {result.ai_score?.toFixed(0)}%
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Completed
                             </Badge>
                             {result.recording_url && (
                               <Dialog>
@@ -436,8 +440,11 @@ export const MockInterviewTab = () => {
                         {status === 'pending' && (
                           <Badge variant="outline" className="gap-1 text-xs animate-pulse">
                             <Mail className="h-3 w-3" />
-                            Awaiting
+                            Check Email
                           </Badge>
+                        )}
+                        {status === 'awaiting' && (
+                          <Badge variant="secondary" className="text-xs">Next Up</Badge>
                         )}
                         {status === 'locked' && (
                           <Badge variant="secondary" className="text-xs">Locked</Badge>
