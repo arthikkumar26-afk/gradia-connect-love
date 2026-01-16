@@ -692,6 +692,112 @@ export type Database = {
           },
         ]
       }
+      mock_interview_sessions: {
+        Row: {
+          candidate_id: string
+          completed_at: string | null
+          created_at: string
+          current_stage_order: number
+          id: string
+          overall_feedback: string | null
+          overall_score: number | null
+          recording_url: string | null
+          stages_completed: Json | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_stage_order?: number
+          id?: string
+          overall_feedback?: string | null
+          overall_score?: number | null
+          recording_url?: string | null
+          stages_completed?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_stage_order?: number
+          id?: string
+          overall_feedback?: string | null
+          overall_score?: number | null
+          recording_url?: string | null
+          stages_completed?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mock_interview_sessions_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mock_interview_stage_results: {
+        Row: {
+          ai_feedback: string | null
+          ai_score: number | null
+          answers: Json | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          passed: boolean | null
+          questions: Json | null
+          session_id: string
+          stage_name: string
+          stage_order: number
+          time_taken_seconds: number | null
+        }
+        Insert: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          answers?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          passed?: boolean | null
+          questions?: Json | null
+          session_id: string
+          stage_name: string
+          stage_order: number
+          time_taken_seconds?: number | null
+        }
+        Update: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          answers?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          passed?: boolean | null
+          questions?: Json | null
+          session_id?: string
+          stage_name?: string
+          stage_order?: number
+          time_taken_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mock_interview_stage_results_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mock_interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mock_test_sessions: {
         Row: {
           answers: Json | null
