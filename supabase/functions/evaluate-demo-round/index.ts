@@ -1,5 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -202,10 +203,29 @@ Return your evaluation as a JSON object with this structure:
 
     // Update session to next stage (7 stages total)
     // Stage 4 is Demo Round, stages 5-7 are: Demo Feedback, HR Documents, Final Review
-    const nextStageOrder = stageOrder + 1;
+    // After Demo Round (stage 4), we auto-complete Demo Feedback (stage 5) and move to HR Documents (stage 6)
     const TOTAL_STAGES = 7;
     const isLastStage = stageOrder >= TOTAL_STAGES;
 
+    // Create Demo Feedback (Stage 5) result automatically with the same evaluation data
+    await supabase
+      .from('mock_interview_stage_results')
+      .insert({
+        session_id: sessionId,
+        stage_name: 'Demo Feedback',
+        stage_order: 5,
+        ai_score: evaluation.overallScore,
+        ai_feedback: evaluation.detailedFeedback,
+        strengths: evaluation.strengths,
+        improvements: evaluation.improvements,
+        passed: evaluation.overallScore >= 65,
+        question_scores: evaluation.criteria,
+        completed_at: new Date().toISOString()
+      });
+
+    // Move to HR Documents (stage 6) - skipping manual feedback review
+    const nextStageOrder = 6;
+    
     if (!isLastStage) {
       await supabase
         .from('mock_interview_sessions')
@@ -235,6 +255,162 @@ Return your evaluation as a JSON object with this structure:
           updated_at: new Date().toISOString()
         })
         .eq('id', sessionId);
+    }
+
+    // Send Demo Feedback email automatically
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    if (RESEND_API_KEY && candidateProfile?.email) {
+      try {
+        const resend = new Resend(RESEND_API_KEY);
+        
+        const scoreColor = evaluation.overallScore >= 80 ? '#16a34a' : evaluation.overallScore >= 65 ? '#ca8a04' : '#dc2626';
+        const scoreBg = evaluation.overallScore >= 80 ? '#f0fdf4' : evaluation.overallScore >= 65 ? '#fefce8' : '#fef2f2';
+        const passedText = evaluation.overallScore >= 65 ? 'Passed ✓' : 'Below Threshold';
+        
+        // Build criteria HTML
+        let criteriaHtml = '';
+        if (evaluation.criteria) {
+          for (const [key, value] of Object.entries(evaluation.criteria as Record<string, { score: number; feedback: string }>)) {
+            const labels: Record<string, string> = {
+              teachingClarity: 'Teaching Clarity',
+              subjectKnowledge: 'Subject Knowledge',
+              presentationSkills: 'Presentation Skills',
+              timeManagement: 'Time Management',
+              overallPotential: 'Overall Potential'
+            };
+            const cColor = value.score >= 80 ? '#16a34a' : value.score >= 65 ? '#ca8a04' : '#dc2626';
+            criteriaHtml += `
+              <div style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-weight: 600; color: #374151;">${labels[key] || key}</span>
+                  <span style="font-weight: 700; color: ${cColor};">${value.score}%</span>
+                </div>
+                <div style="height: 6px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                  <div style="height: 100%; width: ${value.score}%; background: ${cColor};"></div>
+                </div>
+                <p style="font-size: 13px; color: #6b7280; margin: 0;">${value.feedback}</p>
+              </div>
+            `;
+          }
+        }
+        
+        // Build strengths HTML
+        let strengthsHtml = '';
+        if (evaluation.strengths?.length) {
+          strengthsHtml = evaluation.strengths.map((s: string) => `
+            <li style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+              <span style="color: #16a34a; font-weight: bold;">✓</span>
+              <span style="color: #374151;">${s}</span>
+            </li>
+          `).join('');
+        }
+        
+        // Build improvements HTML
+        let improvementsHtml = '';
+        if (evaluation.improvements?.length) {
+          improvementsHtml = evaluation.improvements.map((i: string) => `
+            <li style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+              <span style="color: #ca8a04; font-weight: bold;">→</span>
+              <span style="color: #374151;">${i}</span>
+            </li>
+          `).join('');
+        }
+
+        const emailHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+                
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+                  <h1 style="margin: 0; color: white; font-size: 24px;">Demo Round Feedback</h1>
+                  <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 15px;">Your AI evaluation results are ready</p>
+                </div>
+
+                <!-- Content -->
+                <div style="padding: 30px;">
+                  <p style="margin: 0 0 20px 0; color: #374151; font-size: 16px;">Hello ${candidateProfile?.full_name || 'Candidate'},</p>
+                  
+                  <p style="margin: 0 0 25px 0; color: #6b7280; font-size: 15px; line-height: 1.6;">
+                    Your Demo Round has been evaluated by our AI system. Here are your detailed results:
+                  </p>
+
+                  <!-- Score Card -->
+                  <div style="background: ${scoreBg}; border: 2px solid ${scoreColor}; border-radius: 12px; padding: 24px; margin-bottom: 25px; text-align: center;">
+                    <h3 style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Overall Score</h3>
+                    <div style="font-size: 48px; font-weight: 700; color: ${scoreColor}; margin-bottom: 8px;">${evaluation.overallScore}%</div>
+                    <div style="display: inline-block; padding: 6px 16px; background: ${scoreColor}; color: white; border-radius: 20px; font-size: 14px; font-weight: 600;">
+                      ${passedText}
+                    </div>
+                  </div>
+
+                  <!-- Criteria Breakdown -->
+                  <h3 style="margin: 0 0 15px 0; color: #1f2937; font-size: 16px; font-weight: 600;">📊 Criteria Breakdown</h3>
+                  ${criteriaHtml}
+
+                  <!-- Strengths & Improvements -->
+                  <div style="display: flex; gap: 20px; margin-top: 25px;">
+                    ${strengthsHtml ? `
+                      <div style="flex: 1; padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                        <h4 style="margin: 0 0 12px 0; color: #16a34a; font-size: 15px;">💪 Strengths</h4>
+                        <ul style="margin: 0; padding: 0; list-style: none;">${strengthsHtml}</ul>
+                      </div>
+                    ` : ''}
+                    ${improvementsHtml ? `
+                      <div style="flex: 1; padding: 16px; background: #fefce8; border: 1px solid #fde68a; border-radius: 8px;">
+                        <h4 style="margin: 0 0 12px 0; color: #ca8a04; font-size: 15px;">📈 Areas to Improve</h4>
+                        <ul style="margin: 0; padding: 0; list-style: none;">${improvementsHtml}</ul>
+                      </div>
+                    ` : ''}
+                  </div>
+
+                  <!-- Summary -->
+                  ${evaluation.detailedFeedback ? `
+                    <div style="margin-top: 25px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+                      <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 15px;">💬 AI Evaluation Summary</h4>
+                      <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.6;">${evaluation.detailedFeedback}</p>
+                    </div>
+                  ` : ''}
+
+                  <!-- Next Step -->
+                  <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%); border-radius: 12px; text-align: center;">
+                    <h4 style="margin: 0 0 10px 0; color: #1e40af; font-size: 16px;">🎯 Next Step: HR Documents</h4>
+                    <p style="margin: 0 0 15px 0; color: #3b82f6; font-size: 14px;">Please submit your required documents for verification.</p>
+                    <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || '#'}/candidate/dashboard" 
+                       style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                      Upload Documents →
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="padding: 20px 30px; background: #f9fafb; text-align: center; border-top: 1px solid #e5e7eb;">
+                  <p style="margin: 0; color: #9ca3af; font-size: 13px;">This email was sent by the Gradia Interview System</p>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await resend.emails.send({
+          from: 'Gradia <onboarding@resend.dev>',
+          to: [candidateProfile.email],
+          subject: `🎓 Demo Round Feedback - Score: ${evaluation.overallScore}%`,
+          html: emailHtml
+        });
+
+        console.log('Demo feedback email sent successfully');
+      } catch (emailError) {
+        console.error('Error sending demo feedback email:', emailError);
+        // Don't fail the whole request if email fails
+      }
     }
 
     // Get next stage info for email (7 stages)
