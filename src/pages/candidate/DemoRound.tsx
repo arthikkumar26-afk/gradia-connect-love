@@ -366,6 +366,26 @@ export default function DemoRound() {
                 <p className="text-sm text-muted-foreground">{evaluation.detailedFeedback}</p>
               </div>
 
+              {/* Recording Playback */}
+              {recordedBlob && (
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Play className="h-4 w-4" />
+                    Your Demo Recording
+                  </h4>
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                    <video
+                      src={URL.createObjectURL(recordedBlob)}
+                      controls
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Review your teaching demo to see areas for improvement
+                  </p>
+                </div>
+              )}
+
               <Button onClick={() => navigate('/candidate/dashboard')} className="w-full gap-2">
                 Return to Dashboard
                 <ArrowRight className="h-4 w-4" />
