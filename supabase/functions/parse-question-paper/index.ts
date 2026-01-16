@@ -24,27 +24,30 @@ serve(async (req) => {
 
     console.log('Parsing PDF text for questions, length:', pdfText.length);
 
-    const systemPrompt = `You are a question extraction expert. Extract all questions from the given PDF text content.
+    const systemPrompt = `You are a multilingual question extraction expert. Extract all questions from the given PDF text content.
+IMPORTANT: The content may be in ANY language including Telugu, Hindi, Tamil, or other Indian languages. 
+Preserve the ORIGINAL language of the questions - do NOT translate them to English.
 
 For each question found:
 1. Extract the question number (if present)
-2. Extract the full question text
+2. Extract the FULL question text in its ORIGINAL language
 3. Determine if it's multiple choice, true/false, or text answer
-4. If multiple choice, extract all options
+4. If multiple choice, extract all options in their ORIGINAL language
 
 Return a JSON array of questions with this structure:
 {
   "questions": [
     {
       "question_number": 1,
-      "question_text": "The full question text here?",
+      "question_text": "The full question text here in ORIGINAL language",
       "question_type": "text" | "multiple_choice" | "true_false",
-      "options": ["A) Option 1", "B) Option 2"] // only for multiple_choice
+      "options": ["A) Option 1", "B) Option 2"] // only for multiple_choice, in original language
     }
   ]
 }
 
-Be thorough and extract ALL questions from the document. Ignore headers, footers, and instructions that are not actual questions.`;
+Be thorough and extract ALL questions from the document. Ignore headers, footers, and instructions that are not actual questions.
+If the text appears corrupted or unreadable, try to identify question patterns like numbered items (1., 2., Q1, Q2, etc.) and extract them.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
