@@ -430,6 +430,21 @@ export const MockInterviewTab = () => {
 
     setIsBookingSlot(true);
     try {
+      // Determine the actual slot time
+      let slotTime: Date;
+      let slotLabel: string;
+      
+      if (selectedSlot === 'immediately') {
+        slotTime = new Date();
+        slotLabel = 'Immediately';
+      } else if (selectedSlot === 'next_10_min') {
+        slotTime = new Date(Date.now() + 10 * 60 * 1000);
+        slotLabel = 'In 10 minutes';
+      } else {
+        slotTime = new Date(selectedSlot);
+        slotLabel = slotTime.toLocaleString();
+      }
+
       // Create stage result for slot booking
       await supabase
         .from('mock_interview_stage_results')
@@ -438,7 +453,7 @@ export const MockInterviewTab = () => {
           stage_name: 'Demo Slot Booking',
           stage_order: 3,
           ai_score: 100,
-          ai_feedback: `Demo slot booked for ${new Date(selectedSlot).toLocaleString()}`,
+          ai_feedback: `Demo slot booked: ${slotLabel}`,
           passed: true,
           completed_at: new Date().toISOString()
         });
@@ -459,11 +474,11 @@ export const MockInterviewTab = () => {
           stageName: 'Demo Round',
           stageDescription: 'Conduct your live teaching demonstration. Your session will be recorded and evaluated by AI.',
           appUrl: window.location.origin,
-          bookedSlot: new Date(selectedSlot).toLocaleString()
+          bookedSlot: slotLabel
         }
       });
 
-      toast.success(`Slot booked for ${new Date(selectedSlot).toLocaleString()}! Check email for Demo Round.`);
+      toast.success(`Slot booked: ${slotLabel}! Check email for Demo Round.`);
       setShowSlotBooking(false);
       setSelectedSlot('');
       loadData(); // Refresh the data
@@ -821,7 +836,30 @@ export const MockInterviewTab = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <ScrollArea className="max-h-[400px] pr-4">
+          {/* Quick Options */}
+          <div className="space-y-2 pb-2 border-b">
+            <h4 className="font-medium text-sm text-muted-foreground">Quick Options</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={selectedSlot === 'immediately' ? 'default' : 'outline'}
+                className="w-full"
+                onClick={() => setSelectedSlot('immediately')}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Immediately
+              </Button>
+              <Button
+                variant={selectedSlot === 'next_10_min' ? 'default' : 'outline'}
+                className="w-full"
+                onClick={() => setSelectedSlot('next_10_min')}
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                In 10 Minutes
+              </Button>
+            </div>
+          </div>
+          
+          <ScrollArea className="max-h-[300px] pr-4">
             <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="space-y-2">
               {generateTimeSlots().reduce((groups: { [key: string]: { date: string; time: string; value: string }[] }, slot) => {
                 if (!groups[slot.date]) groups[slot.date] = [];
