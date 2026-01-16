@@ -86,7 +86,7 @@ export default function MockInterviewPipeline() {
     'Pre-Primary': {
       'Teaching': ['MOTHER TEACHER'],
       'Helping/Supporting': ['ASSOCIATE TEACHER', 'CARE TAKER'],
-      'Admin': ['VICE PRINCIPAL', 'COORDINATOR']
+      'Admin': ['VICE PRINCIPAL']
     },
     'Primary': {
       'Teaching': ['PRT', 'TGT', 'ASSO.TEACHER'],
