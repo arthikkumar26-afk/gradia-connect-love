@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -71,8 +71,10 @@ export default function ResumeBuilderTab() {
   const [showPreview, setShowPreview] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("modern");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [mockTestData, setMockTestData] = useState<any>(null);
   const [newSkill, setNewSkill] = useState("");
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   const [formData, setFormData] = useState<ResumeData>({
     fullName: "",
@@ -86,68 +88,148 @@ export default function ResumeBuilderTab() {
   });
 
   useEffect(() => {
-    fetchUserProfile();
+    loadSavedResume();
     fetchMockTestResults();
   }, []);
 
-  const fetchUserProfile = async () => {
+  const loadSavedResume = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile) {
-          setFormData(prev => ({
-            ...prev,
-            fullName: profile.full_name || "",
-            email: profile.email || "",
-            phone: profile.mobile || "",
-            location: profile.location || `${profile.current_district || ""}, ${profile.current_state || ""}`.replace(/^, |, $/g, ""),
-          }));
-        }
+      if (!user) return;
 
-        const { data: education } = await supabase
-          .from('educational_qualifications')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('display_order');
-        
-        if (education && education.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            education: education.map(edu => ({
-              degree: `${edu.education_level}${edu.specialization ? ` - ${edu.specialization}` : ""}`,
-              school: edu.school_college_name || edu.board_university || "",
-              year: edu.year_of_passing?.toString() || ""
-            }))
-          }));
-        }
+      // First try to load saved resume from database
+      const { data: savedResume } = await supabase
+        .from('candidate_resumes')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-        const { data: experience } = await supabase
-          .from('work_experience')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('display_order');
+      if (savedResume) {
+        const expData = savedResume.experience as unknown as Experience[] | null;
+        const eduData = savedResume.education as unknown as Education[] | null;
         
-        if (experience && experience.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            experience: experience.map(exp => ({
-              title: exp.designation || "",
-              company: exp.organization || "",
-              duration: `${exp.from_date || ""} - ${exp.to_date || "Present"}`,
-              description: exp.department || ""
-            }))
-          }));
-        }
+        setFormData({
+          fullName: savedResume.full_name || "",
+          email: savedResume.email || "",
+          phone: savedResume.phone || "",
+          location: savedResume.location || "",
+          summary: savedResume.summary || "",
+          experience: expData || [{ title: "", company: "", duration: "", description: "" }],
+          education: eduData || [{ degree: "", school: "", year: "" }],
+          skills: savedResume.skills || [],
+        });
+        setSelectedTemplate(savedResume.selected_template || "modern");
+        return;
+      }
+
+      // If no saved resume, populate from profile
+      await fetchUserProfile(user.id);
+    } catch (error) {
+      console.error("Error loading saved resume:", error);
+    }
+  };
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profile) {
+        setFormData(prev => ({
+          ...prev,
+          fullName: profile.full_name || "",
+          email: profile.email || "",
+          phone: profile.mobile || "",
+          location: profile.location || `${profile.current_district || ""}, ${profile.current_state || ""}`.replace(/^, |, $/g, ""),
+        }));
+      }
+
+      const { data: education } = await supabase
+        .from('educational_qualifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('display_order');
+      
+      if (education && education.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          education: education.map(edu => ({
+            degree: `${edu.education_level}${edu.specialization ? ` - ${edu.specialization}` : ""}`,
+            school: edu.school_college_name || edu.board_university || "",
+            year: edu.year_of_passing?.toString() || ""
+          }))
+        }));
+      }
+
+      const { data: experience } = await supabase
+        .from('work_experience')
+        .select('*')
+        .eq('user_id', userId)
+        .order('display_order');
+      
+      if (experience && experience.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          experience: experience.map(exp => ({
+            title: exp.designation || "",
+            company: exp.organization || "",
+            duration: `${exp.from_date || ""} - ${exp.to_date || "Present"}`,
+            description: exp.department || ""
+          }))
+        }));
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
+  };
+
+  const saveResume = async () => {
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Not logged in",
+          description: "Please log in to save your resume.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('candidate_resumes')
+        .upsert({
+          user_id: user.id,
+          full_name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          location: formData.location,
+          summary: formData.summary,
+          experience: JSON.parse(JSON.stringify(formData.experience)),
+          education: JSON.parse(JSON.stringify(formData.education)),
+          skills: formData.skills,
+          selected_template: selectedTemplate,
+        }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
+      setHasUnsavedChanges(false);
+      toast({
+        title: "Resume Saved!",
+        description: "Your resume has been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving resume:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save resume. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setIsSaving(false);
   };
 
   const fetchMockTestResults = async () => {
@@ -164,12 +246,6 @@ export default function ResumeBuilderTab() {
         
         if (mockTests && mockTests.length > 0) {
           setMockTestData(mockTests[0]);
-          if (mockTests[0].score && mockTests[0].score >= 70) {
-            const existingSkills = formData.skills;
-            const newSkills = ["Problem Solving", "Quick Learner", "Analytical Skills"];
-            const mergedSkills = [...new Set([...existingSkills, ...newSkills])];
-            setFormData(prev => ({ ...prev, skills: mergedSkills }));
-          }
         }
       }
     } catch (error) {
@@ -180,7 +256,12 @@ export default function ResumeBuilderTab() {
   const handleSyncFromMockTest = async () => {
     setIsLoading(true);
     try {
-      await fetchMockTestResults();
+      if (mockTestData && mockTestData.score && mockTestData.score >= 70) {
+        const newSkills = ["Problem Solving", "Quick Learner", "Analytical Skills"];
+        const mergedSkills = [...new Set([...formData.skills, ...newSkills])];
+        setFormData(prev => ({ ...prev, skills: mergedSkills }));
+        setHasUnsavedChanges(true);
+      }
       toast({
         title: "Resume Updated!",
         description: "Skills updated based on mock test performance.",
@@ -197,18 +278,21 @@ export default function ResumeBuilderTab() {
 
   const handleInputChange = (field: keyof ResumeData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setHasUnsavedChanges(true);
   };
 
   const handleExperienceChange = (index: number, field: keyof Experience, value: string) => {
     const updated = [...formData.experience];
     updated[index] = { ...updated[index], [field]: value };
     setFormData(prev => ({ ...prev, experience: updated }));
+    setHasUnsavedChanges(true);
   };
 
   const handleEducationChange = (index: number, field: keyof Education, value: string) => {
     const updated = [...formData.education];
     updated[index] = { ...updated[index], [field]: value };
     setFormData(prev => ({ ...prev, education: updated }));
+    setHasUnsavedChanges(true);
   };
 
   const addExperience = () => {
@@ -216,6 +300,7 @@ export default function ResumeBuilderTab() {
       ...prev,
       experience: [...prev.experience, { title: "", company: "", duration: "", description: "" }]
     }));
+    setHasUnsavedChanges(true);
   };
 
   const removeExperience = (index: number) => {
@@ -223,6 +308,7 @@ export default function ResumeBuilderTab() {
       ...prev,
       experience: prev.experience.filter((_, i) => i !== index)
     }));
+    setHasUnsavedChanges(true);
   };
 
   const addEducation = () => {
@@ -230,6 +316,7 @@ export default function ResumeBuilderTab() {
       ...prev,
       education: [...prev.education, { degree: "", school: "", year: "" }]
     }));
+    setHasUnsavedChanges(true);
   };
 
   const removeEducation = (index: number) => {
@@ -237,6 +324,7 @@ export default function ResumeBuilderTab() {
       ...prev,
       education: prev.education.filter((_, i) => i !== index)
     }));
+    setHasUnsavedChanges(true);
   };
 
   const addSkill = () => {
@@ -246,6 +334,7 @@ export default function ResumeBuilderTab() {
         skills: [...prev.skills, newSkill.trim()]
       }));
       setNewSkill("");
+      setHasUnsavedChanges(true);
     }
   };
 
@@ -254,6 +343,12 @@ export default function ResumeBuilderTab() {
       ...prev,
       skills: prev.skills.filter(s => s !== skill)
     }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    setHasUnsavedChanges(true);
   };
 
   const handleExport = () => {
@@ -283,11 +378,24 @@ export default function ResumeBuilderTab() {
   return (
     <div className="space-y-4">
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleSyncFromMockTest} disabled={isLoading}>
+          <Button variant="outline" size="sm" onClick={handleSyncFromMockTest} disabled={isLoading || !mockTestData}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
             Sync Mock Test
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={saveResume} 
+            disabled={isSaving}
+            variant={hasUnsavedChanges ? "default" : "outline"}
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-1" />
+            )}
+            {hasUnsavedChanges ? "Save*" : "Save"}
           </Button>
         </div>
         <div className="flex gap-2">
@@ -295,12 +403,22 @@ export default function ResumeBuilderTab() {
             <Eye className="h-4 w-4 mr-1" />
             {showPreview ? "Edit" : "Preview"}
           </Button>
-          <Button size="sm" onClick={handleExport}>
+          <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
             Export PDF
           </Button>
         </div>
       </div>
+
+      {/* Unsaved Changes Banner */}
+      {hasUnsavedChanges && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2 flex items-center justify-between">
+          <span className="text-xs text-amber-700">You have unsaved changes</span>
+          <Button size="sm" variant="ghost" className="h-6 text-xs text-amber-700" onClick={saveResume} disabled={isSaving}>
+            Save now
+          </Button>
+        </div>
+      )}
 
       {/* Mock Test Insight Banner */}
       {mockTestData && (
@@ -347,7 +465,7 @@ export default function ResumeBuilderTab() {
                 {RESUME_TEMPLATES.map((template) => (
                   <div
                     key={template.id}
-                    onClick={() => setSelectedTemplate(template.id)}
+                    onClick={() => handleTemplateChange(template.id)}
                     className={`cursor-pointer rounded-lg border-2 p-2 transition-all hover:shadow-md ${
                       selectedTemplate === template.id
                         ? "border-primary ring-2 ring-primary/20"
