@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useConversation } from '@elevenlabs/react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +25,9 @@ import {
   ArrowRight,
   AlertCircle,
   Bot,
-  Sparkles
+  Sparkles,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { useVideoRecorder } from '@/hooks/useVideoRecorder';
 
@@ -59,6 +62,10 @@ export default function DemoRound() {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [hasPermissions, setHasPermissions] = useState(false);
   const [currentInstruction, setCurrentInstruction] = useState(0);
+  const [voiceAIActive, setVoiceAIActive] = useState(false);
+  const [voiceAIConnecting, setVoiceAIConnecting] = useState(false);
+  const [voiceAIMessage, setVoiceAIMessage] = useState('');
+  const [lastSpokenInstruction, setLastSpokenInstruction] = useState(-1);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,19 +82,45 @@ export default function DemoRound() {
 
   // AI Instructor messages based on time
   const aiInstructions = [
-    { time: 0, message: "Welcome! Start by introducing yourself and the topic you'll be teaching today.", icon: "👋" },
-    { time: 30, message: "Great start! Now explain why this topic is important and what students will learn.", icon: "🎯" },
-    { time: 60, message: "Begin explaining the core concept. Remember to speak clearly and at a steady pace.", icon: "📚" },
-    { time: 120, message: "Excellent! Use an example or analogy to help students understand better.", icon: "💡" },
-    { time: 180, message: "You're doing well! Try to engage as if students are present - ask rhetorical questions.", icon: "❓" },
-    { time: 240, message: "If applicable, demonstrate a practical application of the concept.", icon: "🔧" },
-    { time: 300, message: "Halfway there! Summarize key points covered so far before continuing.", icon: "📝" },
-    { time: 360, message: "Cover any additional details or advanced aspects of your topic.", icon: "🚀" },
-    { time: 420, message: "Address common mistakes or misconceptions students might have.", icon: "⚠️" },
-    { time: 480, message: "Start wrapping up. Provide a brief summary of everything you've taught.", icon: "🎁" },
-    { time: 540, message: "Final minute! Conclude with key takeaways and encourage practice.", icon: "🏁" },
-    { time: 570, message: "Excellent work! Feel free to end your demo when ready.", icon: "✨" },
+    { time: 0, message: "Welcome! Start by introducing yourself and the topic you'll be teaching today.", icon: "👋", voice: "Welcome! Please start by introducing yourself and the topic you will be teaching today." },
+    { time: 30, message: "Great start! Now explain why this topic is important and what students will learn.", icon: "🎯", voice: "Great start! Now explain why this topic is important and what students will learn." },
+    { time: 60, message: "Begin explaining the core concept. Remember to speak clearly and at a steady pace.", icon: "📚", voice: "Now begin explaining the core concept. Remember to speak clearly and at a steady pace." },
+    { time: 120, message: "Excellent! Use an example or analogy to help students understand better.", icon: "💡", voice: "Excellent! Try using an example or analogy to help students understand better." },
+    { time: 180, message: "You're doing well! Try to engage as if students are present - ask rhetorical questions.", icon: "❓", voice: "You're doing well! Try to engage as if students are present. Ask some rhetorical questions." },
+    { time: 240, message: "If applicable, demonstrate a practical application of the concept.", icon: "🔧", voice: "If applicable, demonstrate a practical application of the concept you're teaching." },
+    { time: 300, message: "Halfway there! Summarize key points covered so far before continuing.", icon: "📝", voice: "You're halfway there! Take a moment to summarize the key points you've covered so far." },
+    { time: 360, message: "Cover any additional details or advanced aspects of your topic.", icon: "🚀", voice: "Now cover any additional details or advanced aspects of your topic." },
+    { time: 420, message: "Address common mistakes or misconceptions students might have.", icon: "⚠️", voice: "Address any common mistakes or misconceptions that students might have about this topic." },
+    { time: 480, message: "Start wrapping up. Provide a brief summary of everything you've taught.", icon: "🎁", voice: "Start wrapping up now. Provide a brief summary of everything you've taught." },
+    { time: 540, message: "Final minute! Conclude with key takeaways and encourage practice.", icon: "🏁", voice: "Final minute! Conclude with your key takeaways and encourage students to practice." },
+    { time: 570, message: "Excellent work! Feel free to end your demo when ready.", icon: "✨", voice: "Excellent work! You can end your demo whenever you're ready. Thank you for your presentation!" },
   ];
+
+  // ElevenLabs Voice AI conversation hook
+  const conversation = useConversation({
+    onConnect: () => {
+      console.log('Voice AI connected');
+      setVoiceAIActive(true);
+      setVoiceAIConnecting(false);
+      toast.success('Voice AI Instructor connected!');
+    },
+    onDisconnect: () => {
+      console.log('Voice AI disconnected');
+      setVoiceAIActive(false);
+    },
+    onMessage: (message: unknown) => {
+      console.log('Voice AI message:', message);
+      const msg = message as { type?: string; agent_response_event?: { agent_response?: string } };
+      if (msg.type === 'agent_response') {
+        setVoiceAIMessage(msg.agent_response_event?.agent_response || '');
+      }
+    },
+    onError: (error) => {
+      console.error('Voice AI error:', error);
+      setVoiceAIConnecting(false);
+      toast.error('Voice AI connection failed');
+    },
+  });
 
   useEffect(() => {
     loadData();
@@ -118,7 +151,7 @@ export default function DemoRound() {
     };
   }, [isRecording]);
 
-  // Update AI instruction based on time
+  // Update AI instruction based on time and send voice instruction
   useEffect(() => {
     if (isRecording) {
       const currentIdx = aiInstructions.findIndex((instr, idx) => {
@@ -127,9 +160,67 @@ export default function DemoRound() {
       });
       if (currentIdx !== -1 && currentIdx !== currentInstruction) {
         setCurrentInstruction(currentIdx);
+        
+        // Send voice instruction if AI is connected and this is a new instruction
+        if (voiceAIActive && currentIdx !== lastSpokenInstruction) {
+          const instruction = aiInstructions[currentIdx];
+          conversation.sendContextualUpdate(instruction.voice);
+          setLastSpokenInstruction(currentIdx);
+        }
       }
     }
-  }, [timeElapsed, isRecording]);
+  }, [timeElapsed, isRecording, voiceAIActive, lastSpokenInstruction]);
+
+  // Connect to Voice AI when demo starts
+  const connectVoiceAI = useCallback(async () => {
+    try {
+      setVoiceAIConnecting(true);
+      
+      // Get token from edge function
+      const { data, error } = await supabase.functions.invoke('elevenlabs-demo-instructor', {
+        body: { action: 'get-token' }
+      });
+
+      if (error || !data?.token) {
+        console.error('Failed to get voice AI token:', error || 'No token received');
+        setVoiceAIConnecting(false);
+        return;
+      }
+
+      // Start the conversation with WebRTC
+      await conversation.startSession({
+        conversationToken: data.token,
+        connectionType: 'webrtc' as const,
+      });
+
+    } catch (error) {
+      console.error('Failed to connect voice AI:', error);
+      setVoiceAIConnecting(false);
+    }
+  }, [conversation]);
+
+  // Disconnect Voice AI
+  const disconnectVoiceAI = useCallback(async () => {
+    try {
+      await conversation.endSession();
+      setVoiceAIActive(false);
+    } catch (error) {
+      console.error('Failed to disconnect voice AI:', error);
+    }
+  }, [conversation]);
+
+  // End demo and say thank you
+  const handleDemoComplete = useCallback(async () => {
+    if (voiceAIActive) {
+      // Send thank you message before disconnecting
+      conversation.sendContextualUpdate("Thank you so much for your wonderful teaching demonstration! You did a great job. The demo is now complete. Goodbye and best of luck!");
+      
+      // Wait a moment for the message to be spoken, then disconnect
+      setTimeout(async () => {
+        await disconnectVoiceAI();
+      }, 5000);
+    }
+  }, [voiceAIActive, conversation, disconnectVoiceAI]);
 
   const loadData = async () => {
     try {
@@ -203,6 +294,9 @@ export default function DemoRound() {
   const handleStopDemo = async () => {
     stopRecording();
     setIsStarted(false);
+    
+    // Trigger thank you message from voice AI
+    await handleDemoComplete();
     
     // Stop video preview
     if (videoRef.current?.srcObject) {
@@ -549,7 +643,7 @@ export default function DemoRound() {
             </div>
 
             {/* Controls */}
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
               {!isStarted ? (
                 <>
                   {!hasPermissions && (
@@ -558,6 +652,24 @@ export default function DemoRound() {
                       Enable Camera
                     </Button>
                   )}
+                  
+                  {/* Voice AI Toggle */}
+                  <Button 
+                    onClick={voiceAIActive ? disconnectVoiceAI : connectVoiceAI}
+                    variant={voiceAIActive ? "default" : "outline"}
+                    className="gap-2"
+                    disabled={voiceAIConnecting}
+                  >
+                    {voiceAIConnecting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : voiceAIActive ? (
+                      <Volume2 className="h-4 w-4" />
+                    ) : (
+                      <VolumeX className="h-4 w-4" />
+                    )}
+                    {voiceAIConnecting ? 'Connecting...' : voiceAIActive ? 'Voice AI On' : 'Enable Voice AI'}
+                  </Button>
+                  
                   <Button 
                     onClick={handleStartDemo} 
                     disabled={!demoTopic.trim()}
@@ -569,16 +681,29 @@ export default function DemoRound() {
                   </Button>
                 </>
               ) : (
-                <Button 
-                  onClick={handleStopDemo} 
-                  variant="destructive" 
-                  size="lg" 
-                  className="gap-2"
-                  disabled={timeElapsed < 30}
-                >
-                  <Square className="h-5 w-5" />
-                  End Demo {timeElapsed < 30 && `(${30 - timeElapsed}s min)`}
-                </Button>
+                <>
+                  {/* Voice AI Status during recording */}
+                  {voiceAIActive && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <Volume2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="text-sm text-green-700 dark:text-green-400">Voice AI Active</span>
+                      {conversation.isSpeaking && (
+                        <Badge variant="outline" className="text-xs animate-pulse">Speaking...</Badge>
+                      )}
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={handleStopDemo} 
+                    variant="destructive" 
+                    size="lg" 
+                    className="gap-2"
+                    disabled={timeElapsed < 30}
+                  >
+                    <Square className="h-5 w-5" />
+                    End Demo {timeElapsed < 30 && `(${30 - timeElapsed}s min)`}
+                  </Button>
+                </>
               )}
             </div>
 
@@ -589,21 +714,35 @@ export default function DemoRound() {
                   <CardContent className="py-4">
                     <div className="flex items-start gap-4">
                       <div className="relative flex-shrink-0">
-                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-                          <Bot className="h-7 w-7 text-primary-foreground" />
+                        <div className={`h-14 w-14 rounded-full flex items-center justify-center shadow-lg ${
+                          voiceAIActive 
+                            ? 'bg-gradient-to-br from-green-500 to-green-600' 
+                            : 'bg-gradient-to-br from-primary to-primary/80'
+                        } ${conversation.isSpeaking ? 'animate-pulse' : ''}`}>
+                          <Bot className="h-7 w-7 text-white" />
                         </div>
-                        <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-background">
-                          <Sparkles className="h-3 w-3 text-white" />
+                        <div className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full flex items-center justify-center border-2 border-background ${
+                          voiceAIActive ? 'bg-green-500' : 'bg-primary'
+                        }`}>
+                          {voiceAIActive ? (
+                            <Volume2 className="h-3 w-3 text-white" />
+                          ) : (
+                            <Sparkles className="h-3 w-3 text-white" />
+                          )}
                         </div>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-primary">AI Instructor</span>
-                          <Badge variant="outline" className="text-xs">Live Guidance</Badge>
+                          <Badge variant={voiceAIActive ? "default" : "outline"} className="text-xs">
+                            {voiceAIActive ? (conversation.isSpeaking ? '🎤 Speaking' : '🎧 Listening') : 'Text Mode'}
+                          </Badge>
                         </div>
                         <div className="bg-background/80 backdrop-blur rounded-lg p-3 border border-primary/20 relative">
                           <span className="text-2xl mr-2">{aiInstructions[currentInstruction]?.icon}</span>
-                          <p className="text-sm inline">{aiInstructions[currentInstruction]?.message}</p>
+                          <p className="text-sm inline">
+                            {voiceAIMessage || aiInstructions[currentInstruction]?.message}
+                          </p>
                           <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-background/80" />
                         </div>
                         <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
@@ -611,6 +750,15 @@ export default function DemoRound() {
                           <span>Next tip in {Math.max(0, (aiInstructions[currentInstruction + 1]?.time || MAX_DURATION) - timeElapsed)}s</span>
                           <span className="mx-1">•</span>
                           <span>Teaching: {demoTopic}</span>
+                          {voiceAIActive && (
+                            <>
+                              <span className="mx-1">•</span>
+                              <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
+                                <Volume2 className="h-3 w-3" />
+                                Voice Active
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
