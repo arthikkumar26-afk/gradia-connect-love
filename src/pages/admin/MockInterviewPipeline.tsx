@@ -421,6 +421,33 @@ export default function MockInterviewPipeline() {
         }
       }
 
+      // Insert solutions if available
+      if (extractedSolutions.length > 0 && insertedQuestions) {
+        const solutionsToInsert = extractedSolutions.map(s => {
+          const matchingQuestion = insertedQuestions.find(
+            q => q.question_number === s.question_number
+          );
+          if (!matchingQuestion) return null;
+
+          return {
+            question_id: matchingQuestion.id,
+            solution_text: s.solution_text || s.answer_text || '',
+            step_by_step: s.step_by_step || [],
+            explanation: s.explanation || null
+          };
+        }).filter(Boolean);
+
+        if (solutionsToInsert.length > 0) {
+          const { error: solutionsError } = await supabase
+            .from('interview_solutions')
+            .insert(solutionsToInsert);
+
+          if (solutionsError) {
+            console.error('Error inserting solutions:', solutionsError);
+          }
+        }
+      }
+
       toast.success('Question paper saved successfully!');
       resetForm();
       loadPapers();
