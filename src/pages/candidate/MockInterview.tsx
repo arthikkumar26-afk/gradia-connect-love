@@ -813,8 +813,8 @@ const MockInterview = () => {
       );
     }
 
-    // Stage 3: Demo Slot Booking
-    if (stage.stageType === 'slot_booking' || stage.order === 3) {
+    // Stage 2 & 4: Slot Booking (Technical Assessment Slot Booking or Demo Slot Booking)
+    if (stage.stageType === 'slot_booking' || stage.order === 2 || stage.order === 4) {
       const timeSlots = generateTimeSlots();
       return (
         <div className="min-h-screen bg-background p-4 md:p-8">
@@ -825,9 +825,14 @@ const MockInterview = () => {
                 <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calendar className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">Book Your Demo Interview Slot</CardTitle>
+                <CardTitle className="text-2xl">
+                  {stage.order === 2 ? 'Book Your Technical Assessment Slot' : 'Book Your Demo Interview Slot'}
+                </CardTitle>
                 <CardDescription className="text-base mt-2">
-                  Select a convenient time for your 10-15 minute teaching demonstration
+                  {stage.order === 2 
+                    ? 'Select a convenient time for your 20-25 minute technical assessment'
+                    : 'Select a convenient time for your 10-15 minute teaching demonstration'
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -885,8 +890,8 @@ const MockInterview = () => {
       );
     }
 
-    // Stage 5: Demo Feedback
-    if (stage.stageType === 'feedback' || stage.order === 5) {
+    // Stage 6: Demo Feedback
+    if (stage.stageType === 'feedback' || stage.order === 6) {
       return (
         <div className="min-h-screen bg-background p-4 md:p-8">
           <div className="max-w-3xl mx-auto">
@@ -935,8 +940,8 @@ const MockInterview = () => {
       );
     }
 
-    // Stage 7: All Reviews
-    if (stage.stageType === 'review' || stage.order === 7) {
+    // Stage 8: All Reviews
+    if (stage.stageType === 'review' || stage.order === 8) {
       return (
         <div className="min-h-screen bg-background p-4 md:p-8">
           <div className="max-w-3xl mx-auto">
