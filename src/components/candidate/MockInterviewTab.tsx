@@ -35,10 +35,13 @@ import {
   X,
   File,
   UserPlus,
-  Award
+  Award,
+  MapPin
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { indiaLocationData } from "@/data/indiaLocations";
 
 interface InterviewStage {
   name: string;
@@ -95,6 +98,21 @@ export const MockInterviewTab = () => {
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
   const [selectedInterviewType, setSelectedInterviewType] = useState<'new_employee' | 'promotions' | null>(null);
+  
+  // Slot booking form state for Stage 2
+  const [slotBookingForm, setSlotBookingForm] = useState({
+    date: '',
+    time: '',
+    location: '',
+    state: '',
+    district: '',
+    pincode: '',
+    programme: '',
+    segment: '',
+    department: '',
+    designation: '',
+    classLevel: ''
+  });
   
   // HR Documents state
   const [hrDocuments, setHrDocuments] = useState<{
@@ -1265,110 +1283,344 @@ export const MockInterviewTab = () => {
                 {/* Slot Booking Stage (2 or 4) - Show compact calendar/time picker inline */}
                 {isExpanded && status === 'current' && (stage.order === 2 || stage.order === 4) && !hasResults && (
                   <div className="mt-4 pt-4 border-t space-y-4">
-                    {/* Quick Options - Compact */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium text-muted-foreground">Quick:</span>
-                      <Button
-                        variant={selectedSlot === 'immediately' ? 'default' : 'outline'}
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() => setSelectedSlot('immediately')}
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        Start Now
-                      </Button>
-                      <Button
-                        variant={selectedSlot === 'next_10_min' ? 'default' : 'outline'}
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() => setSelectedSlot('next_10_min')}
-                      >
-                        <Clock className="h-3.5 w-3.5" />
-                        In 10 Min
-                      </Button>
-                    </div>
+                    {stage.order === 2 ? (
+                      <>
+                        {/* Stage 2: Technical Assessment Slot Booking with additional fields */}
+                        <ScrollArea className="max-h-[500px]">
+                          <div className="space-y-4 pr-2">
+                            {/* Date and Time Row */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Date *</Label>
+                                <Input
+                                  type="date"
+                                  value={slotBookingForm.date}
+                                  onChange={(e) => setSlotBookingForm(prev => ({ ...prev, date: e.target.value }))}
+                                  min={new Date().toISOString().split('T')[0]}
+                                  className="h-9 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Time *</Label>
+                                <Select 
+                                  value={slotBookingForm.time} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, time: value }))}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Select time" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', 
+                                      '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM'].map(time => (
+                                      <SelectItem key={time} value={time}>{time}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
 
-                    {/* Date & Time Slots - Compact */}
-                    <div className="space-y-2">
-                      <span className="text-sm font-medium text-muted-foreground">Or schedule for:</span>
-                      <ScrollArea className="max-h-[200px]">
-                        <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="space-y-2">
-                          {Object.entries(
-                            generateTimeSlots().reduce((groups: { [key: string]: { date: string; time: string; value: string }[] }, slot) => {
-                              if (!groups[slot.date]) groups[slot.date] = [];
-                              groups[slot.date].push(slot);
-                              return groups;
-                            }, {} as { [key: string]: { date: string; time: string; value: string }[] })
-                          ).map(([date, slots]) => {
-                            const firstSlot = (slots as { date: string; time: string; value: string }[])[0];
-                            const slotDate = new Date(firstSlot.value);
-                            const dayName = slotDate.toLocaleDateString('en-US', { weekday: 'short' });
-                            
-                            return (
-                              <div key={date} className="flex items-start gap-3 p-2 rounded-lg bg-muted/30">
-                                <div className="flex items-center gap-1.5 min-w-[90px] pt-0.5">
-                                  <Calendar className="h-3.5 w-3.5 text-primary" />
-                                  <span className="text-xs font-medium">{date}</span>
-                                  <span className="text-xs text-muted-foreground">({dayName})</span>
+                            {/* Location Row */}
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                <MapPin className="h-3.5 w-3.5" />
+                                Location Details
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <Label className="text-xs font-medium">Location</Label>
+                                  <Input
+                                    placeholder="Enter location"
+                                    value={slotBookingForm.location}
+                                    onChange={(e) => setSlotBookingForm(prev => ({ ...prev, location: e.target.value }))}
+                                    className="h-9 text-sm"
+                                  />
                                 </div>
-                                <div className="flex flex-wrap gap-1.5 flex-1">
-                                  {(slots as { date: string; time: string; value: string }[]).map((slot) => (
-                                    <div key={slot.value}>
-                                      <RadioGroupItem value={slot.value} id={slot.value} className="peer sr-only" />
-                                      <Label
-                                        htmlFor={slot.value}
-                                        className="inline-block px-2 py-1 rounded text-xs font-medium border cursor-pointer transition-all
-                                          peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground
-                                          hover:border-primary/50 hover:bg-primary/5"
-                                      >
-                                        {slot.time}
-                                      </Label>
-                                    </div>
-                                  ))}
+                                <div className="space-y-1">
+                                  <Label className="text-xs font-medium">Pincode</Label>
+                                  <Input
+                                    placeholder="Enter pincode"
+                                    value={slotBookingForm.pincode}
+                                    onChange={(e) => setSlotBookingForm(prev => ({ ...prev, pincode: e.target.value }))}
+                                    maxLength={6}
+                                    className="h-9 text-sm"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs font-medium">State *</Label>
+                                  <Select 
+                                    value={slotBookingForm.state} 
+                                    onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, state: value, district: '' }))}
+                                  >
+                                    <SelectTrigger className="h-9 text-sm">
+                                      <SelectValue placeholder="Select state" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background border z-50 max-h-48">
+                                      {Object.keys(indiaLocationData).map(state => (
+                                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs font-medium">District *</Label>
+                                  <Select 
+                                    value={slotBookingForm.district} 
+                                    onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, district: value }))}
+                                    disabled={!slotBookingForm.state}
+                                  >
+                                    <SelectTrigger className="h-9 text-sm">
+                                      <SelectValue placeholder="Select district" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background border z-50 max-h-48">
+                                      {slotBookingForm.state && Object.keys(indiaLocationData[slotBookingForm.state] || {}).map(district => (
+                                        <SelectItem key={district} value={district}>{district}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               </div>
-                            );
-                          })}
-                        </RadioGroup>
-                      </ScrollArea>
-                    </div>
+                            </div>
 
-                    {/* Selected Slot & Confirm - Compact inline */}
-                    <div className="flex items-center justify-between gap-3 pt-2 border-t">
-                      <div className="flex items-center gap-2 text-sm">
-                        {selectedSlot ? (
-                          <>
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                            <span className="text-muted-foreground">
-                              {selectedSlot === 'immediately' 
-                                ? 'Start Now' 
-                                : selectedSlot === 'next_10_min'
-                                  ? 'In 10 Minutes'
-                                  : (() => {
-                                      const slotDate = new Date(selectedSlot);
-                                      return `${slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
-                                    })()
-                              }
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground">Select a time slot</span>
+                            {/* Programme and Segment Row */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Programme *</Label>
+                                <Select 
+                                  value={slotBookingForm.programme} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, programme: value }))}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Select programme" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {['State Syllabus', 'CBSE Syllabus', 'Techno Programme', 'Olympiad'].map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Segment *</Label>
+                                <Select 
+                                  value={slotBookingForm.segment} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, segment: value }))}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Select segment" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {['Pre-Primary', 'Primary', 'Middle School-6/7/8', 'High School-9 & 10'].map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {/* Department and Designation Row */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Department *</Label>
+                                <Select 
+                                  value={slotBookingForm.department} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, department: value }))}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Select department" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {['Telugu', 'Hindi', 'English', 'Math', 'Science', 'Social', 'Computer'].map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Designation *</Label>
+                                <Select 
+                                  value={slotBookingForm.designation} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, designation: value }))}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Select designation" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {['Asso.Teacher', 'Teacher', 'Vice-Principal', 'Principal', 'Zonal Co', 'R&D Head', 'SME'].map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {/* Class Row */}
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Class *</Label>
+                              <Select 
+                                value={slotBookingForm.classLevel} 
+                                onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classLevel: value }))}
+                              >
+                                <SelectTrigger className="h-9 text-sm">
+                                  <SelectValue placeholder="Select class" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border z-50">
+                                  {['Nursery', 'PP-1 & PP-2', 'C-1 & C-2', 'C-3, C-4 & C-5', 'C-6, C-7 & C-8', 'C-9 & C-10'].map(option => (
+                                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </ScrollArea>
+
+                        {/* Summary for Stage 2 */}
+                        {slotBookingForm.date && slotBookingForm.time && (
+                          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
+                            <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                              <CheckCircle2 className="h-4 w-4" />
+                              <span className="font-medium">
+                                {new Date(slotBookingForm.date).toLocaleDateString('en-IN', { 
+                                  weekday: 'short', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })} at {slotBookingForm.time}
+                                {slotBookingForm.state && ` • ${slotBookingForm.district}, ${slotBookingForm.state}`}
+                              </span>
+                            </div>
+                          </div>
                         )}
-                      </div>
-                      <Button 
-                        onClick={bookSlot}
-                        disabled={!selectedSlot || isBookingSlot}
-                        size="sm"
-                        className="gap-1.5"
-                      >
-                        {isBookingSlot ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        )}
-                        {isBookingSlot ? 'Booking...' : 'Confirm'}
-                      </Button>
-                    </div>
+
+                        {/* Confirm Button for Stage 2 */}
+                        <div className="flex justify-end pt-2 border-t">
+                          <Button 
+                            onClick={bookSlot}
+                            disabled={
+                              !slotBookingForm.date || !slotBookingForm.time || !slotBookingForm.state || 
+                              !slotBookingForm.district || !slotBookingForm.programme || !slotBookingForm.segment || 
+                              !slotBookingForm.department || !slotBookingForm.designation || !slotBookingForm.classLevel || 
+                              isBookingSlot
+                            }
+                            size="sm"
+                            className="gap-1.5"
+                          >
+                            {isBookingSlot ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            )}
+                            {isBookingSlot ? 'Booking...' : 'Confirm Booking'}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Stage 4: Demo Slot Booking - Original compact UI */}
+                        {/* Quick Options - Compact */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-muted-foreground">Quick:</span>
+                          <Button
+                            variant={selectedSlot === 'immediately' ? 'default' : 'outline'}
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => setSelectedSlot('immediately')}
+                          >
+                            <Play className="h-3.5 w-3.5" />
+                            Start Now
+                          </Button>
+                          <Button
+                            variant={selectedSlot === 'next_10_min' ? 'default' : 'outline'}
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => setSelectedSlot('next_10_min')}
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            In 10 Min
+                          </Button>
+                        </div>
+
+                        {/* Date & Time Slots - Compact */}
+                        <div className="space-y-2">
+                          <span className="text-sm font-medium text-muted-foreground">Or schedule for:</span>
+                          <ScrollArea className="max-h-[200px]">
+                            <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="space-y-2">
+                              {Object.entries(
+                                generateTimeSlots().reduce((groups: { [key: string]: { date: string; time: string; value: string }[] }, slot) => {
+                                  if (!groups[slot.date]) groups[slot.date] = [];
+                                  groups[slot.date].push(slot);
+                                  return groups;
+                                }, {} as { [key: string]: { date: string; time: string; value: string }[] })
+                              ).map(([date, slots]) => {
+                                const firstSlot = (slots as { date: string; time: string; value: string }[])[0];
+                                const slotDate = new Date(firstSlot.value);
+                                const dayName = slotDate.toLocaleDateString('en-US', { weekday: 'short' });
+                                
+                                return (
+                                  <div key={date} className="flex items-start gap-3 p-2 rounded-lg bg-muted/30">
+                                    <div className="flex items-center gap-1.5 min-w-[90px] pt-0.5">
+                                      <Calendar className="h-3.5 w-3.5 text-primary" />
+                                      <span className="text-xs font-medium">{date}</span>
+                                      <span className="text-xs text-muted-foreground">({dayName})</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5 flex-1">
+                                      {(slots as { date: string; time: string; value: string }[]).map((slot) => (
+                                        <div key={slot.value}>
+                                          <RadioGroupItem value={slot.value} id={slot.value} className="peer sr-only" />
+                                          <Label
+                                            htmlFor={slot.value}
+                                            className="inline-block px-2 py-1 rounded text-xs font-medium border cursor-pointer transition-all
+                                              peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground
+                                              hover:border-primary/50 hover:bg-primary/5"
+                                          >
+                                            {slot.time}
+                                          </Label>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </RadioGroup>
+                          </ScrollArea>
+                        </div>
+
+                        {/* Selected Slot & Confirm - Compact inline */}
+                        <div className="flex items-center justify-between gap-3 pt-2 border-t">
+                          <div className="flex items-center gap-2 text-sm">
+                            {selectedSlot ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 text-primary" />
+                                <span className="text-muted-foreground">
+                                  {selectedSlot === 'immediately' 
+                                    ? 'Start Now' 
+                                    : selectedSlot === 'next_10_min'
+                                      ? 'In 10 Minutes'
+                                      : (() => {
+                                          const slotDate = new Date(selectedSlot);
+                                          return `${slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                                        })()
+                                  }
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">Select a time slot</span>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={bookSlot}
+                            disabled={!selectedSlot || isBookingSlot}
+                            size="sm"
+                            className="gap-1.5"
+                          >
+                            {isBookingSlot ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            )}
+                            {isBookingSlot ? 'Booking...' : 'Confirm'}
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 
