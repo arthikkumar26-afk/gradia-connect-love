@@ -1090,6 +1090,80 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_bookings: {
+        Row: {
+          booking_date: string
+          booking_time: string
+          booking_type: string
+          candidate_id: string
+          class_level: string | null
+          class_type: string | null
+          created_at: string
+          department: string | null
+          designation: string | null
+          district: string | null
+          id: string
+          location: string | null
+          pincode: string | null
+          programme: string | null
+          segment: string | null
+          state: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          booking_date: string
+          booking_time: string
+          booking_type?: string
+          candidate_id: string
+          class_level?: string | null
+          class_type?: string | null
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          district?: string | null
+          id?: string
+          location?: string | null
+          pincode?: string | null
+          programme?: string | null
+          segment?: string | null
+          state?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          booking_date?: string
+          booking_time?: string
+          booking_type?: string
+          candidate_id?: string
+          class_level?: string | null
+          class_type?: string | null
+          created_at?: string
+          department?: string | null
+          designation?: string | null
+          district?: string | null
+          id?: string
+          location?: string | null
+          pincode?: string | null
+          programme?: string | null
+          segment?: string | null
+          state?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slot_bookings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sponsor_analytics: {
         Row: {
           created_at: string | null
