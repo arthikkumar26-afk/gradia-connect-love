@@ -91,7 +91,7 @@ export default function MockInterviewPipeline() {
     'Primary': {
       'Teaching': ['PRT', 'TGT', 'ASSO.TEACHER'],
       'Helping/Supporting': ['ASSO.TEACHER'],
-      'Admin': ['VICE PRINCIPAL', 'COORDINATOR', 'ADMIN EXECUTIVE'],
+      'Admin': ['VICE PRINCIPAL'],
       'CLASS-1&2': ['PRT', 'TGT', 'SUBJECT TEACHER'],
       'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
     },
