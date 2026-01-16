@@ -296,6 +296,8 @@ const MockInterview = () => {
         setStageRecordingUrl(recordingUrl);
       }
 
+      console.log('Submitting stage:', { sessionId, stageOrder, answersCount: finalAnswers.length });
+
       const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: {
           action: 'evaluate_answers',
@@ -307,41 +309,52 @@ const MockInterview = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Evaluation error:', error);
+        throw error;
+      }
+
+      console.log('Evaluation result:', data);
 
       setEvaluation(data.evaluation);
       setShowResult(true);
 
-      // If passed, send email for next stage
-      if (data.evaluation.passed && !data.isComplete) {
-        const nextStageOrder = parseInt(stageOrder || '1') + 1;
-        const nextStage = stages.find(s => s.order === nextStageOrder);
+      // If passed and not complete, automatically send email for next stage
+      if (data.evaluation.passed && !data.isComplete && data.nextStage) {
+        console.log('Sending next stage invitation:', data.nextStage);
         
-        if (nextStage && profile) {
-          await supabase.functions.invoke('send-mock-interview-invitation', {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
             body: {
-              candidateEmail: profile.email,
-              candidateName: profile.full_name,
+              candidateEmail: profile?.email,
+              candidateName: profile?.full_name || 'Candidate',
               sessionId,
-              stageOrder: nextStageOrder,
-              stageName: nextStage.name,
-              stageDescription: nextStage.description,
+              stageOrder: data.nextStageOrder,
+              stageName: data.nextStage.name,
+              stageDescription: data.nextStage.description,
               appUrl: window.location.origin
             }
           });
-          toast.success("Check your email for the next stage invitation!");
-        }
-      }
 
-      if (data.isComplete) {
-        toast.success("Congratulations! You've completed all stages!");
+          if (emailError) {
+            console.error('Email error:', emailError);
+            toast.error("Stage passed but failed to send next stage email");
+          } else {
+            toast.success(`🎉 You passed! Check your email for ${data.nextStage.name} invitation!`);
+          }
+        } catch (emailErr) {
+          console.error('Email sending error:', emailErr);
+          toast.error("Stage passed but failed to send next stage email");
+        }
+      } else if (data.isComplete) {
+        toast.success("🎊 Congratulations! You've completed all interview stages!");
       } else if (data.isFailed) {
-        toast.error("Unfortunately you didn't pass this stage. Keep practicing!");
+        toast.error(`Unfortunately you didn't pass ${stage?.name}. Keep practicing!`);
       }
 
     } catch (error) {
       console.error('Error evaluating answers:', error);
-      toast.error("Failed to evaluate answers");
+      toast.error("Failed to evaluate answers. Please try again.");
     } finally {
       setIsEvaluating(false);
     }

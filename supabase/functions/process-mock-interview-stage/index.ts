@@ -275,16 +275,42 @@ serve(async (req) => {
       const nextStageOrder = stageOrder + 1;
       const isLastStage = stageOrder >= INTERVIEW_STAGES.length;
 
+      // Get current session to append to stages_completed
+      const { data: currentSession } = await supabase
+        .from('mock_interview_sessions')
+        .select('stages_completed')
+        .eq('id', sessionId)
+        .single();
+
+      const currentStagesCompleted = (currentSession?.stages_completed as string[]) || [];
+      const updatedStagesCompleted = [...currentStagesCompleted, stage.name];
+
+      console.log('Stage evaluation result:', {
+        passed: evaluation.passed,
+        isLastStage,
+        nextStageOrder,
+        stageName: stage.name,
+        score: evaluation.overallScore
+      });
+
       if (evaluation.passed && !isLastStage) {
-        await supabase
+        // Update session to next stage
+        const { error: updateError } = await supabase
           .from('mock_interview_sessions')
           .update({
             current_stage_order: nextStageOrder,
-            stages_completed: supabase.rpc('array_append', { arr: 'stages_completed', elem: stage.name })
+            stages_completed: updatedStagesCompleted,
+            updated_at: new Date().toISOString()
           })
           .eq('id', sessionId);
-      } else if (isLastStage || !evaluation.passed) {
-        // Calculate overall score
+
+        if (updateError) {
+          console.error('Error updating session:', updateError);
+        } else {
+          console.log('Session updated to next stage:', nextStageOrder);
+        }
+      } else if (isLastStage && evaluation.passed) {
+        // All stages completed successfully
         const { data: allResults } = await supabase
           .from('mock_interview_stage_results')
           .select('ai_score')
@@ -297,21 +323,51 @@ serve(async (req) => {
         await supabase
           .from('mock_interview_sessions')
           .update({
-            status: evaluation.passed ? 'completed' : 'failed',
+            status: 'completed',
+            stages_completed: updatedStagesCompleted,
             overall_score: avgScore,
-            overall_feedback: evaluation.passed 
-              ? 'Congratulations! You have successfully completed all interview stages.' 
-              : `You did not pass the ${stage.name} stage. Keep practicing!`,
-            completed_at: new Date().toISOString()
+            overall_feedback: 'Congratulations! You have successfully completed all interview stages.',
+            completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
           .eq('id', sessionId);
+
+        console.log('Interview completed successfully with avg score:', avgScore);
+      } else if (!evaluation.passed) {
+        // Failed the stage
+        const { data: allResults } = await supabase
+          .from('mock_interview_stage_results')
+          .select('ai_score')
+          .eq('session_id', sessionId);
+
+        const avgScore = allResults?.length 
+          ? allResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / allResults.length 
+          : 0;
+
+        await supabase
+          .from('mock_interview_sessions')
+          .update({
+            status: 'failed',
+            overall_score: avgScore,
+            overall_feedback: `You did not pass the ${stage.name} stage. Keep practicing!`,
+            completed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', sessionId);
+
+        console.log('Interview failed at stage:', stage.name);
       }
+
+      // Return next stage info for email sending in frontend
+      const nextStage = evaluation.passed && !isLastStage ? INTERVIEW_STAGES[stageOrder] : null;
 
       return new Response(JSON.stringify({
         evaluation,
-        nextStage: evaluation.passed && !isLastStage ? INTERVIEW_STAGES[stageOrder] : null,
+        nextStage,
+        nextStageOrder: nextStageOrder,
         isComplete: isLastStage && evaluation.passed,
-        isFailed: !evaluation.passed
+        isFailed: !evaluation.passed,
+        sessionId
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
