@@ -96,10 +96,8 @@ export default function MockInterviewPipeline() {
       'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
     },
     'High School': {
-      'Teaching': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD'],
-      'Helping/Supporting': ['LAB ASSISTANT', 'ATTENDER'],
-      'Admin': ['PRINCIPAL', 'VICE PRINCIPAL', 'COORDINATOR', 'ADMIN MANAGER'],
-      'Non-Teaching': ['LIBRARIAN', 'COUNSELOR', 'OFFICE STAFF']
+      'Board': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD'],
+      'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
     }
   };
 
