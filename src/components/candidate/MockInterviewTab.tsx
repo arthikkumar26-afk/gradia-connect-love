@@ -225,7 +225,7 @@ export const MockInterviewTab = () => {
           candidateEmail: profile.email,
           candidateName: profile.full_name,
           sessionId: sessionId,
-          stageOrder: 2,
+          stageOrder: 3,
           stageName: 'Technical Assessment',
           stageDescription: 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.',
           appUrl: appUrl
@@ -256,7 +256,7 @@ export const MockInterviewTab = () => {
           completed_at: new Date().toISOString()
         });
 
-      // Update session to move to next stage
+      // Update session to move to next stage (Technical Assessment Slot Booking)
       await supabase
         .from('mock_interview_sessions')
         .update({ current_stage_order: 2 })
@@ -295,11 +295,8 @@ export const MockInterviewTab = () => {
       const instructionsEmailSent = await sendInterviewInstructionsEmail(session.id);
       
       if (instructionsEmailSent) {
-        // Complete stage 1 and move to stage 2
+        // Complete stage 1 and move to stage 2 (Technical Assessment Slot Booking)
         await completeInstructionsStage(session.id);
-        
-        // Automatically send Technical Assessment email
-        await sendTechnicalAssessmentEmail(session.id);
         
         // Reload session data
         const { data: updatedSession } = await supabase
@@ -316,7 +313,7 @@ export const MockInterviewTab = () => {
 
         setCurrentSession(updatedSession);
         setStageResults(resultsData as StageResult[] || []);
-        toast.success("Instructions & Technical Assessment invitation sent to your email!");
+        toast.success("Instructions sent! Book your Technical Assessment slot.");
       } else {
         setCurrentSession(session);
         setStageResults([]);
@@ -449,7 +446,7 @@ export const MockInterviewTab = () => {
     return slots;
   };
 
-  const bookDemoSlot = async () => {
+  const bookSlot = async () => {
     if (!selectedSlot || !currentSession) {
       toast.error("Please select a time slot");
       return;
@@ -472,15 +469,24 @@ export const MockInterviewTab = () => {
         slotLabel = slotTime.toLocaleString();
       }
 
+      const currentStage = currentSession.current_stage_order;
+      const isForTechnicalAssessment = currentStage === 2;
+      const stageName = isForTechnicalAssessment ? 'Technical Assessment Slot Booking' : 'Demo Slot Booking';
+      const nextStageOrder = isForTechnicalAssessment ? 3 : 5;
+      const nextStageName = isForTechnicalAssessment ? 'Technical Assessment' : 'Demo Round';
+      const nextStageDescription = isForTechnicalAssessment 
+        ? 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.'
+        : 'Conduct your live teaching demonstration. Your session will be recorded and evaluated by AI.';
+
       // Create stage result for slot booking
       await supabase
         .from('mock_interview_stage_results')
         .insert({
           session_id: currentSession.id,
-          stage_name: 'Demo Slot Booking',
-          stage_order: 3,
+          stage_name: stageName,
+          stage_order: currentStage,
           ai_score: 100,
-          ai_feedback: `Demo slot booked: ${slotLabel}`,
+          ai_feedback: `${isForTechnicalAssessment ? 'Technical Assessment' : 'Demo'} slot booked: ${slotLabel}`,
           passed: true,
           completed_at: new Date().toISOString()
         });
@@ -488,24 +494,24 @@ export const MockInterviewTab = () => {
       // Update session to move to next stage
       await supabase
         .from('mock_interview_sessions')
-        .update({ current_stage_order: 4 })
+        .update({ current_stage_order: nextStageOrder })
         .eq('id', currentSession.id);
 
-      // Send Demo Round invitation email
+      // Send invitation email for next stage
       await supabase.functions.invoke('send-mock-interview-invitation', {
         body: {
           candidateEmail: profile?.email,
           candidateName: profile?.full_name || 'Candidate',
           sessionId: currentSession.id,
-          stageOrder: 4,
-          stageName: 'Demo Round',
-          stageDescription: 'Conduct your live teaching demonstration. Your session will be recorded and evaluated by AI.',
+          stageOrder: nextStageOrder,
+          stageName: nextStageName,
+          stageDescription: nextStageDescription,
           appUrl: window.location.origin,
           bookedSlot: slotLabel
         }
       });
 
-      toast.success(`Slot booked: ${slotLabel}! Check email for Demo Round.`);
+      toast.success(`Slot booked: ${slotLabel}! Check email for ${nextStageName}.`);
       setShowSlotBooking(false);
       setSelectedSlot('');
       loadData(); // Refresh the data
@@ -591,7 +597,7 @@ export const MockInterviewTab = () => {
         .insert({
           session_id: currentSession.id,
           stage_name: 'HR Documents',
-          stage_order: 6,
+          stage_order: 7,
           ai_score: 100,
           ai_feedback: `Documents submitted successfully: ${Object.keys(uploadedFiles).join(', ')}`,
           passed: true,
@@ -602,7 +608,7 @@ export const MockInterviewTab = () => {
       // Update session to next stage
       await supabase
         .from('mock_interview_sessions')
-        .update({ current_stage_order: 7 })
+        .update({ current_stage_order: 8 })
         .eq('id', currentSession.id);
 
       // Send confirmation email
@@ -611,7 +617,7 @@ export const MockInterviewTab = () => {
           candidateEmail: profile?.email,
           candidateName: profile?.full_name || 'Candidate',
           sessionId: currentSession.id,
-          stageOrder: 6,
+          stageOrder: 7,
           stageName: 'HR Documents Submitted',
           stageDescription: 'Your HR documents have been submitted successfully.',
           appUrl: window.location.origin,
@@ -625,7 +631,7 @@ export const MockInterviewTab = () => {
           candidateEmail: profile?.email,
           candidateName: profile?.full_name || 'Candidate',
           sessionId: currentSession.id,
-          stageOrder: 7,
+          stageOrder: 8,
           stageName: 'Final Review',
           stageDescription: 'Your complete interview journey review and final decision.',
           appUrl: window.location.origin
@@ -655,11 +661,12 @@ export const MockInterviewTab = () => {
     
     setIsCompletingFinalReview(true);
     try {
-      // Calculate overall score from all stages (excluding stage 1 and 3 which don't have scores)
+      // Calculate overall score from all stages (excluding stages without meaningful scores)
       const scoredResults = stageResults.filter(r => 
         r.ai_score !== undefined && 
-        r.stage_order !== 1 && 
-        r.stage_order !== 3
+        r.stage_order !== 1 && // Interview Instructions
+        r.stage_order !== 2 && // Technical Assessment Slot Booking
+        r.stage_order !== 4    // Demo Slot Booking
       );
       const overallScore = scoredResults.length > 0 
         ? scoredResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scoredResults.length 
@@ -679,7 +686,7 @@ export const MockInterviewTab = () => {
         .insert({
           session_id: currentSession.id,
           stage_name: 'All Reviews',
-          stage_order: 7,
+          stage_order: 8,
           ai_score: Math.round(overallScore),
           ai_feedback: `Interview journey completed! Overall performance: ${overallScore.toFixed(1)}%. ${decision}.`,
           passed: passed,
@@ -705,7 +712,7 @@ export const MockInterviewTab = () => {
           candidateEmail: profile?.email,
           candidateName: profile?.full_name || 'Candidate',
           sessionId: currentSession.id,
-          stageOrder: 7,
+          stageOrder: 8,
           stageName: 'Interview Completed',
           stageDescription: `Congratulations! You have completed all interview stages. Your overall score: ${overallScore.toFixed(1)}%. Decision: ${decision}`,
           appUrl: window.location.origin,
@@ -738,12 +745,13 @@ export const MockInterviewTab = () => {
   const getStageIcon = (stageOrder: number) => {
     switch (stageOrder) {
       case 1: return Mail;
-      case 2: return Code;
-      case 3: return Calendar;
-      case 4: return Monitor;
-      case 5: return BarChart3;
-      case 6: return FileText;
-      case 7: return ListChecks;
+      case 2: return Calendar; // Technical Assessment Slot Booking
+      case 3: return Code;     // Technical Assessment
+      case 4: return Calendar; // Demo Slot Booking
+      case 5: return Monitor;  // Demo Round
+      case 6: return BarChart3; // Demo Feedback
+      case 7: return FileText;  // HR Documents
+      case 8: return ListChecks; // All Reviews
       default: return Brain;
     }
   };
@@ -789,12 +797,13 @@ export const MockInterviewTab = () => {
               <div className="grid gap-2">
                 {[
                   { order: 1, name: "Interview Instructions", icon: Mail },
-                  { order: 2, name: "Technical Assessment", icon: Code },
-                  { order: 3, name: "Demo Slot Booking", icon: Calendar },
-                  { order: 4, name: "Demo Round", icon: Monitor },
-                  { order: 5, name: "Demo Feedback", icon: BarChart3 },
-                  { order: 6, name: "Final Review (HR)", icon: FileText },
-                  { order: 7, name: "All Reviews", icon: ListChecks },
+                  { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
+                  { order: 3, name: "Technical Assessment", icon: Code },
+                  { order: 4, name: "Demo Slot Booking", icon: Calendar },
+                  { order: 5, name: "Demo Round", icon: Monitor },
+                  { order: 6, name: "Demo Feedback", icon: BarChart3 },
+                  { order: 7, name: "Final Review (HR)", icon: FileText },
+                  { order: 8, name: "All Reviews", icon: ListChecks },
                 ].map((stage) => (
                   <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -936,15 +945,8 @@ export const MockInterviewTab = () => {
                         Email Sent
                       </Badge>
                     )}
-                    {/* For Technical Assessment (stage 2) in progress, show email sent indicator instead of Continue button */}
+                    {/* For Technical Assessment Slot Booking (stage 2) in progress, show Book Slot button */}
                     {status === 'current' && stage.order === 2 && (
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        <Mail className="h-3 w-3 mr-1" />
-                        Check Email to Start
-                      </Badge>
-                    )}
-                    {/* For Demo Slot Booking (stage 3) in progress, show Book Slot button */}
-                    {status === 'current' && stage.order === 3 && (
                       <Button 
                         variant="default" 
                         size="sm"
@@ -955,9 +957,28 @@ export const MockInterviewTab = () => {
                         Book Slot
                       </Button>
                     )}
-                    {/* For Demo Feedback (stage 5) - show View Results like other completed stages */}
-                    {/* For HR Documents (stage 6) in progress, show Upload Documents button */}
-                    {status === 'current' && stage.order === 6 && currentSession && (
+                    {/* For Technical Assessment (stage 3) in progress, show email sent indicator */}
+                    {status === 'current' && stage.order === 3 && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                        <Mail className="h-3 w-3 mr-1" />
+                        Check Email to Start
+                      </Badge>
+                    )}
+                    {/* For Demo Slot Booking (stage 4) in progress, show Book Slot button */}
+                    {status === 'current' && stage.order === 4 && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => setShowSlotBooking(true)}
+                        className="gap-1"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        Book Slot
+                      </Button>
+                    )}
+                    {/* For Demo Feedback (stage 6) - show View Results like other completed stages */}
+                    {/* For HR Documents (stage 7) in progress, show Upload Documents button */}
+                    {status === 'current' && stage.order === 7 && currentSession && (
                       <Button 
                         variant="default" 
                         size="sm"
@@ -968,8 +989,8 @@ export const MockInterviewTab = () => {
                         {isExpanded ? 'Hide Upload' : 'Upload Documents'}
                       </Button>
                     )}
-                    {/* For Final Review (stage 7) in progress, show View Final Summary button */}
-                    {status === 'current' && stage.order === 7 && currentSession && (
+                    {/* For Final Review (stage 8) in progress, show View Final Summary button */}
+                    {status === 'current' && stage.order === 8 && currentSession && (
                       <Button 
                         variant="default" 
                         size="sm"
@@ -1492,10 +1513,12 @@ export const MockInterviewTab = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
-              Book Demo Interview Slot
+              {currentSession?.current_stage_order === 2 ? 'Book Technical Assessment Slot' : 'Book Demo Interview Slot'}
             </DialogTitle>
             <DialogDescription>
-              Select a convenient time slot for your demo teaching session.
+              {currentSession?.current_stage_order === 2 
+                ? 'Select a convenient time slot for your Technical Assessment.'
+                : 'Select a convenient time slot for your demo teaching session.'}
             </DialogDescription>
           </DialogHeader>
           
@@ -1563,7 +1586,7 @@ export const MockInterviewTab = () => {
               Cancel
             </Button>
             <Button 
-              onClick={bookDemoSlot} 
+              onClick={bookSlot} 
               disabled={!selectedSlot || isBookingSlot}
               className="gap-2"
             >
