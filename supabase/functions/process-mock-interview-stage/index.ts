@@ -26,24 +26,8 @@ interface MockInterviewStage {
 
 const INTERVIEW_STAGES: MockInterviewStage[] = [
   {
-    name: 'Resume Screening',
-    order: 1,
-    description: 'AI analyzes your resume and asks clarifying questions about your experience.',
-    questionCount: 5,
-    timePerQuestion: 90,
-    passingScore: 60
-  },
-  {
-    name: 'AI Phone Interview',
-    order: 2,
-    description: 'Initial screening questions about your background, motivation, and basic qualifications.',
-    questionCount: 6,
-    timePerQuestion: 120,
-    passingScore: 65
-  },
-  {
     name: 'Technical Assessment',
-    order: 3,
+    order: 1,
     description: 'Role-specific technical questions to assess your domain knowledge and problem-solving skills.',
     questionCount: 8,
     timePerQuestion: 150,
@@ -51,7 +35,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'HR Round',
-    order: 4,
+    order: 2,
     description: 'Behavioral and situational questions to assess cultural fit and soft skills.',
     questionCount: 6,
     timePerQuestion: 120,
@@ -59,7 +43,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'Viva',
-    order: 5,
+    order: 3,
     description: 'In-depth discussion about your experience, projects, and how you handle real-world scenarios.',
     questionCount: 5,
     timePerQuestion: 180,
@@ -67,7 +51,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'Final Review',
-    order: 6,
+    order: 4,
     description: 'Comprehensive assessment combining all previous stages for final evaluation.',
     questionCount: 4,
     timePerQuestion: 120,
@@ -367,12 +351,10 @@ Requirements:
 5. Make questions specific to the candidate's background when possible
 
 For "${stage.name}" stage, focus on:
-${stage.order === 1 ? '- Resume clarification, experience verification, career highlights' : ''}
-${stage.order === 2 ? '- Motivation, career goals, company fit, availability' : ''}
-${stage.order === 3 ? '- Technical knowledge, problem-solving, domain expertise' : ''}
-${stage.order === 4 ? '- Behavioral questions, teamwork, conflict resolution, leadership' : ''}
-${stage.order === 5 ? '- Deep-dive discussions, project experiences, real-world scenarios' : ''}
-${stage.order === 6 ? '- Comprehensive evaluation, future plans, final assessment questions' : ''}
+${stage.order === 1 ? '- Technical knowledge, problem-solving, domain expertise' : ''}
+${stage.order === 2 ? '- Behavioral questions, teamwork, conflict resolution, leadership' : ''}
+${stage.order === 3 ? '- Deep-dive discussions, project experiences, real-world scenarios' : ''}
+${stage.order === 4 ? '- Comprehensive evaluation, future plans, final assessment questions' : ''}
 
 Generate exactly ${stage.questionCount} questions.`;
 }
