@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useVideoRecorder } from "@/hooks/useVideoRecorder";
 import { MockInterviewResults } from "@/components/candidate/MockInterviewResults";
+import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
 
 interface StageQuestion {
   id: number;
@@ -89,7 +90,7 @@ const MockInterview = () => {
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
   const [allStageResults, setAllStageResults] = useState<any[]>([]);
-
+  const [sessionData, setSessionData] = useState<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
@@ -187,25 +188,33 @@ const MockInterview = () => {
       setProfile(profileData);
 
       // Verify session exists
-      const { data: sessionData, error: sessionError } = await supabase
+      const { data: fetchedSessionData, error: sessionError } = await supabase
         .from('mock_interview_sessions')
         .select('*')
         .eq('id', sessionId)
         .single();
 
-      if (sessionError || !sessionData) {
+      if (sessionError || !fetchedSessionData) {
         toast.error("Invalid session. Please start a new mock interview.");
         navigate('/candidate/dashboard');
         return;
       }
 
-      // Check if this stage was already completed
-      const { data: stageResult } = await supabase
+      setSessionData(fetchedSessionData);
+
+      // Get all stage results for this session
+      const { data: allResults } = await supabase
         .from('mock_interview_stage_results')
         .select('*')
         .eq('session_id', sessionId)
-        .eq('stage_order', parseInt(stageOrder || '1'))
-        .maybeSingle();
+        .order('stage_order', { ascending: true });
+
+      if (allResults) {
+        setAllStageResults(allResults);
+      }
+
+      // Check if this stage was already completed
+      const stageResult = allResults?.find(r => r.stage_order === parseInt(stageOrder || '1'));
 
       if (stageResult?.completed_at) {
         // Stage already completed, show results with strengths and improvements
@@ -724,62 +733,82 @@ const MockInterview = () => {
   const renderStageContent = () => {
     if (!stage) return null;
 
+    const currentStageOrder = sessionData?.current_stage_order || parseInt(stageOrder || '1');
+
+    // Progress Tracker Component for all stages
+    const ProgressTrackerSection = () => (
+      <div className="mb-6">
+        <Card className="bg-muted/30">
+          <CardContent className="py-4">
+            <InterviewProgressTracker
+              stages={stages}
+              currentStageOrder={currentStageOrder}
+              stageResults={allStageResults}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+
     // Stage 1: Interview Instructions
     if (stage.stageType === 'email_info' || stage.order === 1) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="max-w-2xl w-full">
-            <CardHeader className="text-center">
-              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Interview Process Instructions</CardTitle>
-              <CardDescription className="text-base mt-2">
-                Please review the complete interview process before proceeding
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="bg-muted/50 rounded-lg p-4 space-y-4">
-                <h4 className="font-semibold">Your Interview Journey (7 Stages):</h4>
-                <div className="space-y-3">
-                  {stages.map((s, idx) => (
-                    <div key={s.order} className="flex items-start gap-3">
-                      <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-primary text-white' : 'bg-muted-foreground/20'}`}>
-                        {s.order}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{s.name}</p>
-                        <p className="text-xs text-muted-foreground">{s.description}</p>
-                      </div>
-                    </div>
-                  ))}
+        <div className="min-h-screen bg-background p-4 md:p-8">
+          <div className="max-w-3xl mx-auto">
+            <ProgressTrackerSection />
+            <Card className="w-full">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="h-8 w-8 text-primary" />
                 </div>
-              </div>
+                <CardTitle className="text-2xl">Interview Process Instructions</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Please review the complete interview process before proceeding
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+                  <h4 className="font-semibold">Your Interview Journey (7 Stages):</h4>
+                  <div className="space-y-3">
+                    {stages.map((s, idx) => (
+                      <div key={s.order} className="flex items-start gap-3">
+                        <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-primary text-white' : 'bg-muted-foreground/20'}`}>
+                          {s.order}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{s.name}</p>
+                          <p className="text-xs text-muted-foreground">{s.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
-                <h4 className="font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                  <AlertTriangle className="h-4 w-4" />
-                  Important Guidelines:
-                </h4>
-                <ul className="mt-2 text-sm text-amber-600 dark:text-amber-300 space-y-1">
-                  <li>• Ensure stable internet connection</li>
-                  <li>• Use quiet environment with good lighting</li>
-                  <li>• Keep camera and microphone ready</li>
-                  <li>• Have documents ready for HR round</li>
-                </ul>
-              </div>
+                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+                  <h4 className="font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                    <AlertTriangle className="h-4 w-4" />
+                    Important Guidelines:
+                  </h4>
+                  <ul className="mt-2 text-sm text-amber-600 dark:text-amber-300 space-y-1">
+                    <li>• Ensure stable internet connection</li>
+                    <li>• Use quiet environment with good lighting</li>
+                    <li>• Keep camera and microphone ready</li>
+                    <li>• Have documents ready for HR round</li>
+                  </ul>
+                </div>
 
-              <div className="flex flex-col gap-3">
-                <Button onClick={handleCompleteInstructions} className="w-full gap-2" size="lg" disabled={isGenerating}>
-                  {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
-                  I Understand, Proceed to Technical Assessment
-                </Button>
-                <Button variant="outline" onClick={goToDashboard} className="w-full">
-                  Return to Dashboard
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex flex-col gap-3">
+                  <Button onClick={handleCompleteInstructions} className="w-full gap-2" size="lg" disabled={isGenerating}>
+                    {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
+                    I Understand, Proceed to Technical Assessment
+                  </Button>
+                  <Button variant="outline" onClick={goToDashboard} className="w-full">
+                    Return to Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       );
     }
@@ -788,67 +817,70 @@ const MockInterview = () => {
     if (stage.stageType === 'slot_booking' || stage.order === 3) {
       const timeSlots = generateTimeSlots();
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="max-w-2xl w-full">
-            <CardHeader className="text-center">
-              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Calendar className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Book Your Demo Interview Slot</CardTitle>
-              <CardDescription className="text-base mt-2">
-                Select a convenient time for your 10-15 minute teaching demonstration
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                {timeSlots.map((slot) => (
-                  <div key={slot.date} className="space-y-2">
-                    <h4 className="font-medium text-sm text-muted-foreground">{slot.date}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {slot.times.map((time) => {
-                        const slotValue = `${slot.date} at ${time}`;
-                        return (
-                          <Button
-                            key={time}
-                            variant={selectedSlot === slotValue ? "default" : "outline"}
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => setSelectedSlot(slotValue)}
-                          >
-                            <Clock className="h-3 w-3" />
-                            {time}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {selectedSlot && (
-                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">
-                    Selected: {selectedSlot}
-                  </p>
+        <div className="min-h-screen bg-background p-4 md:p-8">
+          <div className="max-w-3xl mx-auto">
+            <ProgressTrackerSection />
+            <Card className="w-full">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="h-8 w-8 text-primary" />
                 </div>
-              )}
+                <CardTitle className="text-2xl">Book Your Demo Interview Slot</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Select a convenient time for your 10-15 minute teaching demonstration
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  {timeSlots.map((slot) => (
+                    <div key={slot.date} className="space-y-2">
+                      <h4 className="font-medium text-sm text-muted-foreground">{slot.date}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {slot.times.map((time) => {
+                          const slotValue = `${slot.date} at ${time}`;
+                          return (
+                            <Button
+                              key={time}
+                              variant={selectedSlot === slotValue ? "default" : "outline"}
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => setSelectedSlot(slotValue)}
+                            >
+                              <Clock className="h-3 w-3" />
+                              {time}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-              <div className="flex flex-col gap-3">
-                <Button 
-                  onClick={handleSlotBooking} 
-                  className="w-full gap-2" 
-                  size="lg" 
-                  disabled={!selectedSlot || isBookingSlot}
-                >
-                  {isBookingSlot ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                  Confirm Booking
-                </Button>
-                <Button variant="outline" onClick={goToDashboard} className="w-full">
-                  Return to Dashboard
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                {selectedSlot && (
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                    <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                      Selected: {selectedSlot}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    onClick={handleSlotBooking} 
+                    className="w-full gap-2" 
+                    size="lg" 
+                    disabled={!selectedSlot || isBookingSlot}
+                  >
+                    {isBookingSlot ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                    Confirm Booking
+                  </Button>
+                  <Button variant="outline" onClick={goToDashboard} className="w-full">
+                    Return to Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       );
     }
@@ -856,39 +888,147 @@ const MockInterview = () => {
     // Stage 5: Demo Feedback
     if (stage.stageType === 'feedback' || stage.order === 5) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="max-w-2xl w-full">
+        <div className="min-h-screen bg-background p-4 md:p-8">
+          <div className="max-w-3xl mx-auto">
+            <ProgressTrackerSection />
+            <Card className="w-full">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <BarChart3 className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">Demo Feedback & Metrics</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Review your demo teaching performance analysis
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <p className="text-center text-muted-foreground">
+                    Your demo teaching has been evaluated by our AI. Review the detailed feedback below.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                    <p className="text-3xl font-bold text-green-600">85%</p>
+                    <p className="text-sm text-green-700 dark:text-green-400">Overall Score</p>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
+                    <p className="text-3xl font-bold text-blue-600">Passed</p>
+                    <p className="text-sm text-blue-700 dark:text-blue-400">Status</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Button onClick={handleCompleteDemoFeedback} className="w-full gap-2" size="lg" disabled={isGenerating}>
+                    {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
+                    Continue to HR Round
+                  </Button>
+                  <Button variant="outline" onClick={goToDashboard} className="w-full">
+                    Return to Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    // Stage 7: All Reviews
+    if (stage.stageType === 'review' || stage.order === 7) {
+      return (
+        <div className="min-h-screen bg-background p-4 md:p-8">
+          <div className="max-w-3xl mx-auto">
+            <ProgressTrackerSection />
+            <Card className="w-full">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ListChecks className="h-8 w-8 text-green-600" />
+                </div>
+                <CardTitle className="text-2xl">Interview Complete - All Reviews</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Congratulations! Here's your complete interview summary
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-3">
+                  {stages.filter(s => s.order < 7).map((s) => (
+                    <div key={s.order} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        <span className="font-medium">{s.name}</span>
+                      </div>
+                      <Badge variant="default">Completed</Badge>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 text-center">
+                  <p className="text-4xl font-bold text-green-600 mb-2">🎊</p>
+                  <h3 className="text-xl font-semibold text-green-700 dark:text-green-400">
+                    Interview Process Completed!
+                  </h3>
+                  <p className="text-sm text-green-600 dark:text-green-300 mt-2">
+                    You have successfully completed all interview stages.
+                  </p>
+                </div>
+
+                <Button onClick={goToDashboard} className="w-full" size="lg">
+                  Return to Dashboard
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    // Default: Assessment stages (Technical Assessment, HR Round, Demo Round)
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-8">
+        <div className="max-w-3xl mx-auto">
+          <ProgressTrackerSection />
+          <Card className="w-full">
             <CardHeader className="text-center">
               <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="h-8 w-8 text-primary" />
+                <Brain className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl">Demo Feedback & Metrics</CardTitle>
+              <CardTitle className="text-2xl">{stage?.name}</CardTitle>
               <CardDescription className="text-base mt-2">
-                Review your demo teaching performance analysis
+                {stage?.description}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="bg-muted/50 rounded-lg p-4">
-                <p className="text-center text-muted-foreground">
-                  Your demo teaching has been evaluated by our AI. Review the detailed feedback below.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-green-600">85%</p>
-                  <p className="text-sm text-green-700 dark:text-green-400">Overall Score</p>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-                  <p className="text-3xl font-bold text-blue-600">Passed</p>
-                  <p className="text-sm text-blue-700 dark:text-blue-400">Status</p>
-                </div>
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  Before you begin:
+                </h4>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li className="flex items-center gap-2">
+                    <Camera className="h-4 w-4" />
+                    Camera access will be required for recording
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Mic className="h-4 w-4" />
+                    Microphone access will be required
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Timer className="h-4 w-4" />
+                    {stage?.questionCount} questions, {stage?.timePerQuestion}s each
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Your entire session will be recorded
+                  </li>
+                </ul>
               </div>
 
               <div className="flex flex-col gap-3">
-                <Button onClick={handleCompleteDemoFeedback} className="w-full gap-2" size="lg" disabled={isGenerating}>
-                  {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
-                  Continue to HR Round
+                <Button onClick={startInterview} className="w-full gap-2" size="lg">
+                  <Play className="h-5 w-5" />
+                  Start Interview
                 </Button>
                 <Button variant="outline" onClick={goToDashboard} className="w-full">
                   Return to Dashboard
@@ -897,105 +1037,6 @@ const MockInterview = () => {
             </CardContent>
           </Card>
         </div>
-      );
-    }
-
-    // Stage 7: All Reviews
-    if (stage.stageType === 'review' || stage.order === 7) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <Card className="max-w-3xl w-full">
-            <CardHeader className="text-center">
-              <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ListChecks className="h-8 w-8 text-green-600" />
-              </div>
-              <CardTitle className="text-2xl">Interview Complete - All Reviews</CardTitle>
-              <CardDescription className="text-base mt-2">
-                Congratulations! Here's your complete interview summary
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-3">
-                {stages.filter(s => s.order < 7).map((s) => (
-                  <div key={s.order} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      <span className="font-medium">{s.name}</span>
-                    </div>
-                    <Badge variant="default">Completed</Badge>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 text-center">
-                <p className="text-4xl font-bold text-green-600 mb-2">🎊</p>
-                <h3 className="text-xl font-semibold text-green-700 dark:text-green-400">
-                  Interview Process Completed!
-                </h3>
-                <p className="text-sm text-green-600 dark:text-green-300 mt-2">
-                  You have successfully completed all interview stages.
-                </p>
-              </div>
-
-              <Button onClick={goToDashboard} className="w-full" size="lg">
-                Return to Dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
-
-    // Default: Assessment stages (Technical Assessment, HR Round)
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full">
-          <CardHeader className="text-center">
-            <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Brain className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle className="text-2xl">{stage?.name}</CardTitle>
-            <CardDescription className="text-base mt-2">
-              {stage?.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-              <h4 className="font-semibold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                Before you begin:
-              </h4>
-              <ul className="text-sm text-muted-foreground space-y-2">
-                <li className="flex items-center gap-2">
-                  <Camera className="h-4 w-4" />
-                  Camera access will be required for recording
-                </li>
-                <li className="flex items-center gap-2">
-                  <Mic className="h-4 w-4" />
-                  Microphone access will be required
-                </li>
-                <li className="flex items-center gap-2">
-                  <Timer className="h-4 w-4" />
-                  {stage?.questionCount} questions, {stage?.timePerQuestion}s each
-                </li>
-                <li className="flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Your entire session will be recorded
-                </li>
-              </ul>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <Button onClick={startInterview} className="w-full gap-2" size="lg">
-                <Play className="h-5 w-5" />
-                Start Interview
-              </Button>
-              <Button variant="outline" onClick={goToDashboard} className="w-full">
-                Return to Dashboard
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   };
