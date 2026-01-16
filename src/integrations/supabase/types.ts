@@ -755,6 +755,7 @@ export type Database = {
           id: string
           passed: boolean | null
           questions: Json | null
+          recording_url: string | null
           session_id: string
           stage_name: string
           stage_order: number
@@ -769,6 +770,7 @@ export type Database = {
           id?: string
           passed?: boolean | null
           questions?: Json | null
+          recording_url?: string | null
           session_id: string
           stage_name: string
           stage_order: number
@@ -783,6 +785,7 @@ export type Database = {
           id?: string
           passed?: boolean | null
           questions?: Json | null
+          recording_url?: string | null
           session_id?: string
           stage_name?: string
           stage_order?: number

@@ -90,9 +90,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, sessionId, stageOrder, candidateProfile, answers } = await req.json();
+    const { action, sessionId, stageOrder, candidateProfile, answers, recordingUrl } = await req.json();
 
-    console.log('Mock interview action:', { action, sessionId, stageOrder });
+    console.log('Mock interview action:', { action, sessionId, stageOrder, hasRecording: !!recordingUrl });
 
     if (action === 'get_stages') {
       return new Response(JSON.stringify({ stages: INTERVIEW_STAGES }), {
@@ -193,7 +193,6 @@ serve(async (req) => {
       if (!stage) {
         throw new Error('Invalid stage order');
       }
-
       // Get the stage result with questions
       const { data: stageResult } = await supabase
         .from('mock_interview_stage_results')
@@ -271,7 +270,7 @@ serve(async (req) => {
         evaluation = JSON.parse(toolCall.function.arguments);
       }
 
-      // Update stage result
+      // Update stage result with recording URL if provided
       await supabase
         .from('mock_interview_stage_results')
         .update({
@@ -279,7 +278,8 @@ serve(async (req) => {
           ai_score: evaluation.overallScore,
           ai_feedback: evaluation.feedback,
           passed: evaluation.passed,
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          recording_url: recordingUrl || null
         })
         .eq('session_id', sessionId)
         .eq('stage_order', stageOrder);
