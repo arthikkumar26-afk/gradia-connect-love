@@ -40,7 +40,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Sending mock interview invitation:', { candidateEmail, stageName, stageOrder });
 
-    const baseUrl = appUrl || 'https://gradia-link-shine.lovable.app';
+    // Use provided appUrl, or determine from environment, or fallback to published URL
+    const baseUrl = appUrl || Deno.env.get('APP_URL') || 'https://gradia-link-shine.lovable.app';
     
     // Determine interview link and content based on stage
     let interviewLink = '';

@@ -137,6 +137,7 @@ export const MockInterviewTab = () => {
 
   const sendInterviewInstructionsEmail = async (sessionId: string) => {
     try {
+      const appUrl = window.location.origin;
       const { data, error } = await supabase.functions.invoke('send-mock-interview-invitation', {
         body: {
           candidateEmail: profile.email,
@@ -144,7 +145,8 @@ export const MockInterviewTab = () => {
           sessionId: sessionId,
           stageOrder: 1,
           stageName: 'Interview Instructions',
-          stageDescription: 'Receive detailed interview process instructions and guidelines via email.'
+          stageDescription: 'Receive detailed interview process instructions and guidelines via email.',
+          appUrl: appUrl
         }
       });
 
@@ -159,6 +161,7 @@ export const MockInterviewTab = () => {
 
   const sendTechnicalAssessmentEmail = async (sessionId: string) => {
     try {
+      const appUrl = window.location.origin;
       const { data, error } = await supabase.functions.invoke('send-mock-interview-invitation', {
         body: {
           candidateEmail: profile.email,
@@ -166,7 +169,8 @@ export const MockInterviewTab = () => {
           sessionId: sessionId,
           stageOrder: 2,
           stageName: 'Technical Assessment',
-          stageDescription: 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.'
+          stageDescription: 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.',
+          appUrl: appUrl
         }
       });
 
