@@ -22,32 +22,82 @@ interface MockInterviewStage {
   questionCount: number;
   timePerQuestion: number;
   passingScore: number;
+  stageType: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review';
+  requiresSlotBooking?: boolean;
+  autoProgressAfterCompletion?: boolean;
 }
 
 const INTERVIEW_STAGES: MockInterviewStage[] = [
   {
-    name: 'Technical Assessment',
+    name: 'Interview Instructions',
     order: 1,
+    description: 'Receive detailed interview process instructions and guidelines via email.',
+    questionCount: 0,
+    timePerQuestion: 0,
+    passingScore: 0,
+    stageType: 'email_info',
+    autoProgressAfterCompletion: true
+  },
+  {
+    name: 'Technical Assessment',
+    order: 2,
     description: 'Role-specific technical questions to assess your domain knowledge and problem-solving skills.',
     questionCount: 8,
     timePerQuestion: 150,
-    passingScore: 70
+    passingScore: 70,
+    stageType: 'assessment',
+    autoProgressAfterCompletion: false // Don't auto-send demo, require slot booking
+  },
+  {
+    name: 'Demo Slot Booking',
+    order: 3,
+    description: 'Book your preferred interview slot for the Demo Round.',
+    questionCount: 0,
+    timePerQuestion: 0,
+    passingScore: 0,
+    stageType: 'slot_booking',
+    requiresSlotBooking: true,
+    autoProgressAfterCompletion: true
   },
   {
     name: 'Demo Round',
-    order: 2,
+    order: 4,
     description: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
     questionCount: 1,
     timePerQuestion: 600, // 10 minutes
-    passingScore: 65
+    passingScore: 65,
+    stageType: 'demo',
+    autoProgressAfterCompletion: true
   },
   {
-    name: 'Final Review',
-    order: 3,
-    description: 'Comprehensive assessment combining all previous stages for final evaluation.',
+    name: 'Demo Feedback',
+    order: 5,
+    description: 'View detailed feedback metrics and AI evaluation of your demo teaching performance.',
+    questionCount: 0,
+    timePerQuestion: 0,
+    passingScore: 0,
+    stageType: 'feedback',
+    autoProgressAfterCompletion: true
+  },
+  {
+    name: 'Final Review (HR)',
+    order: 6,
+    description: 'HR round - Submit required documents for verification and final review.',
     questionCount: 4,
     timePerQuestion: 120,
-    passingScore: 75
+    passingScore: 75,
+    stageType: 'hr_documents',
+    autoProgressAfterCompletion: true
+  },
+  {
+    name: 'All Reviews',
+    order: 7,
+    description: 'View comprehensive summary of all interview stages, scores, and final assessment.',
+    questionCount: 0,
+    timePerQuestion: 0,
+    passingScore: 0,
+    stageType: 'review',
+    autoProgressAfterCompletion: false
   }
 ];
 
@@ -66,7 +116,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, sessionId, stageOrder, candidateProfile, answers, recordingUrl } = await req.json();
+    const { action, sessionId, stageOrder, candidateProfile, answers, recordingUrl, bookedSlot } = await req.json();
 
     console.log('Mock interview action:', { action, sessionId, stageOrder, hasRecording: !!recordingUrl });
 
@@ -76,10 +126,159 @@ serve(async (req) => {
       });
     }
 
+    if (action === 'complete_instructions') {
+      // Mark instructions stage as completed and move to technical assessment
+      const stage = INTERVIEW_STAGES[0];
+      
+      await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: sessionId,
+          stage_name: stage.name,
+          stage_order: stage.order,
+          ai_score: 100,
+          ai_feedback: 'Interview instructions reviewed successfully.',
+          passed: true,
+          completed_at: new Date().toISOString()
+        });
+
+      await supabase
+        .from('mock_interview_sessions')
+        .update({
+          current_stage_order: 2,
+          stages_completed: [stage.name],
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        nextStage: INTERVIEW_STAGES[1],
+        nextStageOrder: 2
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'book_slot') {
+      // Handle slot booking for demo round
+      const stage = INTERVIEW_STAGES.find(s => s.order === stageOrder);
+      if (!stage || stage.stageType !== 'slot_booking') {
+        throw new Error('Invalid stage for slot booking');
+      }
+
+      await supabase
+        .from('mock_interview_stage_results')
+        .upsert({
+          session_id: sessionId,
+          stage_name: stage.name,
+          stage_order: stage.order,
+          ai_score: 100,
+          ai_feedback: `Demo interview slot booked for ${bookedSlot}`,
+          passed: true,
+          completed_at: new Date().toISOString(),
+          answers: { bookedSlot }
+        });
+
+      // Get current session
+      const { data: currentSession } = await supabase
+        .from('mock_interview_sessions')
+        .select('stages_completed')
+        .eq('id', sessionId)
+        .single();
+
+      const currentStagesCompleted = (currentSession?.stages_completed as string[]) || [];
+      const updatedStagesCompleted = [...currentStagesCompleted, stage.name];
+
+      await supabase
+        .from('mock_interview_sessions')
+        .update({
+          current_stage_order: 4, // Move to Demo Round
+          stages_completed: updatedStagesCompleted,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        nextStage: INTERVIEW_STAGES[3], // Demo Round
+        nextStageOrder: 4,
+        bookedSlot
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'complete_demo_feedback') {
+      // Mark demo feedback as reviewed
+      const stage = INTERVIEW_STAGES.find(s => s.order === 5);
+      if (!stage) throw new Error('Demo feedback stage not found');
+
+      // Get demo round result for feedback
+      const { data: demoResult } = await supabase
+        .from('mock_interview_stage_results')
+        .select('*')
+        .eq('session_id', sessionId)
+        .eq('stage_order', 4)
+        .single();
+
+      await supabase
+        .from('mock_interview_stage_results')
+        .upsert({
+          session_id: sessionId,
+          stage_name: stage.name,
+          stage_order: stage.order,
+          ai_score: demoResult?.ai_score || 0,
+          ai_feedback: 'Demo feedback reviewed.',
+          passed: true,
+          completed_at: new Date().toISOString(),
+          strengths: demoResult?.strengths || [],
+          improvements: demoResult?.improvements || []
+        });
+
+      const { data: currentSession } = await supabase
+        .from('mock_interview_sessions')
+        .select('stages_completed')
+        .eq('id', sessionId)
+        .single();
+
+      const currentStagesCompleted = (currentSession?.stages_completed as string[]) || [];
+      const updatedStagesCompleted = [...currentStagesCompleted, stage.name];
+
+      await supabase
+        .from('mock_interview_sessions')
+        .update({
+          current_stage_order: 6,
+          stages_completed: updatedStagesCompleted,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        nextStage: INTERVIEW_STAGES[5], // Final Review (HR)
+        nextStageOrder: 6
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (action === 'generate_questions') {
       const stage = INTERVIEW_STAGES.find(s => s.order === stageOrder);
       if (!stage) {
         throw new Error('Invalid stage order');
+      }
+
+      // Only generate questions for assessment and HR stages
+      if (stage.stageType !== 'assessment' && stage.stageType !== 'hr_documents') {
+        return new Response(JSON.stringify({ 
+          questions: [], 
+          stage,
+          timePerQuestion: 0,
+          message: 'This stage does not require questions'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       const prompt = buildQuestionGenerationPrompt(stage, candidateProfile);
@@ -263,9 +462,21 @@ serve(async (req) => {
         .eq('session_id', sessionId)
         .eq('stage_order', stageOrder);
 
-      // Update session progress
-      const nextStageOrder = stageOrder + 1;
+      // Determine next stage based on current stage
+      const currentStageIndex = INTERVIEW_STAGES.findIndex(s => s.order === stageOrder);
+      const currentStage = INTERVIEW_STAGES[currentStageIndex];
+      
+      // Get next stage order based on stage type
+      let nextStageOrder = stageOrder + 1;
+      
+      // Special handling: After Technical Assessment (stage 2), go to Slot Booking (stage 3)
+      // After Slot Booking, go to Demo Round (stage 4)
+      // After Demo Round (stage 4), go to Demo Feedback (stage 5)
+      // After Demo Feedback (stage 5), go to Final Review HR (stage 6)
+      // After Final Review (stage 6), go to All Reviews (stage 7)
+      
       const isLastStage = stageOrder >= INTERVIEW_STAGES.length;
+      const shouldAutoProgress = currentStage?.autoProgressAfterCompletion !== false;
 
       // Get current session to append to stages_completed
       const { data: currentSession } = await supabase
@@ -282,11 +493,12 @@ serve(async (req) => {
         isLastStage,
         nextStageOrder,
         stageName: stage.name,
-        score: evaluation.overallScore
+        score: evaluation.overallScore,
+        shouldAutoProgress
       });
 
       if (!isLastStage) {
-        // Always move to next stage regardless of pass/fail
+        // For Technical Assessment (stage 2), move to slot booking but don't auto-send email
         const { error: updateError } = await supabase
           .from('mock_interview_sessions')
           .update({
@@ -308,8 +520,9 @@ serve(async (req) => {
           .select('ai_score')
           .eq('session_id', sessionId);
 
-        const avgScore = allResults?.length 
-          ? allResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / allResults.length 
+        const scoredResults = allResults?.filter(r => r.ai_score !== null && r.ai_score > 0) || [];
+        const avgScore = scoredResults.length 
+          ? scoredResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scoredResults.length 
           : 0;
 
         await supabase
@@ -327,8 +540,9 @@ serve(async (req) => {
         console.log('Interview completed with avg score:', avgScore);
       }
 
-      // Always return next stage info for email sending (unless last stage)
+      // Return next stage info - but for Technical Assessment (stage 2), don't auto-send email
       const nextStage = !isLastStage ? INTERVIEW_STAGES[stageOrder] : null;
+      const shouldSendEmail = shouldAutoProgress && nextStage?.stageType !== 'slot_booking';
 
       return new Response(JSON.stringify({
         evaluation,
@@ -336,7 +550,9 @@ serve(async (req) => {
         nextStageOrder: nextStageOrder,
         isComplete: isLastStage,
         passed: evaluation.passed,
-        sessionId
+        sessionId,
+        shouldSendEmail,
+        requiresSlotBooking: nextStage?.stageType === 'slot_booking'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -379,9 +595,9 @@ Requirements:
 5. Make questions specific to the candidate's background when possible
 
 For "${stage.name}" stage, focus on:
-${stage.order === 1 ? '- Technical knowledge, problem-solving, domain expertise' : ''}
-${stage.order === 2 ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
-${stage.order === 3 ? '- Comprehensive evaluation, future plans, final assessment questions' : ''}
+${stage.order === 2 ? '- Technical knowledge, problem-solving, domain expertise' : ''}
+${stage.order === 4 ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
+${stage.order === 6 ? '- HR questions, document verification, future plans, final assessment' : ''}
 
 Generate exactly ${stage.questionCount} questions.`;
 }

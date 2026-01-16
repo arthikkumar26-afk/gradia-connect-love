@@ -23,7 +23,13 @@ import {
   Square,
   Camera,
   Mic,
-  AlertTriangle
+  AlertTriangle,
+  Calendar,
+  Clock,
+  FileText,
+  BarChart3,
+  Mail,
+  ListChecks
 } from "lucide-react";
 import { useVideoRecorder } from "@/hooks/useVideoRecorder";
 import { MockInterviewResults } from "@/components/candidate/MockInterviewResults";
@@ -44,6 +50,9 @@ interface InterviewStage {
   questionCount: number;
   timePerQuestion: number;
   passingScore: number;
+  stageType?: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review';
+  requiresSlotBooking?: boolean;
+  autoProgressAfterCompletion?: boolean;
 }
 
 interface EvaluationResult {
@@ -77,6 +86,9 @@ const MockInterview = () => {
   const [stageRecordingUrl, setStageRecordingUrl] = useState<string | null>(null);
   const [permissionsGranted, setPermissionsGranted] = useState(false);
   const [stages, setStages] = useState<InterviewStage[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [isBookingSlot, setIsBookingSlot] = useState(false);
+  const [allStageResults, setAllStageResults] = useState<any[]>([]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -319,8 +331,8 @@ const MockInterview = () => {
       setEvaluation(data.evaluation);
       setShowResult(true);
 
-      // Always send email for next stage (unless it's the last stage)
-      if (!data.isComplete && data.nextStage) {
+      // Only send email if shouldSendEmail is true (not for slot booking stages)
+      if (!data.isComplete && data.nextStage && data.shouldSendEmail) {
         console.log('Sending next stage invitation:', data.nextStage);
         
         try {
@@ -347,6 +359,8 @@ const MockInterview = () => {
           console.error('Email sending error:', emailErr);
           toast.error("Failed to send next stage email");
         }
+      } else if (data.requiresSlotBooking) {
+        toast.success("📝 Stage completed! Please book your demo interview slot.");
       } else if (data.isComplete) {
         toast.success("🎊 Congratulations! You've completed all interview stages!");
       }
@@ -565,58 +579,429 @@ const MockInterview = () => {
     );
   }
 
-  // Pre-start screen
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-lg w-full">
-        <CardHeader className="text-center">
-          <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Brain className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">{stage?.name}</CardTitle>
-          <CardDescription className="text-base mt-2">
-            {stage?.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <h4 className="font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              Before you begin:
-            </h4>
-            <ul className="text-sm text-muted-foreground space-y-2">
-              <li className="flex items-center gap-2">
-                <Camera className="h-4 w-4" />
-                Camera access will be required for recording
-              </li>
-              <li className="flex items-center gap-2">
-                <Mic className="h-4 w-4" />
-                Microphone access will be required
-              </li>
-              <li className="flex items-center gap-2">
-                <Timer className="h-4 w-4" />
-                {stage?.questionCount} questions, {stage?.timePerQuestion}s each
-              </li>
-              <li className="flex items-center gap-2">
-                <Video className="h-4 w-4" />
-                Your entire session will be recorded
-              </li>
-            </ul>
-          </div>
+  // Helper function for slot booking
+  const handleSlotBooking = async () => {
+    if (!selectedSlot) {
+      toast.error("Please select a time slot");
+      return;
+    }
+    
+    setIsBookingSlot(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
+        body: {
+          action: 'book_slot',
+          sessionId,
+          stageOrder: parseInt(stageOrder || '3'),
+          bookedSlot: selectedSlot
+        }
+      });
 
-          <div className="flex flex-col gap-3">
-            <Button onClick={startInterview} className="w-full gap-2" size="lg">
-              <Play className="h-5 w-5" />
-              Start Interview
-            </Button>
-            <Button variant="outline" onClick={goToDashboard} className="w-full">
-              Return to Dashboard
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+      if (error) throw error;
+
+      // Send demo round invitation with booked slot
+      const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId,
+          stageOrder: 4,
+          stageName: 'Demo Round',
+          stageDescription: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
+          appUrl: window.location.origin,
+          bookedSlot: selectedSlot
+        }
+      });
+
+      if (emailError) {
+        console.error('Email error:', emailError);
+      }
+
+      toast.success(`Demo slot booked for ${selectedSlot}! Check your email for details.`);
+      goToDashboard();
+    } catch (error) {
+      console.error('Error booking slot:', error);
+      toast.error("Failed to book slot");
+    } finally {
+      setIsBookingSlot(false);
+    }
+  };
+
+  // Helper function for completing instructions
+  const handleCompleteInstructions = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
+        body: {
+          action: 'complete_instructions',
+          sessionId
+        }
+      });
+
+      if (error) throw error;
+
+      // Send Technical Assessment invitation
+      const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId,
+          stageOrder: 2,
+          stageName: 'Technical Assessment',
+          stageDescription: 'Role-specific technical questions to assess your domain knowledge and problem-solving skills.',
+          appUrl: window.location.origin
+        }
+      });
+
+      if (emailError) {
+        console.error('Email error:', emailError);
+      }
+
+      toast.success("Instructions reviewed! Check your email for Technical Assessment.");
+      goToDashboard();
+    } catch (error) {
+      console.error('Error completing instructions:', error);
+      toast.error("Failed to proceed");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Helper function for completing demo feedback
+  const handleCompleteDemoFeedback = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
+        body: {
+          action: 'complete_demo_feedback',
+          sessionId
+        }
+      });
+
+      if (error) throw error;
+
+      // Send Final Review (HR) invitation
+      const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId,
+          stageOrder: 6,
+          stageName: 'Final Review (HR)',
+          stageDescription: 'HR round - Submit required documents for verification and final review.',
+          appUrl: window.location.origin
+        }
+      });
+
+      if (emailError) {
+        console.error('Email error:', emailError);
+      }
+
+      toast.success("Feedback reviewed! Check your email for HR Round.");
+      goToDashboard();
+    } catch (error) {
+      console.error('Error completing feedback:', error);
+      toast.error("Failed to proceed");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Generate available time slots
+  const generateTimeSlots = () => {
+    const slots = [];
+    const today = new Date();
+    for (let day = 1; day <= 5; day++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + day);
+      const dateStr = date.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+      slots.push({ date: dateStr, times: ['10:00 AM', '11:30 AM', '2:00 PM', '3:30 PM', '5:00 PM'] });
+    }
+    return slots;
+  };
+
+  // Render stage-specific content
+  const renderStageContent = () => {
+    if (!stage) return null;
+
+    // Stage 1: Interview Instructions
+    if (stage.stageType === 'email_info' || stage.order === 1) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="max-w-2xl w-full">
+            <CardHeader className="text-center">
+              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Interview Process Instructions</CardTitle>
+              <CardDescription className="text-base mt-2">
+                Please review the complete interview process before proceeding
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+                <h4 className="font-semibold">Your Interview Journey (7 Stages):</h4>
+                <div className="space-y-3">
+                  {stages.map((s, idx) => (
+                    <div key={s.order} className="flex items-start gap-3">
+                      <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-primary text-white' : 'bg-muted-foreground/20'}`}>
+                        {s.order}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{s.name}</p>
+                        <p className="text-xs text-muted-foreground">{s.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+                <h4 className="font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                  <AlertTriangle className="h-4 w-4" />
+                  Important Guidelines:
+                </h4>
+                <ul className="mt-2 text-sm text-amber-600 dark:text-amber-300 space-y-1">
+                  <li>• Ensure stable internet connection</li>
+                  <li>• Use quiet environment with good lighting</li>
+                  <li>• Keep camera and microphone ready</li>
+                  <li>• Have documents ready for HR round</li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Button onClick={handleCompleteInstructions} className="w-full gap-2" size="lg" disabled={isGenerating}>
+                  {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
+                  I Understand, Proceed to Technical Assessment
+                </Button>
+                <Button variant="outline" onClick={goToDashboard} className="w-full">
+                  Return to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Stage 3: Demo Slot Booking
+    if (stage.stageType === 'slot_booking' || stage.order === 3) {
+      const timeSlots = generateTimeSlots();
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="max-w-2xl w-full">
+            <CardHeader className="text-center">
+              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Book Your Demo Interview Slot</CardTitle>
+              <CardDescription className="text-base mt-2">
+                Select a convenient time for your 10-15 minute teaching demonstration
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                {timeSlots.map((slot) => (
+                  <div key={slot.date} className="space-y-2">
+                    <h4 className="font-medium text-sm text-muted-foreground">{slot.date}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {slot.times.map((time) => {
+                        const slotValue = `${slot.date} at ${time}`;
+                        return (
+                          <Button
+                            key={time}
+                            variant={selectedSlot === slotValue ? "default" : "outline"}
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => setSelectedSlot(slotValue)}
+                          >
+                            <Clock className="h-3 w-3" />
+                            {time}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {selectedSlot && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                  <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                    Selected: {selectedSlot}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={handleSlotBooking} 
+                  className="w-full gap-2" 
+                  size="lg" 
+                  disabled={!selectedSlot || isBookingSlot}
+                >
+                  {isBookingSlot ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                  Confirm Booking
+                </Button>
+                <Button variant="outline" onClick={goToDashboard} className="w-full">
+                  Return to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Stage 5: Demo Feedback
+    if (stage.stageType === 'feedback' || stage.order === 5) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="max-w-2xl w-full">
+            <CardHeader className="text-center">
+              <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Demo Feedback & Metrics</CardTitle>
+              <CardDescription className="text-base mt-2">
+                Review your demo teaching performance analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-center text-muted-foreground">
+                  Your demo teaching has been evaluated by our AI. Review the detailed feedback below.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-green-600">85%</p>
+                  <p className="text-sm text-green-700 dark:text-green-400">Overall Score</p>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
+                  <p className="text-3xl font-bold text-blue-600">Passed</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-400">Status</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Button onClick={handleCompleteDemoFeedback} className="w-full gap-2" size="lg" disabled={isGenerating}>
+                  {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
+                  Continue to HR Round
+                </Button>
+                <Button variant="outline" onClick={goToDashboard} className="w-full">
+                  Return to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Stage 7: All Reviews
+    if (stage.stageType === 'review' || stage.order === 7) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="max-w-3xl w-full">
+            <CardHeader className="text-center">
+              <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ListChecks className="h-8 w-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl">Interview Complete - All Reviews</CardTitle>
+              <CardDescription className="text-base mt-2">
+                Congratulations! Here's your complete interview summary
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-3">
+                {stages.filter(s => s.order < 7).map((s) => (
+                  <div key={s.order} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <span className="font-medium">{s.name}</span>
+                    </div>
+                    <Badge variant="default">Completed</Badge>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 text-center">
+                <p className="text-4xl font-bold text-green-600 mb-2">🎊</p>
+                <h3 className="text-xl font-semibold text-green-700 dark:text-green-400">
+                  Interview Process Completed!
+                </h3>
+                <p className="text-sm text-green-600 dark:text-green-300 mt-2">
+                  You have successfully completed all interview stages.
+                </p>
+              </div>
+
+              <Button onClick={goToDashboard} className="w-full" size="lg">
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Default: Assessment stages (Technical Assessment, HR Round)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-lg w-full">
+          <CardHeader className="text-center">
+            <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Brain className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">{stage?.name}</CardTitle>
+            <CardDescription className="text-base mt-2">
+              {stage?.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <h4 className="font-semibold flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                Before you begin:
+              </h4>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  Camera access will be required for recording
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mic className="h-4 w-4" />
+                  Microphone access will be required
+                </li>
+                <li className="flex items-center gap-2">
+                  <Timer className="h-4 w-4" />
+                  {stage?.questionCount} questions, {stage?.timePerQuestion}s each
+                </li>
+                <li className="flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  Your entire session will be recorded
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button onClick={startInterview} className="w-full gap-2" size="lg">
+                <Play className="h-5 w-5" />
+                Start Interview
+              </Button>
+              <Button variant="outline" onClick={goToDashboard} className="w-full">
+                Return to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Pre-start screen - render based on stage type
+  return renderStageContent();
 };
 
 export default MockInterview;

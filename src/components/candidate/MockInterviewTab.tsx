@@ -27,7 +27,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   Eye,
-  Monitor
+  Monitor,
+  Calendar,
+  FileText,
+  BarChart3,
+  ListChecks
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -38,6 +42,9 @@ interface InterviewStage {
   questionCount: number;
   timePerQuestion: number;
   passingScore: number;
+  stageType?: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review';
+  requiresSlotBooking?: boolean;
+  autoProgressAfterCompletion?: boolean;
 }
 
 interface QuestionScore {
@@ -259,14 +266,24 @@ export const MockInterviewTab = () => {
 
   const getStageIcon = (stageName: string) => {
     switch (stageName) {
+      case 'Interview Instructions':
+        return Mail;
       case 'Technical Assessment':
         return Code;
+      case 'Demo Slot Booking':
+        return Calendar;
+      case 'Demo Round':
+        return Monitor;
+      case 'Demo Feedback':
+        return BarChart3;
+      case 'Final Review (HR)':
+        return FileText;
+      case 'All Reviews':
+        return ListChecks;
       case 'HR Round':
         return Users;
       case 'Viva':
         return MessageSquare;
-      case 'Demo Round':
-        return Monitor;
       case 'Final Review':
         return ClipboardCheck;
       default:
@@ -440,7 +457,13 @@ export const MockInterviewTab = () => {
                             )}
                           </>
                         )}
-                        {status === 'pending' && (
+                        {status === 'pending' && stage.stageType === 'slot_booking' && (
+                          <Badge variant="outline" className="gap-1 text-xs animate-pulse">
+                            <Calendar className="h-3 w-3" />
+                            Book Slot
+                          </Badge>
+                        )}
+                        {status === 'pending' && stage.stageType !== 'slot_booking' && (
                           <Badge variant="outline" className="gap-1 text-xs animate-pulse">
                             <Mail className="h-3 w-3" />
                             Check Email
@@ -504,8 +527,17 @@ export const MockInterviewTab = () => {
             <Brain className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Ready for Mock Interview?</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Practice with our AI-powered mock interview. Complete 3 stages: Technical Assessment, Demo Round, and Final Review.
+              Practice with our AI-powered mock interview. Complete 7 stages including Technical Assessment, Demo Round, and HR Review.
             </p>
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              <Badge variant="outline" className="gap-1"><Mail className="h-3 w-3" /> Instructions</Badge>
+              <Badge variant="outline" className="gap-1"><Code className="h-3 w-3" /> Technical</Badge>
+              <Badge variant="outline" className="gap-1"><Calendar className="h-3 w-3" /> Slot Booking</Badge>
+              <Badge variant="outline" className="gap-1"><Monitor className="h-3 w-3" /> Demo</Badge>
+              <Badge variant="outline" className="gap-1"><BarChart3 className="h-3 w-3" /> Feedback</Badge>
+              <Badge variant="outline" className="gap-1"><FileText className="h-3 w-3" /> HR Round</Badge>
+              <Badge variant="outline" className="gap-1"><ListChecks className="h-3 w-3" /> Final Review</Badge>
+            </div>
             <Button onClick={startNewSession} disabled={isStarting} size="lg" className="gap-2">
               {isStarting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
               Start Mock Interview
