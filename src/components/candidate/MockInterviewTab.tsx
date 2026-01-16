@@ -25,11 +25,13 @@ import {
   ArrowRight,
   Award,
   RotateCcw,
-  ChevronRight,
-  Mic,
+  Brain,
   Video,
-  Brain
+  Circle,
+  Square
 } from "lucide-react";
+import { useVideoRecorder } from "@/hooks/useVideoRecorder";
+import { MockInterviewResults } from "./MockInterviewResults";
 
 interface StageQuestion {
   id: number;
@@ -55,6 +57,7 @@ interface StageResult {
   ai_score: number;
   ai_feedback: string;
   passed: boolean;
+  recording_url?: string;
 }
 
 interface EvaluationResult {
@@ -72,6 +75,7 @@ interface MockInterviewSession {
   current_stage_order: number;
   overall_score: number;
   overall_feedback: string;
+  recording_url?: string;
 }
 
 export const MockInterviewTab = () => {
@@ -93,14 +97,52 @@ export const MockInterviewTab = () => {
   const [showStageResult, setShowStageResult] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [pastSessions, setPastSessions] = useState<MockInterviewSession[]>([]);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [stageRecordingUrl, setStageRecordingUrl] = useState<string | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+
+  const {
+    isRecording,
+    isPaused,
+    isUploading,
+    previewUrl,
+    recordedBlob,
+    error: recordingError,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    uploadRecording,
+    resetRecording,
+    setVideoElement,
+    stream
+  } = useVideoRecorder();
 
   useEffect(() => {
     if (user) {
       loadData();
     }
   }, [user]);
+
+  // Recording duration timer
+  useEffect(() => {
+    if (isRecording && !isPaused) {
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+    } else if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+    }
+
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, [isRecording, isPaused]);
 
   useEffect(() => {
     if (timeLeft > 0 && currentStage && !showStageResult) {
@@ -116,11 +158,26 @@ export const MockInterviewTab = () => {
     };
   }, [timeLeft, currentStage, showStageResult]);
 
+  // Set video element for recording
+  useEffect(() => {
+    if (videoPreviewRef.current) {
+      setVideoElement(videoPreviewRef.current);
+    }
+  }, [setVideoElement]);
+
+  // Update video preview with stream
+  useEffect(() => {
+    if (videoPreviewRef.current && stream) {
+      videoPreviewRef.current.srcObject = stream;
+      videoPreviewRef.current.muted = true;
+      videoPreviewRef.current.play();
+    }
+  }, [stream]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
 
-      // Load stages
       const { data: stagesData } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: { action: 'get_stages' }
       });
@@ -128,7 +185,6 @@ export const MockInterviewTab = () => {
         setStages(stagesData.stages);
       }
 
-      // Load profile
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
@@ -136,7 +192,6 @@ export const MockInterviewTab = () => {
         .maybeSingle();
       setProfile(profileData);
 
-      // Load current active session
       const { data: sessionData } = await supabase
         .from('mock_interview_sessions')
         .select('*')
@@ -149,7 +204,6 @@ export const MockInterviewTab = () => {
       if (sessionData) {
         setCurrentSession(sessionData);
         
-        // Load stage results for this session
         const { data: resultsData } = await supabase
           .from('mock_interview_stage_results')
           .select('*')
@@ -161,7 +215,6 @@ export const MockInterviewTab = () => {
         }
       }
 
-      // Load past sessions
       const { data: pastData } = await supabase
         .from('mock_interview_sessions')
         .select('*')
@@ -204,7 +257,6 @@ export const MockInterviewTab = () => {
       setStageResults([]);
       toast.success("Mock interview session started!");
       
-      // Start first stage
       await startStage(1, session.id);
 
     } catch (error) {
@@ -227,6 +279,9 @@ export const MockInterviewTab = () => {
     setCurrentAnswer("");
     setShowStageResult(false);
     setEvaluation(null);
+    setRecordingDuration(0);
+    setStageRecordingUrl(null);
+    resetRecording();
 
     try {
       const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
@@ -243,6 +298,10 @@ export const MockInterviewTab = () => {
       if (data?.questions) {
         setQuestions(data.questions);
         setTimeLeft(data.timePerQuestion || 120);
+        // Auto-start recording when questions load
+        setTimeout(() => {
+          startRecording();
+        }, 500);
       }
 
     } catch (error) {
@@ -263,7 +322,10 @@ export const MockInterviewTab = () => {
       setCurrentAnswer("");
       setTimeLeft(currentStage?.timePerQuestion || 120);
     } else {
-      // Submit stage for evaluation
+      // Stop recording and submit stage
+      if (isRecording) {
+        stopRecording();
+      }
       submitStage(newAnswers);
     }
   };
@@ -272,13 +334,21 @@ export const MockInterviewTab = () => {
     setIsEvaluating(true);
     
     try {
+      // Upload recording if available
+      let recordingUrl: string | null = null;
+      if (recordedBlob && currentSession && currentStage) {
+        recordingUrl = await uploadRecording(currentSession.id, currentStage.order);
+        setStageRecordingUrl(recordingUrl);
+      }
+
       const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: {
           action: 'evaluate_answers',
           sessionId: currentSession?.id,
           stageOrder: currentStage?.order,
           answers: finalAnswers,
-          candidateProfile: profile
+          candidateProfile: profile,
+          recordingUrl
         }
       });
 
@@ -287,7 +357,6 @@ export const MockInterviewTab = () => {
       setEvaluation(data.evaluation);
       setShowStageResult(true);
 
-      // Refresh stage results
       const { data: resultsData } = await supabase
         .from('mock_interview_stage_results')
         .select('*')
@@ -327,6 +396,9 @@ export const MockInterviewTab = () => {
     setEvaluation(null);
     setShowStageResult(false);
     setStageResults([]);
+    setRecordingDuration(0);
+    setStageRecordingUrl(null);
+    resetRecording();
     loadData();
   };
 
@@ -378,97 +450,29 @@ export const MockInterviewTab = () => {
     );
   }
 
-  // Show stage result
+  // Show stage result with enhanced display
   if (showStageResult && evaluation && currentStage) {
     return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="text-center">
-            {evaluation.passed ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <CheckCircle2 className="h-8 w-8 text-green-600" />
-                </div>
-                <CardTitle className="text-green-600">Stage Passed!</CardTitle>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <XCircle className="h-8 w-8 text-red-600" />
-                </div>
-                <CardTitle className="text-red-600">Stage Not Passed</CardTitle>
-              </div>
-            )}
-            <CardDescription>{currentStage.name}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex justify-center">
-              <div className="text-center">
-                <p className="text-4xl font-bold text-primary">{evaluation.overallScore?.toFixed(0)}%</p>
-                <p className="text-sm text-muted-foreground">Your Score (Passing: {currentStage.passingScore}%)</p>
-              </div>
-            </div>
-
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-foreground">{evaluation.feedback}</p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h4 className="font-semibold text-green-600 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Strengths
-                </h4>
-                <ul className="space-y-1">
-                  {evaluation.strengths?.map((s, i) => (
-                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <ChevronRight className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-semibold text-amber-600 flex items-center gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  Areas to Improve
-                </h4>
-                <ul className="space-y-1">
-                  {evaluation.improvements?.map((s, i) => (
-                    <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <ChevronRight className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      {s}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-4 pt-4">
-              {evaluation.passed && currentStage.order < stages.length ? (
-                <Button onClick={continueToNextStage} className="gap-2">
-                  Continue to Next Stage
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              ) : evaluation.passed ? (
-                <Button onClick={resetSession} variant="outline" className="gap-2">
-                  <RotateCcw className="h-4 w-4" />
-                  Start New Session
-                </Button>
-              ) : (
-                <Button onClick={resetSession} className="gap-2">
-                  <RotateCcw className="h-4 w-4" />
-                  Try Again
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <MockInterviewResults
+        stageName={currentStage.name}
+        overallScore={evaluation.overallScore}
+        passed={evaluation.passed}
+        passingScore={currentStage.passingScore}
+        feedback={evaluation.feedback}
+        strengths={evaluation.strengths || []}
+        improvements={evaluation.improvements || []}
+        questionScores={evaluation.questionScores}
+        questions={questions}
+        answers={answers}
+        recordingUrl={stageRecordingUrl}
+        onContinue={evaluation.passed && currentStage.order < stages.length ? continueToNextStage : undefined}
+        onRetry={resetSession}
+        isLastStage={currentStage.order >= stages.length}
+      />
     );
   }
 
-  // Show active interview
+  // Show active interview with recording
   if (currentStage && questions.length > 0) {
     const currentQuestion = questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
@@ -492,6 +496,13 @@ export const MockInterviewTab = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
+                {/* Recording Indicator */}
+                {isRecording && (
+                  <Badge variant="destructive" className={`flex items-center gap-1.5 ${isPaused ? 'bg-amber-500' : 'animate-pulse'}`}>
+                    <Circle className="h-2 w-2 fill-current" />
+                    {isPaused ? 'PAUSED' : 'REC'} {formatTime(recordingDuration)}
+                  </Badge>
+                )}
                 <div className={`flex items-center gap-2 ${timeLeft <= 30 ? 'text-red-500' : 'text-muted-foreground'}`}>
                   <Timer className="h-5 w-5" />
                   <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
@@ -502,67 +513,132 @@ export const MockInterviewTab = () => {
           </CardContent>
         </Card>
 
-        {/* Question Card */}
-        <Card>
-          <CardContent className="py-6 space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Brain className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <Badge variant="outline" className="mb-2">{currentQuestion.category}</Badge>
-                <p className="text-lg font-medium text-foreground">{currentQuestion.question}</p>
-              </div>
-            </div>
-
-            {currentQuestion.type === 'multiple_choice' && currentQuestion.options ? (
-              <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
-                <div className="space-y-3">
-                  {currentQuestion.options.map((option, idx) => (
-                    <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                      <RadioGroupItem value={option} id={`option-${idx}`} />
-                      <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </RadioGroup>
-            ) : (
-              <Textarea
-                placeholder="Type your answer here..."
-                value={currentAnswer}
-                onChange={(e) => setCurrentAnswer(e.target.value)}
-                className="min-h-[150px]"
-              />
-            )}
-
-            <div className="flex justify-between items-center pt-4">
-              <p className="text-sm text-muted-foreground">
-                {currentQuestionIndex < questions.length - 1 
-                  ? `${questions.length - currentQuestionIndex - 1} questions remaining`
-                  : 'This is the last question'}
-              </p>
-              <Button 
-                onClick={handleNextQuestion} 
-                disabled={!currentAnswer.trim()}
-                className="gap-2"
-              >
-                {currentQuestionIndex < questions.length - 1 ? (
-                  <>
-                    Next Question
-                    <ArrowRight className="h-4 w-4" />
-                  </>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Video Preview */}
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                Recording Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                {previewUrl ? (
+                  <video
+                    src={previewUrl}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
+                  <video
+                    ref={videoPreviewRef}
+                    className="w-full h-full object-cover"
+                    playsInline
+                    muted
+                  />
+                )}
+                {isRecording && !isPaused && (
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="destructive" className="animate-pulse flex items-center gap-1">
+                      <Circle className="h-2 w-2 fill-current" />
+                      LIVE
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-center gap-2 mt-3">
+                {!isRecording && !previewUrl && (
+                  <Button size="sm" onClick={startRecording} className="gap-1">
+                    <Circle className="h-3 w-3 fill-red-500 text-red-500" />
+                    Start
+                  </Button>
+                )}
+                {isRecording && (
                   <>
-                    Submit Stage
-                    <CheckCircle2 className="h-4 w-4" />
+                    {isPaused ? (
+                      <Button size="sm" variant="outline" onClick={resumeRecording}>
+                        <Play className="h-3 w-3" />
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={pauseRecording}>
+                        Pause
+                      </Button>
+                    )}
+                    <Button size="sm" variant="destructive" onClick={stopRecording}>
+                      <Square className="h-3 w-3" />
+                    </Button>
                   </>
                 )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+              {recordingError && (
+                <p className="text-xs text-destructive mt-2 text-center">{recordingError}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Question Card */}
+          <Card className="lg:col-span-2">
+            <CardContent className="py-6 space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Brain className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <Badge variant="outline" className="mb-2">{currentQuestion.category}</Badge>
+                  <p className="text-lg font-medium text-foreground">{currentQuestion.question}</p>
+                </div>
+              </div>
+
+              {currentQuestion.type === 'multiple_choice' && currentQuestion.options ? (
+                <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
+                  <div className="space-y-3">
+                    {currentQuestion.options.map((option, idx) => (
+                      <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                        <RadioGroupItem value={option} id={`option-${idx}`} />
+                        <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
+                          {option}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </RadioGroup>
+              ) : (
+                <Textarea
+                  placeholder="Type your answer here..."
+                  value={currentAnswer}
+                  onChange={(e) => setCurrentAnswer(e.target.value)}
+                  className="min-h-[150px]"
+                />
+              )}
+
+              <div className="flex justify-between items-center pt-4">
+                <p className="text-sm text-muted-foreground">
+                  {currentQuestionIndex < questions.length - 1 
+                    ? `${questions.length - currentQuestionIndex - 1} questions remaining`
+                    : 'This is the last question'}
+                </p>
+                <Button 
+                  onClick={handleNextQuestion} 
+                  disabled={!currentAnswer.trim()}
+                  className="gap-2"
+                >
+                  {currentQuestionIndex < questions.length - 1 ? (
+                    <>
+                      Next Question
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Submit Stage
+                      <CheckCircle2 className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -598,7 +674,7 @@ export const MockInterviewTab = () => {
             AI Mock Interview
           </h2>
           <p className="text-muted-foreground">
-            Practice all interview stages with AI-powered evaluation
+            Practice all interview stages with AI-powered evaluation and video recording
           </p>
         </div>
         {!currentSession && (
@@ -618,7 +694,7 @@ export const MockInterviewTab = () => {
         <CardHeader>
           <CardTitle>Interview Stages</CardTitle>
           <CardDescription>
-            Complete all 6 stages to finish the mock interview
+            Complete all 6 stages to finish the mock interview. Your responses will be recorded.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -652,9 +728,17 @@ export const MockInterviewTab = () => {
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold">{stage.name}</h4>
                       {result && (
-                        <Badge variant={result.passed ? 'default' : 'destructive'}>
-                          {result.ai_score?.toFixed(0)}%
-                        </Badge>
+                        <>
+                          <Badge variant={result.passed ? 'default' : 'destructive'}>
+                            {result.ai_score?.toFixed(0)}%
+                          </Badge>
+                          {result.recording_url && (
+                            <Badge variant="outline" className="gap-1">
+                              <Video className="h-3 w-3" />
+                              Recorded
+                            </Badge>
+                          )}
+                        </>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">{stage.description}</p>
@@ -704,9 +788,17 @@ export const MockInterviewTab = () => {
                       </p>
                     </div>
                   </div>
-                  <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
-                    {session.status}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {session.recording_url && (
+                      <Badge variant="outline" className="gap-1">
+                        <Video className="h-3 w-3" />
+                        Has Recording
+                      </Badge>
+                    )}
+                    <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
+                      {session.status}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
