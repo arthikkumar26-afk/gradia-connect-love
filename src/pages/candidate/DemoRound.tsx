@@ -22,7 +22,9 @@ import {
   Monitor,
   BookOpen,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { useVideoRecorder } from '@/hooks/useVideoRecorder';
 
@@ -56,6 +58,7 @@ export default function DemoRound() {
   const [profile, setProfile] = useState<any>(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [hasPermissions, setHasPermissions] = useState(false);
+  const [currentInstruction, setCurrentInstruction] = useState(0);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,6 +72,22 @@ export default function DemoRound() {
   } = useVideoRecorder();
 
   const MAX_DURATION = 600; // 10 minutes
+
+  // AI Instructor messages based on time
+  const aiInstructions = [
+    { time: 0, message: "Welcome! Start by introducing yourself and the topic you'll be teaching today.", icon: "👋" },
+    { time: 30, message: "Great start! Now explain why this topic is important and what students will learn.", icon: "🎯" },
+    { time: 60, message: "Begin explaining the core concept. Remember to speak clearly and at a steady pace.", icon: "📚" },
+    { time: 120, message: "Excellent! Use an example or analogy to help students understand better.", icon: "💡" },
+    { time: 180, message: "You're doing well! Try to engage as if students are present - ask rhetorical questions.", icon: "❓" },
+    { time: 240, message: "If applicable, demonstrate a practical application of the concept.", icon: "🔧" },
+    { time: 300, message: "Halfway there! Summarize key points covered so far before continuing.", icon: "📝" },
+    { time: 360, message: "Cover any additional details or advanced aspects of your topic.", icon: "🚀" },
+    { time: 420, message: "Address common mistakes or misconceptions students might have.", icon: "⚠️" },
+    { time: 480, message: "Start wrapping up. Provide a brief summary of everything you've taught.", icon: "🎁" },
+    { time: 540, message: "Final minute! Conclude with key takeaways and encourage practice.", icon: "🏁" },
+    { time: 570, message: "Excellent work! Feel free to end your demo when ready.", icon: "✨" },
+  ];
 
   useEffect(() => {
     loadData();
@@ -98,6 +117,19 @@ export default function DemoRound() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isRecording]);
+
+  // Update AI instruction based on time
+  useEffect(() => {
+    if (isRecording) {
+      const currentIdx = aiInstructions.findIndex((instr, idx) => {
+        const nextInstr = aiInstructions[idx + 1];
+        return timeElapsed >= instr.time && (!nextInstr || timeElapsed < nextInstr.time);
+      });
+      if (currentIdx !== -1 && currentIdx !== currentInstruction) {
+        setCurrentInstruction(currentIdx);
+      }
+    }
+  }, [timeElapsed, isRecording]);
 
   const loadData = async () => {
     try {
@@ -530,12 +562,40 @@ export default function DemoRound() {
               )}
             </div>
 
+            {/* AI Instructor Panel */}
             {isStarted && (
-              <div className="text-center">
-                <p className="text-lg font-medium">Teaching: {demoTopic}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  AI is monitoring your teaching demonstration
-                </p>
+              <div className="mt-4">
+                <Card className="border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10">
+                  <CardContent className="py-4">
+                    <div className="flex items-start gap-4">
+                      <div className="relative flex-shrink-0">
+                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                          <Bot className="h-7 w-7 text-primary-foreground" />
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-background">
+                          <Sparkles className="h-3 w-3 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-primary">AI Instructor</span>
+                          <Badge variant="outline" className="text-xs">Live Guidance</Badge>
+                        </div>
+                        <div className="bg-background/80 backdrop-blur rounded-lg p-3 border border-primary/20 relative">
+                          <span className="text-2xl mr-2">{aiInstructions[currentInstruction]?.icon}</span>
+                          <p className="text-sm inline">{aiInstructions[currentInstruction]?.message}</p>
+                          <div className="absolute -left-2 top-4 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-background/80" />
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>Next tip in {Math.max(0, (aiInstructions[currentInstruction + 1]?.time || MAX_DURATION) - timeElapsed)}s</span>
+                          <span className="mx-1">•</span>
+                          <span>Teaching: {demoTopic}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
           </CardContent>
