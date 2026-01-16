@@ -1043,10 +1043,17 @@ export const MockInterviewTab = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{stage.name}</h3>
-                      {/* Only show score for stages other than Interview Instructions (stage 1) */}
-                      {result?.ai_score !== undefined && stage.order !== 1 && (
+                      {/* Only show score for stages other than Interview Instructions (1) and Slot Booking stages (2, 4) */}
+                      {result?.ai_score !== undefined && stage.order !== 1 && stage.order !== 2 && stage.order !== 4 && (
                         <Badge variant="default" className="bg-green-500">
                           {result.ai_score.toFixed(0)}%
+                        </Badge>
+                      )}
+                      {/* Show "Slot Booked" badge for completed slot booking stages */}
+                      {status === 'completed' && (stage.order === 2 || stage.order === 4) && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Slot Booked
                         </Badge>
                       )}
                       {status === 'current' && (
@@ -1148,89 +1155,110 @@ export const MockInterviewTab = () => {
                 {/* Expanded Results Section */}
                 {isExpanded && hasResults && result && (
                   <div className="mt-4 pt-4 border-t space-y-4">
-                    {/* AI Feedback */}
-                    {result.ai_feedback && (
-                      <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-sm text-foreground">{result.ai_feedback}</p>
+                    {/* For Slot Booking stages (2 and 4), show simplified confirmation */}
+                    {(stage.order === 2 || stage.order === 4) ? (
+                      <div className="p-4 rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-500/30">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                            <CheckCircle2 className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-green-700 dark:text-green-400">
+                              {stage.order === 2 ? 'Technical Assessment Slot Booked' : 'Demo Interview Slot Booked'}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                              {result.ai_feedback || 'Your slot has been confirmed. Check your email for details.'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    ) : (
+                      <>
+                        {/* AI Feedback */}
+                        {result.ai_feedback && (
+                          <div className="p-3 rounded-lg bg-muted/50">
+                            <p className="text-sm text-foreground">{result.ai_feedback}</p>
+                          </div>
+                        )}
 
-                    {/* Criteria Breakdown for Demo Round (stage 4) */}
-                    {result.question_scores && Object.keys(result.question_scores).length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-muted-foreground">Criteria Breakdown</h4>
-                        {Object.entries(result.question_scores).map(([key, value]) => {
-                          const labels: Record<string, string> = {
-                            teachingClarity: 'Teaching Clarity',
-                            subjectKnowledge: 'Subject Knowledge',
-                            presentationSkills: 'Presentation Skills',
-                            timeManagement: 'Time Management',
-                            overallPotential: 'Overall Potential'
-                          };
-                          const scoreColor = value.score >= 80 ? 'text-green-600' : value.score >= 65 ? 'text-amber-600' : 'text-red-600';
-                          const progressColor = value.score >= 80 ? 'bg-green-500' : value.score >= 65 ? 'bg-amber-500' : 'bg-red-500';
-                          
-                          return (
-                            <div key={key} className="p-3 rounded-lg border bg-card">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium">{labels[key] || key}</span>
-                                <span className={`text-sm font-bold ${scoreColor}`}>{value.score}%</span>
-                              </div>
-                              <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
-                                <div className={`h-full ${progressColor}`} style={{ width: `${value.score}%` }} />
-                              </div>
-                              <p className="text-xs text-muted-foreground">{value.feedback}</p>
+                        {/* Criteria Breakdown for Demo Round (stage 5) */}
+                        {result.question_scores && Object.keys(result.question_scores).length > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="text-sm font-semibold text-muted-foreground">Criteria Breakdown</h4>
+                            {Object.entries(result.question_scores).map(([key, value]) => {
+                              const labels: Record<string, string> = {
+                                teachingClarity: 'Teaching Clarity',
+                                subjectKnowledge: 'Subject Knowledge',
+                                presentationSkills: 'Presentation Skills',
+                                timeManagement: 'Time Management',
+                                overallPotential: 'Overall Potential'
+                              };
+                              const scoreColor = value.score >= 80 ? 'text-green-600' : value.score >= 65 ? 'text-amber-600' : 'text-red-600';
+                              const progressColor = value.score >= 80 ? 'bg-green-500' : value.score >= 65 ? 'bg-amber-500' : 'bg-red-500';
+                              
+                              return (
+                                <div key={key} className="p-3 rounded-lg border bg-card">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-medium">{labels[key] || key}</span>
+                                    <span className={`text-sm font-bold ${scoreColor}`}>{value.score}%</span>
+                                  </div>
+                                  <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+                                    <div className={`h-full ${progressColor}`} style={{ width: `${value.score}%` }} />
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{value.feedback}</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Strengths & Improvements Grid */}
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {/* Positive Points (Strengths) */}
+                          {result.strengths && result.strengths.length > 0 && (
+                            <div className="p-3 rounded-lg border border-green-500/30 bg-green-50/50 dark:bg-green-900/10">
+                              <h4 className="text-sm font-semibold flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
+                                <TrendingUp className="h-4 w-4" />
+                                Positive Points
+                              </h4>
+                              <ul className="space-y-2">
+                                {result.strengths.map((strength, idx) => (
+                                  <li key={idx} className="flex items-start gap-2 text-sm">
+                                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                    <span className="text-foreground">{strength}</span>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-                          );
-                        })}
-                      </div>
+                          )}
+
+                          {/* Negative Points (Areas to Improve) */}
+                          {result.improvements && result.improvements.length > 0 && (
+                            <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/10">
+                              <h4 className="text-sm font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400 mb-2">
+                                <TrendingDown className="h-4 w-4" />
+                                Areas to Improve
+                              </h4>
+                              <ul className="space-y-2">
+                                {result.improvements.map((improvement, idx) => (
+                                  <li key={idx} className="flex items-start gap-2 text-sm">
+                                    <Target className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <span className="text-foreground">{improvement}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Button - Full details */}
+                        <div className="flex justify-center pt-2">
+                          <Button variant="outline" size="sm" onClick={() => goToStage(stage.order)}>
+                            View Full Details
+                          </Button>
+                        </div>
+                      </>
                     )}
-
-                    {/* Strengths & Improvements Grid */}
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {/* Positive Points (Strengths) */}
-                      {result.strengths && result.strengths.length > 0 && (
-                        <div className="p-3 rounded-lg border border-green-500/30 bg-green-50/50 dark:bg-green-900/10">
-                          <h4 className="text-sm font-semibold flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
-                            <TrendingUp className="h-4 w-4" />
-                            Positive Points
-                          </h4>
-                          <ul className="space-y-2">
-                            {result.strengths.map((strength, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-sm">
-                                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                <span className="text-foreground">{strength}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Negative Points (Areas to Improve) */}
-                      {result.improvements && result.improvements.length > 0 && (
-                        <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/10">
-                          <h4 className="text-sm font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400 mb-2">
-                            <TrendingDown className="h-4 w-4" />
-                            Areas to Improve
-                          </h4>
-                          <ul className="space-y-2">
-                            {result.improvements.map((improvement, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-sm">
-                                <Target className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                                <span className="text-foreground">{improvement}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Button - Full details */}
-                    <div className="flex justify-center pt-2">
-                      <Button variant="outline" size="sm" onClick={() => goToStage(stage.order)}>
-                        View Full Details
-                      </Button>
-                    </div>
                   </div>
                 )}
 
