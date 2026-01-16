@@ -127,6 +127,56 @@ export const MockInterviewTab = () => {
     }
   };
 
+  const sendInterviewInstructionsEmail = async (sessionId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile.email,
+          candidateName: profile.full_name,
+          sessionId: sessionId,
+          stageOrder: 1,
+          stageName: 'Interview Instructions',
+          stageDescription: 'Receive detailed interview process instructions and guidelines via email.'
+        }
+      });
+
+      if (error) throw error;
+      console.log('Interview instructions email sent:', data);
+      return true;
+    } catch (error) {
+      console.error('Error sending interview instructions email:', error);
+      return false;
+    }
+  };
+
+  const completeInstructionsStage = async (sessionId: string) => {
+    try {
+      // Create stage result for Interview Instructions
+      await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: sessionId,
+          stage_name: 'Interview Instructions',
+          stage_order: 1,
+          ai_score: 100,
+          ai_feedback: 'Interview instructions sent successfully via email.',
+          passed: true,
+          completed_at: new Date().toISOString()
+        });
+
+      // Update session to move to next stage
+      await supabase
+        .from('mock_interview_sessions')
+        .update({ current_stage_order: 2 })
+        .eq('id', sessionId);
+
+      return true;
+    } catch (error) {
+      console.error('Error completing instructions stage:', error);
+      return false;
+    }
+  };
+
   const startMockTest = async () => {
     if (!user || !profile) {
       toast.error("Please complete your profile first");
@@ -149,9 +199,34 @@ export const MockInterviewTab = () => {
 
       if (error) throw error;
 
-      setCurrentSession(session);
-      setStageResults([]);
-      toast.success("Mock test started! Begin with Stage 1.");
+      // Send interview instructions email
+      const emailSent = await sendInterviewInstructionsEmail(session.id);
+      
+      if (emailSent) {
+        // Complete stage 1 and move to stage 2
+        await completeInstructionsStage(session.id);
+        
+        // Reload session data
+        const { data: updatedSession } = await supabase
+          .from('mock_interview_sessions')
+          .select('*')
+          .eq('id', session.id)
+          .single();
+        
+        const { data: resultsData } = await supabase
+          .from('mock_interview_stage_results')
+          .select('*')
+          .eq('session_id', session.id)
+          .order('stage_order', { ascending: true });
+
+        setCurrentSession(updatedSession);
+        setStageResults(resultsData as StageResult[] || []);
+        toast.success("Interview instructions sent to your email! Proceed to Technical Assessment.");
+      } else {
+        setCurrentSession(session);
+        setStageResults([]);
+        toast.warning("Mock test started, but email sending failed. Please check your email settings.");
+      }
 
     } catch (error) {
       console.error('Error starting session:', error);
@@ -183,9 +258,34 @@ export const MockInterviewTab = () => {
 
       if (error) throw error;
 
-      setCurrentSession(session);
-      setStageResults([]);
-      toast.success("New mock test started!");
+      // Send interview instructions email
+      const emailSent = await sendInterviewInstructionsEmail(session.id);
+      
+      if (emailSent) {
+        // Complete stage 1 and move to stage 2
+        await completeInstructionsStage(session.id);
+        
+        // Reload session data
+        const { data: updatedSession } = await supabase
+          .from('mock_interview_sessions')
+          .select('*')
+          .eq('id', session.id)
+          .single();
+        
+        const { data: resultsData } = await supabase
+          .from('mock_interview_stage_results')
+          .select('*')
+          .eq('session_id', session.id)
+          .order('stage_order', { ascending: true });
+
+        setCurrentSession(updatedSession);
+        setStageResults(resultsData as StageResult[] || []);
+        toast.success("New interview started! Instructions sent to your email.");
+      } else {
+        setCurrentSession(session);
+        setStageResults([]);
+        toast.warning("New session started, but email sending failed.");
+      }
 
     } catch (error) {
       console.error('Error starting new session:', error);
