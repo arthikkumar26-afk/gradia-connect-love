@@ -79,7 +79,7 @@ export default function MockInterviewPipeline() {
   const categoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
-    'High School': ['Teaching', 'Helping/Supporting', 'Admin', 'Non-Teaching'],
+    'High School': ['Board', 'Compititive'],
   };
 
   const designationOptions: Record<string, Record<string, string[]>> = {
