@@ -520,17 +520,12 @@ export const MockInterviewTab = () => {
   // Handle file selection for HR documents
   const handleFileSelect = (docType: keyof typeof hrDocuments, file: File | null) => {
     if (file) {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File size must be less than 10MB');
         return;
       }
-      // Validate file type
-      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-      if (!validTypes.includes(file.type)) {
-        toast.error('Only PDF, JPG, and PNG files are allowed');
-        return;
-      }
+      // Accept all file formats - no type restriction
     }
     setHrDocuments(prev => ({ ...prev, [docType]: file }));
   };
@@ -1090,7 +1085,7 @@ export const MockInterviewTab = () => {
                       </div>
                       <h4 className="text-lg font-semibold">Upload HR Documents</h4>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Please upload the required documents for verification. Accepted formats: PDF, JPG, PNG (max 5MB each)
+                        Please upload the required documents for verification. All file formats accepted (max 10MB each)
                       </p>
                     </div>
 
@@ -1125,7 +1120,6 @@ export const MockInterviewTab = () => {
                           <div>
                             <Input
                               type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
                               onChange={(e) => handleFileSelect('idProof', e.target.files?.[0] || null)}
                               className="cursor-pointer"
                             />
@@ -1162,7 +1156,6 @@ export const MockInterviewTab = () => {
                           <div>
                             <Input
                               type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
                               onChange={(e) => handleFileSelect('educationCertificate', e.target.files?.[0] || null)}
                               className="cursor-pointer"
                             />
@@ -1199,7 +1192,6 @@ export const MockInterviewTab = () => {
                           <div>
                             <Input
                               type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
                               onChange={(e) => handleFileSelect('addressProof', e.target.files?.[0] || null)}
                               className="cursor-pointer"
                             />
@@ -1236,7 +1228,6 @@ export const MockInterviewTab = () => {
                           <div>
                             <Input
                               type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
                               onChange={(e) => handleFileSelect('experienceLetter', e.target.files?.[0] || null)}
                               className="cursor-pointer"
                             />
