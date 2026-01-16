@@ -1,5 +1,8 @@
 project_id = "cybqlimobxpjygwcdojv"
 
+[functions.process-mock-interview-stage]
+verify_jwt = false
+
 [functions.analyze-company-website]
 verify_jwt = true
 
