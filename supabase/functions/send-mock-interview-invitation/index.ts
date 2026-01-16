@@ -38,8 +38,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const baseUrl = appUrl || 'https://gradia-link-shine.lovable.app';
     
-    // Demo Round is stage 4, use different URL
-    const isDemoStage = stageOrder === 4 && stageName === 'Demo Round';
+    // Demo Round is stage 2, use different URL
+    const isDemoStage = stageOrder === 2 && stageName === 'Demo Round';
     const interviewLink = isDemoStage 
       ? `${baseUrl}/candidate/demo-round?session=${sessionId}&stage=${stageOrder}`
       : `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
@@ -71,9 +71,9 @@ const handler = async (req: Request): Promise<Response> => {
       <div class="info-box">
         <h3>📋 Interview Details:</h3>
         <ul>
-          <li><strong>Stage:</strong> ${stageName} (Stage ${stageOrder} of 5)</li>
-          <li><strong>Format:</strong> ${stageOrder === 1 ? '8 Questions' : stageOrder === 3 ? '5 Questions' : stageOrder === 5 ? '4 Questions' : '6 Questions'}</li>
-          <li><strong>Time:</strong> ${stageOrder === 1 ? '150' : stageOrder === 3 ? '180' : '120'} seconds per question</li>
+          <li><strong>Stage:</strong> ${stageName} (Stage ${stageOrder} of 3)</li>
+          <li><strong>Format:</strong> ${stageOrder === 1 ? '8 Questions' : '4 Questions'}</li>
+          <li><strong>Time:</strong> ${stageOrder === 1 ? '150' : '120'} seconds per question</li>
           <li><strong>Recording:</strong> Your responses will be video recorded</li>
         </ul>
       </div>
@@ -90,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Gradia <noreply@gradia.co.in>",
       to: [candidateEmail],
-      subject: `${stageEmoji} Your ${stageTitle} is Ready - Stage ${stageOrder} of 5`,
+      subject: `${stageEmoji} Your ${stageTitle} is Ready - Stage ${stageOrder} of 3`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -115,9 +115,9 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="container">
             <div class="header">
               <h1>${stageEmoji} ${stageTitle}</h1>
-              <div class="stage-badge">Stage ${stageOrder} of 5</div>
+              <div class="stage-badge">Stage ${stageOrder} of 3</div>
               <div class="progress">
-                ${[1, 2, 3, 4, 5].map(i => `<div class="progress-step ${i < stageOrder ? 'completed' : i === stageOrder ? 'active' : ''}">${i}</div>`).join('')}
+                ${[1, 2, 3].map(i => `<div class="progress-step ${i < stageOrder ? 'completed' : i === stageOrder ? 'active' : ''}">${i}</div>`).join('')}
               </div>
             </div>
             <div class="content">

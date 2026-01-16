@@ -34,24 +34,8 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
     passingScore: 70
   },
   {
-    name: 'HR Round',
-    order: 2,
-    description: 'Behavioral and situational questions to assess cultural fit and soft skills.',
-    questionCount: 6,
-    timePerQuestion: 120,
-    passingScore: 65
-  },
-  {
-    name: 'Viva',
-    order: 3,
-    description: 'In-depth discussion about your experience, projects, and how you handle real-world scenarios.',
-    questionCount: 5,
-    timePerQuestion: 180,
-    passingScore: 70
-  },
-  {
     name: 'Demo Round',
-    order: 4,
+    order: 2,
     description: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
     questionCount: 1,
     timePerQuestion: 600, // 10 minutes
@@ -59,7 +43,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'Final Review',
-    order: 5,
+    order: 3,
     description: 'Comprehensive assessment combining all previous stages for final evaluation.',
     questionCount: 4,
     timePerQuestion: 120,
@@ -396,9 +380,8 @@ Requirements:
 
 For "${stage.name}" stage, focus on:
 ${stage.order === 1 ? '- Technical knowledge, problem-solving, domain expertise' : ''}
-${stage.order === 2 ? '- Behavioral questions, teamwork, conflict resolution, leadership' : ''}
-${stage.order === 3 ? '- Deep-dive discussions, project experiences, real-world scenarios' : ''}
-${stage.order === 4 ? '- Comprehensive evaluation, future plans, final assessment questions' : ''}
+${stage.order === 2 ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
+${stage.order === 3 ? '- Comprehensive evaluation, future plans, final assessment questions' : ''}
 
 Generate exactly ${stage.questionCount} questions.`;
 }
