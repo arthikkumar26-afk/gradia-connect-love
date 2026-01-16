@@ -50,11 +50,11 @@ const handler = async (req: Request): Promise<Response> => {
     let stageSpecificInfo = '';
 
     switch (stageOrder) {
-      case 1: // Interview Instructions
+      case 1: // Interview Instructions - no button, just instructions
         stageEmoji = '📋';
         stageTitle = 'Interview Process Instructions';
-        buttonText = 'View Instructions →';
-        interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
+        buttonText = ''; // No button for instructions
+        interviewLink = ''; // No link needed
         stageSpecificInfo = `
           <div class="info-box">
             <h3>📋 Welcome to the Interview Process!</h3>
@@ -77,6 +77,8 @@ const handler = async (req: Request): Promise<Response> => {
             <li>Have your camera and microphone ready</li>
             <li>Keep your documents handy for the HR round</li>
           </ul>
+          
+          <p><strong>Next Step:</strong> You will receive another email shortly for the Technical Assessment stage.</p>
         `;
         break;
         
@@ -285,10 +287,12 @@ const handler = async (req: Request): Promise<Response> => {
               
               ${stageSpecificInfo}
               
+              ${buttonText ? `
               <center>
                 <p>Click the button below to continue:</p>
                 <a href="${interviewLink}" class="button">${buttonText}</a>
               </center>
+              ` : ''}
               
               <p><em>Note: This is for practice purposes. Your performance will be evaluated by AI to help you improve.</em></p>
             </div>
