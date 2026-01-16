@@ -52,7 +52,7 @@ import ExperienceModal from "@/components/candidate/ExperienceModal";
 import FamilyModal from "@/components/candidate/FamilyModal";
 import AddressModal, { AddressData } from "@/components/candidate/AddressModal";
 import ResumeBuilderTab from "@/components/candidate/ResumeBuilderTab";
-import MockInterviewTab from "@/components/candidate/MockInterviewTab";
+import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
 import { Briefcase as BriefcaseIcon, Users, MapPin as MapPinIcon } from "lucide-react";
 
 interface FamilyRecord {
