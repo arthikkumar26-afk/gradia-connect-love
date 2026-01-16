@@ -276,13 +276,31 @@ export default function MockInterviewPipeline() {
 
     setIsParsing(true);
     try {
+      // Read file as text - for .txt files this works, for PDFs we send raw content
+      // The AI will try to parse whatever text patterns it can find
       const text = await questionPdfFile.text();
       
+      console.log(`Set ${setIndex + 1}: Sending ${text.length} characters to parser`);
+      
       const { data, error } = await supabase.functions.invoke('parse-question-paper', {
-        body: { pdfText: text, paperType: newPaper.stage_type }
+        body: { 
+          pdfText: text, 
+          paperType: newPaper.stage_type,
+          language: 'auto' // Let AI detect language
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+      
+      console.log(`Set ${setIndex + 1}: Response received:`, data);
+      
+      if (data.error) {
+        toast.error(`Set ${setIndex + 1}: ${data.error}`);
+        return;
+      }
       
       if (data.questions && data.questions.length > 0) {
         setExtractedQuestionsSets(prev => {
@@ -292,11 +310,11 @@ export default function MockInterviewPipeline() {
         });
         toast.success(`Set ${setIndex + 1}: Extracted ${data.questions.length} questions`);
       } else {
-        toast.warning(`Set ${setIndex + 1}: No questions found in the PDF. Please check the format.`);
+        toast.warning(`Set ${setIndex + 1}: No questions found. Try uploading a .txt file instead of PDF for better results.`);
       }
     } catch (error) {
       console.error('Error parsing question PDF:', error);
-      toast.error(`Set ${setIndex + 1}: Failed to parse question PDF`);
+      toast.error(`Set ${setIndex + 1}: Failed to parse. Try uploading a .txt file for better extraction.`);
     } finally {
       setIsParsing(false);
     }
@@ -802,11 +820,22 @@ export default function MockInterviewPipeline() {
                 Reset
               </Button>
               <Button 
-                onClick={savePaperWithQuestionsAndAnswers}
-                disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || extractedQuestionsSets.every(set => set.length === 0)}
+                onClick={() => {
+                  console.log('Save button clicked');
+                  console.log('newPaper:', newPaper);
+                  console.log('extractedQuestionsSets:', extractedQuestionsSets);
+                  console.log('Has questions:', extractedQuestionsSets.some(set => set.length > 0));
+                  savePaperWithQuestionsAndAnswers();
+                }}
+                disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || !extractedQuestionsSets.some(set => set.length > 0)}
               >
                 {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 Save Question Paper
+                {extractedQuestionsSets.some(set => set.length > 0) && (
+                  <span className="ml-1 text-xs opacity-75">
+                    ({extractedQuestionsSets.filter(set => set.length > 0).length} sets)
+                  </span>
+                )}
               </Button>
             </div>
           </CardContent>
