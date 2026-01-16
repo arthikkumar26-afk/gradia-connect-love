@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,10 +12,38 @@ serve(async (req) => {
   }
 
   try {
-    const { pdfText, paperType } = await req.json();
+    const { pdfText, pdfBase64, paperType, language } = await req.json();
     
-    if (!pdfText) {
-      throw new Error('PDF text content is required');
+    let textContent = pdfText || '';
+    
+    // If base64 PDF is provided, extract text using unpdf
+    if (pdfBase64) {
+      console.log('Extracting text from PDF binary data...');
+      try {
+        // Convert base64 to Uint8Array
+        const binaryString = atob(pdfBase64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Get document proxy and extract text
+        const pdf = await getDocumentProxy(bytes);
+        const { text } = await extractText(pdf, { mergePages: true });
+        textContent = text;
+        console.log('Successfully extracted text from PDF, length:', textContent.length);
+      } catch (pdfError) {
+        console.error('PDF extraction error:', pdfError);
+        // Fall back to the raw text if PDF parsing fails
+        if (!pdfText) {
+          throw new Error('Failed to extract text from PDF: ' + (pdfError instanceof Error ? pdfError.message : 'Unknown error'));
+        }
+        console.log('Falling back to raw text input');
+      }
+    }
+    
+    if (!textContent) {
+      throw new Error('No text content available - please provide either pdfText or pdfBase64');
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -22,7 +51,8 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Parsing PDF text for questions, length:', pdfText.length);
+    console.log('Parsing PDF text for questions, length:', textContent.length);
+    console.log('First 500 chars of extracted text:', textContent.substring(0, 500));
 
     const systemPrompt = `You are a multilingual question extraction expert. Extract all questions from the given PDF text content.
 IMPORTANT: The content may be in ANY language including Telugu, Hindi, Tamil, or other Indian languages. 
@@ -59,7 +89,7 @@ If the text appears corrupted or unreadable, try to identify question patterns l
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Extract all questions from this ${paperType || 'question paper'} PDF content:\n\n${pdfText}` }
+          { role: 'user', content: `Extract all questions from this ${paperType || 'question paper'} PDF content (language: ${language || 'auto-detect'}):\n\n${textContent}` }
         ],
         tools: [
           {
