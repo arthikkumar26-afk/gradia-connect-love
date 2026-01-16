@@ -711,12 +711,12 @@ export const MockInterviewTab = () => {
   };
 
   const getStageStatus = (stageOrder: number) => {
-    if (!currentSession) return 'locked';
+    if (!currentSession) return 'upcoming';
     const result = stageResults.find(r => r.stage_order === stageOrder);
     if (result?.completed_at) return 'completed';
     if (stageOrder === currentSession.current_stage_order) return 'current';
     if (stageOrder < currentSession.current_stage_order) return 'completed';
-    return 'locked';
+    return 'upcoming'; // Changed from 'locked' to 'upcoming' - no stage is locked
   };
 
   const getStageIcon = (stageOrder: number) => {
@@ -873,7 +873,7 @@ export const MockInterviewTab = () => {
               className={`transition-all ${
                 status === 'current' ? 'border-primary shadow-md' :
                 status === 'completed' ? 'border-green-500/50 bg-green-50/50 dark:bg-green-900/10' :
-                'opacity-60'
+                'border-muted'
               }`}
             >
               <CardContent className="py-4">
@@ -886,8 +886,6 @@ export const MockInterviewTab = () => {
                   }`}>
                     {status === 'completed' ? (
                       <CheckCircle2 className="h-6 w-6" />
-                    ) : status === 'locked' ? (
-                      <Lock className="h-5 w-5" />
                     ) : (
                       <Icon className="h-6 w-6" />
                     )}
@@ -977,10 +975,11 @@ export const MockInterviewTab = () => {
                         {isExpanded ? 'Hide Results' : 'View Results'}
                       </Button>
                     )}
-                    {status === 'locked' && (
-                      <Button variant="ghost" disabled size="sm">
-                        <Lock className="h-4 w-4" />
-                      </Button>
+                    {status === 'upcoming' && (
+                      <Badge variant="secondary" className="text-muted-foreground">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Upcoming
+                      </Badge>
                     )}
                   </div>
                 </div>
