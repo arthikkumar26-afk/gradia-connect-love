@@ -137,8 +137,10 @@ export default function MockInterviewPipeline() {
 
   const [questionPdfFile, setQuestionPdfFile] = useState<File | null>(null);
   const [answerPdfFile, setAnswerPdfFile] = useState<File | null>(null);
+  const [solutionPdfFile, setSolutionPdfFile] = useState<File | null>(null);
   const [extractedQuestions, setExtractedQuestions] = useState<any[]>([]);
   const [extractedAnswers, setExtractedAnswers] = useState<any[]>([]);
+  const [extractedSolutions, setExtractedSolutions] = useState<any[]>([]);
 
   useEffect(() => {
     loadPapers();
@@ -212,6 +214,44 @@ export default function MockInterviewPipeline() {
     if (file) {
       setAnswerPdfFile(file);
       setExtractedAnswers([]);
+    }
+  };
+
+  const handleSolutionPdfChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSolutionPdfFile(file);
+      setExtractedSolutions([]);
+    }
+  };
+
+  const parseSolutionPdf = async () => {
+    if (!solutionPdfFile) {
+      toast.error('Please select a solutions PDF first');
+      return;
+    }
+
+    setIsParsing(true);
+    try {
+      const text = await solutionPdfFile.text();
+      
+      const { data, error } = await supabase.functions.invoke('parse-answer-key', {
+        body: { pdfText: text, questionCount: extractedQuestions.length, isSolution: true }
+      });
+
+      if (error) throw error;
+      
+      if (data.answers && data.answers.length > 0) {
+        setExtractedSolutions(data.answers);
+        toast.success(`Extracted ${data.answers.length} solutions`);
+      } else {
+        toast.warning('No solutions found in the PDF. Please check the format.');
+      }
+    } catch (error) {
+      console.error('Error parsing solutions PDF:', error);
+      toast.error('Failed to parse solutions PDF');
+    } finally {
+      setIsParsing(false);
     }
   };
 
@@ -396,8 +436,10 @@ export default function MockInterviewPipeline() {
     setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', designation: '' });
     setQuestionPdfFile(null);
     setAnswerPdfFile(null);
+    setSolutionPdfFile(null);
     setExtractedQuestions([]);
     setExtractedAnswers([]);
+    setExtractedSolutions([]);
   };
 
   const deletePaper = async (paperId: string) => {
@@ -566,7 +608,7 @@ export default function MockInterviewPipeline() {
             </div>
 
             {/* File Upload Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Question Paper Upload */}
               <div className="space-y-3">
                 <Label className="flex items-center gap-2">
@@ -628,6 +670,39 @@ export default function MockInterviewPipeline() {
                     <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
                       <CheckCircle2 className="h-4 w-4" />
                       <span>{extractedAnswers.length} answers extracted</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Solutions Upload */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Solutions
+                </Label>
+                <div className="flex gap-2">
+                  <Input 
+                    type="file" 
+                    accept=".pdf,.txt"
+                    onChange={handleSolutionPdfChange}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={parseSolutionPdf} 
+                    disabled={!solutionPdfFile || isParsing}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    <span className="ml-1">Extract</span>
+                  </Button>
+                </div>
+                {extractedSolutions.length > 0 && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 text-sm">
+                    <div className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{extractedSolutions.length} solutions extracted</span>
                     </div>
                   </div>
                 )}
