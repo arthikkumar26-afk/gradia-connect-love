@@ -4,6 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { 
   Play,
@@ -76,6 +80,9 @@ export const MockInterviewTab = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [expandedStage, setExpandedStage] = useState<number | null>(null);
+  const [showSlotBooking, setShowSlotBooking] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [isBookingSlot, setIsBookingSlot] = useState(false);
 
   // Load data on mount and when user changes
   useEffect(() => {
@@ -364,6 +371,106 @@ export const MockInterviewTab = () => {
     navigate(`/candidate/mock-interview/${currentSession.id}/${stageOrder}`);
   };
 
+  // Generate available time slots for next 7 days
+  const generateTimeSlots = () => {
+    const slots: { date: string; time: string; value: string }[] = [];
+    const now = new Date();
+    
+    for (let day = 1; day <= 7; day++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + day);
+      const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      
+      // Morning slots
+      ['10:00 AM', '11:00 AM', '12:00 PM'].forEach(time => {
+        const slotDate = new Date(date);
+        const [hours, minutesPart] = time.split(':');
+        const minutes = parseInt(minutesPart);
+        let hour = parseInt(hours);
+        if (time.includes('PM') && hour !== 12) hour += 12;
+        if (time.includes('AM') && hour === 12) hour = 0;
+        slotDate.setHours(hour, minutes, 0, 0);
+        
+        slots.push({
+          date: dateStr,
+          time,
+          value: slotDate.toISOString()
+        });
+      });
+      
+      // Afternoon slots
+      ['2:00 PM', '3:00 PM', '4:00 PM'].forEach(time => {
+        const slotDate = new Date(date);
+        const [hours, minutesPart] = time.split(':');
+        const minutes = parseInt(minutesPart);
+        let hour = parseInt(hours);
+        if (time.includes('PM') && hour !== 12) hour += 12;
+        slotDate.setHours(hour, minutes, 0, 0);
+        
+        slots.push({
+          date: dateStr,
+          time,
+          value: slotDate.toISOString()
+        });
+      });
+    }
+    
+    return slots;
+  };
+
+  const bookDemoSlot = async () => {
+    if (!selectedSlot || !currentSession) {
+      toast.error("Please select a time slot");
+      return;
+    }
+
+    setIsBookingSlot(true);
+    try {
+      // Create stage result for slot booking
+      await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: currentSession.id,
+          stage_name: 'Demo Slot Booking',
+          stage_order: 3,
+          ai_score: 100,
+          ai_feedback: `Demo slot booked for ${new Date(selectedSlot).toLocaleString()}`,
+          passed: true,
+          completed_at: new Date().toISOString()
+        });
+
+      // Update session to move to next stage
+      await supabase
+        .from('mock_interview_sessions')
+        .update({ current_stage_order: 4 })
+        .eq('id', currentSession.id);
+
+      // Send Demo Round invitation email
+      await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId: currentSession.id,
+          stageOrder: 4,
+          stageName: 'Demo Round',
+          stageDescription: 'Conduct your live teaching demonstration. Your session will be recorded and evaluated by AI.',
+          appUrl: window.location.origin,
+          bookedSlot: new Date(selectedSlot).toLocaleString()
+        }
+      });
+
+      toast.success(`Slot booked for ${new Date(selectedSlot).toLocaleString()}! Check email for Demo Round.`);
+      setShowSlotBooking(false);
+      setSelectedSlot('');
+      loadData(); // Refresh the data
+    } catch (error) {
+      console.error('Error booking slot:', error);
+      toast.error("Failed to book slot");
+    } finally {
+      setIsBookingSlot(false);
+    }
+  };
+
   const getStageStatus = (stageOrder: number) => {
     if (!currentSession) return 'locked';
     const result = stageResults.find(r => r.stage_order === stageOrder);
@@ -583,6 +690,18 @@ export const MockInterviewTab = () => {
                         Check Email to Start
                       </Badge>
                     )}
+                    {/* For Demo Slot Booking (stage 3) in progress, show Book Slot button */}
+                    {status === 'current' && stage.order === 3 && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => setShowSlotBooking(true)}
+                        className="gap-1"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        Book Slot
+                      </Button>
+                    )}
                     {/* For completed stages with results, show expand/collapse button */}
                     {hasResults && (
                       <Button 
@@ -684,6 +803,71 @@ export const MockInterviewTab = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Slot Booking Modal */}
+      <Dialog open={showSlotBooking} onOpenChange={setShowSlotBooking}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Book Demo Interview Slot
+            </DialogTitle>
+            <DialogDescription>
+              Select a convenient time slot for your demo teaching session.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[400px] pr-4">
+            <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="space-y-2">
+              {generateTimeSlots().reduce((groups: { [key: string]: { date: string; time: string; value: string }[] }, slot) => {
+                if (!groups[slot.date]) groups[slot.date] = [];
+                groups[slot.date].push(slot);
+                return groups;
+              }, {} as { [key: string]: { date: string; time: string; value: string }[] }) &&
+              Object.entries(
+                generateTimeSlots().reduce((groups: { [key: string]: { date: string; time: string; value: string }[] }, slot) => {
+                  if (!groups[slot.date]) groups[slot.date] = [];
+                  groups[slot.date].push(slot);
+                  return groups;
+                }, {} as { [key: string]: { date: string; time: string; value: string }[] })
+              ).map(([date, slots]) => (
+                <div key={date} className="space-y-2">
+                  <h4 className="font-medium text-sm text-muted-foreground pt-2">{date}</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(slots as { date: string; time: string; value: string }[]).map((slot) => (
+                      <div key={slot.value} className="flex items-center">
+                        <RadioGroupItem value={slot.value} id={slot.value} className="peer sr-only" />
+                        <Label
+                          htmlFor={slot.value}
+                          className="flex-1 text-center py-2 px-3 rounded-lg border cursor-pointer transition-all
+                            peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 
+                            peer-data-[state=checked]:text-primary hover:border-primary/50 text-sm"
+                        >
+                          {slot.time}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </RadioGroup>
+          </ScrollArea>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setShowSlotBooking(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={bookDemoSlot} 
+              disabled={!selectedSlot || isBookingSlot}
+              className="gap-2"
+            >
+              {isBookingSlot ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              Confirm Booking
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
