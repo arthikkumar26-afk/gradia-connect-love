@@ -371,18 +371,33 @@ export const MockInterviewTab = () => {
     navigate(`/candidate/mock-interview/${currentSession.id}/${stageOrder}`);
   };
 
-  // Generate available time slots for next 7 days
+  // Generate available time slots for today and next 6 days
   const generateTimeSlots = () => {
     const slots: { date: string; time: string; value: string }[] = [];
     const now = new Date();
+    const currentHour = now.getHours();
     
-    for (let day = 1; day <= 7; day++) {
+    for (let day = 0; day <= 6; day++) {
       const date = new Date(now);
       date.setDate(date.getDate() + day);
-      const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       
-      // Morning slots
-      ['10:00 AM', '11:00 AM', '12:00 PM'].forEach(time => {
+      // Check if today, tomorrow, or other day
+      const isToday = day === 0;
+      const isTomorrow = day === 1;
+      let dateStr: string;
+      
+      if (isToday) {
+        dateStr = 'Today';
+      } else if (isTomorrow) {
+        dateStr = 'Tomorrow';
+      } else {
+        dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      }
+      
+      // All available time slots
+      const allSlots = ['10:00 AM', '11:00 AM', '12:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
+      
+      allSlots.forEach(time => {
         const slotDate = new Date(date);
         const [hours, minutesPart] = time.split(':');
         const minutes = parseInt(minutesPart);
@@ -391,21 +406,10 @@ export const MockInterviewTab = () => {
         if (time.includes('AM') && hour === 12) hour = 0;
         slotDate.setHours(hour, minutes, 0, 0);
         
-        slots.push({
-          date: dateStr,
-          time,
-          value: slotDate.toISOString()
-        });
-      });
-      
-      // Afternoon slots
-      ['2:00 PM', '3:00 PM', '4:00 PM'].forEach(time => {
-        const slotDate = new Date(date);
-        const [hours, minutesPart] = time.split(':');
-        const minutes = parseInt(minutesPart);
-        let hour = parseInt(hours);
-        if (time.includes('PM') && hour !== 12) hour += 12;
-        slotDate.setHours(hour, minutes, 0, 0);
+        // Skip past slots for today
+        if (isToday && hour <= currentHour) {
+          return;
+        }
         
         slots.push({
           date: dateStr,
