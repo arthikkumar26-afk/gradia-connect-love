@@ -39,6 +39,12 @@ interface InterviewStage {
   passingScore: number;
 }
 
+interface QuestionScore {
+  questionId: number;
+  score: number;
+  feedback: string;
+}
+
 interface StageResult {
   id: string;
   stage_name: string;
@@ -48,6 +54,9 @@ interface StageResult {
   passed: boolean;
   recording_url?: string;
   completed_at?: string;
+  strengths?: string[];
+  improvements?: string[];
+  question_scores?: unknown; // JSON from database
 }
 
 interface MockInterviewSession {
@@ -607,7 +616,7 @@ export const MockInterviewTab = () => {
 
                         {/* Feedback */}
                         {result.ai_feedback && (
-                          <div className="p-3 bg-muted/50 rounded-lg">
+                          <div className="p-3 bg-muted/50 rounded-lg mb-3">
                             <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
                               <Brain className="h-4 w-4" />
                               AI Feedback
@@ -615,6 +624,45 @@ export const MockInterviewTab = () => {
                             <p className="text-sm text-muted-foreground">{result.ai_feedback}</p>
                           </div>
                         )}
+
+                        {/* Strengths & Improvements */}
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                          {/* Strengths (Positive Points) */}
+                          {result.strengths && result.strengths.length > 0 && (
+                            <div className="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-800">
+                              <h5 className="text-sm font-medium mb-2 flex items-center gap-2 text-green-700 dark:text-green-400">
+                                <ThumbsUp className="h-4 w-4" />
+                                Strengths
+                              </h5>
+                              <ul className="space-y-1">
+                                {result.strengths.map((s, i) => (
+                                  <li key={i} className="text-xs text-green-600 dark:text-green-400 flex items-start gap-1">
+                                    <CheckCircle2 className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                    {s}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {/* Improvements (Negative Points) */}
+                          {result.improvements && result.improvements.length > 0 && (
+                            <div className="p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800">
+                              <h5 className="text-sm font-medium mb-2 flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                                <ThumbsDown className="h-4 w-4" />
+                                Areas to Improve
+                              </h5>
+                              <ul className="space-y-1">
+                                {result.improvements.map((s, i) => (
+                                  <li key={i} className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1">
+                                    <TrendingUp className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                    {s}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Score Progress */}
                         <div className="mt-3">

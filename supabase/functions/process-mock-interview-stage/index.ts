@@ -254,7 +254,7 @@ serve(async (req) => {
         evaluation = JSON.parse(toolCall.function.arguments);
       }
 
-      // Update stage result with recording URL if provided
+      // Update stage result with recording URL, strengths, and improvements
       await supabase
         .from('mock_interview_stage_results')
         .update({
@@ -263,7 +263,10 @@ serve(async (req) => {
           ai_feedback: evaluation.feedback,
           passed: evaluation.passed,
           completed_at: new Date().toISOString(),
-          recording_url: recordingUrl || null
+          recording_url: recordingUrl || null,
+          strengths: evaluation.strengths || [],
+          improvements: evaluation.improvements || [],
+          question_scores: evaluation.questionScores || []
         })
         .eq('session_id', sessionId)
         .eq('stage_order', stageOrder);

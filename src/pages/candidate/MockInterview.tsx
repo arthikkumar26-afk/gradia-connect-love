@@ -196,13 +196,18 @@ const MockInterview = () => {
         .maybeSingle();
 
       if (stageResult?.completed_at) {
-        // Stage already completed, show results
+        // Stage already completed, show results with strengths and improvements
+        const strengths = (stageResult.strengths as string[]) || [];
+        const improvements = (stageResult.improvements as string[]) || [];
+        const questionScores = (stageResult.question_scores as Array<{ questionId: number; score: number; feedback: string }>) || [];
+        
         setEvaluation({
           overallScore: stageResult.ai_score || 0,
           passed: stageResult.passed || false,
           feedback: stageResult.ai_feedback || '',
-          strengths: [],
-          improvements: []
+          strengths,
+          improvements,
+          questionScores
         });
         setStageRecordingUrl(stageResult.recording_url);
         setShowResult(true);
