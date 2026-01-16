@@ -10,11 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { 
-  ArrowLeft, Upload, FileText, Plus, Trash2, Edit, Eye, 
-  Loader2, CheckCircle2, XCircle, BookOpen, Key, RefreshCw 
+  ArrowLeft, Upload, FileText, Plus, Trash2, Eye, 
+  Loader2, CheckCircle2, XCircle, BookOpen, Key, RefreshCw,
+  ChevronDown, FolderOpen
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -60,8 +61,7 @@ export default function MockInterviewPipeline() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState("papers");
+  const [activeTab, setActiveTab] = useState("questions");
   
   // Form states
   const [newPaper, setNewPaper] = useState({
@@ -134,6 +134,7 @@ export default function MockInterviewPipeline() {
     if (!newPaper.segment || !newPaper.category) return [];
     return designationOptions[newPaper.segment]?.[newPaper.category] || [];
   };
+
   const [questionPdfFile, setQuestionPdfFile] = useState<File | null>(null);
   const [answerPdfFile, setAnswerPdfFile] = useState<File | null>(null);
   const [extractedQuestions, setExtractedQuestions] = useState<any[]>([]);
@@ -177,7 +178,6 @@ export default function MockInterviewPipeline() {
       if (questionsError) throw questionsError;
       setQuestions(questionsData || []);
 
-      // Load answer keys for all questions
       if (questionsData && questionsData.length > 0) {
         const questionIds = questionsData.map(q => q.id);
         const { data: answersData, error: answersError } = await supabase
@@ -215,21 +215,6 @@ export default function MockInterviewPipeline() {
     }
   };
 
-  const extractTextFromPdf = async (file: File): Promise<string> => {
-    // For now, we'll read the file as text (works for text-based PDFs)
-    // In production, you'd use a PDF parsing library
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        // Basic extraction - in production use pdf.js or similar
-        resolve(text);
-      };
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
-  };
-
   const parseQuestionPdf = async () => {
     if (!questionPdfFile) {
       toast.error('Please select a question PDF first');
@@ -238,7 +223,6 @@ export default function MockInterviewPipeline() {
 
     setIsParsing(true);
     try {
-      // Read file content
       const text = await questionPdfFile.text();
       
       const { data, error } = await supabase.functions.invoke('parse-question-paper', {
@@ -292,8 +276,20 @@ export default function MockInterviewPipeline() {
   };
 
   const savePaperWithQuestionsAndAnswers = async () => {
-    if (!newPaper.title) {
-      toast.error('Please enter a title');
+    if (!newPaper.segment) {
+      toast.error('Please select a segment');
+      return;
+    }
+    if (!newPaper.category) {
+      toast.error('Please select a category');
+      return;
+    }
+    if (!newPaper.designation) {
+      toast.error('Please select a designation');
+      return;
+    }
+    if (!questionPdfFile) {
+      toast.error('Please upload a question paper PDF');
       return;
     }
     if (extractedQuestions.length === 0) {
@@ -308,7 +304,7 @@ export default function MockInterviewPipeline() {
       if (questionPdfFile) {
         const fileName = `${Date.now()}-${questionPdfFile.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('resumes') // Using existing bucket
+          .from('resumes')
           .upload(`question-papers/${fileName}`, questionPdfFile);
 
         if (uploadError) throw uploadError;
@@ -319,14 +315,15 @@ export default function MockInterviewPipeline() {
         pdfUrl = urlData.publicUrl;
       }
 
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Create the paper
+      // Auto-generate title from segment, category, designation
+      const autoTitle = `${newPaper.segment} - ${newPaper.category} - ${newPaper.designation}`;
+
       const { data: paperData, error: paperError } = await supabase
         .from('interview_question_papers')
         .insert({
-          title: newPaper.title,
+          title: autoTitle,
           description: newPaper.description || null,
           stage_type: newPaper.stage_type,
           pdf_url: pdfUrl || 'manual-entry',
@@ -340,7 +337,6 @@ export default function MockInterviewPipeline() {
 
       if (paperError) throw paperError;
 
-      // Insert questions
       const questionsToInsert = extractedQuestions.map((q, index) => ({
         paper_id: paperData.id,
         question_number: q.question_number || index + 1,
@@ -358,10 +354,8 @@ export default function MockInterviewPipeline() {
 
       if (questionsError) throw questionsError;
 
-      // Insert answer keys if we have them
       if (extractedAnswers.length > 0 && insertedQuestions) {
         const answerKeysToInsert = extractedAnswers.map(a => {
-          // Find matching question by number
           const matchingQuestion = insertedQuestions.find(
             q => q.question_number === a.question_number
           );
@@ -388,7 +382,6 @@ export default function MockInterviewPipeline() {
       }
 
       toast.success('Question paper saved successfully!');
-      setShowAddDialog(false);
       resetForm();
       loadPapers();
     } catch (error) {
@@ -457,6 +450,26 @@ export default function MockInterviewPipeline() {
     }
   };
 
+  // Group papers by segment > category
+  const getPapersGroupedByCategory = () => {
+    const grouped: Record<string, Record<string, QuestionPaper[]>> = {};
+    
+    papers.forEach(paper => {
+      const segment = paper.segment || 'Unassigned';
+      const category = paper.category || 'General';
+      
+      if (!grouped[segment]) {
+        grouped[segment] = {};
+      }
+      if (!grouped[segment][category]) {
+        grouped[segment][category] = [];
+      }
+      grouped[segment][category].push(paper);
+    });
+    
+    return grouped;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -465,440 +478,386 @@ export default function MockInterviewPipeline() {
     );
   }
 
+  const groupedPapers = getPapersGroupedByCategory();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Mock Interview Pipeline</h1>
-                <p className="text-sm text-muted-foreground">
-                  Manage question papers and answer keys for interviews
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Mock Interview Pipeline</h1>
+              <p className="text-sm text-muted-foreground">
+                Manage question papers and answer keys for interviews
+              </p>
             </div>
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Question Paper
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Add New Question Paper</DialogTitle>
-                  <DialogDescription>
-                    Upload a question PDF and answer key PDF. AI will extract questions and answers automatically.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-6 py-4">
-                  {/* Basic Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Title *</Label>
-                      <Input 
-                        placeholder="e.g., Mathematics Technical Test"
-                        value={newPaper.title}
-                        onChange={(e) => setNewPaper(p => ({ ...p, title: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Stage Type *</Label>
-                      <Select 
-                        value={newPaper.stage_type} 
-                        onValueChange={(v) => setNewPaper(p => ({ ...p, stage_type: v }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Stages</SelectItem>
-                          <SelectItem value="technical_assessment">Technical Assessment</SelectItem>
-                          <SelectItem value="demo_round">Demo Round</SelectItem>
-                          <SelectItem value="viva">Viva</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea 
-                      placeholder="Optional description..."
-                      value={newPaper.description}
-                      onChange={(e) => setNewPaper(p => ({ ...p, description: e.target.value }))}
-                    />
-                  </div>
-
-                  {/* Role-based Assignment */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Role-Based Assignment</CardTitle>
-                      <CardDescription>Assign this paper to specific roles (optional)</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>Segment</Label>
-                          <Select 
-                            value={newPaper.segment} 
-                            onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', designation: '' }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select segment" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {segmentOptions.map(seg => (
-                                <SelectItem key={seg} value={seg}>{seg}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Category</Label>
-                          <Select 
-                            value={newPaper.category} 
-                            onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, designation: '' }))}
-                            disabled={!newPaper.segment}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getCurrentCategories().map(cat => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Designation</Label>
-                          <Select 
-                            value={newPaper.designation} 
-                            onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
-                            disabled={!newPaper.category}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select designation" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getCurrentDesignations().map(des => (
-                                <SelectItem key={des} value={des}>{des}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Question PDF Upload */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <BookOpen className="h-4 w-4" />
-                        Question Paper PDF
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex gap-3">
-                        <Input 
-                          type="file" 
-                          accept=".pdf,.txt"
-                          onChange={handleQuestionPdfChange}
-                          className="flex-1"
-                        />
-                        <Button 
-                          onClick={parseQuestionPdf} 
-                          disabled={!questionPdfFile || isParsing}
-                          variant="secondary"
-                        >
-                          {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                          <span className="ml-2">Extract Questions</span>
-                        </Button>
-                      </div>
-                      {extractedQuestions.length > 0 && (
-                        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
-                          <div className="flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span className="font-medium">Extracted {extractedQuestions.length} questions</span>
-                          </div>
-                          <ScrollArea className="h-32">
-                            <div className="space-y-1 text-sm">
-                              {extractedQuestions.map((q, i) => (
-                                <div key={i} className="text-muted-foreground">
-                                  <strong>Q{q.question_number}:</strong> {q.question_text.substring(0, 80)}...
-                                </div>
-                              ))}
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Answer Key PDF Upload */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Key className="h-4 w-4" />
-                        Answer Key PDF
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex gap-3">
-                        <Input 
-                          type="file" 
-                          accept=".pdf,.txt"
-                          onChange={handleAnswerPdfChange}
-                          className="flex-1"
-                        />
-                        <Button 
-                          onClick={parseAnswerPdf} 
-                          disabled={!answerPdfFile || isParsing}
-                          variant="secondary"
-                        >
-                          {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                          <span className="ml-2">Extract Answers</span>
-                        </Button>
-                      </div>
-                      {extractedAnswers.length > 0 && (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-                          <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 mb-2">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <span className="font-medium">Extracted {extractedAnswers.length} answers with keywords</span>
-                          </div>
-                          <ScrollArea className="h-32">
-                            <div className="space-y-1 text-sm">
-                              {extractedAnswers.map((a, i) => (
-                                <div key={i} className="text-muted-foreground">
-                                  <strong>A{a.question_number}:</strong> {a.answer_text.substring(0, 60)}... 
-                                  <span className="text-blue-600 ml-1">
-                                    [{a.keywords?.slice(0, 3).join(', ')}{a.keywords?.length > 3 ? '...' : ''}]
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t">
-                    <Button variant="outline" onClick={() => { setShowAddDialog(false); resetForm(); }}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={savePaperWithQuestionsAndAnswers}
-                      disabled={isUploading || !newPaper.title || extractedQuestions.length === 0}
-                    >
-                      {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                      Save Question Paper
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Papers List */}
-          <Card className="lg:col-span-1">
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Add Question Paper Form - Directly on page */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Add Question Paper
+            </CardTitle>
+            <CardDescription>
+              Select role assignment, upload question paper and answer key PDFs
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Role Selection Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Segment *</Label>
+                <Select 
+                  value={newPaper.segment} 
+                  onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', designation: '' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select segment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {segmentOptions.map(seg => (
+                      <SelectItem key={seg} value={seg}>{seg}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Category *</Label>
+                <Select 
+                  value={newPaper.category} 
+                  onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, designation: '' }))}
+                  disabled={!newPaper.segment}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getCurrentCategories().map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Designation *</Label>
+                <Select 
+                  value={newPaper.designation} 
+                  onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
+                  disabled={!newPaper.category}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select designation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getCurrentDesignations().map(des => (
+                      <SelectItem key={des} value={des}>{des}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* File Upload Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Question Paper Upload */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Question Paper *
+                </Label>
+                <div className="flex gap-2">
+                  <Input 
+                    type="file" 
+                    accept=".pdf,.txt"
+                    onChange={handleQuestionPdfChange}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={parseQuestionPdf} 
+                    disabled={!questionPdfFile || isParsing}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    <span className="ml-1">Extract</span>
+                  </Button>
+                </div>
+                {extractedQuestions.length > 0 && (
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 text-sm">
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{extractedQuestions.length} questions extracted</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Answer Key Upload */}
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  Answer Key
+                </Label>
+                <div className="flex gap-2">
+                  <Input 
+                    type="file" 
+                    accept=".pdf,.txt"
+                    onChange={handleAnswerPdfChange}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={parseAnswerPdf} 
+                    disabled={!answerPdfFile || isParsing}
+                    variant="secondary"
+                    size="sm"
+                  >
+                    {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    <span className="ml-1">Extract</span>
+                  </Button>
+                </div>
+                {extractedAnswers.length > 0 && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 text-sm">
+                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{extractedAnswers.length} answers extracted</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="outline" onClick={resetForm}>
+                Reset
+              </Button>
+              <Button 
+                onClick={savePaperWithQuestionsAndAnswers}
+                disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || extractedQuestions.length === 0}
+              >
+                {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                Save Question Paper
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Category-wise Uploaded Papers */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5" />
+              Uploaded Question Papers
+            </CardTitle>
+            <CardDescription>{papers.length} papers uploaded - organized by segment and category</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {Object.keys(groupedPapers).length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>No question papers yet</p>
+                <p className="text-sm">Use the form above to add your first paper</p>
+              </div>
+            ) : (
+              <Accordion type="multiple" className="w-full">
+                {Object.entries(groupedPapers).map(([segment, categories]) => (
+                  <AccordionItem key={segment} value={segment}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="bg-primary/10 text-primary">
+                          {segment}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          ({Object.values(categories).flat().length} papers)
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="pl-4 space-y-4">
+                        {Object.entries(categories).map(([category, categoryPapers]) => (
+                          <div key={category} className="space-y-2">
+                            <h4 className="font-medium text-sm flex items-center gap-2">
+                              <Badge variant="outline">{category}</Badge>
+                              <span className="text-muted-foreground">({categoryPapers.length})</span>
+                            </h4>
+                            <div className="grid gap-2 pl-4">
+                              {categoryPapers.map(paper => (
+                                <div
+                                  key={paper.id}
+                                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                                    selectedPaper?.id === paper.id 
+                                      ? 'bg-primary/10 border-primary' 
+                                      : 'hover:bg-muted'
+                                  }`}
+                                  onClick={() => setSelectedPaper(paper)}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{paper.designation || paper.title}</span>
+                                        <Badge variant={paper.is_active ? "default" : "secondary"} className="text-xs">
+                                          {paper.is_active ? 'Active' : 'Inactive'}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {getStageLabel(paper.stage_type)} • Created: {new Date(paper.created_at).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                    <div className="flex gap-1 ml-2">
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7"
+                                        onClick={(e) => { e.stopPropagation(); togglePaperActive(paper); }}
+                                      >
+                                        {paper.is_active ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                                      </Button>
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-7 w-7 text-destructive"
+                                        onClick={(e) => { e.stopPropagation(); deletePaper(paper.id); }}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Selected Paper Details */}
+        {selectedPaper && (
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Question Papers
-              </CardTitle>
-              <CardDescription>{papers.length} papers uploaded</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[60vh]">
-                <div className="space-y-2">
-                  {papers.map(paper => (
-                    <div
-                      key={paper.id}
-                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedPaper?.id === paper.id 
-                          ? 'bg-primary/10 border-primary' 
-                          : 'hover:bg-muted'
-                      }`}
-                      onClick={() => setSelectedPaper(paper)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium truncate">{paper.title}</h4>
-                          <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {getStageLabel(paper.stage_type)}
-                            </Badge>
-                            <Badge variant={paper.is_active ? "default" : "secondary"} className="text-xs">
-                              {paper.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                            {paper.segment && (
-                              <Badge variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                                {paper.segment}
-                              </Badge>
-                            )}
-                          </div>
-                          {(paper.category || paper.designation) && (
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {paper.category}{paper.category && paper.designation && ' → '}{paper.designation}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex gap-1 ml-2">
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-7 w-7"
-                            onClick={(e) => { e.stopPropagation(); togglePaperActive(paper); }}
-                          >
-                            {paper.is_active ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-7 w-7 text-destructive"
-                            onClick={(e) => { e.stopPropagation(); deletePaper(paper.id); }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {papers.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>No question papers yet</p>
-                      <p className="text-sm">Click "Add Question Paper" to get started</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {/* Questions & Answers View */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>
-                {selectedPaper ? selectedPaper.title : 'Select a Paper'}
+                <Eye className="h-5 w-5" />
+                {selectedPaper.title}
               </CardTitle>
               <CardDescription>
-                {selectedPaper 
-                  ? `${questions.length} questions • ${getStageLabel(selectedPaper.stage_type)}${selectedPaper.segment ? ` • ${selectedPaper.segment}` : ''}${selectedPaper.designation ? ` • ${selectedPaper.designation}` : ''}`
-                  : 'Click on a paper to view its questions and answer keys'
-                }
+                {questions.length} questions • {getStageLabel(selectedPaper.stage_type)}
+                {selectedPaper.segment && ` • ${selectedPaper.segment}`}
+                {selectedPaper.category && ` • ${selectedPaper.category}`}
+                {selectedPaper.designation && ` • ${selectedPaper.designation}`}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {selectedPaper ? (
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="questions">Questions</TabsTrigger>
-                    <TabsTrigger value="answers">Answer Keys</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="questions">
-                    <ScrollArea className="h-[55vh]">
-                      <div className="space-y-4">
-                        {questions.map((q, index) => (
-                          <Card key={q.id} className="bg-muted/30">
-                            <CardContent className="pt-4">
-                              <div className="flex items-start gap-3">
-                                <Badge className="shrink-0">Q{q.question_number}</Badge>
-                                <div className="flex-1">
-                                  <p className="font-medium">{q.question_text}</p>
-                                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                                    <Badge variant="outline">{q.question_type}</Badge>
-                                    <span>• {q.marks} mark{q.marks > 1 ? 's' : ''}</span>
-                                  </div>
-                                  {q.options && q.options.length > 0 && (
-                                    <div className="mt-2 pl-4 space-y-1">
-                                      {q.options.map((opt, i) => (
-                                        <p key={i} className="text-sm">{opt}</p>
-                                      ))}
-                                    </div>
-                                  )}
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="questions">Questions</TabsTrigger>
+                  <TabsTrigger value="answers">Answer Keys</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="questions">
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-4">
+                      {questions.map((q) => (
+                        <Card key={q.id} className="bg-muted/30">
+                          <CardContent className="pt-4">
+                            <div className="flex items-start gap-3">
+                              <Badge className="shrink-0">Q{q.question_number}</Badge>
+                              <div className="flex-1">
+                                <p className="font-medium">{q.question_text}</p>
+                                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                                  <Badge variant="outline">{q.question_type}</Badge>
+                                  <span>• {q.marks} mark{q.marks > 1 ? 's' : ''}</span>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                        {questions.length === 0 && (
-                          <div className="text-center py-12 text-muted-foreground">
-                            No questions found for this paper
-                          </div>
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </TabsContent>
-                  
-                  <TabsContent value="answers">
-                    <ScrollArea className="h-[55vh]">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-16">Q#</TableHead>
-                            <TableHead>Answer</TableHead>
-                            <TableHead>Keywords</TableHead>
-                            <TableHead className="w-24">Match %</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {questions.map(q => {
-                            const answer = answerKeys[q.id];
-                            return (
-                              <TableRow key={q.id}>
-                                <TableCell className="font-medium">{q.question_number}</TableCell>
-                                <TableCell className="max-w-xs truncate">
-                                  {answer?.answer_text || <span className="text-muted-foreground italic">No answer key</span>}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex flex-wrap gap-1">
-                                    {answer?.keywords?.slice(0, 5).map((kw, i) => (
-                                      <Badge key={i} variant="secondary" className="text-xs">{kw}</Badge>
+                                {q.options && q.options.length > 0 && (
+                                  <div className="mt-2 pl-4 space-y-1">
+                                    {q.options.map((opt: string, i: number) => (
+                                      <p key={i} className="text-sm">{opt}</p>
                                     ))}
-                                    {answer?.keywords?.length > 5 && (
-                                      <Badge variant="outline" className="text-xs">+{answer.keywords.length - 5}</Badge>
-                                    )}
                                   </div>
-                                </TableCell>
-                                <TableCell>{answer?.min_keyword_match_percent || 50}%</TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                       {questions.length === 0 && (
                         <div className="text-center py-12 text-muted-foreground">
-                          No questions to show answer keys for
+                          No questions found for this paper
                         </div>
                       )}
-                    </ScrollArea>
-                  </TabsContent>
-                </Tabs>
-              ) : (
-                <div className="flex items-center justify-center h-[55vh] text-muted-foreground">
-                  <div className="text-center">
-                    <Eye className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>Select a paper from the list to view details</p>
-                  </div>
-                </div>
-              )}
+                    </div>
+                  </ScrollArea>
+                </TabsContent>
+                
+                <TabsContent value="answers">
+                  <ScrollArea className="h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-16">Q#</TableHead>
+                          <TableHead>Answer</TableHead>
+                          <TableHead>Keywords</TableHead>
+                          <TableHead className="w-24">Match %</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {questions.map(q => {
+                          const answer = answerKeys[q.id];
+                          return (
+                            <TableRow key={q.id}>
+                              <TableCell className="font-medium">{q.question_number}</TableCell>
+                              <TableCell className="max-w-xs">
+                                {answer ? (
+                                  <p className="truncate">{answer.answer_text}</p>
+                                ) : (
+                                  <span className="text-muted-foreground italic">No answer key</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {answer?.keywords?.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {answer.keywords.slice(0, 3).map((kw, i) => (
+                                      <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
+                                    ))}
+                                    {answer.keywords.length > 3 && (
+                                      <Badge variant="outline" className="text-xs">+{answer.keywords.length - 3}</Badge>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {answer ? `${answer.min_keyword_match_percent}%` : '-'}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                    {questions.length === 0 && (
+                      <div className="text-center py-12 text-muted-foreground">
+                        No questions to display
+                      </div>
+                    )}
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
-        </div>
+        )}
       </main>
     </div>
   );
