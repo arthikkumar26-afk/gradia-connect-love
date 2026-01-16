@@ -293,8 +293,8 @@ serve(async (req) => {
         score: evaluation.overallScore
       });
 
-      if (evaluation.passed && !isLastStage) {
-        // Update session to next stage
+      if (!isLastStage) {
+        // Always move to next stage regardless of pass/fail
         const { error: updateError } = await supabase
           .from('mock_interview_sessions')
           .update({
@@ -309,8 +309,8 @@ serve(async (req) => {
         } else {
           console.log('Session updated to next stage:', nextStageOrder);
         }
-      } else if (isLastStage && evaluation.passed) {
-        // All stages completed successfully
+      } else {
+        // Last stage completed - mark session as completed
         const { data: allResults } = await supabase
           .from('mock_interview_stage_results')
           .select('ai_score')
@@ -326,47 +326,24 @@ serve(async (req) => {
             status: 'completed',
             stages_completed: updatedStagesCompleted,
             overall_score: avgScore,
-            overall_feedback: 'Congratulations! You have successfully completed all interview stages.',
+            overall_feedback: 'You have completed all interview stages.',
             completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('id', sessionId);
 
-        console.log('Interview completed successfully with avg score:', avgScore);
-      } else if (!evaluation.passed) {
-        // Failed the stage
-        const { data: allResults } = await supabase
-          .from('mock_interview_stage_results')
-          .select('ai_score')
-          .eq('session_id', sessionId);
-
-        const avgScore = allResults?.length 
-          ? allResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / allResults.length 
-          : 0;
-
-        await supabase
-          .from('mock_interview_sessions')
-          .update({
-            status: 'failed',
-            overall_score: avgScore,
-            overall_feedback: `You did not pass the ${stage.name} stage. Keep practicing!`,
-            completed_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', sessionId);
-
-        console.log('Interview failed at stage:', stage.name);
+        console.log('Interview completed with avg score:', avgScore);
       }
 
-      // Return next stage info for email sending in frontend
-      const nextStage = evaluation.passed && !isLastStage ? INTERVIEW_STAGES[stageOrder] : null;
+      // Always return next stage info for email sending (unless last stage)
+      const nextStage = !isLastStage ? INTERVIEW_STAGES[stageOrder] : null;
 
       return new Response(JSON.stringify({
         evaluation,
         nextStage,
         nextStageOrder: nextStageOrder,
-        isComplete: isLastStage && evaluation.passed,
-        isFailed: !evaluation.passed,
+        isComplete: isLastStage,
+        passed: evaluation.passed,
         sessionId
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
