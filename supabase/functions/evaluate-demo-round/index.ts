@@ -200,9 +200,11 @@ Return your evaluation as a JSON object with this structure:
       console.error('Error saving demo result:', saveError);
     }
 
-    // Update session to next stage
+    // Update session to next stage (7 stages total)
+    // Stage 4 is Demo Round, stages 5-7 are: Demo Feedback, HR Documents, Final Review
     const nextStageOrder = stageOrder + 1;
-    const isLastStage = stageOrder >= 3; // Now only 3 stages
+    const TOTAL_STAGES = 7;
+    const isLastStage = stageOrder >= TOTAL_STAGES;
 
     if (!isLastStage) {
       await supabase
@@ -228,18 +230,22 @@ Return your evaluation as a JSON object with this structure:
         .update({
           status: 'completed',
           overall_score: avgScore,
-          overall_feedback: 'You have completed all interview stages including the Demo Round.',
+          overall_feedback: 'Congratulations! You have completed all interview stages.',
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', sessionId);
     }
 
-    // Get next stage info for email (updated to 3 stages)
+    // Get next stage info for email (7 stages)
     const INTERVIEW_STAGES = [
-      { name: 'Technical Assessment', order: 1, description: 'Technical questions' },
-      { name: 'Demo Round', order: 2, description: 'Teaching demonstration' },
-      { name: 'Final Review', order: 3, description: 'Final evaluation' }
+      { name: 'Interview Instructions', order: 1, description: 'Read interview guidelines' },
+      { name: 'Technical Assessment', order: 2, description: 'Technical questions assessment' },
+      { name: 'Demo Slot Booking', order: 3, description: 'Book your demo slot' },
+      { name: 'Demo Round', order: 4, description: 'Teaching demonstration' },
+      { name: 'Demo Feedback', order: 5, description: 'AI evaluation feedback review' },
+      { name: 'HR Documents', order: 6, description: 'Document submission' },
+      { name: 'Final Review', order: 7, description: 'Final evaluation and offer' }
     ];
     
     const nextStage = !isLastStage ? INTERVIEW_STAGES.find(s => s.order === nextStageOrder) : null;
