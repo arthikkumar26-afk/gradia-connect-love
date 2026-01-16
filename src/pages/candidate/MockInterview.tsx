@@ -319,8 +319,8 @@ const MockInterview = () => {
       setEvaluation(data.evaluation);
       setShowResult(true);
 
-      // If passed and not complete, automatically send email for next stage
-      if (data.evaluation.passed && !data.isComplete && data.nextStage) {
+      // Always send email for next stage (unless it's the last stage)
+      if (!data.isComplete && data.nextStage) {
         console.log('Sending next stage invitation:', data.nextStage);
         
         try {
@@ -338,18 +338,17 @@ const MockInterview = () => {
 
           if (emailError) {
             console.error('Email error:', emailError);
-            toast.error("Stage passed but failed to send next stage email");
+            toast.error("Failed to send next stage email");
           } else {
-            toast.success(`🎉 You passed! Check your email for ${data.nextStage.name} invitation!`);
+            const passedText = data.evaluation.passed ? '🎉 You passed!' : '📝 Stage completed.';
+            toast.success(`${passedText} Check your email for ${data.nextStage.name} invitation!`);
           }
         } catch (emailErr) {
           console.error('Email sending error:', emailErr);
-          toast.error("Stage passed but failed to send next stage email");
+          toast.error("Failed to send next stage email");
         }
       } else if (data.isComplete) {
         toast.success("🎊 Congratulations! You've completed all interview stages!");
-      } else if (data.isFailed) {
-        toast.error(`Unfortunately you didn't pass ${stage?.name}. Keep practicing!`);
       }
 
     } catch (error) {
