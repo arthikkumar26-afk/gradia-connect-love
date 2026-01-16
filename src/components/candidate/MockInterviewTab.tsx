@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { 
   Play,
@@ -31,7 +32,10 @@ import {
   TrendingDown,
   ChevronDown,
   ChevronUp,
-  Target
+  Target,
+  Upload,
+  X,
+  File
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
@@ -90,6 +94,20 @@ export const MockInterviewTab = () => {
   const [showSlotBooking, setShowSlotBooking] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
+  
+  // HR Documents state
+  const [hrDocuments, setHrDocuments] = useState<{
+    idProof: File | null;
+    educationCertificate: File | null;
+    addressProof: File | null;
+    experienceLetter: File | null;
+  }>({
+    idProof: null,
+    educationCertificate: null,
+    addressProof: null,
+    experienceLetter: null
+  });
+  const [uploadingDocuments, setUploadingDocuments] = useState(false);
   const [isAcknowledgingFeedback, setIsAcknowledgingFeedback] = useState(false);
 
   // Load data on mount and when user changes
@@ -571,6 +589,127 @@ export const MockInterviewTab = () => {
     }
   };
 
+  // Handle file selection for HR documents
+  const handleFileSelect = (docType: keyof typeof hrDocuments, file: File | null) => {
+    if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      // Validate file type
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      if (!validTypes.includes(file.type)) {
+        toast.error('Only PDF, JPG, and PNG files are allowed');
+        return;
+      }
+    }
+    setHrDocuments(prev => ({ ...prev, [docType]: file }));
+  };
+
+  // Submit HR documents
+  const submitHRDocuments = async () => {
+    if (!currentSession || !profile) return;
+    
+    const uploadedDocs = Object.entries(hrDocuments).filter(([_, file]) => file !== null);
+    if (uploadedDocs.length < 2) {
+      toast.error('Please upload at least ID Proof and Education Certificate');
+      return;
+    }
+    
+    if (!hrDocuments.idProof || !hrDocuments.educationCertificate) {
+      toast.error('ID Proof and Education Certificate are required');
+      return;
+    }
+
+    setUploadingDocuments(true);
+    try {
+      // Upload files to storage
+      const uploadedFiles: Record<string, string> = {};
+      
+      for (const [docType, file] of Object.entries(hrDocuments)) {
+        if (file) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${currentSession.id}/${docType}_${Date.now()}.${fileExt}`;
+          
+          const { data, error } = await supabase.storage
+            .from('resumes')
+            .upload(fileName, file, { upsert: true });
+          
+          if (error) throw error;
+          
+          const { data: urlData } = supabase.storage
+            .from('resumes')
+            .getPublicUrl(fileName);
+          
+          uploadedFiles[docType] = urlData.publicUrl;
+        }
+      }
+
+      // Create stage result for HR Documents
+      await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: currentSession.id,
+          stage_name: 'HR Documents',
+          stage_order: 6,
+          ai_score: 100,
+          ai_feedback: `Documents submitted successfully: ${Object.keys(uploadedFiles).join(', ')}`,
+          passed: true,
+          completed_at: new Date().toISOString(),
+          answers: uploadedFiles
+        });
+
+      // Update session to next stage
+      await supabase
+        .from('mock_interview_sessions')
+        .update({ current_stage_order: 7 })
+        .eq('id', currentSession.id);
+
+      // Send confirmation email
+      await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId: currentSession.id,
+          stageOrder: 6,
+          stageName: 'HR Documents Submitted',
+          stageDescription: 'Your HR documents have been submitted successfully.',
+          appUrl: window.location.origin,
+          documentsUploaded: Object.keys(uploadedFiles)
+        }
+      });
+
+      // Send next stage email (Final Review)
+      await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId: currentSession.id,
+          stageOrder: 7,
+          stageName: 'Final Review',
+          stageDescription: 'Your complete interview journey review and final decision.',
+          appUrl: window.location.origin
+        }
+      });
+
+      toast.success('Documents submitted successfully! Proceeding to Final Review.');
+      setHrDocuments({
+        idProof: null,
+        educationCertificate: null,
+        addressProof: null,
+        experienceLetter: null
+      });
+      setExpandedStage(null);
+      loadData();
+    } catch (error) {
+      console.error('Error submitting documents:', error);
+      toast.error('Failed to submit documents');
+    } finally {
+      setUploadingDocuments(false);
+    }
+  };
+
   const getStageStatus = (stageOrder: number) => {
     if (!currentSession) return 'locked';
     const result = stageResults.find(r => r.stage_order === stageOrder);
@@ -812,6 +951,18 @@ export const MockInterviewTab = () => {
                       >
                         <BarChart3 className="h-4 w-4" />
                         {isExpanded ? 'Hide Feedback' : 'View Feedback'}
+                      </Button>
+                    )}
+                    {/* For HR Documents (stage 6) in progress, show Upload Documents button */}
+                    {status === 'current' && stage.order === 6 && currentSession && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
+                        className="gap-1"
+                      >
+                        <Upload className="h-4 w-4" />
+                        {isExpanded ? 'Hide Upload' : 'Upload Documents'}
                       </Button>
                     )}
                     {/* For completed stages with results, show expand/collapse button */}
@@ -1064,6 +1215,202 @@ export const MockInterviewTab = () => {
                     </div>
                   );
                 })()}
+
+                {/* HR Documents Stage (6) - Show upload form inline */}
+                {isExpanded && status === 'current' && stage.order === 6 && !hasResults && (
+                  <div className="mt-4 pt-4 border-t space-y-6">
+                    {/* Header */}
+                    <div className="text-center">
+                      <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <FileText className="h-8 w-8 text-primary" />
+                      </div>
+                      <h4 className="text-lg font-semibold">Upload HR Documents</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Please upload the required documents for verification. Accepted formats: PDF, JPG, PNG (max 5MB each)
+                      </p>
+                    </div>
+
+                    {/* Document Upload Cards */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* ID Proof - Required */}
+                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            ID Proof <span className="text-destructive">*</span>
+                          </Label>
+                          {hrDocuments.idProof && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6"
+                              onClick={() => handleFileSelect('idProof', null)}
+                            >
+                              <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">Aadhar Card, PAN Card, Passport, or Voter ID</p>
+                        {hrDocuments.idProof ? (
+                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
+                            <File className="h-4 w-4 text-green-600" />
+                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.idProof.name}</span>
+                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
+                          </div>
+                        ) : (
+                          <div>
+                            <Input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleFileSelect('idProof', e.target.files?.[0] || null)}
+                              className="cursor-pointer"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Education Certificate - Required */}
+                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <GraduationCap className="h-4 w-4 text-primary" />
+                            Education Certificate <span className="text-destructive">*</span>
+                          </Label>
+                          {hrDocuments.educationCertificate && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6"
+                              onClick={() => handleFileSelect('educationCertificate', null)}
+                            >
+                              <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">Highest degree certificate or marksheet</p>
+                        {hrDocuments.educationCertificate ? (
+                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
+                            <File className="h-4 w-4 text-green-600" />
+                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.educationCertificate.name}</span>
+                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
+                          </div>
+                        ) : (
+                          <div>
+                            <Input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleFileSelect('educationCertificate', e.target.files?.[0] || null)}
+                              className="cursor-pointer"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Address Proof - Optional */}
+                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            Address Proof
+                          </Label>
+                          {hrDocuments.addressProof && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6"
+                              onClick={() => handleFileSelect('addressProof', null)}
+                            >
+                              <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">Utility bill, bank statement, or rental agreement</p>
+                        {hrDocuments.addressProof ? (
+                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
+                            <File className="h-4 w-4 text-green-600" />
+                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.addressProof.name}</span>
+                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
+                          </div>
+                        ) : (
+                          <div>
+                            <Input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleFileSelect('addressProof', e.target.files?.[0] || null)}
+                              className="cursor-pointer"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Experience Letter - Optional */}
+                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            Experience Letter
+                          </Label>
+                          {hrDocuments.experienceLetter && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6"
+                              onClick={() => handleFileSelect('experienceLetter', null)}
+                            >
+                              <X className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">Previous employment experience letter (if applicable)</p>
+                        {hrDocuments.experienceLetter ? (
+                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
+                            <File className="h-4 w-4 text-green-600" />
+                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.experienceLetter.name}</span>
+                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
+                          </div>
+                        ) : (
+                          <div>
+                            <Input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={(e) => handleFileSelect('experienceLetter', e.target.files?.[0] || null)}
+                              className="cursor-pointer"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Upload Summary */}
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          Documents selected: {Object.values(hrDocuments).filter(f => f !== null).length}/4
+                        </span>
+                        <Badge variant={hrDocuments.idProof && hrDocuments.educationCertificate ? 'default' : 'secondary'}>
+                          {hrDocuments.idProof && hrDocuments.educationCertificate ? 'Ready to submit' : 'Required docs missing'}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex justify-center pt-2">
+                      <Button 
+                        onClick={submitHRDocuments}
+                        disabled={uploadingDocuments || !hrDocuments.idProof || !hrDocuments.educationCertificate}
+                        className="gap-2"
+                        size="lg"
+                      >
+                        {uploadingDocuments ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        {uploadingDocuments ? 'Uploading...' : 'Submit Documents & Proceed to Final Review'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );

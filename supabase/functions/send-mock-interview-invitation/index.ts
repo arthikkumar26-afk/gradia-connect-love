@@ -25,6 +25,7 @@ interface MockInterviewInvitationRequest {
     improvements?: string[];
     questionScores?: Record<string, { score: number; feedback: string }>;
   };
+  documentsUploaded?: string[];
 }
 
 const TOTAL_STAGES = 7;
@@ -44,7 +45,8 @@ const handler = async (req: Request): Promise<Response> => {
       stageDescription,
       appUrl,
       bookedSlot,
-      feedbackData
+      feedbackData,
+      documentsUploaded
     }: MockInterviewInvitationRequest = await req.json();
 
     console.log('Sending mock interview invitation:', { candidateEmail, stageName, stageOrder });
@@ -282,29 +284,64 @@ const handler = async (req: Request): Promise<Response> => {
         }
         break;
         
-      case 6: // Final Review (HR)
+      case 6: // Final Review (HR) / HR Documents Submitted
         stageEmoji = '📄';
-        stageTitle = 'Final Review - HR Round';
-        buttonText = 'Submit Documents →';
-        interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
-        stageSpecificInfo = `
-          <div class="info-box">
-            <h3>📄 HR Round - Document Submission:</h3>
-            <ul>
-              <li><strong>Stage:</strong> Final Review (Stage ${stageOrder} of ${TOTAL_STAGES})</li>
-              <li><strong>Format:</strong> 4 HR Questions + Document Upload</li>
-              <li><strong>Time:</strong> 120 seconds per question</li>
-            </ul>
-          </div>
+        buttonText = 'View Dashboard →';
+        interviewLink = `${baseUrl}/candidate/dashboard`;
+        
+        // If documents were uploaded, show confirmation
+        if (documentsUploaded && documentsUploaded.length > 0) {
+          stageTitle = 'HR Documents Submitted Successfully';
+          const docLabels: Record<string, string> = {
+            idProof: 'ID Proof',
+            educationCertificate: 'Education Certificate',
+            addressProof: 'Address Proof',
+            experienceLetter: 'Experience Letter'
+          };
           
-          <p><strong>Documents to prepare:</strong></p>
-          <ul>
-            <li>Updated Resume/CV</li>
-            <li>Educational certificates</li>
-            <li>Experience letters (if applicable)</li>
-            <li>ID proof</li>
-          </ul>
-        `;
+          stageSpecificInfo = `
+            <div style="background: linear-gradient(135deg, #22c55e20, #22c55e10); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+              <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+              <h2 style="margin: 0; color: #16a34a;">Documents Submitted!</h2>
+              <p style="color: #166534; margin-top: 8px;">Your HR documents have been received and are under review.</p>
+            </div>
+            
+            <div style="background: white; border-radius: 8px; padding: 16px; margin: 16px 0; border: 1px solid #e5e7eb;">
+              <h4 style="color: #374151; margin: 0 0 12px 0;">📋 Documents Received:</h4>
+              <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
+                ${documentsUploaded.map(doc => `<li style="margin-bottom: 8px;">✓ ${docLabels[doc] || doc}</li>`).join('')}
+              </ul>
+            </div>
+            
+            <p><strong>What's Next:</strong></p>
+            <ul>
+              <li>Your documents will be verified by our HR team</li>
+              <li>Proceed to the Final Review stage to see your complete assessment</li>
+              <li>You'll receive your final interview summary shortly</li>
+            </ul>
+          `;
+        } else {
+          stageTitle = 'Final Review - HR Documents';
+          stageSpecificInfo = `
+            <div class="info-box">
+              <h3>📄 HR Round - Document Submission:</h3>
+              <ul>
+                <li><strong>Stage:</strong> HR Documents (Stage ${stageOrder} of ${TOTAL_STAGES})</li>
+                <li><strong>Required:</strong> Upload your identity and education documents</li>
+              </ul>
+            </div>
+            
+            <p><strong>Documents to prepare:</strong></p>
+            <ul>
+              <li><strong>ID Proof</strong> (Required) - Aadhar, PAN, Passport, or Voter ID</li>
+              <li><strong>Education Certificate</strong> (Required) - Highest degree certificate or marksheet</li>
+              <li><strong>Address Proof</strong> (Optional) - Utility bill, bank statement, or rental agreement</li>
+              <li><strong>Experience Letter</strong> (Optional) - Previous employment letter if applicable</li>
+            </ul>
+            
+            <p><em>Accepted formats: PDF, JPG, PNG (max 5MB each)</em></p>
+          `;
+        }
         break;
         
       case 7: // All Reviews
