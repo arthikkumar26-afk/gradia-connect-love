@@ -584,34 +584,43 @@ export type Database = {
       }
       interview_question_papers: {
         Row: {
+          category: string | null
           created_at: string
           created_by: string | null
           description: string | null
+          designation: string | null
           id: string
           is_active: boolean
           pdf_url: string
+          segment: string | null
           stage_type: string
           title: string
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          designation?: string | null
           id?: string
           is_active?: boolean
           pdf_url: string
+          segment?: string | null
           stage_type: string
           title: string
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          designation?: string | null
           id?: string
           is_active?: boolean
           pdf_url?: string
+          segment?: string | null
           stage_type?: string
           title?: string
           updated_at?: string
