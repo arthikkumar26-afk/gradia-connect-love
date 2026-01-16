@@ -578,8 +578,14 @@ Candidate Profile:
 - Experience Level: ${profile.experience_level || 'Entry Level'}
 - Skills: ${profile.skills?.join(', ') || 'Not specified'}
 - Highest Qualification: ${profile.highest_qualification || 'Not specified'}
-- Primary Subject: ${profile.primary_subject || 'Not specified'}
+- Primary Subject: ${profile.primary_subject || 'General Knowledge'}
+- Classes Handled: ${profile.classes_handled || 'Not specified'}
+- Segment: ${profile.segment || 'Education'}
 ` : 'No profile information available.';
+
+  const subjectFocus = profile?.primary_subject 
+    ? `Focus questions specifically on ${profile.primary_subject} topics, concepts, and teaching methodologies for this subject.`
+    : 'Focus on general teaching aptitude and pedagogical skills.';
 
   return `Generate ${stage.questionCount} interview questions for the "${stage.name}" stage.
 
@@ -587,19 +593,26 @@ Stage Description: ${stage.description}
 
 ${profileInfo}
 
+IMPORTANT: ${subjectFocus}
+
 Requirements:
-1. Questions should be relevant to the stage type
-2. Mix of difficulty levels (easy to challenging)
-3. For multiple choice questions, provide 4 options
-4. Include expected key points for text answers
-5. Make questions specific to the candidate's background when possible
+1. Questions should be directly related to the candidate's PRIMARY SUBJECT: ${profile?.primary_subject || 'General'}
+2. Include subject-specific concepts, theories, and teaching approaches
+3. Mix of difficulty levels (easy to challenging)
+4. For multiple choice questions, provide 4 options
+5. Include expected key points for text answers
+6. Make questions specific to the candidate's experience level and background
 
 For "${stage.name}" stage, focus on:
-${stage.order === 2 ? '- Technical knowledge, problem-solving, domain expertise' : ''}
+${stage.order === 2 ? `- Deep knowledge of ${profile?.primary_subject || 'the subject'} concepts
+- Problem-solving in ${profile?.primary_subject || 'academic'} contexts
+- Teaching methodologies for ${profile?.primary_subject || 'the subject'}
+- Real classroom scenarios and student engagement
+- Subject-specific curriculum and exam patterns` : ''}
 ${stage.order === 4 ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
 ${stage.order === 6 ? '- HR questions, document verification, future plans, final assessment' : ''}
 
-Generate exactly ${stage.questionCount} questions.`;
+Generate exactly ${stage.questionCount} questions that test the candidate's expertise in ${profile?.primary_subject || 'their field'}.`;
 }
 
 function buildEvaluationPrompt(stage: MockInterviewStage, questions: any[], answers: any[], profile: any): string {
