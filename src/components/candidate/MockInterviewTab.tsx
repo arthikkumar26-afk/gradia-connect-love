@@ -360,137 +360,139 @@ export const MockInterviewTab = () => {
         </Card>
       )}
 
-      {/* Stages Pipeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Interview Stages</CardTitle>
-          <CardDescription>
-            Complete all 4 stages. You'll receive an email for each stage after passing the previous one.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            {stages.map((stage) => {
-              const Icon = getStageIcon(stage.name);
-              const status = getStageStatus(stage.order);
-              const result = stageResults.find(r => r.stage_order === stage.order);
+      {/* Stages Pipeline - Only show when there's an active session */}
+      {currentSession && currentSession.status === 'in_progress' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Interview Progress</CardTitle>
+            <CardDescription>
+              Your current interview progress. Complete each stage to advance.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {stages.map((stage) => {
+                const Icon = getStageIcon(stage.name);
+                const status = getStageStatus(stage.order);
+                const result = stageResults.find(r => r.stage_order === stage.order);
 
-              return (
-                <div
-                  key={stage.order}
-                  className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
-                    status === 'pending' ? 'border-primary bg-primary/5' :
-                    status === 'passed' ? 'border-green-500 bg-green-50 dark:bg-green-900/10' :
-                    status === 'failed' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
-                    'border-border bg-muted/30'
-                  }`}
-                >
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                    status === 'pending' ? 'bg-primary text-primary-foreground' :
-                    status === 'passed' ? 'bg-green-500 text-white' :
-                    status === 'failed' ? 'bg-red-500 text-white' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {status === 'passed' ? <CheckCircle2 className="h-6 w-6" /> :
-                     status === 'failed' ? <XCircle className="h-6 w-6" /> :
-                     status === 'pending' ? <Clock className="h-6 w-6" /> :
-                     <Icon className="h-6 w-6" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold">{stage.name}</h4>
-                      {result?.completed_at && (
-                        <>
-                          <Badge variant={result.passed ? 'default' : 'destructive'}>
-                            {result.ai_score?.toFixed(0)}%
+                return (
+                  <div
+                    key={stage.order}
+                    className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
+                      status === 'pending' ? 'border-primary bg-primary/5' :
+                      status === 'passed' ? 'border-green-500 bg-green-50 dark:bg-green-900/10' :
+                      status === 'failed' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
+                      'border-border bg-muted/20 opacity-50'
+                    }`}
+                  >
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                      status === 'pending' ? 'bg-primary text-primary-foreground' :
+                      status === 'passed' ? 'bg-green-500 text-white' :
+                      status === 'failed' ? 'bg-red-500 text-white' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {status === 'passed' ? <CheckCircle2 className="h-5 w-5" /> :
+                       status === 'failed' ? <XCircle className="h-5 w-5" /> :
+                       status === 'pending' ? <Clock className="h-5 w-5 animate-pulse" /> :
+                       <Icon className="h-5 w-5" />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-sm">{stage.name}</h4>
+                        {result?.completed_at && (
+                          <>
+                            <Badge variant={result.passed ? 'default' : 'destructive'} className="text-xs">
+                              {result.ai_score?.toFixed(0)}%
+                            </Badge>
+                            {result.recording_url && (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="outline" size="sm" className="gap-1 h-6 text-xs">
+                                    <Video className="h-3 w-3" />
+                                    Recording
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl">
+                                  <DialogHeader>
+                                    <DialogTitle>{stage.name} - Recording</DialogTitle>
+                                  </DialogHeader>
+                                  <video src={result.recording_url} controls className="w-full rounded-lg" />
+                                </DialogContent>
+                              </Dialog>
+                            )}
+                          </>
+                        )}
+                        {status === 'pending' && (
+                          <Badge variant="outline" className="gap-1 text-xs animate-pulse">
+                            <Mail className="h-3 w-3" />
+                            Awaiting
                           </Badge>
-                          {result.recording_url && (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm" className="gap-1 h-6 text-xs">
-                                  <Video className="h-3 w-3" />
-                                  View Recording
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl">
-                                <DialogHeader>
-                                  <DialogTitle>{stage.name} - Recording</DialogTitle>
-                                </DialogHeader>
-                                <video 
-                                  src={result.recording_url} 
-                                  controls 
-                                  className="w-full rounded-lg"
-                                />
-                              </DialogContent>
-                            </Dialog>
-                          )}
-                        </>
-                      )}
-                      {status === 'pending' && (
-                        <Badge variant="outline" className="gap-1">
-                          <Mail className="h-3 w-3" />
-                          Awaiting Response
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{stage.description}</p>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                      <span>{stage.questionCount} questions</span>
-                      <span>•</span>
-                      <span>{stage.timePerQuestion}s per question</span>
-                      <span>•</span>
-                      <span>Passing: {stage.passingScore}%</span>
-                    </div>
-                    
-                    {/* Show feedback for completed stages */}
-                    {result?.completed_at && result.ai_feedback && (
-                      <div className="mt-3 p-3 bg-background rounded border">
-                        <p className="text-sm">{result.ai_feedback}</p>
-                        
-                        {/* Strengths & Improvements */}
-                        <div className="grid grid-cols-2 gap-3 mt-3">
-                          {result.strengths && result.strengths.length > 0 && (
-                            <div className="p-2 bg-green-50 dark:bg-green-900/10 rounded border border-green-200 dark:border-green-800">
-                              <h5 className="text-xs font-medium mb-1 flex items-center gap-1 text-green-700 dark:text-green-400">
-                                <ThumbsUp className="h-3 w-3" />
-                                Strengths
-                              </h5>
-                              <ul className="space-y-0.5">
-                                {result.strengths.map((s, i) => (
-                                  <li key={i} className="text-xs text-green-600 dark:text-green-400 flex items-start gap-1">
-                                    <CheckCircle2 className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                                    {s}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {result.improvements && result.improvements.length > 0 && (
-                            <div className="p-2 bg-amber-50 dark:bg-amber-900/10 rounded border border-amber-200 dark:border-amber-800">
-                              <h5 className="text-xs font-medium mb-1 flex items-center gap-1 text-amber-700 dark:text-amber-400">
-                                <ThumbsDown className="h-3 w-3" />
-                                Areas to Improve
-                              </h5>
-                              <ul className="space-y-0.5">
-                                {result.improvements.map((s, i) => (
-                                  <li key={i} className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1">
-                                    <TrendingUp className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                                    {s}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
+                        )}
+                        {status === 'locked' && (
+                          <Badge variant="secondary" className="text-xs">Locked</Badge>
+                        )}
                       </div>
-                    )}
+                      <p className="text-xs text-muted-foreground mt-0.5">{stage.description}</p>
+                      
+                      {/* Show feedback for completed stages */}
+                      {result?.completed_at && result.ai_feedback && (
+                        <div className="mt-2 p-2 bg-background rounded border text-xs">
+                          <p>{result.ai_feedback}</p>
+                          {/* Strengths & Improvements */}
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            {result.strengths && result.strengths.length > 0 && (
+                              <div className="p-2 bg-green-50 dark:bg-green-900/10 rounded">
+                                <span className="font-medium text-green-700 dark:text-green-400 flex items-center gap-1">
+                                  <ThumbsUp className="h-3 w-3" /> Strengths
+                                </span>
+                                <ul className="mt-1 space-y-0.5">
+                                  {result.strengths.map((s, i) => (
+                                    <li key={i} className="text-green-600 dark:text-green-400">• {s}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {result.improvements && result.improvements.length > 0 && (
+                              <div className="p-2 bg-amber-50 dark:bg-amber-900/10 rounded">
+                                <span className="font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                                  <ThumbsDown className="h-3 w-3" /> Improve
+                                </span>
+                                <ul className="mt-1 space-y-0.5">
+                                  {result.improvements.map((s, i) => (
+                                    <li key={i} className="text-amber-600 dark:text-amber-400">• {s}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No Active Session - Show start prompt */}
+      {!currentSession && (
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            <Brain className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Ready for Mock Interview?</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Practice with our AI-powered mock interview. Complete 4 stages: Technical Assessment, HR Round, Viva, and Final Review.
+            </p>
+            <Button onClick={startNewSession} disabled={isStarting} size="lg" className="gap-2">
+              {isStarting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
+              Start Mock Interview
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Session Complete/Failed State */}
       {currentSession && (currentSession.status === 'completed' || currentSession.status === 'failed') && (
