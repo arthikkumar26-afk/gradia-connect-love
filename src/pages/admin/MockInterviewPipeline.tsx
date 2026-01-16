@@ -74,18 +74,12 @@ export default function MockInterviewPipeline() {
   });
 
   // Role-based options
-  const segmentOptions = [
-    'Pre-Primary', 'Primary', 'Secondary', 'Senior Secondary', 'Foundation', 'JEE', 'NEET'
-  ];
+  const segmentOptions = ['Pre-Primary', 'Primary', 'High School'];
 
   const categoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
-    'Secondary': ['Teaching', 'Admin', 'Non-Teaching'],
-    'Senior Secondary': ['Teaching', 'Admin', 'Non-Teaching'],
-    'Foundation': ['Teaching', 'Admin', 'Academic Support'],
-    'JEE': ['Teaching', 'Admin', 'Academic Support'],
-    'NEET': ['Teaching', 'Admin', 'Academic Support'],
+    'High School': ['Teaching', 'Helping/Supporting', 'Admin', 'Non-Teaching'],
   };
 
   const designationOptions: Record<string, Record<string, string[]>> = {
@@ -101,30 +95,11 @@ export default function MockInterviewPipeline() {
       'CLASS-1&2': ['PRT', 'TGT', 'SUBJECT TEACHER'],
       'CLASSES-3,4&5': ['PRT', 'TGT', 'SUBJECT TEACHER', 'CLASS TEACHER']
     },
-    'Secondary': {
-      'Teaching': ['TGT', 'PGT', 'SENIOR TEACHER'],
-      'Admin': ['VICE PRINCIPAL', 'COORDINATOR', 'ADMIN MANAGER'],
-      'Non-Teaching': ['LAB ASSISTANT', 'LIBRARIAN', 'COUNSELOR']
-    },
-    'Senior Secondary': {
-      'Teaching': ['PGT', 'SENIOR LECTURER', 'HOD'],
-      'Admin': ['PRINCIPAL', 'VICE PRINCIPAL', 'ADMIN MANAGER'],
-      'Non-Teaching': ['LAB ASSISTANT', 'LIBRARIAN', 'COUNSELOR']
-    },
-    'Foundation': {
-      'Teaching': ['FACULTY', 'SENIOR FACULTY', 'HOD'],
-      'Admin': ['CENTER HEAD', 'ADMIN EXECUTIVE'],
-      'Academic Support': ['ACADEMIC COORDINATOR', 'TEST ANALYST']
-    },
-    'JEE': {
-      'Teaching': ['FACULTY', 'SENIOR FACULTY', 'HOD'],
-      'Admin': ['CENTER HEAD', 'ADMIN EXECUTIVE'],
-      'Academic Support': ['ACADEMIC COORDINATOR', 'CONTENT DEVELOPER']
-    },
-    'NEET': {
-      'Teaching': ['FACULTY', 'SENIOR FACULTY', 'HOD'],
-      'Admin': ['CENTER HEAD', 'ADMIN EXECUTIVE'],
-      'Academic Support': ['ACADEMIC COORDINATOR', 'CONTENT DEVELOPER']
+    'High School': {
+      'Teaching': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD'],
+      'Helping/Supporting': ['LAB ASSISTANT', 'ATTENDER'],
+      'Admin': ['PRINCIPAL', 'VICE PRINCIPAL', 'COORDINATOR', 'ADMIN MANAGER'],
+      'Non-Teaching': ['LIBRARIAN', 'COUNSELOR', 'OFFICE STAFF']
     }
   };
 
