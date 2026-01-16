@@ -84,7 +84,7 @@ export default function MockInterviewPipeline() {
 
   const designationOptions: Record<string, Record<string, string[]>> = {
     'Pre-Primary': {
-      'Teaching': ['MOTHER TEACHER', 'ASSO.TEACHER', '1st Language', '2nd Language', '3rd Language', 'Telugu', 'Hindi', 'English', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA'],
+      'Teaching': ['MOTHER TEACHER'],
       'Helping/Supporting': ['CARE TAKER', 'ATTENDER'],
       'Admin': ['VICE PRINCIPAL', 'COORDINATOR']
     },
