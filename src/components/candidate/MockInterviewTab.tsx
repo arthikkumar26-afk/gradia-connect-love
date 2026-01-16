@@ -1262,54 +1262,37 @@ export const MockInterviewTab = () => {
                   </div>
                 )}
 
-                {/* Slot Booking Stage (2 or 4) - Show calendar/time picker inline */}
+                {/* Slot Booking Stage (2 or 4) - Show compact calendar/time picker inline */}
                 {isExpanded && status === 'current' && (stage.order === 2 || stage.order === 4) && !hasResults && (
-                  <div className="mt-4 pt-4 border-t space-y-6">
-                    {/* Header */}
-                    <div className="text-center">
-                      <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <Calendar className="h-8 w-8 text-primary" />
-                      </div>
-                      <h4 className="text-lg font-semibold">
-                        {stage.order === 2 ? 'Book Technical Assessment Slot' : 'Book Demo Interview Slot'}
-                      </h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {stage.order === 2 
-                          ? 'Select a convenient date and time for your Technical Assessment.'
-                          : 'Select a convenient date and time for your Demo teaching session.'}
-                      </p>
+                  <div className="mt-4 pt-4 border-t space-y-4">
+                    {/* Quick Options - Compact */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">Quick:</span>
+                      <Button
+                        variant={selectedSlot === 'immediately' ? 'default' : 'outline'}
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => setSelectedSlot('immediately')}
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                        Start Now
+                      </Button>
+                      <Button
+                        variant={selectedSlot === 'next_10_min' ? 'default' : 'outline'}
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => setSelectedSlot('next_10_min')}
+                      >
+                        <Clock className="h-3.5 w-3.5" />
+                        In 10 Min
+                      </Button>
                     </div>
 
-                    {/* Quick Options */}
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm text-muted-foreground">Quick Options</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button
-                          variant={selectedSlot === 'immediately' ? 'default' : 'outline'}
-                          className="w-full h-auto py-3 flex-col gap-1"
-                          onClick={() => setSelectedSlot('immediately')}
-                        >
-                          <Play className="h-5 w-5" />
-                          <span className="text-sm font-medium">Start Immediately</span>
-                          <span className="text-xs text-muted-foreground">No waiting</span>
-                        </Button>
-                        <Button
-                          variant={selectedSlot === 'next_10_min' ? 'default' : 'outline'}
-                          className="w-full h-auto py-3 flex-col gap-1"
-                          onClick={() => setSelectedSlot('next_10_min')}
-                        >
-                          <Clock className="h-5 w-5" />
-                          <span className="text-sm font-medium">In 10 Minutes</span>
-                          <span className="text-xs text-muted-foreground">Time to prepare</span>
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Date & Time Slots */}
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-sm text-muted-foreground">Or Select a Scheduled Time</h4>
-                      <ScrollArea className="max-h-[350px] pr-4">
-                        <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="space-y-4">
+                    {/* Date & Time Slots - Compact */}
+                    <div className="space-y-2">
+                      <span className="text-sm font-medium text-muted-foreground">Or schedule for:</span>
+                      <ScrollArea className="max-h-[200px]">
+                        <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="space-y-2">
                           {Object.entries(
                             generateTimeSlots().reduce((groups: { [key: string]: { date: string; time: string; value: string }[] }, slot) => {
                               if (!groups[slot.date]) groups[slot.date] = [];
@@ -1317,32 +1300,26 @@ export const MockInterviewTab = () => {
                               return groups;
                             }, {} as { [key: string]: { date: string; time: string; value: string }[] })
                           ).map(([date, slots]) => {
-                            // Get the actual date object for the first slot to extract day name
                             const firstSlot = (slots as { date: string; time: string; value: string }[])[0];
                             const slotDate = new Date(firstSlot.value);
-                            const dayName = slotDate.toLocaleDateString('en-US', { weekday: 'long' });
-                            const fullDate = slotDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                            const dayName = slotDate.toLocaleDateString('en-US', { weekday: 'short' });
                             
                             return (
-                              <div key={date} className="p-4 rounded-lg border bg-card/50 hover:bg-card transition-colors">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                    <Calendar className="h-5 w-5 text-primary" />
-                                  </div>
-                                  <div>
-                                    <h5 className="font-semibold text-foreground">{date}</h5>
-                                    <p className="text-xs text-muted-foreground">{dayName} • {fullDate}</p>
-                                  </div>
+                              <div key={date} className="flex items-start gap-3 p-2 rounded-lg bg-muted/30">
+                                <div className="flex items-center gap-1.5 min-w-[90px] pt-0.5">
+                                  <Calendar className="h-3.5 w-3.5 text-primary" />
+                                  <span className="text-xs font-medium">{date}</span>
+                                  <span className="text-xs text-muted-foreground">({dayName})</span>
                                 </div>
-                                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                                <div className="flex flex-wrap gap-1.5 flex-1">
                                   {(slots as { date: string; time: string; value: string }[]).map((slot) => (
-                                    <div key={slot.value} className="flex items-center">
+                                    <div key={slot.value}>
                                       <RadioGroupItem value={slot.value} id={slot.value} className="peer sr-only" />
                                       <Label
                                         htmlFor={slot.value}
-                                        className="flex-1 text-center py-2.5 px-2 rounded-lg border cursor-pointer transition-all
+                                        className="inline-block px-2 py-1 rounded text-xs font-medium border cursor-pointer transition-all
                                           peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground
-                                          hover:border-primary/50 hover:bg-primary/5 text-sm font-medium"
+                                          hover:border-primary/50 hover:bg-primary/5"
                                       >
                                         {slot.time}
                                       </Label>
@@ -1356,45 +1333,40 @@ export const MockInterviewTab = () => {
                       </ScrollArea>
                     </div>
 
-                    {/* Selected Slot Summary */}
-                    {selectedSlot && (
-                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <CheckCircle2 className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-foreground">Selected Slot</p>
-                            <p className="text-sm text-muted-foreground">
+                    {/* Selected Slot & Confirm - Compact inline */}
+                    <div className="flex items-center justify-between gap-3 pt-2 border-t">
+                      <div className="flex items-center gap-2 text-sm">
+                        {selectedSlot ? (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                            <span className="text-muted-foreground">
                               {selectedSlot === 'immediately' 
-                                ? 'Start Immediately' 
+                                ? 'Start Now' 
                                 : selectedSlot === 'next_10_min'
                                   ? 'In 10 Minutes'
                                   : (() => {
                                       const slotDate = new Date(selectedSlot);
-                                      return `${slotDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at ${slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                                      return `${slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
                                     })()
                               }
-                            </p>
-                          </div>
-                        </div>
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">Select a time slot</span>
+                        )}
                       </div>
-                    )}
-
-                    {/* Confirm Button */}
-                    <div className="flex justify-center pt-2">
                       <Button 
                         onClick={bookSlot}
                         disabled={!selectedSlot || isBookingSlot}
-                        className="gap-2 min-w-[200px]"
-                        size="lg"
+                        size="sm"
+                        className="gap-1.5"
                       >
                         {isBookingSlot ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2 className="h-3.5 w-3.5" />
                         )}
-                        {isBookingSlot ? 'Booking...' : 'Confirm Booking'}
+                        {isBookingSlot ? 'Booking...' : 'Confirm'}
                       </Button>
                     </div>
                   </div>
