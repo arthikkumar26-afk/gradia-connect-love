@@ -1435,6 +1435,24 @@ export const MockInterviewTab = () => {
                               </div>
                             </div>
 
+                            {/* Class Level Row - moved above Department */}
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Class Level *</Label>
+                              <Select 
+                                value={slotBookingForm.classLevel} 
+                                onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classLevel: value }))}
+                              >
+                                <SelectTrigger className="h-9 text-sm">
+                                  <SelectValue placeholder="Select class level" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border z-50">
+                                  {['Nursery', 'PP-1 & PP-2', 'C-1 & C-2', 'C-3, C-4 & C-5', 'C-6, C-7 & C-8', 'C-9 & C-10'].map(option => (
+                                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
                             {/* Department and Designation Row */}
                             <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1">
@@ -1469,24 +1487,6 @@ export const MockInterviewTab = () => {
                                   </SelectContent>
                                 </Select>
                               </div>
-                            </div>
-
-                            {/* Class Level Row */}
-                            <div className="space-y-1">
-                              <Label className="text-xs font-medium">Class Level *</Label>
-                              <Select 
-                                value={slotBookingForm.classLevel} 
-                                onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classLevel: value }))}
-                              >
-                                <SelectTrigger className="h-9 text-sm">
-                                  <SelectValue placeholder="Select class level" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-background border z-50">
-                                  {['Nursery', 'PP-1 & PP-2', 'C-1 & C-2', 'C-3, C-4 & C-5', 'C-6, C-7 & C-8', 'C-9 & C-10'].map(option => (
-                                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
                             </div>
 
                             {/* Class Type and Subject Row */}
