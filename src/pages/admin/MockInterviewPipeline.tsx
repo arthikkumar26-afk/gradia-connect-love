@@ -276,18 +276,31 @@ export default function MockInterviewPipeline() {
 
     setIsParsing(true);
     try {
-      // Read file as text - for .txt files this works, for PDFs we send raw content
-      // The AI will try to parse whatever text patterns it can find
-      const text = await questionPdfFile.text();
-      
-      console.log(`Set ${setIndex + 1}: Sending ${text.length} characters to parser`);
+      // For PDFs, convert to base64 for proper text extraction on the server
+      // For .txt files, send as text directly
+      const isPdf = questionPdfFile.name.toLowerCase().endsWith('.pdf');
+      let payload: { pdfText?: string; pdfBase64?: string; paperType: string; language: string } = {
+        paperType: newPaper.stage_type,
+        language: 'auto'
+      };
+
+      if (isPdf) {
+        // Convert PDF to base64 for server-side extraction
+        const arrayBuffer = await questionPdfFile.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        payload.pdfBase64 = base64;
+        console.log(`Set ${setIndex + 1}: Sending PDF as base64 (${base64.length} chars)`);
+      } else {
+        // For text files, read as text directly
+        const text = await questionPdfFile.text();
+        payload.pdfText = text;
+        console.log(`Set ${setIndex + 1}: Sending text file (${text.length} chars)`);
+      }
       
       const { data, error } = await supabase.functions.invoke('parse-question-paper', {
-        body: { 
-          pdfText: text, 
-          paperType: newPaper.stage_type,
-          language: 'auto' // Let AI detect language
-        }
+        body: payload
       });
 
       if (error) {
@@ -310,11 +323,11 @@ export default function MockInterviewPipeline() {
         });
         toast.success(`Set ${setIndex + 1}: Extracted ${data.questions.length} questions`);
       } else {
-        toast.warning(`Set ${setIndex + 1}: No questions found. Try uploading a .txt file instead of PDF for better results.`);
+        toast.warning(`Set ${setIndex + 1}: No questions found in the document.`);
       }
     } catch (error) {
       console.error('Error parsing question PDF:', error);
-      toast.error(`Set ${setIndex + 1}: Failed to parse. Try uploading a .txt file for better extraction.`);
+      toast.error(`Set ${setIndex + 1}: Failed to parse document. Please try again.`);
     } finally {
       setIsParsing(false);
     }
