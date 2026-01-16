@@ -486,9 +486,20 @@ export const MockInterviewTab = () => {
   };
 
   const bookSlot = async () => {
-    if (!selectedSlot || !currentSession) {
-      toast.error("Please select a time slot");
-      return;
+    const currentStage = currentSession?.current_stage_order;
+    const isStage2 = currentStage === 2;
+    
+    // For Stage 2, use slotBookingForm; for Stage 4, use selectedSlot
+    if (isStage2) {
+      if (!slotBookingForm.date || !slotBookingForm.time || !currentSession) {
+        toast.error("Please fill all required fields");
+        return;
+      }
+    } else {
+      if (!selectedSlot || !currentSession) {
+        toast.error("Please select a time slot");
+        return;
+      }
     }
 
     setIsBookingSlot(true);
@@ -497,18 +508,69 @@ export const MockInterviewTab = () => {
       let slotTime: Date;
       let slotLabel: string;
       
-      if (selectedSlot === 'immediately') {
-        slotTime = new Date();
-        slotLabel = 'Immediately';
-      } else if (selectedSlot === 'next_10_min') {
-        slotTime = new Date(Date.now() + 10 * 60 * 1000);
-        slotLabel = 'In 10 minutes';
+      if (isStage2) {
+        // For Stage 2, use the form date and time
+        slotTime = new Date(`${slotBookingForm.date}T${slotBookingForm.time}`);
+        slotLabel = `${new Date(slotBookingForm.date).toLocaleDateString('en-IN', { 
+          weekday: 'short', month: 'short', day: 'numeric' 
+        })} at ${slotBookingForm.time}`;
+        
+        // Save to slot_bookings table
+        const { error: bookingError } = await supabase
+          .from('slot_bookings')
+          .insert({
+            candidate_id: user?.id,
+            booking_type: 'technical_assessment',
+            booking_date: slotBookingForm.date,
+            booking_time: slotBookingForm.time,
+            location: slotBookingForm.location || null,
+            state: slotBookingForm.state,
+            district: slotBookingForm.district,
+            pincode: slotBookingForm.pincode || null,
+            programme: slotBookingForm.programme,
+            segment: slotBookingForm.segment,
+            department: slotBookingForm.department,
+            designation: slotBookingForm.designation,
+            class_level: slotBookingForm.classLevel,
+            class_type: slotBookingForm.classType,
+            subject: slotBookingForm.subject,
+            status: 'confirmed'
+          });
+        
+        if (bookingError) {
+          console.error('Error saving booking:', bookingError);
+          throw bookingError;
+        }
       } else {
-        slotTime = new Date(selectedSlot);
-        slotLabel = slotTime.toLocaleString();
+        // For Stage 4, use selectedSlot
+        if (selectedSlot === 'immediately') {
+          slotTime = new Date();
+          slotLabel = 'Immediately';
+        } else if (selectedSlot === 'next_10_min') {
+          slotTime = new Date(Date.now() + 10 * 60 * 1000);
+          slotLabel = 'In 10 minutes';
+        } else {
+          slotTime = new Date(selectedSlot);
+          slotLabel = slotTime.toLocaleString();
+        }
+        
+        // Save demo slot booking
+        const { error: bookingError } = await supabase
+          .from('slot_bookings')
+          .insert({
+            candidate_id: user?.id,
+            booking_type: 'demo_interview',
+            booking_date: slotTime.toISOString().split('T')[0],
+            booking_time: slotTime.toTimeString().slice(0, 5),
+            status: 'confirmed'
+          });
+        
+        if (bookingError) {
+          console.error('Error saving demo booking:', bookingError);
+          // Don't throw, continue with the flow
+        }
       }
 
-      const currentStage = currentSession.current_stage_order;
       const isForTechnicalAssessment = currentStage === 2;
       const stageName = isForTechnicalAssessment ? 'Technical Assessment Slot Booking' : 'Demo Slot Booking';
       const nextStageOrder = isForTechnicalAssessment ? 3 : 5;
@@ -553,6 +615,22 @@ export const MockInterviewTab = () => {
       toast.success(`Slot booked: ${slotLabel}! Check email for ${nextStageName}.`);
       setShowSlotBooking(false);
       setSelectedSlot('');
+      // Reset form
+      setSlotBookingForm({
+        date: '',
+        time: '',
+        location: '',
+        state: '',
+        district: '',
+        pincode: '',
+        programme: '',
+        segment: '',
+        department: '',
+        designation: '',
+        classLevel: '',
+        classType: '',
+        subject: ''
+      });
       loadData(); // Refresh the data
     } catch (error) {
       console.error('Error booking slot:', error);
