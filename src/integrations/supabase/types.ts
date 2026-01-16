@@ -753,12 +753,15 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
+          improvements: string[] | null
           passed: boolean | null
+          question_scores: Json | null
           questions: Json | null
           recording_url: string | null
           session_id: string
           stage_name: string
           stage_order: number
+          strengths: string[] | null
           time_taken_seconds: number | null
         }
         Insert: {
@@ -768,12 +771,15 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          improvements?: string[] | null
           passed?: boolean | null
+          question_scores?: Json | null
           questions?: Json | null
           recording_url?: string | null
           session_id: string
           stage_name: string
           stage_order: number
+          strengths?: string[] | null
           time_taken_seconds?: number | null
         }
         Update: {
@@ -783,12 +789,15 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          improvements?: string[] | null
           passed?: boolean | null
+          question_scores?: Json | null
           questions?: Json | null
           recording_url?: string | null
           session_id?: string
           stage_name?: string
           stage_order?: number
+          strengths?: string[] | null
           time_taken_seconds?: number | null
         }
         Relationships: [
