@@ -211,6 +211,54 @@ export type Database = {
           },
         ]
       }
+      candidate_resumes: {
+        Row: {
+          created_at: string
+          education: Json | null
+          email: string | null
+          experience: Json | null
+          full_name: string | null
+          id: string
+          location: string | null
+          phone: string | null
+          selected_template: string | null
+          skills: string[] | null
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          education?: Json | null
+          email?: string | null
+          experience?: Json | null
+          full_name?: string | null
+          id?: string
+          location?: string | null
+          phone?: string | null
+          selected_template?: string | null
+          skills?: string[] | null
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          education?: Json | null
+          email?: string | null
+          experience?: Json | null
+          full_name?: string | null
+          id?: string
+          location?: string | null
+          phone?: string | null
+          selected_template?: string | null
+          skills?: string[] | null
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       educational_qualifications: {
         Row: {
           board_university: string | null
