@@ -106,6 +106,10 @@ export const MockInterviewTab = () => {
     experienceLetter: null
   });
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
+  
+  // Final Review state
+  const [isCompletingFinalReview, setIsCompletingFinalReview] = useState(false);
+  const [showFinalSummary, setShowFinalSummary] = useState(false);
 
   // Load data on mount and when user changes
   useEffect(() => {
@@ -634,6 +638,83 @@ export const MockInterviewTab = () => {
     }
   };
 
+  // Complete Final Review (Stage 7) and mark interview as completed
+  const completeFinalReview = async () => {
+    if (!currentSession || !profile) return;
+    
+    setIsCompletingFinalReview(true);
+    try {
+      // Calculate overall score from all stages (excluding stage 1 and 3 which don't have scores)
+      const scoredResults = stageResults.filter(r => 
+        r.ai_score !== undefined && 
+        r.stage_order !== 1 && 
+        r.stage_order !== 3
+      );
+      const overallScore = scoredResults.length > 0 
+        ? scoredResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scoredResults.length 
+        : 0;
+
+      // Determine final decision based on overall score
+      const passed = overallScore >= 60;
+      const decision = passed ? 'Selected for Next Round' : 'Interview Complete - Under Review';
+      
+      // Collect all strengths and improvements from all stages
+      const allStrengths = stageResults.flatMap(r => r.strengths || []).slice(0, 5);
+      const allImprovements = stageResults.flatMap(r => r.improvements || []).slice(0, 5);
+
+      // Create stage result for Final Review
+      await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: currentSession.id,
+          stage_name: 'All Reviews',
+          stage_order: 7,
+          ai_score: Math.round(overallScore),
+          ai_feedback: `Interview journey completed! Overall performance: ${overallScore.toFixed(1)}%. ${decision}.`,
+          passed: passed,
+          completed_at: new Date().toISOString(),
+          strengths: allStrengths,
+          improvements: allImprovements
+        });
+
+      // Update session as completed
+      await supabase
+        .from('mock_interview_sessions')
+        .update({ 
+          status: 'completed',
+          overall_score: Math.round(overallScore),
+          overall_feedback: decision,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', currentSession.id);
+
+      // Send completion email
+      await supabase.functions.invoke('send-mock-interview-invitation', {
+        body: {
+          candidateEmail: profile?.email,
+          candidateName: profile?.full_name || 'Candidate',
+          sessionId: currentSession.id,
+          stageOrder: 7,
+          stageName: 'Interview Completed',
+          stageDescription: `Congratulations! You have completed all interview stages. Your overall score: ${overallScore.toFixed(1)}%. Decision: ${decision}`,
+          appUrl: window.location.origin,
+          isCompletion: true,
+          overallScore: Math.round(overallScore),
+          decision: decision
+        }
+      });
+
+      toast.success('Interview completed! Check your email for the final summary.');
+      setShowFinalSummary(true);
+      loadData();
+    } catch (error) {
+      console.error('Error completing final review:', error);
+      toast.error('Failed to complete final review');
+    } finally {
+      setIsCompletingFinalReview(false);
+    }
+  };
+
   const getStageStatus = (stageOrder: number) => {
     if (!currentSession) return 'upcoming';
     const result = stageResults.find(r => r.stage_order === stageOrder);
@@ -874,6 +955,18 @@ export const MockInterviewTab = () => {
                       >
                         <Upload className="h-4 w-4" />
                         {isExpanded ? 'Hide Upload' : 'Upload Documents'}
+                      </Button>
+                    )}
+                    {/* For Final Review (stage 7) in progress, show View Final Summary button */}
+                    {status === 'current' && stage.order === 7 && currentSession && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
+                        className="gap-1"
+                      >
+                        <ListChecks className="h-4 w-4" />
+                        {isExpanded ? 'Hide Summary' : 'View Final Summary'}
                       </Button>
                     )}
                     {/* For completed stages with results, show expand/collapse button */}
@@ -1178,6 +1271,185 @@ export const MockInterviewTab = () => {
                           <Upload className="h-4 w-4" />
                         )}
                         {uploadingDocuments ? 'Uploading...' : 'Submit Documents & Proceed to Final Review'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Final Review Stage (7) - Show complete summary inline */}
+                {isExpanded && status === 'current' && stage.order === 7 && !hasResults && (
+                  <div className="mt-4 pt-4 border-t space-y-6">
+                    {/* Header */}
+                    <div className="text-center">
+                      <div className="h-16 w-16 bg-gradient-to-br from-primary/20 to-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <ListChecks className="h-8 w-8 text-primary" />
+                      </div>
+                      <h4 className="text-lg font-semibold">Interview Journey Summary</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Review your complete interview performance across all stages
+                      </p>
+                    </div>
+
+                    {/* Stages Summary Grid */}
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-semibold text-muted-foreground">Stage Performance</h5>
+                      <div className="grid gap-3">
+                        {stages.filter(s => s.order !== 7).map((s) => {
+                          const stageResult = stageResults.find(r => r.stage_order === s.order);
+                          const StageIcon = getStageIcon(s.order);
+                          const isCompleted = stageResult?.completed_at;
+                          const score = stageResult?.ai_score;
+                          const showScore = score !== undefined && s.order !== 1 && s.order !== 3;
+                          
+                          return (
+                            <div 
+                              key={s.order} 
+                              className={`p-3 rounded-lg border flex items-center justify-between ${
+                                isCompleted ? 'bg-green-50/50 dark:bg-green-900/10 border-green-500/30' : 'bg-muted/30'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                                  isCompleted ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
+                                }`}>
+                                  {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <StageIcon className="h-4 w-4" />}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium">{s.name}</p>
+                                  {stageResult?.ai_feedback && (
+                                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                      {stageResult.ai_feedback.substring(0, 50)}...
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {showScore && (
+                                  <Badge 
+                                    variant="default" 
+                                    className={`${
+                                      score >= 80 ? 'bg-green-500' : 
+                                      score >= 60 ? 'bg-amber-500' : 'bg-red-500'
+                                    }`}
+                                  >
+                                    {score.toFixed(0)}%
+                                  </Badge>
+                                )}
+                                {isCompleted && !showScore && (
+                                  <Badge variant="secondary" className="bg-green-100 text-green-700">
+                                    Completed
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Overall Score Preview */}
+                    {(() => {
+                      const scoredResults = stageResults.filter(r => 
+                        r.ai_score !== undefined && 
+                        r.stage_order !== 1 && 
+                        r.stage_order !== 3
+                      );
+                      const overallScore = scoredResults.length > 0 
+                        ? scoredResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scoredResults.length 
+                        : 0;
+                      const passed = overallScore >= 60;
+                      
+                      return (
+                        <div className={`p-4 rounded-lg border-2 ${
+                          passed ? 'border-green-500/50 bg-green-50/50 dark:bg-green-900/10' : 'border-amber-500/50 bg-amber-50/50 dark:bg-amber-900/10'
+                        }`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <h5 className="font-semibold">Overall Performance</h5>
+                            <Badge 
+                              variant="default" 
+                              className={`text-lg px-3 py-1 ${
+                                overallScore >= 80 ? 'bg-green-500' : 
+                                overallScore >= 60 ? 'bg-amber-500' : 'bg-red-500'
+                              }`}
+                            >
+                              {overallScore.toFixed(1)}%
+                            </Badge>
+                          </div>
+                          <div className="h-3 bg-muted rounded-full overflow-hidden mb-3">
+                            <div 
+                              className={`h-full transition-all ${
+                                overallScore >= 80 ? 'bg-green-500' : 
+                                overallScore >= 60 ? 'bg-amber-500' : 'bg-red-500'
+                              }`} 
+                              style={{ width: `${overallScore}%` }} 
+                            />
+                          </div>
+                          <p className={`text-sm font-medium ${passed ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                            {passed ? '🎉 Congratulations! You are eligible for the next round.' : '📝 Your interview is under review.'}
+                          </p>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Strengths & Improvements Summary */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {/* All Strengths */}
+                      {stageResults.some(r => r.strengths && r.strengths.length > 0) && (
+                        <div className="p-3 rounded-lg border border-green-500/30 bg-green-50/50 dark:bg-green-900/10">
+                          <h4 className="text-sm font-semibold flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
+                            <TrendingUp className="h-4 w-4" />
+                            Key Strengths
+                          </h4>
+                          <ul className="space-y-2">
+                            {stageResults
+                              .flatMap(r => r.strengths || [])
+                              .slice(0, 4)
+                              .map((strength, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                  <span className="text-foreground">{strength}</span>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* All Improvements */}
+                      {stageResults.some(r => r.improvements && r.improvements.length > 0) && (
+                        <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/10">
+                          <h4 className="text-sm font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400 mb-2">
+                            <TrendingDown className="h-4 w-4" />
+                            Areas for Improvement
+                          </h4>
+                          <ul className="space-y-2">
+                            {stageResults
+                              .flatMap(r => r.improvements || [])
+                              .slice(0, 4)
+                              .map((improvement, idx) => (
+                                <li key={idx} className="flex items-start gap-2 text-sm">
+                                  <Target className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                  <span className="text-foreground">{improvement}</span>
+                                </li>
+                              ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Complete Interview Button */}
+                    <div className="flex justify-center pt-2">
+                      <Button 
+                        onClick={completeFinalReview}
+                        disabled={isCompletingFinalReview}
+                        className="gap-2"
+                        size="lg"
+                      >
+                        {isCompletingFinalReview ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4" />
+                        )}
+                        {isCompletingFinalReview ? 'Completing...' : 'Complete Interview & Get Final Results'}
                       </Button>
                     </div>
                   </div>
