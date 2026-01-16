@@ -547,25 +547,41 @@ export const MockInterviewTab = () => {
 
     setUploadingDocuments(true);
     try {
-      // Upload files to storage
+      // Upload files using edge function (bypasses RLS)
       const uploadedFiles: Record<string, string> = {};
       
       for (const [docType, file] of Object.entries(hrDocuments)) {
         if (file) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${currentSession.id}/${docType}_${Date.now()}.${fileExt}`;
+          // Get the current session token
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData?.session?.access_token;
           
-          const { data, error } = await supabase.storage
-            .from('resumes')
-            .upload(fileName, file, { upsert: true });
+          if (!accessToken) {
+            throw new Error('Not authenticated');
+          }
           
-          if (error) throw error;
+          // Upload via edge function
+          const formData = new FormData();
+          formData.append('file', file);
           
-          const { data: urlData } = supabase.storage
-            .from('resumes')
-            .getPublicUrl(fileName);
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-resume`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+              },
+              body: formData,
+            }
+          );
           
-          uploadedFiles[docType] = urlData.publicUrl;
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Upload failed');
+          }
+          
+          const { url } = await response.json();
+          uploadedFiles[docType] = url;
         }
       }
 
