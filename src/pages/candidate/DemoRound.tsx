@@ -285,6 +285,9 @@ export default function DemoRound() {
       setIsStarted(true);
       setTimeElapsed(0);
       toast.success('Demo started! Teach your topic now.');
+      
+      // Automatically connect Voice AI when demo starts
+      connectVoiceAI();
     } catch (error) {
       console.error('Error starting demo:', error);
       toast.error('Failed to start recording');
@@ -652,23 +655,6 @@ export default function DemoRound() {
                       Enable Camera
                     </Button>
                   )}
-                  
-                  {/* Voice AI Toggle */}
-                  <Button 
-                    onClick={voiceAIActive ? disconnectVoiceAI : connectVoiceAI}
-                    variant={voiceAIActive ? "default" : "outline"}
-                    className="gap-2"
-                    disabled={voiceAIConnecting}
-                  >
-                    {voiceAIConnecting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : voiceAIActive ? (
-                      <Volume2 className="h-4 w-4" />
-                    ) : (
-                      <VolumeX className="h-4 w-4" />
-                    )}
-                    {voiceAIConnecting ? 'Connecting...' : voiceAIActive ? 'Voice AI On' : 'Enable Voice AI'}
-                  </Button>
                   
                   <Button 
                     onClick={handleStartDemo} 
