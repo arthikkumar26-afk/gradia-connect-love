@@ -51,6 +51,7 @@ import { EducationModal, EducationRecord } from "@/components/candidate/Educatio
 import ExperienceModal from "@/components/candidate/ExperienceModal";
 import FamilyModal from "@/components/candidate/FamilyModal";
 import AddressModal, { AddressData } from "@/components/candidate/AddressModal";
+import ResumeBuilderTab from "@/components/candidate/ResumeBuilderTab";
 import { Briefcase as BriefcaseIcon, Users, MapPin as MapPinIcon } from "lucide-react";
 
 interface FamilyRecord {
@@ -2813,16 +2814,9 @@ const CandidateDashboard = () => {
               </div>
             )}
 
-            {/* Resume Builder Placeholder */}
+            {/* Resume Builder */}
             {activeMenu === "resume" && (
-              <div className="text-center py-12">
-                <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <h2 className="text-xl font-semibold text-foreground mb-2">Resume Builder</h2>
-                <p className="text-muted-foreground mb-4">Coming soon - Build and manage your resumes</p>
-                <Button variant="outline" asChild>
-                  <Link to="/candidate/resume-builder">Go to Resume Builder</Link>
-                </Button>
-              </div>
+              <ResumeBuilderTab />
             )}
 
             {/* Learning Placeholder */}
