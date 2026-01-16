@@ -23,13 +23,14 @@ interface InterviewProgressTrackerProps {
 }
 
 const stageIcons: Record<number, React.ComponentType<{ className?: string }>> = {
-  1: Mail,
-  2: Code,
-  3: Calendar,
-  4: Monitor,
-  5: BarChart3,
-  6: FileText,
-  7: ListChecks,
+  1: Mail,          // Interview Instructions
+  2: Calendar,      // Technical Assessment Slot Booking
+  3: Code,          // Technical Assessment
+  4: Calendar,      // Demo Slot Booking
+  5: Monitor,       // Demo Round
+  6: BarChart3,     // Demo Feedback
+  7: FileText,      // Final Review (HR)
+  8: ListChecks,    // All Reviews
 };
 
 export const InterviewProgressTracker = ({
