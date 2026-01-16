@@ -504,7 +504,7 @@ export const MockInterviewTab = () => {
             <Brain className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Ready for Mock Interview?</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Practice with our AI-powered mock interview. Complete 4 stages: Technical Assessment, HR Round, Viva, and Final Review.
+              Practice with our AI-powered mock interview. Complete 3 stages: Technical Assessment, Demo Round, and Final Review.
             </p>
             <Button onClick={startNewSession} disabled={isStarting} size="lg" className="gap-2">
               {isStarting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-5 w-5" />}
@@ -538,8 +538,8 @@ export const MockInterviewTab = () => {
             <div className="text-3xl font-bold text-primary mb-4">
               {currentSession.overall_score?.toFixed(0)}%
             </div>
-            <Button onClick={() => { setCurrentSession(null); loadData(); }} className="gap-2">
-              <RotateCcw className="h-4 w-4" />
+            <Button onClick={startNewSession} disabled={isStarting} className="gap-2">
+              {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
               Start New Interview
             </Button>
           </CardContent>
