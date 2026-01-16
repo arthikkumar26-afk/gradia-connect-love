@@ -96,7 +96,7 @@ export default function MockInterviewPipeline() {
       'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
     },
     'High School': {
-      'Board': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD'],
+      'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
       'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
     }
   };
