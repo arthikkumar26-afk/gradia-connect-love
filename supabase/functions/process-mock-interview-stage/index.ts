@@ -39,18 +39,29 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
     autoProgressAfterCompletion: true
   },
   {
-    name: 'Technical Assessment',
+    name: 'Technical Assessment Slot Booking',
     order: 2,
+    description: 'Book your preferred slot for the Technical Assessment round.',
+    questionCount: 0,
+    timePerQuestion: 0,
+    passingScore: 0,
+    stageType: 'slot_booking',
+    requiresSlotBooking: true,
+    autoProgressAfterCompletion: true
+  },
+  {
+    name: 'Technical Assessment',
+    order: 3,
     description: 'Role-specific technical questions to assess your domain knowledge and problem-solving skills.',
     questionCount: 8,
     timePerQuestion: 150,
     passingScore: 70,
     stageType: 'assessment',
-    autoProgressAfterCompletion: false // Don't auto-send demo, require slot booking
+    autoProgressAfterCompletion: false
   },
   {
     name: 'Demo Slot Booking',
-    order: 3,
+    order: 4,
     description: 'Book your preferred interview slot for the Demo Round.',
     questionCount: 0,
     timePerQuestion: 0,
@@ -61,7 +72,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'Demo Round',
-    order: 4,
+    order: 5,
     description: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
     questionCount: 1,
     timePerQuestion: 600, // 10 minutes
@@ -71,7 +82,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'Demo Feedback',
-    order: 5,
+    order: 6,
     description: 'View detailed feedback metrics and AI evaluation of your demo teaching performance.',
     questionCount: 0,
     timePerQuestion: 0,
@@ -81,7 +92,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'Final Review (HR)',
-    order: 6,
+    order: 7,
     description: 'HR round - Submit required documents for verification and final review.',
     questionCount: 4,
     timePerQuestion: 120,
@@ -91,7 +102,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
   },
   {
     name: 'All Reviews',
-    order: 7,
+    order: 8,
     description: 'View comprehensive summary of all interview stages, scores, and final assessment.',
     questionCount: 0,
     timePerQuestion: 0,
