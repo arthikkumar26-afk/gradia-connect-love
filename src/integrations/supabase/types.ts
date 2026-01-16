@@ -732,6 +732,44 @@ export type Database = {
           },
         ]
       }
+      interview_solutions: {
+        Row: {
+          created_at: string
+          explanation: string | null
+          id: string
+          question_id: string
+          solution_text: string
+          step_by_step: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          question_id: string
+          solution_text: string
+          step_by_step?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          question_id?: string
+          solution_text?: string
+          step_by_step?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_solutions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "interview_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_stages: {
         Row: {
           created_at: string | null
