@@ -80,7 +80,7 @@ export default function MockInterviewPipeline() {
 
   const categoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
-    'Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
+    'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
     'Secondary': ['Teaching', 'Admin', 'Non-Teaching'],
     'Senior Secondary': ['Teaching', 'Admin', 'Non-Teaching'],
     'Foundation': ['Teaching', 'Admin', 'Academic Support'],
@@ -97,7 +97,9 @@ export default function MockInterviewPipeline() {
     'Primary': {
       'Teaching': ['PRT', 'TGT', 'ASSO.TEACHER'],
       'Helping/Supporting': ['LAB ASSISTANT', 'ATTENDER'],
-      'Admin': ['VICE PRINCIPAL', 'COORDINATOR', 'ADMIN EXECUTIVE']
+      'Admin': ['VICE PRINCIPAL', 'COORDINATOR', 'ADMIN EXECUTIVE'],
+      'CLASS-1&2': ['PRT', 'TGT', 'SUBJECT TEACHER'],
+      'CLASSES-3,4&5': ['PRT', 'TGT', 'SUBJECT TEACHER', 'CLASS TEACHER']
     },
     'Secondary': {
       'Teaching': ['TGT', 'PGT', 'SENIOR TEACHER'],
