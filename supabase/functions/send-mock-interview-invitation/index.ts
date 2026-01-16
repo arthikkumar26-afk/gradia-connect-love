@@ -28,7 +28,7 @@ interface MockInterviewInvitationRequest {
   documentsUploaded?: string[];
 }
 
-const TOTAL_STAGES = 7;
+const TOTAL_STAGES = 8;
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -73,12 +73,13 @@ const handler = async (req: Request): Promise<Response> => {
             <p>This email contains important instructions for your upcoming interview stages.</p>
             <ul>
               <li><strong>Stage 1:</strong> Review these instructions (current)</li>
-              <li><strong>Stage 2:</strong> Technical Assessment - Domain knowledge questions</li>
-              <li><strong>Stage 3:</strong> Demo Slot Booking - Schedule your demo session</li>
-              <li><strong>Stage 4:</strong> Demo Round - Live teaching demonstration</li>
-              <li><strong>Stage 5:</strong> Demo Feedback - Review your performance metrics</li>
-              <li><strong>Stage 6:</strong> Final Review (HR) - Submit required documents</li>
-              <li><strong>Stage 7:</strong> All Reviews - View comprehensive assessment</li>
+              <li><strong>Stage 2:</strong> Technical Assessment Slot Booking</li>
+              <li><strong>Stage 3:</strong> Technical Assessment - Domain knowledge questions</li>
+              <li><strong>Stage 4:</strong> Demo Slot Booking - Schedule your demo session</li>
+              <li><strong>Stage 5:</strong> Demo Round - Live teaching demonstration</li>
+              <li><strong>Stage 6:</strong> Demo Feedback - Review your performance metrics</li>
+              <li><strong>Stage 7:</strong> Final Review (HR) - Submit required documents</li>
+              <li><strong>Stage 8:</strong> All Reviews - View comprehensive assessment</li>
             </ul>
           </div>
           
@@ -90,11 +91,35 @@ const handler = async (req: Request): Promise<Response> => {
             <li>Keep your documents handy for the HR round</li>
           </ul>
           
-          <p><strong>Next Step:</strong> You will receive another email shortly for the Technical Assessment stage.</p>
+          <p><strong>Next Step:</strong> You will receive another email shortly for the Technical Assessment Slot Booking stage.</p>
         `;
         break;
         
-      case 2: // Technical Assessment
+      case 2: // Technical Assessment Slot Booking
+        stageEmoji = '📅';
+        stageTitle = 'Technical Assessment Slot Booking';
+        buttonText = 'Book Your Slot →';
+        interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
+        stageSpecificInfo = `
+          <div class="info-box">
+            <h3>📅 Book Your Technical Assessment Slot:</h3>
+            <ul>
+              <li><strong>Format:</strong> Technical Assessment Interview</li>
+              <li><strong>Duration:</strong> 20-25 minutes</li>
+              <li><strong>Choose:</strong> Select a time slot that works best for you</li>
+            </ul>
+          </div>
+          
+          <p><strong>Before booking:</strong></p>
+          <ul>
+            <li>Check your availability for the next few days</li>
+            <li>Ensure you'll have a quiet space for the assessment</li>
+            <li>Prepare your technical knowledge in advance</li>
+          </ul>
+        `;
+        break;
+        
+      case 3: // Technical Assessment
         stageEmoji = '📝';
         stageTitle = 'Technical Assessment';
         buttonText = 'Start Assessment →';
@@ -120,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
         `;
         break;
         
-      case 3: // Demo Slot Booking
+      case 4: // Demo Slot Booking
         stageEmoji = '📅';
         stageTitle = 'Demo Interview Slot Booking';
         buttonText = 'Book Your Slot →';
@@ -144,7 +169,7 @@ const handler = async (req: Request): Promise<Response> => {
         `;
         break;
         
-      case 4: // Demo Round
+      case 5: // Demo Round
         stageEmoji = '🎬';
         stageTitle = 'Demo Teaching Session';
         buttonText = 'Start Demo Teaching →';
@@ -172,7 +197,7 @@ const handler = async (req: Request): Promise<Response> => {
         `;
         break;
         
-      case 5: // Demo Feedback Summary
+      case 6: // Demo Feedback Summary
         stageEmoji = '📊';
         stageTitle = 'Demo Round Feedback Summary';
         buttonText = 'View Dashboard →';
@@ -284,7 +309,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
         break;
         
-      case 6: // Final Review (HR) / HR Documents Submitted
+      case 7: // Final Review (HR) / HR Documents Submitted
         stageEmoji = '📄';
         buttonText = 'View Dashboard →';
         interviewLink = `${baseUrl}/candidate/dashboard`;
@@ -344,7 +369,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
         break;
         
-      case 7: // All Reviews
+      case 8: // All Reviews
         stageEmoji = '✅';
         stageTitle = 'Complete Interview Summary';
         buttonText = 'View All Reviews →';
