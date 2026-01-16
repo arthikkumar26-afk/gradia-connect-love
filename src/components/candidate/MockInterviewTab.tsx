@@ -864,17 +864,6 @@ export const MockInterviewTab = () => {
                       </Button>
                     )}
                     {/* For Demo Feedback (stage 5) - show View Results like other completed stages */}
-                    {stage.order === 5 && (status === 'completed' || (status === 'current' && stageResults.find(r => r.stage_order === 5))) && (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
-                        className="gap-1"
-                      >
-                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        {isExpanded ? 'Hide Results' : 'View Results'}
-                      </Button>
-                    )}
                     {/* For HR Documents (stage 6) in progress, show Upload Documents button */}
                     {status === 'current' && stage.order === 6 && currentSession && (
                       <Button 
