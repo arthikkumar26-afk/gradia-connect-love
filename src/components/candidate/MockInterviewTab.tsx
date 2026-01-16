@@ -26,7 +26,8 @@ import {
   TrendingUp,
   ThumbsUp,
   ThumbsDown,
-  Eye
+  Eye,
+  Monitor
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -264,6 +265,8 @@ export const MockInterviewTab = () => {
         return Users;
       case 'Viva':
         return MessageSquare;
+      case 'Demo Round':
+        return Monitor;
       case 'Final Review':
         return ClipboardCheck;
       default:

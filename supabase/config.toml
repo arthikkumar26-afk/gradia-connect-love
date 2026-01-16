@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.send-mock-interview-invitation]
 verify_jwt = false
+
+[functions.evaluate-demo-round]
+verify_jwt = false

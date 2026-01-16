@@ -50,8 +50,16 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
     passingScore: 70
   },
   {
-    name: 'Final Review',
+    name: 'Demo Round',
     order: 4,
+    description: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
+    questionCount: 1,
+    timePerQuestion: 600, // 10 minutes
+    passingScore: 65
+  },
+  {
+    name: 'Final Review',
+    order: 5,
     description: 'Comprehensive assessment combining all previous stages for final evaluation.',
     questionCount: 4,
     timePerQuestion: 120,
