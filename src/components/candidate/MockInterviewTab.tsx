@@ -22,7 +22,7 @@ import {
   Lock,
   ArrowRight,
   AlertTriangle,
-  RotateCcw,
+  RefreshCw,
   TrendingUp,
   TrendingDown,
   ChevronDown,
@@ -77,10 +77,34 @@ export const MockInterviewTab = () => {
   const [profile, setProfile] = useState<any>(null);
   const [expandedStage, setExpandedStage] = useState<number | null>(null);
 
+  // Load data on mount and when user changes
   useEffect(() => {
     if (user) {
       loadData();
     }
+  }, [user]);
+
+  // Refresh data when tab becomes visible (user comes back from interview page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        loadData();
+      }
+    };
+
+    const handleFocus = () => {
+      if (user) {
+        loadData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [user]);
 
   const loadData = async () => {
@@ -466,10 +490,15 @@ export const MockInterviewTab = () => {
                 : 'Complete each stage to advance to the next round.'}
           </p>
         </div>
-        <Button onClick={startNewSession} disabled={isStarting} variant="default" className="gap-2">
-          {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-          Start Mock Interview
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => loadData()} disabled={isLoading} variant="outline" size="icon" className="h-10 w-10">
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button onClick={startNewSession} disabled={isStarting} variant="default" className="gap-2">
+            {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+            Start Mock Interview
+          </Button>
+        </div>
       </div>
 
       {/* Progress Tracker */}
