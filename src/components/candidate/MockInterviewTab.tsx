@@ -111,8 +111,26 @@ export const MockInterviewTab = () => {
     segment: '',
     department: '',
     designation: '',
-    classLevel: ''
+    classLevel: '',
+    classType: '',
+    subject: ''
   });
+  
+  // Subjects based on class type
+  const getSubjectsForClass = (classType: string) => {
+    switch (classType) {
+      case 'PP':
+        return ['Numeracy', 'Literacy', 'GA'];
+      case 'Primary':
+        return ['Telugu', 'Hindi', 'English', 'Math', 'Gen.Science', 'Social'];
+      case 'HSC':
+        return ['Telugu', 'Hindi', 'English', 'Math', 'Physics', 'Chemistry', 'Bio', 'Social', 'PET'];
+      case 'Numeracy':
+        return ['Numeracy'];
+      default:
+        return [];
+    }
+  };
   
   // HR Documents state
   const [hrDocuments, setHrDocuments] = useState<{
@@ -1453,15 +1471,15 @@ export const MockInterviewTab = () => {
                               </div>
                             </div>
 
-                            {/* Class Row */}
+                            {/* Class Level Row */}
                             <div className="space-y-1">
-                              <Label className="text-xs font-medium">Class *</Label>
+                              <Label className="text-xs font-medium">Class Level *</Label>
                               <Select 
                                 value={slotBookingForm.classLevel} 
                                 onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classLevel: value }))}
                               >
                                 <SelectTrigger className="h-9 text-sm">
-                                  <SelectValue placeholder="Select class" />
+                                  <SelectValue placeholder="Select class level" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-background border z-50">
                                   {['Nursery', 'PP-1 & PP-2', 'C-1 & C-2', 'C-3, C-4 & C-5', 'C-6, C-7 & C-8', 'C-9 & C-10'].map(option => (
@@ -1469,6 +1487,43 @@ export const MockInterviewTab = () => {
                                   ))}
                                 </SelectContent>
                               </Select>
+                            </div>
+
+                            {/* Class Type and Subject Row */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Class *</Label>
+                                <Select 
+                                  value={slotBookingForm.classType} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classType: value, subject: '' }))}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder="Select class" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {['PP', 'Primary', 'HSC', 'Numeracy'].map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs font-medium">Subject *</Label>
+                                <Select 
+                                  value={slotBookingForm.subject} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, subject: value }))}
+                                  disabled={!slotBookingForm.classType}
+                                >
+                                  <SelectTrigger className="h-9 text-sm">
+                                    <SelectValue placeholder={slotBookingForm.classType ? "Select subject" : "Select class first"} />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-background border z-50">
+                                    {getSubjectsForClass(slotBookingForm.classType).map(option => (
+                                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           </div>
                         </ScrollArea>
@@ -1494,11 +1549,11 @@ export const MockInterviewTab = () => {
                         <div className="flex justify-end pt-2 border-t">
                           <Button 
                             onClick={bookSlot}
-                            disabled={
+                          disabled={
                               !slotBookingForm.date || !slotBookingForm.time || !slotBookingForm.state || 
                               !slotBookingForm.district || !slotBookingForm.programme || !slotBookingForm.segment || 
-                              !slotBookingForm.department || !slotBookingForm.designation || !slotBookingForm.classLevel || 
-                              isBookingSlot
+                              !slotBookingForm.department || !slotBookingForm.designation || !slotBookingForm.classLevel ||
+                              !slotBookingForm.classType || !slotBookingForm.subject || isBookingSlot
                             }
                             size="sm"
                             className="gap-1.5"
