@@ -385,6 +385,47 @@ export type Database = {
         }
         Relationships: []
       }
+      interview_answer_keys: {
+        Row: {
+          answer_text: string
+          created_at: string
+          id: string
+          is_case_sensitive: boolean
+          keywords: string[]
+          min_keyword_match_percent: number
+          question_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer_text: string
+          created_at?: string
+          id?: string
+          is_case_sensitive?: boolean
+          keywords?: string[]
+          min_keyword_match_percent?: number
+          question_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer_text?: string
+          created_at?: string
+          id?: string
+          is_case_sensitive?: boolean
+          keywords?: string[]
+          min_keyword_match_percent?: number
+          question_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_answer_keys_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "interview_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_candidates: {
         Row: {
           ai_analysis: Json | null
@@ -537,6 +578,94 @@ export type Database = {
             columns: ["interview_event_id"]
             isOneToOne: false
             referencedRelation: "interview_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_question_papers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          pdf_url: string
+          stage_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          pdf_url: string
+          stage_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          pdf_url?: string
+          stage_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_question_papers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_questions: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          marks: number | null
+          options: Json | null
+          paper_id: string
+          question_number: number
+          question_text: string
+          question_type: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          marks?: number | null
+          options?: Json | null
+          paper_id: string
+          question_number: number
+          question_text: string
+          question_type?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          marks?: number | null
+          options?: Json | null
+          paper_id?: string
+          question_number?: number
+          question_text?: string
+          question_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_questions_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "interview_question_papers"
             referencedColumns: ["id"]
           },
         ]

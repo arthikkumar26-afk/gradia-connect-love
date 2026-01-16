@@ -62,3 +62,9 @@ verify_jwt = false
 
 [functions.elevenlabs-demo-instructor]
 verify_jwt = false
+
+[functions.parse-question-paper]
+verify_jwt = false
+
+[functions.parse-answer-key]
+verify_jwt = false

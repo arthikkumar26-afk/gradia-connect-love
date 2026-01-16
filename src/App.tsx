@@ -76,6 +76,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import OwnerLogin from "./pages/owner/Login";
 import OwnerDashboard from "./pages/owner/Dashboard";
 import OwnerInitialSetup from "./pages/owner/InitialSetup";
+import MockInterviewPipeline from "./pages/admin/MockInterviewPipeline";
 
 // Sponsor Pages
 import SponsorOverview from "./pages/sponsor/Overview";
@@ -215,6 +216,7 @@ const MainRoutes = () => (
       <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
       <Route path="/admin/audit" element={<AdminAuditLogs />} />
       <Route path="/admin/settings" element={<AdminSettings />} />
+      <Route path="/admin/mock-interview-pipeline" element={<MockInterviewPipeline />} />
       <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
 
       {/* Owner Routes */}
