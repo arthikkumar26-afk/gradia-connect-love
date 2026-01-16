@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { pdfText, questionCount } = await req.json();
+    const { pdfText, questionCount, isSolution } = await req.json();
     
     if (!pdfText) {
       throw new Error('PDF text content is required');
@@ -22,9 +22,32 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Parsing answer key PDF, length:', pdfText.length);
+    console.log(`Parsing ${isSolution ? 'solutions' : 'answer key'} PDF, length:`, pdfText.length);
 
-    const systemPrompt = `You are an answer key extraction expert. Extract all answers from the given answer key PDF.
+    // Different prompts and schemas for answers vs solutions
+    const systemPrompt = isSolution 
+      ? `You are a solutions extraction expert. Extract all detailed solutions from the given solutions PDF.
+
+For each solution found:
+1. Extract the question number it corresponds to
+2. Extract the complete solution text with full explanation
+3. Extract step-by-step breakdown if available (each step as a separate item)
+4. Extract a brief explanation summary
+
+Return a JSON array of solutions with this structure:
+{
+  "answers": [
+    {
+      "question_number": 1,
+      "solution_text": "The complete detailed solution",
+      "step_by_step": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
+      "explanation": "Brief summary of the approach/concept"
+    }
+  ]
+}
+
+Focus on extracting the complete working/derivation, formulas used, and any explanations provided.`
+      : `You are an answer key extraction expert. Extract all answers from the given answer key PDF.
 
 For each answer found:
 1. Extract the question number it corresponds to
@@ -37,12 +60,75 @@ Return a JSON array of answers with this structure:
     {
       "question_number": 1,
       "answer_text": "The complete answer text",
-      "keywords": ["keyword1", "keyword2", "key phrase"] // important words/phrases for matching
+      "keywords": ["keyword1", "keyword2", "key phrase"]
     }
   ]
 }
 
-Extract keywords that are essential to the answer - nouns, technical terms, specific values, and key concepts. These will be used for exact keyword matching against candidate responses.`;
+Extract keywords that are essential to the answer - nouns, technical terms, specific values, and key concepts.`;
+
+    // Different tool schemas for answers vs solutions
+    const toolSchema = isSolution
+      ? {
+          type: "function",
+          function: {
+            name: "extract_solutions",
+            description: "Extract detailed solutions with step-by-step explanations from the PDF",
+            parameters: {
+              type: "object",
+              properties: {
+                answers: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      question_number: { type: "integer" },
+                      solution_text: { type: "string" },
+                      step_by_step: { type: "array", items: { type: "string" } },
+                      explanation: { type: "string" }
+                    },
+                    required: ["question_number", "solution_text"],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ["answers"],
+              additionalProperties: false
+            }
+          }
+        }
+      : {
+          type: "function",
+          function: {
+            name: "extract_answers",
+            description: "Extract answers and keywords from the answer key PDF",
+            parameters: {
+              type: "object",
+              properties: {
+                answers: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      question_number: { type: "integer" },
+                      answer_text: { type: "string" },
+                      keywords: { type: "array", items: { type: "string" } }
+                    },
+                    required: ["question_number", "answer_text", "keywords"],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ["answers"],
+              additionalProperties: false
+            }
+          }
+        };
+
+    const toolName = isSolution ? "extract_solutions" : "extract_answers";
+    const userPrompt = isSolution
+      ? `Extract all detailed solutions with step-by-step explanations from this solutions PDF. ${questionCount ? `There should be ${questionCount} solutions.` : ''}\n\nSolutions Content:\n${pdfText}`
+      : `Extract all answers and their keywords from this answer key PDF. ${questionCount ? `There should be ${questionCount} answers.` : ''}\n\nAnswer Key Content:\n${pdfText}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -54,38 +140,10 @@ Extract keywords that are essential to the answer - nouns, technical terms, spec
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Extract all answers and their keywords from this answer key PDF. ${questionCount ? `There should be ${questionCount} answers.` : ''}\n\nAnswer Key Content:\n${pdfText}` }
+          { role: 'user', content: userPrompt }
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "extract_answers",
-              description: "Extract answers and keywords from the answer key PDF",
-              parameters: {
-                type: "object",
-                properties: {
-                  answers: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        question_number: { type: "integer" },
-                        answer_text: { type: "string" },
-                        keywords: { type: "array", items: { type: "string" } }
-                      },
-                      required: ["question_number", "answer_text", "keywords"],
-                      additionalProperties: false
-                    }
-                  }
-                },
-                required: ["answers"],
-                additionalProperties: false
-              }
-            }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: "extract_answers" } }
+        tools: [toolSchema],
+        tool_choice: { type: "function", function: { name: toolName } }
       }),
     });
 
@@ -113,9 +171,9 @@ Extract keywords that are essential to the answer - nouns, technical terms, spec
     // Extract the tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
-      const answers = JSON.parse(toolCall.function.arguments);
-      console.log('Extracted answers:', answers.answers?.length || 0);
-      return new Response(JSON.stringify(answers), {
+      const result = JSON.parse(toolCall.function.arguments);
+      console.log(`Extracted ${isSolution ? 'solutions' : 'answers'}:`, result.answers?.length || 0);
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -136,7 +194,7 @@ Extract keywords that are essential to the answer - nouns, technical terms, spec
       }
     }
 
-    return new Response(JSON.stringify({ answers: [], error: 'Could not extract answers' }), {
+    return new Response(JSON.stringify({ answers: [], error: `Could not extract ${isSolution ? 'solutions' : 'answers'}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
