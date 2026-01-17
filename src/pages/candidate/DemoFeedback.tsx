@@ -52,6 +52,20 @@ interface StageResult {
   completed_at: string;
 }
 
+interface ManagementReview {
+  id: string;
+  reviewer_name: string | null;
+  overall_rating: number | null;
+  teaching_skills_rating: number | null;
+  communication_rating: number | null;
+  subject_knowledge_rating: number | null;
+  recommendation: string | null;
+  feedback_text: string | null;
+  strengths: string[] | null;
+  areas_for_improvement: string[] | null;
+  submitted_at: string | null;
+}
+
 export default function DemoFeedback() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -62,6 +76,7 @@ export default function DemoFeedback() {
   const [result, setResult] = useState<StageResult | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [managementReviews, setManagementReviews] = useState<ManagementReview[]>([]);
 
   useEffect(() => {
     loadFeedbackData();
@@ -99,6 +114,18 @@ export default function DemoFeedback() {
           strengths: resultData.strengths || [],
           improvements: resultData.improvements || []
         });
+      }
+
+      // Load management reviews
+      const { data: reviewsData } = await supabase
+        .from('management_reviews')
+        .select('*')
+        .eq('session_id', sessionId)
+        .eq('status', 'submitted')
+        .order('submitted_at', { ascending: false });
+
+      if (reviewsData) {
+        setManagementReviews(reviewsData as ManagementReview[]);
       }
     } catch (error) {
       console.error('Error loading feedback:', error);
@@ -380,6 +407,95 @@ export default function DemoFeedback() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Management Team Reviews */}
+        {managementReviews.length > 0 && (
+          <Card className="mb-8 border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" />
+                Management Team Reviews
+              </CardTitle>
+              <CardDescription>
+                Feedback from our review team
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {managementReviews.map((review, index) => (
+                <div key={review.id} className={index > 0 ? 'pt-6 border-t' : ''}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="font-semibold text-primary">
+                          {review.reviewer_name?.charAt(0) || 'R'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium">{review.reviewer_name || 'Reviewer'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {review.submitted_at && new Date(review.submitted_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    {review.recommendation && (
+                      <Badge className={
+                        review.recommendation === 'strongly_recommend' ? 'bg-green-500' :
+                        review.recommendation === 'recommend' ? 'bg-blue-500' :
+                        review.recommendation === 'needs_improvement' ? 'bg-orange-500' : 'bg-red-500'
+                      }>
+                        {review.recommendation.replace('_', ' ')}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {review.overall_rating && (
+                    <div className="flex items-center gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star key={star} className={`h-5 w-5 ${star <= review.overall_rating! ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+                      ))}
+                      <span className="ml-2 text-sm font-medium">{review.overall_rating}/5</span>
+                    </div>
+                  )}
+                  
+                  {review.feedback_text && (
+                    <p className="text-muted-foreground mb-4">{review.feedback_text}</p>
+                  )}
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {review.strengths && review.strengths.length > 0 && (
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <p className="font-medium text-green-700 mb-2 flex items-center gap-1">
+                          <TrendingUp className="h-4 w-4" /> Strengths
+                        </p>
+                        <ul className="space-y-1">
+                          {review.strengths.map((s, i) => (
+                            <li key={i} className="text-sm text-green-800 flex items-start gap-1">
+                              <CheckCircle2 className="h-3 w-3 mt-1 flex-shrink-0" /> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {review.areas_for_improvement && review.areas_for_improvement.length > 0 && (
+                      <div className="bg-orange-50 p-3 rounded-lg">
+                        <p className="font-medium text-orange-700 mb-2 flex items-center gap-1">
+                          <TrendingDown className="h-4 w-4" /> Areas to Improve
+                        </p>
+                        <ul className="space-y-1">
+                          {review.areas_for_improvement.map((s, i) => (
+                            <li key={i} className="text-sm text-orange-800 flex items-start gap-1">
+                              <Target className="h-3 w-3 mt-1 flex-shrink-0" /> {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between">
