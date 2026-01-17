@@ -86,7 +86,7 @@ export default function MockInterviewPipeline() {
   // Class options for High School > Board/Competitive
   const classLevelOptions: Record<string, string[]> = {
     'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
-    'Compititive': ['CLASSES-6,7&8'],
+    'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
   };
 
   // Subject designations based on class level
@@ -101,6 +101,10 @@ export default function MockInterviewPipeline() {
     'CLASSES-6,7&8': [
       'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 
       'Mental Ability', 'Counsellor'
+    ],
+    'CLASSES-9&10': [
+      'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 
+      'Mental Ability', 'Counsellor', 'Academic Dean'
     ],
   };
 
