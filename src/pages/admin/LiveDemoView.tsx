@@ -32,8 +32,10 @@ interface SessionData {
 }
 
 export default function LiveDemoView() {
+  console.log("LiveDemoView component mounted");
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
+  console.log("Live demo token:", token);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
