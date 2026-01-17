@@ -66,6 +66,7 @@ const EmployerDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [clientDashboardOpen, setClientDashboardOpen] = useState(false);
   const [newApplications, setNewApplications] = useState(0);
+  const [companyName, setCompanyName] = useState<string | null>(null);
   const { user, profile, isAuthenticated, logout } = useAuth();
 
   // Role-based access control
@@ -80,6 +81,25 @@ const EmployerDashboard = () => {
       return;
     }
   }, [isAuthenticated, profile, navigate]);
+
+  // Fetch company name for employer
+  useEffect(() => {
+    const fetchCompanyName = async () => {
+      if (user?.id) {
+        const { data } = await supabase
+          .from('employer_registrations')
+          .select('company_name')
+          .eq('employer_id', user.id)
+          .single();
+        
+        if (data?.company_name) {
+          setCompanyName(data.company_name);
+        }
+      }
+    };
+    
+    fetchCompanyName();
+  }, [user?.id]);
 
   // Real-time subscription for new applications
   useEffect(() => {
@@ -234,7 +254,7 @@ const EmployerDashboard = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  {profile?.full_name || profile?.company_name || "Employer"}
+                  {companyName || profile?.company_name || profile?.full_name || "Employer"}
                 </p>
                 <p className="text-xs text-muted-foreground">Employer</p>
               </div>
