@@ -27,9 +27,12 @@ import {
   Bot,
   Sparkles,
   Volume2,
-  VolumeX
+  VolumeX,
+  Users,
+  Wifi
 } from 'lucide-react';
 import { useVideoRecorder } from '@/hooks/useVideoRecorder';
+import { useWebRTCStreaming } from '@/hooks/useWebRTCStreaming';
 
 interface DemoEvaluation {
   overallScore: number;
@@ -66,6 +69,7 @@ export default function DemoRound() {
   const [voiceAIConnecting, setVoiceAIConnecting] = useState(false);
   const [voiceAIMessage, setVoiceAIMessage] = useState('');
   const [lastSpokenInstruction, setLastSpokenInstruction] = useState(-1);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -77,6 +81,28 @@ export default function DemoRound() {
     stopRecording,
     uploadRecording,
   } = useVideoRecorder();
+
+  // WebRTC streaming hook for broadcasting to management
+  const {
+    isConnected: webrtcConnected,
+    isStreaming: webrtcStreaming,
+    viewerCount,
+    startBroadcasting,
+    stopBroadcasting
+  } = useWebRTCStreaming({
+    sessionId: sessionId || '',
+    role: 'broadcaster',
+    onConnectionStateChange: (state) => {
+      console.log('[DemoRound] WebRTC connection state:', state);
+      if (state === 'connected') {
+        toast.success('Live stream connected to viewer!');
+      }
+    },
+    onError: (error) => {
+      console.error('[DemoRound] WebRTC error:', error);
+    }
+  });
+
 
   const MAX_DURATION = 600; // 10 minutes
 
@@ -261,6 +287,7 @@ export default function DemoRound() {
         videoRef.current.srcObject = stream;
       }
       
+      setLocalStream(stream);
       setHasPermissions(true);
       toast.success('Camera and microphone ready!');
     } catch (error) {
@@ -310,6 +337,15 @@ export default function DemoRound() {
         }).catch(err => {
           console.error('Failed to notify management:', err);
         });
+
+        // Start WebRTC broadcasting for live video
+        if (localStream) {
+          console.log('[DemoRound] Starting WebRTC broadcast');
+          startBroadcasting(localStream);
+        } else if (videoRef.current?.srcObject) {
+          console.log('[DemoRound] Starting WebRTC broadcast from video ref');
+          startBroadcasting(videoRef.current.srcObject as MediaStream);
+        }
       }
 
       await startRecording();
@@ -329,6 +365,9 @@ export default function DemoRound() {
     stopRecording();
     setIsStarted(false);
     
+    // Stop WebRTC broadcasting
+    stopBroadcasting();
+    
     // Mark live stream as inactive
     if (sessionId) {
       await supabase
@@ -346,6 +385,7 @@ export default function DemoRound() {
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
+    setLocalStream(null);
   };
 
   useEffect(() => {
@@ -676,6 +716,24 @@ export default function DemoRound() {
                 <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1.5 rounded-full">
                   <div className="h-3 w-3 bg-white rounded-full animate-pulse" />
                   <span className="text-sm font-medium">RECORDING</span>
+                </div>
+              )}
+
+              {/* Live viewers indicator */}
+              {isStarted && webrtcConnected && (
+                <div className="absolute top-4 left-36 flex items-center gap-2 bg-blue-500 text-white px-3 py-1.5 rounded-full">
+                  <Users className="h-3 w-3" />
+                  <span className="text-sm font-medium">{viewerCount} watching</span>
+                </div>
+              )}
+
+              {/* Streaming status indicator */}
+              {isStarted && (
+                <div className={`absolute bottom-16 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full text-white ${webrtcStreaming ? 'bg-green-500' : 'bg-yellow-500'}`}>
+                  <Wifi className="h-3 w-3" />
+                  <span className="text-xs font-medium">
+                    {webrtcStreaming ? 'Streaming to viewers' : 'Connecting...'}
+                  </span>
                 </div>
               )}
 

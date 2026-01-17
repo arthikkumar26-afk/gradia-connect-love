@@ -16,8 +16,14 @@ import {
   CheckCircle2,
   Eye,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Volume2,
+  VolumeX,
+  Users,
+  Wifi,
+  WifiOff
 } from "lucide-react";
+import { useWebRTCStreaming } from "@/hooks/useWebRTCStreaming";
 
 interface SessionData {
   id: string;
@@ -44,9 +50,12 @@ export default function LiveDemoView() {
   const [streamEnded, setStreamEnded] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [waitingForStream, setWaitingForStream] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [hasVideoStream, setHasVideoStream] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (token) {
@@ -115,6 +124,51 @@ export default function LiveDemoView() {
     };
   }, [isStreamActive, streamEnded]);
 
+  // WebRTC streaming hook
+  const {
+    isConnected: webrtcConnected,
+    isStreaming: webrtcStreaming,
+    connectionState,
+    startViewing,
+    stopViewing
+  } = useWebRTCStreaming({
+    sessionId: session?.id || '',
+    role: 'viewer',
+    onStreamReceived: (stream) => {
+      console.log('[LiveDemoView] Received video stream');
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(err => console.error('Error playing video:', err));
+        setHasVideoStream(true);
+        toast.success('Live video stream connected!');
+      }
+    },
+    onConnectionStateChange: (state) => {
+      console.log('[LiveDemoView] Connection state:', state);
+      if (state === 'failed') {
+        toast.error('Video connection failed. Retrying...');
+        setHasVideoStream(false);
+      }
+    },
+    onError: (error) => {
+      console.error('[LiveDemoView] WebRTC error:', error);
+    }
+  });
+
+  // Start WebRTC viewing when stream becomes active
+  useEffect(() => {
+    if (session?.id && isStreamActive && !streamEnded) {
+      console.log('[LiveDemoView] Starting WebRTC viewing');
+      startViewing();
+    }
+    
+    return () => {
+      if (!isStreamActive || streamEnded) {
+        stopViewing();
+      }
+    };
+  }, [session?.id, isStreamActive, streamEnded, startViewing, stopViewing]);
+
   const loadSessionData = async () => {
     try {
       // Fetch session by token
@@ -157,6 +211,13 @@ export default function LiveDemoView() {
       setError("Failed to load viewing session. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
     }
   };
 
@@ -269,9 +330,24 @@ export default function LiveDemoView() {
               
               {isStreamActive && (
                 <div className="pt-3 border-t flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-mono text-lg">{formatTime(elapsedTime)}</span>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-mono text-lg">{formatTime(elapsedTime)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {webrtcConnected ? (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                          <Wifi className="h-3 w-3 mr-1" />
+                          Connected
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                          <WifiOff className="h-3 w-3 mr-1" />
+                          Connecting...
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <span className="text-sm text-muted-foreground">Demo in progress</span>
                 </div>
@@ -299,29 +375,62 @@ export default function LiveDemoView() {
                   </div>
                 </div>
               ) : isStreamActive ? (
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full h-full relative">
+                  {/* Video element for WebRTC stream */}
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted={isMuted}
+                    className={`w-full h-full object-contain ${hasVideoStream ? 'block' : 'hidden'}`}
+                  />
+                  
                   {/* Live indicator overlay */}
-                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
                     <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
                     LIVE
                   </div>
-                  <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded text-sm font-mono">
+                  <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded text-sm font-mono z-10">
                     {formatTime(elapsedTime)}
                   </div>
                   
-                  {/* Placeholder for actual video stream */}
-                  <div className="text-center text-white">
-                    <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                      <Video className="h-12 w-12 text-white/80" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-2">Demo in Progress</h3>
-                    <p className="text-white/60 text-sm max-w-md mx-auto">
-                      {session?.candidate_name} is currently presenting their teaching demonstration.
-                    </p>
-                    <p className="text-white/40 text-xs mt-4">
-                      Note: Live video streaming requires WebRTC setup. Currently showing status only.
-                    </p>
+                  {/* Video controls overlay */}
+                  <div className="absolute bottom-4 right-4 flex items-center gap-2 z-10">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="bg-black/50 hover:bg-black/70 text-white"
+                      onClick={toggleMute}
+                    >
+                      {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                    </Button>
                   </div>
+                  
+                  {/* Show placeholder while waiting for video stream */}
+                  {!hasVideoStream && (
+                    <div className="absolute inset-0 flex items-center justify-center text-white">
+                      <div className="text-center">
+                        <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+                          {webrtcConnected ? (
+                            <Loader2 className="h-12 w-12 text-white/80 animate-spin" />
+                          ) : (
+                            <Video className="h-12 w-12 text-white/80 animate-pulse" />
+                          )}
+                        </div>
+                        <h3 className="text-lg font-medium mb-2">
+                          {webrtcConnected ? 'Connecting to Video Stream...' : 'Establishing Connection...'}
+                        </h3>
+                        <p className="text-white/60 text-sm max-w-md mx-auto">
+                          {session?.candidate_name} is presenting their teaching demonstration.
+                        </p>
+                        <p className="text-white/40 text-xs mt-4">
+                          {webrtcConnected 
+                            ? 'Video stream will appear shortly' 
+                            : 'Connecting via WebRTC...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center text-white">
