@@ -12,10 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   ArrowLeft, Upload, FileText, Plus, Trash2, Eye, 
   Loader2, CheckCircle2, XCircle, BookOpen, Key, RefreshCw,
-  ChevronDown, FolderOpen
+  ChevronDown, FolderOpen, Play, Clock, User, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -62,6 +65,13 @@ export default function MockInterviewPipeline() {
   const [isUploading, setIsUploading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [activeTab, setActiveTab] = useState("questions");
+  
+  // Preview modal states
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
+  const [previewPaper, setPreviewPaper] = useState<QuestionPaper | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [previewAnswers, setPreviewAnswers] = useState<Record<number, number>>({});
   
   // Form states
   const [newPaper, setNewPaper] = useState({
@@ -148,6 +158,44 @@ export default function MockInterviewPipeline() {
     }
     
     return designationOptions[newPaper.segment]?.[newPaper.category] || [];
+  };
+
+  // Open preview modal for a paper
+  const openPreview = async (paper: QuestionPaper) => {
+    try {
+      const { data: paperQuestions, error } = await supabase
+        .from('interview_questions')
+        .select('*')
+        .eq('paper_id', paper.id)
+        .order('display_order');
+      
+      if (error) throw error;
+      
+      setPreviewPaper(paper);
+      setPreviewQuestions(paperQuestions || []);
+      setCurrentQuestionIndex(0);
+      setPreviewAnswers({});
+      setShowPreview(true);
+    } catch (error) {
+      console.error('Error loading preview questions:', error);
+      toast.error('Failed to load questions for preview');
+    }
+  };
+
+  const handlePreviewAnswer = (questionIndex: number, optionIndex: number) => {
+    setPreviewAnswers(prev => ({ ...prev, [questionIndex]: optionIndex }));
+  };
+
+  const nextPreviewQuestion = () => {
+    if (currentQuestionIndex < previewQuestions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const prevPreviewQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
   };
 
   // 5 sets of question papers
@@ -951,6 +999,15 @@ export default function MockInterviewPipeline() {
                                       <Button 
                                         size="icon" 
                                         variant="ghost" 
+                                        className="h-7 w-7 text-blue-600"
+                                        onClick={(e) => { e.stopPropagation(); openPreview(paper); }}
+                                        title="Preview as Candidate"
+                                      >
+                                        <Play className="h-3.5 w-3.5" />
+                                      </Button>
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
                                         className="h-7 w-7"
                                         onClick={(e) => { e.stopPropagation(); togglePaperActive(paper); }}
                                       >
@@ -1095,6 +1152,166 @@ export default function MockInterviewPipeline() {
           </Card>
         )}
       </main>
+
+      {/* Candidate Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Candidate View Preview
+            </DialogTitle>
+            <DialogDescription>
+              This is how candidates will see the questions during their interview
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewPaper && previewQuestions.length > 0 && (
+            <div className="flex-1 overflow-hidden">
+              {/* Interview Header */}
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-lg">{previewPaper.segment} - {previewPaper.category}</h3>
+                    <p className="text-sm text-muted-foreground">{previewPaper.designation}</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>90 sec/question</span>
+                    </div>
+                    <Badge variant="secondary">
+                      Question {currentQuestionIndex + 1} of {previewQuestions.length}
+                    </Badge>
+                  </div>
+                </div>
+                <Progress 
+                  value={((currentQuestionIndex + 1) / previewQuestions.length) * 100} 
+                  className="mt-3 h-2"
+                />
+              </div>
+
+              {/* Current Question */}
+              <Card className="border-2">
+                <CardContent className="pt-6">
+                  <div className="space-y-6">
+                    <div className="flex items-start gap-4">
+                      <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
+                        {currentQuestionIndex + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-lg font-medium leading-relaxed">
+                          {previewQuestions[currentQuestionIndex]?.question_text}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {previewQuestions[currentQuestionIndex]?.question_type}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {previewQuestions[currentQuestionIndex]?.marks || 1} mark(s)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Options */}
+                    {previewQuestions[currentQuestionIndex]?.options && (
+                      <RadioGroup 
+                        value={previewAnswers[currentQuestionIndex]?.toString() || ""}
+                        onValueChange={(val) => handlePreviewAnswer(currentQuestionIndex, parseInt(val))}
+                        className="space-y-3"
+                      >
+                        {(Array.isArray(previewQuestions[currentQuestionIndex].options) 
+                          ? previewQuestions[currentQuestionIndex].options 
+                          : previewQuestions[currentQuestionIndex].options?.options || []
+                        ).map((option: string, idx: number) => (
+                          <div
+                            key={idx}
+                            className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                              previewAnswers[currentQuestionIndex] === idx
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                            }`}
+                            onClick={() => handlePreviewAnswer(currentQuestionIndex, idx)}
+                          >
+                            <RadioGroupItem value={idx.toString()} id={`option-${idx}`} />
+                            <Label 
+                              htmlFor={`option-${idx}`} 
+                              className="flex-1 cursor-pointer font-normal"
+                            >
+                              <span className="font-semibold mr-2">
+                                {String.fromCharCode(65 + idx)}.
+                              </span>
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={prevPreviewQuestion}
+                  disabled={currentQuestionIndex === 0}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+                
+                <div className="flex gap-1">
+                  {previewQuestions.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentQuestionIndex(idx)}
+                      className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
+                        idx === currentQuestionIndex
+                          ? 'bg-primary text-primary-foreground'
+                          : previewAnswers[idx] !== undefined
+                          ? 'bg-green-500 text-white'
+                          : 'bg-muted hover:bg-muted-foreground/20'
+                      }`}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                </div>
+
+                <Button
+                  onClick={nextPreviewQuestion}
+                  disabled={currentQuestionIndex === previewQuestions.length - 1}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+
+              {/* Summary */}
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                <div className="flex items-center justify-between">
+                  <span>
+                    Answered: {Object.keys(previewAnswers).length} / {previewQuestions.length}
+                  </span>
+                  <Button variant="link" size="sm" onClick={() => setShowPreview(false)}>
+                    Close Preview
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {previewQuestions.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>No questions found in this paper</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
