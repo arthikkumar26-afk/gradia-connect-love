@@ -346,6 +346,66 @@ export type Database = {
         }
         Relationships: []
       }
+      employer_registrations: {
+        Row: {
+          benefits: string | null
+          company_description: string | null
+          company_email: string | null
+          company_name: string
+          company_phone: string | null
+          company_website: string | null
+          created_at: string
+          district: string
+          employer_id: string
+          id: string
+          pin_code: string | null
+          registration_status: string | null
+          state: string
+          tc_accepted: boolean
+          tc_accepted_at: string | null
+          town_city: string | null
+          updated_at: string
+        }
+        Insert: {
+          benefits?: string | null
+          company_description?: string | null
+          company_email?: string | null
+          company_name: string
+          company_phone?: string | null
+          company_website?: string | null
+          created_at?: string
+          district: string
+          employer_id: string
+          id?: string
+          pin_code?: string | null
+          registration_status?: string | null
+          state: string
+          tc_accepted?: boolean
+          tc_accepted_at?: string | null
+          town_city?: string | null
+          updated_at?: string
+        }
+        Update: {
+          benefits?: string | null
+          company_description?: string | null
+          company_email?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_website?: string | null
+          created_at?: string
+          district?: string
+          employer_id?: string
+          id?: string
+          pin_code?: string | null
+          registration_status?: string | null
+          state?: string
+          tc_accepted?: boolean
+          tc_accepted_at?: string | null
+          town_city?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       family_details: {
         Row: {
           age: number | null
