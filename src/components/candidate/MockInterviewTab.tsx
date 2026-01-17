@@ -1631,7 +1631,7 @@ export const MockInterviewTab = () => {
                               !slotBookingForm.date || !slotBookingForm.time || !slotBookingForm.state || 
                               !slotBookingForm.district || !slotBookingForm.programme || !slotBookingForm.segment || 
                               !slotBookingForm.department || !slotBookingForm.designation || !slotBookingForm.classLevel ||
-                              !slotBookingForm.classType || !slotBookingForm.subject || isBookingSlot
+                              isBookingSlot
                             }
                             size="sm"
                             className="gap-1.5"
