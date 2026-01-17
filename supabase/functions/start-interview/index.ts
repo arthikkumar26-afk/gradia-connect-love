@@ -165,6 +165,13 @@ serve(async (req) => {
     // Get stage-specific config
     const stageConfig = stageConfigs[stageName] || stageConfigs['Technical Assessment'];
 
+    // Get candidate's segment, category, and designation from profile
+    const candidateSegment = candidate.segment;
+    const candidateCategory = candidate.category;
+    const candidateDesignation = candidate.preferred_role || candidate.primary_subject;
+
+    console.log(`Candidate profile - Segment: ${candidateSegment}, Category: ${candidateCategory}, Designation: ${candidateDesignation}`);
+
     // Check if questions already exist for this event
     const { data: existingResponse } = await supabase
       .from('interview_responses')
@@ -244,11 +251,84 @@ serve(async (req) => {
       });
     }
 
-    // Build the prompt based on stage
-    const prompt = stageConfig.promptTemplate
-      .replace('{jobTitle}', job.job_title)
-      .replace('{skills}', skills.join(', '))
-      .replace('{requirements}', requirements) + `
+    let questions: any[] = [];
+    let usingAdminQuestions = false;
+
+    // FIRST: Try to fetch questions from admin-uploaded question papers
+    // Match based on candidate's segment, category, and designation
+    if (candidateSegment || candidateCategory || candidateDesignation) {
+      console.log('Searching for admin-uploaded question papers matching candidate profile...');
+      
+      // Build query to find matching question paper
+      let query = supabase
+        .from('interview_question_papers')
+        .select(`
+          *,
+          interview_questions(
+            *,
+            interview_answer_keys(*)
+          )
+        `)
+        .eq('is_active', true);
+
+      // Add filters based on available candidate data
+      if (candidateSegment) {
+        query = query.eq('segment', candidateSegment);
+      }
+      if (candidateCategory) {
+        query = query.eq('category', candidateCategory);
+      }
+      if (candidateDesignation) {
+        query = query.eq('designation', candidateDesignation);
+      }
+
+      const { data: matchingPapers, error: paperError } = await query.limit(5);
+
+      if (paperError) {
+        console.error('Error fetching question papers:', paperError);
+      } else if (matchingPapers && matchingPapers.length > 0) {
+        console.log(`Found ${matchingPapers.length} matching question papers from admin uploads`);
+        
+        // Randomly select one paper if multiple matches
+        const selectedPaper = matchingPapers[Math.floor(Math.random() * matchingPapers.length)];
+        console.log(`Selected paper: ${selectedPaper.title} (ID: ${selectedPaper.id})`);
+
+        const paperQuestions = selectedPaper.interview_questions || [];
+        
+        if (paperQuestions.length > 0) {
+          // Transform admin questions to interview format
+          questions = paperQuestions.map((q: any) => {
+            const answerKey = q.interview_answer_keys?.[0];
+            
+            return {
+              question: q.question_text,
+              type: q.question_type === 'multiple_choice' ? 'mcq' : q.question_type,
+              options: q.options?.options || q.options || [],
+              correctAnswer: answerKey?.answer_text ? 
+                (q.options?.options || q.options || []).findIndex(
+                  (opt: string) => opt.toLowerCase().includes(answerKey.answer_text.toLowerCase().charAt(0))
+                ) : 0,
+              explanation: answerKey?.answer_text || 'Correct answer based on the answer key.',
+              questionId: q.id,
+              marks: q.marks || 1
+            };
+          });
+
+          usingAdminQuestions = true;
+          console.log(`Loaded ${questions.length} questions from admin-uploaded paper`);
+        }
+      } else {
+        console.log('No matching question papers found for candidate profile. Falling back to AI generation.');
+      }
+    }
+
+    // FALLBACK: Generate questions via AI if no admin questions found
+    if (!usingAdminQuestions || questions.length === 0) {
+      // Build the prompt based on stage
+      const prompt = stageConfig.promptTemplate
+        .replace('{jobTitle}', job.job_title)
+        .replace('{skills}', skills.join(', '))
+        .replace('{requirements}', requirements) + `
 
 The candidate applied for: ${job.job_title}
 Candidate name: ${candidate.full_name}
@@ -285,75 +365,74 @@ EXAMPLE of CORRECT format:
   "explanation": "Clear expectations and routines help prevent behavioral issues"
 }`;
 
-    console.log(`Generating ${stageConfig.questionCount} ${stageConfig.questionType} questions for ${stageName}`);
+      console.log(`Generating ${stageConfig.questionCount} ${stageConfig.questionType} questions for ${stageName} via AI`);
 
-    let questions: any[] = [];
-
-    try {
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { 
-              role: 'system', 
-              content: `You are an expert interviewer conducting the "${stageName}" round. Generate assessment questions appropriate for this stage. 
+      try {
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              { 
+                role: 'system', 
+                content: `You are an expert interviewer conducting the "${stageName}" round. Generate assessment questions appropriate for this stage. 
 
 CRITICAL: You MUST return a valid JSON array where:
 - Each question's "question" field contains ONLY the question text (no A/B/C/D options embedded)
 - Each question's "options" array contains 4 complete answer choices as full text
 - Response must be valid JSON only, no markdown formatting.` 
-            },
-            { role: 'user', content: prompt }
-          ],
-        }),
-      });
+              },
+              { role: 'user', content: prompt }
+            ],
+          }),
+        });
 
-      if (!aiResponse.ok) {
-        const errorText = await aiResponse.text();
-        console.error('AI API error:', aiResponse.status, errorText);
-        throw new Error(`AI API returned ${aiResponse.status}`);
-      }
-
-      const aiData = await aiResponse.json();
-      console.log('AI Response received for', stageName);
-
-      const content = aiData.choices?.[0]?.message?.content;
-      if (content) {
-        const jsonMatch = content.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-          const parsedQuestions = JSON.parse(jsonMatch[0]);
-          
-          // Validate and clean questions
-          questions = parsedQuestions.map((q: any) => {
-            // Check if options are just letters like ["A", "B", "C", "D"]
-            const hasInvalidOptions = q.options?.every((opt: string) => 
-              typeof opt === 'string' && opt.length <= 2
-            );
-            
-            if (hasInvalidOptions || !q.options || q.options.length !== 4) {
-              console.log('Invalid question format detected, skipping:', q.question?.substring(0, 50));
-              return null; // Will be filtered out
-            }
-            
-            return {
-              question: q.question,
-              type: q.type || 'mcq',
-              options: q.options.map((opt: string) => 
-                opt.replace(/^[A-D]\)\s*/i, '').replace(/^[A-D]\.\s*/i, '').trim()
-              ),
-              correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
-              explanation: q.explanation || 'Correct answer based on best practices.'
-            };
-          }).filter(Boolean);
+        if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error('AI API error:', aiResponse.status, errorText);
+          throw new Error(`AI API returned ${aiResponse.status}`);
         }
+
+        const aiData = await aiResponse.json();
+        console.log('AI Response received for', stageName);
+
+        const content = aiData.choices?.[0]?.message?.content;
+        if (content) {
+          const jsonMatch = content.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            const parsedQuestions = JSON.parse(jsonMatch[0]);
+            
+            // Validate and clean questions
+            questions = parsedQuestions.map((q: any) => {
+              // Check if options are just letters like ["A", "B", "C", "D"]
+              const hasInvalidOptions = q.options?.every((opt: string) => 
+                typeof opt === 'string' && opt.length <= 2
+              );
+              
+              if (hasInvalidOptions || !q.options || q.options.length !== 4) {
+                console.log('Invalid question format detected, skipping:', q.question?.substring(0, 50));
+                return null; // Will be filtered out
+              }
+              
+              return {
+                question: q.question,
+                type: q.type || 'mcq',
+                options: q.options.map((opt: string) => 
+                  opt.replace(/^[A-D]\)\s*/i, '').replace(/^[A-D]\.\s*/i, '').trim()
+                ),
+                correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : 0,
+                explanation: q.explanation || 'Correct answer based on best practices.'
+              };
+            }).filter(Boolean);
+          }
+        }
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', parseError);
       }
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
     }
 
     // Fallback questions based on stage
