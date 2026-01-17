@@ -250,23 +250,12 @@ export const RegistrationContent = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Registration</h2>
-          <p className="text-muted-foreground">
-            {existingRegistration 
-              ? "Update your company registration details" 
-              : "Complete your company registration details"
-            }
-          </p>
+      {existingRegistration && (
+        <div className="flex items-center gap-2 text-success">
+          <CheckCircle className="h-5 w-5" />
+          <span className="text-sm font-medium">Registered</span>
         </div>
-        {existingRegistration && (
-          <div className="flex items-center gap-2 text-success">
-            <CheckCircle className="h-5 w-5" />
-            <span className="text-sm font-medium">Registered</span>
-          </div>
-        )}
-      </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Company Details */}
