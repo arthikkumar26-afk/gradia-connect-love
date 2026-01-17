@@ -67,6 +67,13 @@ const EmployerDashboard = () => {
   const [clientDashboardOpen, setClientDashboardOpen] = useState(false);
   const [newApplications, setNewApplications] = useState(0);
   const [companyName, setCompanyName] = useState<string | null>(null);
+  const [dashboardStats, setDashboardStats] = useState({
+    activeJobs: 0,
+    applicationsReceived: 0,
+    pendingReviews: 0,
+    interviewsScheduled: 0,
+    isLoading: true
+  });
   const { user, profile, isAuthenticated, logout } = useAuth();
 
   // Role-based access control
@@ -99,6 +106,75 @@ const EmployerDashboard = () => {
     };
     
     fetchCompanyName();
+  }, [user?.id]);
+
+  // Fetch live dashboard stats
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Get active jobs count
+        const { count: activeJobsCount } = await supabase
+          .from('jobs')
+          .select('*', { count: 'exact', head: true })
+          .eq('employer_id', user.id)
+          .eq('status', 'active');
+
+        // Get all job IDs for this employer
+        const { data: myJobs } = await supabase
+          .from('jobs')
+          .select('id')
+          .eq('employer_id', user.id);
+        
+        const jobIds = myJobs?.map(j => j.id) || [];
+
+        // Get applications received (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const { count: applicationsCount } = await supabase
+          .from('interview_candidates')
+          .select('*', { count: 'exact', head: true })
+          .in('job_id', jobIds.length > 0 ? jobIds : ['no-jobs'])
+          .gte('applied_at', thirtyDaysAgo.toISOString());
+
+        // Get pending reviews (candidates with status 'pending' or 'applied')
+        const { count: pendingCount } = await supabase
+          .from('interview_candidates')
+          .select('*', { count: 'exact', head: true })
+          .in('job_id', jobIds.length > 0 ? jobIds : ['no-jobs'])
+          .in('status', ['pending', 'applied', 'screening']);
+
+        // Get interviews scheduled this week
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+        const { count: interviewsCount } = await supabase
+          .from('interview_events')
+          .select('*, interview_candidates!inner(job_id)', { count: 'exact', head: true })
+          .in('interview_candidates.job_id', jobIds.length > 0 ? jobIds : ['no-jobs'])
+          .gte('scheduled_at', startOfWeek.toISOString())
+          .lt('scheduled_at', endOfWeek.toISOString());
+
+        setDashboardStats({
+          activeJobs: activeJobsCount || 0,
+          applicationsReceived: applicationsCount || 0,
+          pendingReviews: pendingCount || 0,
+          interviewsScheduled: interviewsCount || 0,
+          isLoading: false
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        setDashboardStats(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    fetchDashboardStats();
   }, [user?.id]);
 
   // Real-time subscription for new applications
@@ -209,28 +285,28 @@ const EmployerDashboard = () => {
   const dashboardCards = [
     {
       title: "Active Job Posts",
-      value: "12",
+      value: dashboardStats.isLoading ? "..." : dashboardStats.activeJobs.toString(),
       subtitle: "Currently hiring",
       icon: Briefcase,
       gradient: "from-primary/20 to-primary/5",
     },
     {
       title: "Applications Received",
-      value: "156",
+      value: dashboardStats.isLoading ? "..." : dashboardStats.applicationsReceived.toString(),
       subtitle: "Last 30 days",
       icon: UserPlus,
       gradient: "from-success/20 to-success/5",
     },
     {
       title: "Pending Reviews",
-      value: "48",
+      value: dashboardStats.isLoading ? "..." : dashboardStats.pendingReviews.toString(),
       subtitle: "Awaiting feedback",
       icon: Clock,
       gradient: "from-warning/20 to-warning/5",
     },
     {
       title: "Interviews Scheduled",
-      value: "18",
+      value: dashboardStats.isLoading ? "..." : dashboardStats.interviewsScheduled.toString(),
       subtitle: "This week",
       icon: Calendar,
       gradient: "from-accent/20 to-accent/5",
