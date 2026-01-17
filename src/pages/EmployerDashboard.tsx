@@ -52,6 +52,7 @@ import { InterviewPipelineContent } from "@/components/employer/InterviewPipelin
 import { EmailTemplatesEditor } from "@/components/employer/EmailTemplatesEditor";
 import { VivaContent } from "@/components/employer/VivaContent";
 import { RegistrationContent } from "@/components/employer/RegistrationContent";
+import { SubscriptionsContent } from "@/components/employer/SubscriptionsContent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -410,6 +411,7 @@ const EmployerDashboard = () => {
             {activeMenu === "teams" && <TeamsContent />}
             {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
             {activeMenu === "viva" && <VivaContent />}
+            {activeMenu === "subscriptions" && <SubscriptionsContent />}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
           </div>
         </main>
