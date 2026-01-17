@@ -301,18 +301,20 @@ const EmployerDashboard = () => {
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <h1 className="text-2xl font-bold text-foreground">
-              {activeMenu === "jobs" ? "Job Management" : "Dashboard"}
+              {menuItems.find(item => item.id === activeMenu)?.label || "Dashboard"}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="cta" size="lg" className="rounded-xl" asChild>
-              <Link to="/employer/post-job">
-                <Briefcase className="h-5 w-5 mr-2" />
-                Post New Job
-              </Link>
-            </Button>
-          </div>
+          {activeMenu === "dashboard" && (
+            <div className="flex items-center gap-3">
+              <Button variant="cta" size="lg" className="rounded-xl" asChild>
+                <Link to="/employer/post-job">
+                  <Briefcase className="h-5 w-5 mr-2" />
+                  Post New Job
+                </Link>
+              </Button>
+            </div>
+          )}
         </header>
 
 

@@ -173,19 +173,15 @@ export const SubscriptionsContent = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Subscriptions</h2>
-          <p className="text-muted-foreground">Manage your subscription and billing</p>
-        </div>
-        {currentSubscription && (
+      {/* Active Plan Badge */}
+      {currentSubscription && (
+        <div className="flex justify-end">
           <Badge variant="default" className="bg-success text-success-foreground">
             <CheckCircle className="h-3 w-3 mr-1" />
             {currentSubscription.plan_name} Plan Active
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

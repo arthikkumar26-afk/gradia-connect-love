@@ -108,11 +108,6 @@ export const JobManagementContent = () => {
   return (
     <>
       <div className="space-y-6">
-        {/* Header Section */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-1">Job Management</h2>
-          <p className="text-muted-foreground">Manage job requirements and postings</p>
-        </div>
 
         {/* Actions Row */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
