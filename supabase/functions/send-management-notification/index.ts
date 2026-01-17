@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 interface ManagementNotificationRequest {
-  notificationType: 'slot_booking' | 'demo_feedback' | 'demo_started';
+  notificationType: 'slot_booking' | 'demo_feedback' | 'demo_started' | 'demo_slot_booked';
   candidateName: string;
   candidateEmail: string;
   sessionId?: string;
@@ -18,12 +18,13 @@ interface ManagementNotificationRequest {
   bookingDetails?: {
     date: string;
     time: string;
-    segment: string;
+    segment?: string;
     category?: string;
-    designation: string;
+    designation?: string;
     location?: string;
     state?: string;
     district?: string;
+    slotLabel?: string;
   };
   appUrl?: string;
 }
@@ -55,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get management team members based on notification type
-    const notificationField = notificationType === 'slot_booking' 
+    const notificationField = (notificationType === 'slot_booking' || notificationType === 'demo_slot_booked')
       ? 'receives_slot_notifications' 
       : 'receives_demo_notifications';
     
@@ -179,6 +180,70 @@ const handler = async (req: Request): Promise<Response> => {
                 </div>
                 
                 <p>This is an automated notification. The candidate will receive their assessment invitation shortly.</p>
+              </div>
+              <div class="footer">
+                <p>Gradia - Transforming Education Recruitment</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+      } else if (notificationType === 'demo_slot_booked') {
+        // Demo slot booking notification
+        subject = `📅 Demo Session Scheduled - ${candidateName}`;
+        htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+              .info-card { background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #8b5cf6; }
+              .label { color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+              .value { font-size: 16px; font-weight: 600; color: #1f2937; }
+              .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+              .schedule-badge { display: inline-block; background: #f5f3ff; color: #7c3aed; padding: 8px 16px; border-radius: 20px; font-weight: 600; margin: 10px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1 style="margin: 0;">🎬 Demo Session Scheduled</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Teaching Demonstration Booking</p>
+              </div>
+              <div class="content">
+                <p>Hello ${member.full_name},</p>
+                <p>A candidate has scheduled their <strong>Demo Teaching Session</strong>:</p>
+                
+                <div class="info-card">
+                  <div style="margin-bottom: 15px;">
+                    <p class="label">Candidate</p>
+                    <p class="value">${candidateName}</p>
+                    <p style="color: #6b7280; font-size: 14px;">${candidateEmail}</p>
+                  </div>
+                  
+                  ${bookingDetails ? `
+                  <div style="margin-bottom: 15px;">
+                    <p class="label">Scheduled Time</p>
+                    <p class="value">
+                      <span class="schedule-badge">
+                        📅 ${bookingDetails.slotLabel || `${bookingDetails.date} at ${bookingDetails.time}`}
+                      </span>
+                    </p>
+                  </div>
+                  ` : ''}
+                </div>
+                
+                <p style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; border-radius: 4px;">
+                  💡 <strong>Next Step:</strong> When the candidate starts their demo, you will receive a live viewing link to observe their teaching in real-time.
+                </p>
+                
+                <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+                  This is an automated notification. The candidate has been sent their demo session invitation.
+                </p>
               </div>
               <div class="footer">
                 <p>Gradia - Transforming Education Recruitment</p>
