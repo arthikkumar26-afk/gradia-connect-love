@@ -80,7 +80,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Found ${teamMembers.length} team members to notify`);
 
-    const baseUrl = appUrl || "https://id-preview--b06fa647-568a-470e-9033-ffe17071d8a6.lovable.app";
+    // Normalize the appUrl - fix invalid domains
+    let baseUrl = appUrl || "https://id-preview--b06fa647-568a-470e-9033-ffe17071d8a6.lovable.app";
+    
+    // Fix invalid lovableproject.com domain to lovable.app
+    if (baseUrl.includes('lovableproject.com')) {
+      baseUrl = "https://id-preview--b06fa647-568a-470e-9033-ffe17071d8a6.lovable.app";
+    }
     let emailsSent = 0;
     let feedbackLinksCreated = 0;
 
