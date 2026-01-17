@@ -140,22 +140,38 @@ export default function LiveDemoView() {
       console.log('[LiveDemoView] Stream tracks:', stream.getTracks().map(t => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`));
       
       if (videoRef.current) {
-        // Remove old stream if exists
-        if (videoRef.current.srcObject) {
-          const oldStream = videoRef.current.srcObject as MediaStream;
-          oldStream.getTracks().forEach(t => t.stop());
-        }
-        
+        // Don't stop old tracks as they might be the same stream
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true; // Start muted for autoplay policy
         
         // Monitor track events for debugging
         stream.getTracks().forEach(track => {
           console.log(`[LiveDemoView] Track ${track.kind}: enabled=${track.enabled}, readyState=${track.readyState}`);
-          track.onended = () => console.log(`[LiveDemoView] Track ${track.kind} ended`);
+          track.onended = () => {
+            console.log(`[LiveDemoView] Track ${track.kind} ended`);
+            setHasVideoStream(false);
+          };
           track.onmute = () => console.log(`[LiveDemoView] Track ${track.kind} muted`);
           track.onunmute = () => console.log(`[LiveDemoView] Track ${track.kind} unmuted`);
         });
+        
+        // Handle video element events
+        videoRef.current.onloadedmetadata = () => {
+          console.log('[LiveDemoView] Video metadata loaded');
+        };
+        
+        videoRef.current.onplaying = () => {
+          console.log('[LiveDemoView] Video is playing');
+          setHasVideoStream(true);
+        };
+        
+        videoRef.current.onstalled = () => {
+          console.log('[LiveDemoView] Video stalled - stream may be frozen');
+        };
+        
+        videoRef.current.onwaiting = () => {
+          console.log('[LiveDemoView] Video waiting for data');
+        };
         
         videoRef.current.play()
           .then(() => {
@@ -166,7 +182,13 @@ export default function LiveDemoView() {
           })
           .catch(err => {
             console.error('[LiveDemoView] Error playing video:', err);
-            toast.error('Error playing video. Please click to enable.');
+            // Try to play without audio first
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              videoRef.current.play().catch(e => {
+                console.error('[LiveDemoView] Still cannot play:', e);
+              });
+            }
           });
       }
     },

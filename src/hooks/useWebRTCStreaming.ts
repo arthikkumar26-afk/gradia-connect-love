@@ -22,7 +22,26 @@ const ICE_SERVERS: RTCConfiguration = {
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
-  ]
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    // Free TURN servers for better NAT traversal
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    }
+  ],
+  iceCandidatePoolSize: 10
 };
 
 export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
@@ -116,14 +135,46 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
       console.log(`[WebRTC ${role}] Track readyState:`, event.track.readyState);
       
       // Monitor track state changes
-      event.track.onended = () => console.log(`[WebRTC ${role}] Track ${event.track.kind} ended`);
-      event.track.onmute = () => console.log(`[WebRTC ${role}] Track ${event.track.kind} muted`);
-      event.track.onunmute = () => console.log(`[WebRTC ${role}] Track ${event.track.kind} unmuted`);
+      event.track.onended = () => {
+        console.log(`[WebRTC ${role}] Track ${event.track.kind} ended - requesting reconnect`);
+        // Request a new offer if track ends
+        if (role === 'viewer') {
+          setTimeout(() => {
+            channelRef.current?.send({
+              type: 'broadcast',
+              event: 'signaling',
+              payload: {
+                type: 'request-offer',
+                from: clientIdRef.current,
+                data: {}
+              }
+            });
+          }, 1000);
+        }
+      };
+      event.track.onmute = () => {
+        console.log(`[WebRTC ${role}] Track ${event.track.kind} muted`);
+      };
+      event.track.onunmute = () => {
+        console.log(`[WebRTC ${role}] Track ${event.track.kind} unmuted`);
+      };
       
       if (event.streams[0]) {
         console.log(`[WebRTC ${role}] Stream has ${event.streams[0].getTracks().length} tracks`);
-        onStreamReceived?.(event.streams[0]);
+        
+        // Clone the stream to ensure we get fresh references
+        const clonedStream = new MediaStream();
+        event.streams[0].getTracks().forEach(track => {
+          clonedStream.addTrack(track);
+        });
+        
+        onStreamReceived?.(clonedStream);
       }
+    };
+
+    // Monitor for negotiation needed
+    pc.onnegotiationneeded = () => {
+      console.log(`[WebRTC ${role}] Negotiation needed`);
     };
 
     peerConnectionsRef.current.set(peerId, pc);
