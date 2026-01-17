@@ -83,9 +83,10 @@ export default function MockInterviewPipeline() {
     'High School': ['Board', 'Compititive'],
   };
 
-  // Class options for High School > Board
+  // Class options for High School > Board/Competitive
   const classLevelOptions: Record<string, string[]> = {
     'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
+    'Compititive': ['CLASSES-6,7&8'],
   };
 
   // Subject designations based on class level
@@ -96,6 +97,10 @@ export default function MockInterviewPipeline() {
       'Biology', 'Botany', 'Zoology', 'Social', 'Mental Ability', 'Counsellor', 
       'Academic Dean', 'Computers', 'Physical Education', 'Principal', 
       'Soft Skills Trainer', 'French'
+    ],
+    'CLASSES-6,7&8': [
+      'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 
+      'Mental Ability', 'Counsellor'
     ],
   };
 
@@ -117,8 +122,8 @@ export default function MockInterviewPipeline() {
     }
   };
 
-  // Check if we need to show class level field
-  const showClassLevel = newPaper.segment === 'High School' && newPaper.category === 'Board';
+  // Check if we need to show class level field (for Board or Compititive)
+  const showClassLevel = newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive');
 
   const getCurrentClassLevels = () => {
     if (!showClassLevel) return [];
@@ -132,8 +137,8 @@ export default function MockInterviewPipeline() {
   const getCurrentDesignations = () => {
     if (!newPaper.segment || !newPaper.category) return [];
     
-    // For High School + Board, use class-based designations
-    if (newPaper.segment === 'High School' && newPaper.category === 'Board') {
+    // For High School + Board or Compititive, use class-based designations
+    if (newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive')) {
       if (!newPaper.classLevel) return [];
       return classDesignationOptions[newPaper.classLevel] || [];
     }
