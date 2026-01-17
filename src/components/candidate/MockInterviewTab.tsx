@@ -682,7 +682,7 @@ export const MockInterviewTab = () => {
         .update({ current_stage_order: nextStageOrder })
         .eq('id', currentSession.id);
 
-      // Send invitation email for next stage
+      // Send invitation email for next stage (to candidate)
       await supabase.functions.invoke('send-mock-interview-invitation', {
         body: {
           candidateEmail: profile?.email,
@@ -695,6 +695,26 @@ export const MockInterviewTab = () => {
           bookedSlot: slotLabel
         }
       });
+
+      // Send notification to management about demo slot booking
+      if (!isForTechnicalAssessment) {
+        console.log('[MockInterviewTab] Sending demo slot booking notification to management');
+        await supabase.functions.invoke('send-management-notification', {
+          body: {
+            notificationType: 'demo_slot_booked',
+            candidateName: profile?.full_name || 'Candidate',
+            candidateEmail: profile?.email,
+            sessionId: currentSession.id,
+            bookingDetails: {
+              date: slotTime.toISOString().split('T')[0],
+              time: slotTime.toTimeString().slice(0, 5),
+              slotLabel: slotLabel
+            },
+            appUrl: window.location.origin
+          }
+        });
+        console.log('[MockInterviewTab] Management notification sent for demo slot booking');
+      }
 
       toast.success(`Slot booked: ${slotLabel}! Check email for ${nextStageName}.`);
       setShowSlotBooking(false);
