@@ -76,120 +76,138 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, t
     }
   };
 
-  const generateFlyerImage = (): Promise<string> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      const width = 800;
-      const height = 1100;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      
-      if (!ctx) {
-        resolve("");
-        return;
-      }
-
-      // Background gradient
-      const gradient = ctx.createLinearGradient(0, 0, 0, height);
-      gradient.addColorStop(0, "#1a365d");
-      gradient.addColorStop(0.3, "#2c5282");
-      gradient.addColorStop(1, "#1a365d");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, width, height);
-
-      // Decorative elements
-      ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
-      ctx.beginPath();
-      ctx.arc(700, 100, 200, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(100, 900, 150, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Header bar
-      ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.fillRect(0, 0, width, 120);
-
-      // Company name
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 36px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(companyName, width / 2, 75);
-
-      // Headline
-      ctx.font = "bold 56px Arial";
-      ctx.fillStyle = "#48bb78";
-      ctx.fillText(flyerData.headline, width / 2, 220);
-
-      // Tagline
-      ctx.font = "24px Arial";
-      ctx.fillStyle = "#e2e8f0";
-      ctx.fillText(flyerData.tagline, width / 2, 270);
-
-      // Positions box
-      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-      ctx.roundRect(50, 320, width - 100, 80, 10);
-      ctx.fill();
-      
-      ctx.fillStyle = "#1a365d";
-      ctx.font = "bold 28px Arial";
-      ctx.fillText(flyerData.positions, width / 2, 370);
-
-      // QR Code section
-      ctx.fillStyle = "#ffffff";
-      ctx.roundRect(width / 2 - 130, 440, 260, 320, 15);
-      ctx.fill();
-
-      // Draw QR code
-      const qrSvg = document.getElementById("flyer-qr-code");
-      if (qrSvg) {
-        const svgData = new XMLSerializer().serializeToString(qrSvg);
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, width / 2 - 100, 470, 200, 200);
-          
-          // Scan instruction
-          ctx.fillStyle = "#1a365d";
-          ctx.font = "bold 18px Arial";
-          ctx.fillText("SCAN TO APPLY", width / 2, 710);
-          
-          // Arrow pointer
-          ctx.fillStyle = "#48bb78";
-          ctx.font = "24px Arial";
-          ctx.fillText("👆", width / 2, 740);
-
-          // Contact section
-          ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-          ctx.fillRect(0, 800, width, 150);
-
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "18px Arial";
-          ctx.textAlign = "left";
-          ctx.fillText(`📍 ${flyerData.location}`, 80, 850);
-          ctx.fillText(`📞 ${flyerData.contactPhone}`, 80, 885);
-          ctx.textAlign = "right";
-          ctx.fillText(`✉️ ${flyerData.contactEmail}`, width - 80, 850);
-          ctx.fillText(`🌐 ${flyerData.website}`, width - 80, 885);
-
-          // Footer
-          ctx.textAlign = "center";
-          ctx.fillStyle = "#a0aec0";
-          ctx.font = "14px Arial";
-          ctx.fillText("Powered by Gradia - Your Next Step", width / 2, 1000);
-
-          // Gradia branding
-          ctx.fillStyle = "#48bb78";
-          ctx.font = "bold 16px Arial";
-          ctx.fillText("gradia.jobs", width / 2, 1030);
-
-          resolve(canvas.toDataURL("image/png"));
-        };
-        img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
-      } else {
-        resolve(canvas.toDataURL("image/png"));
-      }
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
     });
+  };
+
+  const generateFlyerImage = async (): Promise<string> => {
+    const canvas = document.createElement("canvas");
+    const width = 800;
+    const height = 1100;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    
+    if (!ctx) {
+      return "";
+    }
+
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, "#1a365d");
+    gradient.addColorStop(0.3, "#2c5282");
+    gradient.addColorStop(1, "#1a365d");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Decorative elements
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.beginPath();
+    ctx.arc(700, 100, 200, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(100, 900, 150, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Header bar
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.fillRect(0, 0, width, 120);
+
+    // Company name
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 36px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(companyName, width / 2, 75);
+
+    // Headline
+    ctx.font = "bold 56px Arial";
+    ctx.fillStyle = "#48bb78";
+    ctx.fillText(flyerData.headline, width / 2, 220);
+
+    // Tagline
+    ctx.font = "24px Arial";
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillText(flyerData.tagline, width / 2, 270);
+
+    // Positions box
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.beginPath();
+    ctx.roundRect(50, 320, width - 100, 80, 10);
+    ctx.fill();
+    
+    ctx.fillStyle = "#1a365d";
+    ctx.font = "bold 28px Arial";
+    ctx.fillText(flyerData.positions, width / 2, 370);
+
+    // QR Code section background
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.roundRect(width / 2 - 130, 440, 260, 320, 15);
+    ctx.fill();
+
+    // Draw QR code
+    const qrSvg = document.getElementById("flyer-qr-code");
+    if (qrSvg) {
+      try {
+        const svgData = new XMLSerializer().serializeToString(qrSvg);
+        const qrImg = await loadImage("data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))));
+        ctx.drawImage(qrImg, width / 2 - 100, 470, 200, 200);
+      } catch (e) {
+        console.error("Failed to load QR code:", e);
+      }
+    }
+    
+    // Scan instruction
+    ctx.fillStyle = "#1a365d";
+    ctx.font = "bold 18px Arial";
+    ctx.fillText("SCAN TO APPLY", width / 2, 710);
+    
+    // Arrow pointer
+    ctx.fillStyle = "#48bb78";
+    ctx.font = "24px Arial";
+    ctx.fillText("👆", width / 2, 740);
+
+    // Contact section background
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.fillRect(0, 800, width, 150);
+
+    // Contact info
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "18px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(`📍 ${flyerData.location}`, 80, 850);
+    ctx.fillText(`📞 ${flyerData.contactPhone}`, 80, 885);
+    ctx.textAlign = "right";
+    ctx.fillText(`✉️ ${flyerData.contactEmail}`, width - 80, 850);
+    ctx.fillText(`🌐 ${flyerData.website}`, width - 80, 885);
+
+    // Footer
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#a0aec0";
+    ctx.font = "14px Arial";
+    ctx.fillText("Powered by Gradia - Your Next Step", width / 2, 1000);
+
+    // Gradia branding
+    ctx.fillStyle = "#48bb78";
+    ctx.font = "bold 16px Arial";
+    ctx.fillText("gradia.jobs", width / 2, 1030);
+
+    // Try to load and draw Gradia logo
+    try {
+      const logoImg = await loadImage(gradiaLogo);
+      ctx.drawImage(logoImg, width / 2 - 40, 1040, 80, 30);
+    } catch (e) {
+      // Logo load failed, text is already there as fallback
+      console.error("Failed to load Gradia logo:", e);
+    }
+
+    return canvas.toDataURL("image/png");
   };
 
   const handlePrint = () => {
