@@ -313,45 +313,6 @@ const EmployerDashboard = () => {
           </div>
         </header>
 
-        {/* Breadcrumbs */}
-        <div className="bg-background px-6 py-3 border-b border-border">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/">Home</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link to="/employer/dashboard">Employer</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>
-                  {activeMenu === "dashboard" ? "Dashboard" :
-                   activeMenu === "registration" ? "Registration" :
-                   activeMenu === "login" ? "Login" :
-                   activeMenu === "jobs" ? "Jobs" :
-                   activeMenu === "job-alert" ? "Job Alert" :
-                   activeMenu === "client-dashboard" ? "Client Dashboard" :
-                   activeMenu === "talent-pool" ? "Talent Pool" :
-                   activeMenu === "teams" ? "Teams" :
-                   activeMenu === "interview-pipeline" ? "Interview Pipeline" :
-                   activeMenu === "viva" ? "Viva" :
-                   activeMenu === "placements" ? "Placements" :
-                   activeMenu === "subscriptions" ? "Subscriptions" :
-                   activeMenu === "email-templates" ? "Email Templates" :
-                   activeMenu === "approvals" ? "Approvals" :
-                   activeMenu === "settings" ? "Settings" :
-                   activeMenu === "configuration" ? "Configuration" : "Dashboard"}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
 
         {/* Dashboard Content */}
         <main className="flex-1 p-4 overflow-y-auto">
