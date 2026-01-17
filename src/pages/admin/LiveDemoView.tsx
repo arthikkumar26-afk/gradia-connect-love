@@ -50,8 +50,9 @@ export default function LiveDemoView() {
   const [streamEnded, setStreamEnded] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [waitingForStream, setWaitingForStream] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Start muted to allow autoplay
   const [hasVideoStream, setHasVideoStream] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -136,11 +137,37 @@ export default function LiveDemoView() {
     role: 'viewer',
     onStreamReceived: (stream) => {
       console.log('[LiveDemoView] Received video stream');
+      console.log('[LiveDemoView] Stream tracks:', stream.getTracks().map(t => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`));
+      
       if (videoRef.current) {
+        // Remove old stream if exists
+        if (videoRef.current.srcObject) {
+          const oldStream = videoRef.current.srcObject as MediaStream;
+          oldStream.getTracks().forEach(t => t.stop());
+        }
+        
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(err => console.error('Error playing video:', err));
-        setHasVideoStream(true);
-        toast.success('Live video stream connected!');
+        videoRef.current.muted = true; // Start muted for autoplay policy
+        
+        // Monitor track events for debugging
+        stream.getTracks().forEach(track => {
+          console.log(`[LiveDemoView] Track ${track.kind}: enabled=${track.enabled}, readyState=${track.readyState}`);
+          track.onended = () => console.log(`[LiveDemoView] Track ${track.kind} ended`);
+          track.onmute = () => console.log(`[LiveDemoView] Track ${track.kind} muted`);
+          track.onunmute = () => console.log(`[LiveDemoView] Track ${track.kind} unmuted`);
+        });
+        
+        videoRef.current.play()
+          .then(() => {
+            console.log('[LiveDemoView] Video playing successfully');
+            setHasVideoStream(true);
+            setAudioEnabled(true);
+            toast.success('Live video stream connected! Click the sound button to enable audio.');
+          })
+          .catch(err => {
+            console.error('[LiveDemoView] Error playing video:', err);
+            toast.error('Error playing video. Please click to enable.');
+          });
       }
     },
     onConnectionStateChange: (state) => {
@@ -216,8 +243,22 @@ export default function LiveDemoView() {
 
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const newMutedState = !isMuted;
+      videoRef.current.muted = newMutedState;
+      setIsMuted(newMutedState);
+      
+      if (!newMutedState) {
+        toast.success('Audio enabled');
+      }
+    }
+  };
+
+  // Handle user interaction to enable audio
+  const enableAudio = () => {
+    if (videoRef.current && isMuted) {
+      videoRef.current.muted = false;
+      setIsMuted(false);
+      toast.success('Audio enabled');
     }
   };
 
@@ -394,12 +435,25 @@ export default function LiveDemoView() {
                     {formatTime(elapsedTime)}
                   </div>
                   
+                  {/* Click to enable audio overlay */}
+                  {hasVideoStream && isMuted && (
+                    <div 
+                      className="absolute inset-0 z-5 cursor-pointer"
+                      onClick={enableAudio}
+                    >
+                      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 animate-pulse">
+                        <VolumeX className="h-4 w-4" />
+                        Click anywhere to enable audio
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Video controls overlay */}
                   <div className="absolute bottom-4 right-4 flex items-center gap-2 z-10">
                     <Button
                       size="sm"
-                      variant="secondary"
-                      className="bg-black/50 hover:bg-black/70 text-white"
+                      variant={isMuted ? "destructive" : "secondary"}
+                      className={isMuted ? "bg-red-600 hover:bg-red-700 text-white animate-pulse" : "bg-black/50 hover:bg-black/70 text-white"}
                       onClick={toggleMute}
                     >
                       {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
