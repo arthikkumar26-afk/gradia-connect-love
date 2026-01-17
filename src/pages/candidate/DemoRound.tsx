@@ -281,6 +281,37 @@ export default function DemoRound() {
     }
 
     try {
+      // Generate live view token and update session
+      const liveViewToken = crypto.randomUUID();
+      
+      if (sessionId) {
+        // Update session with live view token and mark as active
+        await supabase
+          .from('mock_interview_sessions')
+          .update({
+            live_view_token: liveViewToken,
+            live_view_active: true,
+            live_stream_started_at: new Date().toISOString()
+          })
+          .eq('id', sessionId);
+        
+        // Notify management that demo is starting with live view link
+        supabase.functions.invoke('send-management-notification', {
+          body: {
+            notificationType: 'demo_started',
+            candidateName: profile?.full_name || 'Candidate',
+            candidateEmail: profile?.email,
+            sessionId,
+            liveViewToken,
+            appUrl: window.location.origin
+          }
+        }).then(result => {
+          console.log('Management notified of demo start:', result);
+        }).catch(err => {
+          console.error('Failed to notify management:', err);
+        });
+      }
+
       await startRecording();
       setIsStarted(true);
       setTimeElapsed(0);
@@ -297,6 +328,14 @@ export default function DemoRound() {
   const handleStopDemo = async () => {
     stopRecording();
     setIsStarted(false);
+    
+    // Mark live stream as inactive
+    if (sessionId) {
+      await supabase
+        .from('mock_interview_sessions')
+        .update({ live_view_active: false })
+        .eq('id', sessionId);
+    }
     
     // Trigger thank you message from voice AI
     await handleDemoComplete();
@@ -348,6 +387,18 @@ export default function DemoRound() {
       console.log('Evaluation result:', data);
       setEvaluation(data.evaluation);
       setShowResult(true);
+
+      // Send feedback request to management team
+      await supabase.functions.invoke('send-management-notification', {
+        body: {
+          notificationType: 'demo_feedback',
+          candidateName: profile?.full_name || 'Candidate',
+          candidateEmail: profile?.email,
+          sessionId,
+          appUrl: window.location.origin
+        }
+      });
+      console.log('Management feedback request sent');
 
       // Send next stage email if not complete
       if (!data.isComplete && data.nextStage) {

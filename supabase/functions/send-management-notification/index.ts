@@ -10,10 +10,11 @@ const corsHeaders = {
 };
 
 interface ManagementNotificationRequest {
-  notificationType: 'slot_booking' | 'demo_feedback';
+  notificationType: 'slot_booking' | 'demo_feedback' | 'demo_started';
   candidateName: string;
   candidateEmail: string;
   sessionId?: string;
+  liveViewToken?: string;
   bookingDetails?: {
     date: string;
     time: string;
@@ -43,6 +44,7 @@ const handler = async (req: Request): Promise<Response> => {
       candidateName,
       candidateEmail,
       sessionId,
+      liveViewToken,
       bookingDetails,
       appUrl
     } = requestData;
@@ -148,6 +150,71 @@ const handler = async (req: Request): Promise<Response> => {
                 </div>
                 
                 <p>This is an automated notification. The candidate will receive their assessment invitation shortly.</p>
+              </div>
+              <div class="footer">
+                <p>Gradia - Transforming Education Recruitment</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+      } else if (notificationType === 'demo_started' && liveViewToken) {
+        // Demo started - send live viewing link
+        const liveViewLink = `${baseUrl}/admin/live-demo?token=${liveViewToken}`;
+
+        subject = `🔴 LIVE NOW - ${candidateName} is Starting Demo Round`;
+        htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center; }
+              .live-badge { display: inline-block; background: white; color: #ef4444; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 10px; animation: pulse 2s infinite; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+              .info-card { background: white; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ef4444; }
+              .button { display: inline-block; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+              .label { color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+              .value { font-size: 16px; font-weight: 600; color: #1f2937; }
+              .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+              .urgent-note { background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 6px; margin: 15px 0; font-size: 13px; color: #991b1b; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <span class="live-badge">🔴 LIVE NOW</span>
+                <h1 style="margin: 0;">Demo Round Starting</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Join Now to Watch Live</p>
+              </div>
+              <div class="content">
+                <p>Hello ${member.full_name},</p>
+                <p><strong>${candidateName}</strong> is starting their Demo Round right now! Join the live session to observe their teaching demonstration:</p>
+                
+                <div class="info-card">
+                  <div style="margin-bottom: 10px;">
+                    <p class="label">Candidate</p>
+                    <p class="value">${candidateName}</p>
+                    <p style="color: #6b7280; font-size: 14px;">${candidateEmail}</p>
+                  </div>
+                </div>
+
+                <div style="text-align: center;">
+                  <a href="${liveViewLink}" class="button">👁️ Join Live Session</a>
+                </div>
+                
+                <div class="urgent-note">
+                  ⚡ This is a live session. Click the button above to watch the candidate's demo in real-time.
+                  <br><br>
+                  After the demo completes, you will receive a separate email with a feedback link.
+                </div>
+                
+                <p style="color: #6b7280; font-size: 14px;">
+                  If the button doesn't work, copy and paste this link:<br>
+                  <span style="color: #3b82f6; word-break: break-all;">${liveViewLink}</span>
+                </p>
               </div>
               <div class="footer">
                 <p>Gradia - Transforming Education Recruitment</p>
