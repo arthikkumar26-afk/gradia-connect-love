@@ -871,6 +871,129 @@ export type Database = {
           },
         ]
       }
+      management_reviews: {
+        Row: {
+          areas_for_improvement: string[] | null
+          communication_rating: number | null
+          created_at: string
+          feedback_text: string | null
+          feedback_token: string | null
+          feedback_token_expires_at: string | null
+          id: string
+          overall_rating: number | null
+          recommendation: string | null
+          reviewer_email: string | null
+          reviewer_id: string | null
+          reviewer_name: string | null
+          sent_at: string | null
+          session_id: string
+          status: string | null
+          strengths: string[] | null
+          subject_knowledge_rating: number | null
+          submitted_at: string | null
+          teaching_skills_rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          areas_for_improvement?: string[] | null
+          communication_rating?: number | null
+          created_at?: string
+          feedback_text?: string | null
+          feedback_token?: string | null
+          feedback_token_expires_at?: string | null
+          id?: string
+          overall_rating?: number | null
+          recommendation?: string | null
+          reviewer_email?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          sent_at?: string | null
+          session_id: string
+          status?: string | null
+          strengths?: string[] | null
+          subject_knowledge_rating?: number | null
+          submitted_at?: string | null
+          teaching_skills_rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          areas_for_improvement?: string[] | null
+          communication_rating?: number | null
+          created_at?: string
+          feedback_text?: string | null
+          feedback_token?: string | null
+          feedback_token_expires_at?: string | null
+          id?: string
+          overall_rating?: number | null
+          recommendation?: string | null
+          reviewer_email?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          sent_at?: string | null
+          session_id?: string
+          status?: string | null
+          strengths?: string[] | null
+          subject_knowledge_rating?: number | null
+          submitted_at?: string | null
+          teaching_skills_rating?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "management_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "management_team"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "management_reviews_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mock_interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      management_team: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean | null
+          receives_demo_notifications: boolean | null
+          receives_slot_notifications: boolean | null
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean | null
+          receives_demo_notifications?: boolean | null
+          receives_slot_notifications?: boolean | null
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean | null
+          receives_demo_notifications?: boolean | null
+          receives_slot_notifications?: boolean | null
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mock_interview_sessions: {
         Row: {
           candidate_id: string

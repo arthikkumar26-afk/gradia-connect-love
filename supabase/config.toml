@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.parse-answer-key]
 verify_jwt = false
+
+[functions.send-management-notification]
+verify_jwt = false

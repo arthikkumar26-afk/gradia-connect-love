@@ -606,6 +606,25 @@ export const MockInterviewTab = () => {
           console.error('Error saving booking:', bookingError);
           throw bookingError;
         }
+
+        // Send notification to management team
+        await supabase.functions.invoke('send-management-notification', {
+          body: {
+            notificationType: 'slot_booking',
+            candidateName: profile?.full_name || 'Candidate',
+            candidateEmail: profile?.email,
+            bookingDetails: {
+              date: slotBookingForm.date,
+              time: slotBookingForm.time,
+              segment: slotBookingForm.segment,
+              category: slotBookingForm.category,
+              designation: slotBookingForm.designation,
+              state: slotBookingForm.state,
+              district: slotBookingForm.district
+            },
+            appUrl: window.location.origin
+          }
+        });
       } else {
         // For Stage 4, use selectedSlot
         if (selectedSlot === 'immediately') {
