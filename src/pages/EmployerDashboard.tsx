@@ -30,8 +30,11 @@ import {
   LogIn,
   BellRing,
   LayoutGrid,
-  CreditCard
+  CreditCard,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
 import { Button } from "@/components/ui/button";
@@ -61,6 +64,7 @@ const EmployerDashboard = () => {
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [clientDashboardOpen, setClientDashboardOpen] = useState(false);
   const [newApplications, setNewApplications] = useState(0);
   const { user, profile, isAuthenticated, logout } = useAuth();
 
@@ -162,8 +166,15 @@ const EmployerDashboard = () => {
     { id: "login", label: "Login", icon: LogIn, path: "/employer/login" },
     { id: "jobs", label: "Jobs", icon: Briefcase, path: "/employer/jobs" },
     { id: "job-alert", label: "Job Alert", icon: BellRing, path: "/employer/job-alert" },
-    { id: "client-dashboard", label: "Client-Dashboard", icon: LayoutGrid, path: "/employer/client-dashboard" },
-    { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
+    { 
+      id: "client-dashboard", 
+      label: "Client-Dashboard", 
+      icon: LayoutGrid, 
+      path: "/employer/client-dashboard",
+      children: [
+        { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
+      ]
+    },
     { id: "talent-pool", label: "Talent Pool", icon: Users, path: "/employer/talent-pool" },
     { id: "teams", label: "Teams", icon: UsersRound, path: "/employer/teams" },
     { id: "viva", label: "Viva", icon: Mic, path: "/employer/viva" },
@@ -235,7 +246,66 @@ const EmployerDashboard = () => {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeMenu === item.id;
+            const hasChildren = 'children' in item && item.children && item.children.length > 0;
+            const isChildActive = hasChildren && item.children?.some(child => activeMenu === child.id);
             const showBadge = item.id === "talent-pool" && newApplications > 0;
+
+            // If item has children, render collapsible
+            if (hasChildren) {
+              return (
+                <Collapsible 
+                  key={item.id} 
+                  open={clientDashboardOpen || isChildActive}
+                  onOpenChange={setClientDashboardOpen}
+                >
+                  <CollapsibleTrigger asChild>
+                    <button
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        isActive || isChildActive
+                          ? "bg-accent/10 text-accent font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                      title={!sidebarOpen ? item.label : undefined}
+                    >
+                      <Icon className="h-5 w-5 flex-shrink-0" />
+                      {sidebarOpen && (
+                        <>
+                          <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
+                          {clientDashboardOpen || isChildActive ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </>
+                      )}
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pl-4">
+                    {item.children?.map((child) => {
+                      const ChildIcon = child.icon;
+                      const isChildItemActive = activeMenu === child.id;
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => setActiveMenu(child.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all mt-1 ${
+                            isChildItemActive
+                              ? "bg-accent/10 text-accent font-medium"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                          title={!sidebarOpen ? child.label : undefined}
+                        >
+                          <ChildIcon className="h-4 w-4 flex-shrink-0" />
+                          {sidebarOpen && (
+                            <span className="flex-1 text-left whitespace-nowrap text-sm">{child.label}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
             
             return (
               <button
