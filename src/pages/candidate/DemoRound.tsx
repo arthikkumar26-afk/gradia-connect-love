@@ -155,19 +155,24 @@ export default function DemoRound() {
     };
   }, []);
 
+  // Timer runs based on isStarted state, not isRecording (more reliable)
   useEffect(() => {
-    if (isRecording) {
+    if (isStarted) {
+      console.log('[DemoRound] Starting timer, isStarted:', isStarted);
       timerRef.current = setInterval(() => {
         setTimeElapsed(prev => {
-          if (prev >= MAX_DURATION) {
+          const newTime = prev + 1;
+          console.log('[DemoRound] Timer tick:', newTime);
+          if (newTime >= MAX_DURATION) {
             handleStopDemo();
             return prev;
           }
-          return prev + 1;
+          return newTime;
         });
       }, 1000);
     } else {
       if (timerRef.current) {
+        console.log('[DemoRound] Stopping timer');
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
@@ -175,7 +180,7 @@ export default function DemoRound() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRecording]);
+  }, [isStarted]);
 
   // Update AI instruction based on time and send voice instruction
   useEffect(() => {
@@ -297,6 +302,8 @@ export default function DemoRound() {
   };
 
   const handleStartDemo = async () => {
+    console.log('[DemoRound] handleStartDemo called');
+    
     if (!demoTopic.trim()) {
       toast.error('Please enter your demo topic');
       return;
@@ -310,10 +317,11 @@ export default function DemoRound() {
     try {
       // Generate live view token and update session
       const liveViewToken = crypto.randomUUID();
+      console.log('[DemoRound] Generated liveViewToken:', liveViewToken);
       
       if (sessionId) {
         // Update session with live view token and mark as active
-        await supabase
+        const { error: updateError } = await supabase
           .from('mock_interview_sessions')
           .update({
             live_view_token: liveViewToken,
@@ -321,6 +329,12 @@ export default function DemoRound() {
             live_stream_started_at: new Date().toISOString()
           })
           .eq('id', sessionId);
+        
+        if (updateError) {
+          console.error('[DemoRound] Error updating session:', updateError);
+        } else {
+          console.log('[DemoRound] Session updated with live view token');
+        }
         
         // Notify management that demo is starting with live view link
         supabase.functions.invoke('send-management-notification', {
@@ -340,23 +354,32 @@ export default function DemoRound() {
 
         // Start WebRTC broadcasting for live video
         if (localStream) {
-          console.log('[DemoRound] Starting WebRTC broadcast');
+          console.log('[DemoRound] Starting WebRTC broadcast with localStream');
           startBroadcasting(localStream);
         } else if (videoRef.current?.srcObject) {
           console.log('[DemoRound] Starting WebRTC broadcast from video ref');
           startBroadcasting(videoRef.current.srcObject as MediaStream);
+        } else {
+          console.warn('[DemoRound] No stream available for WebRTC broadcast');
         }
       }
 
+      // Start recording
+      console.log('[DemoRound] Starting recording...');
       await startRecording();
+      console.log('[DemoRound] Recording started successfully');
+      
+      // Set started state AFTER recording starts - this triggers the timer
       setIsStarted(true);
       setTimeElapsed(0);
+      console.log('[DemoRound] Demo started, isStarted set to true');
+      
       toast.success('Demo started! Teach your topic now.');
       
       // Automatically connect Voice AI when demo starts
       connectVoiceAI();
     } catch (error) {
-      console.error('Error starting demo:', error);
+      console.error('[DemoRound] Error starting demo:', error);
       toast.error('Failed to start recording');
     }
   };
@@ -389,10 +412,12 @@ export default function DemoRound() {
   };
 
   useEffect(() => {
-    if (recordedBlob && !isRecording && timeElapsed > 30) {
+    // Submit demo when recording stops and we have a blob
+    if (recordedBlob && !isStarted && timeElapsed > 30) {
+      console.log('[DemoRound] Auto-submitting demo, timeElapsed:', timeElapsed);
       submitDemo();
     }
-  }, [recordedBlob, isRecording]);
+  }, [recordedBlob, isStarted, timeElapsed]);
 
   const submitDemo = async () => {
     if (!recordedBlob || !sessionId) return;
