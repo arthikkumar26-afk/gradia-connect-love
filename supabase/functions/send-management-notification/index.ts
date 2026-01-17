@@ -87,6 +87,29 @@ const handler = async (req: Request): Promise<Response> => {
     if (baseUrl.includes('lovableproject.com')) {
       baseUrl = "https://id-preview--b06fa647-568a-470e-9033-ffe17071d8a6.lovable.app";
     }
+
+    // For demo_started notifications, save the live_view_token to the session
+    let actualToken = liveViewToken;
+    if (notificationType === 'demo_started' && sessionId) {
+      actualToken = liveViewToken || crypto.randomUUID();
+      
+      // Update the session with the live_view_token
+      const { error: updateError } = await supabase
+        .from('mock_interview_sessions')
+        .update({ 
+          live_view_token: actualToken,
+          live_view_active: true,
+          live_stream_started_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+      
+      if (updateError) {
+        console.error("Error updating session with live_view_token:", updateError);
+      } else {
+        console.log(`Session ${sessionId} updated with live_view_token: ${actualToken}`);
+      }
+    }
+
     let emailsSent = 0;
     let feedbackLinksCreated = 0;
 
@@ -166,9 +189,8 @@ const handler = async (req: Request): Promise<Response> => {
         `;
       } else if (notificationType === 'demo_started') {
         // Demo started - send live viewing link
-        // Generate token if not provided
-        const viewToken = liveViewToken || sessionId || crypto.randomUUID();
-        const liveViewLink = `${baseUrl}/admin/live-demo?token=${viewToken}`;
+        // Use the token that was saved to the session (actualToken)
+        const liveViewLink = `${baseUrl}/admin/live-demo?token=${actualToken}`;
 
         subject = `🔴 LIVE NOW - ${candidateName} is Starting Demo Round`;
         htmlContent = `
