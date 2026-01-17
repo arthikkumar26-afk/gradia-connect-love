@@ -109,27 +109,96 @@ export const MockInterviewTab = () => {
     pincode: '',
     programme: '',
     segment: '',
-    department: '',
-    designation: '',
+    category: '',
     classLevel: '',
+    designation: '',
+    department: '',
     classType: '',
     subject: ''
   });
   
-  // Subjects based on class type
-  const getSubjectsForClass = (classType: string) => {
-    switch (classType) {
-      case 'PP':
-        return ['Numeracy', 'Literacy', 'GA'];
-      case 'Primary':
-        return ['Telugu', 'Hindi', 'English', 'Math', 'Gen.Science', 'Social'];
-      case 'HSC':
-        return ['Telugu', 'Hindi', 'English', 'Math', 'Physics', 'Chemistry', 'Bio', 'Social', 'PET'];
-      case 'Numeracy':
-        return ['Numeracy'];
-      default:
-        return [];
+  // Role-based options matching admin MockInterviewPipeline
+  const segmentOptions = ['Pre-Primary', 'Primary', 'High School'];
+
+  const categoryOptions: Record<string, string[]> = {
+    'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
+    'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
+    'High School': ['Board', 'Compititive'],
+  };
+
+  // Class options for High School > Board/Competitive
+  const classLevelOptions: Record<string, string[]> = {
+    'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
+    'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
+  };
+
+  // Subject designations based on class level
+  const classDesignationOptions: Record<string, string[]> = {
+    'CLASS-6,7&8': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology'],
+    'CLASS-9&10': [
+      'Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 
+      'Biology', 'Botany', 'Zoology', 'Social', 'Mental Ability', 'Counsellor', 
+      'Academic Dean', 'Computers', 'Physical Education', 'Principal', 
+      'Soft Skills Trainer', 'French'
+    ],
+    'CLASSES-6,7&8': [
+      'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 
+      'Mental Ability', 'Counsellor'
+    ],
+    'CLASSES-9&10': [
+      'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 
+      'Mental Ability', 'Counsellor', 'Academic Dean'
+    ],
+  };
+
+  const designationOptions: Record<string, Record<string, string[]>> = {
+    'Pre-Primary': {
+      'Teaching': ['MOTHER TEACHER'],
+      'Helping/Supporting': ['ASSO.TEACHER', 'CARE TAKER'],
+      'Admin': ['VICE PRINCIPAL']
+    },
+    'Primary': {
+      'Teaching': ['PRT', 'TGT', 'ASSO.TEACHER'],
+      'Helping/Supporting': ['ASSO.TEACHER'],
+      'Admin': ['VICE PRINCIPAL'],
+      'CLASS-1&2': ['PRT', 'TGT', 'SUBJECT TEACHER'],
+      'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
+    },
+    'High School': {
+      'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
     }
+  };
+
+  // Check if we need to show class level field (for Board or Compititive)
+  const showClassLevel = slotBookingForm.segment === 'High School' && 
+    (slotBookingForm.category === 'Board' || slotBookingForm.category === 'Compititive');
+
+  const getCurrentCategories = () => {
+    return slotBookingForm.segment ? categoryOptions[slotBookingForm.segment] || [] : [];
+  };
+
+  const getCurrentClassLevels = () => {
+    if (!showClassLevel) return [];
+    return classLevelOptions[slotBookingForm.category] || [];
+  };
+
+  const getCurrentDesignations = () => {
+    // For High School Board, designations come from classLevel
+    if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Board') {
+      return classDesignationOptions[slotBookingForm.classLevel] || [];
+    }
+    // For High School Compititive, designations come from classLevel first, then category
+    if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Compititive') {
+      if (slotBookingForm.classLevel) {
+        return classDesignationOptions[slotBookingForm.classLevel] || [];
+      }
+      return designationOptions['High School']?.['Compititive'] || [];
+    }
+    // For other segments, use category-based designations
+    if (slotBookingForm.segment && slotBookingForm.category) {
+      return designationOptions[slotBookingForm.segment]?.[slotBookingForm.category] || [];
+    }
+    return [];
   };
   
   // HR Documents state
@@ -625,9 +694,10 @@ export const MockInterviewTab = () => {
         pincode: '',
         programme: '',
         segment: '',
-        department: '',
-        designation: '',
+        category: '',
         classLevel: '',
+        designation: '',
+        department: '',
         classType: '',
         subject: ''
       });
@@ -1477,73 +1547,47 @@ export const MockInterviewTab = () => {
                               </div>
                             </div>
 
-                            {/* Programme and Segment Row */}
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Programme *</Label>
-                                <Select 
-                                  value={slotBookingForm.programme} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, programme: value }))}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select programme" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border z-50">
-                                    {['State Syllabus', 'CBSE Syllabus', 'Techno Programme', 'Olympiad'].map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
+                            {/* Segment, Category, Designation Row - matching admin algorithm */}
+                            <div className="grid grid-cols-3 gap-3">
                               <div className="space-y-1">
                                 <Label className="text-xs font-medium">Segment *</Label>
                                 <Select 
                                   value={slotBookingForm.segment} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, segment: value }))}
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ 
+                                    ...prev, 
+                                    segment: value, 
+                                    category: '', 
+                                    classLevel: '', 
+                                    designation: '' 
+                                  }))}
                                 >
                                   <SelectTrigger className="h-9 text-sm">
                                     <SelectValue placeholder="Select segment" />
                                   </SelectTrigger>
                                   <SelectContent className="bg-background border z-50">
-                                    {['Pre-Primary', 'Primary', 'Middle School-6/7/8', 'High School-9 & 10'].map(option => (
+                                    {segmentOptions.map(option => (
                                       <SelectItem key={option} value={option}>{option}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
                               </div>
-                            </div>
-
-                            {/* Class Level Row - moved above Department */}
-                            <div className="space-y-1">
-                              <Label className="text-xs font-medium">Class Level *</Label>
-                              <Select 
-                                value={slotBookingForm.classLevel} 
-                                onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classLevel: value }))}
-                              >
-                                <SelectTrigger className="h-9 text-sm">
-                                  <SelectValue placeholder="Select class level" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-background border z-50">
-                                  {['Nursery', 'PP-1 & PP-2', 'C-1 & C-2', 'C-3, C-4 & C-5', 'C-6, C-7 & C-8', 'C-9 & C-10'].map(option => (
-                                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {/* Department and Designation Row */}
-                            <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-xs font-medium">Department *</Label>
+                                <Label className="text-xs font-medium">Category *</Label>
                                 <Select 
-                                  value={slotBookingForm.department} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, department: value }))}
+                                  value={slotBookingForm.category} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ 
+                                    ...prev, 
+                                    category: value, 
+                                    classLevel: '', 
+                                    designation: '' 
+                                  }))}
+                                  disabled={!slotBookingForm.segment}
                                 >
                                   <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select department" />
+                                    <SelectValue placeholder="Select category" />
                                   </SelectTrigger>
                                   <SelectContent className="bg-background border z-50">
-                                    {['Telugu', 'Hindi', 'English', 'Math', 'Science', 'Social', 'Computer'].map(option => (
+                                    {getCurrentCategories().map(option => (
                                       <SelectItem key={option} value={option}>{option}</SelectItem>
                                     ))}
                                   </SelectContent>
@@ -1554,12 +1598,13 @@ export const MockInterviewTab = () => {
                                 <Select 
                                   value={slotBookingForm.designation} 
                                   onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, designation: value }))}
+                                  disabled={showClassLevel ? !slotBookingForm.classLevel : !slotBookingForm.category}
                                 >
                                   <SelectTrigger className="h-9 text-sm">
                                     <SelectValue placeholder="Select designation" />
                                   </SelectTrigger>
                                   <SelectContent className="bg-background border z-50">
-                                    {['Asso.Teacher', 'Teacher', 'Vice-Principal', 'Principal', 'Zonal Co', 'R&D Head', 'SME'].map(option => (
+                                    {getCurrentDesignations().map(option => (
                                       <SelectItem key={option} value={option}>{option}</SelectItem>
                                     ))}
                                   </SelectContent>
@@ -1567,42 +1612,29 @@ export const MockInterviewTab = () => {
                               </div>
                             </div>
 
-                            {/* Class Type and Subject Row */}
-                            <div className="grid grid-cols-2 gap-3">
+                            {/* Class Level Row - only shows for High School Board/Compititive */}
+                            {showClassLevel && (
                               <div className="space-y-1">
-                                <Label className="text-xs font-medium">Class *</Label>
+                                <Label className="text-xs font-medium">Class Level *</Label>
                                 <Select 
-                                  value={slotBookingForm.classType} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classType: value, subject: '' }))}
+                                  value={slotBookingForm.classLevel} 
+                                  onValueChange={(value) => setSlotBookingForm(prev => ({ 
+                                    ...prev, 
+                                    classLevel: value, 
+                                    designation: '' 
+                                  }))}
                                 >
                                   <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select class" />
+                                    <SelectValue placeholder="Select class level" />
                                   </SelectTrigger>
                                   <SelectContent className="bg-background border z-50">
-                                    {['PP', 'Primary', 'HSC', 'Numeracy'].map(option => (
+                                    {getCurrentClassLevels().map(option => (
                                       <SelectItem key={option} value={option}>{option}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Subject *</Label>
-                                <Select 
-                                  value={slotBookingForm.subject} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, subject: value }))}
-                                  disabled={!slotBookingForm.classType}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder={slotBookingForm.classType ? "Select subject" : "Select class first"} />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border z-50">
-                                    {getSubjectsForClass(slotBookingForm.classType).map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
+                            )}
                           </div>
                         </ScrollArea>
 
