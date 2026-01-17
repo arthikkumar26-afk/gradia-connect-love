@@ -165,26 +165,31 @@ serve(async (req) => {
     // Get stage-specific config
     const stageConfig = stageConfigs[stageName] || stageConfigs['Technical Assessment'];
 
-    // Get candidate's segment, category, class_level, and designation from profile
-    const candidateSegment = candidate.segment;
-    const candidateCategory = candidate.category;
-    const candidateDesignation = candidate.preferred_role || candidate.primary_subject;
-    // For class level matching, we'll check the slot_bookings table or profile data
-    // Get class level from the candidate's most recent slot booking if available
+    // Get candidate's segment, category, class_level, and designation from slot booking (primary) or profile (fallback)
+    let candidateSegment: string | null = null;
+    let candidateCategory: string | null = null;
     let candidateClassLevel: string | null = null;
+    let candidateDesignation: string | null = null;
     
-    // Try to get class_level from recent slot booking
+    // Try to get from recent slot booking first (most accurate for question matching)
     const { data: recentBooking } = await supabase
       .from('slot_bookings')
-      .select('class_level')
+      .select('segment, category, class_level, designation')
       .eq('candidate_id', interviewEvent.interview_candidate.candidate_id)
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
     
-    if (recentBooking?.class_level) {
+    if (recentBooking) {
+      candidateSegment = recentBooking.segment;
+      candidateCategory = recentBooking.category;
       candidateClassLevel = recentBooking.class_level;
+      candidateDesignation = recentBooking.designation;
     }
+    
+    // Fallback to profile data if not found in slot booking
+    if (!candidateSegment) candidateSegment = candidate.segment;
+    if (!candidateDesignation) candidateDesignation = candidate.preferred_role || candidate.primary_subject;
 
     console.log(`Candidate profile - Segment: ${candidateSegment}, Category: ${candidateCategory}, Class: ${candidateClassLevel}, Designation: ${candidateDesignation}`);
 

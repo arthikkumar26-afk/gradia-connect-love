@@ -1275,6 +1275,7 @@ export type Database = {
           booking_time: string
           booking_type: string
           candidate_id: string
+          category: string | null
           class_level: string | null
           class_type: string | null
           created_at: string
@@ -1296,6 +1297,7 @@ export type Database = {
           booking_time: string
           booking_type?: string
           candidate_id: string
+          category?: string | null
           class_level?: string | null
           class_type?: string | null
           created_at?: string
@@ -1317,6 +1319,7 @@ export type Database = {
           booking_time?: string
           booking_type?: string
           candidate_id?: string
+          category?: string | null
           class_level?: string | null
           class_type?: string | null
           created_at?: string
