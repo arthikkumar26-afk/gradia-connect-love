@@ -11,7 +11,7 @@ interface WebRTCStreamingOptions {
 }
 
 interface SignalingMessage {
-  type: 'offer' | 'answer' | 'ice-candidate' | 'broadcaster-ready' | 'viewer-joined';
+  type: 'offer' | 'answer' | 'ice-candidate' | 'broadcaster-ready' | 'viewer-joined' | 'request-offer';
   data: any;
   from: string;
   to?: string;
@@ -37,133 +37,19 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   const clientIdRef = useRef<string>(crypto.randomUUID());
-
-  // Initialize Supabase Realtime channel for signaling
-  const initChannel = useCallback(() => {
-    console.log(`[WebRTC ${role}] Initializing channel for session: ${sessionId}`);
-    
-    const channel = supabase.channel(`webrtc-${sessionId}`, {
-      config: {
-        broadcast: { self: false }
-      }
-    });
-
-    channel
-      .on('broadcast', { event: 'signaling' }, ({ payload }) => {
-        handleSignalingMessage(payload as SignalingMessage);
-      })
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const viewers = Object.keys(state).filter(key => {
-          const presence = state[key] as any[];
-          return presence.some(p => p.role === 'viewer');
-        });
-        setViewerCount(viewers.length);
-        console.log(`[WebRTC ${role}] Viewer count: ${viewers.length}`);
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        console.log(`[WebRTC ${role}] Presence join:`, key, newPresences);
-        // If broadcaster, create offer for new viewer
-        if (role === 'broadcaster' && localStreamRef.current) {
-          const newViewers = (newPresences as any[]).filter(p => p.role === 'viewer');
-          newViewers.forEach(viewer => {
-            createOfferForViewer(viewer.clientId);
-          });
-        }
-      })
-      .subscribe(async (status) => {
-        console.log(`[WebRTC ${role}] Channel status: ${status}`);
-        if (status === 'SUBSCRIBED') {
-          setIsConnected(true);
-          // Track presence
-          await channel.track({
-            role,
-            clientId: clientIdRef.current,
-            online_at: new Date().toISOString()
-          });
-          
-          // If viewer, announce joining
-          if (role === 'viewer') {
-            channel.send({
-              type: 'broadcast',
-              event: 'signaling',
-              payload: {
-                type: 'viewer-joined',
-                from: clientIdRef.current,
-                data: {}
-              }
-            });
-          }
-        }
-      });
-
-    channelRef.current = channel;
-    return channel;
-  }, [sessionId, role]);
-
-  // Handle incoming signaling messages
-  const handleSignalingMessage = useCallback(async (message: SignalingMessage) => {
-    console.log(`[WebRTC ${role}] Received signaling:`, message.type, 'from:', message.from);
-    
-    // Ignore our own messages
-    if (message.from === clientIdRef.current) return;
-    
-    // Check if message is meant for us
-    if (message.to && message.to !== clientIdRef.current) return;
-
-    try {
-      switch (message.type) {
-        case 'viewer-joined':
-          if (role === 'broadcaster' && localStreamRef.current) {
-            console.log(`[WebRTC broadcaster] Creating offer for viewer: ${message.from}`);
-            await createOfferForViewer(message.from);
-          }
-          break;
-
-        case 'offer':
-          if (role === 'viewer') {
-            console.log('[WebRTC viewer] Received offer, creating answer');
-            await handleOffer(message.from, message.data);
-          }
-          break;
-
-        case 'answer':
-          if (role === 'broadcaster') {
-            console.log('[WebRTC broadcaster] Received answer');
-            await handleAnswer(message.from, message.data);
-          }
-          break;
-
-        case 'ice-candidate':
-          console.log(`[WebRTC ${role}] Received ICE candidate`);
-          await handleIceCandidate(message.from, message.data);
-          break;
-
-        case 'broadcaster-ready':
-          if (role === 'viewer') {
-            console.log('[WebRTC viewer] Broadcaster is ready');
-            // Announce ourselves again
-            channelRef.current?.send({
-              type: 'broadcast',
-              event: 'signaling',
-              payload: {
-                type: 'viewer-joined',
-                from: clientIdRef.current,
-                data: {}
-              }
-            });
-          }
-          break;
-      }
-    } catch (error) {
-      console.error(`[WebRTC ${role}] Error handling signaling:`, error);
-      onError?.(error as Error);
-    }
-  }, [role, onError]);
+  const broadcastReadyIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isChannelInitializedRef = useRef(false);
 
   // Create peer connection
   const createPeerConnection = useCallback((peerId: string): RTCPeerConnection => {
     console.log(`[WebRTC ${role}] Creating peer connection for: ${peerId}`);
+    
+    // Close existing connection if any
+    const existingPc = peerConnectionsRef.current.get(peerId);
+    if (existingPc) {
+      existingPc.close();
+      peerConnectionsRef.current.delete(peerId);
+    }
     
     const pc = new RTCPeerConnection(ICE_SERVERS);
     
@@ -192,6 +78,21 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
         setIsStreaming(true);
       } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
         setIsStreaming(false);
+        // Try to reconnect if we have a stream
+        if (role === 'viewer' && pc.connectionState === 'failed') {
+          console.log('[WebRTC viewer] Connection failed, requesting new offer');
+          setTimeout(() => {
+            channelRef.current?.send({
+              type: 'broadcast',
+              event: 'signaling',
+              payload: {
+                type: 'request-offer',
+                from: clientIdRef.current,
+                data: {}
+              }
+            });
+          }, 2000);
+        }
       }
     };
 
@@ -213,64 +114,75 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
       return;
     }
 
-    let pc = peerConnectionsRef.current.get(viewerId);
-    if (!pc) {
-      pc = createPeerConnection(viewerId);
-    }
+    console.log('[WebRTC broadcaster] Creating offer for viewer:', viewerId);
+    const pc = createPeerConnection(viewerId);
 
     // Add local tracks
     localStreamRef.current.getTracks().forEach(track => {
-      if (!pc!.getSenders().some(sender => sender.track === track)) {
-        pc!.addTrack(track, localStreamRef.current!);
-      }
+      console.log(`[WebRTC broadcaster] Adding track: ${track.kind}`);
+      pc.addTrack(track, localStreamRef.current!);
     });
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
 
-    console.log('[WebRTC broadcaster] Sending offer to viewer:', viewerId);
-    channelRef.current?.send({
-      type: 'broadcast',
-      event: 'signaling',
-      payload: {
-        type: 'offer',
-        from: clientIdRef.current,
-        to: viewerId,
-        data: pc.localDescription?.toJSON()
-      }
-    });
-  }, [createPeerConnection]);
+      console.log('[WebRTC broadcaster] Sending offer to viewer:', viewerId);
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'signaling',
+        payload: {
+          type: 'offer',
+          from: clientIdRef.current,
+          to: viewerId,
+          data: pc.localDescription?.toJSON()
+        }
+      });
+    } catch (error) {
+      console.error('[WebRTC broadcaster] Error creating offer:', error);
+      onError?.(error as Error);
+    }
+  }, [createPeerConnection, onError]);
 
   // Viewer: Handle incoming offer
   const handleOffer = useCallback(async (broadcasterId: string, offerData: RTCSessionDescriptionInit) => {
-    let pc = peerConnectionsRef.current.get(broadcasterId);
-    if (!pc) {
-      pc = createPeerConnection(broadcasterId);
+    console.log('[WebRTC viewer] Handling offer from broadcaster:', broadcasterId);
+    const pc = createPeerConnection(broadcasterId);
+
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription(offerData));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      console.log('[WebRTC viewer] Sending answer to broadcaster');
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'signaling',
+        payload: {
+          type: 'answer',
+          from: clientIdRef.current,
+          to: broadcasterId,
+          data: pc.localDescription?.toJSON()
+        }
+      });
+    } catch (error) {
+      console.error('[WebRTC viewer] Error handling offer:', error);
+      onError?.(error as Error);
     }
-
-    await pc.setRemoteDescription(new RTCSessionDescription(offerData));
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    console.log('[WebRTC viewer] Sending answer to broadcaster');
-    channelRef.current?.send({
-      type: 'broadcast',
-      event: 'signaling',
-      payload: {
-        type: 'answer',
-        from: clientIdRef.current,
-        to: broadcasterId,
-        data: pc.localDescription?.toJSON()
-      }
-    });
-  }, [createPeerConnection]);
+  }, [createPeerConnection, onError]);
 
   // Broadcaster: Handle incoming answer
   const handleAnswer = useCallback(async (viewerId: string, answerData: RTCSessionDescriptionInit) => {
     const pc = peerConnectionsRef.current.get(viewerId);
     if (pc && pc.signalingState === 'have-local-offer') {
-      await pc.setRemoteDescription(new RTCSessionDescription(answerData));
-      console.log('[WebRTC broadcaster] Answer processed successfully');
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(answerData));
+        console.log('[WebRTC broadcaster] Answer processed successfully');
+      } catch (error) {
+        console.error('[WebRTC broadcaster] Error processing answer:', error);
+      }
+    } else {
+      console.warn('[WebRTC broadcaster] Cannot process answer, invalid state:', pc?.signalingState);
     }
   }, []);
 
@@ -278,21 +190,199 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
   const handleIceCandidate = useCallback(async (peerId: string, candidateData: RTCIceCandidateInit) => {
     const pc = peerConnectionsRef.current.get(peerId);
     if (pc && pc.remoteDescription) {
-      await pc.addIceCandidate(new RTCIceCandidate(candidateData));
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidateData));
+      } catch (error) {
+        console.error(`[WebRTC ${role}] Error adding ICE candidate:`, error);
+      }
+    } else {
+      console.log(`[WebRTC ${role}] Queuing ICE candidate, no remote description yet`);
     }
-  }, []);
+  }, [role]);
+
+  // Handle incoming signaling messages
+  const handleSignalingMessage = useCallback(async (message: SignalingMessage) => {
+    console.log(`[WebRTC ${role}] Received signaling:`, message.type, 'from:', message.from);
+    
+    // Ignore our own messages
+    if (message.from === clientIdRef.current) return;
+    
+    // Check if message is meant for us
+    if (message.to && message.to !== clientIdRef.current) return;
+
+    try {
+      switch (message.type) {
+        case 'viewer-joined':
+        case 'request-offer':
+          if (role === 'broadcaster' && localStreamRef.current) {
+            console.log(`[WebRTC broadcaster] Creating offer for viewer: ${message.from}`);
+            await createOfferForViewer(message.from);
+          }
+          break;
+
+        case 'offer':
+          if (role === 'viewer') {
+            console.log('[WebRTC viewer] Received offer, creating answer');
+            await handleOffer(message.from, message.data);
+          }
+          break;
+
+        case 'answer':
+          if (role === 'broadcaster') {
+            console.log('[WebRTC broadcaster] Received answer');
+            await handleAnswer(message.from, message.data);
+          }
+          break;
+
+        case 'ice-candidate':
+          console.log(`[WebRTC ${role}] Received ICE candidate`);
+          await handleIceCandidate(message.from, message.data);
+          break;
+
+        case 'broadcaster-ready':
+          if (role === 'viewer') {
+            console.log('[WebRTC viewer] Broadcaster is ready, requesting offer');
+            channelRef.current?.send({
+              type: 'broadcast',
+              event: 'signaling',
+              payload: {
+                type: 'viewer-joined',
+                from: clientIdRef.current,
+                data: {}
+              }
+            });
+          }
+          break;
+      }
+    } catch (error) {
+      console.error(`[WebRTC ${role}] Error handling signaling:`, error);
+      onError?.(error as Error);
+    }
+  }, [role, createOfferForViewer, handleOffer, handleAnswer, handleIceCandidate, onError]);
+
+  // Initialize Supabase Realtime channel for signaling
+  const initChannel = useCallback(() => {
+    if (isChannelInitializedRef.current || !sessionId) {
+      console.log(`[WebRTC ${role}] Channel already initialized or no sessionId`);
+      return channelRef.current;
+    }
+    
+    console.log(`[WebRTC ${role}] Initializing channel for session: ${sessionId}`);
+    isChannelInitializedRef.current = true;
+    
+    const channel = supabase.channel(`webrtc-${sessionId}`, {
+      config: {
+        broadcast: { self: false }
+      }
+    });
+
+    channel
+      .on('broadcast', { event: 'signaling' }, ({ payload }) => {
+        handleSignalingMessage(payload as SignalingMessage);
+      })
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const viewers = Object.keys(state).filter(key => {
+          const presence = state[key] as any[];
+          return presence.some(p => p.role === 'viewer');
+        });
+        setViewerCount(viewers.length);
+        console.log(`[WebRTC ${role}] Viewer count: ${viewers.length}`);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log(`[WebRTC ${role}] Presence join:`, key, newPresences);
+        // If broadcaster with stream, create offer for new viewer
+        if (role === 'broadcaster' && localStreamRef.current) {
+          const newViewers = (newPresences as any[]).filter(p => p.role === 'viewer');
+          newViewers.forEach(viewer => {
+            console.log('[WebRTC broadcaster] New viewer joined via presence, creating offer');
+            createOfferForViewer(viewer.clientId);
+          });
+        }
+      })
+      .subscribe(async (status) => {
+        console.log(`[WebRTC ${role}] Channel status: ${status}`);
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+          // Track presence
+          await channel.track({
+            role,
+            clientId: clientIdRef.current,
+            online_at: new Date().toISOString()
+          });
+          
+          // If viewer, announce joining immediately
+          if (role === 'viewer') {
+            console.log('[WebRTC viewer] Announcing viewer-joined');
+            channel.send({
+              type: 'broadcast',
+              event: 'signaling',
+              payload: {
+                type: 'viewer-joined',
+                from: clientIdRef.current,
+                data: {}
+              }
+            });
+            
+            // Keep requesting connection periodically until connected
+            const requestInterval = setInterval(() => {
+              if (peerConnectionsRef.current.size === 0 || 
+                  Array.from(peerConnectionsRef.current.values()).every(pc => pc.connectionState !== 'connected')) {
+                console.log('[WebRTC viewer] Requesting offer again...');
+                channel.send({
+                  type: 'broadcast',
+                  event: 'signaling',
+                  payload: {
+                    type: 'request-offer',
+                    from: clientIdRef.current,
+                    data: {}
+                  }
+                });
+              } else {
+                clearInterval(requestInterval);
+              }
+            }, 3000);
+            
+            // Clear interval after 30 seconds
+            setTimeout(() => clearInterval(requestInterval), 30000);
+          }
+        }
+      });
+
+    channelRef.current = channel;
+    return channel;
+  }, [sessionId, role, handleSignalingMessage, createOfferForViewer]);
 
   // Start broadcasting
   const startBroadcasting = useCallback(async (stream: MediaStream) => {
-    console.log('[WebRTC broadcaster] Starting broadcast');
+    console.log('[WebRTC broadcaster] Starting broadcast with stream:', stream.id);
+    console.log('[WebRTC broadcaster] Stream tracks:', stream.getTracks().map(t => `${t.kind}: ${t.enabled}`));
+    
     localStreamRef.current = stream;
     
     if (!channelRef.current) {
       initChannel();
     }
 
-    // Notify that broadcaster is ready
+    // Announce broadcaster ready periodically to catch late-joining viewers
+    broadcastReadyIntervalRef.current = setInterval(() => {
+      if (localStreamRef.current) {
+        console.log('[WebRTC broadcaster] Broadcasting ready announcement');
+        channelRef.current?.send({
+          type: 'broadcast',
+          event: 'signaling',
+          payload: {
+            type: 'broadcaster-ready',
+            from: clientIdRef.current,
+            data: {}
+          }
+        });
+      }
+    }, 5000);
+
+    // Initial announcement
     setTimeout(() => {
+      console.log('[WebRTC broadcaster] Initial ready announcement');
       channelRef.current?.send({
         type: 'broadcast',
         event: 'signaling',
@@ -311,21 +401,27 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
   const stopBroadcasting = useCallback(() => {
     console.log('[WebRTC broadcaster] Stopping broadcast');
     
+    if (broadcastReadyIntervalRef.current) {
+      clearInterval(broadcastReadyIntervalRef.current);
+      broadcastReadyIntervalRef.current = null;
+    }
+    
     peerConnectionsRef.current.forEach(pc => pc.close());
     peerConnectionsRef.current.clear();
     
     localStreamRef.current = null;
     setIsStreaming(false);
     setIsConnected(false);
+    isChannelInitializedRef.current = false;
   }, []);
 
   // Start viewing (join as viewer)
   const startViewing = useCallback(() => {
-    console.log('[WebRTC viewer] Starting to view');
-    if (!channelRef.current) {
+    console.log('[WebRTC viewer] Starting to view session:', sessionId);
+    if (!channelRef.current && !isChannelInitializedRef.current) {
       initChannel();
     }
-  }, [initChannel]);
+  }, [sessionId, initChannel]);
 
   // Stop viewing
   const stopViewing = useCallback(() => {
@@ -336,15 +432,22 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
     
     setIsStreaming(false);
     setIsConnected(false);
+    isChannelInitializedRef.current = false;
   }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       console.log(`[WebRTC ${role}] Cleaning up`);
+      
+      if (broadcastReadyIntervalRef.current) {
+        clearInterval(broadcastReadyIntervalRef.current);
+      }
+      
       peerConnectionsRef.current.forEach(pc => pc.close());
       peerConnectionsRef.current.clear();
       channelRef.current?.unsubscribe();
+      isChannelInitializedRef.current = false;
     };
   }, [role]);
 
