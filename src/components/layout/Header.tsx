@@ -12,19 +12,41 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { learningCategories } from "@/data/learningCategories";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { supabase } from "@/integrations/supabase/client";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [companyName, setCompanyName] = useState<string | null>(null);
   const {
     isAuthenticated,
     logout,
-    profile
+    profile,
+    user
   } = useAuth();
   const navigate = useNavigate();
   const {
     toast
   } = useToast();
   const userRole = profile?.role; // 'employer' or 'candidate'
+
+  // Fetch company name for employers
+  useEffect(() => {
+    const fetchCompanyName = async () => {
+      if (user?.id && userRole === 'employer') {
+        const { data } = await supabase
+          .from('employer_registrations')
+          .select('company_name')
+          .eq('employer_id', user.id)
+          .single();
+        
+        if (data?.company_name) {
+          setCompanyName(data.company_name);
+        }
+      }
+    };
+    
+    fetchCompanyName();
+  }, [user?.id, userRole]);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -246,6 +268,7 @@ const Header = () => {
                       <User className="h-4 w-4" />
                       {userRole === 'admin' ? 'Admin' : 
                        userRole === 'owner' ? 'Owner' : 
+                       userRole === 'employer' ? (companyName || profile?.company_name || profile?.full_name?.split(' ')[0] || 'Account') :
                        profile?.full_name?.split(' ')[0] || 'Account'}
                       <ChevronDown className="h-3 w-3" />
                     </Button>
