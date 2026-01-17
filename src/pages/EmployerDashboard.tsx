@@ -51,6 +51,7 @@ import { TeamsContent } from "@/components/employer/TeamsContent";
 import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
 import { EmailTemplatesEditor } from "@/components/employer/EmailTemplatesEditor";
 import { VivaContent } from "@/components/employer/VivaContent";
+import { RegistrationContent } from "@/components/employer/RegistrationContent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -402,6 +403,7 @@ const EmployerDashboard = () => {
               </>
             )}
 
+            {activeMenu === "registration" && <RegistrationContent />}
             {activeMenu === "jobs" && <JobManagementContent />}
             {activeMenu === "talent-pool" && <TalentPoolContent />}
             {activeMenu === "placements" && <PlacementsContent />}
