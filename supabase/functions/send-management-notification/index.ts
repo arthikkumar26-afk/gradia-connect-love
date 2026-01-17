@@ -164,9 +164,11 @@ const handler = async (req: Request): Promise<Response> => {
           </body>
           </html>
         `;
-      } else if (notificationType === 'demo_started' && liveViewToken) {
+      } else if (notificationType === 'demo_started') {
         // Demo started - send live viewing link
-        const liveViewLink = `${baseUrl}/admin/live-demo?token=${liveViewToken}`;
+        // Generate token if not provided
+        const viewToken = liveViewToken || sessionId || crypto.randomUUID();
+        const liveViewLink = `${baseUrl}/admin/live-demo?token=${viewToken}`;
 
         subject = `🔴 LIVE NOW - ${candidateName} is Starting Demo Round`;
         htmlContent = `
