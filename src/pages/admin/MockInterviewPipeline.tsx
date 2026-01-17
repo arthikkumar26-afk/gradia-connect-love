@@ -70,6 +70,7 @@ export default function MockInterviewPipeline() {
     stage_type: 'all' as string,
     segment: '',
     category: '',
+    classLevel: '',
     designation: '',
   });
 
@@ -80,6 +81,17 @@ export default function MockInterviewPipeline() {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
     'High School': ['Board', 'Compititive'],
+  };
+
+  // Class options for High School > Board
+  const classLevelOptions: Record<string, string[]> = {
+    'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
+  };
+
+  // Subject designations based on class level
+  const classDesignationOptions: Record<string, string[]> = {
+    'CLASS-6,7&8': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology'],
+    'CLASS-9&10': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology', 'Social Studies'],
   };
 
   const designationOptions: Record<string, Record<string, string[]>> = {
@@ -96,9 +108,16 @@ export default function MockInterviewPipeline() {
       'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
     },
     'High School': {
-      'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
       'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
     }
+  };
+
+  // Check if we need to show class level field
+  const showClassLevel = newPaper.segment === 'High School' && newPaper.category === 'Board';
+
+  const getCurrentClassLevels = () => {
+    if (!showClassLevel) return [];
+    return classLevelOptions[newPaper.category] || [];
   };
 
   const getCurrentCategories = () => {
@@ -107,6 +126,13 @@ export default function MockInterviewPipeline() {
 
   const getCurrentDesignations = () => {
     if (!newPaper.segment || !newPaper.category) return [];
+    
+    // For High School + Board, use class-based designations
+    if (newPaper.segment === 'High School' && newPaper.category === 'Board') {
+      if (!newPaper.classLevel) return [];
+      return classDesignationOptions[newPaper.classLevel] || [];
+    }
+    
     return designationOptions[newPaper.segment]?.[newPaper.category] || [];
   };
 
@@ -488,7 +514,7 @@ export default function MockInterviewPipeline() {
   };
 
   const resetForm = () => {
-    setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', designation: '' });
+    setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', classLevel: '', designation: '' });
     setQuestionPdfFiles([null, null, null, null, null]);
     setAnswerPdfFile(null);
     setSolutionPdfFile(null);
@@ -609,12 +635,12 @@ export default function MockInterviewPipeline() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Role Selection Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={`grid grid-cols-1 gap-4 ${showClassLevel ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
               <div className="space-y-2">
                 <Label>Segment *</Label>
                 <Select 
                   value={newPaper.segment} 
-                  onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', designation: '' }))}
+                  onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', classLevel: '', designation: '' }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select segment" />
@@ -630,7 +656,7 @@ export default function MockInterviewPipeline() {
                 <Label>Category *</Label>
                 <Select 
                   value={newPaper.category} 
-                  onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, designation: '' }))}
+                  onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, classLevel: '', designation: '' }))}
                   disabled={!newPaper.segment}
                 >
                   <SelectTrigger>
@@ -643,12 +669,31 @@ export default function MockInterviewPipeline() {
                   </SelectContent>
                 </Select>
               </div>
+              {showClassLevel && (
+                <div className="space-y-2">
+                  <Label>Class *</Label>
+                  <Select 
+                    value={newPaper.classLevel} 
+                    onValueChange={(v) => setNewPaper(p => ({ ...p, classLevel: v, designation: '' }))}
+                    disabled={!newPaper.category}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getCurrentClassLevels().map(cls => (
+                        <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Designation *</Label>
                 <Select 
                   value={newPaper.designation} 
                   onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
-                  disabled={!newPaper.category}
+                  disabled={showClassLevel ? !newPaper.classLevel : !newPaper.category}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select designation" />
