@@ -25,7 +25,12 @@ import {
   Mail,
   LogOut,
   User,
-  Mic
+  Mic,
+  ClipboardList,
+  LogIn,
+  BellRing,
+  LayoutGrid,
+  CreditCard
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -151,12 +156,17 @@ const EmployerDashboard = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
+    { id: "registration", label: "Registration", icon: ClipboardList, path: "/employer/registration" },
+    { id: "login", label: "Login", icon: LogIn, path: "/employer/login" },
     { id: "jobs", label: "Jobs", icon: Briefcase, path: "/employer/jobs" },
+    { id: "job-alert", label: "Job Alert", icon: BellRing, path: "/employer/job-alert" },
+    { id: "client-dashboard", label: "Client-Dashboard", icon: LayoutGrid, path: "/employer/client-dashboard" },
     { id: "talent-pool", label: "Talent Pool", icon: Users, path: "/employer/talent-pool" },
     { id: "teams", label: "Teams", icon: UsersRound, path: "/employer/teams" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "viva", label: "Viva", icon: Mic, path: "/employer/viva" },
     { id: "placements", label: "Placements", icon: UserCheck, path: "/employer/placements" },
+    { id: "subscriptions", label: "Subscriptions", icon: CreditCard, path: "/employer/subscriptions" },
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
@@ -322,12 +332,17 @@ const EmployerDashboard = () => {
               <BreadcrumbItem>
                 <BreadcrumbPage>
                   {activeMenu === "dashboard" ? "Dashboard" :
+                   activeMenu === "registration" ? "Registration" :
+                   activeMenu === "login" ? "Login" :
                    activeMenu === "jobs" ? "Jobs" :
+                   activeMenu === "job-alert" ? "Job Alert" :
+                   activeMenu === "client-dashboard" ? "Client Dashboard" :
                    activeMenu === "talent-pool" ? "Talent Pool" :
                    activeMenu === "teams" ? "Teams" :
                    activeMenu === "interview-pipeline" ? "Interview Pipeline" :
                    activeMenu === "viva" ? "Viva" :
                    activeMenu === "placements" ? "Placements" :
+                   activeMenu === "subscriptions" ? "Subscriptions" :
                    activeMenu === "email-templates" ? "Email Templates" :
                    activeMenu === "approvals" ? "Approvals" :
                    activeMenu === "settings" ? "Settings" :
