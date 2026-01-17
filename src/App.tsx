@@ -210,7 +210,6 @@ const MainRoutes = () => (
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/trending-jobs" element={<TrendingJobsAdmin />} />
       <Route path="/admin/jobs" element={<JobModeration />} />
       <Route path="/admin/users" element={<AdminUsers />} />
@@ -224,6 +223,7 @@ const MainRoutes = () => (
       <Route path="/admin/feedback" element={<ManagementFeedback />} />
       <Route path="/admin/live-demo" element={<LiveDemoView />} />
       <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
+      <Route path="/admin" element={<AdminDashboard />} />
 
       {/* Owner Routes */}
       <Route path="/owner/login" element={<OwnerLogin />} />
