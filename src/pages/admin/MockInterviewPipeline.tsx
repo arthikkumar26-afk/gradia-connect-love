@@ -91,7 +91,12 @@ export default function MockInterviewPipeline() {
   // Subject designations based on class level
   const classDesignationOptions: Record<string, string[]> = {
     'CLASS-6,7&8': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology'],
-    'CLASS-9&10': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology', 'Social Studies'],
+    'CLASS-9&10': [
+      '1st Language', '2nd Language', '3rd Language', 'Maths', 'Physics', 'Chemistry', 
+      'Biology', 'Botany', 'Zoology', 'Social', 'Mental Ability', 'Counsellor', 
+      'Academic Dean', 'Computers', 'Physical Education', 'Principal', 
+      'Soft Skills Trainer', 'French'
+    ],
   };
 
   const designationOptions: Record<string, Record<string, string[]>> = {
