@@ -1061,6 +1061,9 @@ export type Database = {
           created_at: string
           current_stage_order: number
           id: string
+          live_stream_started_at: string | null
+          live_view_active: boolean | null
+          live_view_token: string | null
           overall_feedback: string | null
           overall_score: number | null
           recording_url: string | null
@@ -1075,6 +1078,9 @@ export type Database = {
           created_at?: string
           current_stage_order?: number
           id?: string
+          live_stream_started_at?: string | null
+          live_view_active?: boolean | null
+          live_view_token?: string | null
           overall_feedback?: string | null
           overall_score?: number | null
           recording_url?: string | null
@@ -1089,6 +1095,9 @@ export type Database = {
           created_at?: string
           current_stage_order?: number
           id?: string
+          live_stream_started_at?: string | null
+          live_view_active?: boolean | null
+          live_view_token?: string | null
           overall_feedback?: string | null
           overall_score?: number | null
           recording_url?: string | null

@@ -277,6 +277,11 @@ export default function ManagementFeedback() {
   }
 
   if (isSubmitted) {
+    // Auto close after 3 seconds
+    setTimeout(() => {
+      window.close();
+    }, 3000);
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4">
         <Card className="max-w-md w-full">
@@ -286,8 +291,11 @@ export default function ManagementFeedback() {
             <p className="text-muted-foreground mb-4">
               Your feedback has been submitted successfully. The candidate will be able to view your review.
             </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              This window will close automatically in a few seconds...
+            </p>
             <Button onClick={() => window.close()} variant="outline">
-              Close Window
+              Close Window Now
             </Button>
           </CardContent>
         </Card>
