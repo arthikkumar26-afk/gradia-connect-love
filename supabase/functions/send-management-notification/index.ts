@@ -256,7 +256,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log(`Attempting to send email to ${member.email} with subject: ${subject}`);
         const { data: emailData, error: emailError } = await resend.emails.send({
-          from: "Gradia <onboarding@resend.dev>",
+          from: "Gradia <noreply@gradia.co.in>",
           to: [member.email],
           subject,
           html: htmlContent,

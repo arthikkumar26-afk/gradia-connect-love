@@ -400,7 +400,7 @@ Return your evaluation as a JSON object with this structure:
         `;
 
         await resend.emails.send({
-          from: 'Gradia <onboarding@resend.dev>',
+          from: 'Gradia <noreply@gradia.co.in>',
           to: [candidateProfile.email],
           subject: `🎓 Demo Round Feedback - Score: ${evaluation.overallScore}%`,
           html: emailHtml
