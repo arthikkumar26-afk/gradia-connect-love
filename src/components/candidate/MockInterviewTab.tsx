@@ -596,16 +596,12 @@ export const MockInterviewTab = () => {
             state: slotBookingForm.state,
             district: slotBookingForm.district,
             pincode: slotBookingForm.pincode || null,
-            programme: slotBookingForm.programme,
             segment: slotBookingForm.segment,
-            department: slotBookingForm.department,
+            category: slotBookingForm.category || null,
             designation: slotBookingForm.designation,
-            class_level: slotBookingForm.classLevel,
-            class_type: slotBookingForm.classType,
-            subject: slotBookingForm.subject,
+            class_level: slotBookingForm.classLevel || null,
             status: 'confirmed'
           });
-        
         if (bookingError) {
           console.error('Error saving booking:', bookingError);
           throw bookingError;
@@ -1659,10 +1655,10 @@ export const MockInterviewTab = () => {
                         <div className="flex justify-end pt-2 border-t">
                           <Button 
                             onClick={bookSlot}
-                          disabled={
+                            disabled={
                               !slotBookingForm.date || !slotBookingForm.time || !slotBookingForm.state || 
-                              !slotBookingForm.district || !slotBookingForm.programme || !slotBookingForm.segment || 
-                              !slotBookingForm.department || !slotBookingForm.designation || !slotBookingForm.classLevel ||
+                              !slotBookingForm.district || !slotBookingForm.segment || !slotBookingForm.category ||
+                              !slotBookingForm.designation || (showClassLevel && !slotBookingForm.classLevel) ||
                               isBookingSlot
                             }
                             size="sm"
