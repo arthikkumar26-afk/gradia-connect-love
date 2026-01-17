@@ -78,9 +78,13 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
         setIsStreaming(true);
       } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
         setIsStreaming(false);
-        // Try to reconnect if we have a stream
-        if (role === 'viewer' && pc.connectionState === 'failed') {
-          console.log('[WebRTC viewer] Connection failed, requesting new offer');
+        // Try to reconnect if viewer
+        if (role === 'viewer') {
+          console.log('[WebRTC viewer] Connection failed/disconnected, requesting new offer');
+          // Close the failed connection
+          pc.close();
+          peerConnectionsRef.current.delete(peerId);
+          
           setTimeout(() => {
             channelRef.current?.send({
               type: 'broadcast',
@@ -91,14 +95,33 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
                 data: {}
               }
             });
-          }, 2000);
+          }, 1000);
+        }
+      }
+    };
+    
+    // Monitor ICE connection state for debugging
+    pc.oniceconnectionstatechange = () => {
+      console.log(`[WebRTC ${role}] ICE connection state: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === 'failed') {
+        console.log(`[WebRTC ${role}] ICE failed, attempting restart`);
+        if (role === 'broadcaster') {
+          pc.restartIce();
         }
       }
     };
 
     pc.ontrack = (event) => {
-      console.log(`[WebRTC ${role}] Received remote track:`, event.track.kind);
+      console.log(`[WebRTC ${role}] Received remote track:`, event.track.kind, 'enabled:', event.track.enabled);
+      console.log(`[WebRTC ${role}] Track readyState:`, event.track.readyState);
+      
+      // Monitor track state changes
+      event.track.onended = () => console.log(`[WebRTC ${role}] Track ${event.track.kind} ended`);
+      event.track.onmute = () => console.log(`[WebRTC ${role}] Track ${event.track.kind} muted`);
+      event.track.onunmute = () => console.log(`[WebRTC ${role}] Track ${event.track.kind} unmuted`);
+      
       if (event.streams[0]) {
+        console.log(`[WebRTC ${role}] Stream has ${event.streams[0].getTracks().length} tracks`);
         onStreamReceived?.(event.streams[0]);
       }
     };
