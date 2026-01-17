@@ -254,12 +254,15 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Send email
       try {
-        const { error: emailError } = await resend.emails.send({
+        console.log(`Attempting to send email to ${member.email} with subject: ${subject}`);
+        const { data: emailData, error: emailError } = await resend.emails.send({
           from: "Gradia <onboarding@resend.dev>",
           to: [member.email],
           subject,
           html: htmlContent,
         });
+        
+        console.log("Resend response:", { emailData, emailError });
 
         if (emailError) {
           console.error(`Error sending email to ${member.email}:`, emailError);
