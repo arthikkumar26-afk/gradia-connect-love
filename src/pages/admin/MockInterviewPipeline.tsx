@@ -472,19 +472,21 @@ export default function MockInterviewPipeline() {
           pdfUrl = urlData.publicUrl;
         }
 
-        // Auto-generate title from segment, category, designation, and set number
-        const autoTitle = `${newPaper.segment} - ${newPaper.category} - ${newPaper.designation} - Set ${set.setNumber}`;
+        // Auto-generate title including class level if applicable
+        const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
+        const autoTitleWithClass = `${newPaper.segment} - ${newPaper.category}${classInfo} - ${newPaper.designation} - Set ${set.setNumber}`;
 
         const { data: paperData, error: paperError } = await supabase
           .from('interview_question_papers')
           .insert({
-            title: autoTitle,
+            title: autoTitleWithClass,
             description: newPaper.description || null,
             stage_type: newPaper.stage_type,
             pdf_url: pdfUrl || 'manual-entry',
             created_by: user?.id,
             segment: newPaper.segment || null,
             category: newPaper.category || null,
+            class_level: newPaper.classLevel || null,
             designation: newPaper.designation || null
           })
           .select()

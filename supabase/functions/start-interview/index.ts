@@ -165,12 +165,28 @@ serve(async (req) => {
     // Get stage-specific config
     const stageConfig = stageConfigs[stageName] || stageConfigs['Technical Assessment'];
 
-    // Get candidate's segment, category, and designation from profile
+    // Get candidate's segment, category, class_level, and designation from profile
     const candidateSegment = candidate.segment;
     const candidateCategory = candidate.category;
     const candidateDesignation = candidate.preferred_role || candidate.primary_subject;
+    // For class level matching, we'll check the slot_bookings table or profile data
+    // Get class level from the candidate's most recent slot booking if available
+    let candidateClassLevel: string | null = null;
+    
+    // Try to get class_level from recent slot booking
+    const { data: recentBooking } = await supabase
+      .from('slot_bookings')
+      .select('class_level')
+      .eq('candidate_id', interviewEvent.interview_candidate.candidate_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (recentBooking?.class_level) {
+      candidateClassLevel = recentBooking.class_level;
+    }
 
-    console.log(`Candidate profile - Segment: ${candidateSegment}, Category: ${candidateCategory}, Designation: ${candidateDesignation}`);
+    console.log(`Candidate profile - Segment: ${candidateSegment}, Category: ${candidateCategory}, Class: ${candidateClassLevel}, Designation: ${candidateDesignation}`);
 
     // Check if questions already exist for this event
     const { data: existingResponse } = await supabase
@@ -255,8 +271,8 @@ serve(async (req) => {
     let usingAdminQuestions = false;
 
     // FIRST: Try to fetch questions from admin-uploaded question papers
-    // Match based on candidate's segment, category, and designation
-    if (candidateSegment || candidateCategory || candidateDesignation) {
+    // Match based on candidate's segment, category, class_level, and designation
+    if (candidateSegment || candidateCategory || candidateDesignation || candidateClassLevel) {
       console.log('Searching for admin-uploaded question papers matching candidate profile...');
       
       // Build query to find matching question paper
@@ -277,6 +293,9 @@ serve(async (req) => {
       }
       if (candidateCategory) {
         query = query.eq('category', candidateCategory);
+      }
+      if (candidateClassLevel) {
+        query = query.eq('class_level', candidateClassLevel);
       }
       if (candidateDesignation) {
         query = query.eq('designation', candidateDesignation);

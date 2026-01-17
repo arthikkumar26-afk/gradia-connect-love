@@ -585,6 +585,7 @@ export type Database = {
       interview_question_papers: {
         Row: {
           category: string | null
+          class_level: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -599,6 +600,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          class_level?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -613,6 +615,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          class_level?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
