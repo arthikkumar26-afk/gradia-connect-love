@@ -67,7 +67,9 @@ export default function MockInterviewPipeline() {
   const [isParsing, setIsParsing] = useState(false);
   const [activeTab, setActiveTab] = useState("questions");
   const [createMode, setCreateMode] = useState<'pdf' | 'manual'>('pdf');
-  const [manualQuestions, setManualQuestions] = useState<ManualQuestion[]>([]);
+  const [manualQuestionsSets, setManualQuestionsSets] = useState<ManualQuestion[][]>([[], [], [], []]);
+  const [activeManualSet, setActiveManualSet] = useState(0);
+  const setLabels = ['A', 'B', 'C', 'D'];
   
   // Preview modal states
   const [showPreview, setShowPreview] = useState(false);
@@ -608,11 +610,12 @@ export default function MockInterviewPipeline() {
     setExtractedQuestionsSets([[], [], [], [], []]);
     setExtractedAnswers([]);
     setExtractedSolutions([]);
-    setManualQuestions([]);
+    setManualQuestionsSets([[], [], [], []]);
+    setActiveManualSet(0);
     setCreateMode('pdf');
   };
 
-  // Save manual questions
+  // Save manual questions - all sets
   const saveManualQuestions = async () => {
     if (!newPaper.segment) {
       toast.error('Please select a segment');
@@ -626,8 +629,14 @@ export default function MockInterviewPipeline() {
       toast.error('Please select a designation');
       return;
     }
-    if (manualQuestions.length === 0) {
-      toast.error('Please add at least one question');
+    
+    // Check if at least one set has questions
+    const validSets = manualQuestionsSets
+      .map((questions, index) => ({ questions, setLabel: setLabels[index] }))
+      .filter(set => set.questions.length > 0);
+    
+    if (validSets.length === 0) {
+      toast.error('Please add at least one question in any set');
       return;
     }
 
@@ -635,87 +644,90 @@ export default function MockInterviewPipeline() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Auto-generate title including class level and core subject if applicable
-      const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
-      const subjectInfo = newPaper.coreSubject ? ` - ${newPaper.coreSubject}` : '';
-      const autoTitle = `${newPaper.segment} - ${newPaper.category}${classInfo}${subjectInfo} - ${newPaper.designation} - Manual`;
+      // Save each valid set as a separate paper
+      for (const set of validSets) {
+        // Auto-generate title including class level, core subject and set label
+        const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
+        const subjectInfo = newPaper.coreSubject ? ` - ${newPaper.coreSubject}` : '';
+        const autoTitle = `${newPaper.segment} - ${newPaper.category}${classInfo}${subjectInfo} - ${newPaper.designation} - Set ${set.setLabel}`;
 
-      const { data: paperData, error: paperError } = await supabase
-        .from('interview_question_papers')
-        .insert({
-          title: autoTitle,
-          description: newPaper.description || null,
-          stage_type: newPaper.stage_type,
-          pdf_url: 'manual-entry',
-          created_by: user?.id,
-          segment: newPaper.segment || null,
-          category: newPaper.category || null,
-          class_level: newPaper.classLevel || null,
-          designation: newPaper.designation || null
-        })
-        .select()
-        .single();
-
-      if (paperError) throw paperError;
-
-      // Insert questions
-      const questionsToInsert = manualQuestions.map((q, index) => ({
-        paper_id: paperData.id,
-        question_number: q.question_number,
-        question_text: q.question_text,
-        question_type: q.question_type,
-        options: q.question_type === 'mcq' ? q.options : null,
-        marks: q.marks,
-        display_order: index
-      }));
-
-      const { data: insertedQuestions, error: questionsError } = await supabase
-        .from('interview_questions')
-        .insert(questionsToInsert)
-        .select();
-
-      if (questionsError) throw questionsError;
-
-      // Insert answer keys for MCQ questions
-      if (insertedQuestions) {
-        const answerKeysToInsert = manualQuestions
-          .map((q, index) => {
-            const insertedQ = insertedQuestions[index];
-            if (!insertedQ) return null;
-
-            if (q.question_type === 'mcq' && q.correct_answer_index !== undefined) {
-              return {
-                question_id: insertedQ.id,
-                answer_text: q.options[q.correct_answer_index] || '',
-                keywords: [q.options[q.correct_answer_index] || ''],
-                is_case_sensitive: false,
-                min_keyword_match_percent: 100
-              };
-            } else if (q.question_type === 'text' && q.correct_answer_text) {
-              return {
-                question_id: insertedQ.id,
-                answer_text: q.correct_answer_text,
-                keywords: q.correct_answer_text.split(/[,\s]+/).filter((k: string) => k.length > 2),
-                is_case_sensitive: false,
-                min_keyword_match_percent: 50
-              };
-            }
-            return null;
+        const { data: paperData, error: paperError } = await supabase
+          .from('interview_question_papers')
+          .insert({
+            title: autoTitle,
+            description: newPaper.description || null,
+            stage_type: newPaper.stage_type,
+            pdf_url: 'manual-entry',
+            created_by: user?.id,
+            segment: newPaper.segment || null,
+            category: newPaper.category || null,
+            class_level: newPaper.classLevel || null,
+            designation: newPaper.designation || null
           })
-          .filter(Boolean);
+          .select()
+          .single();
 
-        if (answerKeysToInsert.length > 0) {
-          const { error: answersError } = await supabase
-            .from('interview_answer_keys')
-            .insert(answerKeysToInsert);
+        if (paperError) throw paperError;
 
-          if (answersError) {
-            console.error('Error inserting answer keys:', answersError);
+        // Insert questions
+        const questionsToInsert = set.questions.map((q, index) => ({
+          paper_id: paperData.id,
+          question_number: q.question_number,
+          question_text: q.question_text,
+          question_type: q.question_type,
+          options: q.question_type === 'mcq' ? q.options : null,
+          marks: q.marks,
+          display_order: index
+        }));
+
+        const { data: insertedQuestions, error: questionsError } = await supabase
+          .from('interview_questions')
+          .insert(questionsToInsert)
+          .select();
+
+        if (questionsError) throw questionsError;
+
+        // Insert answer keys for MCQ questions
+        if (insertedQuestions) {
+          const answerKeysToInsert = set.questions
+            .map((q, index) => {
+              const insertedQ = insertedQuestions[index];
+              if (!insertedQ) return null;
+
+              if (q.question_type === 'mcq' && q.correct_answer_index !== undefined) {
+                return {
+                  question_id: insertedQ.id,
+                  answer_text: q.options[q.correct_answer_index] || '',
+                  keywords: [q.options[q.correct_answer_index] || ''],
+                  is_case_sensitive: false,
+                  min_keyword_match_percent: 100
+                };
+              } else if (q.question_type === 'text' && q.correct_answer_text) {
+                return {
+                  question_id: insertedQ.id,
+                  answer_text: q.correct_answer_text,
+                  keywords: q.correct_answer_text.split(/[,\s]+/).filter((k: string) => k.length > 2),
+                  is_case_sensitive: false,
+                  min_keyword_match_percent: 50
+                };
+              }
+              return null;
+            })
+            .filter(Boolean);
+
+          if (answerKeysToInsert.length > 0) {
+            const { error: answersError } = await supabase
+              .from('interview_answer_keys')
+              .insert(answerKeysToInsert);
+
+            if (answersError) {
+              console.error('Error inserting answer keys:', answersError);
+            }
           }
         }
       }
 
-      toast.success('Question paper saved successfully!');
+      toast.success(`${validSets.length} question paper(s) saved successfully!`);
       resetForm();
       loadPapers();
     } catch (error) {
@@ -1110,10 +1122,36 @@ export default function MockInterviewPipeline() {
 
               {/* Manual Creation Mode */}
               <TabsContent value="manual" className="space-y-6 mt-6">
-                <ManualQuestionCreator 
-                  questions={manualQuestions}
-                  onQuestionsChange={setManualQuestions}
-                />
+                {/* Set Tabs A, B, C, D */}
+                <Tabs value={`set-${activeManualSet}`} onValueChange={(v) => setActiveManualSet(parseInt(v.replace('set-', '')))}>
+                  <TabsList className="mb-4">
+                    {setLabels.map((label, index) => (
+                      <TabsTrigger key={index} value={`set-${index}`} className="relative">
+                        Set {label}
+                        {manualQuestionsSets[index].length > 0 && (
+                          <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
+                            {manualQuestionsSets[index].length}
+                          </Badge>
+                        )}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {setLabels.map((label, index) => (
+                    <TabsContent key={index} value={`set-${index}`}>
+                      <ManualQuestionCreator 
+                        questions={manualQuestionsSets[index]}
+                        onQuestionsChange={(questions) => {
+                          setManualQuestionsSets(prev => {
+                            const newSets = [...prev];
+                            newSets[index] = questions;
+                            return newSets;
+                          });
+                        }}
+                      />
+                    </TabsContent>
+                  ))}
+                </Tabs>
 
                 {/* Manual Mode Save Button */}
                 <div className="flex justify-end gap-3 pt-4 border-t">
@@ -1122,13 +1160,13 @@ export default function MockInterviewPipeline() {
                   </Button>
                   <Button 
                     onClick={saveManualQuestions}
-                    disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || manualQuestions.length === 0}
+                    disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || !manualQuestionsSets.some(set => set.length > 0)}
                   >
                     {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     Save Question Paper
-                    {manualQuestions.length > 0 && (
+                    {manualQuestionsSets.some(set => set.length > 0) && (
                       <span className="ml-1 text-xs opacity-75">
-                        ({manualQuestions.length} questions)
+                        ({manualQuestionsSets.filter(set => set.length > 0).length} sets)
                       </span>
                     )}
                   </Button>
