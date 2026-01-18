@@ -84,16 +84,18 @@ export default function MockInterviewPipeline() {
     segment: '',
     category: '',
     classLevel: '',
+    coreSubject: '',
     designation: '',
   });
 
   // Role-based options
-  const segmentOptions = ['Pre-Primary', 'Primary', 'High School'];
+  const segmentOptions = ['Pre-Primary', 'Primary', 'High School', 'School'];
 
   const categoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
     'High School': ['Board', 'Compititive'],
+    'School': ['CBSE', 'State Board'],
   };
 
   // Class options for High School > Board/Competitive
@@ -101,6 +103,16 @@ export default function MockInterviewPipeline() {
     'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
     'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
   };
+
+  // Core subjects for School segment
+  const coreSubjectOptions = [
+    'English', 'Maths', 'Physics', 'Chemistry', 'Biology', 'Social', 'Others'
+  ];
+
+  // Designations for School segment
+  const schoolDesignationOptions = [
+    'Principal', 'Cluster Principal', 'SME', 'RP', 'Vice Principal', 'Dean', 'Academic Dean'
+  ];
 
   // Subject designations based on class level
   const classDesignationOptions: Record<string, string[]> = {
@@ -136,11 +148,18 @@ export default function MockInterviewPipeline() {
     },
     'High School': {
       'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
+    },
+    'School': {
+      'CBSE': schoolDesignationOptions,
+      'State Board': schoolDesignationOptions
     }
   };
 
   // Check if we need to show class level field (for Board or Compititive)
   const showClassLevel = newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive');
+  
+  // Check if we need to show core subject field (for School segment)
+  const showCoreSubject = newPaper.segment === 'School';
 
   const getCurrentClassLevels = () => {
     if (!showClassLevel) return [];
@@ -475,9 +494,10 @@ export default function MockInterviewPipeline() {
           pdfUrl = urlData.publicUrl;
         }
 
-        // Auto-generate title including class level if applicable
+        // Auto-generate title including class level and core subject if applicable
         const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
-        const autoTitleWithClass = `${newPaper.segment} - ${newPaper.category}${classInfo} - ${newPaper.designation} - Set ${set.setNumber}`;
+        const subjectInfo = newPaper.coreSubject ? ` - ${newPaper.coreSubject}` : '';
+        const autoTitleWithClass = `${newPaper.segment} - ${newPaper.category}${classInfo}${subjectInfo} - ${newPaper.designation} - Set ${set.setNumber}`;
 
         const { data: paperData, error: paperError } = await supabase
           .from('interview_question_papers')
@@ -581,7 +601,7 @@ export default function MockInterviewPipeline() {
   };
 
   const resetForm = () => {
-    setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', classLevel: '', designation: '' });
+    setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', classLevel: '', coreSubject: '', designation: '' });
     setQuestionPdfFiles([null, null, null, null, null]);
     setAnswerPdfFile(null);
     setSolutionPdfFile(null);
@@ -615,9 +635,10 @@ export default function MockInterviewPipeline() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Auto-generate title including class level if applicable
+      // Auto-generate title including class level and core subject if applicable
       const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
-      const autoTitle = `${newPaper.segment} - ${newPaper.category}${classInfo} - ${newPaper.designation} - Manual`;
+      const subjectInfo = newPaper.coreSubject ? ` - ${newPaper.coreSubject}` : '';
+      const autoTitle = `${newPaper.segment} - ${newPaper.category}${classInfo}${subjectInfo} - ${newPaper.designation} - Manual`;
 
       const { data: paperData, error: paperError } = await supabase
         .from('interview_question_papers')
@@ -817,12 +838,12 @@ export default function MockInterviewPipeline() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Role Selection Fields */}
-            <div className={`grid grid-cols-1 gap-4 ${showClassLevel ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+            <div className={`grid grid-cols-1 gap-4 ${showClassLevel || showCoreSubject ? 'md:grid-cols-5' : 'md:grid-cols-3'}`}>
               <div className="space-y-2">
                 <Label>Segment *</Label>
                 <Select 
                   value={newPaper.segment} 
-                  onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', classLevel: '', designation: '' }))}
+                  onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', classLevel: '', coreSubject: '', designation: '' }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select segment" />
@@ -838,7 +859,7 @@ export default function MockInterviewPipeline() {
                 <Label>Category *</Label>
                 <Select 
                   value={newPaper.category} 
-                  onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, classLevel: '', designation: '' }))}
+                  onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, classLevel: '', coreSubject: '', designation: '' }))}
                   disabled={!newPaper.segment}
                 >
                   <SelectTrigger>
@@ -865,6 +886,25 @@ export default function MockInterviewPipeline() {
                     <SelectContent>
                       {getCurrentClassLevels().map(cls => (
                         <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {showCoreSubject && (
+                <div className="space-y-2">
+                  <Label>Core Subject *</Label>
+                  <Select 
+                    value={newPaper.coreSubject} 
+                    onValueChange={(v) => setNewPaper(p => ({ ...p, coreSubject: v }))}
+                    disabled={!newPaper.category}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select core subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {coreSubjectOptions.map(subj => (
+                        <SelectItem key={subj} value={subj}>{subj}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
