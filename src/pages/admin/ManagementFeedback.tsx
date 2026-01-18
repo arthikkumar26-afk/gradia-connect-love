@@ -190,6 +190,59 @@ export default function ManagementFeedback() {
 
       if (error) throw error;
 
+      // Check if all management reviews for this session are now submitted
+      const { data: allReviews } = await supabase
+        .from('management_reviews')
+        .select('id, status')
+        .eq('session_id', review.session_id);
+
+      const allSubmitted = allReviews?.every(r => r.status === 'submitted' || r.id === review.id);
+
+      // If all reviews are submitted, advance the session stage
+      if (allSubmitted) {
+        // Get current session to check stage
+        const { data: session } = await supabase
+          .from('mock_interview_sessions')
+          .select('current_stage_order')
+          .eq('id', review.session_id)
+          .maybeSingle();
+
+        // Only advance if currently at Demo Feedback stage (6)
+        if (session && session.current_stage_order === 6) {
+          // Check if stage result already exists
+          const { data: existingResult } = await supabase
+            .from('mock_interview_stage_results')
+            .select('id')
+            .eq('session_id', review.session_id)
+            .eq('stage_order', 6)
+            .maybeSingle();
+
+          if (!existingResult) {
+            // Create stage result for Demo Feedback
+            await supabase
+              .from('mock_interview_stage_results')
+              .insert({
+                session_id: review.session_id,
+                stage_name: 'Demo Feedback',
+                stage_order: 6,
+                ai_score: formData.overall_rating * 20, // Convert 1-5 to 0-100
+                ai_feedback: `Management feedback received. Recommendation: ${formData.recommendation}. ${formData.feedback_text || ''}`,
+                passed: formData.recommendation === 'strongly_recommend' || formData.recommendation === 'recommend',
+                completed_at: new Date().toISOString()
+              });
+          }
+
+          // Update session to next stage (HR Documents - stage 7)
+          await supabase
+            .from('mock_interview_sessions')
+            .update({ 
+              current_stage_order: 7,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', review.session_id);
+        }
+      }
+
       toast.success("Feedback submitted successfully!");
       setIsSubmitted(true);
     } catch (error) {
