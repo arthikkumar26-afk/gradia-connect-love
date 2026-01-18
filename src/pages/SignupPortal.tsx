@@ -86,6 +86,64 @@ const SignupPortal = () => {
   const [jobSalary, setJobSalary] = useState("");
   const [jobQualification, setJobQualification] = useState("");
   const [jobExperience, setJobExperience] = useState("");
+  const [savedJobs, setSavedJobs] = useState<Array<{
+    id: string;
+    date: string;
+    city: string;
+    schoolName: string;
+    segment: string;
+    department: string;
+    designation: string;
+    salary: string;
+    qualification: string;
+    experience: string;
+    status: string;
+  }>>([]);
+
+  const handleSaveJob = () => {
+    if (!jobDesignation || !jobCity || !schoolName) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in at least Designation, City, and School Name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newJob = {
+      id: Date.now().toString(),
+      date: jobDate,
+      city: jobCity,
+      schoolName: schoolName,
+      segment: jobSegment,
+      department: jobDepartment,
+      designation: jobDesignation,
+      salary: jobSalary,
+      qualification: jobQualification,
+      experience: jobExperience,
+      status: "Draft",
+    };
+
+    setSavedJobs([...savedJobs, newJob]);
+    
+    // Reset form
+    setJobDate("");
+    setJobCity("");
+    setSchoolName("");
+    setJobSegment("");
+    setJobDepartment("");
+    setJobDesignation("");
+    setJobSalary("");
+    setJobQualification("");
+    setJobExperience("");
+    setShowAddJobForm(false);
+
+    toast({
+      title: "Job Saved",
+      description: "Your job has been saved successfully!",
+    });
+  };
+
   // Employer form states
   const [companyName, setCompanyName] = useState("");
   const [companyCategory, setCompanyCategory] = useState("");
@@ -1224,7 +1282,10 @@ const SignupPortal = () => {
                               </div>
                             </div>
                             <div className="flex gap-2 mt-4">
-                              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                              <Button 
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={handleSaveJob}
+                              >
                                 <Plus className="h-4 w-4 mr-2" />
                                 Save Job
                               </Button>
@@ -1243,32 +1304,37 @@ const SignupPortal = () => {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="border-b border-slate-700">
-                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Job Title</th>
-                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Department</th>
-                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Location</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Designation</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">School Name</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">City</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Salary</th>
                                 <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
                                 <th className="text-left py-3 px-4 text-slate-400 font-medium">Actions</th>
                               </tr>
                             </thead>
                             <tbody>
-                              <tr className="border-b border-slate-700/50">
-                                <td className="py-3 px-4 text-white">Software Engineer</td>
-                                <td className="py-3 px-4 text-slate-300">Engineering</td>
-                                <td className="py-3 px-4 text-slate-300">Hyderabad</td>
-                                <td className="py-3 px-4"><span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">Active</span></td>
-                                <td className="py-3 px-4">
-                                  <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">Edit</Button>
-                                </td>
-                              </tr>
-                              <tr className="border-b border-slate-700/50">
-                                <td className="py-3 px-4 text-white">Product Manager</td>
-                                <td className="py-3 px-4 text-slate-300">Product</td>
-                                <td className="py-3 px-4 text-slate-300">Bangalore</td>
-                                <td className="py-3 px-4"><span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">Draft</span></td>
-                                <td className="py-3 px-4">
-                                  <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">Edit</Button>
-                                </td>
-                              </tr>
+                              {savedJobs.length === 0 ? (
+                                <tr>
+                                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                                    No jobs created yet. Click "Add New Job" to create your first job posting.
+                                  </td>
+                                </tr>
+                              ) : (
+                                savedJobs.map((job) => (
+                                  <tr key={job.id} className="border-b border-slate-700/50">
+                                    <td className="py-3 px-4 text-white capitalize">{job.designation}</td>
+                                    <td className="py-3 px-4 text-slate-300">{job.schoolName}</td>
+                                    <td className="py-3 px-4 text-slate-300 capitalize">{job.city}</td>
+                                    <td className="py-3 px-4 text-slate-300">₹{job.salary}</td>
+                                    <td className="py-3 px-4">
+                                      <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">{job.status}</span>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">Edit</Button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
                             </tbody>
                           </table>
                         </div>
