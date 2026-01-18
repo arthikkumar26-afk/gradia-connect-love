@@ -19,7 +19,7 @@ import { SignupWizard } from "@/components/candidate/signup/SignupWizard";
 import { cn } from "@/lib/utils";
 
 type UserRole = "candidate" | "employer" | null;
-type SidebarOption = "registration" | "login" | "job-alert" | "dashboard";
+type SidebarOption = "become-employer" | "registration" | "login" | "job-alert" | "dashboard";
 
 const companyCategories = [
   "IT & Technology",
@@ -180,6 +180,7 @@ const SignupPortal = () => {
   ];
 
   const employerSidebarItems = [
+    { id: "become-employer" as SidebarOption, label: "Become an Employer", icon: Briefcase },
     { id: "registration" as SidebarOption, label: "Registration", icon: UserPlus },
     { id: "login" as SidebarOption, label: "Login", icon: LogIn },
     { id: "job-alert" as SidebarOption, label: "Job Alert", icon: Bell },
@@ -242,7 +243,10 @@ const SignupPortal = () => {
             {/* Employer Option */}
             <Card 
               className="bg-slate-800/50 border-slate-700 hover:border-green-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-green-500/10"
-              onClick={() => setSelectedRole("employer")}
+              onClick={() => {
+                setSelectedRole("employer");
+                setActiveSection("become-employer");
+              }}
             >
               <CardContent className="p-8 text-center">
                 <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
@@ -493,7 +497,7 @@ const SignupPortal = () => {
             </div>
           )}
 
-          {selectedRole === "employer" && activeSection === "registration" && (
+          {selectedRole === "employer" && activeSection === "become-employer" && (
             <div>
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-white">Become an Employer</h1>
@@ -598,16 +602,33 @@ const SignupPortal = () => {
                 </CardContent>
               </Card>
 
-              {/* Registration Form Header */}
-              <Card className="bg-slate-800 border-slate-700 mb-6">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
-                    <UserPlus className="h-5 w-5 text-green-400" />
-                    Registration
-                  </h3>
-                  <p className="text-slate-400 text-sm">Complete the form below to create your employer account and start hiring top talent.</p>
+              {/* CTA to Registration */}
+              <Card className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/50">
+                <CardContent className="p-6 text-center">
+                  <h3 className="text-lg font-semibold text-white mb-2">Ready to Start Hiring?</h3>
+                  <p className="text-slate-300 text-sm mb-4">Create your employer account and access thousands of qualified candidates</p>
+                  <Button 
+                    className="bg-green-600 hover:bg-green-700" 
+                    size="lg"
+                    onClick={() => setActiveSection("registration")}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Proceed to Registration
+                  </Button>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {selectedRole === "employer" && activeSection === "registration" && (
+            <div>
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <UserPlus className="h-6 w-6 text-green-400" />
+                  Employer Registration
+                </h1>
+                <p className="text-slate-400">Complete the form below to create your employer account</p>
+              </div>
 
               {/* Employer Registration Form */}
               <Card className="bg-slate-800 border-slate-700">
