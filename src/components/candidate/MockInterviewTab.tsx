@@ -40,7 +40,8 @@ import {
   Phone,
   MessageSquare,
   IndianRupee,
-  Send
+  Send,
+  Video
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
@@ -1992,18 +1993,18 @@ export const MockInterviewTab = () => {
                         </div>
                         
                         <div className="grid md:grid-cols-2 gap-4">
-                          {/* Option 1: Schedule HR Call */}
+                          {/* Option 1: Schedule Online Meeting */}
                           <Card 
                             className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 border-2"
                             onClick={() => setHrNegotiationType('call')}
                           >
                             <CardContent className="pt-6 text-center">
                               <div className="h-14 w-14 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Phone className="h-7 w-7 text-blue-500" />
+                                <Video className="h-7 w-7 text-blue-500" />
                               </div>
-                              <h5 className="font-semibold mb-2">Schedule HR Call</h5>
+                              <h5 className="font-semibold mb-2">Schedule Online Meeting</h5>
                               <p className="text-sm text-muted-foreground">
-                                Request a call with HR to discuss salary, joining date, and other details
+                                Request a video meeting with HR to discuss salary, joining date, and other details
                               </p>
                             </CardContent>
                           </Card>
@@ -2026,13 +2027,13 @@ export const MockInterviewTab = () => {
                         </div>
                       </div>
                     ) : hrNegotiationType === 'call' ? (
-                      // HR Call Scheduling Form
+                      // Online Meeting Scheduling Form
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-4">
                           <Button variant="ghost" size="sm" onClick={() => setHrNegotiationType(null)}>
                             ← Back
                           </Button>
-                          <h4 className="font-semibold">Schedule HR Call</h4>
+                          <h4 className="font-semibold">Schedule Online Meeting</h4>
                         </div>
                         
                         <div className="grid md:grid-cols-2 gap-4">
@@ -2070,7 +2071,7 @@ export const MockInterviewTab = () => {
 
                         <div className="p-4 rounded-lg border border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10">
                           <p className="text-sm text-blue-700 dark:text-blue-400">
-                            💡 HR team will review your request and send you a meeting link for the scheduled time.
+                            💡 HR team will review your request and send you a video meeting link for the scheduled time.
                           </p>
                         </div>
 
@@ -2084,9 +2085,9 @@ export const MockInterviewTab = () => {
                             {isSubmittingNegotiation ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
-                              <Send className="h-4 w-4" />
+                              <Video className="h-4 w-4" />
                             )}
-                            {isSubmittingNegotiation ? 'Submitting...' : 'Request HR Call'}
+                            {isSubmittingNegotiation ? 'Submitting...' : 'Request Online Meeting'}
                           </Button>
                         </div>
                       </div>
