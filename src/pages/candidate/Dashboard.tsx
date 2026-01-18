@@ -40,7 +40,8 @@ import {
   Target,
   Lightbulb,
   ExternalLink,
-  Video
+  Video,
+  Star
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -143,6 +144,11 @@ const CandidateDashboard = () => {
   const [isStartingMockTest, setIsStartingMockTest] = useState(false);
   const [courseSuggestions, setCourseSuggestions] = useState<{[key: string]: any}>({});
   const [loadingCourseSuggestions, setLoadingCourseSuggestions] = useState<{[key: string]: boolean}>({});
+  
+  // Upskill course suggestions based on mock interview performance
+  const [upskillCourseSuggestions, setUpskillCourseSuggestions] = useState<any[]>([]);
+  const [mockInterviewStageResults, setMockInterviewStageResults] = useState<any[]>([]);
+  const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -922,6 +928,180 @@ const CandidateDashboard = () => {
       setLoadingCourseSuggestions(prev => ({ ...prev, [session.id]: false }));
     }
   };
+
+  // Fetch mock interview stage results and generate upskill course suggestions
+  const fetchMockInterviewCourseSuggestions = async () => {
+    if (!profile?.id) return;
+    
+    setIsLoadingUpskillCourses(true);
+    try {
+      // Get the most recent completed mock interview session
+      const { data: recentSession } = await supabase
+        .from('mock_interview_sessions')
+        .select('*')
+        .eq('candidate_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!recentSession) {
+        setIsLoadingUpskillCourses(false);
+        return;
+      }
+
+      // Get stage results for this session
+      const { data: resultsData } = await supabase
+        .from('mock_interview_stage_results')
+        .select('*')
+        .eq('session_id', recentSession.id)
+        .order('stage_order', { ascending: true });
+
+      if (resultsData) {
+        setMockInterviewStageResults(resultsData);
+        
+        // Generate course suggestions based on improvements
+        const improvements = resultsData.flatMap((r: any) => r.improvements || []);
+        const overallScore = resultsData.length > 0 
+          ? resultsData.filter((r: any) => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4)
+              .reduce((sum: number, r: any) => sum + (r.ai_score || 0), 0) / 
+            (resultsData.filter((r: any) => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4).length || 1)
+          : 0;
+
+        const courses: any[] = [];
+
+        // Communication-related improvements
+        if (improvements.some((i: string) => i.toLowerCase().includes('communication') || i.toLowerCase().includes('speaking') || i.toLowerCase().includes('voice') || i.toLowerCase().includes('clarity'))) {
+          courses.push({
+            id: 'comm-1',
+            title: 'Effective Communication for Educators',
+            description: 'Master clear and impactful communication techniques for teaching.',
+            duration: '6 hours',
+            level: 'Beginner',
+            rating: 4.7,
+            category: 'Communication Skills',
+            url: 'https://www.coursera.org/search?query=communication%20skills'
+          });
+        }
+
+        // Subject knowledge improvements
+        if (improvements.some((i: string) => i.toLowerCase().includes('knowledge') || i.toLowerCase().includes('content') || i.toLowerCase().includes('subject') || i.toLowerCase().includes('depth'))) {
+          courses.push({
+            id: 'subj-1',
+            title: 'Deep Dive into Subject Mastery',
+            description: 'Strengthen your subject knowledge with expert-led courses.',
+            duration: '12 hours',
+            level: 'Intermediate',
+            rating: 4.8,
+            category: 'Subject Expertise',
+            url: 'https://www.edx.org/'
+          });
+        }
+
+        // Teaching/presentation improvements
+        if (improvements.some((i: string) => i.toLowerCase().includes('teaching') || i.toLowerCase().includes('presentation') || i.toLowerCase().includes('demo') || i.toLowerCase().includes('engagement') || i.toLowerCase().includes('interactive'))) {
+          courses.push({
+            id: 'teach-1',
+            title: 'Modern Teaching Techniques',
+            description: 'Learn interactive teaching methods to engage students effectively.',
+            duration: '8 hours',
+            level: 'Intermediate',
+            rating: 4.6,
+            category: 'Teaching Methods',
+            url: 'https://www.udemy.com/courses/teaching-and-academics/'
+          });
+          courses.push({
+            id: 'teach-2',
+            title: 'Presentation Skills Masterclass',
+            description: 'Deliver compelling presentations and demonstrations with confidence.',
+            duration: '5 hours',
+            level: 'Beginner',
+            rating: 4.5,
+            category: 'Presentation Skills',
+            url: 'https://www.linkedin.com/learning/topics/presentation-skills'
+          });
+        }
+
+        // Time management improvements
+        if (improvements.some((i: string) => i.toLowerCase().includes('time') || i.toLowerCase().includes('pace') || i.toLowerCase().includes('planning'))) {
+          courses.push({
+            id: 'time-1',
+            title: 'Time Management for Teachers',
+            description: 'Optimize your lesson planning and classroom time management.',
+            duration: '4 hours',
+            level: 'Beginner',
+            rating: 4.4,
+            category: 'Productivity',
+            url: 'https://www.skillshare.com/browse/time-management'
+          });
+        }
+
+        // Confidence improvements
+        if (improvements.some((i: string) => i.toLowerCase().includes('confidence') || i.toLowerCase().includes('nervous') || i.toLowerCase().includes('calm'))) {
+          courses.push({
+            id: 'conf-1',
+            title: 'Building Confidence in the Classroom',
+            description: 'Overcome nervousness and project confidence while teaching.',
+            duration: '3 hours',
+            level: 'Beginner',
+            rating: 4.6,
+            category: 'Personal Development',
+            url: 'https://www.coursera.org/search?query=confidence'
+          });
+        }
+
+        // Low score - general improvement courses
+        if (overallScore < 70 && courses.length === 0) {
+          courses.push({
+            id: 'gen-1',
+            title: 'Complete Teacher Training Program',
+            description: 'Comprehensive program covering all aspects of effective teaching.',
+            duration: '20 hours',
+            level: 'Beginner',
+            rating: 4.8,
+            category: 'Teaching Foundation',
+            url: 'https://www.khanacademy.org/'
+          });
+          courses.push({
+            id: 'gen-2',
+            title: 'Interview Preparation for Educators',
+            description: 'Practice and perfect your teaching interview skills.',
+            duration: '6 hours',
+            level: 'Intermediate',
+            rating: 4.5,
+            category: 'Career Development',
+            url: 'https://www.udemy.com/courses/personal-development/career-development/'
+          });
+        }
+
+        // Add default courses if none matched
+        if (courses.length === 0 && resultsData.length > 0) {
+          courses.push({
+            id: 'def-1',
+            title: 'Advanced Teaching Strategies',
+            description: 'Take your teaching to the next level with advanced methodologies.',
+            duration: '10 hours',
+            level: 'Advanced',
+            rating: 4.7,
+            category: 'Professional Growth',
+            url: 'https://www.edx.org/learn/teaching'
+          });
+        }
+
+        setUpskillCourseSuggestions(courses);
+      }
+    } catch (error) {
+      console.error('Error fetching mock interview course suggestions:', error);
+    } finally {
+      setIsLoadingUpskillCourses(false);
+    }
+  };
+
+  // Fetch upskill course suggestions when activeMenu is 'upskill'
+  useEffect(() => {
+    if (activeMenu === 'upskill' && profile?.id && upskillCourseSuggestions.length === 0) {
+      fetchMockInterviewCourseSuggestions();
+    }
+  }, [activeMenu, profile?.id]);
 
   useEffect(() => {
     // Wait for auth loading to complete
@@ -2497,11 +2677,80 @@ const CandidateDashboard = () => {
                   </Card>
                 )}
 
-                {/* Recommended Courses */}
+                {/* AI-Recommended Courses Based on Mock Interview Performance */}
+                {isLoadingUpskillCourses && (
+                  <Card className="p-6">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <span className="text-muted-foreground">Loading personalized course recommendations...</span>
+                    </div>
+                  </Card>
+                )}
+
+                {!isLoadingUpskillCourses && upskillCourseSuggestions.length > 0 && (
+                  <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">Recommended Courses</h3>
+                            <p className="text-xs text-muted-foreground">Based on your mock interview performance</p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="bg-primary/10 text-primary">
+                          <GraduationCap className="h-3 w-3 mr-1" />
+                          {upskillCourseSuggestions.length} Courses
+                        </Badge>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {upskillCourseSuggestions.map((course) => (
+                          <a
+                            key={course.id}
+                            href={course.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block p-4 rounded-lg border bg-background hover:shadow-md hover:border-primary/50 transition-all group"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                {course.category}
+                              </Badge>
+                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </div>
+                            <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                              {course.title}
+                            </h4>
+                            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                              {course.description}
+                            </p>
+                            <div className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="flex items-center gap-1 text-amber-500">
+                                  <Star className="h-3 w-3 fill-current" />
+                                  {course.rating}
+                                </span>
+                                <span className="text-muted-foreground">•</span>
+                                <span className="text-muted-foreground">{course.duration}</span>
+                              </div>
+                              <Badge variant="secondary" className="text-xs">
+                                {course.level}
+                              </Badge>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
+                {/* General Course Platforms */}
                 <Card className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <GraduationCap className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Recommended Courses</h3>
+                    <h3 className="font-semibold text-foreground">Popular Learning Platforms</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <a 
