@@ -354,7 +354,7 @@ const SignupPortal = () => {
     <div className="min-h-screen flex bg-slate-900">
       {/* Sidebar */}
       <aside className={cn(
-        "bg-slate-800 border-r border-slate-700 transition-all duration-300 flex flex-col",
+        "bg-slate-800 border-r border-slate-700 transition-all duration-300 flex flex-col sticky top-0 h-screen",
         sidebarCollapsed ? "w-16" : "w-64"
       )}>
         {/* Sidebar Header */}
