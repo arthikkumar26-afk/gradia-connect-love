@@ -258,8 +258,6 @@ const EmployerDashboard = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
-    { id: "registration", label: "Registration", icon: ClipboardList, path: "/employer/registration" },
-    { id: "login", label: "Login", icon: LogIn, path: "/employer/login" },
     { id: "jobs", label: "Jobs", icon: Briefcase, path: "/employer/jobs" },
     { id: "job-alert", label: "Job Alert", icon: BellRing, path: "/employer/job-alert" },
     { 
