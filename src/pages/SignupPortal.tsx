@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   User, Briefcase, UserPlus, LogIn, Bell, LayoutDashboard, 
   ArrowLeft, Users, Target, BarChart, Shield, ChevronRight,
-  FileText, TrendingUp, Search, Menu, MapPin, ClipboardList,
+  FileText, TrendingUp, Search, Menu, ClipboardList,
   CreditCard, Megaphone, Database, Monitor, MessageSquare, 
   Award, Sparkles, Receipt, CheckCircle, Video, Download,
-  ChevronDown, ChevronUp, Plus, Table, Bot
+  Plus, Table, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,7 +74,6 @@ const SignupPortal = () => {
   const [vacanciesSubOption, setVacanciesSubOption] = useState<VacanciesSubOption>("manual-job");
   const [paymentSubOption, setPaymentSubOption] = useState<PaymentSubOption>("tariffs");
   const [advertisementSubOption, setAdvertisementSubOption] = useState<AdvertisementSubOption>("flyers-videos");
-  const [jobAlertExpanded, setJobAlertExpanded] = useState(false);
   
   // Employer form states
   const [companyName, setCompanyName] = useState("");
@@ -923,59 +922,162 @@ const SignupPortal = () => {
                 <p className="text-slate-400">Manage your job postings, payments, and recruitment process</p>
               </div>
 
-              {/* Sub-navigation tabs */}
-              <div className="flex flex-wrap gap-2 mb-6">
-                {jobAlertSubItems.map((subItem) => (
-                  <Button
-                    key={subItem.id}
-                    variant={jobAlertSubOption === subItem.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setJobAlertSubOption(subItem.id)}
-                    className={cn(
-                      jobAlertSubOption === subItem.id 
-                        ? "bg-yellow-600 hover:bg-yellow-700" 
-                        : "border-slate-600 text-slate-300 hover:bg-slate-700"
-                    )}
-                  >
-                    <subItem.icon className="h-4 w-4 mr-2" />
-                    {subItem.label}
-                  </Button>
-                ))}
+              {/* Step 1: Main navigation tabs */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Step 1: Select Category</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {jobAlertSubItems.map((subItem) => (
+                    <Button
+                      key={subItem.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setJobAlertSubOption(subItem.id)}
+                      className={cn(
+                        "border-2 transition-all",
+                        jobAlertSubOption === subItem.id 
+                          ? "bg-yellow-500/20 border-yellow-500 text-yellow-400 hover:bg-yellow-500/30" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                      )}
+                    >
+                      <subItem.icon className="h-4 w-4 mr-2" />
+                      {subItem.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
-              {/* Vacancies List Content */}
+              {/* Step 2: Sub-category tabs for Vacancies List */}
               {jobAlertSubOption === "vacancies-list" && (
-                <div className="space-y-6">
-                  {/* Sub-tabs for Vacancies */}
-                  <div className="flex gap-2 mb-4">
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Step 2: Choose Method</span>
+                  </div>
+                  <div className="flex gap-2">
                     <Button
-                      variant={vacanciesSubOption === "manual-job" ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => setVacanciesSubOption("manual-job")}
                       className={cn(
+                        "border-2 transition-all",
                         vacanciesSubOption === "manual-job" 
-                          ? "bg-blue-600 hover:bg-blue-700" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
                       )}
                     >
                       <Table className="h-4 w-4 mr-2" />
                       Manual Job Creation
                     </Button>
                     <Button
-                      variant={vacanciesSubOption === "ai-job" ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => setVacanciesSubOption("ai-job")}
                       className={cn(
+                        "border-2 transition-all",
                         vacanciesSubOption === "ai-job" 
-                          ? "bg-purple-600 hover:bg-purple-700" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
                       )}
                     >
                       <Bot className="h-4 w-4 mr-2" />
                       AI Job Creation
                     </Button>
                   </div>
+                </div>
+              )}
 
+              {/* Step 2: Sub-category tabs for Payment */}
+              {jobAlertSubOption === "payment" && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Step 2: Choose Option</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPaymentSubOption("tariffs")}
+                      className={cn(
+                        "border-2 transition-all",
+                        paymentSubOption === "tariffs" 
+                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                      )}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Tariffs/Plans
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPaymentSubOption("receipts")}
+                      className={cn(
+                        "border-2 transition-all",
+                        paymentSubOption === "receipts" 
+                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                      )}
+                    >
+                      <Receipt className="h-4 w-4 mr-2" />
+                      Payment Receipts
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPaymentSubOption("confirmation")}
+                      className={cn(
+                        "border-2 transition-all",
+                        paymentSubOption === "confirmation" 
+                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                      )}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Confirmation
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Sub-category tabs for Advertisement */}
+              {jobAlertSubOption === "advertisement" && (
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Step 2: Choose Option</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAdvertisementSubOption("flyers-videos")}
+                      className={cn(
+                        "border-2 transition-all",
+                        advertisementSubOption === "flyers-videos" 
+                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                      )}
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Flyers/Videos Creation
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Content Area */}
+              <div className="mb-3">
+                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                  {jobAlertSubOption === "vacancies-list" ? "Step 3: Manage Jobs" : 
+                   jobAlertSubOption === "payment" ? "Step 3: Payment Details" :
+                   jobAlertSubOption === "advertisement" ? "Step 3: Create Materials" :
+                   "Step 2: View Details"}
+                </span>
+              </div>
+
+              {/* Vacancies List Content */}
+              {jobAlertSubOption === "vacancies-list" && (
+                <div className="space-y-6">
                   {/* Manual Job Creation */}
                   {vacanciesSubOption === "manual-job" && (
                     <Card className="bg-slate-800 border-slate-700">
@@ -1077,49 +1179,6 @@ const SignupPortal = () => {
               {/* Payment Content */}
               {jobAlertSubOption === "payment" && (
                 <div className="space-y-6">
-                  {/* Sub-tabs for Payment */}
-                  <div className="flex gap-2 mb-4">
-                    <Button
-                      variant={paymentSubOption === "tariffs" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setPaymentSubOption("tariffs")}
-                      className={cn(
-                        paymentSubOption === "tariffs" 
-                          ? "bg-green-600 hover:bg-green-700" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
-                      )}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Tariffs/Plans
-                    </Button>
-                    <Button
-                      variant={paymentSubOption === "receipts" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setPaymentSubOption("receipts")}
-                      className={cn(
-                        paymentSubOption === "receipts" 
-                          ? "bg-blue-600 hover:bg-blue-700" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
-                      )}
-                    >
-                      <Receipt className="h-4 w-4 mr-2" />
-                      Payment Receipts
-                    </Button>
-                    <Button
-                      variant={paymentSubOption === "confirmation" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setPaymentSubOption("confirmation")}
-                      className={cn(
-                        paymentSubOption === "confirmation" 
-                          ? "bg-purple-600 hover:bg-purple-700" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
-                      )}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Confirmation
-                    </Button>
-                  </div>
-
                   {paymentSubOption === "tariffs" && (
                     <div className="grid md:grid-cols-3 gap-4">
                       <Card className="bg-slate-800 border-slate-700">
