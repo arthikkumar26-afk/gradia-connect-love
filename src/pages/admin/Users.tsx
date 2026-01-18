@@ -21,7 +21,11 @@ import {
   Calendar,
   Eye,
   UserCheck,
-  UserX
+  UserX,
+  CreditCard,
+  ClipboardList,
+  UserCog,
+  MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -178,9 +182,14 @@ const Users = () => {
   const menuItems = [
     { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
     { title: "Users", icon: UsersIcon, path: "/admin/users" },
+    { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
+    { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
     { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
     { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
     { title: "Companies", icon: Building2, path: "/admin/companies" },
+    { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
+    { title: "Management", icon: UserCog, path: "/admin/management" },
+    { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
     { title: "Reports", icon: BarChart3, path: "/admin/reports" },
     { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
     { title: "Settings", icon: Settings, path: "/admin/settings" },
