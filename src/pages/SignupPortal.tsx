@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   User, Briefcase, UserPlus, LogIn, Bell, LayoutDashboard, 
   ArrowLeft, Users, Target, BarChart, Shield, ChevronRight,
-  FileText, TrendingUp, Search, Menu
+  FileText, TrendingUp, Search, Menu, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 import { SignupWizard } from "@/components/candidate/signup/SignupWizard";
 import { cn } from "@/lib/utils";
+import { indiaLocationData } from "@/data/indiaLocations";
 
 type UserRole = "candidate" | "employer" | null;
 type SidebarOption = "become-employer" | "registration" | "login" | "job-alert" | "dashboard";
@@ -39,6 +40,9 @@ interface FormErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+  state?: string;
+  district?: string;
+  townCity?: string;
 }
 
 const SignupPortal = () => {
@@ -57,8 +61,22 @@ const SignupPortal = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [state, setState] = useState("");
+  const [district, setDistrict] = useState("");
+  const [townCity, setTownCity] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Derived location options
+  const states = useMemo(() => Object.keys(indiaLocationData).sort(), []);
+  const districts = useMemo(() => {
+    if (!state) return [];
+    return Object.keys(indiaLocationData[state] || {}).sort();
+  }, [state]);
+  const towns = useMemo(() => {
+    if (!state || !district) return [];
+    return (indiaLocationData[state]?.[district] || []).sort();
+  }, [state, district]);
 
   useEffect(() => {
     if (isAuthenticated && profile) {
@@ -96,6 +114,15 @@ const SignupPortal = () => {
       newErrors.confirmPassword = "Please confirm your password";
     } else if (password !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
+    }
+    if (!state) {
+      newErrors.state = "Please select a state";
+    }
+    if (!district) {
+      newErrors.district = "Please select a district";
+    }
+    if (!townCity) {
+      newErrors.townCity = "Please select or enter town/city";
     }
 
     setErrors(newErrors);
@@ -148,6 +175,9 @@ const SignupPortal = () => {
             full_name: contactPerson,
             company_name: companyName,
             role: 'employer',
+            current_state: state,
+            current_district: district,
+            location: townCity,
           });
 
         if (profileError) {
@@ -701,6 +731,66 @@ const SignupPortal = () => {
                           className={cn("bg-slate-700 border-slate-600 text-white", errors.email && "border-destructive")}
                         />
                         {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                      </div>
+                    </div>
+
+                    {/* Location Fields */}
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="state" className="text-white">State <span className="text-destructive">*</span></Label>
+                        <Select value={state} onValueChange={(value) => {
+                          setState(value);
+                          setDistrict("");
+                          setTownCity("");
+                          if (errors.state) setErrors({ ...errors, state: undefined });
+                        }}>
+                          <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.state && "border-destructive")}>
+                            <SelectValue placeholder="Select state" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            {states.map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.state && <p className="text-sm text-destructive">{errors.state}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="district" className="text-white">District <span className="text-destructive">*</span></Label>
+                        <Select value={district} onValueChange={(value) => {
+                          setDistrict(value);
+                          setTownCity("");
+                          if (errors.district) setErrors({ ...errors, district: undefined });
+                        }} disabled={!state}>
+                          <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.district && "border-destructive", !state && "opacity-50")}>
+                            <SelectValue placeholder={state ? "Select district" : "Select state first"} />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            {districts.map((d) => (
+                              <SelectItem key={d} value={d}>{d}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.district && <p className="text-sm text-destructive">{errors.district}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="townCity" className="text-white">Town/City <span className="text-destructive">*</span></Label>
+                        <Select value={townCity} onValueChange={(value) => {
+                          setTownCity(value);
+                          if (errors.townCity) setErrors({ ...errors, townCity: undefined });
+                        }} disabled={!district}>
+                          <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.townCity && "border-destructive", !district && "opacity-50")}>
+                            <SelectValue placeholder={district ? "Select town/city" : "Select district first"} />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            {towns.map((t) => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {errors.townCity && <p className="text-sm text-destructive">{errors.townCity}</p>}
                       </div>
                     </div>
 
