@@ -1437,8 +1437,8 @@ export const MockInterviewTab = () => {
                         onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
                         className="gap-1"
                       >
-                        <Upload className="h-4 w-4" />
-                        {isExpanded ? 'Hide Upload' : 'Upload Documents'}
+                        <Video className="h-4 w-4" />
+                        {isExpanded ? 'Hide Options' : 'Schedule Call'}
                       </Button>
                     )}
                     {/* For Final Review (stage 8) in progress, show View Final Summary button */}
