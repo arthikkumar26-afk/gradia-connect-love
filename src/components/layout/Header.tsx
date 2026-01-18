@@ -193,13 +193,42 @@ const Header = () => {
             {/* QR Code Button */}
             <SignupQRButton variant="icon" />
 
-            {/* Sign Up Button - Only show when not authenticated */}
-            {!isAuthenticated && <Button variant="outline" size="sm" asChild>
-                <Link to="/candidate/signup" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Sign Up
-                </Link>
-              </Button>}
+            {/* Sign Up Dropdown - Only show when not authenticated */}
+            {!isAuthenticated && <div className="hidden lg:flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <User className="h-4 w-4" />
+                      Sign Up
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-background z-50" align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/candidate/signup" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
+                          <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Candidate Sign Up</div>
+                          <div className="text-xs text-muted-foreground">Job seekers & applicants</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/employer/signup" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900">
+                          <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Employer Sign Up</div>
+                          <div className="text-xs text-muted-foreground">Post jobs & hire talent</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>}
 
             {/* Login Dropdown - Only show when not authenticated */}
             {!isAuthenticated && <div className="hidden lg:flex items-center">
