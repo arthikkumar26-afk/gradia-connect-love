@@ -115,44 +115,73 @@ const SignupPortal = () => {
     setIsSavingJob(true);
 
     try {
-      // Get current user or use a placeholder employer_id for demo
+      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      const employerId = user?.id || crypto.randomUUID();
+      
+      // If user is authenticated, save to database
+      if (user) {
+        const { data, error } = await supabase
+          .from('jobs')
+          .insert({
+            employer_id: user.id,
+            job_title: jobDesignation,
+            location: jobCity,
+            description: `School: ${schoolName}, Segment: ${jobSegment || 'N/A'}`,
+            department: jobDepartment || null,
+            salary_range: jobSalary || null,
+            requirements: jobQualification || null,
+            experience_required: jobExperience || null,
+            closing_date: jobDate || null,
+            status: 'draft',
+          })
+          .select()
+          .single();
 
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert({
-          employer_id: employerId,
-          job_title: jobDesignation,
-          location: jobCity,
-          description: `School: ${schoolName}`,
-          department: jobDepartment || null,
-          salary_range: jobSalary || null,
-          requirements: jobQualification || null,
-          experience_required: jobExperience || null,
-          closing_date: jobDate || null,
-          status: 'draft',
-        })
-        .select()
-        .single();
+        if (error) throw error;
 
-      if (error) throw error;
+        const newJob = {
+          id: data.id,
+          date: jobDate,
+          city: jobCity,
+          schoolName: schoolName,
+          segment: jobSegment,
+          department: jobDepartment,
+          designation: jobDesignation,
+          salary: jobSalary,
+          qualification: jobQualification,
+          experience: jobExperience,
+          status: "Draft",
+        };
 
-      const newJob = {
-        id: data.id,
-        date: jobDate,
-        city: jobCity,
-        schoolName: schoolName,
-        segment: jobSegment,
-        department: jobDepartment,
-        designation: jobDesignation,
-        salary: jobSalary,
-        qualification: jobQualification,
-        experience: jobExperience,
-        status: "Draft",
-      };
+        setSavedJobs([...savedJobs, newJob]);
 
-      setSavedJobs([...savedJobs, newJob]);
+        toast({
+          title: "Job Saved",
+          description: "Your job has been saved to the database!",
+        });
+      } else {
+        // Save locally for non-authenticated users (demo mode)
+        const newJob = {
+          id: Date.now().toString(),
+          date: jobDate,
+          city: jobCity,
+          schoolName: schoolName,
+          segment: jobSegment,
+          department: jobDepartment,
+          designation: jobDesignation,
+          salary: jobSalary,
+          qualification: jobQualification,
+          experience: jobExperience,
+          status: "Draft (Local)",
+        };
+
+        setSavedJobs([...savedJobs, newJob]);
+
+        toast({
+          title: "Job Saved Locally",
+          description: "Complete registration to save jobs permanently to the database.",
+        });
+      }
       
       // Reset form
       setJobDate("");
@@ -165,11 +194,6 @@ const SignupPortal = () => {
       setJobQualification("");
       setJobExperience("");
       setShowAddJobForm(false);
-
-      toast({
-        title: "Job Saved",
-        description: "Your job has been saved to the database!",
-      });
     } catch (error: any) {
       console.error('Error saving job:', error);
       toast({
