@@ -36,7 +36,11 @@ import {
   File,
   UserPlus,
   Award,
-  MapPin
+  MapPin,
+  Phone,
+  MessageSquare,
+  IndianRupee,
+  Send
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
@@ -218,6 +222,23 @@ export const MockInterviewTab = () => {
   // Final Review state
   const [isCompletingFinalReview, setIsCompletingFinalReview] = useState(false);
   const [showFinalSummary, setShowFinalSummary] = useState(false);
+  
+  // HR Negotiation state
+  const [hrNegotiationType, setHrNegotiationType] = useState<'call' | 'form' | null>(null);
+  const [existingNegotiation, setExistingNegotiation] = useState<any>(null);
+  const [isSubmittingNegotiation, setIsSubmittingNegotiation] = useState(false);
+  const [negotiationForm, setNegotiationForm] = useState({
+    expectedSalary: '',
+    currentSalary: '',
+    noticePeriod: '',
+    preferredJoiningDate: '',
+    relocationRequired: false,
+    willingToRelocate: false,
+    preferredLocation: '',
+    additionalRequirements: '',
+    preferredCallDate: '',
+    preferredCallTime: ''
+  });
 
   // Load data on mount and when user changes
   useEffect(() => {
@@ -290,6 +311,18 @@ export const MockInterviewTab = () => {
         
         if (resultsData) {
           setStageResults(resultsData as StageResult[]);
+        }
+        
+        // Load existing HR negotiation for this session
+        const { data: negotiationData } = await supabase
+          .from('hr_negotiations')
+          .select('*')
+          .eq('session_id', recentSession.id)
+          .maybeSingle();
+        
+        if (negotiationData) {
+          setExistingNegotiation(negotiationData);
+          setHrNegotiationType(negotiationData.negotiation_type as 'call' | 'form');
         }
       }
 
@@ -955,6 +988,75 @@ export const MockInterviewTab = () => {
     }
   };
 
+  // Submit HR Negotiation
+  const submitHRNegotiation = async () => {
+    if (!currentSession || !profile || !user || !hrNegotiationType) return;
+    
+    setIsSubmittingNegotiation(true);
+    try {
+      const negotiationData: any = {
+        session_id: currentSession.id,
+        candidate_id: user.id,
+        negotiation_type: hrNegotiationType,
+        status: hrNegotiationType === 'call' ? 'call_requested' : 'pending'
+      };
+
+      if (hrNegotiationType === 'form') {
+        negotiationData.expected_salary = negotiationForm.expectedSalary ? parseFloat(negotiationForm.expectedSalary) : null;
+        negotiationData.current_salary = negotiationForm.currentSalary ? parseFloat(negotiationForm.currentSalary) : null;
+        negotiationData.notice_period = negotiationForm.noticePeriod || null;
+        negotiationData.preferred_joining_date = negotiationForm.preferredJoiningDate || null;
+        negotiationData.relocation_required = negotiationForm.relocationRequired;
+        negotiationData.willing_to_relocate = negotiationForm.willingToRelocate;
+        negotiationData.preferred_location = negotiationForm.preferredLocation || null;
+        negotiationData.additional_requirements = negotiationForm.additionalRequirements || null;
+      } else {
+        negotiationData.preferred_call_date = negotiationForm.preferredCallDate || null;
+        negotiationData.preferred_call_time = negotiationForm.preferredCallTime || null;
+      }
+
+      const { data, error } = await supabase
+        .from('hr_negotiations')
+        .insert(negotiationData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Create stage result for Final Review (HR)
+      await supabase
+        .from('mock_interview_stage_results')
+        .insert({
+          session_id: currentSession.id,
+          stage_name: 'Final Review (HR)',
+          stage_order: 7,
+          ai_score: 100,
+          ai_feedback: hrNegotiationType === 'call' 
+            ? `HR call requested for ${negotiationForm.preferredCallDate} at ${negotiationForm.preferredCallTime}. Waiting for HR to schedule.`
+            : `Negotiation details submitted. Expected salary: ₹${negotiationForm.expectedSalary}. Awaiting HR review.`,
+          passed: true,
+          completed_at: new Date().toISOString()
+        });
+
+      // Update session to next stage
+      await supabase
+        .from('mock_interview_sessions')
+        .update({ current_stage_order: 8 })
+        .eq('id', currentSession.id);
+
+      setExistingNegotiation(data);
+      toast.success(hrNegotiationType === 'call' 
+        ? 'HR call request submitted! HR team will contact you shortly.'
+        : 'Negotiation details submitted! HR team will review and respond.');
+      loadData();
+    } catch (error) {
+      console.error('Error submitting HR negotiation:', error);
+      toast.error('Failed to submit. Please try again.');
+    } finally {
+      setIsSubmittingNegotiation(false);
+    }
+  };
+
   const getStageStatus = (stageOrder: number) => {
     if (!currentSession) return 'upcoming';
     const result = stageResults.find(r => r.stage_order === stageOrder);
@@ -972,7 +1074,7 @@ export const MockInterviewTab = () => {
       case 4: return Calendar; // Demo Slot Booking
       case 5: return Monitor;  // Demo Round
       case 6: return BarChart3; // Demo Feedback
-      case 7: return FileText;  // HR Documents
+      case 7: return MessageSquare;  // HR Negotiation
       case 8: return ListChecks; // All Reviews
       default: return Brain;
     }
@@ -1828,200 +1930,324 @@ export const MockInterviewTab = () => {
                 )}
 
 
-                {/* HR Documents Stage (6) - Show upload form inline */}
-                {isExpanded && status === 'current' && stage.order === 6 && !hasResults && (
+                {/* HR Negotiation Stage (7) - Show call scheduling or negotiation form */}
+                {isExpanded && status === 'current' && stage.order === 7 && !hasResults && (
                   <div className="mt-4 pt-4 border-t space-y-6">
-                    {/* Header */}
-                    <div className="text-center">
-                      <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <FileText className="h-8 w-8 text-primary" />
-                      </div>
-                      <h4 className="text-lg font-semibold">Upload HR Documents</h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Please upload the required documents for verification. All file formats accepted (max 10MB each)
-                      </p>
-                    </div>
-
-                    {/* Document Upload Cards */}
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {/* ID Proof - Required */}
-                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm font-medium flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            ID Proof <span className="text-destructive">*</span>
-                          </Label>
-                          {hrDocuments.idProof && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6"
-                              onClick={() => handleFileSelect('idProof', null)}
-                            >
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            </Button>
+                    {/* Show existing negotiation status if submitted */}
+                    {existingNegotiation ? (
+                      <div className="space-y-4">
+                        <div className="text-center">
+                          <div className="h-16 w-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <CheckCircle2 className="h-8 w-8 text-green-500" />
+                          </div>
+                          <h4 className="text-lg font-semibold">Negotiation Submitted</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Your {existingNegotiation.negotiation_type === 'call' ? 'HR call request' : 'negotiation details'} have been submitted.
+                          </p>
+                        </div>
+                        <div className="p-4 rounded-lg border bg-muted/30 space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Status</span>
+                            <Badge variant={existingNegotiation.status === 'approved' ? 'default' : 'secondary'}>
+                              {existingNegotiation.status === 'call_requested' ? 'Call Requested' :
+                               existingNegotiation.status === 'call_scheduled' ? 'Call Scheduled' :
+                               existingNegotiation.status === 'approved' ? 'Approved' :
+                               existingNegotiation.status === 'counter_offer' ? 'Counter Offer' :
+                               'Under Review'}
+                            </Badge>
+                          </div>
+                          {existingNegotiation.negotiation_type === 'call' && existingNegotiation.call_meeting_link && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Meeting Link</span>
+                              <a href={existingNegotiation.call_meeting_link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                                Join Call
+                              </a>
+                            </div>
+                          )}
+                          {existingNegotiation.admin_response && (
+                            <div className="pt-2 border-t">
+                              <span className="text-sm font-medium">HR Response:</span>
+                              <p className="text-sm text-muted-foreground mt-1">{existingNegotiation.admin_response}</p>
+                            </div>
+                          )}
+                          {existingNegotiation.offered_salary && (
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Offered Salary</span>
+                              <span className="text-sm font-medium">₹{existingNegotiation.offered_salary.toLocaleString()}</span>
+                            </div>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mb-3">Aadhar Card, PAN Card, Passport, or Voter ID</p>
-                        {hrDocuments.idProof ? (
-                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
-                            <File className="h-4 w-4 text-green-600" />
-                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.idProof.name}</span>
-                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
+                      </div>
+                    ) : !hrNegotiationType ? (
+                      // Option Selection
+                      <div className="space-y-4">
+                        <div className="text-center">
+                          <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <MessageSquare className="h-8 w-8 text-primary" />
                           </div>
-                        ) : (
-                          <div>
+                          <h4 className="text-lg font-semibold">Final Review (HR)</h4>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Choose how you'd like to proceed with the HR discussion
+                          </p>
+                        </div>
+                        
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {/* Option 1: Schedule HR Call */}
+                          <Card 
+                            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 border-2"
+                            onClick={() => setHrNegotiationType('call')}
+                          >
+                            <CardContent className="pt-6 text-center">
+                              <div className="h-14 w-14 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Phone className="h-7 w-7 text-blue-500" />
+                              </div>
+                              <h5 className="font-semibold mb-2">Schedule HR Call</h5>
+                              <p className="text-sm text-muted-foreground">
+                                Request a call with HR to discuss salary, joining date, and other details
+                              </p>
+                            </CardContent>
+                          </Card>
+
+                          {/* Option 2: Fill Negotiation Form */}
+                          <Card 
+                            className="cursor-pointer transition-all hover:shadow-lg hover:border-primary/50 border-2"
+                            onClick={() => setHrNegotiationType('form')}
+                          >
+                            <CardContent className="pt-6 text-center">
+                              <div className="h-14 w-14 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <FileText className="h-7 w-7 text-green-500" />
+                              </div>
+                              <h5 className="font-semibold mb-2">Submit Negotiation Details</h5>
+                              <p className="text-sm text-muted-foreground">
+                                Fill in your salary expectations and preferences for HR review
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </div>
+                    ) : hrNegotiationType === 'call' ? (
+                      // HR Call Scheduling Form
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Button variant="ghost" size="sm" onClick={() => setHrNegotiationType(null)}>
+                            ← Back
+                          </Button>
+                          <h4 className="font-semibold">Schedule HR Call</h4>
+                        </div>
+                        
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Preferred Date <span className="text-destructive">*</span></Label>
                             <Input
-                              type="file"
-                              onChange={(e) => handleFileSelect('idProof', e.target.files?.[0] || null)}
-                              className="cursor-pointer"
+                              type="date"
+                              value={negotiationForm.preferredCallDate}
+                              onChange={(e) => setNegotiationForm(prev => ({ ...prev, preferredCallDate: e.target.value }))}
+                              min={new Date().toISOString().split('T')[0]}
                             />
                           </div>
-                        )}
-                      </div>
-
-                      {/* Education Certificate - Required */}
-                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm font-medium flex items-center gap-2">
-                            <GraduationCap className="h-4 w-4 text-primary" />
-                            Education Certificate <span className="text-destructive">*</span>
-                          </Label>
-                          {hrDocuments.educationCertificate && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6"
-                              onClick={() => handleFileSelect('educationCertificate', null)}
+                          <div className="space-y-2">
+                            <Label>Preferred Time <span className="text-destructive">*</span></Label>
+                            <Select
+                              value={negotiationForm.preferredCallTime}
+                              onValueChange={(value) => setNegotiationForm(prev => ({ ...prev, preferredCallTime: value }))}
                             >
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            </Button>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="09:00 AM">09:00 AM</SelectItem>
+                                <SelectItem value="10:00 AM">10:00 AM</SelectItem>
+                                <SelectItem value="11:00 AM">11:00 AM</SelectItem>
+                                <SelectItem value="12:00 PM">12:00 PM</SelectItem>
+                                <SelectItem value="02:00 PM">02:00 PM</SelectItem>
+                                <SelectItem value="03:00 PM">03:00 PM</SelectItem>
+                                <SelectItem value="04:00 PM">04:00 PM</SelectItem>
+                                <SelectItem value="05:00 PM">05:00 PM</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-lg border border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10">
+                          <p className="text-sm text-blue-700 dark:text-blue-400">
+                            💡 HR team will review your request and send you a meeting link for the scheduled time.
+                          </p>
+                        </div>
+
+                        <div className="flex justify-center pt-2">
+                          <Button 
+                            onClick={submitHRNegotiation}
+                            disabled={isSubmittingNegotiation || !negotiationForm.preferredCallDate || !negotiationForm.preferredCallTime}
+                            className="gap-2"
+                            size="lg"
+                          >
+                            {isSubmittingNegotiation ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                            {isSubmittingNegotiation ? 'Submitting...' : 'Request HR Call'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      // Negotiation Form
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Button variant="ghost" size="sm" onClick={() => setHrNegotiationType(null)}>
+                            ← Back
+                          </Button>
+                          <h4 className="font-semibold">Negotiation Details</h4>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <IndianRupee className="h-4 w-4" />
+                              Current Salary (per annum)
+                            </Label>
+                            <Input
+                              type="number"
+                              placeholder="e.g., 500000"
+                              value={negotiationForm.currentSalary}
+                              onChange={(e) => setNegotiationForm(prev => ({ ...prev, currentSalary: e.target.value }))}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="flex items-center gap-2">
+                              <IndianRupee className="h-4 w-4" />
+                              Expected Salary (per annum) <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              type="number"
+                              placeholder="e.g., 700000"
+                              value={negotiationForm.expectedSalary}
+                              onChange={(e) => setNegotiationForm(prev => ({ ...prev, expectedSalary: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Notice Period</Label>
+                            <Select
+                              value={negotiationForm.noticePeriod}
+                              onValueChange={(value) => setNegotiationForm(prev => ({ ...prev, noticePeriod: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select notice period" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="immediate">Immediate</SelectItem>
+                                <SelectItem value="15_days">15 Days</SelectItem>
+                                <SelectItem value="30_days">30 Days</SelectItem>
+                                <SelectItem value="60_days">60 Days</SelectItem>
+                                <SelectItem value="90_days">90 Days</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Preferred Joining Date</Label>
+                            <Input
+                              type="date"
+                              value={negotiationForm.preferredJoiningDate}
+                              onChange={(e) => setNegotiationForm(prev => ({ ...prev, preferredJoiningDate: e.target.value }))}
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Relocation Required?</Label>
+                            <div className="flex items-center gap-4 pt-2">
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  checked={negotiationForm.relocationRequired}
+                                  onChange={() => setNegotiationForm(prev => ({ ...prev, relocationRequired: true }))}
+                                  className="w-4 h-4"
+                                />
+                                <span>Yes</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  checked={!negotiationForm.relocationRequired}
+                                  onChange={() => setNegotiationForm(prev => ({ ...prev, relocationRequired: false }))}
+                                  className="w-4 h-4"
+                                />
+                                <span>No</span>
+                              </label>
+                            </div>
+                          </div>
+                          {negotiationForm.relocationRequired && (
+                            <div className="space-y-2">
+                              <Label>Willing to Relocate?</Label>
+                              <div className="flex items-center gap-4 pt-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    checked={negotiationForm.willingToRelocate}
+                                    onChange={() => setNegotiationForm(prev => ({ ...prev, willingToRelocate: true }))}
+                                    className="w-4 h-4"
+                                  />
+                                  <span>Yes</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    checked={!negotiationForm.willingToRelocate}
+                                    onChange={() => setNegotiationForm(prev => ({ ...prev, willingToRelocate: false }))}
+                                    className="w-4 h-4"
+                                  />
+                                  <span>No</span>
+                                </label>
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mb-3">Highest degree certificate or marksheet</p>
-                        {hrDocuments.educationCertificate ? (
-                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
-                            <File className="h-4 w-4 text-green-600" />
-                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.educationCertificate.name}</span>
-                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
-                          </div>
-                        ) : (
-                          <div>
-                            <Input
-                              type="file"
-                              onChange={(e) => handleFileSelect('educationCertificate', e.target.files?.[0] || null)}
-                              className="cursor-pointer"
-                            />
-                          </div>
-                        )}
-                      </div>
 
-                      {/* Address Proof - Optional */}
-                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm font-medium flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            Address Proof
-                          </Label>
-                          {hrDocuments.addressProof && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6"
-                              onClick={() => handleFileSelect('addressProof', null)}
-                            >
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          )}
+                        <div className="space-y-2">
+                          <Label>Preferred Location (if applicable)</Label>
+                          <Input
+                            placeholder="e.g., Hyderabad, Bangalore"
+                            value={negotiationForm.preferredLocation}
+                            onChange={(e) => setNegotiationForm(prev => ({ ...prev, preferredLocation: e.target.value }))}
+                          />
                         </div>
-                        <p className="text-xs text-muted-foreground mb-3">Utility bill, bank statement, or rental agreement</p>
-                        {hrDocuments.addressProof ? (
-                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
-                            <File className="h-4 w-4 text-green-600" />
-                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.addressProof.name}</span>
-                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
-                          </div>
-                        ) : (
-                          <div>
-                            <Input
-                              type="file"
-                              onChange={(e) => handleFileSelect('addressProof', e.target.files?.[0] || null)}
-                              className="cursor-pointer"
-                            />
-                          </div>
-                        )}
-                      </div>
 
-                      {/* Experience Letter - Optional */}
-                      <div className="p-4 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <Label className="text-sm font-medium flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary" />
-                            Experience Letter
-                          </Label>
-                          {hrDocuments.experienceLetter && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-6 w-6"
-                              onClick={() => handleFileSelect('experienceLetter', null)}
-                            >
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          )}
+                        <div className="space-y-2">
+                          <Label>Additional Requirements or Questions</Label>
+                          <textarea
+                            className="w-full min-h-[100px] p-3 rounded-lg border bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                            placeholder="Any other requirements, questions, or things you'd like to discuss..."
+                            value={negotiationForm.additionalRequirements}
+                            onChange={(e) => setNegotiationForm(prev => ({ ...prev, additionalRequirements: e.target.value }))}
+                          />
                         </div>
-                        <p className="text-xs text-muted-foreground mb-3">Previous employment experience letter (if applicable)</p>
-                        {hrDocuments.experienceLetter ? (
-                          <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-900/20">
-                            <File className="h-4 w-4 text-green-600" />
-                            <span className="text-sm text-green-700 dark:text-green-400 truncate">{hrDocuments.experienceLetter.name}</span>
-                            <CheckCircle2 className="h-4 w-4 text-green-600 ml-auto" />
-                          </div>
-                        ) : (
-                          <div>
-                            <Input
-                              type="file"
-                              onChange={(e) => handleFileSelect('experienceLetter', e.target.files?.[0] || null)}
-                              className="cursor-pointer"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Upload Summary */}
-                    <div className="p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Documents selected: {Object.values(hrDocuments).filter(f => f !== null).length}/4
-                        </span>
-                        <Badge variant={hrDocuments.idProof && hrDocuments.educationCertificate ? 'default' : 'secondary'}>
-                          {hrDocuments.idProof && hrDocuments.educationCertificate ? 'Ready to submit' : 'Required docs missing'}
-                        </Badge>
+                        <div className="flex justify-center pt-2">
+                          <Button 
+                            onClick={submitHRNegotiation}
+                            disabled={isSubmittingNegotiation || !negotiationForm.expectedSalary}
+                            className="gap-2"
+                            size="lg"
+                          >
+                            {isSubmittingNegotiation ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                            {isSubmittingNegotiation ? 'Submitting...' : 'Submit Negotiation Details'}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="flex justify-center pt-2">
-                      <Button 
-                        onClick={submitHRDocuments}
-                        disabled={uploadingDocuments || !hrDocuments.idProof || !hrDocuments.educationCertificate}
-                        className="gap-2"
-                        size="lg"
-                      >
-                        {uploadingDocuments ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Upload className="h-4 w-4" />
-                        )}
-                        {uploadingDocuments ? 'Uploading...' : 'Submit Documents & Proceed to Final Review'}
-                      </Button>
-                    </div>
+                    )}
                   </div>
                 )}
-
-                {/* Final Review Stage (7) - Show complete summary inline */}
-                {isExpanded && status === 'current' && stage.order === 7 && !hasResults && (
+                {/* Final Review Stage (8) - Show complete summary inline */}
+                {isExpanded && status === 'current' && stage.order === 8 && !hasResults && (
                   <div className="mt-4 pt-4 border-t space-y-6">
                     {/* Header */}
                     <div className="text-center">
@@ -2038,7 +2264,7 @@ export const MockInterviewTab = () => {
                     <div className="space-y-3">
                       <h5 className="text-sm font-semibold text-muted-foreground">Stage Performance</h5>
                       <div className="grid gap-3">
-                        {stages.filter(s => s.order !== 7).map((s) => {
+                        {stages.filter(s => s.order !== 8).map((s) => {
                           const stageResult = stageResults.find(r => r.stage_order === s.order);
                           const StageIcon = getStageIcon(s.order);
                           const isCompleted = stageResult?.completed_at;
