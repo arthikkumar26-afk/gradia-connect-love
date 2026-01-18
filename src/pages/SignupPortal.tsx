@@ -1267,7 +1267,7 @@ const SignupPortal = () => {
                           <FileText className="h-12 w-12 text-blue-400 mx-auto mb-3" />
                           <h4 className="text-white font-medium mb-2">Job Flyers</h4>
                           <p className="text-slate-400 text-sm mb-3">Generate professional job flyers for social media</p>
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
                             <Download className="h-4 w-4 mr-2" />
                             Create Flyer
                           </Button>
@@ -1278,7 +1278,7 @@ const SignupPortal = () => {
                           <Video className="h-12 w-12 text-purple-400 mx-auto mb-3" />
                           <h4 className="text-white font-medium mb-2">Promo Videos</h4>
                           <p className="text-slate-400 text-sm mb-3">Create video content for job promotions</p>
-                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
                             <Download className="h-4 w-4 mr-2" />
                             Create Video
                           </Button>
