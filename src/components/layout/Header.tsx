@@ -205,7 +205,7 @@ const Header = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56 bg-background border border-border shadow-lg z-[100]" align="end">
                     <DropdownMenuItem asChild>
-                      <Link to="/candidate/signup" className="flex items-center gap-3 py-2 cursor-pointer">
+                      <Link to="/signup" className="flex items-center gap-3 py-2 cursor-pointer">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
                           <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
@@ -216,7 +216,7 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/employer/signup" className="flex items-center gap-3 py-2 cursor-pointer">
+                      <Link to="/signup" className="flex items-center gap-3 py-2 cursor-pointer">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-900">
                           <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
                         </div>

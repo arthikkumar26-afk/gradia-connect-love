@@ -48,6 +48,7 @@ import DemoRound from "./pages/candidate/DemoRound";
 import DemoFeedback from "./pages/candidate/DemoFeedback";
 import CareerCoaching from "./pages/candidate/CareerCoaching";
 import CandidateSignup from "./pages/candidate/Signup";
+import SignupPortal from "./pages/SignupPortal";
 import QuickRegister from "./pages/candidate/QuickRegister";
 import CandidateCreateProfile from "./pages/candidate/CreateProfile";
 import EmployerCreateProfile from "./pages/employer/CreateProfile";
@@ -144,7 +145,7 @@ const MainRoutes = () => (
       <Route path="/candidate/create-profile" element={<CandidateCreateProfile />} />
       <Route path="/candidate/apply" element={<CandidateCreateProfile />} />
       <Route path="/create-profile" element={<CandidateCreateProfile />} />
-      <Route path="/signup" element={<CandidateSignup />} />
+      <Route path="/signup" element={<SignupPortal />} />
       <Route path="/candidate/quick-register" element={<QuickRegister />} />
       <Route path="/profile/success" element={<ProfileSuccess />} />
       <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
