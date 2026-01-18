@@ -15,10 +15,11 @@ const Layout = ({ children }: LayoutProps) => {
     return <>{children}</>;
   }
   
-  // Hide footer for employer, candidate, and sponsor logged-in pages
+  // Hide footer for employer, candidate, sponsor, and admin logged-in pages
   const hideFooter = location.pathname.startsWith('/employer/dashboard') || 
                      location.pathname.startsWith('/candidate/dashboard') ||
-                     location.pathname.startsWith('/sponsor/');
+                     location.pathname.startsWith('/sponsor/') ||
+                     location.pathname.startsWith('/admin/');
   
   return (
     <div className="min-h-screen flex flex-col">
