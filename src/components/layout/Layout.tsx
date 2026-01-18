@@ -20,7 +20,7 @@ const Layout = ({ children }: LayoutProps) => {
                      location.pathname.startsWith('/candidate/dashboard') ||
                      location.pathname.startsWith('/sponsor/') ||
                      location.pathname.startsWith('/admin/') ||
-                     location.pathname === '/signup';
+                     location.pathname.startsWith('/signup');
   
   return (
     <div className="min-h-screen flex flex-col">
