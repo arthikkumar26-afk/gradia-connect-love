@@ -43,6 +43,8 @@ interface FormErrors {
   state?: string;
   district?: string;
   townCity?: string;
+  designation?: string;
+  contactNumber?: string;
 }
 
 const SignupPortal = () => {
@@ -64,6 +66,8 @@ const SignupPortal = () => {
   const [state, setState] = useState("");
   const [district, setDistrict] = useState("");
   const [townCity, setTownCity] = useState("");
+  const [designation, setDesignation] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -124,6 +128,14 @@ const SignupPortal = () => {
     if (!townCity) {
       newErrors.townCity = "Please select or enter town/city";
     }
+    if (!designation.trim()) {
+      newErrors.designation = "Designation is required";
+    }
+    if (!contactNumber.trim()) {
+      newErrors.contactNumber = "Contact number is required";
+    } else if (!/^[6-9]\d{9}$/.test(contactNumber)) {
+      newErrors.contactNumber = "Please enter a valid 10-digit mobile number";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -178,6 +190,8 @@ const SignupPortal = () => {
             current_state: state,
             current_district: district,
             location: townCity,
+            mobile: contactNumber,
+            preferred_role: designation,
           });
 
         if (profileError) {
@@ -715,6 +729,41 @@ const SignupPortal = () => {
                           className={cn("bg-slate-700 border-slate-600 text-white", errors.contactPerson && "border-destructive")}
                         />
                         {errors.contactPerson && <p className="text-sm text-destructive">{errors.contactPerson}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="designation" className="text-white">Designation <span className="text-destructive">*</span></Label>
+                        <Input
+                          id="designation"
+                          type="text"
+                          placeholder="e.g., HR Manager, CEO"
+                          value={designation}
+                          onChange={(e) => {
+                            setDesignation(e.target.value);
+                            if (errors.designation) setErrors({ ...errors, designation: undefined });
+                          }}
+                          className={cn("bg-slate-700 border-slate-600 text-white", errors.designation && "border-destructive")}
+                        />
+                        {errors.designation && <p className="text-sm text-destructive">{errors.designation}</p>}
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="contactNumber" className="text-white">Contact Number <span className="text-destructive">*</span></Label>
+                        <Input
+                          id="contactNumber"
+                          type="tel"
+                          placeholder="Enter 10-digit mobile number"
+                          value={contactNumber}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            setContactNumber(value);
+                            if (errors.contactNumber) setErrors({ ...errors, contactNumber: undefined });
+                          }}
+                          className={cn("bg-slate-700 border-slate-600 text-white", errors.contactNumber && "border-destructive")}
+                        />
+                        {errors.contactNumber && <p className="text-sm text-destructive">{errors.contactNumber}</p>}
                       </div>
 
                       <div className="space-y-2">
