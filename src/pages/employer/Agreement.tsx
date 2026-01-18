@@ -90,22 +90,33 @@ export default function Agreement() {
           <ScrollArea className="h-[400px] rounded-md border p-6 mb-6 bg-muted/30">
             <div className="prose prose-sm max-w-none">
               <h2 className="text-xl font-semibold mb-4">Employer Service Agreement</h2>
-              <h3 className="text-lg font-semibold mt-6 mb-3">1. Introduction</h3>
+              
+              <h3 className="text-lg font-semibold mt-6 mb-3">1. Benefits with Employer</h3>
+              <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-2">
+                <li>Access to a large pool of qualified candidates</li>
+                <li>AI-powered candidate screening and matching</li>
+                <li>Streamlined interview scheduling and management</li>
+                <li>Real-time application tracking and analytics</li>
+                <li>Dedicated support for recruitment needs</li>
+                <li>Cost-effective hiring solutions</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold mt-6 mb-3">2. Introduction</h3>
               <p className="text-muted-foreground mb-4">
                 This Service Agreement is entered into between the Company and our platform for the provision of recruitment services.
               </p>
-              <h3 className="text-lg font-semibold mt-6 mb-3">2. Services Provided</h3>
+              <h3 className="text-lg font-semibold mt-6 mb-3">3. Services Provided</h3>
               <p className="text-muted-foreground mb-4">
                 Our platform provides comprehensive recruitment solutions including job posting, candidate management, and tracking.
               </p>
-              <h3 className="text-lg font-semibold mt-6 mb-3">3. Employer Responsibilities</h3>
+              <h3 className="text-lg font-semibold mt-6 mb-3">4. Employer Responsibilities</h3>
               <ul className="list-disc pl-6 text-muted-foreground mb-4 space-y-2">
                 <li>Provide accurate information about job postings</li>
                 <li>Comply with employment laws</li>
                 <li>Treat candidates with professionalism</li>
                 <li>Pay subscription fees as per the selected plan</li>
               </ul>
-              <h3 className="text-lg font-semibold mt-6 mb-3">4. Payment Terms</h3>
+              <h3 className="text-lg font-semibold mt-6 mb-3">5. Payment Terms</h3>
               <p className="text-muted-foreground mb-4">
                 Subscription fees are billed based on the selected plan. Payment is due at the start of each billing cycle.
               </p>
@@ -127,7 +138,7 @@ export default function Agreement() {
           )}
 
           <div className="flex gap-4">
-            <Button variant="outline" onClick={() => navigate('/employer/signup')} className="flex-1">
+            <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">
               <ArrowLeft className="mr-2 h-4 w-4" />Back
             </Button>
             <Button onClick={handleContinue} disabled={!accepted || loading} className="flex-1">
