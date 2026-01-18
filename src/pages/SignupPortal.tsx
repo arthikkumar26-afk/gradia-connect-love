@@ -100,6 +100,68 @@ const SignupPortal = () => {
     status: string;
   }>>([]);
 
+  // Role-based options (same as MockInterviewPipeline)
+  const segmentOptions = ['Pre-Primary', 'Primary', 'High School', 'School'];
+
+  const categoryOptions: Record<string, string[]> = {
+    'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
+    'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
+    'High School': ['Board', 'Compititive'],
+    'School': ['CBSE', 'State Board'],
+  };
+
+  const schoolDesignationOptions = [
+    'Principal', 'Cluster Principal', 'SME', 'RP', 'Vice Principal', 'Dean', 'Academic Dean'
+  ];
+
+  const designationOptions: Record<string, Record<string, string[]>> = {
+    'Pre-Primary': {
+      'Teaching': ['MOTHER TEACHER'],
+      'Helping/Supporting': ['ASSO.TEACHER', 'CARE TAKER'],
+      'Admin': ['VICE PRINCIPAL']
+    },
+    'Primary': {
+      'Teaching': ['PRT', 'TGT', 'ASSO.TEACHER'],
+      'Helping/Supporting': ['ASSO.TEACHER'],
+      'Admin': ['VICE PRINCIPAL'],
+      'CLASS-1&2': ['PRT', 'TGT', 'SUBJECT TEACHER'],
+      'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
+    },
+    'High School': {
+      'Board': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology'],
+      'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
+    },
+    'School': {
+      'CBSE': schoolDesignationOptions,
+      'State Board': schoolDesignationOptions
+    }
+  };
+
+  // Get available departments based on selected segment
+  const availableDepartments = useMemo(() => {
+    if (!jobSegment) return [];
+    return categoryOptions[jobSegment] || [];
+  }, [jobSegment]);
+
+  // Get available designations based on selected segment and department
+  const availableDesignations = useMemo(() => {
+    if (!jobSegment || !jobDepartment) return [];
+    return designationOptions[jobSegment]?.[jobDepartment] || [];
+  }, [jobSegment, jobDepartment]);
+
+  // Reset dependent fields when segment changes
+  const handleSegmentChange = (value: string) => {
+    setJobSegment(value);
+    setJobDepartment("");
+    setJobDesignation("");
+  };
+
+  // Reset designation when department changes
+  const handleDepartmentChange = (value: string) => {
+    setJobDepartment(value);
+    setJobDesignation("");
+  };
+
   const [isSavingJob, setIsSavingJob] = useState(false);
 
   const handleSaveJob = async () => {
@@ -1257,48 +1319,48 @@ const SignupPortal = () => {
                               </div>
                               <div className="space-y-2">
                                 <Label className="text-white">Segment</Label>
-                                <Select value={jobSegment} onValueChange={setJobSegment}>
+                                <Select value={jobSegment} onValueChange={handleSegmentChange}>
                                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                                     <SelectValue placeholder="Select segment" />
                                   </SelectTrigger>
                                   <SelectContent className="bg-slate-700 border-slate-600">
-                                    <SelectItem value="primary">Primary</SelectItem>
-                                    <SelectItem value="secondary">Secondary</SelectItem>
-                                    <SelectItem value="higher-secondary">Higher Secondary</SelectItem>
-                                    <SelectItem value="college">College</SelectItem>
-                                    <SelectItem value="university">University</SelectItem>
+                                    {segmentOptions.map((seg) => (
+                                      <SelectItem key={seg} value={seg}>{seg}</SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div className="space-y-2">
-                                <Label className="text-white">Department</Label>
-                                <Select value={jobDepartment} onValueChange={setJobDepartment}>
+                                <Label className="text-white">Department/Category</Label>
+                                <Select 
+                                  value={jobDepartment} 
+                                  onValueChange={handleDepartmentChange}
+                                  disabled={!jobSegment}
+                                >
                                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                                    <SelectValue placeholder="Select department" />
+                                    <SelectValue placeholder={jobSegment ? "Select department" : "Select segment first"} />
                                   </SelectTrigger>
                                   <SelectContent className="bg-slate-700 border-slate-600">
-                                    <SelectItem value="academics">Academics</SelectItem>
-                                    <SelectItem value="administration">Administration</SelectItem>
-                                    <SelectItem value="sports">Sports</SelectItem>
-                                    <SelectItem value="arts">Arts</SelectItem>
-                                    <SelectItem value="science">Science</SelectItem>
-                                    <SelectItem value="commerce">Commerce</SelectItem>
+                                    {availableDepartments.map((dept) => (
+                                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>
                               <div className="space-y-2">
                                 <Label className="text-white">Designation</Label>
-                                <Select value={jobDesignation} onValueChange={setJobDesignation}>
+                                <Select 
+                                  value={jobDesignation} 
+                                  onValueChange={setJobDesignation}
+                                  disabled={!jobDepartment}
+                                >
                                   <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                                    <SelectValue placeholder="Select designation" />
+                                    <SelectValue placeholder={jobDepartment ? "Select designation" : "Select department first"} />
                                   </SelectTrigger>
                                   <SelectContent className="bg-slate-700 border-slate-600">
-                                    <SelectItem value="teacher">Teacher</SelectItem>
-                                    <SelectItem value="lecturer">Lecturer</SelectItem>
-                                    <SelectItem value="professor">Professor</SelectItem>
-                                    <SelectItem value="hod">Head of Department</SelectItem>
-                                    <SelectItem value="principal">Principal</SelectItem>
-                                    <SelectItem value="coordinator">Coordinator</SelectItem>
+                                    {availableDesignations.map((desig) => (
+                                      <SelectItem key={desig} value={desig}>{desig}</SelectItem>
+                                    ))}
                                   </SelectContent>
                                 </Select>
                               </div>
