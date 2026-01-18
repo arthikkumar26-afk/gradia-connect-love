@@ -80,6 +80,7 @@ import MockInterviewPipeline from "./pages/admin/MockInterviewPipeline";
 import AdminManagement from "./pages/admin/Management";
 import ManagementFeedback from "./pages/admin/ManagementFeedback";
 import LiveDemoView from "./pages/admin/LiveDemoView";
+import HRNegotiations from "./pages/admin/HRNegotiations";
 
 // Sponsor Pages
 import SponsorOverview from "./pages/sponsor/Overview";
@@ -222,6 +223,7 @@ const MainRoutes = () => (
       <Route path="/admin/management" element={<AdminManagement />} />
       <Route path="/admin/feedback" element={<ManagementFeedback />} />
       <Route path="/admin/live-demo" element={<LiveDemoView />} />
+      <Route path="/admin/hr-negotiations" element={<HRNegotiations />} />
       <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
       <Route path="/admin" element={<AdminDashboard />} />
 
