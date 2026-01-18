@@ -306,7 +306,7 @@ const SignupPortal = () => {
                   <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">Resume Builder</span>
                   <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">Interview Prep</span>
                 </div>
-                <Button className="mt-6 w-full bg-blue-600 hover:bg-blue-700" size="lg">
+                <Button className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white" size="lg">
                   Continue as Candidate
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -334,7 +334,7 @@ const SignupPortal = () => {
                   <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">AI Matching</span>
                   <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Analytics</span>
                 </div>
-                <Button className="mt-6 w-full bg-green-600 hover:bg-green-700" size="lg">
+                <Button className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white" size="lg">
                   Continue as Employer
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
@@ -676,7 +676,7 @@ const SignupPortal = () => {
                   <h3 className="text-lg font-semibold text-white mb-2">Ready to Start Hiring?</h3>
                   <p className="text-slate-300 text-sm mb-4">Create your employer account and access thousands of qualified candidates</p>
                   <Button 
-                    className="bg-green-600 hover:bg-green-700" 
+                    className="bg-green-600 hover:bg-green-700 text-white" 
                     size="lg"
                     onClick={() => setActiveSection("registration")}
                   >
@@ -902,7 +902,7 @@ const SignupPortal = () => {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" size="lg" disabled={isLoading}>
+                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" size="lg" disabled={isLoading}>
                       {isLoading ? "Creating Account..." : "Create Employer Account"}
                     </Button>
                   </form>
@@ -1087,7 +1087,7 @@ const SignupPortal = () => {
                             <Table className="h-5 w-5 text-blue-400" />
                             Manual Job Creation
                           </h3>
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
                             <Plus className="h-4 w-4 mr-2" />
                             Add New Job
                           </Button>
@@ -1164,7 +1164,7 @@ const SignupPortal = () => {
                             </Select>
                           </div>
                           
-                          <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                          <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                             <Sparkles className="h-4 w-4 mr-2" />
                             Generate Job Description with AI
                           </Button>
@@ -1190,7 +1190,7 @@ const SignupPortal = () => {
                             <li>• 50 CV Downloads</li>
                             <li>• Email Support</li>
                           </ul>
-                          <Button className="w-full bg-green-600 hover:bg-green-700">Choose Plan</Button>
+                          <Button className="w-full bg-green-600 hover:bg-green-700 text-white">Choose Plan</Button>
                         </CardContent>
                       </Card>
                       <Card className="bg-slate-800 border-yellow-500/50">
@@ -1203,7 +1203,7 @@ const SignupPortal = () => {
                             <li>• 200 CV Downloads</li>
                             <li>• Priority Support</li>
                           </ul>
-                          <Button className="w-full bg-yellow-600 hover:bg-yellow-700">Choose Plan</Button>
+                          <Button className="w-full bg-yellow-600 hover:bg-yellow-700 text-white">Choose Plan</Button>
                         </CardContent>
                       </Card>
                       <Card className="bg-slate-800 border-slate-700">
@@ -1215,7 +1215,7 @@ const SignupPortal = () => {
                             <li>• Unlimited Downloads</li>
                             <li>• Dedicated Support</li>
                           </ul>
-                          <Button className="w-full bg-purple-600 hover:bg-purple-700">Contact Us</Button>
+                          <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">Contact Us</Button>
                         </CardContent>
                       </Card>
                     </div>
