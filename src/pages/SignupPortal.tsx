@@ -226,7 +226,6 @@ const SignupPortal = () => {
   const employerSidebarItems = [
     { id: "become-employer" as SidebarOption, label: "Become an Employer", icon: Briefcase },
     { id: "registration" as SidebarOption, label: "Registration", icon: UserPlus },
-    { id: "login" as SidebarOption, label: "Login", icon: LogIn },
     { id: "job-alert" as SidebarOption, label: "Job Alert", icon: Bell },
     { id: "dashboard" as SidebarOption, label: "Client Dashboard", icon: LayoutDashboard },
   ];
