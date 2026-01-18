@@ -500,6 +500,7 @@ const SignupPortal = () => {
                 <p className="text-slate-400">Join us as a strategic partner and unlock exclusive opportunities</p>
               </div>
               
+              {/* Introduction Card */}
               <Card className="bg-slate-800 border-slate-700 mb-6">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-4">
@@ -513,14 +514,98 @@ const SignupPortal = () => {
                   
                   <p className="text-slate-300 mb-4">
                     An <strong className="text-white">Employer</strong> is an organization or entity that collaborates with Gradia to support employment generation initiatives. 
-                    Employers post jobs and strategically connect with talented candidates.
+                    Employers post jobs and strategically connect with talented candidates to build exceptional teams.
                   </p>
                   
                   <p className="text-slate-300">
-                    As an employer, you serve as a <strong className="text-blue-400">Brand Ambassador</strong> representing your company, 
+                    As an employer, you serve as a <strong className="text-blue-400">Brand Ambassador</strong> representing your company within the talent network, 
                     a <strong className="text-green-400">Talent Connector</strong> helping bridge the gap between job seekers and opportunities, 
-                    and a <strong className="text-purple-400">Community Builder</strong> fostering connections between businesses and skilled professionals.
+                    an <strong className="text-purple-400">Industry Expert</strong> sharing insights through panel discussions, 
+                    and a <strong className="text-orange-400">Community Builder</strong> fostering connections between businesses, job seekers, and professionals.
                   </p>
+                </CardContent>
+              </Card>
+
+              {/* Benefits Section */}
+              <Card className="bg-slate-800 border-slate-700 mb-6">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Target className="h-5 w-5 text-green-400" />
+                    Employer Benefits
+                  </h3>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="flex gap-3 p-3 bg-slate-700/50 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <Users className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-sm">Access Quality Candidates</h4>
+                        <p className="text-xs text-slate-400">Pre-vetted, skilled professionals ready to join your team</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 p-3 bg-slate-700/50 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                        <Target className="h-5 w-5 text-green-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-sm">AI-Powered Matching</h4>
+                        <p className="text-xs text-slate-400">Smart algorithms to find the perfect fit for your roles</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 p-3 bg-slate-700/50 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                        <BarChart className="h-5 w-5 text-purple-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-sm">Analytics Dashboard</h4>
+                        <p className="text-xs text-slate-400">Track hiring metrics and optimize your recruitment</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 p-3 bg-slate-700/50 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                        <Shield className="h-5 w-5 text-orange-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-sm">Background Verification</h4>
+                        <p className="text-xs text-slate-400">Built-in screening tools for secure hiring</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 p-3 bg-slate-700/50 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                        <FileText className="h-5 w-5 text-cyan-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-sm">Post Unlimited Jobs</h4>
+                        <p className="text-xs text-slate-400">Reach thousands of qualified job seekers</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 p-3 bg-slate-700/50 rounded-lg">
+                      <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="h-5 w-5 text-pink-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-sm">Brand Visibility</h4>
+                        <p className="text-xs text-slate-400">Showcase your company to potential candidates</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Registration Form Header */}
+              <Card className="bg-slate-800 border-slate-700 mb-6">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-green-400" />
+                    Registration
+                  </h3>
+                  <p className="text-slate-400 text-sm">Complete the form below to create your employer account and start hiring top talent.</p>
                 </CardContent>
               </Card>
 
