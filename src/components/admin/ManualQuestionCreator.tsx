@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Trash2, GripVertical, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, GripVertical, CheckCircle2, Upload, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ManualQuestion {
   question_number: number;
@@ -25,7 +26,80 @@ interface ManualQuestionCreatorProps {
   onQuestionsChange: (questions: ManualQuestion[]) => void;
 }
 
+// Parse CSV content to extract questions
+const parseCSV = (content: string): ManualQuestion[] => {
+  const lines = content.split('\n').filter(line => line.trim());
+  if (lines.length < 2) return [];
+  
+  const questions: ManualQuestion[] = [];
+  
+  // Skip header row
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(',').map(cell => cell.trim().replace(/^"|"$/g, ''));
+    if (cells.length < 2) continue;
+    
+    // Expected format: question_text, option_a, option_b, option_c, option_d, correct_answer (A/B/C/D), marks
+    const questionText = cells[0];
+    const options = cells.slice(1, 5).filter(o => o);
+    const correctAnswerLetter = cells[5]?.toUpperCase();
+    const marks = parseInt(cells[6]) || 1;
+    
+    if (!questionText) continue;
+    
+    const correctIndex = correctAnswerLetter ? correctAnswerLetter.charCodeAt(0) - 65 : undefined;
+    
+    questions.push({
+      question_number: questions.length + 1,
+      question_text: questionText,
+      question_type: options.length >= 2 ? 'mcq' : 'text',
+      options: options.length >= 2 ? options : [],
+      correct_answer_index: options.length >= 2 ? correctIndex : undefined,
+      correct_answer_text: options.length < 2 ? cells[1] : undefined,
+      marks
+    });
+  }
+  
+  return questions;
+};
+
+// Parse Excel-like TSV content
+const parseTSV = (content: string): ManualQuestion[] => {
+  const lines = content.split('\n').filter(line => line.trim());
+  if (lines.length < 2) return [];
+  
+  const questions: ManualQuestion[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split('\t').map(cell => cell.trim());
+    if (cells.length < 2) continue;
+    
+    const questionText = cells[0];
+    const options = cells.slice(1, 5).filter(o => o);
+    const correctAnswerLetter = cells[5]?.toUpperCase();
+    const marks = parseInt(cells[6]) || 1;
+    
+    if (!questionText) continue;
+    
+    const correctIndex = correctAnswerLetter ? correctAnswerLetter.charCodeAt(0) - 65 : undefined;
+    
+    questions.push({
+      question_number: questions.length + 1,
+      question_text: questionText,
+      question_type: options.length >= 2 ? 'mcq' : 'text',
+      options: options.length >= 2 ? options : [],
+      correct_answer_index: options.length >= 2 ? correctIndex : undefined,
+      correct_answer_text: options.length < 2 ? cells[1] : undefined,
+      marks
+    });
+  }
+  
+  return questions;
+};
+
 export default function ManualQuestionCreator({ questions, onQuestionsChange }: ManualQuestionCreatorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  
   const [currentQuestion, setCurrentQuestion] = useState<ManualQuestion>({
     question_number: questions.length + 1,
     question_text: '',
@@ -34,6 +108,83 @@ export default function ManualQuestionCreator({ questions, onQuestionsChange }: 
     correct_answer_index: undefined,
     marks: 1
   });
+
+  // Handle file import
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const fileName = file.name.toLowerCase();
+      
+      if (fileName.endsWith('.csv')) {
+        const content = await file.text();
+        const importedQuestions = parseCSV(content);
+        if (importedQuestions.length === 0) {
+          toast.error('No questions found in CSV. Check format: question, optionA, optionB, optionC, optionD, correct_answer, marks');
+          return;
+        }
+        const renumbered = importedQuestions.map((q, i) => ({ ...q, question_number: questions.length + i + 1 }));
+        onQuestionsChange([...questions, ...renumbered]);
+        toast.success(`Imported ${importedQuestions.length} questions from CSV`);
+      } 
+      else if (fileName.endsWith('.tsv') || fileName.endsWith('.txt')) {
+        const content = await file.text();
+        const importedQuestions = parseTSV(content);
+        if (importedQuestions.length === 0) {
+          toast.error('No questions found. Check format: question [tab] optionA [tab] optionB...');
+          return;
+        }
+        const renumbered = importedQuestions.map((q, i) => ({ ...q, question_number: questions.length + i + 1 }));
+        onQuestionsChange([...questions, ...renumbered]);
+        toast.success(`Imported ${importedQuestions.length} questions`);
+      }
+      else if (fileName.endsWith('.pdf')) {
+        // Use edge function to parse PDF
+        const isPdf = true;
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        
+        const { data, error } = await supabase.functions.invoke('parse-question-paper', {
+          body: { pdfBase64: base64, paperType: 'all', language: 'auto' }
+        });
+
+        if (error) throw error;
+        
+        if (data.questions && data.questions.length > 0) {
+          const importedQuestions: ManualQuestion[] = data.questions.map((q: any, index: number) => ({
+            question_number: questions.length + index + 1,
+            question_text: q.question_text || q.text || '',
+            question_type: q.options && q.options.length >= 2 ? 'mcq' : 'text',
+            options: q.options || [],
+            correct_answer_index: undefined,
+            marks: q.marks || 1
+          }));
+          onQuestionsChange([...questions, ...importedQuestions]);
+          toast.success(`Imported ${importedQuestions.length} questions from PDF`);
+        } else {
+          toast.warning('No questions found in PDF');
+        }
+      }
+      else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        toast.error('Excel files (.xlsx/.xls) require conversion. Please save as CSV and try again.');
+      }
+      else {
+        toast.error('Unsupported file format. Use CSV, TSV, TXT, or PDF.');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error('Failed to import questions. Check file format.');
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const addQuestion = () => {
     if (!currentQuestion.question_text.trim()) {
@@ -117,6 +268,52 @@ export default function ManualQuestionCreator({ questions, onQuestionsChange }: 
 
   return (
     <div className="space-y-6">
+      {/* Import Section */}
+      <Card className="border border-dashed">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="font-medium text-sm">Bulk Import Questions</p>
+                <p className="text-xs text-muted-foreground">CSV, TSV, TXT, or PDF files</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.tsv,.txt,.pdf"
+                onChange={handleFileImport}
+                className="hidden"
+                id="question-import"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Choose File
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="text-xs text-muted-foreground flex-1">
+              <strong>CSV Format:</strong> question, optionA, optionB, optionC, optionD, correct (A/B/C/D), marks
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Question Form */}
       <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
         <CardContent className="pt-6 space-y-4">
