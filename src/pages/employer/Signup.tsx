@@ -46,7 +46,7 @@ const EmployerSignup = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/employer/agreement");
+      navigate("/employer/benefits");
     }
   }, [isAuthenticated, navigate]);
 
@@ -97,7 +97,7 @@ const EmployerSignup = () => {
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/employer/agreement`;
+      const redirectUrl = `${window.location.origin}/employer/benefits`;
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -145,10 +145,10 @@ const EmployerSignup = () => {
 
       toast({
         title: "Account Created!",
-        description: "Please review and accept the agreement to continue",
+        description: "Explore the benefits of partnering with Gradia",
       });
 
-      navigate("/employer/agreement");
+      navigate("/employer/benefits");
     } catch (error: any) {
       toast({
         title: "Error",
