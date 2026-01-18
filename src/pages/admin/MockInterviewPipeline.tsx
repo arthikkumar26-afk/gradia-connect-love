@@ -67,9 +67,9 @@ export default function MockInterviewPipeline() {
   const [isParsing, setIsParsing] = useState(false);
   const [activeTab, setActiveTab] = useState("questions");
   const [createMode, setCreateMode] = useState<'pdf' | 'manual'>('pdf');
-  const [manualQuestionsSets, setManualQuestionsSets] = useState<ManualQuestion[][]>([[], [], [], []]);
+  const [manualQuestionsSets, setManualQuestionsSets] = useState<ManualQuestion[][]>([[], [], [], [], [], [], [], [], [], []]);
   const [activeManualSet, setActiveManualSet] = useState(0);
-  const setLabels = ['A', 'B', 'C', 'D'];
+  const setLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
   
   // Preview modal states
   const [showPreview, setShowPreview] = useState(false);
@@ -610,7 +610,7 @@ export default function MockInterviewPipeline() {
     setExtractedQuestionsSets([[], [], [], [], []]);
     setExtractedAnswers([]);
     setExtractedSolutions([]);
-    setManualQuestionsSets([[], [], [], []]);
+    setManualQuestionsSets([[], [], [], [], [], [], [], [], [], []]);
     setActiveManualSet(0);
     setCreateMode('pdf');
   };
