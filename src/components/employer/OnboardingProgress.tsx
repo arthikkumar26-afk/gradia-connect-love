@@ -1,10 +1,11 @@
 import { Check } from 'lucide-react';
 
 interface OnboardingProgressProps {
-  currentStep: 'agreement' | 'terms' | 'payment';
+  currentStep: 'benefits' | 'agreement' | 'terms' | 'payment';
 }
 
 const steps = [
+  { id: 'benefits', label: 'Benefits' },
   { id: 'agreement', label: 'Agreement' },
   { id: 'terms', label: 'Terms & Conditions' },
   { id: 'payment', label: 'Payment' },

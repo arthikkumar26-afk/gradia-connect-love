@@ -32,6 +32,7 @@ import ProfileSuccess from "./pages/ProfileSuccess";
 import JobRequirements from "./pages/JobRequirements";
 import Registration from "./pages/employer/Registration";
 import Agreement from "./pages/employer/Agreement";
+import Benefits from "./pages/employer/Benefits";
 import Terms from "./pages/employer/Terms";
 import Plans from "./pages/employer/Plans";
 import Onboarding from "./pages/employer/Onboarding";
@@ -175,6 +176,7 @@ const MainRoutes = () => (
       <Route path="/employer/signup" element={<EmployerSignup />} />
       <Route path="/employer/login" element={<EmployerLogin />} />
       <Route path="/employer/create-profile" element={<EmployerCreateProfile />} />
+      <Route path="/employer/benefits" element={<Benefits />} />
       <Route path="/employer/agreement" element={<Agreement />} />
       <Route path="/employer/terms" element={<Terms />} />
       <Route path="/employer/plans" element={<Plans />} />
