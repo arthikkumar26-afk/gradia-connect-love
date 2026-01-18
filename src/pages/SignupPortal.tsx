@@ -3,7 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { 
   User, Briefcase, UserPlus, LogIn, Bell, LayoutDashboard, 
   ArrowLeft, Users, Target, BarChart, Shield, ChevronRight,
-  FileText, TrendingUp, Search, Menu, MapPin
+  FileText, TrendingUp, Search, Menu, MapPin, ClipboardList,
+  CreditCard, Megaphone, Database, Monitor, MessageSquare, 
+  Award, Sparkles, Receipt, CheckCircle, Video, Download,
+  ChevronDown, ChevronUp, Plus, Table, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +24,18 @@ import { indiaLocationData } from "@/data/indiaLocations";
 
 type UserRole = "candidate" | "employer" | null;
 type SidebarOption = "become-employer" | "registration" | "login" | "job-alert" | "dashboard";
+type JobAlertSubOption = 
+  | "vacancies-list" 
+  | "payment" 
+  | "advertisement" 
+  | "get-data-cvs" 
+  | "cv-dashboard" 
+  | "interview-process" 
+  | "feedback-report" 
+  | "offer-letter";
+type VacanciesSubOption = "manual-job" | "ai-job";
+type PaymentSubOption = "tariffs" | "receipts" | "confirmation";
+type AdvertisementSubOption = "flyers-videos";
 
 const companyCategories = [
   "IT & Technology",
@@ -55,6 +70,11 @@ const SignupPortal = () => {
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [activeSection, setActiveSection] = useState<SidebarOption>("registration");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [jobAlertSubOption, setJobAlertSubOption] = useState<JobAlertSubOption>("vacancies-list");
+  const [vacanciesSubOption, setVacanciesSubOption] = useState<VacanciesSubOption>("manual-job");
+  const [paymentSubOption, setPaymentSubOption] = useState<PaymentSubOption>("tariffs");
+  const [advertisementSubOption, setAdvertisementSubOption] = useState<AdvertisementSubOption>("flyers-videos");
+  const [jobAlertExpanded, setJobAlertExpanded] = useState(false);
   
   // Employer form states
   const [companyName, setCompanyName] = useState("");
@@ -226,8 +246,19 @@ const SignupPortal = () => {
   const employerSidebarItems = [
     { id: "become-employer" as SidebarOption, label: "Become an Employer", icon: Briefcase },
     { id: "registration" as SidebarOption, label: "Registration", icon: UserPlus },
-    { id: "job-alert" as SidebarOption, label: "Job Alert", icon: Bell },
+    { id: "job-alert" as SidebarOption, label: "Job Alert", icon: Bell, hasSubItems: true },
     { id: "dashboard" as SidebarOption, label: "Client Dashboard", icon: LayoutDashboard },
+  ];
+
+  const jobAlertSubItems = [
+    { id: "vacancies-list" as JobAlertSubOption, label: "Vacancies List", icon: ClipboardList, hasSubItems: true },
+    { id: "payment" as JobAlertSubOption, label: "Payment", icon: CreditCard, hasSubItems: true },
+    { id: "advertisement" as JobAlertSubOption, label: "Advertisement", icon: Megaphone, hasSubItems: true },
+    { id: "get-data-cvs" as JobAlertSubOption, label: "Get DATA/CVs", icon: Database },
+    { id: "cv-dashboard" as JobAlertSubOption, label: "CV Dashboard", icon: Monitor },
+    { id: "interview-process" as JobAlertSubOption, label: "Interview Process", icon: MessageSquare },
+    { id: "feedback-report" as JobAlertSubOption, label: "Feedback Report", icon: FileText },
+    { id: "offer-letter" as JobAlertSubOption, label: "Offer Letter", icon: Award },
   ];
 
   const sidebarItems = selectedRole === "employer" ? employerSidebarItems : candidateSidebarItems;
@@ -387,37 +418,64 @@ const SignupPortal = () => {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 p-2">
+        <nav className="flex-1 p-2 overflow-y-auto">
           {sidebarItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                if (item.id === "login") {
-                  navigate(selectedRole === "employer" ? "/employer/login" : "/candidate/login");
-                } else if (item.id === "dashboard") {
-                  toast({
-                    title: "Login Required",
-                    description: "Please complete registration first to access the dashboard",
-                  });
-                } else if (item.id === "job-alert") {
-                  toast({
-                    title: "Coming Soon",
-                    description: "Job alerts feature will be available after registration",
-                  });
-                } else {
-                  setActiveSection(item.id);
-                }
-              }}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-1",
-                activeSection === item.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-slate-300 hover:bg-slate-700 hover:text-white"
+            <div key={item.id}>
+              <button
+                onClick={() => {
+                  if (item.id === "login") {
+                    navigate(selectedRole === "employer" ? "/employer/login" : "/candidate/login");
+                  } else if (item.id === "dashboard") {
+                    toast({
+                      title: "Login Required",
+                      description: "Please complete registration first to access the dashboard",
+                    });
+                  } else if (item.id === "job-alert") {
+                    setActiveSection(item.id);
+                    setJobAlertExpanded(!jobAlertExpanded);
+                  } else {
+                    setActiveSection(item.id);
+                    setJobAlertExpanded(false);
+                  }
+                }}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-1",
+                  activeSection === item.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                )}
+              >
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                {!sidebarCollapsed && <span className="flex-1 text-left">{item.label}</span>}
+                {!sidebarCollapsed && item.id === "job-alert" && selectedRole === "employer" && (
+                  jobAlertExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+
+              {/* Job Alert Sub Items */}
+              {item.id === "job-alert" && selectedRole === "employer" && jobAlertExpanded && !sidebarCollapsed && (
+                <div className="ml-4 pl-4 border-l border-slate-600 mb-2">
+                  {jobAlertSubItems.map((subItem) => (
+                    <button
+                      key={subItem.id}
+                      onClick={() => {
+                        setActiveSection("job-alert");
+                        setJobAlertSubOption(subItem.id);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors mb-0.5",
+                        jobAlertSubOption === subItem.id && activeSection === "job-alert"
+                          ? "bg-slate-600 text-white"
+                          : "text-slate-400 hover:bg-slate-700 hover:text-white"
+                      )}
+                    >
+                      <subItem.icon className="h-4 w-4 flex-shrink-0" />
+                      <span>{subItem.label}</span>
+                    </button>
+                  ))}
+                </div>
               )}
-            >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!sidebarCollapsed && <span>{item.label}</span>}
-            </button>
+            </div>
           ))}
         </nav>
 
@@ -883,6 +941,417 @@ const SignupPortal = () => {
                   </form>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Job Alert Section for Employers */}
+          {selectedRole === "employer" && activeSection === "job-alert" && (
+            <div>
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Bell className="h-6 w-6 text-yellow-400" />
+                  Job Alert
+                </h1>
+                <p className="text-slate-400">Manage your job postings, payments, and recruitment process</p>
+              </div>
+
+              {/* Sub-navigation tabs */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {jobAlertSubItems.map((subItem) => (
+                  <Button
+                    key={subItem.id}
+                    variant={jobAlertSubOption === subItem.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setJobAlertSubOption(subItem.id)}
+                    className={cn(
+                      jobAlertSubOption === subItem.id 
+                        ? "bg-yellow-600 hover:bg-yellow-700" 
+                        : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                    )}
+                  >
+                    <subItem.icon className="h-4 w-4 mr-2" />
+                    {subItem.label}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Vacancies List Content */}
+              {jobAlertSubOption === "vacancies-list" && (
+                <div className="space-y-6">
+                  {/* Sub-tabs for Vacancies */}
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      variant={vacanciesSubOption === "manual-job" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setVacanciesSubOption("manual-job")}
+                      className={cn(
+                        vacanciesSubOption === "manual-job" 
+                          ? "bg-blue-600 hover:bg-blue-700" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                      )}
+                    >
+                      <Table className="h-4 w-4 mr-2" />
+                      Manual Job Creation
+                    </Button>
+                    <Button
+                      variant={vacanciesSubOption === "ai-job" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setVacanciesSubOption("ai-job")}
+                      className={cn(
+                        vacanciesSubOption === "ai-job" 
+                          ? "bg-purple-600 hover:bg-purple-700" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                      )}
+                    >
+                      <Bot className="h-4 w-4 mr-2" />
+                      AI Job Creation
+                    </Button>
+                  </div>
+
+                  {/* Manual Job Creation */}
+                  {vacanciesSubOption === "manual-job" && (
+                    <Card className="bg-slate-800 border-slate-700">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <Table className="h-5 w-5 text-blue-400" />
+                            Manual Job Creation
+                          </h3>
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add New Job
+                          </Button>
+                        </div>
+                        
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-slate-700">
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Job Title</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Department</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Location</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                                <th className="text-left py-3 px-4 text-slate-400 font-medium">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="border-b border-slate-700/50">
+                                <td className="py-3 px-4 text-white">Software Engineer</td>
+                                <td className="py-3 px-4 text-slate-300">Engineering</td>
+                                <td className="py-3 px-4 text-slate-300">Hyderabad</td>
+                                <td className="py-3 px-4"><span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">Active</span></td>
+                                <td className="py-3 px-4">
+                                  <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">Edit</Button>
+                                </td>
+                              </tr>
+                              <tr className="border-b border-slate-700/50">
+                                <td className="py-3 px-4 text-white">Product Manager</td>
+                                <td className="py-3 px-4 text-slate-300">Product</td>
+                                <td className="py-3 px-4 text-slate-300">Bangalore</td>
+                                <td className="py-3 px-4"><span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">Draft</span></td>
+                                <td className="py-3 px-4">
+                                  <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">Edit</Button>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="text-slate-400 text-sm mt-4">Note: Complete registration to create and manage job postings.</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* AI Job Creation */}
+                  {vacanciesSubOption === "ai-job" && (
+                    <Card className="bg-slate-800 border-slate-700">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                            <Bot className="h-5 w-5 text-purple-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">AI Job Creation</h3>
+                            <p className="text-slate-400 text-sm">Generate job descriptions with AI by selecting designation</p>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-white">Select Designation</Label>
+                            <Select>
+                              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                <SelectValue placeholder="Choose a designation" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="software-engineer">Software Engineer</SelectItem>
+                                <SelectItem value="product-manager">Product Manager</SelectItem>
+                                <SelectItem value="data-analyst">Data Analyst</SelectItem>
+                                <SelectItem value="hr-manager">HR Manager</SelectItem>
+                                <SelectItem value="marketing-executive">Marketing Executive</SelectItem>
+                                <SelectItem value="teacher">Teacher</SelectItem>
+                                <SelectItem value="accountant">Accountant</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Generate Job Description with AI
+                          </Button>
+                        </div>
+                        <p className="text-slate-400 text-sm mt-4">Note: Complete registration to access AI job creation features.</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Payment Content */}
+              {jobAlertSubOption === "payment" && (
+                <div className="space-y-6">
+                  {/* Sub-tabs for Payment */}
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      variant={paymentSubOption === "tariffs" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPaymentSubOption("tariffs")}
+                      className={cn(
+                        paymentSubOption === "tariffs" 
+                          ? "bg-green-600 hover:bg-green-700" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                      )}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Tariffs/Plans
+                    </Button>
+                    <Button
+                      variant={paymentSubOption === "receipts" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPaymentSubOption("receipts")}
+                      className={cn(
+                        paymentSubOption === "receipts" 
+                          ? "bg-blue-600 hover:bg-blue-700" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                      )}
+                    >
+                      <Receipt className="h-4 w-4 mr-2" />
+                      Payment Receipts
+                    </Button>
+                    <Button
+                      variant={paymentSubOption === "confirmation" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPaymentSubOption("confirmation")}
+                      className={cn(
+                        paymentSubOption === "confirmation" 
+                          ? "bg-purple-600 hover:bg-purple-700" 
+                          : "border-slate-600 text-slate-300 hover:bg-slate-700"
+                      )}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Confirmation
+                    </Button>
+                  </div>
+
+                  {paymentSubOption === "tariffs" && (
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <Card className="bg-slate-800 border-slate-700">
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-lg font-semibold text-white mb-2">Basic Plan</h4>
+                          <div className="text-3xl font-bold text-green-400 mb-4">₹5,000<span className="text-sm text-slate-400">/month</span></div>
+                          <ul className="text-slate-300 text-sm space-y-2 mb-4">
+                            <li>• 5 Job Postings</li>
+                            <li>• 50 CV Downloads</li>
+                            <li>• Email Support</li>
+                          </ul>
+                          <Button className="w-full bg-green-600 hover:bg-green-700">Choose Plan</Button>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-slate-800 border-yellow-500/50">
+                        <CardContent className="p-6 text-center">
+                          <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">Popular</span>
+                          <h4 className="text-lg font-semibold text-white mb-2 mt-2">Pro Plan</h4>
+                          <div className="text-3xl font-bold text-yellow-400 mb-4">₹15,000<span className="text-sm text-slate-400">/month</span></div>
+                          <ul className="text-slate-300 text-sm space-y-2 mb-4">
+                            <li>• 20 Job Postings</li>
+                            <li>• 200 CV Downloads</li>
+                            <li>• Priority Support</li>
+                          </ul>
+                          <Button className="w-full bg-yellow-600 hover:bg-yellow-700">Choose Plan</Button>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-slate-800 border-slate-700">
+                        <CardContent className="p-6 text-center">
+                          <h4 className="text-lg font-semibold text-white mb-2">Enterprise</h4>
+                          <div className="text-3xl font-bold text-purple-400 mb-4">Custom</div>
+                          <ul className="text-slate-300 text-sm space-y-2 mb-4">
+                            <li>• Unlimited Postings</li>
+                            <li>• Unlimited Downloads</li>
+                            <li>• Dedicated Support</li>
+                          </ul>
+                          <Button className="w-full bg-purple-600 hover:bg-purple-700">Contact Us</Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {paymentSubOption === "receipts" && (
+                    <Card className="bg-slate-800 border-slate-700">
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                          <Receipt className="h-5 w-5 text-blue-400" />
+                          Payment Receipts
+                        </h3>
+                        <p className="text-slate-400">No payment receipts available. Complete registration to view payment history.</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {paymentSubOption === "confirmation" && (
+                    <Card className="bg-slate-800 border-slate-700">
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-400" />
+                          Payment Confirmation
+                        </h3>
+                        <p className="text-slate-400">No pending confirmations. Complete registration and subscribe to a plan.</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {/* Advertisement Content */}
+              {jobAlertSubOption === "advertisement" && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
+                        <Megaphone className="h-5 w-5 text-orange-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Flyers & Videos Creation</h3>
+                        <p className="text-slate-400 text-sm">Create and download promotional materials</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <Card className="bg-slate-700/50 border-slate-600">
+                        <CardContent className="p-4 text-center">
+                          <FileText className="h-12 w-12 text-blue-400 mx-auto mb-3" />
+                          <h4 className="text-white font-medium mb-2">Job Flyers</h4>
+                          <p className="text-slate-400 text-sm mb-3">Generate professional job flyers for social media</p>
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            <Download className="h-4 w-4 mr-2" />
+                            Create Flyer
+                          </Button>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-slate-700/50 border-slate-600">
+                        <CardContent className="p-4 text-center">
+                          <Video className="h-12 w-12 text-purple-400 mx-auto mb-3" />
+                          <h4 className="text-white font-medium mb-2">Promo Videos</h4>
+                          <p className="text-slate-400 text-sm mb-3">Create video content for job promotions</p>
+                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                            <Download className="h-4 w-4 mr-2" />
+                            Create Video
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <p className="text-slate-400 text-sm mt-4">Note: Complete registration to create and download materials.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Get DATA/CVs Content */}
+              {jobAlertSubOption === "get-data-cvs" && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                        <Database className="h-5 w-5 text-cyan-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Get DATA/CVs</h3>
+                        <p className="text-slate-400 text-sm">Access and download candidate CVs and data</p>
+                      </div>
+                    </div>
+                    <p className="text-slate-400">Complete registration and subscribe to a plan to access candidate data and CVs.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* CV Dashboard Content */}
+              {jobAlertSubOption === "cv-dashboard" && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                        <Monitor className="h-5 w-5 text-indigo-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">CV Dashboard</h3>
+                        <p className="text-slate-400 text-sm">Manage and track downloaded CVs</p>
+                      </div>
+                    </div>
+                    <p className="text-slate-400">Complete registration to access your CV dashboard.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Interview Process Content */}
+              {jobAlertSubOption === "interview-process" && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-teal-500/20 flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 text-teal-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Interview Process</h3>
+                        <p className="text-slate-400 text-sm">Manage candidate interviews and scheduling</p>
+                      </div>
+                    </div>
+                    <p className="text-slate-400">Complete registration to manage your interview pipeline.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Feedback Report Content */}
+              {jobAlertSubOption === "feedback-report" && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-pink-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Feedback Report</h3>
+                        <p className="text-slate-400 text-sm">View and manage interview feedback</p>
+                      </div>
+                    </div>
+                    <p className="text-slate-400">Complete registration to access feedback reports.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Offer Letter Content */}
+              {jobAlertSubOption === "offer-letter" && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                        <Award className="h-5 w-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">Offer Letter</h3>
+                        <p className="text-slate-400 text-sm">Generate and manage offer letters</p>
+                      </div>
+                    </div>
+                    <p className="text-slate-400">Complete registration to create and send offer letters.</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </div>
