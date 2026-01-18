@@ -23,7 +23,8 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
-  Search
+  Search,
+  MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -110,6 +111,7 @@ export default function AdminManagement() {
     { title: "Companies", icon: Building2, path: "/admin/companies" },
     { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
     { title: "Management", icon: UserCog, path: "/admin/management" },
+    { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
     { title: "Reports", icon: BarChart3, path: "/admin/reports" },
     { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
     { title: "Settings", icon: Settings, path: "/admin/settings" },
