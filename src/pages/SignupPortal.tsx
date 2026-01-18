@@ -74,7 +74,18 @@ const SignupPortal = () => {
   const [vacanciesSubOption, setVacanciesSubOption] = useState<VacanciesSubOption>("manual-job");
   const [paymentSubOption, setPaymentSubOption] = useState<PaymentSubOption>("tariffs");
   const [advertisementSubOption, setAdvertisementSubOption] = useState<AdvertisementSubOption>("flyers-videos");
+  const [showAddJobForm, setShowAddJobForm] = useState(false);
   
+  // Add Job Form states
+  const [jobDate, setJobDate] = useState("");
+  const [jobCity, setJobCity] = useState("");
+  const [schoolName, setSchoolName] = useState("");
+  const [jobSegment, setJobSegment] = useState("");
+  const [jobDepartment, setJobDepartment] = useState("");
+  const [jobDesignation, setJobDesignation] = useState("");
+  const [jobSalary, setJobSalary] = useState("");
+  const [jobQualification, setJobQualification] = useState("");
+  const [jobExperience, setJobExperience] = useState("");
   // Employer form states
   const [companyName, setCompanyName] = useState("");
   const [companyCategory, setCompanyCategory] = useState("");
@@ -1082,11 +1093,151 @@ const SignupPortal = () => {
                             <Table className="h-5 w-5 text-blue-400" />
                             Manual Job Creation
                           </h3>
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                          <Button 
+                            size="sm" 
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => setShowAddJobForm(!showAddJobForm)}
+                          >
                             <Plus className="h-4 w-4 mr-2" />
-                            Add New Job
+                            {showAddJobForm ? "Cancel" : "Add New Job"}
                           </Button>
                         </div>
+                        
+                        {/* Add Job Form */}
+                        {showAddJobForm && (
+                          <div className="mb-6 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                            <h4 className="text-white font-medium mb-4">Add New Job</h4>
+                            <div className="grid md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-white">Date</Label>
+                                <Input 
+                                  type="date"
+                                  value={jobDate}
+                                  onChange={(e) => setJobDate(e.target.value)}
+                                  className="bg-slate-700 border-slate-600 text-white"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">City</Label>
+                                <Input 
+                                  placeholder="Enter city"
+                                  value={jobCity}
+                                  onChange={(e) => setJobCity(e.target.value)}
+                                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">School Name</Label>
+                                <Input 
+                                  placeholder="Enter school name"
+                                  value={schoolName}
+                                  onChange={(e) => setSchoolName(e.target.value)}
+                                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">Segment</Label>
+                                <Select value={jobSegment} onValueChange={setJobSegment}>
+                                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                    <SelectValue placeholder="Select segment" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-slate-700 border-slate-600">
+                                    <SelectItem value="primary">Primary</SelectItem>
+                                    <SelectItem value="secondary">Secondary</SelectItem>
+                                    <SelectItem value="higher-secondary">Higher Secondary</SelectItem>
+                                    <SelectItem value="college">College</SelectItem>
+                                    <SelectItem value="university">University</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">Department</Label>
+                                <Select value={jobDepartment} onValueChange={setJobDepartment}>
+                                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                    <SelectValue placeholder="Select department" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-slate-700 border-slate-600">
+                                    <SelectItem value="academics">Academics</SelectItem>
+                                    <SelectItem value="administration">Administration</SelectItem>
+                                    <SelectItem value="sports">Sports</SelectItem>
+                                    <SelectItem value="arts">Arts</SelectItem>
+                                    <SelectItem value="science">Science</SelectItem>
+                                    <SelectItem value="commerce">Commerce</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">Designation</Label>
+                                <Select value={jobDesignation} onValueChange={setJobDesignation}>
+                                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                    <SelectValue placeholder="Select designation" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-slate-700 border-slate-600">
+                                    <SelectItem value="teacher">Teacher</SelectItem>
+                                    <SelectItem value="lecturer">Lecturer</SelectItem>
+                                    <SelectItem value="professor">Professor</SelectItem>
+                                    <SelectItem value="hod">Head of Department</SelectItem>
+                                    <SelectItem value="principal">Principal</SelectItem>
+                                    <SelectItem value="coordinator">Coordinator</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">Salary (₹)</Label>
+                                <Input 
+                                  placeholder="e.g., 25000-35000"
+                                  value={jobSalary}
+                                  onChange={(e) => setJobSalary(e.target.value)}
+                                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">Qualification</Label>
+                                <Select value={jobQualification} onValueChange={setJobQualification}>
+                                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                    <SelectValue placeholder="Select qualification" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-slate-700 border-slate-600">
+                                    <SelectItem value="graduate">Graduate</SelectItem>
+                                    <SelectItem value="post-graduate">Post Graduate</SelectItem>
+                                    <SelectItem value="phd">PhD</SelectItem>
+                                    <SelectItem value="bed">B.Ed</SelectItem>
+                                    <SelectItem value="med">M.Ed</SelectItem>
+                                    <SelectItem value="diploma">Diploma</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-white">Experience</Label>
+                                <Select value={jobExperience} onValueChange={setJobExperience}>
+                                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                    <SelectValue placeholder="Select experience" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-slate-700 border-slate-600">
+                                    <SelectItem value="fresher">Fresher</SelectItem>
+                                    <SelectItem value="1-2">1-2 Years</SelectItem>
+                                    <SelectItem value="2-5">2-5 Years</SelectItem>
+                                    <SelectItem value="5-10">5-10 Years</SelectItem>
+                                    <SelectItem value="10+">10+ Years</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 mt-4">
+                              <Button className="bg-green-600 hover:bg-green-700 text-white">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Save Job
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                                onClick={() => setShowAddJobForm(false)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                         
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
