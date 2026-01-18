@@ -18,9 +18,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   ArrowLeft, Upload, FileText, Plus, Trash2, Eye, 
   Loader2, CheckCircle2, XCircle, BookOpen, Key, RefreshCw,
-  ChevronDown, FolderOpen, Play, Clock, User, ChevronRight
+  ChevronDown, FolderOpen, Play, Clock, User, ChevronRight, PenLine
 } from "lucide-react";
 import { toast } from "sonner";
+import ManualQuestionCreator, { ManualQuestion } from "@/components/admin/ManualQuestionCreator";
 
 interface QuestionPaper {
   id: string;
@@ -65,6 +66,8 @@ export default function MockInterviewPipeline() {
   const [isUploading, setIsUploading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [activeTab, setActiveTab] = useState("questions");
+  const [createMode, setCreateMode] = useState<'pdf' | 'manual'>('pdf');
+  const [manualQuestions, setManualQuestions] = useState<ManualQuestion[]>([]);
   
   // Preview modal states
   const [showPreview, setShowPreview] = useState(false);
@@ -585,6 +588,121 @@ export default function MockInterviewPipeline() {
     setExtractedQuestionsSets([[], [], [], [], []]);
     setExtractedAnswers([]);
     setExtractedSolutions([]);
+    setManualQuestions([]);
+    setCreateMode('pdf');
+  };
+
+  // Save manual questions
+  const saveManualQuestions = async () => {
+    if (!newPaper.segment) {
+      toast.error('Please select a segment');
+      return;
+    }
+    if (!newPaper.category) {
+      toast.error('Please select a category');
+      return;
+    }
+    if (!newPaper.designation) {
+      toast.error('Please select a designation');
+      return;
+    }
+    if (manualQuestions.length === 0) {
+      toast.error('Please add at least one question');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Auto-generate title including class level if applicable
+      const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
+      const autoTitle = `${newPaper.segment} - ${newPaper.category}${classInfo} - ${newPaper.designation} - Manual`;
+
+      const { data: paperData, error: paperError } = await supabase
+        .from('interview_question_papers')
+        .insert({
+          title: autoTitle,
+          description: newPaper.description || null,
+          stage_type: newPaper.stage_type,
+          pdf_url: 'manual-entry',
+          created_by: user?.id,
+          segment: newPaper.segment || null,
+          category: newPaper.category || null,
+          class_level: newPaper.classLevel || null,
+          designation: newPaper.designation || null
+        })
+        .select()
+        .single();
+
+      if (paperError) throw paperError;
+
+      // Insert questions
+      const questionsToInsert = manualQuestions.map((q, index) => ({
+        paper_id: paperData.id,
+        question_number: q.question_number,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        options: q.question_type === 'mcq' ? q.options : null,
+        marks: q.marks,
+        display_order: index
+      }));
+
+      const { data: insertedQuestions, error: questionsError } = await supabase
+        .from('interview_questions')
+        .insert(questionsToInsert)
+        .select();
+
+      if (questionsError) throw questionsError;
+
+      // Insert answer keys for MCQ questions
+      if (insertedQuestions) {
+        const answerKeysToInsert = manualQuestions
+          .map((q, index) => {
+            const insertedQ = insertedQuestions[index];
+            if (!insertedQ) return null;
+
+            if (q.question_type === 'mcq' && q.correct_answer_index !== undefined) {
+              return {
+                question_id: insertedQ.id,
+                answer_text: q.options[q.correct_answer_index] || '',
+                keywords: [q.options[q.correct_answer_index] || ''],
+                is_case_sensitive: false,
+                min_keyword_match_percent: 100
+              };
+            } else if (q.question_type === 'text' && q.correct_answer_text) {
+              return {
+                question_id: insertedQ.id,
+                answer_text: q.correct_answer_text,
+                keywords: q.correct_answer_text.split(/[,\s]+/).filter((k: string) => k.length > 2),
+                is_case_sensitive: false,
+                min_keyword_match_percent: 50
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        if (answerKeysToInsert.length > 0) {
+          const { error: answersError } = await supabase
+            .from('interview_answer_keys')
+            .insert(answerKeysToInsert);
+
+          if (answersError) {
+            console.error('Error inserting answer keys:', answersError);
+          }
+        }
+      }
+
+      toast.success('Question paper saved successfully!');
+      resetForm();
+      loadPapers();
+    } catch (error) {
+      console.error('Error saving paper:', error);
+      toast.error('Failed to save question paper');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const deletePaper = async (paperId: string) => {
@@ -694,7 +812,7 @@ export default function MockInterviewPipeline() {
               Add Question Paper
             </CardTitle>
             <CardDescription>
-              Select role assignment, upload question paper and answer key PDFs
+              Select role assignment, then upload PDFs or create questions manually
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -771,168 +889,212 @@ export default function MockInterviewPipeline() {
               </div>
             </div>
 
-            {/* File Upload Section - 5 Question Paper Sets */}
-            <div className="space-y-4">
-              <Label className="flex items-center gap-2 text-base font-semibold">
-                <BookOpen className="h-5 w-5" />
-                Question Papers (5 Sets) *
-              </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                {[0, 1, 2, 3, 4].map((setIndex) => (
-                  <div key={setIndex} className="space-y-2 p-3 border rounded-lg bg-muted/30">
-                    <Label className="text-sm font-medium">Set {setIndex + 1}</Label>
-                    <Input 
-                      type="file" 
-                      accept=".pdf,.txt"
-                      onChange={handleQuestionPdfChange(setIndex)}
-                      className="text-xs"
-                    />
-                    <Button 
-                      onClick={parseQuestionPdf(setIndex)} 
-                      disabled={!questionPdfFiles[setIndex] || isParsing}
-                      variant="secondary"
-                      size="sm"
-                      className="w-full"
-                    >
-                      {isParsing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
-                      Extract
-                    </Button>
-                    {extractedQuestionsSets[setIndex]?.length > 0 && (
-                      <div className="bg-green-50 dark:bg-green-900/20 rounded p-1.5 text-xs">
-                        <div className="flex items-center gap-1 text-green-700 dark:text-green-400">
-                          <CheckCircle2 className="h-3 w-3" />
-                          <span>{extractedQuestionsSets[setIndex].length} Qs</span>
+            {/* Creation Mode Tabs */}
+            <Tabs value={createMode} onValueChange={(v) => setCreateMode(v as 'pdf' | 'manual')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsTrigger value="pdf" className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload PDF
+                </TabsTrigger>
+                <TabsTrigger value="manual" className="flex items-center gap-2">
+                  <PenLine className="h-4 w-4" />
+                  Create Manually
+                </TabsTrigger>
+              </TabsList>
+
+              {/* PDF Upload Mode */}
+              <TabsContent value="pdf" className="space-y-6 mt-6">
+                {/* File Upload Section - 5 Question Paper Sets */}
+                <div className="space-y-4">
+                  <Label className="flex items-center gap-2 text-base font-semibold">
+                    <BookOpen className="h-5 w-5" />
+                    Question Papers (5 Sets) *
+                  </Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                    {[0, 1, 2, 3, 4].map((setIndex) => (
+                      <div key={setIndex} className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                        <Label className="text-sm font-medium">Set {setIndex + 1}</Label>
+                        <Input 
+                          type="file" 
+                          accept=".pdf,.txt"
+                          onChange={handleQuestionPdfChange(setIndex)}
+                          className="text-xs"
+                        />
+                        <Button 
+                          onClick={parseQuestionPdf(setIndex)} 
+                          disabled={!questionPdfFiles[setIndex] || isParsing}
+                          variant="secondary"
+                          size="sm"
+                          className="w-full"
+                        >
+                          {isParsing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                          Extract
+                        </Button>
+                        {extractedQuestionsSets[setIndex]?.length > 0 && (
+                          <div className="bg-green-50 dark:bg-green-900/20 rounded p-1.5 text-xs">
+                            <div className="flex items-center gap-1 text-green-700 dark:text-green-400">
+                              <CheckCircle2 className="h-3 w-3" />
+                              <span>{extractedQuestionsSets[setIndex].length} Qs</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Extracted Questions Preview */}
+                {extractedQuestionsSets.some(set => set.length > 0) && (
+                  <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
+                    <Label className="flex items-center gap-2 text-base font-semibold">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      Extracted Questions Preview
+                    </Label>
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {extractedQuestionsSets.map((questions, setIndex) => (
+                        questions.length > 0 && (
+                          <div key={setIndex} className="space-y-2">
+                            <h4 className="font-medium text-sm text-muted-foreground">Set {setIndex + 1} ({questions.length} questions)</h4>
+                            <div className="grid gap-2">
+                              {questions.slice(0, 5).map((q: any, qIndex: number) => (
+                                <div key={qIndex} className="bg-background border rounded p-2 text-sm">
+                                  <span className="font-medium text-primary">Q{q.question_number || qIndex + 1}:</span>{' '}
+                                  <span className="text-foreground">{q.question_text?.substring(0, 150)}{q.question_text?.length > 150 ? '...' : ''}</span>
+                                </div>
+                              ))}
+                              {questions.length > 5 && (
+                                <p className="text-xs text-muted-foreground italic">+ {questions.length - 5} more questions...</p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Answer Key and Solutions Upload */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Answer Key Upload */}
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <Key className="h-4 w-4" />
+                      Answer Key
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        type="file" 
+                        accept=".pdf,.txt"
+                        onChange={handleAnswerPdfChange}
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={parseAnswerPdf} 
+                        disabled={!answerPdfFile || isParsing}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        <span className="ml-1">Extract</span>
+                      </Button>
+                    </div>
+                    {extractedAnswers.length > 0 && (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 text-sm">
+                        <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>{extractedAnswers.length} answers extracted</span>
                         </div>
                       </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Extracted Questions Preview */}
-            {extractedQuestionsSets.some(set => set.length > 0) && (
-              <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
-                <Label className="flex items-center gap-2 text-base font-semibold">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  Extracted Questions Preview
-                </Label>
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {extractedQuestionsSets.map((questions, setIndex) => (
-                    questions.length > 0 && (
-                      <div key={setIndex} className="space-y-2">
-                        <h4 className="font-medium text-sm text-muted-foreground">Set {setIndex + 1} ({questions.length} questions)</h4>
-                        <div className="grid gap-2">
-                          {questions.slice(0, 5).map((q: any, qIndex: number) => (
-                            <div key={qIndex} className="bg-background border rounded p-2 text-sm">
-                              <span className="font-medium text-primary">Q{q.question_number || qIndex + 1}:</span>{' '}
-                              <span className="text-foreground">{q.question_text?.substring(0, 150)}{q.question_text?.length > 150 ? '...' : ''}</span>
-                            </div>
-                          ))}
-                          {questions.length > 5 && (
-                            <p className="text-xs text-muted-foreground italic">+ {questions.length - 5} more questions...</p>
-                          )}
+                  {/* Solutions Upload */}
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Solutions
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        type="file" 
+                        accept=".pdf,.txt"
+                        onChange={handleSolutionPdfChange}
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={parseSolutionPdf} 
+                        disabled={!solutionPdfFile || isParsing}
+                        variant="secondary"
+                        size="sm"
+                      >
+                        {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        <span className="ml-1">Extract</span>
+                      </Button>
+                    </div>
+                    {extractedSolutions.length > 0 && (
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 text-sm">
+                        <div className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>{extractedSolutions.length} solutions extracted</span>
                         </div>
                       </div>
-                    )
-                  ))}
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* Answer Key and Solutions Upload */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Answer Key Upload */}
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Key className="h-4 w-4" />
-                  Answer Key
-                </Label>
-                <div className="flex gap-2">
-                  <Input 
-                    type="file" 
-                    accept=".pdf,.txt"
-                    onChange={handleAnswerPdfChange}
-                    className="flex-1"
-                  />
+                {/* PDF Mode Save Button */}
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button variant="outline" onClick={resetForm}>
+                    Reset
+                  </Button>
                   <Button 
-                    onClick={parseAnswerPdf} 
-                    disabled={!answerPdfFile || isParsing}
-                    variant="secondary"
-                    size="sm"
+                    onClick={() => {
+                      console.log('Save button clicked');
+                      console.log('newPaper:', newPaper);
+                      console.log('extractedQuestionsSets:', extractedQuestionsSets);
+                      console.log('Has questions:', extractedQuestionsSets.some(set => set.length > 0));
+                      savePaperWithQuestionsAndAnswers();
+                    }}
+                    disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || !extractedQuestionsSets.some(set => set.length > 0)}
                   >
-                    {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    <span className="ml-1">Extract</span>
+                    {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Save Question Paper
+                    {extractedQuestionsSets.some(set => set.length > 0) && (
+                      <span className="ml-1 text-xs opacity-75">
+                        ({extractedQuestionsSets.filter(set => set.length > 0).length} sets)
+                      </span>
+                    )}
                   </Button>
                 </div>
-                {extractedAnswers.length > 0 && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 text-sm">
-                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>{extractedAnswers.length} answers extracted</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </TabsContent>
 
-              {/* Solutions Upload */}
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Solutions
-                </Label>
-                <div className="flex gap-2">
-                  <Input 
-                    type="file" 
-                    accept=".pdf,.txt"
-                    onChange={handleSolutionPdfChange}
-                    className="flex-1"
-                  />
+              {/* Manual Creation Mode */}
+              <TabsContent value="manual" className="space-y-6 mt-6">
+                <ManualQuestionCreator 
+                  questions={manualQuestions}
+                  onQuestionsChange={setManualQuestions}
+                />
+
+                {/* Manual Mode Save Button */}
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button variant="outline" onClick={resetForm}>
+                    Reset
+                  </Button>
                   <Button 
-                    onClick={parseSolutionPdf} 
-                    disabled={!solutionPdfFile || isParsing}
-                    variant="secondary"
-                    size="sm"
+                    onClick={saveManualQuestions}
+                    disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || manualQuestions.length === 0}
                   >
-                    {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                    <span className="ml-1">Extract</span>
+                    {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Save Question Paper
+                    {manualQuestions.length > 0 && (
+                      <span className="ml-1 text-xs opacity-75">
+                        ({manualQuestions.length} questions)
+                      </span>
+                    )}
                   </Button>
                 </div>
-                {extractedSolutions.length > 0 && (
-                  <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 text-sm">
-                    <div className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>{extractedSolutions.length} solutions extracted</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={resetForm}>
-                Reset
-              </Button>
-              <Button 
-                onClick={() => {
-                  console.log('Save button clicked');
-                  console.log('newPaper:', newPaper);
-                  console.log('extractedQuestionsSets:', extractedQuestionsSets);
-                  console.log('Has questions:', extractedQuestionsSets.some(set => set.length > 0));
-                  savePaperWithQuestionsAndAnswers();
-                }}
-                disabled={isUploading || !newPaper.segment || !newPaper.category || !newPaper.designation || !extractedQuestionsSets.some(set => set.length > 0)}
-              >
-                {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Save Question Paper
-                {extractedQuestionsSets.some(set => set.length > 0) && (
-                  <span className="ml-1 text-xs opacity-75">
-                    ({extractedQuestionsSets.filter(set => set.length > 0).length} sets)
-                  </span>
-                )}
-              </Button>
-            </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
