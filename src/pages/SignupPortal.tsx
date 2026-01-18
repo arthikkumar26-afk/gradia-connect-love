@@ -6,7 +6,7 @@ import {
   FileText, TrendingUp, Search, Menu, ClipboardList,
   CreditCard, Megaphone, Database, Monitor, MessageSquare, 
   Award, Sparkles, Receipt, CheckCircle, Video, Download,
-  Plus, Table, Bot
+  Plus, Table, Bot, Activity, Calendar, Clock, UserCheck, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -424,11 +424,6 @@ const SignupPortal = () => {
               onClick={() => {
                 if (item.id === "login") {
                   navigate(selectedRole === "employer" ? "/employer/login" : "/candidate/login");
-                } else if (item.id === "dashboard") {
-                  toast({
-                    title: "Login Required",
-                    description: "Please complete registration first to access the dashboard",
-                  });
                 } else {
                   setActiveSection(item.id);
                 }
@@ -1379,6 +1374,116 @@ const SignupPortal = () => {
                   </CardContent>
                 </Card>
               )}
+            </div>
+          )}
+
+          {/* Client Dashboard Content */}
+          {activeSection === "dashboard" && (
+            <div className="space-y-6">
+              {/* Interview Tracker Header */}
+              <Card className="bg-slate-800 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Activity className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold text-white">Interview Tracker</h2>
+                      <p className="text-slate-400 text-sm">Track and manage all interview activities</p>
+                    </div>
+                  </div>
+
+                  {/* Stats Overview */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-slate-700/50 rounded-lg p-4 text-center">
+                      <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-2">
+                        <Clock className="h-5 w-5 text-yellow-400" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">0</p>
+                      <p className="text-slate-400 text-xs">Pending</p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4 text-center">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
+                        <Calendar className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">0</p>
+                      <p className="text-slate-400 text-xs">Scheduled</p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4 text-center">
+                      <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-2">
+                        <UserCheck className="h-5 w-5 text-green-400" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">0</p>
+                      <p className="text-slate-400 text-xs">Completed</p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4 text-center">
+                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-2">
+                        <XCircle className="h-5 w-5 text-red-400" />
+                      </div>
+                      <p className="text-2xl font-bold text-white">0</p>
+                      <p className="text-slate-400 text-xs">Cancelled</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Interview List */}
+              <Card className="bg-slate-800 border-slate-700">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-blue-400" />
+                    Recent Interviews
+                  </h3>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-700">
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Candidate</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Position</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Date & Time</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Stage</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                          <th className="text-left py-3 px-4 text-slate-400 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-slate-400">
+                            <div className="flex flex-col items-center gap-2">
+                              <Calendar className="h-12 w-12 text-slate-600" />
+                              <p>No interviews scheduled yet</p>
+                              <p className="text-sm">Complete registration to start scheduling interviews</p>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card className="bg-slate-800 border-slate-700">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white h-auto py-4 flex flex-col gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Schedule Interview
+                    </Button>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white h-auto py-4 flex flex-col gap-2">
+                      <UserCheck className="h-5 w-5" />
+                      View Candidates
+                    </Button>
+                    <Button className="bg-purple-600 hover:bg-purple-700 text-white h-auto py-4 flex flex-col gap-2">
+                      <FileText className="h-5 w-5" />
+                      Generate Report
+                    </Button>
+                  </div>
+                  <p className="text-slate-400 text-sm mt-4">Note: Complete registration to access these features.</p>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
