@@ -25,7 +25,8 @@ import {
   Loader2,
   ClipboardList,
   UserCog,
-  MessageSquare
+  MessageSquare,
+  CreditCard
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -208,6 +209,8 @@ const AdminDashboard = () => {
   const menuItems = [
     { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
     { title: "Users", icon: Users, path: "/admin/users" },
+    { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
+    { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
     { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
     { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
     { title: "Companies", icon: Building2, path: "/admin/companies" },

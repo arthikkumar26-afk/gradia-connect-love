@@ -73,6 +73,8 @@ import AdminCompanies from "./pages/admin/Companies";
 import AdminReports from "./pages/admin/Reports";
 import AdminAuditLogs from "./pages/admin/AuditLogs";
 import AdminSettings from "./pages/admin/AdminSettings";
+import SubscribedEmployers from "./pages/admin/SubscribedEmployers";
+import SubscribedCandidates from "./pages/admin/SubscribedCandidates";
 import OwnerLogin from "./pages/owner/Login";
 import OwnerDashboard from "./pages/owner/Dashboard";
 import OwnerInitialSetup from "./pages/owner/InitialSetup";
@@ -214,6 +216,8 @@ const MainRoutes = () => (
       <Route path="/admin/trending-jobs" element={<TrendingJobsAdmin />} />
       <Route path="/admin/jobs" element={<JobModeration />} />
       <Route path="/admin/users" element={<AdminUsers />} />
+      <Route path="/admin/subscribed-employers" element={<SubscribedEmployers />} />
+      <Route path="/admin/subscribed-candidates" element={<SubscribedCandidates />} />
       <Route path="/admin/companies" element={<AdminCompanies />} />
       <Route path="/admin/reports" element={<AdminReports />} />
       <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
