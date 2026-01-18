@@ -420,62 +420,30 @@ const SignupPortal = () => {
         {/* Navigation */}
         <nav className="flex-1 p-2 overflow-y-auto">
           {sidebarItems.map((item) => (
-            <div key={item.id}>
-              <button
-                onClick={() => {
-                  if (item.id === "login") {
-                    navigate(selectedRole === "employer" ? "/employer/login" : "/candidate/login");
-                  } else if (item.id === "dashboard") {
-                    toast({
-                      title: "Login Required",
-                      description: "Please complete registration first to access the dashboard",
-                    });
-                  } else if (item.id === "job-alert") {
-                    setActiveSection(item.id);
-                    setJobAlertExpanded(!jobAlertExpanded);
-                  } else {
-                    setActiveSection(item.id);
-                    setJobAlertExpanded(false);
-                  }
-                }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-1",
-                  activeSection === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-slate-300 hover:bg-slate-700 hover:text-white"
-                )}
-              >
-                <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="flex-1 text-left">{item.label}</span>}
-                {!sidebarCollapsed && item.id === "job-alert" && selectedRole === "employer" && (
-                  jobAlertExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-
-              {/* Job Alert Sub Items */}
-              {item.id === "job-alert" && selectedRole === "employer" && jobAlertExpanded && !sidebarCollapsed && (
-                <div className="ml-4 pl-4 border-l border-slate-600 mb-2">
-                  {jobAlertSubItems.map((subItem) => (
-                    <button
-                      key={subItem.id}
-                      onClick={() => {
-                        setActiveSection("job-alert");
-                        setJobAlertSubOption(subItem.id);
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors mb-0.5",
-                        jobAlertSubOption === subItem.id && activeSection === "job-alert"
-                          ? "bg-slate-600 text-white"
-                          : "text-slate-400 hover:bg-slate-700 hover:text-white"
-                      )}
-                    >
-                      <subItem.icon className="h-4 w-4 flex-shrink-0" />
-                      <span>{subItem.label}</span>
-                    </button>
-                  ))}
-                </div>
+            <button
+              key={item.id}
+              onClick={() => {
+                if (item.id === "login") {
+                  navigate(selectedRole === "employer" ? "/employer/login" : "/candidate/login");
+                } else if (item.id === "dashboard") {
+                  toast({
+                    title: "Login Required",
+                    description: "Please complete registration first to access the dashboard",
+                  });
+                } else {
+                  setActiveSection(item.id);
+                }
+              }}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors mb-1",
+                activeSection === item.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-slate-300 hover:bg-slate-700 hover:text-white"
               )}
-            </div>
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span>{item.label}</span>}
+            </button>
           ))}
         </nav>
 
