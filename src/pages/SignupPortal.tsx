@@ -603,7 +603,7 @@ const SignupPortal = () => {
               </Card>
 
               {/* CTA to Registration */}
-              <Card className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/50">
+              <Card className="bg-slate-800 border-green-500/50">
                 <CardContent className="p-6 text-center">
                   <h3 className="text-lg font-semibold text-white mb-2">Ready to Start Hiring?</h3>
                   <p className="text-slate-300 text-sm mb-4">Create your employer account and access thousands of qualified candidates</p>
