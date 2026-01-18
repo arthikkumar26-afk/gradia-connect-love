@@ -128,7 +128,7 @@ export default function Agreement() {
           )}
 
           <div className="flex gap-4">
-            <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">
+            <Button variant="outline" onClick={() => navigate('/employer/benefits')} className="flex-1">
               <ArrowLeft className="mr-2 h-4 w-4" />Back
             </Button>
             <Button onClick={handleContinue} disabled={!accepted || loading} className="flex-1">
