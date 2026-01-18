@@ -773,7 +773,7 @@ const SignupPortal = () => {
                   </div>
                   
                   <p className="text-slate-300 mb-4">
-                    An <strong className="text-white">Employer</strong> is an organization or entity that collaborates with Gradia to support employment generation initiatives. 
+                    An <strong className="text-white">Employer</strong> is an entity that collaborates with Gradia to support employment generation initiatives. 
                     Employers post jobs and strategically connect with talented candidates to build exceptional teams.
                   </p>
                   
