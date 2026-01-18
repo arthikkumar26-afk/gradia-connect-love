@@ -484,7 +484,7 @@ const SignupPortal = () => {
             {/* Candidate Option */}
             <Card 
               className="bg-slate-800/50 border-slate-700 hover:border-blue-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10"
-              onClick={() => setSelectedRole("candidate")}
+              onClick={() => navigate("/candidate/signup")}
             >
               <CardContent className="p-8 text-center">
                 <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-6">
