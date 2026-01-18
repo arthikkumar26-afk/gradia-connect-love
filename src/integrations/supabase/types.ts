@@ -445,6 +445,108 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_negotiations: {
+        Row: {
+          additional_requirements: string | null
+          admin_notes: string | null
+          admin_response: string | null
+          call_meeting_link: string | null
+          call_notes: string | null
+          call_scheduled_at: string | null
+          candidate_id: string
+          created_at: string
+          current_salary: number | null
+          expected_salary: number | null
+          id: string
+          negotiation_type: string
+          notice_period: string | null
+          offered_joining_date: string | null
+          offered_salary: number | null
+          preferred_call_date: string | null
+          preferred_call_time: string | null
+          preferred_joining_date: string | null
+          preferred_location: string | null
+          relocation_required: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          session_id: string
+          status: string
+          updated_at: string
+          willing_to_relocate: boolean | null
+        }
+        Insert: {
+          additional_requirements?: string | null
+          admin_notes?: string | null
+          admin_response?: string | null
+          call_meeting_link?: string | null
+          call_notes?: string | null
+          call_scheduled_at?: string | null
+          candidate_id: string
+          created_at?: string
+          current_salary?: number | null
+          expected_salary?: number | null
+          id?: string
+          negotiation_type?: string
+          notice_period?: string | null
+          offered_joining_date?: string | null
+          offered_salary?: number | null
+          preferred_call_date?: string | null
+          preferred_call_time?: string | null
+          preferred_joining_date?: string | null
+          preferred_location?: string | null
+          relocation_required?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          session_id: string
+          status?: string
+          updated_at?: string
+          willing_to_relocate?: boolean | null
+        }
+        Update: {
+          additional_requirements?: string | null
+          admin_notes?: string | null
+          admin_response?: string | null
+          call_meeting_link?: string | null
+          call_notes?: string | null
+          call_scheduled_at?: string | null
+          candidate_id?: string
+          created_at?: string
+          current_salary?: number | null
+          expected_salary?: number | null
+          id?: string
+          negotiation_type?: string
+          notice_period?: string | null
+          offered_joining_date?: string | null
+          offered_salary?: number | null
+          preferred_call_date?: string | null
+          preferred_call_time?: string | null
+          preferred_joining_date?: string | null
+          preferred_location?: string | null
+          relocation_required?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          session_id?: string
+          status?: string
+          updated_at?: string
+          willing_to_relocate?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hr_negotiations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_negotiations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mock_interview_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interview_answer_keys: {
         Row: {
           answer_text: string
