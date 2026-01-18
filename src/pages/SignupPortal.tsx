@@ -1378,7 +1378,7 @@ const SignupPortal = () => {
           )}
 
           {/* Client Dashboard Content */}
-          {activeSection === "dashboard" && (
+          {selectedRole === "employer" && activeSection === "dashboard" && (
             <div className="space-y-6">
               {/* Interview Tracker Header */}
               <Card className="bg-slate-800 border-slate-700">
