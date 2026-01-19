@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { PersonalInfoStep } from "./PersonalInfoStep";
 import { EducationExperienceStep } from "./EducationExperienceStep";
 import { JobPreferencesStep } from "./JobPreferencesStep";
@@ -77,6 +78,7 @@ export const SignupWizard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<CandidateFormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
@@ -397,8 +399,11 @@ export const SignupWizard = () => {
         description: "Welcome to Gradia. Start exploring job opportunities.",
       });
 
-      // Wait briefly for auth state to sync, then navigate
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Refresh the AuthContext profile to sync the newly created profile
+      await refreshProfile();
+      
+      // Wait for auth state to fully sync, then navigate
+      await new Promise(resolve => setTimeout(resolve, 1000));
       navigate("/candidate/dashboard", { replace: true });
     } catch (error: any) {
       toast({
