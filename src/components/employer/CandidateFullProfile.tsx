@@ -560,9 +560,9 @@ export const CandidateFullProfile = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Candidate Info */}
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column - AI Automation */}
+          <div className="lg:col-span-4 space-y-6">
             {/* AI Automation Panel */}
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
               <CardHeader className="pb-3">
@@ -833,7 +833,7 @@ export const CandidateFullProfile = () => {
           </div>
 
           {/* Right Column - Interview Stages */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-8 space-y-6">
             {/* Progress Overview */}
             <Card>
               <CardHeader className="pb-3">
