@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { 
   User, Briefcase, UserPlus, LogIn, Bell, LayoutDashboard, 
   ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, ChevronRight,
@@ -112,11 +112,25 @@ interface FormErrors {
 
 const SignupPortal = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, profile } = useAuth();
   const { toast } = useToast();
   
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [activeSection, setActiveSection] = useState<SidebarOption>("registration");
+
+  // Read URL query parameters on mount
+  useEffect(() => {
+    const role = searchParams.get('role');
+    const section = searchParams.get('section');
+    
+    if (role === 'employer' || role === 'candidate') {
+      setSelectedRole(role as UserRole);
+    }
+    if (section === 'registration' || section === 'login' || section === 'become-employer' || section === 'job-alert' || section === 'dashboard') {
+      setActiveSection(section as SidebarOption);
+    }
+  }, [searchParams]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [jobAlertSubOption, setJobAlertSubOption] = useState<JobAlertSubOption>("vacancies-list");
   const [vacanciesSubOption, setVacanciesSubOption] = useState<VacanciesSubOption>("manual-job");
