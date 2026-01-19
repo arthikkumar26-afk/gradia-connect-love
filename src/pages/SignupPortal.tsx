@@ -1041,64 +1041,63 @@ const SignupPortal = () => {
 
           {selectedRole === "employer" && activeSection === "registration" && (
             <div>
-              {/* Onboarding Progress Indicator */}
-              {employerOnboardingStep !== 'form' && (
-                <div className="w-full max-w-3xl mx-auto mb-8">
-                  <div className="flex items-center justify-between">
-                    {[
-                      { id: 'benefits', label: 'Benefits' },
-                      { id: 'agreement', label: 'Agreement' },
-                      { id: 'terms', label: 'Terms & Conditions' },
-                      { id: 'payment', label: 'Payment' },
-                    ].map((step, index) => {
-                      const stepOrder = ['benefits', 'agreement', 'terms', 'payment'];
-                      const currentIndex = stepOrder.indexOf(employerOnboardingStep);
-                      const stepIndex = stepOrder.indexOf(step.id);
-                      const isCompleted = stepIndex < currentIndex;
-                      const isCurrent = step.id === employerOnboardingStep;
-                      
-                      return (
-                        <div key={step.id} className="flex items-center flex-1">
-                          <div className="flex flex-col items-center flex-1">
-                            <div
-                              className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                                isCompleted
-                                  ? 'bg-green-500 text-white'
-                                  : isCurrent
-                                  ? 'bg-green-500 text-white ring-4 ring-green-500/20'
-                                  : 'bg-slate-700 text-slate-400'
-                              )}
-                            >
-                              {isCompleted ? (
-                                <Check className="w-5 h-5" />
-                              ) : (
-                                <span className="text-sm font-semibold">{index + 1}</span>
-                              )}
-                            </div>
-                            <span
-                              className={cn(
-                                "mt-2 text-xs font-medium text-center",
-                                isCurrent ? 'text-white' : 'text-slate-400'
-                              )}
-                            >
-                              {step.label}
-                            </span>
+              {/* Onboarding Progress Indicator - Always Visible */}
+              <div className="w-full max-w-4xl mx-auto mb-8">
+                <div className="flex items-center justify-between">
+                  {[
+                    { id: 'form', label: 'Registration' },
+                    { id: 'benefits', label: 'Benefits' },
+                    { id: 'agreement', label: 'Agreement' },
+                    { id: 'terms', label: 'Terms & Conditions' },
+                    { id: 'payment', label: 'Payment' },
+                  ].map((step, index) => {
+                    const stepOrder = ['form', 'benefits', 'agreement', 'terms', 'payment'];
+                    const currentIndex = stepOrder.indexOf(employerOnboardingStep);
+                    const stepIndex = stepOrder.indexOf(step.id);
+                    const isCompleted = stepIndex < currentIndex;
+                    const isCurrent = step.id === employerOnboardingStep;
+                    
+                    return (
+                      <div key={step.id} className="flex items-center flex-1">
+                        <div className="flex flex-col items-center flex-1">
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                              isCompleted
+                                ? 'bg-green-500 text-white'
+                                : isCurrent
+                                ? 'bg-green-500 text-white ring-4 ring-green-500/20'
+                                : 'bg-slate-700 text-slate-400'
+                            )}
+                          >
+                            {isCompleted ? (
+                              <Check className="w-5 h-5" />
+                            ) : (
+                              <span className="text-sm font-semibold">{index + 1}</span>
+                            )}
                           </div>
-                          {index < 3 && (
-                            <div
-                              className={cn(
-                                "h-0.5 flex-1 -mt-8 transition-colors",
-                                isCompleted ? 'bg-green-500' : 'bg-slate-700'
-                              )}
-                            />
-                          )}
+                          <span
+                            className={cn(
+                              "mt-2 text-xs font-medium text-center",
+                              isCurrent ? 'text-white' : 'text-slate-400'
+                            )}
+                          >
+                            {step.label}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        {index < 4 && (
+                          <div
+                            className={cn(
+                              "h-0.5 flex-1 -mt-8 transition-colors",
+                              isCompleted ? 'bg-green-500' : 'bg-slate-700'
+                            )}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
               {/* Step: Registration Form */}
               {employerOnboardingStep === 'form' && (
