@@ -20,6 +20,9 @@ import {
   ClipboardList,
   BellRing,
   Megaphone,
+  Grid3X3,
+  UserCheck,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -46,6 +49,9 @@ import { JobAlertContent } from "@/components/employer/JobAlertContent";
 import { LiveInterviewMonitor } from "@/components/employer/LiveInterviewMonitor";
 import { EmployerInterviewPipelineTracker } from "@/components/employer/EmployerInterviewPipelineTracker";
 import { SMMContent } from "@/components/employer/SMMContent";
+import { FeedbackMatrixContent } from "@/components/employer/FeedbackMatrixContent";
+import { ConfirmationContent } from "@/components/employer/ConfirmationContent";
+import { OfferLetterContent } from "@/components/employer/OfferLetterContent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -255,6 +261,9 @@ const EmployerDashboard = () => {
     { id: "mock-interview-pipeline", label: "Mock Interview Pipeline", icon: ClipboardList, path: "/employer/mock-interview-pipeline" },
     { id: "live-interviews", label: "Live Interviews", icon: Calendar, path: "/employer/live-interviews" },
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
+    { id: "feedback-matrix", label: "Feedback Matrix", icon: Grid3X3, path: "/employer/feedback-matrix" },
+    { id: "confirmation", label: "Confirmation", icon: UserCheck, path: "/employer/confirmation" },
+    { id: "offer-letter", label: "Offer Letter", icon: FileText, path: "/employer/offer-letter" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
     { id: "configuration", label: "Configuration", icon: Sliders, path: "/employer/configuration" },
@@ -504,6 +513,9 @@ const EmployerDashboard = () => {
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
             {activeMenu === "job-alert" && <JobAlertContent />}
             {activeMenu === "smm" && <SMMContent />}
+            {activeMenu === "feedback-matrix" && <FeedbackMatrixContent />}
+            {activeMenu === "confirmation" && <ConfirmationContent />}
+            {activeMenu === "offer-letter" && <OfferLetterContent />}
           </div>
         </main>
       </div>
