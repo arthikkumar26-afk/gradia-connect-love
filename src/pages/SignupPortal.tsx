@@ -1,13 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   User, Briefcase, UserPlus, LogIn, Bell, LayoutDashboard, 
-  ArrowLeft, Users, Target, BarChart, Shield, ChevronRight,
+  ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, ChevronRight,
   FileText, TrendingUp, Search, Menu, ClipboardList,
   CreditCard, Megaphone, Database, Monitor, MessageSquare, 
   Award, Sparkles, Receipt, CheckCircle, Video, Download,
-  Plus, Table, Bot, Activity, Calendar, Clock, UserCheck, XCircle
+  Plus, Table, Bot, Activity, Calendar, Clock, UserCheck, XCircle,
+  HeadphonesIcon, Wallet, Building2, Check
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +27,7 @@ import { indiaLocationData } from "@/data/indiaLocations";
 
 type UserRole = "candidate" | "employer" | null;
 type SidebarOption = "become-employer" | "registration" | "login" | "job-alert" | "dashboard";
+type EmployerOnboardingStep = "form" | "benefits" | "agreement" | "terms";
 type JobAlertSubOption = 
   | "vacancies-list" 
   | "payment" 
@@ -36,6 +40,49 @@ type JobAlertSubOption =
 type VacanciesSubOption = "manual-job" | "ai-job";
 type PaymentSubOption = "tariffs" | "receipts" | "confirmation";
 type AdvertisementSubOption = "flyers-videos";
+
+const employerBenefits = [
+  {
+    icon: Users,
+    title: 'Access to Qualified Candidates',
+    description: 'Connect with a large pool of pre-screened, qualified candidates across various industries and skill levels.',
+  },
+  {
+    icon: Sparkles,
+    title: 'AI-Powered Screening',
+    description: 'Our AI technology automatically screens and matches candidates to your job requirements, saving you time and effort.',
+  },
+  {
+    icon: Calendar,
+    title: 'Streamlined Interview Scheduling',
+    description: 'Easily schedule and manage interviews with integrated calendar tools and automated reminders.',
+  },
+  {
+    icon: BarChart,
+    title: 'Real-Time Analytics',
+    description: 'Track applications, monitor hiring metrics, and gain insights into your recruitment performance.',
+  },
+  {
+    icon: HeadphonesIcon,
+    title: 'Dedicated Support',
+    description: 'Get personalized assistance from our recruitment experts to help you find the perfect candidates.',
+  },
+  {
+    icon: Wallet,
+    title: 'Cost-Effective Solutions',
+    description: 'Flexible pricing plans designed to fit your budget while maximizing your hiring ROI.',
+  },
+  {
+    icon: Building2,
+    title: 'Employer Branding',
+    description: 'Showcase your company culture and values to attract top talent with customizable company profiles.',
+  },
+  {
+    icon: CheckCircle,
+    title: 'Background Verification',
+    description: 'Integrated background check services to ensure candidate authenticity and reliability.',
+  },
+];
 
 const companyCategories = [
   "IT & Technology",
@@ -75,6 +122,14 @@ const SignupPortal = () => {
   const [paymentSubOption, setPaymentSubOption] = useState<PaymentSubOption>("tariffs");
   const [advertisementSubOption, setAdvertisementSubOption] = useState<AdvertisementSubOption>("flyers-videos");
   const [showAddJobForm, setShowAddJobForm] = useState(false);
+  
+  // Employer onboarding wizard state
+  const [employerOnboardingStep, setEmployerOnboardingStep] = useState<EmployerOnboardingStep>("form");
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsScrolledToEnd, setTermsScrolledToEnd] = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
+  const termsScrollRef = useRef<HTMLDivElement>(null);
   
   // Add Job Form states
   const [jobDate, setJobDate] = useState("");
@@ -297,12 +352,15 @@ const SignupPortal = () => {
   useEffect(() => {
     if (isAuthenticated && profile) {
       if (profile.role === 'employer') {
-        navigate("/employer/agreement");
+        // If already authenticated as employer and on registration, show benefits step
+        if (selectedRole === 'employer' && activeSection === 'registration' && employerOnboardingStep === 'form') {
+          setEmployerOnboardingStep('benefits');
+        }
       } else {
         navigate("/candidate/dashboard");
       }
     }
-  }, [isAuthenticated, profile, navigate]);
+  }, [isAuthenticated, profile, navigate, selectedRole, activeSection, employerOnboardingStep]);
 
   const validateEmployerForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -413,10 +471,11 @@ const SignupPortal = () => {
 
       toast({
         title: "Account Created!",
-        description: "Please review and accept the agreement to continue",
+        description: "Explore the benefits of partnering with Gradia",
       });
 
-      navigate("/employer/agreement");
+      // Move to benefits step instead of navigating
+      setEmployerOnboardingStep('benefits');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -425,6 +484,110 @@ const SignupPortal = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle agreement continuation
+  const handleAgreementContinue = async () => {
+    if (!agreementAccepted) {
+      toast({ title: 'Please accept the agreement', variant: 'destructive' });
+      return;
+    }
+
+    setIsLoading(true);
+    setRetryError(null);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: 'Authentication required', variant: 'destructive' });
+        setEmployerOnboardingStep('form');
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email, company_name")
+        .eq("id", user.id)
+        .single();
+
+      const { error } = await supabase
+        .from("agreements")
+        .insert({
+          employer_id: user.id,
+          admin_name: profile?.full_name || "Unknown",
+          admin_email: profile?.email || user.email || "",
+          company_name: profile?.company_name || "",
+        });
+
+      if (error) throw error;
+
+      toast({ title: 'Agreement accepted', description: 'Proceeding to terms & conditions' });
+      setEmployerOnboardingStep('terms');
+    } catch (error: any) {
+      console.error("Agreement error:", error);
+      setRetryError('Failed to record agreement. Please try again.');
+      toast({ title: 'Error', description: 'Failed to record agreement', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle terms scroll
+  const handleTermsScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 20 && !termsScrolledToEnd) {
+      setTermsScrolledToEnd(true);
+    }
+  };
+
+  // Handle terms continuation
+  const handleTermsContinue = async () => {
+    if (!termsScrolledToEnd) {
+      toast({ title: 'Please scroll to the end of the terms', variant: 'destructive' });
+      return;
+    }
+    if (!termsAccepted) {
+      toast({ title: 'Please accept the terms', variant: 'destructive' });
+      return;
+    }
+
+    setIsLoading(true);
+    setRetryError(null);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setEmployerOnboardingStep('form');
+        return;
+      }
+
+      const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).single();
+      const { error } = await supabase.from("terms_acceptances").insert({
+        employer_id: user.id,
+        admin_name: profile?.full_name || "Unknown",
+        admin_email: profile?.email || user.email || "",
+      });
+
+      if (error) throw error;
+      toast({ title: 'Terms accepted', description: 'Proceeding to plan selection' });
+      navigate('/employer/plans');
+    } catch (error: any) {
+      setRetryError('Failed to record terms acceptance. Please try again.');
+      toast({ title: 'Error', description: 'Failed to record terms acceptance', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Go back in onboarding steps
+  const goBackOnboarding = () => {
+    if (employerOnboardingStep === 'terms') {
+      setEmployerOnboardingStep('agreement');
+    } else if (employerOnboardingStep === 'agreement') {
+      setEmployerOnboardingStep('benefits');
+    } else if (employerOnboardingStep === 'benefits') {
+      setEmployerOnboardingStep('form');
     }
   };
 
@@ -878,224 +1041,464 @@ const SignupPortal = () => {
 
           {selectedRole === "employer" && activeSection === "registration" && (
             <div>
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <UserPlus className="h-6 w-6 text-green-400" />
-                  Employer Registration
-                </h1>
-                <p className="text-slate-400">Complete the form below to create your employer account</p>
-              </div>
+              {/* Onboarding Progress Indicator */}
+              {employerOnboardingStep !== 'form' && (
+                <div className="w-full max-w-3xl mx-auto mb-8">
+                  <div className="flex items-center justify-between">
+                    {[
+                      { id: 'benefits', label: 'Benefits' },
+                      { id: 'agreement', label: 'Agreement' },
+                      { id: 'terms', label: 'Terms & Conditions' },
+                      { id: 'payment', label: 'Payment' },
+                    ].map((step, index) => {
+                      const stepOrder = ['benefits', 'agreement', 'terms', 'payment'];
+                      const currentIndex = stepOrder.indexOf(employerOnboardingStep);
+                      const stepIndex = stepOrder.indexOf(step.id);
+                      const isCompleted = stepIndex < currentIndex;
+                      const isCurrent = step.id === employerOnboardingStep;
+                      
+                      return (
+                        <div key={step.id} className="flex items-center flex-1">
+                          <div className="flex flex-col items-center flex-1">
+                            <div
+                              className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                                isCompleted
+                                  ? 'bg-green-500 text-white'
+                                  : isCurrent
+                                  ? 'bg-green-500 text-white ring-4 ring-green-500/20'
+                                  : 'bg-slate-700 text-slate-400'
+                              )}
+                            >
+                              {isCompleted ? (
+                                <Check className="w-5 h-5" />
+                              ) : (
+                                <span className="text-sm font-semibold">{index + 1}</span>
+                              )}
+                            </div>
+                            <span
+                              className={cn(
+                                "mt-2 text-xs font-medium text-center",
+                                isCurrent ? 'text-white' : 'text-slate-400'
+                              )}
+                            >
+                              {step.label}
+                            </span>
+                          </div>
+                          {index < 3 && (
+                            <div
+                              className={cn(
+                                "h-0.5 flex-1 -mt-8 transition-colors",
+                                isCompleted ? 'bg-green-500' : 'bg-slate-700'
+                              )}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-              {/* Employer Registration Form */}
-              <Card className="bg-slate-800 border-slate-700">
-                <CardContent className="p-6">
-                  <form onSubmit={handleEmployerSubmit} className="space-y-5">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="companyName" className="text-white">Company Name <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="companyName"
-                          type="text"
-                          placeholder="Enter your company name"
-                          value={companyName}
-                          onChange={(e) => {
-                            setCompanyName(e.target.value);
-                            if (errors.companyName) setErrors({ ...errors, companyName: undefined });
-                          }}
-                          className={cn("bg-slate-700 border-slate-600 text-white", errors.companyName && "border-destructive")}
-                        />
-                        {errors.companyName && <p className="text-sm text-destructive">{errors.companyName}</p>}
+              {/* Step: Registration Form */}
+              {employerOnboardingStep === 'form' && (
+                <>
+                  <div className="mb-6">
+                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                      <UserPlus className="h-6 w-6 text-green-400" />
+                      Employer Registration
+                    </h1>
+                    <p className="text-slate-400">Complete the form below to create your employer account</p>
+                  </div>
+
+                  <Card className="bg-slate-800 border-slate-700">
+                    <CardContent className="p-6">
+                      <form onSubmit={handleEmployerSubmit} className="space-y-5">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="companyName" className="text-white">Company Name <span className="text-destructive">*</span></Label>
+                            <Input
+                              id="companyName"
+                              type="text"
+                              placeholder="Enter your company name"
+                              value={companyName}
+                              onChange={(e) => {
+                                setCompanyName(e.target.value);
+                                if (errors.companyName) setErrors({ ...errors, companyName: undefined });
+                              }}
+                              className={cn("bg-slate-700 border-slate-600 text-white", errors.companyName && "border-destructive")}
+                            />
+                            {errors.companyName && <p className="text-sm text-destructive">{errors.companyName}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="companyCategory" className="text-white">Company Category <span className="text-destructive">*</span></Label>
+                            <Select value={companyCategory} onValueChange={(value) => {
+                              setCompanyCategory(value);
+                              if (errors.companyCategory) setErrors({ ...errors, companyCategory: undefined });
+                            }}>
+                              <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.companyCategory && "border-destructive")}>
+                                <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {companyCategories.map((category) => (
+                                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {errors.companyCategory && <p className="text-sm text-destructive">{errors.companyCategory}</p>}
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="contactPerson" className="text-white">Contact Person Name <span className="text-destructive">*</span></Label>
+                            <Input
+                              id="contactPerson"
+                              type="text"
+                              placeholder="Enter your full name"
+                              value={contactPerson}
+                              onChange={(e) => {
+                                setContactPerson(e.target.value);
+                                if (errors.contactPerson) setErrors({ ...errors, contactPerson: undefined });
+                              }}
+                              className={cn("bg-slate-700 border-slate-600 text-white", errors.contactPerson && "border-destructive")}
+                            />
+                            {errors.contactPerson && <p className="text-sm text-destructive">{errors.contactPerson}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="designation" className="text-white">Designation <span className="text-destructive">*</span></Label>
+                            <Input
+                              id="designation"
+                              type="text"
+                              placeholder="e.g., HR Manager, CEO"
+                              value={designation}
+                              onChange={(e) => {
+                                setDesignation(e.target.value);
+                                if (errors.designation) setErrors({ ...errors, designation: undefined });
+                              }}
+                              className={cn("bg-slate-700 border-slate-600 text-white", errors.designation && "border-destructive")}
+                            />
+                            {errors.designation && <p className="text-sm text-destructive">{errors.designation}</p>}
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="contactNumber" className="text-white">Contact Number <span className="text-destructive">*</span></Label>
+                            <Input
+                              id="contactNumber"
+                              type="tel"
+                              placeholder="Enter 10-digit mobile number"
+                              value={contactNumber}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setContactNumber(value);
+                                if (errors.contactNumber) setErrors({ ...errors, contactNumber: undefined });
+                              }}
+                              className={cn("bg-slate-700 border-slate-600 text-white", errors.contactNumber && "border-destructive")}
+                            />
+                            {errors.contactNumber && <p className="text-sm text-destructive">{errors.contactNumber}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="email" className="text-white">Work Email <span className="text-destructive">*</span></Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="employer@company.com"
+                              value={email}
+                              onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (errors.email) setErrors({ ...errors, email: undefined });
+                              }}
+                              className={cn("bg-slate-700 border-slate-600 text-white", errors.email && "border-destructive")}
+                            />
+                            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="state" className="text-white">State <span className="text-destructive">*</span></Label>
+                            <Select value={state} onValueChange={(value) => {
+                              setState(value);
+                              setDistrict("");
+                              setTownCity("");
+                              if (errors.state) setErrors({ ...errors, state: undefined });
+                            }}>
+                              <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.state && "border-destructive")}>
+                                <SelectValue placeholder="Select state" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[200px]">
+                                {states.map((s) => (
+                                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {errors.state && <p className="text-sm text-destructive">{errors.state}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="district" className="text-white">District <span className="text-destructive">*</span></Label>
+                            <Select value={district} onValueChange={(value) => {
+                              setDistrict(value);
+                              setTownCity("");
+                              if (errors.district) setErrors({ ...errors, district: undefined });
+                            }} disabled={!state}>
+                              <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.district && "border-destructive", !state && "opacity-50")}>
+                                <SelectValue placeholder={state ? "Select district" : "Select state first"} />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[200px]">
+                                {districts.map((d) => (
+                                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {errors.district && <p className="text-sm text-destructive">{errors.district}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="townCity" className="text-white">Town/City <span className="text-destructive">*</span></Label>
+                            <Select value={townCity} onValueChange={(value) => {
+                              setTownCity(value);
+                              if (errors.townCity) setErrors({ ...errors, townCity: undefined });
+                            }} disabled={!district}>
+                              <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.townCity && "border-destructive", !district && "opacity-50")}>
+                                <SelectValue placeholder={district ? "Select town/city" : "Select district first"} />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[200px]">
+                                {towns.map((t) => (
+                                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {errors.townCity && <p className="text-sm text-destructive">{errors.townCity}</p>}
+                          </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="password" className="text-white">Password <span className="text-destructive">*</span></Label>
+                            <Input
+                              id="password"
+                              type="password"
+                              placeholder="Create a strong password"
+                              value={password}
+                              onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (errors.password) setErrors({ ...errors, password: undefined });
+                              }}
+                              className={cn("bg-slate-700 border-slate-600 text-white", errors.password && "border-destructive")}
+                            />
+                            <PasswordStrengthIndicator password={password} />
+                            {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="confirmPassword" className="text-white">Confirm Password <span className="text-destructive">*</span></Label>
+                            <Input
+                              id="confirmPassword"
+                              type="password"
+                              placeholder="Confirm your password"
+                              value={confirmPassword}
+                              onChange={(e) => {
+                                setConfirmPassword(e.target.value);
+                                if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
+                              }}
+                              className={cn("bg-slate-700 border-slate-600 text-white", errors.confirmPassword && "border-destructive")}
+                            />
+                            {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+                          </div>
+                        </div>
+
+                        <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" size="lg" disabled={isLoading}>
+                          {isLoading ? "Creating Account..." : "Create Employer Account"}
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+
+              {/* Step: Benefits */}
+              {employerOnboardingStep === 'benefits' && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="text-center mb-8">
+                      <h1 className="text-3xl font-bold text-white">Benefits with Employer</h1>
+                      <p className="text-slate-400 mt-2">
+                        Discover the advantages of partnering with Gradia Connect for your recruitment needs.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                      {employerBenefits.map((benefit, index) => (
+                        <div
+                          key={index}
+                          className="flex items-start gap-4 p-4 rounded-lg bg-slate-700/50 border border-slate-600 hover:border-green-500/30 transition-colors"
+                        >
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <benefit.icon className="w-5 h-5 text-green-400" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-white mb-1">{benefit.title}</h3>
+                            <p className="text-sm text-slate-400">{benefit.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                        <ArrowLeft className="mr-2 h-4 w-4" />Back
+                      </Button>
+                      <Button onClick={() => setEmployerOnboardingStep('agreement')} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+                        Continue
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step: Agreement */}
+              {employerOnboardingStep === 'agreement' && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="text-center mb-8">
+                      <h1 className="text-3xl font-bold text-white">Service Agreement</h1>
+                      <p className="text-slate-400 mt-2">
+                        Please review and accept the following agreement to continue.
+                      </p>
+                    </div>
+
+                    <ScrollArea className="h-[300px] rounded-md border border-slate-600 p-6 mb-6 bg-slate-700/30">
+                      <div className="prose prose-sm max-w-none">
+                        <h2 className="text-xl font-semibold text-white mb-4">Employer Service Agreement</h2>
+                        
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">1. Introduction</h3>
+                        <p className="text-slate-300 mb-4">
+                          This Service Agreement is entered into between the Company and our platform for the provision of recruitment services.
+                        </p>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">2. Services Provided</h3>
+                        <p className="text-slate-300 mb-4">
+                          Our platform provides comprehensive recruitment solutions including job posting, candidate management, and tracking.
+                        </p>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">3. Employer Responsibilities</h3>
+                        <ul className="list-disc pl-6 text-slate-300 mb-4 space-y-2">
+                          <li>Provide accurate information about job postings</li>
+                          <li>Comply with employment laws</li>
+                          <li>Treat candidates with professionalism</li>
+                          <li>Pay subscription fees as per the selected plan</li>
+                        </ul>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">4. Payment Terms</h3>
+                        <p className="text-slate-300 mb-4">
+                          Subscription fees are billed based on the selected plan. Payment is due at the start of each billing cycle.
+                        </p>
+                        <p className="text-slate-400 mt-8 italic">Last updated: January 2025</p>
                       </div>
+                    </ScrollArea>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="companyCategory" className="text-white">Company Category <span className="text-destructive">*</span></Label>
-                        <Select value={companyCategory} onValueChange={(value) => {
-                          setCompanyCategory(value);
-                          if (errors.companyCategory) setErrors({ ...errors, companyCategory: undefined });
-                        }}>
-                          <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.companyCategory && "border-destructive")}>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {companyCategories.map((category) => (
-                              <SelectItem key={category} value={category}>{category}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.companyCategory && <p className="text-sm text-destructive">{errors.companyCategory}</p>}
+                    <div className="flex items-start gap-3 mb-6 p-4 bg-slate-700/50 rounded-md">
+                      <Checkbox 
+                        id="accept-agreement" 
+                        checked={agreementAccepted} 
+                        onCheckedChange={(checked) => setAgreementAccepted(checked as boolean)}
+                        className="border-slate-500 data-[state=checked]:bg-green-600"
+                      />
+                      <label htmlFor="accept-agreement" className="text-sm text-slate-300 leading-relaxed cursor-pointer">
+                        I have read and agree to the Agreement
+                      </label>
+                    </div>
+
+                    {retryError && (
+                      <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-md text-sm text-red-400">
+                        {retryError}
+                      </div>
+                    )}
+
+                    <div className="flex gap-4">
+                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                        <ArrowLeft className="mr-2 h-4 w-4" />Back
+                      </Button>
+                      <Button onClick={handleAgreementContinue} disabled={!agreementAccepted || isLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+                        {isLoading ? 'Processing...' : 'I Agree & Continue'}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step: Terms */}
+              {employerOnboardingStep === 'terms' && (
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="text-center mb-8">
+                      <h1 className="text-3xl font-bold text-white">Terms & Conditions</h1>
+                      <p className="text-slate-400 mt-2">Please read and accept the terms & conditions to complete your registration.</p>
+                    </div>
+
+                    <div ref={termsScrollRef} className="h-[400px] rounded-md border border-slate-600 p-6 mb-6 bg-slate-700/30 overflow-y-auto" onScroll={handleTermsScroll}>
+                      <div className="prose prose-sm max-w-none">
+                        <h2 className="text-xl font-semibold text-white mb-4">Terms and Conditions of Use</h2>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">1. Acceptance of Terms</h3>
+                        <p className="text-slate-300 mb-4">By accessing this platform, you agree to these Terms and Conditions.</p>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">2. Account Registration</h3>
+                        <p className="text-slate-300 mb-4">You must provide accurate information during registration.</p>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">3. Use of Platform</h3>
+                        <ul className="list-disc pl-6 text-slate-300 mb-4 space-y-2">
+                          <li>No false or discriminatory job listings</li>
+                          <li>No harassment of users or candidates</li>
+                          <li>No unauthorized access attempts</li>
+                        </ul>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">4. Payment and Refunds</h3>
+                        <p className="text-slate-300 mb-4">All fees are non-refundable unless otherwise stated.</p>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">5. Service Availability</h3>
+                        <p className="text-slate-300 mb-4">We strive to maintain platform availability but do not guarantee uninterrupted access.</p>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">6. Limitation of Liability</h3>
+                        <p className="text-slate-300 mb-4">We shall not be liable for indirect or consequential damages.</p>
+                        <h3 className="text-lg font-semibold text-white mt-6 mb-3">7. Termination</h3>
+                        <p className="text-slate-300 mb-4">We may terminate your account if you breach these Terms.</p>
+                        <p className="text-slate-400 mt-8 italic">Last updated: January 2025</p>
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="contactPerson" className="text-white">Contact Person Name <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="contactPerson"
-                          type="text"
-                          placeholder="Enter your full name"
-                          value={contactPerson}
-                          onChange={(e) => {
-                            setContactPerson(e.target.value);
-                            if (errors.contactPerson) setErrors({ ...errors, contactPerson: undefined });
-                          }}
-                          className={cn("bg-slate-700 border-slate-600 text-white", errors.contactPerson && "border-destructive")}
-                        />
-                        {errors.contactPerson && <p className="text-sm text-destructive">{errors.contactPerson}</p>}
+                    {!termsScrolledToEnd && (
+                      <div className="text-sm text-amber-400 mb-4 flex items-center gap-2">
+                        <span>⚠️</span><span>Please scroll to the end to enable the checkbox</span>
                       </div>
+                    )}
 
-                      <div className="space-y-2">
-                        <Label htmlFor="designation" className="text-white">Designation <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="designation"
-                          type="text"
-                          placeholder="e.g., HR Manager, CEO"
-                          value={designation}
-                          onChange={(e) => {
-                            setDesignation(e.target.value);
-                            if (errors.designation) setErrors({ ...errors, designation: undefined });
-                          }}
-                          className={cn("bg-slate-700 border-slate-600 text-white", errors.designation && "border-destructive")}
-                        />
-                        {errors.designation && <p className="text-sm text-destructive">{errors.designation}</p>}
-                      </div>
+                    <div className="flex items-start gap-3 mb-6 p-4 bg-slate-700/50 rounded-md">
+                      <Checkbox 
+                        id="accept-terms" 
+                        checked={termsAccepted} 
+                        onCheckedChange={(checked) => setTermsAccepted(checked as boolean)} 
+                        disabled={!termsScrolledToEnd}
+                        className="border-slate-500 data-[state=checked]:bg-green-600"
+                      />
+                      <label htmlFor="accept-terms" className={cn("text-sm cursor-pointer", !termsScrolledToEnd ? 'text-slate-500' : 'text-slate-300')}>
+                        I have read and accept the Terms & Conditions
+                      </label>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="contactNumber" className="text-white">Contact Number <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="contactNumber"
-                          type="tel"
-                          placeholder="Enter 10-digit mobile number"
-                          value={contactNumber}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                            setContactNumber(value);
-                            if (errors.contactNumber) setErrors({ ...errors, contactNumber: undefined });
-                          }}
-                          className={cn("bg-slate-700 border-slate-600 text-white", errors.contactNumber && "border-destructive")}
-                        />
-                        {errors.contactNumber && <p className="text-sm text-destructive">{errors.contactNumber}</p>}
-                      </div>
+                    {retryError && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-md text-sm text-red-400">{retryError}</div>}
 
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-white">Work Email <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="employer@company.com"
-                          value={email}
-                          onChange={(e) => {
-                            setEmail(e.target.value);
-                            if (errors.email) setErrors({ ...errors, email: undefined });
-                          }}
-                          className={cn("bg-slate-700 border-slate-600 text-white", errors.email && "border-destructive")}
-                        />
-                        {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                      </div>
+                    <div className="flex gap-4">
+                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                        <ArrowLeft className="mr-2 h-4 w-4" />Back
+                      </Button>
+                      <Button onClick={handleTermsContinue} disabled={!termsAccepted || isLoading || !termsScrolledToEnd} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+                        {isLoading ? 'Processing...' : 'Accept & Continue to Plans'}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </div>
-
-                    {/* Location Fields */}
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="state" className="text-white">State <span className="text-destructive">*</span></Label>
-                        <Select value={state} onValueChange={(value) => {
-                          setState(value);
-                          setDistrict("");
-                          setTownCity("");
-                          if (errors.state) setErrors({ ...errors, state: undefined });
-                        }}>
-                          <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.state && "border-destructive")}>
-                            <SelectValue placeholder="Select state" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            {states.map((s) => (
-                              <SelectItem key={s} value={s}>{s}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.state && <p className="text-sm text-destructive">{errors.state}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="district" className="text-white">District <span className="text-destructive">*</span></Label>
-                        <Select value={district} onValueChange={(value) => {
-                          setDistrict(value);
-                          setTownCity("");
-                          if (errors.district) setErrors({ ...errors, district: undefined });
-                        }} disabled={!state}>
-                          <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.district && "border-destructive", !state && "opacity-50")}>
-                            <SelectValue placeholder={state ? "Select district" : "Select state first"} />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            {districts.map((d) => (
-                              <SelectItem key={d} value={d}>{d}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.district && <p className="text-sm text-destructive">{errors.district}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="townCity" className="text-white">Town/City <span className="text-destructive">*</span></Label>
-                        <Select value={townCity} onValueChange={(value) => {
-                          setTownCity(value);
-                          if (errors.townCity) setErrors({ ...errors, townCity: undefined });
-                        }} disabled={!district}>
-                          <SelectTrigger className={cn("bg-slate-700 border-slate-600 text-white", errors.townCity && "border-destructive", !district && "opacity-50")}>
-                            <SelectValue placeholder={district ? "Select town/city" : "Select district first"} />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            {towns.map((t) => (
-                              <SelectItem key={t} value={t}>{t}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {errors.townCity && <p className="text-sm text-destructive">{errors.townCity}</p>}
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="password" className="text-white">Password <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="password"
-                          type="password"
-                          placeholder="Create a strong password"
-                          value={password}
-                          onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (errors.password) setErrors({ ...errors, password: undefined });
-                          }}
-                          className={cn("bg-slate-700 border-slate-600 text-white", errors.password && "border-destructive")}
-                        />
-                        <PasswordStrengthIndicator password={password} />
-                        {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword" className="text-white">Confirm Password <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          placeholder="Confirm your password"
-                          value={confirmPassword}
-                          onChange={(e) => {
-                            setConfirmPassword(e.target.value);
-                            if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
-                          }}
-                          className={cn("bg-slate-700 border-slate-600 text-white", errors.confirmPassword && "border-destructive")}
-                        />
-                        {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
-                      </div>
-                    </div>
-
-                    <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white" size="lg" disabled={isLoading}>
-                      {isLoading ? "Creating Account..." : "Create Employer Account"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
 
