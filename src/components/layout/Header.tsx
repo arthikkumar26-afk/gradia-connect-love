@@ -307,6 +307,30 @@ const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t border-border overflow-y-auto z-[70]">
             <div className="flex flex-col space-y-4 pb-20 pt-4 container mx-auto px-4">
+              {/* Mobile Sign Up and Login Buttons - Show only when not authenticated */}
+              {!isAuthenticated && (
+                <div className="flex flex-col gap-2 px-3 pb-2 border-b border-border">
+                  <Button asChild variant="default" size="sm" className="w-full gap-2">
+                    <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
+                      <User className="h-4 w-4" />
+                      Sign Up
+                    </Link>
+                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link to="/candidate/login" onClick={() => setIsMenuOpen(false)}>
+                        Candidate Login
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
+                        Employer Login
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               {/* Mobile Navigation */}
               <div className="flex flex-col space-y-2">
                 <Link to="/" className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-muted rounded-md transition-colors" onClick={() => setIsMenuOpen(false)}>
