@@ -1103,6 +1103,9 @@ const CandidateDashboard = () => {
     }
   }, [activeMenu, profile?.id]);
 
+  // Track if we've already shown the profile required toast to prevent loops
+  const [hasShownProfileToast, setHasShownProfileToast] = useState(false);
+
   useEffect(() => {
     // Wait for auth loading to complete
     if (authLoading) {
@@ -1115,12 +1118,16 @@ const CandidateDashboard = () => {
     }
 
     // If authenticated but no profile exists, redirect to create profile
+    // Only show toast once to prevent infinite loop
     if (!profile) {
-      toast({
-        title: "Profile Required",
-        description: "Please complete your profile to continue.",
-      });
-      navigate("/candidate/create-profile");
+      if (!hasShownProfileToast) {
+        setHasShownProfileToast(true);
+        toast({
+          title: "Profile Required",
+          description: "Please complete your profile to continue.",
+        });
+        navigate("/candidate/create-profile", { replace: true });
+      }
       return;
     }
 
