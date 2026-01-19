@@ -584,8 +584,11 @@ const SignupPortal = () => {
   const goBackOnboarding = () => {
     if (employerOnboardingStep === 'terms') {
       setEmployerOnboardingStep('agreement');
+      setTermsAccepted(false);
+      setTermsScrolledToEnd(false);
     } else if (employerOnboardingStep === 'agreement') {
       setEmployerOnboardingStep('benefits');
+      setAgreementAccepted(false);
     } else if (employerOnboardingStep === 'benefits') {
       setEmployerOnboardingStep('form');
     }
