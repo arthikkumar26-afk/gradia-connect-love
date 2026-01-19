@@ -28,7 +28,7 @@ import { indiaLocationData } from "@/data/indiaLocations";
 
 type UserRole = "candidate" | "employer" | null;
 type SidebarOption = "become-employer" | "registration" | "login" | "job-alert" | "dashboard";
-type EmployerOnboardingStep = "form" | "benefits" | "agreement" | "terms" | "payment";
+type EmployerOnboardingStep = "form" | "benefits" | "agreement" | "terms" | "payment" | "job-alert-onboarding";
 type JobAlertSubOption = 
   | "vacancies-list" 
   | "payment" 
@@ -583,7 +583,9 @@ const SignupPortal = () => {
 
   // Go back in onboarding steps
   const goBackOnboarding = () => {
-    if (employerOnboardingStep === 'payment') {
+    if (employerOnboardingStep === 'job-alert-onboarding') {
+      setEmployerOnboardingStep('payment');
+    } else if (employerOnboardingStep === 'payment') {
       setEmployerOnboardingStep('terms');
     } else if (employerOnboardingStep === 'terms') {
       setEmployerOnboardingStep('agreement');
@@ -633,7 +635,7 @@ const SignupPortal = () => {
 
       if (error) throw error;
       toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
-      navigate("/employer/dashboard");
+      setEmployerOnboardingStep('job-alert-onboarding');
     } catch (error: any) {
       setRetryError('Failed to process payment. Please try again.');
       toast({ title: 'Error', description: 'Failed to process plan selection', variant: 'destructive' });
@@ -1610,6 +1612,232 @@ const SignupPortal = () => {
                   <div className="flex justify-center">
                     <Button variant="outline" onClick={goBackOnboarding} className="border-slate-600 bg-slate-700 text-white hover:bg-slate-600">
                       <ArrowLeft className="mr-2 h-4 w-4" />Back
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step: Job Alert Onboarding */}
+              {employerOnboardingStep === 'job-alert-onboarding' && (
+                <div>
+                  <div className="text-center mb-8">
+                    <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="h-8 w-8 text-green-400" />
+                    </div>
+                    <h1 className="text-3xl font-bold text-white mb-4">Registration Complete!</h1>
+                    <p className="text-slate-400">Your account is now active. Start managing your job postings below.</p>
+                  </div>
+
+                  <Card className="bg-slate-800 border-slate-700 mb-6">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            <Bell className="h-5 w-5 text-yellow-400" />
+                            Job Alert - Create Your First Job
+                          </h2>
+                          <p className="text-slate-400 text-sm mt-1">Post a job to start receiving applications</p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => setShowAddJobForm(!showAddJobForm)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {showAddJobForm ? "Cancel" : "Add New Job"}
+                        </Button>
+                      </div>
+
+                      {/* Add Job Form */}
+                      {showAddJobForm && (
+                        <div className="mb-6 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                          <h4 className="text-white font-medium mb-4">Add New Job</h4>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-white">Date</Label>
+                              <Input 
+                                type="date"
+                                value={jobDate}
+                                onChange={(e) => setJobDate(e.target.value)}
+                                className="bg-slate-700 border-slate-600 text-white"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">City</Label>
+                              <Input 
+                                placeholder="Enter city"
+                                value={jobCity}
+                                onChange={(e) => setJobCity(e.target.value)}
+                                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">School Name</Label>
+                              <Input 
+                                placeholder="Enter school name"
+                                value={schoolName}
+                                onChange={(e) => setSchoolName(e.target.value)}
+                                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">Segment</Label>
+                              <Select value={jobSegment} onValueChange={handleSegmentChange}>
+                                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                  <SelectValue placeholder="Select segment" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-700 border-slate-600">
+                                  {segmentOptions.map((seg) => (
+                                    <SelectItem key={seg} value={seg}>{seg}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">Department/Category</Label>
+                              <Select 
+                                value={jobDepartment} 
+                                onValueChange={handleDepartmentChange}
+                                disabled={!jobSegment}
+                              >
+                                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                  <SelectValue placeholder={jobSegment ? "Select department" : "Select segment first"} />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-700 border-slate-600">
+                                  {availableDepartments.map((dept) => (
+                                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">Designation</Label>
+                              <Select 
+                                value={jobDesignation} 
+                                onValueChange={setJobDesignation}
+                                disabled={!jobDepartment}
+                              >
+                                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                  <SelectValue placeholder={jobDepartment ? "Select designation" : "Select department first"} />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-700 border-slate-600">
+                                  {availableDesignations.map((desig) => (
+                                    <SelectItem key={desig} value={desig}>{desig}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">Salary (₹)</Label>
+                              <Input 
+                                placeholder="e.g., 25000-35000"
+                                value={jobSalary}
+                                onChange={(e) => setJobSalary(e.target.value)}
+                                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">Qualification</Label>
+                              <Select value={jobQualification} onValueChange={setJobQualification}>
+                                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                  <SelectValue placeholder="Select qualification" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-700 border-slate-600">
+                                  <SelectItem value="graduate">Graduate</SelectItem>
+                                  <SelectItem value="post-graduate">Post Graduate</SelectItem>
+                                  <SelectItem value="phd">PhD</SelectItem>
+                                  <SelectItem value="bed">B.Ed</SelectItem>
+                                  <SelectItem value="med">M.Ed</SelectItem>
+                                  <SelectItem value="diploma">Diploma</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-white">Experience</Label>
+                              <Select value={jobExperience} onValueChange={setJobExperience}>
+                                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                                  <SelectValue placeholder="Select experience" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-slate-700 border-slate-600">
+                                  <SelectItem value="fresher">Fresher</SelectItem>
+                                  <SelectItem value="1-2">1-2 Years</SelectItem>
+                                  <SelectItem value="2-5">2-5 Years</SelectItem>
+                                  <SelectItem value="5-10">5-10 Years</SelectItem>
+                                  <SelectItem value="10+">10+ Years</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-4">
+                            <Button 
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={handleSaveJob}
+                              disabled={isSavingJob}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              {isSavingJob ? "Saving..." : "Save Job"}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                              onClick={() => setShowAddJobForm(false)}
+                              disabled={isSavingJob}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Saved Jobs Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-slate-700">
+                              <th className="text-left py-3 px-2 text-slate-400 font-medium text-xs">Date</th>
+                              <th className="text-left py-3 px-2 text-slate-400 font-medium text-xs">City</th>
+                              <th className="text-left py-3 px-2 text-slate-400 font-medium text-xs">School Name</th>
+                              <th className="text-left py-3 px-2 text-slate-400 font-medium text-xs">Segment</th>
+                              <th className="text-left py-3 px-2 text-slate-400 font-medium text-xs">Department</th>
+                              <th className="text-left py-3 px-2 text-slate-400 font-medium text-xs">Designation</th>
+                              <th className="text-left py-3 px-2 text-slate-400 font-medium text-xs">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {savedJobs.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="py-8 text-center text-slate-400">
+                                  No jobs created yet. Click "Add New Job" to create your first job posting.
+                                </td>
+                              </tr>
+                            ) : (
+                              savedJobs.map((job) => (
+                                <tr key={job.id} className="border-b border-slate-700/50">
+                                  <td className="py-3 px-2 text-slate-300 text-xs">{job.date || '-'}</td>
+                                  <td className="py-3 px-2 text-slate-300 text-xs capitalize">{job.city}</td>
+                                  <td className="py-3 px-2 text-slate-300 text-xs">{job.schoolName}</td>
+                                  <td className="py-3 px-2 text-slate-300 text-xs capitalize">{job.segment || '-'}</td>
+                                  <td className="py-3 px-2 text-slate-300 text-xs capitalize">{job.department || '-'}</td>
+                                  <td className="py-3 px-2 text-white text-xs capitalize font-medium">{job.designation}</td>
+                                  <td className="py-3 px-2">
+                                    <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">{job.status}</span>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="flex gap-4 justify-center">
+                    <Button variant="outline" onClick={goBackOnboarding} className="border-slate-600 bg-slate-700 text-white hover:bg-slate-600">
+                      <ArrowLeft className="mr-2 h-4 w-4" />Back
+                    </Button>
+                    <Button onClick={() => navigate("/employer/dashboard")} className="bg-green-600 hover:bg-green-700 text-white">
+                      Go to Dashboard
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
