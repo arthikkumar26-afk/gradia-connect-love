@@ -1867,9 +1867,12 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         jobAlertSubOption === subItem.id 
-                          ? "bg-yellow-500/20 border-yellow-500 !text-yellow-400 hover:bg-yellow-500/30" 
-                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
+                          ? "bg-yellow-500/20 border-yellow-500 hover:bg-yellow-500/30" 
+                          : "border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500"
                       )}
+                      style={{ 
+                        color: jobAlertSubOption === subItem.id ? '#facc15' : '#e2e8f0'
+                      }}
                     >
                       <subItem.icon className="h-4 w-4 mr-2" />
                       {subItem.label}
@@ -1892,9 +1895,12 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         vacanciesSubOption === "manual-job" 
-                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
+                          ? "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30" 
+                          : "border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500"
                       )}
+                      style={{ 
+                        color: vacanciesSubOption === "manual-job" ? '#60a5fa' : '#e2e8f0'
+                      }}
                     >
                       <Table className="h-4 w-4 mr-2" />
                       Manual Job Creation
@@ -1906,9 +1912,12 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         vacanciesSubOption === "ai-job" 
-                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
+                          ? "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30" 
+                          : "border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500"
                       )}
+                      style={{ 
+                        color: vacanciesSubOption === "ai-job" ? '#60a5fa' : '#e2e8f0'
+                      }}
                     >
                       <Bot className="h-4 w-4 mr-2" />
                       AI Job Creation
@@ -1931,9 +1940,12 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         paymentSubOption === "tariffs" 
-                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
+                          ? "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30" 
+                          : "border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500"
                       )}
+                      style={{ 
+                        color: paymentSubOption === "tariffs" ? '#60a5fa' : '#e2e8f0'
+                      }}
                     >
                       <FileText className="h-4 w-4 mr-2" />
                       Tariffs/Plans
@@ -1945,9 +1957,12 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         paymentSubOption === "receipts" 
-                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
+                          ? "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30" 
+                          : "border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500"
                       )}
+                      style={{ 
+                        color: paymentSubOption === "receipts" ? '#60a5fa' : '#e2e8f0'
+                      }}
                     >
                       <Receipt className="h-4 w-4 mr-2" />
                       Payment Receipts
@@ -1959,9 +1974,12 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         paymentSubOption === "confirmation" 
-                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
+                          ? "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30" 
+                          : "border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500"
                       )}
+                      style={{ 
+                        color: paymentSubOption === "confirmation" ? '#60a5fa' : '#e2e8f0'
+                      }}
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Confirmation
@@ -1984,9 +2002,12 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         advertisementSubOption === "flyers-videos" 
-                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
+                          ? "bg-blue-500/20 border-blue-500 hover:bg-blue-500/30" 
+                          : "border-slate-600 bg-slate-800 hover:bg-slate-700 hover:border-slate-500"
                       )}
+                      style={{ 
+                        color: advertisementSubOption === "flyers-videos" ? '#60a5fa' : '#e2e8f0'
+                      }}
                     >
                       <Video className="h-4 w-4 mr-2" />
                       Flyers/Videos Creation
