@@ -103,17 +103,15 @@ const getStageColor = (title: string): string => {
   return stageColors[title] || 'bg-gray-500';
 };
 
-// Candidate Profile Modal Component
-const CandidateProfileModal = ({ 
+// Candidate Profile Inline Component (replaces pipeline content when selected)
+const CandidateProfileInline = ({ 
   candidate, 
-  open,
-  onOpenChange,
+  onBack,
   onUpdateStep,
   onRefresh
 }: { 
-  candidate: Candidate | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  candidate: Candidate;
+  onBack: () => void;
   onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
   onRefresh?: () => void;
 }) => {
@@ -136,8 +134,6 @@ const CandidateProfileModal = ({
       fetchJobType();
     }
   }, [candidate?.jobId]);
-  
-  if (!candidate) return null;
 
   const completedSteps = candidate.interviewSteps.filter(s => s.status === "completed").length;
   const progress = (completedSteps / candidate.interviewSteps.length) * 100;
@@ -202,39 +198,47 @@ const CandidateProfileModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={candidate.avatar} />
-              <AvatarFallback className="bg-accent/10 text-accent">
-                {getInitials(candidate.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span>{candidate.name}</span>
-                {candidate.aiScore && (
-                  <Badge className="bg-primary/10 text-primary border-primary/20">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    AI Score: {candidate.aiScore}%
-                  </Badge>
-                )}
-                {candidate.autoProgressed && (
-                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                    <Zap className="h-3 w-3 mr-1" />
-                    Auto-Progressed
-                  </Badge>
-                )}
-              </div>
-              <p className="text-sm font-normal text-muted-foreground">{candidate.role}</p>
+    <div className="space-y-4">
+      {/* Header with Back Button */}
+      <div className="flex items-center gap-4 pb-4 border-b">
+        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+          <ChevronRight className="h-4 w-4 rotate-180" />
+          Back to Pipeline
+        </Button>
+        <div className="flex items-center gap-3 flex-1">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={candidate.avatar} />
+            <AvatarFallback className="bg-accent/10 text-accent">
+              {getInitials(candidate.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-lg font-semibold">{candidate.name}</span>
+              {candidate.aiScore && (
+                <Badge className="bg-primary/10 text-primary border-primary/20">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  AI Score: {candidate.aiScore}%
+                </Badge>
+              )}
+              {candidate.autoProgressed && (
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Auto-Progressed
+                </Badge>
+              )}
             </div>
-          </DialogTitle>
-        </DialogHeader>
+            <p className="text-sm text-muted-foreground">{candidate.role}</p>
+          </div>
+        </div>
+        <Button onClick={onRefresh} variant="ghost" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
 
-        <div className="flex-1 overflow-y-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column - Contact & Skills */}
             <div className="space-y-4">
               {/* Contact Info */}
@@ -540,8 +544,6 @@ const CandidateProfileModal = ({
               />
             </div>
           </div>
-        </div>
-      </DialogContent>
       
       {/* Manual Interview Schedule Modal */}
       <ManualInterviewScheduleModal
@@ -557,7 +559,7 @@ const CandidateProfileModal = ({
         stageName={selectedStageForSchedule?.title || 'Panel Interview'}
         onSuccess={onRefresh}
       />
-    </Dialog>
+    </div>
   );
 };
 
@@ -892,7 +894,6 @@ export const InterviewPipelineContent = () => {
     0
   );
 
-  const isModalOpen = selectedCandidate !== null;
   const filteredStages = stages.filter(s => s.title !== "AI Phone Interview");
 
   // Loading state
@@ -941,19 +942,20 @@ export const InterviewPipelineContent = () => {
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {/* Candidate Profile Modal */}
-      <CandidateProfileModal
+  // If a candidate is selected, show their profile inline
+  if (selectedCandidate) {
+    return (
+      <CandidateProfileInline
         candidate={selectedCandidate}
-        open={isModalOpen}
-        onOpenChange={(open) => {
-          if (!open) setSelectedCandidate(null);
-        }}
+        onBack={() => setSelectedCandidate(null)}
         onUpdateStep={handleUpdateStep}
         onRefresh={refetch}
       />
+    );
+  }
 
+  return (
+    <div className="space-y-4">
       {/* Header Stats */}
       <div className="flex items-center justify-between">
         <div>
