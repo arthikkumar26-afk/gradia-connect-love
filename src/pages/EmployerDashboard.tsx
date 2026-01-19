@@ -271,10 +271,6 @@ const EmployerDashboard = () => {
       ]
     },
     { id: "talent-pool", label: "Talent Pool", icon: Users, path: "/employer/talent-pool" },
-    { id: "teams", label: "Teams", icon: UsersRound, path: "/employer/teams" },
-    { id: "viva", label: "Viva", icon: Mic, path: "/employer/viva" },
-    { id: "placements", label: "Placements", icon: UserCheck, path: "/employer/placements" },
-    { id: "subscriptions", label: "Subscriptions", icon: CreditCard, path: "/employer/subscriptions" },
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
