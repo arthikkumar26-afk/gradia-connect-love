@@ -57,6 +57,8 @@ import { VivaContent } from "@/components/employer/VivaContent";
 import { RegistrationContent } from "@/components/employer/RegistrationContent";
 import { SubscriptionsContent } from "@/components/employer/SubscriptionsContent";
 import { JobAlertContent } from "@/components/employer/JobAlertContent";
+import { LiveInterviewMonitor } from "@/components/employer/LiveInterviewMonitor";
+import { EmployerInterviewPipelineTracker } from "@/components/employer/EmployerInterviewPipelineTracker";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -268,6 +270,8 @@ const EmployerDashboard = () => {
       path: "/employer/client-dashboard",
       children: [
         { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
+        { id: "mock-interview-pipeline", label: "Mock Interview Pipeline", icon: ClipboardList, path: "/employer/mock-interview-pipeline" },
+        { id: "live-interviews", label: "Live Interviews", icon: Calendar, path: "/employer/live-interviews" },
       ]
     },
     { id: "talent-pool", label: "Talent Pool", icon: Users, path: "/employer/talent-pool" },
@@ -573,6 +577,8 @@ const EmployerDashboard = () => {
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
             {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
+            {activeMenu === "mock-interview-pipeline" && <EmployerInterviewPipelineTracker />}
+            {activeMenu === "live-interviews" && <LiveInterviewMonitor />}
             {activeMenu === "viva" && <VivaContent />}
             {activeMenu === "subscriptions" && <SubscriptionsContent />}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
