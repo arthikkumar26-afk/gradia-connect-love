@@ -61,7 +61,7 @@ const CandidateCreateProfile = () => {
     const checkAndRedirect = async () => {
       // Allow authenticated users without a profile to create one
       if (!user) {
-        navigate("/candidate/signup");
+        navigate("/candidate/signup", { replace: true });
         return;
       }
 
@@ -74,13 +74,13 @@ const CandidateCreateProfile = () => {
           .maybeSingle();
 
         if (existingProfile) {
-          // Profile exists - redirect to appropriate dashboard
+          // Profile exists - redirect to appropriate dashboard immediately
           if (existingProfile.role === 'candidate') {
-            navigate("/candidate/dashboard");
+            navigate("/candidate/dashboard", { replace: true });
           } else if (existingProfile.role === 'employer') {
-            navigate("/employer/dashboard");
+            navigate("/employer/dashboard", { replace: true });
           } else {
-            navigate("/");
+            navigate("/", { replace: true });
           }
           return;
         }
