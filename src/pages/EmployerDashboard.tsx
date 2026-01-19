@@ -19,6 +19,7 @@ import {
   User,
   ClipboardList,
   BellRing,
+  Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -44,6 +45,7 @@ import { SubscriptionsContent } from "@/components/employer/SubscriptionsContent
 import { JobAlertContent } from "@/components/employer/JobAlertContent";
 import { LiveInterviewMonitor } from "@/components/employer/LiveInterviewMonitor";
 import { EmployerInterviewPipelineTracker } from "@/components/employer/EmployerInterviewPipelineTracker";
+import { SMMContent } from "@/components/employer/SMMContent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -246,6 +248,7 @@ const EmployerDashboard = () => {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
     { id: "jobs", label: "Vacancies List", icon: Briefcase, path: "/employer/jobs" },
+    { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
     { id: "job-alert", label: "Job Alert", icon: BellRing, path: "/employer/job-alert" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "mock-interview-pipeline", label: "Mock Interview Pipeline", icon: ClipboardList, path: "/employer/mock-interview-pipeline" },
@@ -500,6 +503,7 @@ const EmployerDashboard = () => {
             {activeMenu === "subscriptions" && <SubscriptionsContent />}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
             {activeMenu === "job-alert" && <JobAlertContent />}
+            {activeMenu === "smm" && <SMMContent />}
           </div>
         </main>
       </div>
