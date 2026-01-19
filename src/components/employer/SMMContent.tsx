@@ -137,9 +137,11 @@ export const SMMContent = () => {
       case "linkedin":
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
         break;
-      case "whatsapp":
-        shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
-        break;
+      case "instagram":
+        // Instagram doesn't have a direct share URL, copy link instead
+        navigator.clipboard.writeText(`${text} ${jobUrl}`);
+        toast.success("Content copied! Open Instagram and paste in your post.");
+        return;
     }
 
     if (shareUrl) {
@@ -375,11 +377,11 @@ export const SMMContent = () => {
 
                 <Button
                   variant="outline"
-                  className="h-20 flex-col gap-2 hover:bg-[#25D366]/10 hover:border-[#25D366] hover:text-[#25D366]"
-                  onClick={() => shareToSocialMedia("whatsapp")}
+                  className="h-20 flex-col gap-2 hover:bg-[#E4405F]/10 hover:border-[#E4405F] hover:text-[#E4405F]"
+                  onClick={() => shareToSocialMedia("instagram")}
                 >
                   <Instagram className="h-6 w-6" />
-                  <span className="text-sm">WhatsApp</span>
+                  <span className="text-sm">Instagram</span>
                 </Button>
               </div>
 
