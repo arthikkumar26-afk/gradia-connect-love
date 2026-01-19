@@ -397,7 +397,9 @@ export const SignupWizard = () => {
         description: "Welcome to Gradia. Start exploring job opportunities.",
       });
 
-      navigate("/candidate/dashboard");
+      // Wait briefly for auth state to sync, then navigate
+      await new Promise(resolve => setTimeout(resolve, 500));
+      navigate("/candidate/dashboard", { replace: true });
     } catch (error: any) {
       toast({
         title: "Error",
