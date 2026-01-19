@@ -502,7 +502,7 @@ export const CandidateFullProfile = () => {
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <AlertCircle className="h-12 w-12 text-muted-foreground" />
         <p className="text-lg text-muted-foreground">Candidate not found</p>
-        <Button onClick={() => navigate(-1)}>Go Back</Button>
+        <Button onClick={() => navigate('/employer/dashboard')}>Go Back</Button>
       </div>
     );
   }
@@ -513,7 +513,17 @@ export const CandidateFullProfile = () => {
       <div className="border-b bg-card sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/employer/dashboard');
+                }
+              }}
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
