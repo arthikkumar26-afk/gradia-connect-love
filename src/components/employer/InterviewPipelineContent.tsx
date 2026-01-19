@@ -312,6 +312,20 @@ const CandidateProfileInline = ({
                 </Card>
               )}
 
+              {/* AI Action Panel - moved below Skills */}
+              <AIActionPanel
+                candidateId={candidate.id}
+                candidateName={candidate.name}
+                candidateEmail={candidate.email}
+                jobId={candidate.jobId}
+                jobTitle={candidate.role}
+                interviewCandidateId={candidate.interviewCandidateId}
+                currentStage={candidate.currentStage}
+                aiScore={candidate.aiScore}
+                resumeUrl={candidate.resumeUrl}
+                onRefresh={onRefresh}
+              />
+
               {/* AI Analysis */}
               {candidate.aiAnalysis && (
                 <Card>
@@ -527,20 +541,6 @@ const CandidateProfileInline = ({
               {/* Interview Recording & Results */}
               <InterviewRecordingPlayer 
                 interviewCandidateId={candidate.interviewCandidateId} 
-              />
-
-              {/* AI Action Panel */}
-              <AIActionPanel
-                candidateId={candidate.id}
-                candidateName={candidate.name}
-                candidateEmail={candidate.email}
-                jobId={candidate.jobId}
-                jobTitle={candidate.role}
-                interviewCandidateId={candidate.interviewCandidateId}
-                currentStage={candidate.currentStage}
-                aiScore={candidate.aiScore}
-                resumeUrl={candidate.resumeUrl}
-                onRefresh={onRefresh}
               />
             </div>
           </div>
