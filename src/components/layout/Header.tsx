@@ -193,8 +193,8 @@ const Header = () => {
             {/* QR Code Button */}
             <SignupQRButton variant="icon" />
 
-            {/* Sign Up Button - Only show when not authenticated */}
-            {!isAuthenticated && <div className="hidden md:flex items-center">
+            {/* Sign Up Button - Only show when not authenticated on desktop */}
+            {!isAuthenticated && <div className="hidden lg:flex items-center">
                 <Button variant="outline" size="sm" className="gap-2" asChild>
                   <Link to="/signup">
                     <User className="h-4 w-4" />
