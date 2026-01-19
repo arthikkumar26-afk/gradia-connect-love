@@ -54,6 +54,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Check user_roles table first
     const { data: roleData } = await supabaseAdmin
       .from('user_roles')
       .select('role')
@@ -61,7 +62,19 @@ serve(async (req) => {
       .eq('role', 'employer')
       .single();
 
-    if (!roleData) {
+    // Fallback: check profiles table if no role in user_roles
+    let isEmployer = !!roleData;
+    if (!isEmployer) {
+      const { data: profileData } = await supabaseAdmin
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .eq('role', 'employer')
+        .single();
+      isEmployer = !!profileData;
+    }
+
+    if (!isEmployer) {
       return new Response(
         JSON.stringify({ error: "Forbidden - Only employers can generate job descriptions" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
