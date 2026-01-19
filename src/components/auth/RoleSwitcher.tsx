@@ -14,7 +14,7 @@ const RoleSwitcher = ({ current }: RoleSwitcherProps) => {
       </div>
       <div className="flex items-center gap-2">
         <Button asChild variant={isCandidate ? "default" : "outline"} size="sm">
-          <Link to="/candidate/create-profile?role=candidate">Candidate</Link>
+          <Link to="/candidate/signup">Candidate</Link>
         </Button>
         <Button asChild variant={!isCandidate ? "default" : "outline"} size="sm">
           <Link to="/employer/create-profile?role=employer">Employer</Link>

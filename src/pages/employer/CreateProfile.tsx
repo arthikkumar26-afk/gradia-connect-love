@@ -97,7 +97,7 @@ const EmployerCreateProfile = () => {
       if (!override) {
         const role = user.user_metadata?.role;
         if (role === 'candidate') {
-          navigate("/candidate/create-profile");
+          navigate("/candidate/signup");
         }
       }
     };
