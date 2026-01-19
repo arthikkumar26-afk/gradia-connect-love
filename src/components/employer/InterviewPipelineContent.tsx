@@ -829,8 +829,8 @@ export const InterviewPipelineContent = () => {
   };
 
   const handleOpenCandidate = (candidate: Candidate) => {
-    // Navigate to full profile page
-    navigate(`/employer/candidate/${candidate.interviewCandidateId}`);
+    // Open candidate profile in modal instead of navigating
+    setSelectedCandidate(candidate);
   };
 
   const handleUpdateStep = async (stepId: string, status: InterviewStep["status"]) => {
