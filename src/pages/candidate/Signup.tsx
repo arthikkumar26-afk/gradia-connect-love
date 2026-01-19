@@ -119,7 +119,7 @@ const CandidateSignup = () => {
               <div className="text-center text-sm text-muted-foreground">
                 <p>
                   Are you an employer?{" "}
-                  <Link to="/signup-portal?role=employer&section=registration" className="text-accent hover:underline font-medium">
+                  <Link to="/signup?role=employer&section=registration" className="text-accent hover:underline font-medium">
                     Create employer account
                   </Link>
                 </p>
