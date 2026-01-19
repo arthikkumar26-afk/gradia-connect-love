@@ -1353,7 +1353,7 @@ const SignupPortal = () => {
                     </div>
 
                     <div className="flex gap-4">
-                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 bg-slate-700 text-white hover:bg-slate-600">
                         <ArrowLeft className="mr-2 h-4 w-4" />Back
                       </Button>
                       <Button onClick={() => setEmployerOnboardingStep('agreement')} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
@@ -1422,7 +1422,7 @@ const SignupPortal = () => {
                     )}
 
                     <div className="flex gap-4">
-                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 bg-slate-700 text-white hover:bg-slate-600">
                         <ArrowLeft className="mr-2 h-4 w-4" />Back
                       </Button>
                       <Button onClick={handleAgreementContinue} disabled={!agreementAccepted || isLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
@@ -1490,7 +1490,7 @@ const SignupPortal = () => {
                     {retryError && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-md text-sm text-red-400">{retryError}</div>}
 
                     <div className="flex gap-4">
-                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700">
+                      <Button variant="outline" onClick={goBackOnboarding} className="flex-1 border-slate-600 bg-slate-700 text-white hover:bg-slate-600">
                         <ArrowLeft className="mr-2 h-4 w-4" />Back
                       </Button>
                       <Button onClick={handleTermsContinue} disabled={!termsAccepted || isLoading || !termsScrolledToEnd} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
