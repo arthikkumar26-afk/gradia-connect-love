@@ -1867,8 +1867,8 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         jobAlertSubOption === subItem.id 
-                          ? "bg-yellow-500/20 border-yellow-500 text-yellow-400 hover:bg-yellow-500/30" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                          ? "bg-yellow-500/20 border-yellow-500 !text-yellow-400 hover:bg-yellow-500/30" 
+                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
                       )}
                     >
                       <subItem.icon className="h-4 w-4 mr-2" />
@@ -1892,8 +1892,8 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         vacanciesSubOption === "manual-job" 
-                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
                       )}
                     >
                       <Table className="h-4 w-4 mr-2" />
@@ -1906,8 +1906,8 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         vacanciesSubOption === "ai-job" 
-                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
                       )}
                     >
                       <Bot className="h-4 w-4 mr-2" />
@@ -1931,8 +1931,8 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         paymentSubOption === "tariffs" 
-                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
                       )}
                     >
                       <FileText className="h-4 w-4 mr-2" />
@@ -1945,8 +1945,8 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         paymentSubOption === "receipts" 
-                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
                       )}
                     >
                       <Receipt className="h-4 w-4 mr-2" />
@@ -1959,8 +1959,8 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         paymentSubOption === "confirmation" 
-                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
                       )}
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
@@ -1984,8 +1984,8 @@ const SignupPortal = () => {
                       className={cn(
                         "border-2 transition-all",
                         advertisementSubOption === "flyers-videos" 
-                          ? "bg-blue-500/20 border-blue-500 text-blue-400 hover:bg-blue-500/30" 
-                          : "border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-slate-500"
+                          ? "bg-blue-500/20 border-blue-500 !text-blue-400 hover:bg-blue-500/30" 
+                          : "border-slate-600 !text-slate-200 hover:bg-slate-700 hover:border-slate-500 hover:!text-white"
                       )}
                     >
                       <Video className="h-4 w-4 mr-2" />
