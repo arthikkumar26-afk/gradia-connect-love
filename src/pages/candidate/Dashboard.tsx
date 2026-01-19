@@ -1135,7 +1135,7 @@ const CandidateDashboard = () => {
               title: "Profile Required",
               description: "Please complete your profile to continue.",
             });
-            navigate("/candidate/create-profile", { replace: true });
+            navigate("/candidate/signup", { replace: true });
           }
           setIsWaitingForProfile(false);
         }, 1500); // Wait 1.5 seconds for profile sync

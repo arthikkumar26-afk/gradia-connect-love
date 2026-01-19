@@ -51,7 +51,7 @@ import CareerCoaching from "./pages/candidate/CareerCoaching";
 import CandidateSignup from "./pages/candidate/Signup";
 import SignupPortal from "./pages/SignupPortal";
 import QuickRegister from "./pages/candidate/QuickRegister";
-import CandidateCreateProfile from "./pages/candidate/CreateProfile";
+import { Navigate } from "react-router-dom";
 import EmployerCreateProfile from "./pages/employer/CreateProfile";
 import TechLearning from "./pages/learning/TechLearning";
 import NonTechLearning from "./pages/learning/NonTechLearning";
@@ -143,9 +143,9 @@ const MainRoutes = () => (
       <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
       <Route path="/candidate/signup" element={<CandidateSignup />} />
       <Route path="/candidate/login" element={<CandidateLogin />} />
-      <Route path="/candidate/create-profile" element={<CandidateCreateProfile />} />
-      <Route path="/candidate/apply" element={<CandidateCreateProfile />} />
-      <Route path="/create-profile" element={<CandidateCreateProfile />} />
+      <Route path="/candidate/create-profile" element={<Navigate to="/candidate/signup" replace />} />
+      <Route path="/candidate/apply" element={<Navigate to="/candidate/signup" replace />} />
+      <Route path="/create-profile" element={<Navigate to="/candidate/signup" replace />} />
       <Route path="/signup" element={<SignupPortal />} />
       <Route path="/candidate/quick-register" element={<QuickRegister />} />
       <Route path="/profile/success" element={<ProfileSuccess />} />
