@@ -22,7 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
-import { SignupWizard } from "@/components/candidate/signup/SignupWizard";
+
 import { cn } from "@/lib/utils";
 import { indiaLocationData } from "@/data/indiaLocations";
 
@@ -973,8 +973,15 @@ const SignupPortal = () => {
                 </CardContent>
               </Card>
 
-              <div className="mt-6">
-                <SignupWizard />
+              <div className="mt-6 text-center">
+                <Button 
+                  size="lg" 
+                  className="w-full max-w-md" 
+                  onClick={() => navigate('/candidate/signup')}
+                >
+                  Create Candidate Account
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </div>
           )}
