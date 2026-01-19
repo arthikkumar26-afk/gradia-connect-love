@@ -56,6 +56,7 @@ import { EmailTemplatesEditor } from "@/components/employer/EmailTemplatesEditor
 import { VivaContent } from "@/components/employer/VivaContent";
 import { RegistrationContent } from "@/components/employer/RegistrationContent";
 import { SubscriptionsContent } from "@/components/employer/SubscriptionsContent";
+import { JobAlertContent } from "@/components/employer/JobAlertContent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -579,6 +580,7 @@ const EmployerDashboard = () => {
             {activeMenu === "viva" && <VivaContent />}
             {activeMenu === "subscriptions" && <SubscriptionsContent />}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
+            {activeMenu === "job-alert" && <JobAlertContent />}
           </div>
         </main>
       </div>
