@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -27,7 +28,7 @@ import { indiaLocationData } from "@/data/indiaLocations";
 
 type UserRole = "candidate" | "employer" | null;
 type SidebarOption = "become-employer" | "registration" | "login" | "job-alert" | "dashboard";
-type EmployerOnboardingStep = "form" | "benefits" | "agreement" | "terms";
+type EmployerOnboardingStep = "form" | "benefits" | "agreement" | "terms" | "payment";
 type JobAlertSubOption = 
   | "vacancies-list" 
   | "payment" 
@@ -571,7 +572,7 @@ const SignupPortal = () => {
 
       if (error) throw error;
       toast({ title: 'Terms accepted', description: 'Proceeding to plan selection' });
-      navigate('/employer/plans');
+      setEmployerOnboardingStep('payment');
     } catch (error: any) {
       setRetryError('Failed to record terms acceptance. Please try again.');
       toast({ title: 'Error', description: 'Failed to record terms acceptance', variant: 'destructive' });
@@ -582,7 +583,9 @@ const SignupPortal = () => {
 
   // Go back in onboarding steps
   const goBackOnboarding = () => {
-    if (employerOnboardingStep === 'terms') {
+    if (employerOnboardingStep === 'payment') {
+      setEmployerOnboardingStep('terms');
+    } else if (employerOnboardingStep === 'terms') {
       setEmployerOnboardingStep('agreement');
       setTermsAccepted(false);
       setTermsScrolledToEnd(false);
@@ -591,6 +594,51 @@ const SignupPortal = () => {
       setAgreementAccepted(false);
     } else if (employerOnboardingStep === 'benefits') {
       setEmployerOnboardingStep('form');
+    }
+  };
+
+  // Plans data for payment step
+  const employerPlans = [
+    { id: 'basic', name: 'Basic', duration: '1 Month', price: 499, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
+    { id: 'standard', name: 'Standard', duration: '3 Months', price: 1299, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
+    { id: 'premium', name: 'Premium', duration: '6 Months', price: 2499, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
+  ];
+
+  const [planLoading, setPlanLoading] = useState<string | null>(null);
+
+  const handleSelectPlan = async (planId: string) => {
+    const selectedPlan = employerPlans.find(p => p.id === planId);
+    if (!selectedPlan) return;
+
+    setPlanLoading(planId);
+    setRetryError(null);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setEmployerOnboardingStep('form'); return; }
+
+      toast({ title: 'Processing payment...', description: 'Please wait' });
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const { error } = await supabase.from("subscriptions").insert({
+        employer_id: user.id,
+        plan_id: planId,
+        plan_name: selectedPlan.name,
+        billing_cycle: 'monthly',
+        amount: selectedPlan.price,
+        currency: "INR",
+        status: "active",
+        payment_method: planId === 'basic' ? null : 'card',
+      });
+
+      if (error) throw error;
+      toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
+      navigate("/employer/dashboard");
+    } catch (error: any) {
+      setRetryError('Failed to process payment. Please try again.');
+      toast({ title: 'Error', description: 'Failed to process plan selection', variant: 'destructive' });
+    } finally {
+      setPlanLoading(null);
     }
   };
 
@@ -1500,6 +1548,71 @@ const SignupPortal = () => {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Step: Payment/Plans */}
+              {employerOnboardingStep === 'payment' && (
+                <div>
+                  <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold text-white mb-4">Choose Your Plan</h1>
+                    <p className="text-slate-400">Select the perfect plan for your hiring needs</p>
+                  </div>
+
+                  {retryError && (
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-md text-sm text-red-400 text-center max-w-md mx-auto">
+                      {retryError}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {employerPlans.map((plan) => (
+                      <Card key={plan.id} className={cn(
+                        "p-6 relative flex flex-col bg-slate-800 border-slate-700",
+                        plan.popular && "ring-2 ring-green-500 shadow-xl md:scale-105"
+                      )}>
+                        {plan.popular && (
+                          <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white">
+                            Recommended
+                          </Badge>
+                        )}
+                        <div className="mb-6">
+                          <h3 className="text-2xl font-bold text-white mb-1">{plan.name} Plan</h3>
+                          <p className="text-sm text-slate-400 mb-4">Duration: {plan.duration}</p>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-bold text-green-400">₹{plan.price}</span>
+                            <span className="text-slate-400 text-sm">/ {plan.duration.toLowerCase()}</span>
+                          </div>
+                        </div>
+                        <ul className="space-y-3 mb-6 flex-grow">
+                          {plan.features.map((feature, index) => (
+                            <li key={index} className="flex items-start gap-3">
+                              <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                              <span className="text-sm text-slate-300">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <Button 
+                          onClick={() => handleSelectPlan(plan.id)} 
+                          disabled={planLoading !== null} 
+                          className={cn(
+                            "w-full",
+                            plan.popular 
+                              ? "bg-green-600 hover:bg-green-700 text-white" 
+                              : "bg-slate-700 hover:bg-slate-600 text-white border border-slate-600"
+                          )}
+                        >
+                          {planLoading === plan.id ? 'Processing...' : `Choose ${plan.name}`}
+                        </Button>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-center">
+                    <Button variant="outline" onClick={goBackOnboarding} className="border-slate-600 bg-slate-700 text-white hover:bg-slate-600">
+                      <ArrowLeft className="mr-2 h-4 w-4" />Back
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           )}
