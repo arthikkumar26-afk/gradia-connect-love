@@ -185,7 +185,11 @@ const CandidateCreateProfile = () => {
         return;
       }
 
+      // Refresh profile and wait for it to complete
       await refreshProfile();
+      
+      // Add a small delay to ensure auth context state is fully updated
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Fetch the newly created profile to get registration number
       const { data: newProfile } = await supabase
@@ -214,7 +218,8 @@ const CandidateCreateProfile = () => {
         description: "Your profile has been created",
       });
 
-      navigate("/candidate/dashboard");
+      // Use replace to prevent going back to create-profile page
+      navigate("/candidate/dashboard", { replace: true });
     } catch (error: any) {
       toast({
         title: "Error",
