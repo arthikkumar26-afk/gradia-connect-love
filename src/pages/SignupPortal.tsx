@@ -350,18 +350,14 @@ const SignupPortal = () => {
     return (indiaLocationData[state]?.[district] || []).sort();
   }, [state, district]);
 
+  // Only redirect candidates away - don't auto-advance employer onboarding steps
   useEffect(() => {
     if (isAuthenticated && profile) {
-      if (profile.role === 'employer') {
-        // If already authenticated as employer and on registration, show benefits step
-        if (selectedRole === 'employer' && activeSection === 'registration' && employerOnboardingStep === 'form') {
-          setEmployerOnboardingStep('benefits');
-        }
-      } else {
+      if (profile.role !== 'employer') {
         navigate("/candidate/dashboard");
       }
     }
-  }, [isAuthenticated, profile, navigate, selectedRole, activeSection, employerOnboardingStep]);
+  }, [isAuthenticated, profile, navigate]);
 
   const validateEmployerForm = (): boolean => {
     const newErrors: FormErrors = {};
