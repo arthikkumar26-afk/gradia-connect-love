@@ -15,13 +15,13 @@ import {
 } from "@/components/ui/breadcrumb";
 import { 
   LayoutDashboard,
-  Briefcase, 
-  MapPin, 
-  Calendar, 
-  LogOut, 
-  User, 
-  FileText, 
-  ClipboardList, 
+  Briefcase,
+  MapPin,
+  Calendar,
+  LogOut,
+  User,
+  FileText,
+  ClipboardList,
   TrendingUp,
   Menu,
   X,
@@ -43,7 +43,7 @@ import {
   Video,
   Star,
   Download,
-  Users
+  Users,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
