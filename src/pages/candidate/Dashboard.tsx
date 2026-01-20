@@ -2208,7 +2208,147 @@ const CandidateDashboard = () => {
                   </CardContent>
                 </Card>
 
-
+                {/* Mock Test Results Section */}
+                {mockTestSessions.filter(s => s.status === 'completed').length > 0 && (
+                  <Card className="mt-6 overflow-hidden border-border shadow-soft">
+                    <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30 border-b border-emerald-200 dark:border-emerald-800">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg">
+                            <Target className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg text-foreground">Mock Test Results</CardTitle>
+                            <p className="text-sm text-muted-foreground">Your completed mock test performance</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setActiveMenu("mocktest")}
+                          className="gap-1"
+                        >
+                          <Target className="h-4 w-4" />
+                          Take New Test
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="space-y-4">
+                        {mockTestSessions
+                          .filter(s => s.status === 'completed')
+                          .slice(0, 3)
+                          .map((session) => {
+                            const scorePercent = session.score || 0;
+                            const isPassed = scorePercent >= 60;
+                            return (
+                              <div 
+                                key={session.id} 
+                                className={`p-4 rounded-lg border ${
+                                  isPassed 
+                                    ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' 
+                                    : 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between flex-wrap gap-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-full ${
+                                      isPassed 
+                                        ? 'bg-green-100 dark:bg-green-900/50' 
+                                        : 'bg-amber-100 dark:bg-amber-900/50'
+                                    }`}>
+                                      {isPassed ? (
+                                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                      ) : (
+                                        <Target className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-semibold text-foreground">Mock Test</h4>
+                                        <Badge variant={isPassed ? "default" : "secondary"} className={
+                                          isPassed 
+                                            ? "bg-green-500 text-white" 
+                                            : "bg-amber-500 text-white"
+                                        }>
+                                          {isPassed ? "Passed" : "Needs Improvement"}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">
+                                        {new Date(session.completed_at || session.created_at).toLocaleDateString('en-IN', {
+                                          day: 'numeric',
+                                          month: 'short',
+                                          year: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="text-center">
+                                      <div className={`text-2xl font-bold ${
+                                        isPassed ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'
+                                      }`}>
+                                        {scorePercent.toFixed(0)}%
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">Score</div>
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="text-lg font-semibold text-foreground">
+                                        {session.correct_answers || 0}/{session.total_questions || 10}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">Correct</div>
+                                    </div>
+                                    {session.time_taken_seconds && (
+                                      <div className="text-center">
+                                        <div className="text-lg font-semibold text-foreground">
+                                          {Math.floor(session.time_taken_seconds / 60)}m {session.time_taken_seconds % 60}s
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">Time</div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* Progress bar */}
+                                <div className="mt-3">
+                                  <Progress 
+                                    value={scorePercent} 
+                                    className={`h-2 ${isPassed ? '[&>div]:bg-green-500' : '[&>div]:bg-amber-500'}`}
+                                  />
+                                </div>
+                                {/* View recording button */}
+                                {session.recording_url && (
+                                  <div className="mt-3 flex justify-end">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => window.open(session.recording_url, '_blank')}
+                                      className="gap-1.5"
+                                    >
+                                      <Video className="h-3.5 w-3.5" />
+                                      View Recording
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        {mockTestSessions.filter(s => s.status === 'completed').length > 3 && (
+                          <div className="text-center pt-2">
+                            <Button 
+                              variant="link" 
+                              onClick={() => setActiveMenu("mocktest")}
+                              className="text-sm"
+                            >
+                              View all {mockTestSessions.filter(s => s.status === 'completed').length} completed tests
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Personalized Job Recommendations */}
                 <Card className="mt-6 overflow-hidden border-border">
