@@ -41,7 +41,9 @@ import {
   Lightbulb,
   ExternalLink,
   Video,
-  Star
+  Star,
+  Download,
+  Users
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -54,7 +56,7 @@ import FamilyModal from "@/components/candidate/FamilyModal";
 import AddressModal, { AddressData } from "@/components/candidate/AddressModal";
 import ResumeBuilderTab from "@/components/candidate/ResumeBuilderTab";
 import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
-import { Briefcase as BriefcaseIcon, Users, MapPin as MapPinIcon } from "lucide-react";
+import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 
 interface FamilyRecord {
   id?: string;
@@ -106,6 +108,7 @@ const CandidateDashboard = () => {
   const navigate = useNavigate();
   const { profile, isAuthenticated, logout, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { exportProfileToPdf } = useProfilePdfExport();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -1428,6 +1431,25 @@ const CandidateDashboard = () => {
 
           {activeMenu === "dashboard" && (
             <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (profile) {
+                    exportProfileToPdf({
+                      profile: profile as any,
+                      resumeAnalysis,
+                      educationRecords,
+                      experienceRecords,
+                      familyRecords,
+                      addressData,
+                      mockTestResults: mockTestSessions
+                    });
+                  }
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
               <Button variant="outline" onClick={() => navigate("/profile/edit")}>
                 <User className="h-4 w-4 mr-2" />
                 Edit Profile
@@ -1889,7 +1911,7 @@ const CandidateDashboard = () => {
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-orange-100 dark:bg-orange-900/50 rounded-lg">
-                          <BriefcaseIcon className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                          <Briefcase className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                         </div>
                         <div>
                           <CardTitle className="text-lg text-foreground">Previous Experience</CardTitle>
@@ -1996,7 +2018,7 @@ const CandidateDashboard = () => {
                           ) : (
                             <tr>
                               <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
-                                <BriefcaseIcon className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                                <Briefcase className="h-10 w-10 mx-auto mb-2 opacity-30" />
                                 <p>No experience records added yet.</p>
                                 <Button
                                   variant="link"
@@ -2132,7 +2154,7 @@ const CandidateDashboard = () => {
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-teal-100 dark:bg-teal-900/50 rounded-lg">
-                          <MapPinIcon className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                          <MapPin className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                         </div>
                         <div>
                           <CardTitle className="text-lg text-foreground">Address Details</CardTitle>
@@ -2432,7 +2454,7 @@ const CandidateDashboard = () => {
                                       <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1 flex-wrap">
                                         {job.department && (
                                           <span className="flex items-center gap-1">
-                                            <BriefcaseIcon className="h-3 w-3" />
+                                            <Briefcase className="h-3 w-3" />
                                             {job.department}
                                           </span>
                                         )}
