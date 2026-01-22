@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,36 @@ import {
   XCircle,
   Clock,
   Send,
-  ExternalLink
+  ExternalLink,
+  ShieldCheck,
+  Home,
+  Users,
+  CreditCard,
+  UserCheck,
+  TrendingUp,
+  Briefcase,
+  Building2,
+  ClipboardList,
+  UserCog,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu
 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Negotiation {
   id: string;
@@ -64,6 +92,9 @@ interface Negotiation {
 }
 
 const HRNegotiations = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
   const [negotiations, setNegotiations] = useState<Negotiation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,6 +109,22 @@ const HRNegotiations = () => {
     callMeetingLink: '',
     adminNotes: ''
   });
+
+  const menuItems = [
+    { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
+    { title: "Users", icon: Users, path: "/admin/users" },
+    { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
+    { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
+    { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
+    { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
+    { title: "Companies", icon: Building2, path: "/admin/companies" },
+    { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
+    { title: "Management", icon: UserCog, path: "/admin/management" },
+    { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
+    { title: "Reports", icon: BarChart3, path: "/admin/reports" },
+    { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
+    { title: "Settings", icon: Settings, path: "/admin/settings" },
+  ];
 
   useEffect(() => {
     loadNegotiations();
@@ -155,6 +202,12 @@ const HRNegotiations = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+    toast.success("You have been successfully logged out.");
+  };
+
   const filteredNegotiations = negotiations.filter(n => {
     const matchesSearch = 
       n.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,16 +237,81 @@ const HRNegotiations = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full bg-muted/30">
+        {/* Sidebar */}
+        <Sidebar className="border-r border-border">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary">
+                <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-bold text-foreground">Gradia Admin</h1>
+                <p className="text-xs text-muted-foreground">Management Panel</p>
+              </div>
+            </div>
+          </div>
+          
+          <SidebarContent className="p-2">
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-2">
+                Main Menu
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {menuItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          to={item.path}
+                          className={`w-full justify-start gap-3 px-3 py-2 rounded-lg transition-colors ${
+                            location.pathname === item.path 
+                              ? "bg-primary text-primary-foreground" 
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <div className="mt-auto p-4 border-t border-border">
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout} 
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </div>
+        </Sidebar>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Header */}
+          <header className="h-14 border-b border-border bg-background flex items-center px-4 lg:px-6">
+            <SidebarTrigger>
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
+          </header>
+
+          {/* Page Content */}
+          <main className="flex-1 p-4 lg:p-6 overflow-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">HR Negotiations</h1>
@@ -541,7 +659,12 @@ const HRNegotiations = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
