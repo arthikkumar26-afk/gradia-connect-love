@@ -103,11 +103,11 @@ const CandidateSignup = () => {
   const [retryError, setRetryError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && currentStep === 'signup') {
-      // If already authenticated, skip to benefits
-      setCurrentStep('benefits');
+    if (isAuthenticated) {
+      // If already authenticated, redirect directly to dashboard
+      navigate('/candidate/dashboard');
     }
-  }, [isAuthenticated, currentStep]);
+  }, [isAuthenticated, navigate]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -154,7 +154,7 @@ const CandidateSignup = () => {
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/candidate/signup`;
+      const redirectUrl = `${window.location.origin}/candidate/dashboard`;
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
