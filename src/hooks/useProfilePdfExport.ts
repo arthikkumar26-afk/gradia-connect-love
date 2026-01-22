@@ -27,6 +27,7 @@ interface Profile {
   classes_handled?: string;
   languages?: string[];
   resume_url?: string;
+  profile_picture?: string;
 }
 
 interface ResumeAnalysis {
@@ -121,18 +122,59 @@ export const useProfilePdfExport = () => {
         }
       };
 
+      // Helper to load image as base64
+      const loadImageAsBase64 = async (url: string): Promise<string | null> => {
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          return null;
+        }
+      };
+
       // Header
       doc.setFillColor(59, 130, 246); // Blue
-      doc.rect(0, 0, pageWidth, 35, 'F');
+      doc.rect(0, 0, pageWidth, 45, 'F');
+      
+      // Add profile picture if available
+      let profileImageLoaded = false;
+      if (profile.profile_picture) {
+        try {
+          const imgData = await loadImageAsBase64(profile.profile_picture);
+          if (imgData) {
+            // Draw white circular background
+            doc.setFillColor(255, 255, 255);
+            doc.circle(margin + 15, 22, 14, 'F');
+            // Add the image
+            doc.addImage(imgData, 'JPEG', margin + 3, 10, 24, 24);
+            profileImageLoaded = true;
+          }
+        } catch (e) {
+          console.error('Failed to load profile image:', e);
+        }
+      }
+      
+      const textOffset = profileImageLoaded ? 35 : 0;
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      doc.text('GRADIA', margin, 18);
+      doc.text('GRADIA', margin + textOffset, 18);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('Candidate Profile Report', margin, 28);
+      doc.text('Candidate Profile Report', margin + textOffset, 28);
+      
+      // Candidate name in header
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(profile.full_name, margin + textOffset, 38);
       
       // Registration number on right
       if (profile.registration_number) {
@@ -146,7 +188,7 @@ export const useProfilePdfExport = () => {
       doc.setFont('helvetica', 'normal');
       doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}`, pageWidth - margin - 50, 28);
       
-      yPos = 45;
+      yPos = 55;
       doc.setTextColor(0, 0, 0);
 
       // Section helper
