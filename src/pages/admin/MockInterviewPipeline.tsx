@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,10 +18,26 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   ArrowLeft, Upload, FileText, Plus, Trash2, Eye, 
   Loader2, CheckCircle2, XCircle, BookOpen, Key, RefreshCw,
-  ChevronDown, FolderOpen, Play, Clock, User, ChevronRight, PenLine
+  ChevronDown, FolderOpen, Play, Clock, User, ChevronRight, PenLine,
+  Home, Users, CreditCard, UserCheck, TrendingUp, Briefcase, Building2,
+  ClipboardList, UserCog, MessageSquare, BarChart3, Settings, LogOut,
+  ShieldCheck, Menu
 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import ManualQuestionCreator, { ManualQuestion } from "@/components/admin/ManualQuestionCreator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 
 interface QuestionPaper {
   id: string;
@@ -58,6 +74,8 @@ interface AnswerKey {
 
 export default function MockInterviewPipeline() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
   const [papers, setPapers] = useState<QuestionPaper[]>([]);
   const [selectedPaper, setSelectedPaper] = useState<QuestionPaper | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -818,25 +836,98 @@ export default function MockInterviewPipeline() {
 
   const groupedPapers = getPapersGroupedByCategory();
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/admin/login");
+  };
+
+  const menuItems = [
+    { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
+    { title: "Users", icon: Users, path: "/admin/users" },
+    { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
+    { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
+    { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
+    { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
+    { title: "Companies", icon: Building2, path: "/admin/companies" },
+    { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
+    { title: "Management", icon: UserCog, path: "/admin/management" },
+    { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
+    { title: "Reports", icon: BarChart3, path: "/admin/reports" },
+    { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
+    { title: "Settings", icon: Settings, path: "/admin/settings" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/dashboard')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Mock Interview Pipeline</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage question papers and answer keys for interviews
-              </p>
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full bg-muted/30">
+        {/* Sidebar */}
+        <Sidebar className="border-r border-border">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary">
+                <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-bold text-foreground">Gradia Admin</h1>
+                <p className="text-xs text-muted-foreground">Management Panel</p>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+          
+          <SidebarContent className="p-2">
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-medium text-muted-foreground px-2">
+                Main Menu
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {menuItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <Link
+                          to={item.path}
+                          className={`w-full justify-start gap-3 px-3 py-2 rounded-lg transition-colors ${
+                            location.pathname === item.path 
+                              ? "bg-primary text-primary-foreground" 
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
 
-      <main className="container mx-auto px-4 py-6 space-y-6">
+          <div className="mt-auto p-4 border-t border-border">
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout} 
+              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
+          </div>
+        </Sidebar>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Header */}
+          <header className="h-14 border-b border-border bg-background flex items-center justify-between px-4 lg:px-6">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger>
+                <Menu className="h-5 w-5" />
+              </SidebarTrigger>
+              <h1 className="text-lg font-semibold">Mock Interview Pipeline</h1>
+            </div>
+          </header>
+
+          <main className="flex-1 p-4 lg:p-6 overflow-auto space-y-6">
         {/* Add Question Paper Form - Directly on page */}
         <Card>
           <CardHeader>
@@ -1554,6 +1645,8 @@ export default function MockInterviewPipeline() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
