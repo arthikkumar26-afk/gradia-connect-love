@@ -113,6 +113,72 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_interview_sessions: {
+        Row: {
+          ai_evaluations: Json | null
+          answers: Json | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          interview_candidate_id: string
+          job_id: string
+          overall_feedback: string | null
+          overall_score: number | null
+          questions: Json | null
+          recordings: Json | null
+          started_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_evaluations?: Json | null
+          answers?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          interview_candidate_id: string
+          job_id: string
+          overall_feedback?: string | null
+          overall_score?: number | null
+          questions?: Json | null
+          recordings?: Json | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_evaluations?: Json | null
+          answers?: Json | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          interview_candidate_id?: string
+          job_id?: string
+          overall_feedback?: string | null
+          overall_score?: number | null
+          questions?: Json | null
+          recordings?: Json | null
+          started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_interview_sessions_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_interview_sessions_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applications: {
         Row: {
           applied_date: string | null
