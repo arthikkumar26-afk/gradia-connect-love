@@ -208,8 +208,20 @@ Current question to focus on: Question ${currentQuestionIndex + 1}`;
     setIsConnecting(true);
     try {
       // Request microphone permission first
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (micError) {
+        toast({
+          title: "Microphone Required",
+          description: "Please allow microphone access to proceed with the interview.",
+          variant: "destructive"
+        });
+        setIsConnecting(false);
+        return;
+      }
 
+      console.log("Requesting ElevenLabs agent token...");
+      
       // Get conversation token from edge function
       const { data, error } = await supabase.functions.invoke("elevenlabs-agent-token", {
         body: { 
@@ -218,10 +230,20 @@ Current question to focus on: Question ${currentQuestionIndex + 1}`;
         }
       });
 
-      if (error) throw error;
-      if (!data?.token) throw new Error("No token received");
+      console.log("Token response:", { data, error });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to get AI token");
+      }
+      
+      if (!data?.token) {
+        console.error("No token in response:", data);
+        throw new Error(data?.error || "No token received from AI service");
+      }
 
       setAgentToken(data.token);
+      console.log("Token received, starting recording...");
 
       // Start recording
       if (streamRef.current) {
@@ -240,11 +262,15 @@ Current question to focus on: Question ${currentQuestionIndex + 1}`;
         mediaRecorder.start(1000);
       }
 
+      console.log("Starting ElevenLabs conversation...");
+      
       // Start the conversation with ElevenLabs
       await conversation.startSession({
         conversationToken: data.token,
         connectionType: "webrtc"
       });
+
+      console.log("Conversation started successfully");
 
     } catch (error: any) {
       console.error("Failed to start interview:", error);

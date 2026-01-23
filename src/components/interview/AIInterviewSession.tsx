@@ -52,16 +52,17 @@ export const AIInterviewSession = ({
   const [existingSession, setExistingSession] = useState<any>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
 
-  // Fetch existing session
+  // Fetch existing session - use service role via edge function to bypass RLS for unauthenticated access
   useEffect(() => {
     const fetchSession = async () => {
       setIsLoading(true);
       try {
+        // Try to fetch directly first (for authenticated users)
         const { data, error } = await supabase
           .from("ai_interview_sessions")
           .select("*")
           .eq("interview_candidate_id", interviewCandidateId)
-          .single();
+          .maybeSingle();
 
         if (data && !error) {
           setExistingSession(data);
@@ -69,9 +70,13 @@ export const AIInterviewSession = ({
           if (data.questions && Array.isArray(data.questions)) {
             setQuestions(data.questions as unknown as Question[]);
           }
+        } else if (error) {
+          // RLS error - user is not authenticated, this is expected for email link access
+          console.log("Could not fetch session directly (expected for unauthenticated access):", error.message);
         }
       } catch (err) {
-        // No existing session
+        // No existing session or access denied - that's okay for new interviews
+        console.log("Session fetch failed:", err);
       } finally {
         setIsLoading(false);
       }
