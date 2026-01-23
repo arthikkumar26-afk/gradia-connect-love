@@ -82,6 +82,9 @@ const CandidateSignup = () => {
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
   
+  // Track if user just signed up (to allow wizard flow to complete)
+  const [justSignedUp, setJustSignedUp] = useState(false);
+  
   // Form state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -103,11 +106,12 @@ const CandidateSignup = () => {
   const [retryError, setRetryError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      // If already authenticated, redirect directly to dashboard
+    // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
+    // If user just signed up, let them complete the wizard flow
+    if (isAuthenticated && currentStep === 'signup' && !justSignedUp) {
       navigate('/candidate/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, currentStep, justSignedUp]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -182,6 +186,7 @@ const CandidateSignup = () => {
       }
 
       if (authData.user) {
+        // Create profile
         const { error: profileError } = await supabase
           .from("profiles")
           .upsert({
@@ -195,7 +200,22 @@ const CandidateSignup = () => {
         if (profileError) {
           console.error("Profile creation error:", profileError);
         }
+
+        // Create user role entry
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .upsert({
+            user_id: authData.user.id,
+            role: 'candidate' as const,
+          }, { onConflict: 'user_id,role' });
+
+        if (roleError) {
+          console.error("Role creation error:", roleError);
+        }
       }
+
+      // Mark that user just signed up to prevent redirect during wizard flow
+      setJustSignedUp(true);
 
       toast({
         title: "Account Created!",
