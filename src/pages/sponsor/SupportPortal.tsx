@@ -56,7 +56,7 @@ export default function SupportPortal() {
               </Button>
 
               <div className="text-center pt-4">
-                <a href="#" className="text-sm text-primary hover:underline">
+                <a href="/sponsor/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </a>
               </div>

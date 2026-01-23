@@ -183,7 +183,7 @@ export default function SponsorLogin() {
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <Link to="#" className="text-primary hover:underline">
+              <Link to="/sponsor/forgot-password" className="text-primary hover:underline">
                 Forgot password?
               </Link>
             </div>
