@@ -259,7 +259,7 @@ const EmployerDashboard = () => {
     { id: "job-alert", label: "Job Alert", icon: BellRing, path: "/employer/job-alert" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "mock-interview-pipeline", label: "Mock Interview Pipeline", icon: ClipboardList, path: "/employer/mock-interview-pipeline" },
-    { id: "live-interviews", label: "Live Interviews", icon: Calendar, path: "/employer/live-interviews" },
+    
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "feedback-matrix", label: "Feedback Matrix", icon: Grid3X3, path: "/employer/feedback-matrix" },
     { id: "confirmation", label: "Confirmation", icon: UserCheck, path: "/employer/confirmation" },
