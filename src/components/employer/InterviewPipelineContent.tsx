@@ -236,8 +236,8 @@ const StageActionButtons = ({
     );
   }
 
-  // First pending stage
-  if (isFirstPending) {
+  // Pending stages - show buttons for ALL pending stages
+  if (step.status === "pending") {
     if (step.title === "AI Technical Interview") {
       return (
         <div className="flex gap-1 mt-2">
@@ -255,14 +255,16 @@ const StageActionButtons = ({
             )}
             Resend
           </Button>
-          <Button 
-            size="sm" 
-            onClick={onLaunchAIInterview}
-            className="h-6 text-[10px] px-2 bg-purple-600 hover:bg-purple-700"
-          >
-            <Brain className="h-3 w-3 mr-1" />
-            Launch AI
-          </Button>
+          {isFirstPending && (
+            <Button 
+              size="sm" 
+              onClick={onLaunchAIInterview}
+              className="h-6 text-[10px] px-2 bg-purple-600 hover:bg-purple-700"
+            >
+              <Brain className="h-3 w-3 mr-1" />
+              Launch AI
+            </Button>
+          )}
         </div>
       );
     }
@@ -283,14 +285,16 @@ const StageActionButtons = ({
           )}
           Resend
         </Button>
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={() => onUpdateStep(step.id, "current")}
-          className="h-6 text-[10px] px-2"
-        >
-          Start
-        </Button>
+        {isFirstPending && (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onUpdateStep(step.id, "current")}
+            className="h-6 text-[10px] px-2"
+          >
+            Start
+          </Button>
+        )}
       </div>
     );
   }
