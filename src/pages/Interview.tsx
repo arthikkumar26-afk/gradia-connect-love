@@ -79,18 +79,41 @@ const Interview = () => {
     
     // Handle direct link (from email with candidateId and stageId)
     if (candidateIdParam && stageIdParam) {
-      console.log('Interview: Direct link mode');
+      console.log('Interview: Direct link mode with candidateId:', candidateIdParam, 'stageId:', stageIdParam);
       setInterviewCandidateId(candidateIdParam);
       
-      // Check if this is an AI interview
+      // Check if this is an AI interview - render AI interview component
       if (typeParam === 'ai-technical') {
+        console.log('Interview: AI Technical Interview mode');
+        
+        // Fetch basic candidate and job info for display
+        try {
+          const { data: candidateData, error: candidateError } = await supabase
+            .from('interview_candidates')
+            .select(`
+              *,
+              candidate:profiles(full_name),
+              job:jobs(job_title)
+            `)
+            .eq('id', candidateIdParam)
+            .single();
+          
+          if (candidateData) {
+            setCandidateName(candidateData.candidate?.full_name || 'Candidate');
+            setJobTitle(candidateData.job?.job_title || 'Position');
+          }
+        } catch (err) {
+          console.log('Interview: Could not fetch candidate info, using defaults');
+        }
+        
         setIsAIInterview(true);
         setLoading(false);
         return;
       }
       
-      // For other interview types, fetch interview data
+      // For other interview types, fetch interview data via edge function
       try {
+        console.log('Interview: Calling start-interview for non-AI interview');
         const { data, error: fnError } = await supabase.functions.invoke('start-interview', {
           body: { 
             interviewCandidateId: candidateIdParam,
@@ -98,6 +121,8 @@ const Interview = () => {
             type: typeParam
           }
         });
+
+        console.log('Interview: start-interview response:', { data, fnError });
 
         if (fnError) throw new Error(fnError.message);
         if (data?.error) throw new Error(data.error);
