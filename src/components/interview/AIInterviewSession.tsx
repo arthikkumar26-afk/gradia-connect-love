@@ -12,16 +12,18 @@ import {
   Video,
   Mic,
   AlertCircle,
-  RotateCcw
+  RotateCcw,
+  Bot
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import AITechnicalInterview from "./AITechnicalInterview";
+import AIInterviewAgent from "./AIInterviewAgent";
 
 interface AIInterviewSessionProps {
   interviewCandidateId: string;
   jobId: string;
   jobTitle: string;
+  candidateName?: string;
   onComplete?: () => void;
 }
 
@@ -38,6 +40,7 @@ export const AIInterviewSession = ({
   interviewCandidateId,
   jobId,
   jobTitle,
+  candidateName = "Candidate",
   onComplete
 }: AIInterviewSessionProps) => {
   const { toast } = useToast();
@@ -117,14 +120,18 @@ export const AIInterviewSession = ({
     }
   };
 
-  // Handle interview completion
-  const handleInterviewComplete = async (answers: string[], recordings: string[]) => {
+  // Handle interview completion from AI agent
+  const handleAgentComplete = async (transcript: any[], recordings: string[]) => {
     if (!sessionId) return;
 
     setIsEvaluating(true);
     try {
+      const candidateAnswers = transcript
+        .filter((t: any) => t.role === "candidate")
+        .map((t: any) => t.content);
+
       const { data, error } = await supabase.functions.invoke("evaluate-ai-interview", {
-        body: { sessionId, answers, transcripts: answers }
+        body: { sessionId, answers: candidateAnswers, transcripts: candidateAnswers }
       });
 
       if (error) throw error;
@@ -160,10 +167,12 @@ export const AIInterviewSession = ({
 
   if (isInterviewStarted && questions.length > 0 && sessionId) {
     return (
-      <AITechnicalInterview
+      <AIInterviewAgent
         sessionId={sessionId}
         questions={questions}
-        onComplete={handleInterviewComplete}
+        jobTitle={jobTitle}
+        candidateName={candidateName}
+        onComplete={handleAgentComplete}
         onCancel={() => setIsInterviewStarted(false)}
       />
     );

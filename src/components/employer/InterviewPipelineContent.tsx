@@ -64,6 +64,7 @@ import { AIActionPanel } from "./AIActionPanel";
 import { InterviewRecordingPlayer } from "./InterviewRecordingPlayer";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
 import { ManualInterviewScheduleModal } from "./ManualInterviewScheduleModal";
+import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -122,6 +123,7 @@ const CandidateProfileInline = ({
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedStageForSchedule, setSelectedStageForSchedule] = useState<InterviewStep | null>(null);
   const [jobInterviewType, setJobInterviewType] = useState<string | null>(null);
+  const [showAIInterviewDialog, setShowAIInterviewDialog] = useState(false);
   
   // Fetch job interview type
   useEffect(() => {
@@ -523,7 +525,7 @@ const CandidateProfileInline = ({
                                     </Button>
                                   </div>
                                 )}
-                                {isFirstPending && (
+                                {isFirstPending && step.title !== "AI Technical Interview" && (
                                   <Button 
                                     size="sm" 
                                     variant="outline"
@@ -531,6 +533,17 @@ const CandidateProfileInline = ({
                                     className="mt-2 h-7 text-xs"
                                   >
                                     Start
+                                  </Button>
+                                )}
+                                {/* Special AI Technical Interview button */}
+                                {(isFirstPending || step.status === "current") && step.title === "AI Technical Interview" && (
+                                  <Button 
+                                    size="sm" 
+                                    onClick={() => setShowAIInterviewDialog(true)}
+                                    className="mt-2 h-7 text-xs bg-purple-600 hover:bg-purple-700"
+                                  >
+                                    <Brain className="h-3 w-3 mr-1" />
+                                    Launch AI Interview
                                   </Button>
                                 )}
                               </div>
@@ -563,6 +576,27 @@ const CandidateProfileInline = ({
         stageName={selectedStageForSchedule?.title || 'Panel Interview'}
         onSuccess={onRefresh}
       />
+
+      {/* AI Technical Interview Dialog */}
+      <Dialog open={showAIInterviewDialog} onOpenChange={setShowAIInterviewDialog}>
+        <DialogContent className="max-w-6xl h-[90vh] p-0">
+          <AIInterviewSession
+            interviewCandidateId={candidate.interviewCandidateId}
+            jobId={candidate.jobId}
+            jobTitle={candidate.role}
+            candidateName={candidate.name}
+            onComplete={() => {
+              setShowAIInterviewDialog(false);
+              onRefresh?.();
+              // Mark the AI Technical Interview stage as completed
+              const aiStage = candidate.interviewSteps.find(s => s.title === "AI Technical Interview");
+              if (aiStage) {
+                onUpdateStep(aiStage.id, "completed");
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.ai-interview-tts]
 verify_jwt = false
+
+[functions.elevenlabs-agent-token]
+verify_jwt = false
