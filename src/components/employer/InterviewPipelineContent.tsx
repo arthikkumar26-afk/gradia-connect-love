@@ -69,8 +69,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Stage icon mapping
+import { Brain } from "lucide-react";
+
 const stageIcons: Record<string, React.ElementType> = {
   'Resume Screening': Users,
+  'AI Technical Interview': Brain,
   'Technical Assessment': Code,
   'HR Round': UserCheck,
   'Final Review': FileCheck,
@@ -79,6 +82,7 @@ const stageIcons: Record<string, React.ElementType> = {
 
 const stageColors: Record<string, string> = {
   'Resume Screening': 'bg-blue-500',
+  'AI Technical Interview': 'bg-purple-500',
   'Technical Assessment': 'bg-orange-500',
   'HR Round': 'bg-green-500',
   'Final Review': 'bg-cyan-500',

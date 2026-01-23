@@ -71,3 +71,12 @@ verify_jwt = false
 
 [functions.send-management-notification]
 verify_jwt = false
+
+[functions.generate-ai-interview-questions]
+verify_jwt = false
+
+[functions.evaluate-ai-interview]
+verify_jwt = false
+
+[functions.ai-interview-tts]
+verify_jwt = false
