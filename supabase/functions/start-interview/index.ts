@@ -245,6 +245,23 @@ serve(async (req) => {
 
     console.log(`Starting ${stageName} for candidate:`, candidate.full_name);
 
+    // Handle AI Technical Interview type - return early with candidate info only
+    // The actual AI interview is handled by a separate AI system (e.g., ElevenLabs)
+    if (type === 'ai-technical' || stageName === 'AI Technical Interview' || stageName.toLowerCase().includes('ai technical')) {
+      console.log('AI Technical Interview detected - returning candidate info for AI interview component');
+      return new Response(JSON.stringify({
+        success: true,
+        isAIInterview: true,
+        candidateName: candidate.full_name,
+        jobTitle: job.job_title,
+        stageName: stageName,
+        interviewCandidateId: interviewEvent.interview_candidate?.id || interviewCandidateId,
+        jobId: job.id,
+      }), {
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     // Get stage-specific config
     const stageConfig = stageConfigs[stageName] || stageConfigs['Technical Assessment'];
 
