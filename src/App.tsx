@@ -28,6 +28,8 @@ import EmployerLogin from "./pages/EmployerLogin";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import CandidateLogin from "./pages/CandidateLogin";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ProfileSuccess from "./pages/ProfileSuccess";
 import JobRequirements from "./pages/JobRequirements";
 import Registration from "./pages/employer/Registration";
@@ -124,6 +126,8 @@ const MainRoutes = () => (
       {/* Main Pages */}
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/careers" element={<Careers />} />
@@ -144,6 +148,7 @@ const MainRoutes = () => (
       <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
       <Route path="/candidate/signup" element={<CandidateSignup />} />
       <Route path="/candidate/login" element={<CandidateLogin />} />
+      <Route path="/candidate/forgot-password" element={<ForgotPassword />} />
       <Route path="/candidate/create-profile" element={<Navigate to="/candidate/signup" replace />} />
       <Route path="/candidate/apply" element={<Navigate to="/candidate/signup" replace />} />
       <Route path="/create-profile" element={<Navigate to="/candidate/signup" replace />} />
@@ -176,6 +181,7 @@ const MainRoutes = () => (
       <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
       <Route path="/employer/signup" element={<EmployerSignup />} />
       <Route path="/employer/login" element={<EmployerLogin />} />
+      <Route path="/employer/forgot-password" element={<ForgotPassword />} />
       <Route path="/employer/create-profile" element={<EmployerCreateProfile />} />
       <Route path="/employer/benefits" element={<Benefits />} />
       <Route path="/employer/agreement" element={<Agreement />} />
@@ -271,6 +277,7 @@ const MainRoutes = () => (
       <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
       <Route path="/job-mela-calendar" element={<JobMelaCalendar />} />
       <Route path="/sponsor/login" element={<SponsorLogin />} />
+      <Route path="/sponsor/forgot-password" element={<ForgotPassword />} />
       <Route path="/sponsor/benefits" element={<SponsorBenefits />} />
       <Route path="/sponsors" element={<SponsorLanding />} />
       <Route path="/collaboration-opportunities" element={<CollaborationOpportunities />} />
