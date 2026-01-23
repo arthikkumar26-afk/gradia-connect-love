@@ -26,25 +26,51 @@ function sanitizeInput(input: unknown, maxLength: number): string {
 }
 
 interface NotificationRequest {
-  type: 'stage_change' | 'comment_added' | 'document_uploaded' | 'offer_response';
+  type: 'stage_change' | 'comment_added' | 'document_uploaded' | 'offer_response' | 'stage_invitation';
   recipientEmail: string;
   recipientName: string;
   candidateName: string;
   jobTitle: string;
   companyName?: string;
   stage?: string;
+  stageName?: string;
   previousStage?: string;
   comment?: string;
   commentAuthor?: string;
   documentName?: string;
   offerAction?: 'accepted' | 'rejected' | 'deferred';
   deferredDate?: string;
+  interviewCandidateId?: string;
+  stageId?: string;
 }
 
 const generateEmailContent = (data: NotificationRequest) => {
   const { type, recipientName, candidateName, jobTitle, companyName = "Gradia" } = data;
 
   switch (type) {
+    case 'stage_invitation':
+      const stageName = data.stageName || data.stage || 'Interview';
+      return {
+        subject: `Interview Invitation: ${stageName} - ${jobTitle}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">Interview Stage Invitation</h2>
+            <p>Hi ${recipientName || candidateName},</p>
+            <p>You are invited to proceed with the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position.</p>
+            <p>Please log in to your dashboard to begin your interview.</p>
+            <div style="margin: 30px 0;">
+              <a href="https://gradia-link-shine.lovable.app/candidate/dashboard" 
+                 style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
+                Go to Dashboard
+              </a>
+            </div>
+            <p>If you have any questions, please don't hesitate to reach out.</p>
+            <br>
+            <p>Best regards,<br>${companyName} Team</p>
+          </div>
+        `,
+      };
+
     case 'stage_change':
       return {
         subject: `Placement Update: ${candidateName} - ${jobTitle}`,
@@ -163,8 +189,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const rawData = await req.json();
 
-    // Validate and sanitize input
-    const recipientEmail = rawData.recipientEmail;
+    // Support both 'to' and 'recipientEmail' field names
+    const recipientEmail = rawData.recipientEmail || rawData.to;
     if (!isValidEmail(recipientEmail)) {
       return new Response(
         JSON.stringify({ error: "Invalid recipient email" }),
@@ -172,7 +198,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const validTypes = ['stage_change', 'comment_added', 'document_uploaded', 'offer_response'];
+    const validTypes = ['stage_change', 'comment_added', 'document_uploaded', 'offer_response', 'stage_invitation'];
     if (!validTypes.includes(rawData.type)) {
       return new Response(
         JSON.stringify({ error: "Invalid notification type" }),
@@ -183,17 +209,20 @@ const handler = async (req: Request): Promise<Response> => {
     const notificationData: NotificationRequest = {
       type: rawData.type,
       recipientEmail: recipientEmail,
-      recipientName: sanitizeInput(rawData.recipientName, MAX_NAME_LENGTH),
+      recipientName: sanitizeInput(rawData.recipientName || rawData.candidateName, MAX_NAME_LENGTH),
       candidateName: sanitizeInput(rawData.candidateName, MAX_NAME_LENGTH),
       jobTitle: sanitizeInput(rawData.jobTitle, MAX_NAME_LENGTH),
       companyName: sanitizeInput(rawData.companyName, MAX_NAME_LENGTH) || "Gradia",
       stage: sanitizeInput(rawData.stage, 100),
+      stageName: sanitizeInput(rawData.stageName, 100),
       previousStage: sanitizeInput(rawData.previousStage, 100),
       comment: sanitizeInput(rawData.comment, MAX_COMMENT_LENGTH),
       commentAuthor: sanitizeInput(rawData.commentAuthor, MAX_NAME_LENGTH),
       documentName: sanitizeInput(rawData.documentName, MAX_NAME_LENGTH),
       offerAction: ['accepted', 'rejected', 'deferred'].includes(rawData.offerAction) ? rawData.offerAction : undefined,
       deferredDate: sanitizeInput(rawData.deferredDate, 20),
+      interviewCandidateId: sanitizeInput(rawData.interviewCandidateId, 100),
+      stageId: sanitizeInput(rawData.stageId, 100),
     };
     
     console.log('Sending email notification:', notificationData.type, 'for user:', userId);
