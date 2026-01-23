@@ -192,8 +192,10 @@ const StageActionButtons = ({
     );
   }
 
-  // Current stage - show all action buttons
-  if (step.status === "current") {
+  // Current or In Progress stage - show all action buttons
+  if (step.status === "current" || step.status === "in_progress" || step.isLive) {
+    const isAITechnicalInterview = step.title === "AI Technical Interview";
+    
     return (
       <div className="flex flex-wrap gap-1 mt-2">
         <Button 
@@ -210,6 +212,16 @@ const StageActionButtons = ({
           )}
           Resend
         </Button>
+        {isAITechnicalInterview && (
+          <Button 
+            size="sm" 
+            onClick={onLaunchAIInterview}
+            className="h-6 text-[10px] px-2 bg-purple-600 hover:bg-purple-700"
+          >
+            <Brain className="h-3 w-3 mr-1" />
+            Launch AI
+          </Button>
+        )}
         <Button 
           size="sm" 
           variant="outline"
