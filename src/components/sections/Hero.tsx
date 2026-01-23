@@ -39,7 +39,7 @@ const Hero = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     placeholder="Job title, company, or keywords..."
-                    className="pl-10 h-12 text-lg border-0 bg-background"
+                    className="pl-10 h-12 text-lg border border-input bg-background text-foreground"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -47,7 +47,7 @@ const Hero = () => {
                 <div className="flex-1 relative">
                   <Input
                     placeholder="Location (remote, city, country)"
-                    className="h-12 text-lg border-0 bg-background"
+                    className="h-12 text-lg border border-input bg-background text-foreground"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                   />
