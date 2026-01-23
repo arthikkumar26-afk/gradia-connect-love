@@ -22,39 +22,47 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    if (!interviewCandidateId) {
+      throw new Error("Interview candidate ID is required");
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Fetch interview candidate to get job_id if not provided
+    const { data: interviewCandidate, error: candidateError } = await supabase
+      .from("interview_candidates")
+      .select(`
+        *,
+        profiles:candidate_id (
+          full_name,
+          experience_level,
+          preferred_role,
+          primary_subject,
+          segment
+        )
+      `)
+      .eq("id", interviewCandidateId)
+      .single();
+
+    if (candidateError || !interviewCandidate) {
+      throw new Error("Interview candidate not found");
+    }
+
+    // Use provided jobId or get from interview candidate
+    const effectiveJobId = jobId || interviewCandidate.job_id;
 
     // Fetch job details
     const { data: job, error: jobError } = await supabase
       .from("jobs")
       .select("*")
-      .eq("id", jobId)
+      .eq("id", effectiveJobId)
       .single();
 
     if (jobError || !job) {
       throw new Error("Job not found");
     }
 
-    // Fetch candidate profile if available
-    let candidateProfile = null;
-    if (interviewCandidateId) {
-      const { data: interviewCandidate } = await supabase
-        .from("interview_candidates")
-        .select(`
-          *,
-          profiles:candidate_id (
-            full_name,
-            experience_level,
-            preferred_role,
-            primary_subject,
-            segment
-          )
-        `)
-        .eq("id", interviewCandidateId)
-        .single();
-      
-      candidateProfile = interviewCandidate?.profiles;
-    }
+    const candidateProfile = interviewCandidate?.profiles;
 
     const systemPrompt = `You are a senior technical interviewer. Generate ${questionCount} technical interview questions for a ${job.job_title} position.
 
@@ -184,7 +192,7 @@ Return ONLY a valid JSON array of questions in this exact format:
           .from("ai_interview_sessions")
           .insert({
             interview_candidate_id: interviewCandidateId,
-            job_id: jobId,
+            job_id: effectiveJobId,
             questions,
             status: "pending"
           });

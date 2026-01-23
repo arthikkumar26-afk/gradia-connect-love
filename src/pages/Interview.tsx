@@ -571,11 +571,14 @@ const Interview = () => {
 
   // Render AI Interview Session for AI Technical Interview type
   if (isAIInterview && interviewCandidateId) {
+    // Get jobId from URL if available, or it will be fetched by the component
+    const jobIdFromUrl = urlParams.get("jobId");
+    
     return (
       <div className="min-h-screen bg-background">
         <AIInterviewSession
           interviewCandidateId={interviewCandidateId}
-          jobId=""
+          jobId={jobIdFromUrl || ""}
           jobTitle={jobTitle || "Technical Position"}
           candidateName={candidateName || "Candidate"}
           onComplete={() => {
