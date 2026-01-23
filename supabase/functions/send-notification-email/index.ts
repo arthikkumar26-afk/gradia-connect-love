@@ -50,20 +50,40 @@ const generateEmailContent = (data: NotificationRequest) => {
   switch (type) {
     case 'stage_invitation':
       const stageName = data.stageName || data.stage || 'Interview';
+      const baseUrl = "https://gradia-link-shine.lovable.app";
+      
+      // Generate direct interview link based on stage
+      let interviewLink = `${baseUrl}/candidate/dashboard`;
+      let buttonText = "Go to Dashboard";
+      
+      if (data.interviewCandidateId && data.stageId) {
+        if (stageName === "AI Technical Interview" || stageName.toLowerCase().includes("ai")) {
+          interviewLink = `${baseUrl}/interview?candidateId=${data.interviewCandidateId}&stageId=${data.stageId}&type=ai-technical`;
+          buttonText = "Start AI Interview";
+        } else if (stageName === "Technical Assessment") {
+          interviewLink = `${baseUrl}/interview?candidateId=${data.interviewCandidateId}&stageId=${data.stageId}&type=technical`;
+          buttonText = "Start Technical Assessment";
+        } else {
+          interviewLink = `${baseUrl}/interview?candidateId=${data.interviewCandidateId}&stageId=${data.stageId}&type=general`;
+          buttonText = "Start Interview";
+        }
+      }
+      
       return {
         subject: `Interview Invitation: ${stageName} - ${jobTitle}`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #333;">Interview Stage Invitation</h2>
             <p>Hi ${recipientName || candidateName},</p>
             <p>You are invited to proceed with the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position.</p>
-            <p>Please log in to your dashboard to begin your interview.</p>
-            <div style="margin: 30px 0;">
-              <a href="https://gradia-link-shine.lovable.app/candidate/dashboard" 
-                 style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">
-                Go to Dashboard
+            <p>Click the button below to start your interview directly:</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="${interviewLink}" 
+                 style="background-color: #7C3AED; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                ${buttonText}
               </a>
             </div>
+            <p style="color: #666; font-size: 14px;">Or copy this link: <a href="${interviewLink}">${interviewLink}</a></p>
             <p>If you have any questions, please don't hesitate to reach out.</p>
             <br>
             <p>Best regards,<br>${companyName} Team</p>

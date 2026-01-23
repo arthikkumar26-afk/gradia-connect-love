@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Clock, CheckCircle, XCircle, AlertCircle, Video, Loader2, RefreshCw, Camera } from "lucide-react";
+import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
 
 interface Question {
   question: string;
@@ -30,9 +31,12 @@ interface VideoInstructions {
 }
 
 const Interview = () => {
-  // Get token from URL
+  // Get parameters from URL
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get("token");
+  const candidateIdParam = urlParams.get("candidateId");
+  const stageIdParam = urlParams.get("stageId");
+  const typeParam = urlParams.get("type");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +63,8 @@ const Interview = () => {
   const [demoVideoFile, setDemoVideoFile] = useState<File | null>(null);
   const [demoVideoPreview, setDemoVideoPreview] = useState<string | null>(null);
   const [uploadingDemoVideo, setUploadingDemoVideo] = useState(false);
+  const [isAIInterview, setIsAIInterview] = useState(false);
+  const [interviewCandidateId, setInterviewCandidateId] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -67,12 +73,55 @@ const Interview = () => {
   const webcamStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
 
-  // Initialize interview
+  // Initialize interview - now handles both token-based and direct link approaches
   const initInterview = useCallback(async () => {
-    console.log('Interview: initInterview called with token:', token);
+    console.log('Interview: initInterview called with params:', { token, candidateIdParam, stageIdParam, typeParam });
     
+    // Handle direct link (from email with candidateId and stageId)
+    if (candidateIdParam && stageIdParam) {
+      console.log('Interview: Direct link mode');
+      setInterviewCandidateId(candidateIdParam);
+      
+      // Check if this is an AI interview
+      if (typeParam === 'ai-technical') {
+        setIsAIInterview(true);
+        setLoading(false);
+        return;
+      }
+      
+      // For other interview types, fetch interview data
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('start-interview', {
+          body: { 
+            interviewCandidateId: candidateIdParam,
+            stageId: stageIdParam,
+            type: typeParam
+          }
+        });
+
+        if (fnError) throw new Error(fnError.message);
+        if (data?.error) throw new Error(data.error);
+
+        setResponseId(data.responseId);
+        setQuestions(data.questions || []);
+        setAnswers(new Array((data.questions || []).length).fill(null));
+        setCandidateName(data.candidateName || 'Candidate');
+        setJobTitle(data.jobTitle || 'Position');
+        setStageName(data.stageName || 'Interview');
+        setIsVideoStage(data.isVideoStage || false);
+        setVideoInstructions(data.videoInstructions || null);
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Interview: Error initializing direct link', err);
+        setError(err.message || 'Failed to load interview.');
+        setLoading(false);
+      }
+      return;
+    }
+    
+    // Handle token-based link (legacy)
     if (!token) {
-      console.log('Interview: No token found');
+      console.log('Interview: No token or direct link params found');
       setError("Invalid interview link. Please use the link from your email.");
       setLoading(false);
       return;
@@ -491,6 +540,24 @@ const Interview = () => {
   };
 
   console.log('Interview: Render state - loading:', loading, 'error:', error, 'started:', started, 'completed:', completed, 'questions:', questions.length, 'isVideoStage:', isVideoStage);
+
+  // Render AI Interview Session for AI Technical Interview type
+  if (isAIInterview && interviewCandidateId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AIInterviewSession
+          interviewCandidateId={interviewCandidateId}
+          jobId=""
+          jobTitle="Technical Position"
+          candidateName=""
+          onComplete={() => {
+            setCompleted(true);
+            toast.success("AI Interview completed successfully!");
+          }}
+        />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
