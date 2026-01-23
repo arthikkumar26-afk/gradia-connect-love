@@ -76,6 +76,8 @@ const Interview = () => {
   // Initialize interview - now handles both token-based and direct link approaches
   const initInterview = useCallback(async () => {
     console.log('Interview: initInterview called with params:', { token, candidateIdParam, stageIdParam, typeParam });
+    setLoading(true);
+    setError(null);
     
     // Handle direct link (from email with candidateId and stageId)
     if (candidateIdParam && stageIdParam) {
@@ -86,24 +88,25 @@ const Interview = () => {
       if (typeParam === 'ai-technical') {
         console.log('Interview: AI Technical Interview mode');
         
-        // Fetch basic candidate and job info for display
+        // Call edge function to get candidate info (bypasses RLS)
         try {
-          const { data: candidateData, error: candidateError } = await supabase
-            .from('interview_candidates')
-            .select(`
-              *,
-              candidate:profiles(full_name),
-              job:jobs(job_title)
-            `)
-            .eq('id', candidateIdParam)
-            .single();
+          const { data, error: fnError } = await supabase.functions.invoke('start-interview', {
+            body: { 
+              interviewCandidateId: candidateIdParam,
+              stageId: stageIdParam,
+              type: typeParam
+            }
+          });
           
-          if (candidateData) {
-            setCandidateName(candidateData.candidate?.full_name || 'Candidate');
-            setJobTitle(candidateData.job?.job_title || 'Position');
+          console.log('Interview: AI interview data fetched:', { data, fnError });
+          
+          if (data && !data.error) {
+            setCandidateName(data.candidateName || 'Candidate');
+            setJobTitle(data.jobTitle || 'Position');
+            setStageName(data.stageName || 'AI Technical Interview');
           }
         } catch (err) {
-          console.log('Interview: Could not fetch candidate info, using defaults');
+          console.log('Interview: Could not fetch candidate info via edge function, using defaults:', err);
         }
         
         setIsAIInterview(true);
@@ -205,7 +208,7 @@ const Interview = () => {
       setError(err.message || 'Failed to load interview. Please try again.');
       setLoading(false);
     }
-  }, [token]);
+  }, [token, candidateIdParam, stageIdParam, typeParam]);
 
   useEffect(() => {
     console.log('Interview: useEffect running, calling initInterview');
@@ -573,8 +576,8 @@ const Interview = () => {
         <AIInterviewSession
           interviewCandidateId={interviewCandidateId}
           jobId=""
-          jobTitle="Technical Position"
-          candidateName=""
+          jobTitle={jobTitle || "Technical Position"}
+          candidateName={candidateName || "Candidate"}
           onComplete={() => {
             setCompleted(true);
             toast.success("AI Interview completed successfully!");
