@@ -212,16 +212,7 @@ const StageActionButtons = ({
           )}
           Resend
         </Button>
-        {isAITechnicalInterview && (
-          <Button 
-            size="sm" 
-            onClick={onLaunchAIInterview}
-            className="h-6 text-[10px] px-2 bg-purple-600 hover:bg-purple-700"
-          >
-            <Brain className="h-3 w-3 mr-1" />
-            Launch AI
-          </Button>
-        )}
+        {/* AI Technical Interview is started via email link only - no Launch button needed */}
         <Button 
           size="sm" 
           variant="outline"
