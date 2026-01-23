@@ -117,46 +117,129 @@ serve(async (req) => {
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { token } = await req.json();
+    const { token, interviewCandidateId, stageId, type } = await req.json();
 
-    if (!token) {
-      throw new Error('Interview token is required');
-    }
+    let interviewEvent: any;
+    let candidate: any;
+    let job: any;
+    let stageName: string;
 
-    console.log('Starting interview with token:', token);
+    // Handle direct link (from email with candidateId and stageId)
+    if (interviewCandidateId && stageId) {
+      console.log('Starting interview with direct link:', { interviewCandidateId, stageId, type });
 
-    // Validate token and get interview details
-    const { data: invitation, error: invError } = await supabase
-      .from('interview_invitations')
-      .select(`
-        *,
-        interview_event:interview_events(
+      // Fetch interview candidate data directly
+      const { data: interviewCandidate, error: icError } = await supabase
+        .from('interview_candidates')
+        .select(`
           *,
-          stage:interview_stages(*),
-          interview_candidate:interview_candidates(
+          candidate:profiles(*),
+          job:jobs(*),
+          current_stage:interview_stages(*)
+        `)
+        .eq('id', interviewCandidateId)
+        .single();
+
+      if (icError || !interviewCandidate) {
+        console.error('Invalid interview candidate:', icError);
+        throw new Error('Invalid interview link. Please use the link from your email.');
+      }
+
+      // Get the stage info
+      const { data: stage, error: stageError } = await supabase
+        .from('interview_stages')
+        .select('*')
+        .eq('id', stageId)
+        .single();
+
+      if (stageError || !stage) {
+        console.error('Invalid stage:', stageError);
+        throw new Error('Invalid interview stage.');
+      }
+
+      // Find or create interview event for this candidate + stage
+      let { data: existingEvent, error: eventError } = await supabase
+        .from('interview_events')
+        .select('*')
+        .eq('interview_candidate_id', interviewCandidateId)
+        .eq('stage_id', stageId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!existingEvent) {
+        // Create a new interview event
+        const { data: newEvent, error: createError } = await supabase
+          .from('interview_events')
+          .insert({
+            interview_candidate_id: interviewCandidateId,
+            stage_id: stageId,
+            status: 'pending'
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Failed to create interview event:', createError);
+          throw new Error('Failed to initialize interview.');
+        }
+        existingEvent = newEvent;
+      }
+
+      interviewEvent = {
+        id: existingEvent.id,
+        ...existingEvent,
+        stage: stage,
+        interview_candidate: interviewCandidate
+      };
+      candidate = interviewCandidate.candidate;
+      job = interviewCandidate.job;
+      stageName = stage.name || 'Technical Assessment';
+
+      console.log(`Starting ${stageName} for candidate:`, candidate.full_name);
+
+    } else if (token) {
+      // Handle token-based link (legacy)
+      console.log('Starting interview with token:', token);
+
+      // Validate token and get interview details
+      const { data: invitation, error: invError } = await supabase
+        .from('interview_invitations')
+        .select(`
+          *,
+          interview_event:interview_events(
             *,
-            candidate:profiles(*),
-            job:jobs(*)
+            stage:interview_stages(*),
+            interview_candidate:interview_candidates(
+              *,
+              candidate:profiles(*),
+              job:jobs(*)
+            )
           )
-        )
-      `)
-      .eq('invitation_token', token)
-      .single();
+        `)
+        .eq('invitation_token', token)
+        .single();
 
-    if (invError || !invitation) {
-      console.error('Invalid token:', invError);
-      throw new Error('Invalid or expired interview link');
+      if (invError || !invitation) {
+        console.error('Invalid token:', invError);
+        throw new Error('Invalid or expired interview link');
+      }
+
+      // Check if expired
+      if (new Date(invitation.expires_at) < new Date()) {
+        throw new Error('This interview link has expired');
+      }
+
+      interviewEvent = invitation.interview_event;
+      candidate = interviewEvent.interview_candidate.candidate;
+      job = interviewEvent.interview_candidate.job;
+      stageName = interviewEvent.stage?.name || 'Technical Assessment';
+
+      console.log(`Starting ${stageName} for candidate:`, candidate.full_name);
+
+    } else {
+      throw new Error('Interview link is required');
     }
-
-    // Check if expired
-    if (new Date(invitation.expires_at) < new Date()) {
-      throw new Error('This interview link has expired');
-    }
-
-    const interviewEvent = invitation.interview_event;
-    const candidate = interviewEvent.interview_candidate.candidate;
-    const job = interviewEvent.interview_candidate.job;
-    const stageName = interviewEvent.stage?.name || 'Technical Assessment';
     const skills = job.skills || [];
     const requirements = job.requirements || '';
 
