@@ -118,6 +118,8 @@ const CandidateSignup = () => {
 
     if (!fullName.trim()) {
       newErrors.fullName = "Full name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(fullName.trim())) {
+      newErrors.fullName = "Name should only contain letters";
     }
 
     if (!email.trim()) {
@@ -474,8 +476,12 @@ const CandidateSignup = () => {
               placeholder="Enter your full name"
               value={fullName}
               onChange={(e) => {
-                setFullName(e.target.value);
-                if (errors.fullName) setErrors({ ...errors, fullName: undefined });
+                const value = e.target.value;
+                // Only allow letters and spaces
+                if (value === '' || /^[a-zA-Z\s]*$/.test(value)) {
+                  setFullName(value);
+                  if (errors.fullName) setErrors({ ...errors, fullName: undefined });
+                }
               }}
               className={errors.fullName ? "border-destructive" : ""}
             />
