@@ -80,7 +80,7 @@ const JobCard = ({
               </Badge>
             </div>
             <CardTitle className="text-sm font-semibold group-hover:text-accent transition-colors line-clamp-2 leading-tight">
-              <Link to={`/job/${id}`} className="hover:underline">
+              <Link to={`/jobs-results?job=${id}`} className="hover:underline">
                 {title}
               </Link>
             </CardTitle>
@@ -134,12 +134,12 @@ const JobCard = ({
         {/* Actions */}
         <div className="flex gap-1.5 mt-auto">
           <Button variant="outline" size="sm" className="flex-1 h-7 text-xs px-2" asChild>
-            <Link to={`/job/${id}`}>
+            <Link to={`/jobs-results?job=${id}`}>
               Details
             </Link>
           </Button>
           <Button variant="default" size="sm" className="flex-1 h-7 text-xs px-2" asChild>
-            <Link to={`/job/${id}/apply`}>
+            <Link to={`/jobs-results?job=${id}&apply=true`}>
               Apply
             </Link>
           </Button>

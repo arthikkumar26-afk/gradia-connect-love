@@ -114,6 +114,24 @@ const JobsResults = () => {
     fetchJobs();
   }, []);
 
+  // Handle job ID from URL parameters (for Details/Apply links from JobCard)
+  useEffect(() => {
+    const jobId = searchParams.get('job');
+    const shouldApply = searchParams.get('apply') === 'true';
+    
+    if (jobId && jobs.length > 0) {
+      const job = jobs.find(j => j.id === jobId);
+      if (job) {
+        if (shouldApply) {
+          setApplyingJob(job);
+          setShowApplicationModal(true);
+        } else {
+          setSelectedJob(job);
+        }
+      }
+    }
+  }, [searchParams, jobs]);
+
   // Filter jobs based on search parameters
   useEffect(() => {
     const query = searchParams.get('q')?.toLowerCase() || '';
