@@ -108,8 +108,198 @@ const getStageColor = (title: string): string => {
   return stageColors[title] || 'bg-gray-500';
 };
 
+// Stage Action Buttons Component
+const StageActionButtons = ({
+  step,
+  isFirstPending,
+  candidateName,
+  candidateEmail,
+  jobTitle,
+  interviewCandidateId,
+  onUpdateStep,
+  onLaunchAIInterview
+}: {
+  step: InterviewStep;
+  isFirstPending: boolean;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  interviewCandidateId: string;
+  onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
+  onLaunchAIInterview: () => void;
+}) => {
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [isMovingNext, setIsMovingNext] = useState(false);
+
+  const handleResendInvitation = async () => {
+    setIsSendingInvite(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-notification-email', {
+        body: {
+          to: candidateEmail,
+          candidateName,
+          jobTitle,
+          stageName: step.title,
+          type: 'stage_invitation',
+          interviewCandidateId,
+          stageId: step.id,
+        },
+      });
+
+      if (error) throw error;
+      toast.success(`Invitation resent for ${step.title}`);
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      toast.error('Failed to resend invitation');
+    } finally {
+      setIsSendingInvite(false);
+    }
+  };
+
+  const handleMoveToNextStep = async () => {
+    setIsMovingNext(true);
+    try {
+      // Complete current step and move to next
+      onUpdateStep(step.id, "completed");
+      toast.success(`Moved to next stage`);
+    } catch (error) {
+      console.error('Error moving to next step:', error);
+      toast.error('Failed to move to next stage');
+    } finally {
+      setIsMovingNext(false);
+    }
+  };
+
+  // Completed stage - show resend mail button only
+  if (step.status === "completed") {
+    return (
+      <div className="flex gap-1 mt-2">
+        <Button 
+          size="sm" 
+          variant="ghost"
+          onClick={handleResendInvitation}
+          disabled={isSendingInvite}
+          className="h-6 text-[10px] px-2"
+        >
+          {isSendingInvite ? (
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+          ) : (
+            <Mail className="h-3 w-3 mr-1" />
+          )}
+          Resend
+        </Button>
+      </div>
+    );
+  }
+
+  // Current stage - show all action buttons
+  if (step.status === "current") {
+    return (
+      <div className="flex flex-wrap gap-1 mt-2">
+        <Button 
+          size="sm" 
+          variant="ghost"
+          onClick={handleResendInvitation}
+          disabled={isSendingInvite}
+          className="h-6 text-[10px] px-2"
+        >
+          {isSendingInvite ? (
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+          ) : (
+            <Mail className="h-3 w-3 mr-1" />
+          )}
+          Resend
+        </Button>
+        <Button 
+          size="sm" 
+          variant="outline"
+          onClick={() => onUpdateStep(step.id, "failed")}
+          className="text-destructive hover:text-destructive h-6 text-[10px] px-2"
+        >
+          <XCircle className="h-3 w-3 mr-1" />
+          Fail
+        </Button>
+        <Button 
+          size="sm"
+          onClick={handleMoveToNextStep}
+          disabled={isMovingNext}
+          className="h-6 text-[10px] px-2"
+        >
+          {isMovingNext ? (
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+          ) : (
+            <ChevronRight className="h-3 w-3 mr-1" />
+          )}
+          Next
+        </Button>
+      </div>
+    );
+  }
+
+  // First pending stage
+  if (isFirstPending) {
+    if (step.title === "AI Technical Interview") {
+      return (
+        <div className="flex gap-1 mt-2">
+          <Button 
+            size="sm" 
+            variant="ghost"
+            onClick={handleResendInvitation}
+            disabled={isSendingInvite}
+            className="h-6 text-[10px] px-2"
+          >
+            {isSendingInvite ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <Mail className="h-3 w-3 mr-1" />
+            )}
+            Resend
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={onLaunchAIInterview}
+            className="h-6 text-[10px] px-2 bg-purple-600 hover:bg-purple-700"
+          >
+            <Brain className="h-3 w-3 mr-1" />
+            Launch AI
+          </Button>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex gap-1 mt-2">
+        <Button 
+          size="sm" 
+          variant="ghost"
+          onClick={handleResendInvitation}
+          disabled={isSendingInvite}
+          className="h-6 text-[10px] px-2"
+        >
+          {isSendingInvite ? (
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+          ) : (
+            <Mail className="h-3 w-3 mr-1" />
+          )}
+          Resend
+        </Button>
+        <Button 
+          size="sm" 
+          variant="outline"
+          onClick={() => onUpdateStep(step.id, "current")}
+          className="h-6 text-[10px] px-2"
+        >
+          Start
+        </Button>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 // Candidate Profile Inline Component (replaces pipeline content when selected)
-const CandidateProfileInline = ({ 
+const CandidateProfileInline = ({
   candidate, 
   onBack,
   onUpdateStep,
@@ -503,49 +693,17 @@ const CandidateProfileInline = ({
                                   />
                                 )}
                                 
-                                {/* Action buttons for current step */}
-                                {step.status === "current" && (
-                                  <div className="flex gap-2 mt-2">
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline"
-                                      onClick={() => onUpdateStep(step.id, "failed")}
-                                      className="text-destructive hover:text-destructive h-7 text-xs"
-                                    >
-                                      <XCircle className="h-3 w-3 mr-1" />
-                                      Fail
-                                    </Button>
-                                    <Button 
-                                      size="sm"
-                                      onClick={() => onUpdateStep(step.id, "completed")}
-                                      className="h-7 text-xs"
-                                    >
-                                      <Check className="h-3 w-3 mr-1" />
-                                      Complete
-                                    </Button>
-                                  </div>
-                                )}
-                                {isFirstPending && step.title !== "AI Technical Interview" && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => onUpdateStep(step.id, "current")}
-                                    className="mt-2 h-7 text-xs"
-                                  >
-                                    Start
-                                  </Button>
-                                )}
-                                {/* Special AI Technical Interview button */}
-                                {(isFirstPending || step.status === "current") && step.title === "AI Technical Interview" && (
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => setShowAIInterviewDialog(true)}
-                                    className="mt-2 h-7 text-xs bg-purple-600 hover:bg-purple-700"
-                                  >
-                                    <Brain className="h-3 w-3 mr-1" />
-                                    Launch AI Interview
-                                  </Button>
-                                )}
+                                {/* Action buttons for all stages */}
+                                <StageActionButtons
+                                  step={step}
+                                  isFirstPending={isFirstPending}
+                                  candidateName={candidate.name}
+                                  candidateEmail={candidate.email}
+                                  jobTitle={candidate.role}
+                                  interviewCandidateId={candidate.interviewCandidateId}
+                                  onUpdateStep={onUpdateStep}
+                                  onLaunchAIInterview={() => setShowAIInterviewDialog(true)}
+                                />
                               </div>
                             </div>
                           </div>
