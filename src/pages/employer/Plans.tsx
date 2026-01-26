@@ -8,6 +8,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingProgress from '@/components/employer/OnboardingProgress';
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const plans = [
   { id: 'basic', name: 'Basic', duration: '1 Month', price: 499, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
   { id: 'standard', name: 'Standard', duration: '3 Months', price: 1299, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
@@ -19,6 +25,7 @@ export default function Plans() {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -28,6 +35,19 @@ export default function Plans() {
       if (!terms) { toast({ title: 'Please accept terms first', variant: 'destructive' }); navigate("/employer/terms"); }
     };
     checkAuth();
+
+    // Load Razorpay script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => setRazorpayLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, [navigate, toast]);
 
   const handleSelectPlan = async (planId: string) => {
@@ -41,27 +61,89 @@ export default function Plans() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/employer/signup"); return; }
 
-      toast({ title: 'Processing payment...', description: 'Please wait' });
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get user profile for prefilling Razorpay
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, email, mobile, company_name')
+        .eq('id', user.id)
+        .single();
 
-      const { error } = await supabase.from("subscriptions").insert({
-        employer_id: user.id,
-        plan_id: planId,
-        plan_name: selectedPlan.name,
-        billing_cycle: 'monthly',
-        amount: selectedPlan.price,
-        currency: "INR",
-        status: "active",
-        payment_method: planId === 'basic' ? null : 'card',
+      // Create Razorpay order via edge function
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: selectedPlan.price,
+          currency: 'INR',
+          plan_id: selectedPlan.id,
+          plan_name: selectedPlan.name,
+          employer_id: user.id,
+        },
       });
 
-      if (error) throw error;
-      toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
-      navigate("/employer/dashboard");
+      if (orderError || !orderData) {
+        throw new Error(orderError?.message || 'Failed to create order');
+      }
+
+      if (!razorpayLoaded || !window.Razorpay) {
+        throw new Error('Payment gateway not loaded. Please refresh and try again.');
+      }
+
+      // Configure Razorpay options
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Gradia',
+        description: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+        order_id: orderData.order_id,
+        prefill: {
+          name: profile?.full_name || profile?.company_name || '',
+          email: profile?.email || user.email || '',
+          contact: profile?.mobile || '',
+        },
+        theme: {
+          color: '#7c3aed',
+        },
+        handler: async function (response: any) {
+          try {
+            // Verify payment via edge function
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_id: selectedPlan.id,
+                plan_name: selectedPlan.name,
+                amount: selectedPlan.price,
+                employer_id: user.id,
+                billing_cycle: 'monthly',
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error('Payment verification failed');
+            }
+
+            toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
+            navigate(`/employer/subscription-success?session_id=${response.razorpay_payment_id}`);
+          } catch (error: any) {
+            console.error('Payment verification error:', error);
+            toast({ title: 'Error', description: 'Payment verification failed. Please contact support.', variant: 'destructive' });
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(null);
+            toast({ title: 'Payment Cancelled', description: 'You can try again anytime', variant: 'default' });
+          },
+        },
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
     } catch (error: any) {
-      setRetryError('Failed to process payment. Please try again.');
-      toast({ title: 'Error', description: 'Failed to process plan selection', variant: 'destructive' });
-    } finally {
+      console.error('Payment error:', error);
+      setRetryError(error.message || 'Failed to initiate payment. Please try again.');
+      toast({ title: 'Error', description: error.message || 'Failed to process payment', variant: 'destructive' });
       setLoading(null);
     }
   };
@@ -97,8 +179,13 @@ export default function Plans() {
                   </li>
                 ))}
               </ul>
-              <Button onClick={() => handleSelectPlan(plan.id)} disabled={loading !== null} className="w-full" variant={plan.popular ? 'default' : 'outline'}>
-                {loading === plan.id ? 'Processing...' : `Choose ${plan.name}`}
+              <Button 
+                onClick={() => handleSelectPlan(plan.id)} 
+                disabled={loading !== null || !razorpayLoaded} 
+                className="w-full" 
+                variant={plan.popular ? 'default' : 'outline'}
+              >
+                {loading === plan.id ? 'Processing...' : !razorpayLoaded ? 'Loading...' : `Choose ${plan.name}`}
               </Button>
             </Card>
           ))}
