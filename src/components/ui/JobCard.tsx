@@ -55,7 +55,7 @@ const JobCard = ({
       navigate(`/jobs-results?job=${id}&apply=true`);
     } else {
       // Redirect to candidate login with return URL
-      navigate(`/candidate-login?redirect=/jobs-results?job=${id}&apply=true`);
+      navigate(`/candidate/login?redirect=/jobs-results?job=${id}&apply=true`);
     }
   };
 
