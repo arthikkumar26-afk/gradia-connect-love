@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface JobCardProps {
   id: string;
@@ -42,6 +43,7 @@ const JobCard = ({
   const [isSaved, setIsSaved] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, profile } = useAuth();
+  const { toast } = useToast();
 
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,8 +55,15 @@ const JobCard = ({
     // Check if user is authenticated as candidate
     if (isAuthenticated && profile?.role === 'candidate') {
       navigate(`/jobs-results?job=${id}&apply=true`);
+    } else if (isAuthenticated && profile?.role !== 'candidate') {
+      // User is logged in but not as a candidate (e.g., employer)
+      toast({
+        title: "Candidates Only",
+        description: "Only candidates can apply for jobs. Please log in with a candidate account.",
+        variant: "destructive",
+      });
     } else {
-      // Redirect to candidate login with return URL
+      // Not authenticated - redirect to candidate login with return URL
       navigate(`/candidate/login?redirect=/jobs-results?job=${id}&apply=true`);
     }
   };
