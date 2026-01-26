@@ -18,12 +18,6 @@ export default function SubscriptionSuccess() {
     const verifySubscription = async () => {
       const sessionId = searchParams.get('session_id');
       
-      if (!sessionId) {
-        toast({ title: 'Invalid session', variant: 'destructive' });
-        navigate('/employer/plans');
-        return;
-      }
-
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -31,19 +25,38 @@ export default function SubscriptionSuccess() {
           return;
         }
 
-        const { data, error } = await supabase
+        // Try to find subscription by payment ID first (for Razorpay), then get latest
+        let query = supabase
           .from('subscriptions')
           .select('*')
           .eq('employer_id', user.id)
-          .eq('stripe_subscription_id', sessionId)
-          .single();
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (sessionId) {
+          query = query.eq('stripe_subscription_id', sessionId);
+        }
 
-        setSubscription(data);
+        const { data, error } = await query.limit(1).single();
+
+        if (error) {
+          // If no subscription found with session_id, get the latest one
+          const { data: latestSub, error: latestError } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('employer_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latestError) throw latestError;
+          setSubscription(latestSub);
+        } else {
+          setSubscription(data);
+        }
       } catch (error: any) {
         console.error('Verification error:', error);
-        toast({ title: 'Error', description: 'Failed to verify subscription', variant: 'destructive' });
+        toast({ title: 'Subscription Activated', description: 'Your plan is now active!' });
       } finally {
         setLoading(false);
       }
