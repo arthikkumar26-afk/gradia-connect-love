@@ -266,14 +266,19 @@ export const JobApplicationFlow = ({
 
         // Send application confirmation email
         try {
-          await supabase.functions.invoke('send-status-notification', {
+          const candidateName = parsedResumeData?.full_name || profile?.full_name || user.email?.split('@')[0] || 'Candidate';
+          const candidateEmail = parsedResumeData?.email || user.email || '';
+          
+          await supabase.functions.invoke('send-application-email', {
             body: {
-              candidateId: user.id,
-              jobId: job.id,
-              status: 'applied',
+              email: candidateEmail,
+              candidateName: candidateName,
+              jobTitle: dbJob.job_title,
+              companyName: 'Gradia',
+              aiScore: analysisResult?.analysis?.overall_score || null,
             },
           });
-          console.log('Application confirmation email sent');
+          console.log('Application confirmation email sent to:', candidateEmail);
         } catch (emailError) {
           console.error('Failed to send confirmation email:', emailError);
           // Don't fail the application if email fails

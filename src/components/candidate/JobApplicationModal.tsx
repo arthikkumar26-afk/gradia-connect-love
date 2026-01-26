@@ -189,6 +189,23 @@ export const JobApplicationModal = ({
         console.error('Application insert error:', appError);
       }
 
+      // Send application confirmation email
+      try {
+        await supabase.functions.invoke('send-application-email', {
+          body: {
+            email: candidateProfile.email,
+            candidateName: candidateProfile.full_name || 'Candidate',
+            jobTitle: job.job_title,
+            companyName: 'Gradia',
+            aiScore: analysisResult?.score || null,
+          },
+        });
+        console.log('Application confirmation email sent to:', candidateProfile.email);
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+        // Don't fail the application if email fails
+      }
+
       setAnalysisStep('complete');
       
       setTimeout(() => {
