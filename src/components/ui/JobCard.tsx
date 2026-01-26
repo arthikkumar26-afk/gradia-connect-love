@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   BookmarkCheck
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface JobCardProps {
   id: string;
@@ -39,10 +40,23 @@ const JobCard = ({
   featured = false
 }: JobCardProps) => {
   const [isSaved, setIsSaved] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated, profile } = useAuth();
 
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsSaved(!isSaved);
+  };
+
+  const handleApplyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Check if user is authenticated as candidate
+    if (isAuthenticated && profile?.role === 'candidate') {
+      navigate(`/jobs-results?job=${id}&apply=true`);
+    } else {
+      // Redirect to candidate login with return URL
+      navigate(`/candidate-login?redirect=/jobs-results?job=${id}&apply=true`);
+    }
   };
 
   const getTypeColor = (type: string) => {
@@ -138,10 +152,13 @@ const JobCard = ({
               Details
             </Link>
           </Button>
-          <Button variant="default" size="sm" className="flex-1 h-7 text-xs px-2" asChild>
-            <Link to={`/jobs-results?job=${id}&apply=true`}>
-              Apply
-            </Link>
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="flex-1 h-7 text-xs px-2"
+            onClick={handleApplyClick}
+          >
+            Apply
           </Button>
         </div>
       </CardContent>
