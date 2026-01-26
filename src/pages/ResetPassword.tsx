@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
-import { ArrowLeft, Lock, CheckCircle } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,22 +17,59 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
-  // Check if we have a valid session from the reset link
+  // Handle the password recovery token from the URL
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Invalid or Expired Link",
-          description: "Please request a new password reset link.",
-          variant: "destructive",
+    const handlePasswordRecovery = async () => {
+      // Check for hash parameters (Supabase sends tokens in URL hash)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const type = hashParams.get('type');
+
+      // If we have recovery tokens in the URL, set the session
+      if (type === 'recovery' && accessToken && refreshToken) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
         });
+
+        if (error) {
+          console.error('Error setting session:', error);
+          setIsValidSession(false);
+          toast({
+            title: "Invalid or Expired Link",
+            description: "Please request a new password reset link.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.session) {
+          setIsValidSession(true);
+          // Clear the hash from the URL for security
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      } else {
+        // Check if there's an existing session (user might have already set the session)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setIsValidSession(true);
+        } else {
+          setIsValidSession(false);
+          toast({
+            title: "Invalid or Expired Link",
+            description: "Please request a new password reset link.",
+            variant: "destructive",
+          });
+        }
       }
     };
-    checkSession();
-  }, []);
+
+    handlePasswordRecovery();
+  }, [toast]);
 
   const validateForm = (): boolean => {
     const newErrors: { password?: string; confirmPassword?: string } = {};
@@ -92,6 +129,55 @@ const ResetPassword = () => {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking session
+  if (isValidSession === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
+        <div className="w-full max-w-md">
+          <Card className="p-8 text-center animate-scale-in">
+            <div className="flex justify-center mb-6">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground mb-2">
+              Verifying Reset Link...
+            </h1>
+            <p className="text-muted-foreground">
+              Please wait while we verify your password reset link.
+            </p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if session is invalid
+  if (isValidSession === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
+        <div className="w-full max-w-md">
+          <Card className="p-8 text-center animate-scale-in">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-4">
+              Invalid or Expired Link
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              This password reset link is invalid or has expired. Please request a new one.
+            </p>
+            <Link to="/forgot-password">
+              <Button className="w-full">
+                Request New Reset Link
+              </Button>
+            </Link>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
