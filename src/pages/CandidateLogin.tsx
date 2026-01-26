@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const CandidateLogin = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -22,9 +24,13 @@ const CandidateLogin = () => {
 
   useEffect(() => {
     if (isAuthenticated && profile) {
-      // Always redirect candidates to candidate dashboard from this page
       if (profile.role === "candidate") {
-        navigate("/candidate/dashboard", { replace: true });
+        // Check for redirect URL (e.g., returning to job application)
+        if (redirectUrl) {
+          navigate(redirectUrl, { replace: true });
+        } else {
+          navigate("/candidate/dashboard", { replace: true });
+        }
       } else {
         // Non-candidates should not use this login page - sign them out
         toast({
@@ -35,7 +41,7 @@ const CandidateLogin = () => {
         supabase.auth.signOut();
       }
     }
-  }, [isAuthenticated, profile, navigate, toast]);
+  }, [isAuthenticated, profile, navigate, toast, redirectUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,8 +97,12 @@ const CandidateLogin = () => {
         description: "Welcome back!",
       });
       
-      // Navigate to candidate dashboard
-      navigate("/candidate/dashboard", { replace: true });
+      // Navigate to redirect URL or candidate dashboard
+      if (redirectUrl) {
+        navigate(redirectUrl, { replace: true });
+      } else {
+        navigate("/candidate/dashboard", { replace: true });
+      }
     } catch (error: any) {
       toast({
         title: "Error",

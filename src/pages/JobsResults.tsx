@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { JobApplicationFlow } from "@/components/jobs/JobApplicationFlow";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Search, 
   ArrowLeft, 
@@ -44,6 +45,7 @@ interface Job {
 const JobsResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isAuthenticated, profile } = useAuth();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyingJob, setApplyingJob] = useState<Job | null>(null);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -52,6 +54,7 @@ const JobsResults = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingApplyJobId, setPendingApplyJobId] = useState<string | null>(null);
 
   // Fetch jobs from database
   useEffect(() => {
@@ -123,14 +126,33 @@ const JobsResults = () => {
       const job = jobs.find(j => j.id === jobId);
       if (job) {
         if (shouldApply) {
-          setApplyingJob(job);
-          setShowApplicationModal(true);
+          // Check if user is authenticated before opening application modal
+          if (isAuthenticated && profile?.role === 'candidate') {
+            setApplyingJob(job);
+            setShowApplicationModal(true);
+          } else {
+            // Store the job ID and redirect to login
+            setPendingApplyJobId(jobId);
+            navigate(`/candidate-login?redirect=/jobs-results?job=${jobId}&apply=true`);
+          }
         } else {
           setSelectedJob(job);
         }
       }
     }
-  }, [searchParams, jobs]);
+  }, [searchParams, jobs, isAuthenticated, profile, navigate]);
+
+  // Handle returning from login with pending job application
+  useEffect(() => {
+    if (pendingApplyJobId && isAuthenticated && profile?.role === 'candidate') {
+      const job = jobs.find(j => j.id === pendingApplyJobId);
+      if (job) {
+        setApplyingJob(job);
+        setShowApplicationModal(true);
+        setPendingApplyJobId(null);
+      }
+    }
+  }, [pendingApplyJobId, isAuthenticated, profile, jobs]);
 
   // Filter jobs based on search parameters
   useEffect(() => {
@@ -170,8 +192,14 @@ const JobsResults = () => {
   };
 
   const handleApplyClick = (job: Job) => {
-    setApplyingJob(job);
-    setShowApplicationModal(true);
+    // Check if user is authenticated as candidate
+    if (isAuthenticated && profile?.role === 'candidate') {
+      setApplyingJob(job);
+      setShowApplicationModal(true);
+    } else {
+      // Redirect to candidate login with return URL
+      navigate(`/candidate-login?redirect=/jobs-results?job=${job.id}&apply=true`);
+    }
   };
 
   return (
