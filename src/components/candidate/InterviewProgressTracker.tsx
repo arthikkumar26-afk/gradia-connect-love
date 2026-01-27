@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Lock, Mail, Code, Calendar, Monitor, BarChart3, FileText, ListChecks } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Mail, Code, Calendar, Monitor, BarChart3, FileText, ListChecks, UserCheck, Video, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InterviewStage {
@@ -22,15 +22,26 @@ interface InterviewProgressTrackerProps {
   className?: string;
 }
 
-const stageIcons: Record<number, React.ComponentType<{ className?: string }>> = {
-  1: Mail,          // Interview Instructions
-  2: Calendar,      // Technical Assessment Slot Booking
-  3: Code,          // Technical Assessment
-  4: Calendar,      // Demo Slot Booking
-  5: Monitor,       // Demo Round
-  6: BarChart3,     // Demo Feedback
-  7: FileText,      // Final Review (HR)
-  8: ListChecks,    // All Reviews
+// Map stage names to icons
+const stageIconsByName: Record<string, React.ComponentType<{ className?: string }>> = {
+  'Resume Screening': FileText,
+  'AI Technical Interview': Brain,
+  'Technical Assessment': Code,
+  'HR Round': UserCheck,
+  'Viva': Video,
+  'Final Review': ListChecks,
+  'Offer Stage': Mail,
+};
+
+// Fallback icons by order
+const stageIconsByOrder: Record<number, React.ComponentType<{ className?: string }>> = {
+  1: FileText,        // Resume Screening
+  2: Brain,           // AI Technical Interview
+  3: Code,            // Technical Assessment
+  4: UserCheck,       // HR Round
+  5: Video,           // Viva
+  6: ListChecks,      // Final Review
+  7: Mail,            // Offer Stage
 };
 
 export const InterviewProgressTracker = ({
@@ -63,7 +74,7 @@ export const InterviewProgressTracker = ({
 
         {stages.map((stage) => {
           const status = getStageStatus(stage.order);
-          const Icon = stageIcons[stage.order] || Circle;
+          const Icon = stageIconsByName[stage.name] || stageIconsByOrder[stage.order] || Circle;
           const result = stageResults.find((r) => r.stage_order === stage.order);
 
           return (
@@ -117,7 +128,7 @@ export const InterviewProgressTracker = ({
       <div className="md:hidden space-y-2">
         {stages.map((stage, index) => {
           const status = getStageStatus(stage.order);
-          const Icon = stageIcons[stage.order] || Circle;
+          const Icon = stageIconsByName[stage.name] || stageIconsByOrder[stage.order] || Circle;
           const result = stageResults.find((r) => r.stage_order === stage.order);
           const isLast = index === stages.length - 1;
 
