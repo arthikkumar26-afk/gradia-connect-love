@@ -504,6 +504,25 @@ export default function LiveDemoView() {
                             ? 'Video stream will appear shortly' 
                             : 'Connecting via WebRTC...'}
                         </p>
+                        {/* Retry button for when connection is stuck */}
+                        <div className="mt-6 space-y-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              stopViewing();
+                              setTimeout(() => startViewing(), 1000);
+                              toast.info('Reconnecting to stream...');
+                            }}
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                          >
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Retry Connection
+                          </Button>
+                          <p className="text-white/30 text-xs">
+                            Connection state: {connectionState}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
