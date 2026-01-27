@@ -19,29 +19,44 @@ export const useVideoRecorder = (options?: UseVideoRecorderOptions) => {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const ownsStreamRef = useRef<boolean>(false);
 
-  const startRecording = useCallback(async () => {
+  // Start recording - optionally accepts an existing stream to reuse
+  const startRecording = useCallback(async (existingStream?: MediaStream) => {
     try {
       setError(null);
       chunksRef.current = [];
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
+      let stream: MediaStream;
+      
+      if (existingStream) {
+        // Reuse the provided stream - don't create a new one
+        stream = existingStream;
+        ownsStreamRef.current = false;
+        console.log('[useVideoRecorder] Reusing existing stream for recording');
+      } else {
+        // Create a new stream
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user'
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        ownsStreamRef.current = true;
+        console.log('[useVideoRecorder] Created new stream for recording');
+      }
 
       streamRef.current = stream;
 
-      // Show preview
-      if (videoRef.current) {
+      // Only update video preview if we created the stream
+      // If using existing stream, caller manages the preview
+      if (ownsStreamRef.current && videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.muted = true;
         videoRef.current.play();
@@ -69,6 +84,7 @@ export const useVideoRecorder = (options?: UseVideoRecorderOptions) => {
       mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
       setIsPaused(false);
+      console.log('[useVideoRecorder] Recording started');
 
     } catch (err) {
       console.error('Error starting recording:', err);
@@ -82,10 +98,15 @@ export const useVideoRecorder = (options?: UseVideoRecorderOptions) => {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setIsPaused(false);
+      console.log('[useVideoRecorder] Recording stopped');
 
-      // Stop all tracks
-      if (streamRef.current) {
+      // Only stop tracks if we created the stream ourselves
+      if (streamRef.current && ownsStreamRef.current) {
+        console.log('[useVideoRecorder] Stopping owned stream tracks');
         streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      } else {
+        console.log('[useVideoRecorder] Not stopping stream - owned by caller');
         streamRef.current = null;
       }
     }
