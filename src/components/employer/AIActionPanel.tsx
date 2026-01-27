@@ -67,7 +67,7 @@ export const AIActionPanel = ({
   const [isAutoProgressing, setIsAutoProgressing] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
-  const [isStartingAIInterview, setIsStartingAIInterview] = useState(false);
+  
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   
   // Schedule Interview Modal
@@ -88,25 +88,6 @@ export const AIActionPanel = ({
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
 
-  const handleStartAIInterview = async () => {
-    if (!jobId || !interviewCandidateId) return;
-    
-    setIsStartingAIInterview(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-ai-interview-questions", {
-        body: { jobId, interviewCandidateId, questionCount: 5 }
-      });
-
-      if (error) throw error;
-      toast.success(`AI interview questions generated for ${candidateName}`);
-      onRefresh?.();
-    } catch (err: any) {
-      console.error("AI Interview error:", err);
-      toast.error(err.message || "Failed to start AI interview");
-    } finally {
-      setIsStartingAIInterview(false);
-    }
-  };
 
   const handleAIAnalysis = async () => {
     if (!jobId) {
@@ -429,26 +410,6 @@ export const AIActionPanel = ({
             )}
           </Button>
 
-          {/* AI Technical Interview Button */}
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleStartAIInterview}
-            disabled={isStartingAIInterview || !interviewCandidateId || !jobId}
-            className="w-full"
-          >
-            {isStartingAIInterview ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating Questions...
-              </>
-            ) : (
-              <>
-                <Brain className="h-4 w-4 mr-2" />
-                Start AI Technical Interview
-              </>
-            )}
-          </Button>
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-2">

@@ -70,8 +70,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Stage icon mapping
-import { Brain } from "lucide-react";
-
 const stageIcons: Record<string, React.ElementType> = {
   'Resume Screening': Users,
   'Technical Assessment': Code,
@@ -116,8 +114,7 @@ const StageActionButtons = ({
   candidateEmail,
   jobTitle,
   interviewCandidateId,
-  onUpdateStep,
-  onLaunchAIInterview
+  onUpdateStep
 }: {
   step: InterviewStep;
   isFirstPending: boolean;
@@ -126,7 +123,6 @@ const StageActionButtons = ({
   jobTitle: string;
   interviewCandidateId: string;
   onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
-  onLaunchAIInterview: () => void;
 }) => {
   const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [isMovingNext, setIsMovingNext] = useState(false);
@@ -159,9 +155,20 @@ const StageActionButtons = ({
   const handleMoveToNextStep = async () => {
     setIsMovingNext(true);
     try {
-      // Complete current step and move to next
+      // Call the edge function to properly advance the candidate in the database
+      const { data, error } = await supabase.functions.invoke('process-interview-stage', {
+        body: {
+          interviewCandidateId,
+          action: 'advance',
+          feedback: `Manually advanced from ${step.title}`
+        }
+      });
+
+      if (error) throw error;
+      
+      // Update local UI state
       onUpdateStep(step.id, "completed");
-      toast.success(`Moved to next stage`);
+      toast.success(data?.message || `Moved to next stage`);
     } catch (error) {
       console.error('Error moving to next step:', error);
       toast.error('Failed to move to next stage');
@@ -194,7 +201,6 @@ const StageActionButtons = ({
 
   // Current or In Progress stage - show all action buttons
   if (step.status === "current" || step.status === "in_progress" || step.isLive) {
-    const isAITechnicalInterview = step.title === "AI Technical Interview";
     
     return (
       <div className="flex flex-wrap gap-1 mt-2">
@@ -239,39 +245,8 @@ const StageActionButtons = ({
     );
   }
 
-  // Pending stages - show buttons for ALL pending stages
+  // Pending stages - show resend button for all
   if (step.status === "pending") {
-    if (step.title === "AI Technical Interview") {
-      return (
-        <div className="flex gap-1 mt-2">
-          <Button 
-            size="sm" 
-            variant="ghost"
-            onClick={handleResendInvitation}
-            disabled={isSendingInvite}
-            className="h-6 text-[10px] px-2"
-          >
-            {isSendingInvite ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-            ) : (
-              <Mail className="h-3 w-3 mr-1" />
-            )}
-            Resend
-          </Button>
-          {isFirstPending && (
-            <Button 
-              size="sm" 
-              onClick={onLaunchAIInterview}
-              className="h-6 text-[10px] px-2 bg-purple-600 hover:bg-purple-700"
-            >
-              <Brain className="h-3 w-3 mr-1" />
-              Launch AI
-            </Button>
-          )}
-        </div>
-      );
-    }
-    
     return (
       <div className="flex gap-1 mt-2">
         <Button 
@@ -709,7 +684,6 @@ const CandidateProfileInline = ({
                                   jobTitle={candidate.role}
                                   interviewCandidateId={candidate.interviewCandidateId}
                                   onUpdateStep={onUpdateStep}
-                                  onLaunchAIInterview={() => setShowAIInterviewDialog(true)}
                                 />
                               </div>
                             </div>
