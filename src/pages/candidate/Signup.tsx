@@ -12,6 +12,7 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 
 interface FormErrors {
@@ -77,7 +78,7 @@ const benefits = [
 const CandidateSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, refreshProfile } = useAuth();
   
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
@@ -214,6 +215,8 @@ const CandidateSignup = () => {
         if (roleError) {
           console.error("Role creation error:", roleError);
         }
+        // Refresh the profile in AuthContext to ensure it's available
+        await refreshProfile();
       }
 
       // Mark that user just signed up to prevent redirect during wizard flow
@@ -263,6 +266,9 @@ const CandidateSignup = () => {
       return;
     }
 
+    // Refresh profile one more time before navigating to ensure it's loaded
+    await refreshProfile();
+    
     toast({ title: 'Welcome to Gradia!', description: 'Your account is ready' });
     navigate('/candidate/dashboard');
   };
