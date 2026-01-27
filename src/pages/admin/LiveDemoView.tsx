@@ -140,56 +140,109 @@ export default function LiveDemoView() {
       console.log('[LiveDemoView] Stream tracks:', stream.getTracks().map(t => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`));
       
       if (videoRef.current) {
-        // Don't stop old tracks as they might be the same stream
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true; // Start muted for autoplay policy
+        // Store the video element reference
+        const videoElement = videoRef.current;
+        
+        // Clear any existing srcObject first
+        if (videoElement.srcObject) {
+          const oldStream = videoElement.srcObject as MediaStream;
+          oldStream.getTracks().forEach(track => {
+            // Don't stop tracks - they might be reused
+          });
+        }
+        
+        // Set the new stream
+        videoElement.srcObject = stream;
+        videoElement.muted = true; // Start muted for autoplay policy
+        
+        // Check if we have actual video track with frames
+        const videoTracks = stream.getVideoTracks();
+        const hasActiveVideoTrack = videoTracks.some(t => t.enabled && t.readyState === 'live');
+        console.log(`[LiveDemoView] Has active video track: ${hasActiveVideoTrack}, tracks: ${videoTracks.length}`);
         
         // Monitor track events for debugging
         stream.getTracks().forEach(track => {
-          console.log(`[LiveDemoView] Track ${track.kind}: enabled=${track.enabled}, readyState=${track.readyState}`);
+          console.log(`[LiveDemoView] Track ${track.kind}: enabled=${track.enabled}, readyState=${track.readyState}, muted=${track.muted}`);
           track.onended = () => {
             console.log(`[LiveDemoView] Track ${track.kind} ended`);
             setHasVideoStream(false);
           };
-          track.onmute = () => console.log(`[LiveDemoView] Track ${track.kind} muted`);
-          track.onunmute = () => console.log(`[LiveDemoView] Track ${track.kind} unmuted`);
+          track.onmute = () => {
+            console.log(`[LiveDemoView] Track ${track.kind} muted`);
+          };
+          track.onunmute = () => {
+            console.log(`[LiveDemoView] Track ${track.kind} unmuted`);
+            // Re-trigger hasVideoStream when track unmutes
+            if (track.kind === 'video') {
+              setHasVideoStream(true);
+            }
+          };
         });
         
         // Handle video element events
-        videoRef.current.onloadedmetadata = () => {
-          console.log('[LiveDemoView] Video metadata loaded');
+        videoElement.onloadedmetadata = () => {
+          console.log('[LiveDemoView] Video metadata loaded, dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+          // If we have video dimensions, we have actual video
+          if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0) {
+            setHasVideoStream(true);
+          }
         };
         
-        videoRef.current.onplaying = () => {
-          console.log('[LiveDemoView] Video is playing');
+        videoElement.onloadeddata = () => {
+          console.log('[LiveDemoView] Video data loaded');
           setHasVideoStream(true);
         };
         
-        videoRef.current.onstalled = () => {
+        videoElement.onplaying = () => {
+          console.log('[LiveDemoView] Video is playing, dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+          setHasVideoStream(true);
+        };
+        
+        videoElement.onstalled = () => {
           console.log('[LiveDemoView] Video stalled - stream may be frozen');
         };
         
-        videoRef.current.onwaiting = () => {
+        videoElement.onwaiting = () => {
           console.log('[LiveDemoView] Video waiting for data');
         };
         
-        videoRef.current.play()
-          .then(() => {
+        videoElement.onerror = (e) => {
+          console.error('[LiveDemoView] Video element error:', e);
+        };
+        
+        // Attempt to play with retry logic
+        const attemptPlay = async () => {
+          try {
+            await videoElement.play();
             console.log('[LiveDemoView] Video playing successfully');
-            setHasVideoStream(true);
+            // Double check dimensions after playing
+            setTimeout(() => {
+              if (videoElement.videoWidth > 0) {
+                setHasVideoStream(true);
+                toast.success('Live video stream connected! Click the sound button to enable audio.');
+              } else {
+                console.warn('[LiveDemoView] Video playing but no dimensions - may be blank');
+                // Still mark as having stream - the black might be intentional camera
+                setHasVideoStream(true);
+                toast.success('Live video stream connected! Click the sound button to enable audio.');
+              }
+            }, 500);
             setAudioEnabled(true);
-            toast.success('Live video stream connected! Click the sound button to enable audio.');
-          })
-          .catch(err => {
+          } catch (err) {
             console.error('[LiveDemoView] Error playing video:', err);
-            // Try to play without audio first
-            if (videoRef.current) {
-              videoRef.current.muted = true;
-              videoRef.current.play().catch(e => {
-                console.error('[LiveDemoView] Still cannot play:', e);
-              });
+            // Retry with muted
+            videoElement.muted = true;
+            try {
+              await videoElement.play();
+              setHasVideoStream(true);
+              toast.success('Live video stream connected! Click the sound button to enable audio.');
+            } catch (e) {
+              console.error('[LiveDemoView] Still cannot play:', e);
             }
-          });
+          }
+        };
+        
+        attemptPlay();
       }
     },
     onConnectionStateChange: (state) => {

@@ -353,20 +353,28 @@ export default function DemoRound() {
         });
 
         // Start WebRTC broadcasting for live video
-        if (localStream) {
-          console.log('[DemoRound] Starting WebRTC broadcast with localStream');
-          startBroadcasting(localStream);
-        } else if (videoRef.current?.srcObject) {
-          console.log('[DemoRound] Starting WebRTC broadcast from video ref');
-          startBroadcasting(videoRef.current.srcObject as MediaStream);
+        const streamToUse = localStream || (videoRef.current?.srcObject as MediaStream);
+        
+        if (streamToUse) {
+          console.log('[DemoRound] Starting WebRTC broadcast with stream');
+          console.log('[DemoRound] Stream tracks:', streamToUse.getTracks().map(t => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`));
+          startBroadcasting(streamToUse);
+          
+          // Start recording with the SAME stream to avoid conflicts
+          console.log('[DemoRound] Starting recording with same stream...');
+          await startRecording(streamToUse);
         } else {
           console.warn('[DemoRound] No stream available for WebRTC broadcast');
+          // Fallback: start recording without stream (will create its own)
+          console.log('[DemoRound] Starting recording without existing stream...');
+          await startRecording();
         }
+      } else {
+        // No sessionId - just start recording normally
+        console.log('[DemoRound] No sessionId, starting recording normally...');
+        await startRecording();
       }
 
-      // Start recording
-      console.log('[DemoRound] Starting recording...');
-      await startRecording();
       console.log('[DemoRound] Recording started successfully');
       
       // Set started state AFTER recording starts - this triggers the timer
