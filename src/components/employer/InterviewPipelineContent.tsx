@@ -599,7 +599,11 @@ const CandidateProfileInline = ({
                   {candidate.education && (
                     <div className="flex items-center gap-3 text-sm">
                       <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-foreground">{candidate.education}</span>
+                      <span className="text-foreground">
+                        {typeof candidate.education === 'object' 
+                          ? ((candidate.education as any).education_level || (candidate.education as any).specialization || 'Education details available')
+                          : candidate.education}
+                      </span>
                     </div>
                   )}
                   {candidate.resumeUrl && (
