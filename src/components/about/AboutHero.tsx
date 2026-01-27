@@ -22,19 +22,19 @@ const AboutHero = () => {
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 rounded-full px-4 py-2 mb-8">
-            <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-            <span className="text-sm text-primary-foreground/90 font-medium">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-8">
+            <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+            <span className="text-sm text-white/90 font-medium">
               Building Careers. Creating Futures.
             </span>
           </div>
           
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6 leading-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             Guiding Careers.
-            <span className="block text-accent">Empowering Organizations.</span>
+            <span className="block text-cyan-400">Empowering Organizations.</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-primary-foreground/85 max-w-3xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg md:text-xl text-white/85 max-w-3xl mx-auto mb-10 leading-relaxed">
             Gradia is a next-generation placement and partnership platform helping talent and 
             institutions grow together through meaningful career opportunities.
           </p>
@@ -42,7 +42,7 @@ const AboutHero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              className="bg-background text-foreground hover:bg-background/90 group"
+              className="bg-white text-slate-900 hover:bg-white/90 group"
               asChild
             >
               <Link to="/jobs">
@@ -54,11 +54,11 @@ const AboutHero = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 backdrop-blur-sm [&>a]:text-primary-foreground [&_svg]:text-primary-foreground"
+              className="border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
               asChild
             >
-              <Link to="/sponsors" className="text-primary-foreground">
-                <Handshake className="h-5 w-5 mr-2 text-primary-foreground" />
+              <Link to="/sponsors" className="text-white">
+                <Handshake className="h-5 w-5 mr-2 text-white" />
                 Partner with Gradia
               </Link>
             </Button>
