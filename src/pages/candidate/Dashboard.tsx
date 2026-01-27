@@ -106,7 +106,7 @@ interface Job {
 
 const CandidateDashboard = () => {
   const navigate = useNavigate();
-  const { profile, isAuthenticated, logout, isLoading: authLoading } = useAuth();
+  const { profile, isAuthenticated, logout, isLoading: authLoading, refreshProfile } = useAuth();
   const { toast } = useToast();
   const { exportProfileToPdf } = useProfilePdfExport();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -1122,26 +1122,32 @@ const CandidateDashboard = () => {
       return;
     }
 
-    // If authenticated but no profile exists, wait a bit before redirecting
-    // This handles the case where profile was just created but AuthContext hasn't synced yet
+    // If authenticated but no profile exists, try to refresh it
     if (!profile) {
       // Only proceed with redirect logic once, and wait for potential sync
       if (!hasShownProfileToast && !isWaitingForProfile) {
         setIsWaitingForProfile(true);
         
-        // Wait for AuthContext to potentially sync the profile
-        const timer = setTimeout(() => {
-          // Re-check if profile still doesn't exist after waiting
-          if (!profile) {
-            setHasShownProfileToast(true);
-            toast({
-              title: "Profile Required",
-              description: "Please complete your profile to continue.",
-            });
-            navigate("/candidate/signup", { replace: true });
-          }
+        // Try to refresh profile first
+        refreshProfile().then(() => {
+          // Wait a bit more for state to update
+          setTimeout(() => {
+            setIsWaitingForProfile(false);
+          }, 500);
+        }).catch(() => {
           setIsWaitingForProfile(false);
-        }, 1500); // Wait 1.5 seconds for profile sync
+        });
+        
+        // Set a longer timeout before redirecting
+        const timer = setTimeout(() => {
+          // Only redirect if still no profile after refresh attempt
+          setHasShownProfileToast(true);
+          toast({
+            title: "Profile Required",
+            description: "Please complete your profile to continue.",
+          });
+          navigate("/candidate/signup", { replace: true });
+        }, 3000); // Wait 3 seconds for profile sync
         
         return () => clearTimeout(timer);
       }
