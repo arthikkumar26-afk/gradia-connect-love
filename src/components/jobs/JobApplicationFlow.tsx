@@ -267,9 +267,11 @@ export const JobApplicationFlow = ({
         // Send application confirmation email
         try {
           const candidateName = parsedResumeData?.full_name || profile?.full_name || user.email?.split('@')[0] || 'Candidate';
-          const candidateEmail = parsedResumeData?.email || user.email || '';
+          const candidateEmail = profile?.email || user.email || '';
           
-          await supabase.functions.invoke('send-application-email', {
+          console.log('Sending application email to:', candidateEmail, 'for job:', dbJob.job_title);
+          
+          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-application-email', {
             body: {
               email: candidateEmail,
               candidateName: candidateName,
@@ -278,7 +280,13 @@ export const JobApplicationFlow = ({
               aiScore: analysisResult?.analysis?.overall_score || null,
             },
           });
-          console.log('Application confirmation email sent to:', candidateEmail);
+          
+          if (emailError) {
+            console.error('Email function error:', emailError);
+          } else {
+            console.log('Application confirmation email sent successfully:', emailResult);
+            toast.success(`Confirmation email sent to ${candidateEmail}`);
+          }
         } catch (emailError) {
           console.error('Failed to send confirmation email:', emailError);
           // Don't fail the application if email fails
