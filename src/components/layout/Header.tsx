@@ -298,14 +298,26 @@ const Header = () => {
               </div>}
 
             {/* Mobile Menu Button */}
-            <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="lg:hidden relative z-[100]" 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+            >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t border-border overflow-y-auto z-[70]">
+        {isMenuOpen && (
+          <div 
+            className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t border-border overflow-y-auto z-[90]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex flex-col space-y-4 pb-20 pt-4 container mx-auto px-4">
               {/* Mobile Sign Up and Login Buttons - Show only when not authenticated */}
               {!isAuthenticated && (
@@ -541,7 +553,8 @@ const Header = () => {
                 </Button>
               </div>
             </div>
-          </div>}
+          </div>
+        )}
       </div>
     </header>;
 };
