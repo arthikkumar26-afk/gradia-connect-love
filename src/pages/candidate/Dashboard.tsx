@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +119,8 @@ const CandidateDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   
   // Education state
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
@@ -749,6 +751,216 @@ const CandidateDashboard = () => {
       });
     } finally {
       setIsReanalyzing(false);
+    }
+  };
+
+  // Handle resume upload and AI auto-fill profile
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload a PDF, Word document, or image file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 10MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploadingResume(true);
+
+    try {
+      toast({
+        title: "Analyzing Resume",
+        description: "AI is extracting your profile details...",
+      });
+
+      // First upload the file to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}/resume_${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(fileName);
+
+      const resumeUrl = urlData?.publicUrl;
+
+      // Parse resume with AI
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', file);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        {
+          method: 'POST',
+          body: formDataToSend,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to parse resume');
+      }
+
+      const data = await response.json();
+      console.log('AI parsed resume data:', data);
+
+      // Update profile with extracted data
+      const profileUpdate: any = {};
+      
+      if (data.full_name) profileUpdate.full_name = data.full_name;
+      if (data.mobile) profileUpdate.mobile = data.mobile;
+      if (data.date_of_birth) profileUpdate.date_of_birth = data.date_of_birth;
+      if (data.gender) profileUpdate.gender = data.gender;
+      if (data.location) profileUpdate.location = data.location;
+      if (data.current_state) profileUpdate.current_state = data.current_state;
+      if (data.current_district) profileUpdate.current_district = data.current_district;
+      if (data.linkedin) profileUpdate.linkedin = data.linkedin;
+      if (data.website) profileUpdate.website = data.website;
+      if (data.languages && Array.isArray(data.languages)) profileUpdate.languages = data.languages;
+      if (data.highest_qualification) profileUpdate.highest_qualification = data.highest_qualification;
+      if (data.experience_level) profileUpdate.experience_level = data.experience_level;
+      if (data.preferred_role) profileUpdate.preferred_role = data.preferred_role;
+      if (resumeUrl) profileUpdate.resume_url = resumeUrl;
+
+      // Update profile in database
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('id', profile.id);
+
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+        }
+      }
+
+      // Save education records if extracted
+      if (data.education && Array.isArray(data.education) && data.education.length > 0) {
+        for (let i = 0; i < data.education.length; i++) {
+          const edu = data.education[i];
+          if (edu.education_level) {
+            await supabase.from('educational_qualifications').upsert({
+              user_id: profile.id,
+              education_level: edu.education_level,
+              school_college_name: edu.school_college_name || null,
+              specialization: edu.specialization || null,
+              board_university: edu.board_university || null,
+              year_of_passing: edu.year_of_passing || null,
+              percentage_marks: edu.percentage_marks || null,
+              display_order: i,
+            }, { onConflict: 'user_id,education_level' });
+          }
+        }
+        // Refresh education records
+        const { data: newEducation } = await supabase
+          .from('educational_qualifications')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('display_order');
+        if (newEducation) setEducationRecords(newEducation);
+      }
+
+      // Save work experience if extracted
+      if (data.experience && Array.isArray(data.experience) && data.experience.length > 0) {
+        for (let i = 0; i < data.experience.length; i++) {
+          const exp = data.experience[i];
+          if (exp.organization || exp.designation) {
+            await supabase.from('work_experience').insert({
+              user_id: profile.id,
+              organization: exp.organization || null,
+              designation: exp.designation || null,
+              department: exp.department || null,
+              from_date: exp.from_date || null,
+              to_date: exp.to_date || null,
+              place: exp.place || null,
+              salary_per_month: exp.salary_per_month || null,
+              display_order: i,
+            });
+          }
+        }
+        // Refresh experience records
+        const { data: newExperience } = await supabase
+          .from('work_experience')
+          .select('*')
+          .eq('user_id', profile.id)
+          .order('display_order');
+        if (newExperience) setExperienceRecords(newExperience);
+      }
+
+      // Save resume analysis
+      setResumeAnalysis({
+        overall_score: data.overall_score || 0,
+        career_level: data.career_level || '',
+        experience_summary: data.experience_summary || '',
+        strengths: data.strengths || [],
+        improvements: data.improvements || [],
+        skill_highlights: data.skill_highlights || data.skills || []
+      });
+
+      // Save analysis to database
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-resume-analysis`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: profile.id,
+            analysis: {
+              overall_score: data.overall_score,
+              career_level: data.career_level,
+              experience_summary: data.experience_summary,
+              strengths: data.strengths,
+              improvements: data.improvements,
+              skill_highlights: data.skill_highlights || data.skills
+            }
+          })
+        }
+      );
+
+      // Refresh profile
+      await refreshProfile();
+
+      toast({
+        title: "Profile Updated!",
+        description: `AI extracted your details. Resume score: ${data.overall_score || 0}/100`,
+      });
+
+    } catch (error: any) {
+      console.error('Error uploading resume:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Could not process your resume. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingResume(false);
+      // Reset file input
+      if (resumeInputRef.current) {
+        resumeInputRef.current.value = '';
+      }
     }
   };
 
@@ -1661,13 +1873,25 @@ const CandidateDashboard = () => {
 
                         {/* Action Buttons */}
                         <div className="mt-4 flex flex-wrap gap-2">
+                          <input
+                            ref={resumeInputRef}
+                            type="file"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            onChange={handleResumeUpload}
+                            className="hidden"
+                          />
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => setActiveMenu("resume")}
+                            onClick={() => resumeInputRef.current?.click()}
+                            disabled={isUploadingResume}
                           >
-                            <FileText className="h-4 w-4 mr-2" />
-                            {profile?.resume_url ? 'Update Resume' : 'Upload Resume'}
+                            {isUploadingResume ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="h-4 w-4 mr-2" />
+                            )}
+                            {isUploadingResume ? 'Analyzing...' : (profile?.resume_url ? 'Update Resume' : 'Upload Resume')}
                           </Button>
                           <Button 
                             variant="outline" 
