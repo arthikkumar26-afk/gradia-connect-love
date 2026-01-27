@@ -51,10 +51,21 @@ Questions should be appropriate for an automated phone interview format.
 Make questions progressively harder from moderate to challenging.`
   },
   'Technical Assessment': {
-    questionCount: 0,
-    questionType: 'video', // Using video type to indicate manual/meeting stage
-    timePerQuestion: 0,
-    promptTemplate: `This is a manual interview stage - no AI questions needed. The candidate will attend a live meeting with the interviewer.`
+    questionCount: 10,
+    questionType: 'mcq',
+    timePerQuestion: 90,
+    promptTemplate: `Generate 10 technical MCQ questions for a {jobTitle} position.
+Skills required: {skills}
+Requirements: {requirements}
+
+Focus on:
+- Core technical concepts and knowledge
+- Problem-solving abilities  
+- Best practices and design patterns
+- Real-world scenario questions
+
+Make questions progressively harder from basic to advanced.
+This is the technical assessment round to evaluate the candidate's technical skills.`
   },
   'Demo Video': {
     questionCount: 0,
