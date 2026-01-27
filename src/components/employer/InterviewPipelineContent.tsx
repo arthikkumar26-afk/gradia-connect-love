@@ -77,6 +77,7 @@ const stageIcons: Record<string, React.ElementType> = {
   'AI Technical Interview': Brain,
   'Technical Assessment': Code,
   'HR Round': UserCheck,
+  'Viva': Video,
   'Final Review': FileCheck,
   'Offer Stage': FileText,
 };
@@ -86,6 +87,7 @@ const stageColors: Record<string, string> = {
   'AI Technical Interview': 'bg-purple-500',
   'Technical Assessment': 'bg-orange-500',
   'HR Round': 'bg-green-500',
+  'Viva': 'bg-yellow-500',
   'Final Review': 'bg-cyan-500',
   'Offer Stage': 'bg-emerald-500',
 };
