@@ -385,7 +385,7 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
             online_at: new Date().toISOString()
           });
           
-          // If viewer, announce joining immediately
+          // If viewer, announce joining immediately and keep retrying
           if (role === 'viewer') {
             console.log('[WebRTC viewer] Announcing viewer-joined');
             channel.send({
@@ -398,11 +398,30 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
               }
             });
             
-            // Keep requesting connection periodically until connected
+            // More aggressive retry logic for viewer - keep requesting until connected
+            let retryCount = 0;
+            const maxRetries = 20; // 20 retries = 60 seconds total
             const requestInterval = setInterval(() => {
-              if (peerConnectionsRef.current.size === 0 || 
-                  Array.from(peerConnectionsRef.current.values()).every(pc => pc.connectionState !== 'connected')) {
-                console.log('[WebRTC viewer] Requesting offer again...');
+              const hasActiveConnection = Array.from(peerConnectionsRef.current.values()).some(
+                pc => pc.connectionState === 'connected' || pc.connectionState === 'connecting'
+              );
+              
+              if (hasActiveConnection) {
+                console.log('[WebRTC viewer] Connection established, stopping retries');
+                clearInterval(requestInterval);
+              } else if (retryCount < maxRetries) {
+                retryCount++;
+                console.log(`[WebRTC viewer] Requesting offer (attempt ${retryCount}/${maxRetries})...`);
+                channel.send({
+                  type: 'broadcast',
+                  event: 'signaling',
+                  payload: {
+                    type: 'viewer-joined',
+                    from: clientIdRef.current,
+                    data: {}
+                  }
+                });
+                // Also send request-offer as backup
                 channel.send({
                   type: 'broadcast',
                   event: 'signaling',
@@ -413,12 +432,10 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
                   }
                 });
               } else {
+                console.log('[WebRTC viewer] Max retries reached');
                 clearInterval(requestInterval);
               }
             }, 3000);
-            
-            // Clear interval after 30 seconds
-            setTimeout(() => clearInterval(requestInterval), 30000);
           }
         }
       });
@@ -430,13 +447,23 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
   // Start broadcasting
   const startBroadcasting = useCallback(async (stream: MediaStream) => {
     console.log('[WebRTC broadcaster] Starting broadcast with stream:', stream.id);
-    console.log('[WebRTC broadcaster] Stream tracks:', stream.getTracks().map(t => `${t.kind}: ${t.enabled}`));
+    console.log('[WebRTC broadcaster] Stream tracks:', stream.getTracks().map(t => `${t.kind}: ${t.enabled}, readyState: ${t.readyState}`));
+    
+    // Verify stream tracks are active
+    const activeTracks = stream.getTracks().filter(t => t.enabled && t.readyState === 'live');
+    if (activeTracks.length === 0) {
+      console.error('[WebRTC broadcaster] No active tracks in stream!');
+      return;
+    }
     
     localStreamRef.current = stream;
     
     if (!channelRef.current) {
       initChannel();
     }
+
+    // Wait a bit for channel to be fully ready
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Announce broadcaster ready periodically to catch late-joining viewers
     broadcastReadyIntervalRef.current = setInterval(() => {
@@ -452,9 +479,9 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
           }
         });
       }
-    }, 5000);
+    }, 3000); // More frequent announcements
 
-    // Initial announcement
+    // Initial announcement with slight delay
     setTimeout(() => {
       console.log('[WebRTC broadcaster] Initial ready announcement');
       channelRef.current?.send({
@@ -466,7 +493,7 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
           data: {}
         }
       });
-    }, 1000);
+    }, 500);
 
     setIsStreaming(true);
   }, [initChannel]);
