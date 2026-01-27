@@ -190,9 +190,47 @@ serve(async (req) => {
 
     let messageContent: any[];
     
-    // Simplified prompt - just analyze for scoring
-    const prompt = `You are an expert resume/CV analyzer. Analyze this resume and provide a comprehensive assessment.
+    // Enhanced prompt - extract profile details AND analyze
+    const prompt = `You are an expert resume/CV analyzer and data extractor. Analyze this resume and extract all available information.
 
+PART 1 - EXTRACT PROFILE INFORMATION:
+Extract the following fields from the resume (use null if not found):
+- full_name: The candidate's full name
+- email: Email address
+- mobile: Phone/mobile number (digits only, no country code)
+- date_of_birth: Date of birth in YYYY-MM-DD format (if mentioned)
+- gender: Gender if mentioned (Male/Female/Other)
+- location: Current city/location
+- current_state: Current state/province
+- current_district: Current district/city
+- linkedin: LinkedIn profile URL
+- website: Personal website/portfolio URL
+- languages: Array of languages known
+- skills: Array of all technical and professional skills
+- highest_qualification: Highest education qualification (e.g., "B.Tech", "MBA", "PhD")
+- experience_level: One of "Fresher", "0-1 years", "1-3 years", "3-5 years", "5-10 years", "10+ years"
+- preferred_role: Most suitable job role based on experience
+
+PART 2 - EXTRACT EDUCATION HISTORY:
+- education: Array of objects with fields:
+  - education_level: Degree type (e.g., "10th", "12th", "B.Tech", "M.Tech", "MBA")
+  - school_college_name: Name of school/college
+  - specialization: Branch/specialization (e.g., "Computer Science", "Commerce")
+  - board_university: Board/University name
+  - year_of_passing: Year of completion (number)
+  - percentage_marks: Percentage or CGPA (number, convert CGPA to percentage if needed)
+
+PART 3 - EXTRACT WORK EXPERIENCE:
+- experience: Array of objects with fields:
+  - organization: Company/Organization name
+  - designation: Job title/role
+  - department: Department worked in
+  - from_date: Start date (YYYY-MM format)
+  - to_date: End date (YYYY-MM format or "Present")
+  - place: Location of job
+  - salary_per_month: Monthly salary if mentioned (number)
+
+PART 4 - RESUME QUALITY ANALYSIS:
 Evaluate the resume based on:
 1. Professional Experience - Quality and relevance of work history
 2. Education & Qualifications - Academic background and certifications
@@ -208,7 +246,7 @@ Provide:
 - skill_highlights: Array of top 5-8 notable skills
 - career_level: One of "Entry Level", "Junior", "Mid-Level", "Senior", "Lead", "Executive"
 
-Return ONLY valid JSON with these fields, no explanation text.`;
+Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be found.`;
 
     // Helper function for base64 encoding that handles large files
     function arrayBufferToBase64(buffer: ArrayBuffer): string {
