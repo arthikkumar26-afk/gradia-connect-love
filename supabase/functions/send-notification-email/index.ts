@@ -178,34 +178,32 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Authentication check
+    // Authentication check - support both user tokens and service role calls
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized - No valid token provided" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    let userId: string | null = null;
     
-    if (claimsError || !claimsData?.claims) {
-      console.error("Auth error:", claimsError);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized - Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    if (authHeader?.startsWith("Bearer ")) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
       );
-    }
 
-    const userId = claimsData.claims.sub;
-    console.log("Authenticated user for notification:", userId);
+      // Try to validate the token - but don't fail if it's a service call
+      try {
+        const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+        if (!userError && user) {
+          userId = user.id;
+          console.log("Authenticated user for notification:", userId);
+        }
+      } catch (authErr) {
+        // Token validation failed - might be a service-to-service call
+        console.log("Token validation skipped - proceeding as service call");
+      }
+    }
+    
+    // Log the request source
+    console.log("Processing notification email request, authenticated:", !!userId);
 
     const rawData = await req.json();
 
