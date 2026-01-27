@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle, Lock, Mail, Code, Calendar, Monitor, BarChart3, FileText, ListChecks, UserCheck, Video, Brain } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Mail, Code, Calendar, Monitor, BarChart3, FileText, ListChecks, UserCheck, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface InterviewStage {
@@ -25,7 +25,6 @@ interface InterviewProgressTrackerProps {
 // Map stage names to icons
 const stageIconsByName: Record<string, React.ComponentType<{ className?: string }>> = {
   'Resume Screening': FileText,
-  'AI Technical Interview': Brain,
   'Technical Assessment': Code,
   'HR Round': UserCheck,
   'Viva': Video,
@@ -36,12 +35,11 @@ const stageIconsByName: Record<string, React.ComponentType<{ className?: string 
 // Fallback icons by order
 const stageIconsByOrder: Record<number, React.ComponentType<{ className?: string }>> = {
   1: FileText,        // Resume Screening
-  2: Brain,           // AI Technical Interview
-  3: Code,            // Technical Assessment
-  4: UserCheck,       // HR Round
-  5: Video,           // Viva
-  6: ListChecks,      // Final Review
-  7: Mail,            // Offer Stage
+  2: Code,            // Technical Assessment
+  3: UserCheck,       // HR Round
+  4: Video,           // Viva
+  5: ListChecks,      // Final Review
+  6: Mail,            // Offer Stage
 };
 
 export const InterviewProgressTracker = ({
