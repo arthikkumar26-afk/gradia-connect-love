@@ -75,7 +75,9 @@ export default function CandidateDetailModal({
     experience_level: candidateData?.experience_level || profile?.experience_level || null,
     preferred_role: candidateData?.preferred_role || profile?.preferred_role || null,
     skills: candidateData?.skills || [],
-    education: candidateData?.education || null,
+    education: typeof candidateData?.education === 'object' 
+      ? (candidateData.education?.education_level || candidateData.education?.specialization || null)
+      : candidateData?.education || null,
     profile_picture: profile?.profile_picture || null,
   });
 

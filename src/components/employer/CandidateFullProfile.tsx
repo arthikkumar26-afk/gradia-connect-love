@@ -160,7 +160,9 @@ export const CandidateFullProfile = () => {
         phone: candidateData?.mobile || profile?.mobile || undefined,
         location: candidateData?.location || profile?.location || undefined,
         experience: candidateData?.experience_level || profile?.experience_level || undefined,
-        education: candidateData?.education || undefined,
+        education: typeof candidateData?.education === 'object' 
+          ? (candidateData.education?.education_level || candidateData.education?.specialization || JSON.stringify(candidateData.education))
+          : candidateData?.education || undefined,
         resumeUrl: interviewCandidate.resume_url || profile?.resume_url || undefined,
         profilePicture: profile?.profile_picture || undefined,
         preferredRole: candidateData?.preferred_role || profile?.preferred_role || undefined,
