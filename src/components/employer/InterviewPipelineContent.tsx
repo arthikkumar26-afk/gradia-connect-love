@@ -7,6 +7,8 @@ import {
   UserCheck,
   FileCheck,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   MoreVertical,
   Calendar,
   Mail,
@@ -28,7 +30,8 @@ import {
   RefreshCw,
   Database,
   X,
-  Trash2
+  Trash2,
+  Play
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -278,6 +281,152 @@ const StageActionButtons = ({
   }
 
   return null;
+};
+
+// Clickable Stages List Component - Shows expandable stage details with recordings
+const ClickableStagesList = ({
+  interviewSteps,
+  interviewCandidateId,
+  candidateName,
+  candidateEmail,
+  jobTitle,
+  onUpdateStep,
+  getStepIcon,
+  getStatusBadge
+}: {
+  interviewSteps: InterviewStep[];
+  interviewCandidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
+  getStepIcon: (step: InterviewStep) => React.ReactNode;
+  getStatusBadge: (step: InterviewStep) => React.ReactNode;
+}) => {
+  const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
+  
+  const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview");
+  const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
+
+  const handleStageClick = (step: InterviewStep) => {
+    // Only allow expansion for completed stages
+    if (step.status === "completed") {
+      setExpandedStageId(expandedStageId === step.id ? null : step.id);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {filteredSteps.map((step, index) => {
+        const isFirstPending = step.status === "pending" && index === firstPendingIndex;
+        const isExpanded = expandedStageId === step.id;
+        const isClickable = step.status === "completed";
+        
+        return (
+          <div 
+            key={step.id} 
+            className={`border rounded-lg overflow-hidden transition-all ${
+              step.isLive ? 'bg-red-500/5 border-red-300' : 'border-border'
+            } ${isClickable ? 'cursor-pointer hover:border-primary/50 hover:bg-accent/30' : ''}`}
+          >
+            {/* Stage Header - Clickable for completed stages */}
+            <div 
+              className={`flex items-start gap-3 p-3 ${isClickable ? 'cursor-pointer' : ''}`}
+              onClick={() => handleStageClick(step)}
+            >
+              <div className="mt-0.5">{getStepIcon(step)}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-foreground truncate">{step.title}</h4>
+                    {isClickable && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 hover:bg-transparent"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStageClick(step);
+                        }}
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                  {getStatusBadge(step)}
+                </div>
+                {step.date && (
+                  <p className="text-xs text-muted-foreground">
+                    {step.date}
+                    {step.interviewer && ` • ${step.interviewer}`}
+                  </p>
+                )}
+                {step.notes && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{step.notes}</p>
+                )}
+                {step.score !== undefined && step.score > 0 && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs font-medium text-primary">Score: {step.score}%</p>
+                    {step.score >= 50 && (
+                      <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-[10px] py-0">
+                        Passed
+                      </Badge>
+                    )}
+                    {step.score < 50 && (
+                      <Badge className="bg-red-500/10 text-red-600 border-red-500/20 text-[10px] py-0">
+                        Below Threshold
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                
+                {/* Show interview link for current stages (not expanded content) */}
+                {step.status === "current" && (
+                  <StageRecordingPlayer
+                    interviewCandidateId={interviewCandidateId}
+                    stageId={step.id}
+                    stageName={step.title}
+                    showLinkForPending={true}
+                  />
+                )}
+                
+                {/* Action buttons for all stages */}
+                <StageActionButtons
+                  step={step}
+                  isFirstPending={isFirstPending}
+                  candidateName={candidateName}
+                  candidateEmail={candidateEmail}
+                  jobTitle={jobTitle}
+                  interviewCandidateId={interviewCandidateId}
+                  onUpdateStep={onUpdateStep}
+                />
+              </div>
+            </div>
+            
+            {/* Expanded Content - Shows recording and Q&A for completed stages */}
+            {isExpanded && step.status === "completed" && (
+              <div className="border-t bg-muted/30 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Play className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Stage Results</span>
+                </div>
+                <StageRecordingPlayer
+                  interviewCandidateId={interviewCandidateId}
+                  stageId={step.id}
+                  stageName={step.title}
+                  showLinkForPending={false}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 // Candidate Profile Inline Component (replaces pipeline content when selected)
@@ -620,77 +769,16 @@ const CandidateProfileInline = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {candidate.interviewSteps
-                      .filter(step => step.title !== "AI Phone Interview")
-                      .map((step, index, filteredSteps) => {
-                        // Find first pending step index
-                        const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
-                        const isFirstPending = step.status === "pending" && index === firstPendingIndex;
-                        
-                        // Check if this stage might have a recording (Technical Assessment, etc.)
-                        const hasRecordingCapability = step.title === "Technical Assessment" || step.title === "HR Round";
-                        
-                        return (
-                          <div key={step.id} className={`border-b border-border/50 pb-3 last:border-0 last:pb-0 ${step.isLive ? 'bg-red-500/5 -mx-4 px-4 py-2 rounded-lg' : ''}`}>
-                            <div className="flex items-start gap-3">
-                              <div className="mt-0.5">{getStepIcon(step)}</div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <h4 className="text-sm font-medium text-foreground truncate">{step.title}</h4>
-                                  {getStatusBadge(step)}
-                                </div>
-                                {step.date && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {step.date}
-                                    {step.interviewer && ` • ${step.interviewer}`}
-                                  </p>
-                                )}
-                                {step.notes && (
-                                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{step.notes}</p>
-                                )}
-                                {step.score !== undefined && step.score > 0 && (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <p className="text-xs font-medium text-primary">Score: {step.score}%</p>
-                                    {step.score >= 50 && (
-                                      <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-[10px] py-0">
-                                        Passed
-                                      </Badge>
-                                    )}
-                                    {step.score < 50 && (
-                                      <Badge className="bg-red-500/10 text-red-600 border-red-500/20 text-[10px] py-0">
-                                        Below Threshold
-                                      </Badge>
-                                    )}
-                                  </div>
-                                )}
-                                
-                                {/* Show recording for completed stages OR interview link for current/pending stages */}
-                                {(step.status === "completed" || step.status === "current") && hasRecordingCapability && (
-                                  <StageRecordingPlayer
-                                    interviewCandidateId={candidate.interviewCandidateId}
-                                    stageId={step.id}
-                                    stageName={step.title}
-                                    showLinkForPending={step.status === "current"}
-                                  />
-                                )}
-                                
-                                {/* Action buttons for all stages */}
-                                <StageActionButtons
-                                  step={step}
-                                  isFirstPending={isFirstPending}
-                                  candidateName={candidate.name}
-                                  candidateEmail={candidate.email}
-                                  jobTitle={candidate.role}
-                                  interviewCandidateId={candidate.interviewCandidateId}
-                                  onUpdateStep={onUpdateStep}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+                  <ClickableStagesList
+                    interviewSteps={candidate.interviewSteps}
+                    interviewCandidateId={candidate.interviewCandidateId}
+                    candidateName={candidate.name}
+                    candidateEmail={candidate.email}
+                    jobTitle={candidate.role}
+                    onUpdateStep={onUpdateStep}
+                    getStepIcon={getStepIcon}
+                    getStatusBadge={getStatusBadge}
+                  />
                 </CardContent>
               </Card>
 
