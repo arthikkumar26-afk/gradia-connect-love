@@ -31,7 +31,8 @@ import {
   Database,
   X,
   Trash2,
-  Play
+  Play,
+  Eye
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { AIActionPanel } from "./AIActionPanel";
 import { InterviewRecordingPlayer } from "./InterviewRecordingPlayer";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
+import { StageResultsModal } from "./StageResultsModal";
 import { ManualInterviewScheduleModal } from "./ManualInterviewScheduleModal";
 import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
@@ -304,6 +306,8 @@ const ClickableStagesList = ({
   getStatusBadge: (step: InterviewStep) => React.ReactNode;
 }) => {
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [selectedStageForResults, setSelectedStageForResults] = useState<InterviewStep | null>(null);
   
   const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview");
   const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
@@ -313,6 +317,12 @@ const ClickableStagesList = ({
     if (step.status === "completed") {
       setExpandedStageId(expandedStageId === step.id ? null : step.id);
     }
+  };
+
+  const handleViewResults = (step: InterviewStep, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedStageForResults(step);
+    setResultsModalOpen(true);
   };
 
   return (
@@ -395,15 +405,29 @@ const ClickableStagesList = ({
                 )}
                 
                 {/* Action buttons for all stages */}
-                <StageActionButtons
-                  step={step}
-                  isFirstPending={isFirstPending}
-                  candidateName={candidateName}
-                  candidateEmail={candidateEmail}
-                  jobTitle={jobTitle}
-                  interviewCandidateId={interviewCandidateId}
-                  onUpdateStep={onUpdateStep}
-                />
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  {/* View Results button for completed stages */}
+                  {step.status === "completed" && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-6 text-[10px] px-2"
+                      onClick={(e) => handleViewResults(step, e)}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      View Results
+                    </Button>
+                  )}
+                  <StageActionButtons
+                    step={step}
+                    isFirstPending={isFirstPending}
+                    candidateName={candidateName}
+                    candidateEmail={candidateEmail}
+                    jobTitle={jobTitle}
+                    interviewCandidateId={interviewCandidateId}
+                    onUpdateStep={onUpdateStep}
+                  />
+                </div>
               </div>
             </div>
             
@@ -425,6 +449,21 @@ const ClickableStagesList = ({
           </div>
         );
       })}
+      
+      {/* Stage Results Modal */}
+      {selectedStageForResults && (
+        <StageResultsModal
+          isOpen={resultsModalOpen}
+          onClose={() => {
+            setResultsModalOpen(false);
+            setSelectedStageForResults(null);
+          }}
+          interviewCandidateId={interviewCandidateId}
+          stageId={selectedStageForResults.id}
+          stageName={selectedStageForResults.title}
+          candidateName={candidateName}
+        />
+      )}
     </div>
   );
 };
