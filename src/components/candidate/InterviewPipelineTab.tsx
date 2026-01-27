@@ -10,7 +10,6 @@ import {
   Clock,
   AlertCircle,
   FileText,
-  Phone,
   Code,
   Users,
   ClipboardCheck,
@@ -138,12 +137,12 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     switch (stageName) {
       case 'Resume Screening':
         return FileText;
-      case 'AI Phone Interview':
-        return Phone;
       case 'Technical Assessment':
         return Code;
       case 'HR Round':
         return Users;
+      case 'Viva':
+        return ClipboardCheck;
       case 'Final Review':
         return ClipboardCheck;
       case 'Offer Stage':
