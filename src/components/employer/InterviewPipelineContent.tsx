@@ -450,12 +450,26 @@ const HRRoundScheduleModal = ({
                 <Clock className="h-4 w-4" />
                 Time *
               </label>
-              <Input
-                type="time"
-                value={scheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                required
-              />
+              <Select value={scheduleTime} onValueChange={setScheduleTime}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    ['00', '30'].map(minute => {
+                      const time = `${hour.toString().padStart(2, '0')}:${minute}`;
+                      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                      const ampm = hour < 12 ? 'AM' : 'PM';
+                      const displayTime = `${displayHour}:${minute} ${ampm}`;
+                      return (
+                        <SelectItem key={time} value={time}>
+                          {displayTime}
+                        </SelectItem>
+                      );
+                    })
+                  )).flat()}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           {(!scheduleDate || !scheduleTime) && (
