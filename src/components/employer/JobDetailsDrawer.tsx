@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles } from "lucide-react";
+import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles, Link2, Copy, Check, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,31 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showApplicantsModal, setShowApplicantsModal] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  
+  // Generate shareable job link
+  const getJobApplicationLink = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/jobs-results?job=${job?.id}&apply=true`;
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getJobApplicationLink());
+      setIsCopied(true);
+      toast({
+        title: "Link copied!",
+        description: "Job application link copied to clipboard",
+      });
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the link manually",
+        variant: "destructive",
+      });
+    }
+  };
   
   // Form state
   const [jobTitle, setJobTitle] = useState("");
@@ -417,9 +442,47 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
             )}
           </div>
 
-          <Separator />
+          {/* Share Job Link (View Only) */}
+          {!isEditMode && (
+            <div className="space-y-3 bg-primary/5 border border-primary/20 p-4 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-primary" />
+                <h4 className="font-semibold text-sm">Share Job Link</h4>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Share this link with candidates to apply for this position
+              </p>
+              <div className="flex gap-2">
+                <Input 
+                  readOnly 
+                  value={getJobApplicationLink()} 
+                  className="text-xs bg-background"
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={handleCopyLink}
+                  className="shrink-0"
+                >
+                  {isCopied ? (
+                    <Check className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => window.open(getJobApplicationLink(), '_blank')}
+                  className="shrink-0"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
 
-          {/* Additional Details (View Only) */}
+          <Separator />
           {!isEditMode && (
             <>
               <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
