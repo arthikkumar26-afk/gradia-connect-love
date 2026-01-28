@@ -539,7 +539,12 @@ export const AIActionPanel = ({
                 type="datetime-local"
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                className={!scheduleDate ? "border-amber-300" : ""}
               />
+              {!scheduleDate && (
+                <p className="text-xs text-amber-600">Please select both date and time to continue</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="meetingLink">Meeting Link (optional)</Label>
