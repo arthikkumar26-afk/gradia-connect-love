@@ -263,9 +263,7 @@ export const useInterviewPipeline = () => {
               email: candidateEmail,
               role: c.jobs?.job_title || 'Unknown Position',
               avatar: c.profiles?.profile_picture || undefined,
-              appliedDate: c.applied_at 
-                ? formatRelativeDate(c.applied_at)
-                : 'Recently',
+              appliedDate: c.applied_at || new Date().toISOString(),
               rating: Math.min(5, Math.round((c.ai_score || 70) / 20)),
               tags: candidateSkills.slice(0, 3),
               phone: candidatePhone,
@@ -319,7 +317,7 @@ export const useInterviewPipeline = () => {
             email: candidateEmail,
             role: c.jobs?.job_title || 'Unknown Position',
             avatar: c.profiles?.profile_picture || undefined,
-            appliedDate: c.applied_at ? formatRelativeDate(c.applied_at) : 'Recently',
+            appliedDate: c.applied_at || new Date().toISOString(),
             rating: Math.min(5, Math.round((c.ai_score || 70) / 20)),
             tags: candidateSkills.slice(0, 3),
             phone: candidatePhone,
