@@ -35,6 +35,7 @@ import {
   Eye
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -119,7 +120,8 @@ const StageActionButtons = ({
   candidateEmail,
   jobTitle,
   interviewCandidateId,
-  onUpdateStep
+  onUpdateStep,
+  onScheduleHRRound
 }: {
   step: InterviewStep;
   isFirstPending: boolean;
@@ -128,9 +130,13 @@ const StageActionButtons = ({
   jobTitle: string;
   interviewCandidateId: string;
   onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
+  onScheduleHRRound?: (step: InterviewStep) => void;
 }) => {
   const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [isMovingNext, setIsMovingNext] = useState(false);
+  
+  // Check if this is HR Round (manual meeting link only)
+  const isHRRound = step.title === 'HR Round';
 
   const handleResendInvitation = async () => {
     setIsSendingInvite(true);
@@ -211,26 +217,37 @@ const StageActionButtons = ({
     );
   }
 
-  // Current or In Progress stage - show all action buttons
+  // Current or In Progress stage - show action buttons based on stage type
   if (step.status === "current" || step.status === "in_progress" || step.isLive) {
-    
     return (
       <div className="flex flex-wrap gap-1 mt-2">
-        <Button 
-          size="sm" 
-          variant="ghost"
-          onClick={handleResendInvitation}
-          disabled={isSendingInvite}
-          className="h-6 text-[10px] px-2"
-        >
-          {isSendingInvite ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <Mail className="h-3 w-3 mr-1" />
-          )}
-          Resend
-        </Button>
-        {/* AI Technical Interview is started via email link only - no Launch button needed */}
+        {/* HR Round - Manual meeting link scheduling */}
+        {isHRRound ? (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onScheduleHRRound?.(step)}
+            className="h-6 text-[10px] px-2 border-green-500 text-green-600 hover:bg-green-50"
+          >
+            <Calendar className="h-3 w-3 mr-1" />
+            Schedule Meeting
+          </Button>
+        ) : (
+          <Button 
+            size="sm" 
+            variant="ghost"
+            onClick={handleResendInvitation}
+            disabled={isSendingInvite}
+            className="h-6 text-[10px] px-2"
+          >
+            {isSendingInvite ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <Mail className="h-3 w-3 mr-1" />
+            )}
+            Resend
+          </Button>
+        )}
         <Button 
           size="sm" 
           variant="outline"
@@ -257,25 +274,37 @@ const StageActionButtons = ({
     );
   }
 
-  // Pending stages - show resend button for all
+  // Pending stages - show resend button for all (except HR Round which shows Schedule Meeting)
   if (step.status === "pending") {
     return (
       <div className="flex gap-1 mt-2">
-        <Button 
-          size="sm" 
-          variant="ghost"
-          onClick={handleResendInvitation}
-          disabled={isSendingInvite}
-          className="h-6 text-[10px] px-2"
-        >
-          {isSendingInvite ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <Mail className="h-3 w-3 mr-1" />
-          )}
-          Resend
-        </Button>
-        {isFirstPending && (
+        {isHRRound && isFirstPending ? (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onScheduleHRRound?.(step)}
+            className="h-6 text-[10px] px-2 border-green-500 text-green-600 hover:bg-green-50"
+          >
+            <Calendar className="h-3 w-3 mr-1" />
+            Schedule Meeting
+          </Button>
+        ) : (
+          <Button 
+            size="sm" 
+            variant="ghost"
+            onClick={handleResendInvitation}
+            disabled={isSendingInvite}
+            className="h-6 text-[10px] px-2"
+          >
+            {isSendingInvite ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <Mail className="h-3 w-3 mr-1" />
+            )}
+            Resend
+          </Button>
+        )}
+        {isFirstPending && !isHRRound && (
           <Button 
             size="sm" 
             variant="outline"
@@ -290,6 +319,147 @@ const StageActionButtons = ({
   }
 
   return null;
+};
+
+// HR Round Schedule Modal Component
+const HRRoundScheduleModal = ({
+  isOpen,
+  onClose,
+  step,
+  candidateName,
+  candidateEmail,
+  jobTitle,
+  interviewCandidateId,
+  onSuccess
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  step: InterviewStep;
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  interviewCandidateId: string;
+  onSuccess: () => void;
+}) => {
+  const [meetingLink, setMeetingLink] = useState('');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendInvitation = async () => {
+    if (!meetingLink.trim()) {
+      toast.error('Please paste a meeting link');
+      return;
+    }
+    if (!scheduleDate) {
+      toast.error('Please select date and time');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // Send invitation email with meeting link
+      const { error } = await supabase.functions.invoke('send-notification-email', {
+        body: {
+          to: candidateEmail,
+          candidateName,
+          jobTitle,
+          stageName: step.title,
+          type: 'hr_round_invitation',
+          interviewCandidateId,
+          stageId: step.id,
+          meetingLink,
+          scheduledDate: scheduleDate,
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success(`HR Round invitation sent to ${candidateName}`, {
+        description: `Meeting scheduled for ${new Date(scheduleDate).toLocaleString()}`,
+        duration: 4000,
+      });
+      
+      onSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Error sending HR round invitation:', error);
+      toast.error('Failed to send invitation');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            Schedule HR Round Meeting
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Candidate: <span className="font-medium text-foreground">{candidateName}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Email: <span className="font-medium text-foreground">{candidateEmail}</span>
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Meeting Date & Time *</label>
+            <Input
+              type="datetime-local"
+              value={scheduleDate}
+              onChange={(e) => setScheduleDate(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+              className={!scheduleDate ? "border-amber-300" : ""}
+            />
+            {!scheduleDate && (
+              <p className="text-xs text-amber-600">Please select both date and time</p>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Meeting Link *</label>
+            <Input
+              placeholder="Paste your Zoom, Google Meet, or Teams link"
+              value={meetingLink}
+              onChange={(e) => setMeetingLink(e.target.value)}
+              className={!meetingLink.trim() ? "border-amber-300" : ""}
+            />
+            <p className="text-xs text-muted-foreground">
+              Supports Google Meet, Zoom, Microsoft Teams, or any video call link
+            </p>
+          </div>
+          
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSendInvitation}
+              disabled={isSending || !meetingLink.trim() || !scheduleDate}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Invitation
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 // Clickable Stages List Component - Shows expandable stage details with recordings
@@ -315,6 +485,8 @@ const ClickableStagesList = ({
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedStageForResults, setSelectedStageForResults] = useState<InterviewStep | null>(null);
+  const [hrScheduleModalOpen, setHrScheduleModalOpen] = useState(false);
+  const [selectedHRStep, setSelectedHRStep] = useState<InterviewStep | null>(null);
   
   const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview");
   const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
@@ -332,6 +504,11 @@ const ClickableStagesList = ({
     setResultsModalOpen(true);
   };
 
+  const handleScheduleHRRound = (step: InterviewStep) => {
+    setSelectedHRStep(step);
+    setHrScheduleModalOpen(true);
+  };
+
   return (
     <div className="space-y-3">
       {filteredSteps.map((step, index) => {
@@ -343,7 +520,7 @@ const ClickableStagesList = ({
           <div 
             key={step.id} 
             className={`border rounded-lg overflow-hidden transition-all ${
-              step.isLive ? 'bg-red-500/5 border-red-300' : 'border-border'
+              step.isLive ? 'bg-destructive/5 border-destructive/30' : 'border-border'
             } ${isClickable ? 'cursor-pointer hover:border-primary/50 hover:bg-accent/30' : ''}`}
           >
             {/* Stage Header - Clickable for completed stages */}
@@ -389,12 +566,12 @@ const ClickableStagesList = ({
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-xs font-medium text-primary">Score: {step.score}%</p>
                     {step.score >= 50 && (
-                      <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-[10px] py-0">
+                      <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] py-0">
                         Passed
                       </Badge>
                     )}
                     {step.score < 50 && (
-                      <Badge className="bg-red-500/10 text-red-600 border-red-500/20 text-[10px] py-0">
+                      <Badge className="bg-destructive/10 text-destructive border-destructive/20 text-[10px] py-0">
                         Below Threshold
                       </Badge>
                     )}
@@ -433,6 +610,7 @@ const ClickableStagesList = ({
                     jobTitle={jobTitle}
                     interviewCandidateId={interviewCandidateId}
                     onUpdateStep={onUpdateStep}
+                    onScheduleHRRound={handleScheduleHRRound}
                   />
                 </div>
               </div>
@@ -469,6 +647,23 @@ const ClickableStagesList = ({
           stageId={selectedStageForResults.id}
           stageName={selectedStageForResults.title}
           candidateName={candidateName}
+        />
+      )}
+      
+      {/* HR Round Schedule Modal */}
+      {selectedHRStep && (
+        <HRRoundScheduleModal
+          isOpen={hrScheduleModalOpen}
+          onClose={() => {
+            setHrScheduleModalOpen(false);
+            setSelectedHRStep(null);
+          }}
+          step={selectedHRStep}
+          candidateName={candidateName}
+          candidateEmail={candidateEmail}
+          jobTitle={jobTitle}
+          interviewCandidateId={interviewCandidateId}
+          onSuccess={() => onUpdateStep(selectedHRStep.id, "current")}
         />
       )}
     </div>
