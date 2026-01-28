@@ -26,7 +26,7 @@ function sanitizeInput(input: unknown, maxLength: number): string {
 }
 
 interface NotificationRequest {
-  type: 'stage_change' | 'comment_added' | 'document_uploaded' | 'offer_response' | 'stage_invitation';
+  type: 'stage_change' | 'comment_added' | 'document_uploaded' | 'offer_response' | 'stage_invitation' | 'hr_round_invitation';
   recipientEmail: string;
   recipientName: string;
   candidateName: string;
@@ -42,12 +42,67 @@ interface NotificationRequest {
   deferredDate?: string;
   interviewCandidateId?: string;
   stageId?: string;
+  meetingLink?: string;
+  scheduledDate?: string;
 }
 
 const generateEmailContent = (data: NotificationRequest) => {
   const { type, recipientName, candidateName, jobTitle, companyName = "Gradia" } = data;
 
   switch (type) {
+    case 'hr_round_invitation':
+      const meetingTime = data.scheduledDate 
+        ? new Date(data.scheduledDate).toLocaleString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short'
+          })
+        : 'To be confirmed';
+      
+      return {
+        subject: `HR Round Scheduled: ${jobTitle} at ${companyName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #333;">HR Round Interview Scheduled</h2>
+            <p>Dear ${recipientName || candidateName},</p>
+            <p>Your HR Round interview for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong> has been scheduled.</p>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0 0 10px 0;"><strong>📅 Date & Time:</strong> ${meetingTime}</p>
+              <p style="margin: 0 0 10px 0;"><strong>💼 Position:</strong> ${jobTitle}</p>
+              <p style="margin: 0;"><strong>🏢 Company:</strong> ${companyName}</p>
+            </div>
+            
+            ${data.meetingLink ? `
+              <p>Please join the meeting using the link below at the scheduled time:</p>
+              <div style="margin: 30px 0; text-align: center;">
+                <a href="${data.meetingLink}" 
+                   style="background-color: #10B981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                  Join Meeting
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">Or copy this link: <a href="${data.meetingLink}">${data.meetingLink}</a></p>
+            ` : ''}
+            
+            <p><strong>Tips for your HR Round:</strong></p>
+            <ul style="color: #555;">
+              <li>Join 5 minutes before the scheduled time</li>
+              <li>Ensure you have a stable internet connection</li>
+              <li>Be prepared to discuss your experience and expectations</li>
+              <li>Have questions ready about the role and company</li>
+            </ul>
+            
+            <p>If you need to reschedule, please contact us as soon as possible.</p>
+            <br>
+            <p>Best regards,<br>${companyName} Recruitment Team</p>
+          </div>
+        `,
+      };
+
     case 'stage_invitation':
       const stageName = data.stageName || data.stage || 'Interview';
       const baseUrl = "https://gradia-link-shine.lovable.app";
@@ -216,7 +271,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const validTypes = ['stage_change', 'comment_added', 'document_uploaded', 'offer_response', 'stage_invitation'];
+    const validTypes = ['stage_change', 'comment_added', 'document_uploaded', 'offer_response', 'stage_invitation', 'hr_round_invitation'];
     if (!validTypes.includes(rawData.type)) {
       return new Response(
         JSON.stringify({ error: "Invalid notification type" }),
@@ -241,6 +296,8 @@ const handler = async (req: Request): Promise<Response> => {
       deferredDate: sanitizeInput(rawData.deferredDate, 20),
       interviewCandidateId: sanitizeInput(rawData.interviewCandidateId, 100),
       stageId: sanitizeInput(rawData.stageId, 100),
+      meetingLink: sanitizeInput(rawData.meetingLink, 500),
+      scheduledDate: sanitizeInput(rawData.scheduledDate, 50),
     };
     
     console.log('Sending email notification:', notificationData.type, 'for user:', userId);

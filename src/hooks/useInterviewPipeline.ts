@@ -187,14 +187,31 @@ export const useInterviewPipeline = () => {
             const events = eventsByCandidate.get(c.id) || [];
             
             // Build interview steps from stages and events
+            // Get the current stage order
+            const currentStageOrder = dbStages.find(st => st.id === c.current_stage_id)?.stage_order || 1;
+            
             const interviewSteps: InterviewStep[] = dbStages.map((s) => {
               const event = events.find((e) => e.stage_id === s.id);
               let status: InterviewStep["status"] = "pending";
               let isLive = false;
               let liveStatus: InterviewStep["liveStatus"] = undefined;
               
+              // First, determine status based on stage order relative to current stage
+              if (s.stage_order < currentStageOrder) {
+                // All stages before current stage should be marked as completed
+                status = "completed";
+              } else if (s.stage_order === currentStageOrder) {
+                // Current stage
+                status = "current";
+                liveStatus = "waiting";
+              } else {
+                // Future stages
+                status = "pending";
+              }
+              
+              // Override with event status if exists (for more accurate tracking)
               if (event) {
-                if (event.status === "completed") {
+                if (event.status === "completed" || event.status === "passed") {
                   status = "completed";
                 } else if (event.status === "failed") {
                   status = "failed";
@@ -203,14 +220,12 @@ export const useInterviewPipeline = () => {
                   isLive = true;
                   liveStatus = "in_interview";
                 } else if (event.status === "scheduled" || event.status === "pending") {
-                  status = "current";
-                  liveStatus = "waiting";
+                  // Only show as current if it's the current stage
+                  if (s.stage_order === currentStageOrder) {
+                    status = "current";
+                    liveStatus = "waiting";
+                  }
                 }
-              } else if (c.current_stage_id === s.id) {
-                status = "current";
-                liveStatus = "waiting";
-              } else if (s.stage_order < (dbStages.find(st => st.id === c.current_stage_id)?.stage_order || 0)) {
-                status = "completed";
               }
 
               return {
@@ -221,7 +236,9 @@ export const useInterviewPipeline = () => {
                 liveStatus,
                 date: event?.scheduled_at 
                   ? new Date(event.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                  : undefined,
+                  : event?.completed_at 
+                    ? new Date(event.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : undefined,
                 notes: event?.notes || undefined,
                 score: event?.ai_score || undefined,
                 startedAt: event?.created_at || undefined,
