@@ -358,6 +358,7 @@ const HRRoundScheduleModal = ({
 }) => {
   const [meetingLink, setMeetingLink] = useState('');
   const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
   const [isSending, setIsSending] = useState(false);
 
   const handleSendInvitation = async () => {
@@ -366,9 +367,16 @@ const HRRoundScheduleModal = ({
       return;
     }
     if (!scheduleDate) {
-      toast.error('Please select date and time');
+      toast.error('Please select a date');
       return;
     }
+    if (!scheduleTime) {
+      toast.error('Please select a time');
+      return;
+    }
+
+    // Combine date and time into ISO string
+    const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
 
     setIsSending(true);
     try {
@@ -383,14 +391,14 @@ const HRRoundScheduleModal = ({
           interviewCandidateId,
           stageId: step.id,
           meetingLink,
-          scheduledDate: scheduleDate,
+          scheduledDate: scheduledDateTime,
         },
       });
 
       if (error) throw error;
       
       toast.success(`HR Round invitation sent to ${candidateName}`, {
-        description: `Meeting scheduled for ${new Date(scheduleDate).toLocaleString()}`,
+        description: `Meeting scheduled for ${new Date(scheduledDateTime).toLocaleString()}`,
         duration: 4000,
       });
       
@@ -423,19 +431,36 @@ const HRRoundScheduleModal = ({
             </p>
           </div>
           
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Meeting Date & Time *</label>
-            <Input
-              type="datetime-local"
-              value={scheduleDate}
-              onChange={(e) => setScheduleDate(e.target.value)}
-              min={new Date().toISOString().slice(0, 16)}
-              className={!scheduleDate ? "border-amber-300" : ""}
-            />
-            {!scheduleDate && (
-              <p className="text-xs text-amber-600">Please select both date and time</p>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Date *
+              </label>
+              <Input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Time *
+              </label>
+              <Input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                required
+              />
+            </div>
           </div>
+          {(!scheduleDate || !scheduleTime) && (
+            <p className="text-xs text-amber-600">Please select both date and time</p>
+          )}
           
           <div className="space-y-2">
             <label className="text-sm font-medium">Meeting Link *</label>
@@ -456,7 +481,7 @@ const HRRoundScheduleModal = ({
             </Button>
             <Button 
               onClick={handleSendInvitation}
-              disabled={isSending || !meetingLink.trim() || !scheduleDate}
+              disabled={isSending || !meetingLink.trim() || !scheduleDate || !scheduleTime}
             >
               {isSending ? (
                 <>
