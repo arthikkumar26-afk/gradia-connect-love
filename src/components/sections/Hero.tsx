@@ -2,9 +2,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";
-import { Search, ArrowRight, Briefcase } from "lucide-react";
+import { Search, ArrowRight, X } from "lucide-react";
 import JobCard from "@/components/ui/JobCard";
-import { getFeaturedJobs } from "@/data/sampleJobs";
+import { sampleJobs, getFeaturedJobs } from "@/data/sampleJobs";
 
 type FilterType = "all" | "software" | "education" | "remote" | "entry";
 
@@ -13,33 +13,66 @@ const Hero = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [isSearchActive, setIsSearchActive] = useState(false);
   const allFeaturedJobs = getFeaturedJobs();
 
   const filteredJobs = useMemo(() => {
-    if (activeFilter === "all") return allFeaturedJobs;
+    // If search is active, search through all jobs
+    let jobsToFilter = isSearchActive ? sampleJobs : allFeaturedJobs;
     
-    return allFeaturedJobs.filter(job => {
-      switch (activeFilter) {
-        case "software":
-          return job.category === "software";
-        case "education":
-          return job.category === "education";
-        case "remote":
-          return job.location.toLowerCase().includes("remote");
-        case "entry":
-          return job.type === "fresher" || job.experience.toLowerCase().includes("fresher") || job.experience.toLowerCase().includes("entry");
-        default:
-          return true;
-      }
-    });
-  }, [activeFilter, allFeaturedJobs]);
+    // Apply search filter
+    if (isSearchActive && (searchTerm || location)) {
+      jobsToFilter = jobsToFilter.filter(job => {
+        const searchLower = searchTerm.toLowerCase();
+        const locationLower = location.toLowerCase();
+        
+        const matchesSearch = !searchTerm || 
+          job.title.toLowerCase().includes(searchLower) ||
+          job.company.toLowerCase().includes(searchLower) ||
+          job.skills.some(skill => skill.toLowerCase().includes(searchLower)) ||
+          job.description.toLowerCase().includes(searchLower) ||
+          job.category.toLowerCase().includes(searchLower);
+        
+        const matchesLocation = !location || 
+          job.location.toLowerCase().includes(locationLower);
+        
+        return matchesSearch && matchesLocation;
+      });
+    }
+    
+    // Apply category filter
+    if (activeFilter !== "all") {
+      jobsToFilter = jobsToFilter.filter(job => {
+        switch (activeFilter) {
+          case "software":
+            return job.category === "software";
+          case "education":
+            return job.category === "education";
+          case "remote":
+            return job.location.toLowerCase().includes("remote");
+          case "entry":
+            return job.type === "fresher" || job.experience.toLowerCase().includes("fresher") || job.experience.toLowerCase().includes("entry");
+          default:
+            return true;
+        }
+      });
+    }
+    
+    return jobsToFilter;
+  }, [activeFilter, allFeaturedJobs, isSearchActive, searchTerm, location]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchTerm) params.set('q', searchTerm);
-    if (location) params.set('location', location);
-    navigate(`/jobs-results?${params.toString()}`);
+    if (searchTerm || location) {
+      setIsSearchActive(true);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setLocation("");
+    setIsSearchActive(false);
+    setActiveFilter("all");
   };
 
   const handleFilterClick = (filter: FilterType) => {
@@ -52,6 +85,17 @@ const Hero = () => {
     { id: "remote" as FilterType, label: "Remote" },
     { id: "entry" as FilterType, label: "Entry Level" },
   ];
+
+  const getStatusText = () => {
+    const parts = [];
+    if (isSearchActive && searchTerm) parts.push(`"${searchTerm}"`);
+    if (isSearchActive && location) parts.push(`in "${location}"`);
+    if (activeFilter !== "all") {
+      const filterLabel = filterButtons.find(f => f.id === activeFilter)?.label || activeFilter;
+      parts.push(filterLabel);
+    }
+    return parts.length > 0 ? parts.join(" • ") : null;
+  };
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
@@ -115,32 +159,51 @@ const Hero = () => {
 
         {/* Jobs Section */}
         <div className="mt-16">
-          {activeFilter !== "all" && (
-            <div className="text-center mb-6">
+          {(isSearchActive || activeFilter !== "all") && (
+            <div className="text-center mb-6 flex flex-col items-center gap-2">
               <p className="text-primary-foreground/80">
-                Showing {filteredJobs.length} {activeFilter === "software" ? "Software Engineering" : activeFilter === "education" ? "Education" : activeFilter === "remote" ? "Remote" : "Entry Level"} jobs
+                Showing {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} {getStatusText() && `for ${getStatusText()}`}
               </p>
+              {isSearchActive && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSearch}
+                  className="text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear Search
+                </Button>
+              )}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
             {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => (
+              filteredJobs.slice(0, 8).map((job) => (
                 <div key={job.id} className="animate-fade-in">
                   <JobCard {...job} />
                 </div>
               ))
             ) : (
               <div className="col-span-full text-center py-12">
-                <p className="text-primary-foreground/70 text-lg">No jobs found for this filter. Try another category.</p>
+                <p className="text-primary-foreground/70 text-lg">No jobs found. Try different keywords or filters.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearSearch}
+                  className="mt-4 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10"
+                >
+                  Clear All Filters
+                </Button>
               </div>
             )}
           </div>
 
           <div className="text-center">
             <Button variant="cta" size="lg" asChild>
-              <Link to="/jobs">
-                View All Jobs
+              <Link to={isSearchActive ? `/jobs-results?q=${encodeURIComponent(searchTerm)}&location=${encodeURIComponent(location)}` : "/jobs"}>
+                {isSearchActive && filteredJobs.length > 8 ? `View All ${filteredJobs.length} Results` : "View All Jobs"}
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Link>
             </Button>
