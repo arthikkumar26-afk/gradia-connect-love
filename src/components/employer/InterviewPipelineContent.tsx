@@ -173,7 +173,14 @@ const StageActionButtons = ({
       
       // Update local UI state
       onUpdateStep(step.id, "completed");
-      toast.success(data?.message || `Moved to next stage`);
+      
+      // Show clear success message with current stage cleared and next stage info
+      const clearedMessage = `✓ ${step.title} cleared!`;
+      const nextStageMessage = data?.currentStage ? ` Moved to ${data.currentStage}` : '';
+      toast.success(clearedMessage + nextStageMessage, {
+        description: data?.action === 'hired' ? 'Candidate is ready for hire!' : undefined,
+        duration: 4000,
+      });
     } catch (error) {
       console.error('Error moving to next step:', error);
       toast.error('Failed to move to next stage');
