@@ -1,16 +1,38 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, ArrowRight, Briefcase } from "lucide-react";
 import JobCard from "@/components/ui/JobCard";
 import { getFeaturedJobs } from "@/data/sampleJobs";
+
+type FilterType = "all" | "software" | "education" | "remote" | "entry";
 
 const Hero = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
-  const featuredJobs = getFeaturedJobs();
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const allFeaturedJobs = getFeaturedJobs();
+
+  const filteredJobs = useMemo(() => {
+    if (activeFilter === "all") return allFeaturedJobs;
+    
+    return allFeaturedJobs.filter(job => {
+      switch (activeFilter) {
+        case "software":
+          return job.category === "software";
+        case "education":
+          return job.category === "education";
+        case "remote":
+          return job.location.toLowerCase().includes("remote");
+        case "entry":
+          return job.type === "fresher" || job.experience.toLowerCase().includes("fresher") || job.experience.toLowerCase().includes("entry");
+        default:
+          return true;
+      }
+    });
+  }, [activeFilter, allFeaturedJobs]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +41,17 @@ const Hero = () => {
     if (location) params.set('location', location);
     navigate(`/jobs-results?${params.toString()}`);
   };
+
+  const handleFilterClick = (filter: FilterType) => {
+    setActiveFilter(activeFilter === filter ? "all" : filter);
+  };
+
+  const filterButtons = [
+    { id: "software" as FilterType, label: "Software Engineering" },
+    { id: "education" as FilterType, label: "Education" },
+    { id: "remote" as FilterType, label: "Remote" },
+    { id: "entry" as FilterType, label: "Entry Level" },
+  ];
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
@@ -60,18 +93,21 @@ const Hero = () => {
               
               {/* Quick Filters */}
               <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
-                  Software Engineering
-                </Button>
-                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
-                  Education
-                </Button>
-                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
-                  Remote
-                </Button>
-                <Button variant="outline" size="sm" className="bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground">
-                  Entry Level
-                </Button>
+                {filterButtons.map((filter) => (
+                  <Button
+                    key={filter.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleFilterClick(filter.id)}
+                    className={`transition-all duration-200 ${
+                      activeFilter === filter.id
+                        ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                        : "bg-background/50 border-accent/30 text-foreground hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    {filter.label}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>
@@ -79,13 +115,26 @@ const Hero = () => {
 
         {/* Jobs Section */}
         <div className="mt-16">
+          {activeFilter !== "all" && (
+            <div className="text-center mb-6">
+              <p className="text-primary-foreground/80">
+                Showing {filteredJobs.length} {activeFilter === "software" ? "Software Engineering" : activeFilter === "education" ? "Education" : activeFilter === "remote" ? "Remote" : "Entry Level"} jobs
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {featuredJobs.map((job) => (
-              <div key={job.id} className="animate-fade-in">
-                <JobCard {...job} />
+            {filteredJobs.length > 0 ? (
+              filteredJobs.map((job) => (
+                <div key={job.id} className="animate-fade-in">
+                  <JobCard {...job} />
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-primary-foreground/70 text-lg">No jobs found for this filter. Try another category.</p>
               </div>
-            ))}
+            )}
           </div>
 
           <div className="text-center">
