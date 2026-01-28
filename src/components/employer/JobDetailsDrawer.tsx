@@ -11,7 +11,7 @@ import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles } 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
+import { JobApplicantsModal } from "./JobApplicantsModal";
 interface Job {
   id: string;
   jobTitle: string;
@@ -32,13 +32,15 @@ interface JobDetailsDrawerProps {
   mode: "view" | "edit";
   onJobUpdated?: () => void;
   onJobDeleted?: () => void;
+  onViewPipeline?: (candidateId: string, jobId: string) => void;
 }
 
-export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, onJobDeleted }: JobDetailsDrawerProps) => {
+export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, onJobDeleted, onViewPipeline }: JobDetailsDrawerProps) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showApplicantsModal, setShowApplicantsModal] = useState(false);
   
   // Form state
   const [jobTitle, setJobTitle] = useState("");
@@ -485,7 +487,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
               </>
             ) : (
               <>
-                <Button variant="cta" className="flex-1">
+                <Button variant="cta" className="flex-1" onClick={() => setShowApplicantsModal(true)}>
                   View Applicants
                 </Button>
                 <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
@@ -496,6 +498,17 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
           </div>
         </div>
       </SheetContent>
+
+      {/* Applicants Modal */}
+      {job && (
+        <JobApplicantsModal
+          jobId={job.id}
+          jobTitle={job.jobTitle}
+          open={showApplicantsModal}
+          onOpenChange={setShowApplicantsModal}
+          onViewPipeline={onViewPipeline}
+        />
+      )}
     </Sheet>
   );
 };

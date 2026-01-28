@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Search, Filter, Eye, Pencil, Plus, Loader2 } from "lucide-react";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from "react-router-dom";
 
 interface Job {
   id: string;
@@ -30,6 +31,12 @@ export const JobManagementContent = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [, setSearchParams] = useSearchParams();
+
+  const handleViewPipeline = (candidateId: string, jobId: string) => {
+    // Navigate to Interview Pipeline tab with the selected candidate
+    setSearchParams({ tab: "interview-pipeline", candidateId, jobId });
+  };
 
   useEffect(() => {
     fetchJobs();
@@ -235,6 +242,7 @@ export const JobManagementContent = () => {
         mode={drawerMode}
         onJobUpdated={fetchJobs}
         onJobDeleted={fetchJobs}
+        onViewPipeline={handleViewPipeline}
       />
     </>
   );
