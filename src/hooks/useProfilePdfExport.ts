@@ -344,7 +344,47 @@ export const useProfilePdfExport = () => {
         
         doc.setTextColor(0, 0, 0);
         addRow('Career Level', resumeAnalysis.career_level || '-');
-        yPos += 2;
+        yPos += 4;
+        
+        // Score Explanation - Why this score?
+        checkPageBreak(35);
+        doc.setFillColor(254, 243, 199); // Light yellow background
+        doc.roundedRect(margin, yPos, contentWidth, 30, 2, 2, 'F');
+        doc.setDrawColor(245, 158, 11); // Orange border
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin, yPos, contentWidth, 30, 2, 2, 'S');
+        
+        yPos += 5;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(180, 83, 9);
+        doc.text('📊 Why This Score?', margin + 3, yPos);
+        yPos += 5;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 70, 20);
+        doc.setFontSize(8);
+        
+        // Generate score explanation based on analysis
+        const strengthsCount = resumeAnalysis.strengths?.length || 0;
+        const improvementsCount = resumeAnalysis.improvements?.length || 0;
+        const skillsCount = resumeAnalysis.skill_highlights?.length || 0;
+        const hasExperience = resumeAnalysis.experience_summary && resumeAnalysis.experience_summary.length > 20;
+        
+        let scoreExplanation = '';
+        if (score >= 80) {
+          scoreExplanation = `Excellent CV! Your profile demonstrates ${strengthsCount} key strengths, ${skillsCount} relevant skills, and ${hasExperience ? 'comprehensive' : 'basic'} experience documentation. Strong alignment with job requirements and clear career progression.`;
+        } else if (score >= 60) {
+          scoreExplanation = `Good CV with room for improvement. Found ${strengthsCount} strengths and ${improvementsCount} areas needing attention. ${skillsCount > 3 ? 'Good skill coverage' : 'Consider adding more skills'}. ${hasExperience ? 'Experience well documented' : 'Experience section needs more detail'}.`;
+        } else if (score >= 40) {
+          scoreExplanation = `Average CV needing significant enhancement. Identified ${improvementsCount} improvement areas vs ${strengthsCount} strengths. ${skillsCount < 3 ? 'Skills section incomplete' : 'Skills present but need elaboration'}. Add quantifiable achievements and detailed experience.`;
+        } else {
+          scoreExplanation = `CV requires major improvements. Found ${improvementsCount} critical gaps. Missing key sections: ${skillsCount < 2 ? 'skills, ' : ''}${!hasExperience ? 'experience details, ' : ''}achievements, and professional summary. Recommend complete restructuring.`;
+        }
+        
+        const explanationLines = doc.splitTextToSize(scoreExplanation, contentWidth - 8);
+        doc.text(explanationLines, margin + 3, yPos);
+        yPos += Math.min(explanationLines.length * 3.5, 18) + 8;
         
         // Experience Summary with better formatting
         if (resumeAnalysis.experience_summary) {
