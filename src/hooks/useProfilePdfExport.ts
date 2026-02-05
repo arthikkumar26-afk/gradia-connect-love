@@ -138,29 +138,64 @@ export const useProfilePdfExport = () => {
         }
       };
 
+      // Helper to create circular image using canvas
+      const createCircularImage = async (imageUrl: string, size: number): Promise<string | null> => {
+        try {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const imageBitmap = await createImageBitmap(blob);
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return null;
+          
+          // Draw white circle background
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Clip to circle and draw image
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          
+          // Draw image centered and cover the circle
+          const scale = Math.max(size / imageBitmap.width, size / imageBitmap.height);
+          const scaledWidth = imageBitmap.width * scale;
+          const scaledHeight = imageBitmap.height * scale;
+          const offsetX = (size - scaledWidth) / 2;
+          const offsetY = (size - scaledHeight) / 2;
+          
+          ctx.drawImage(imageBitmap, offsetX, offsetY, scaledWidth, scaledHeight);
+          
+          return canvas.toDataURL('image/png');
+        } catch (e) {
+          console.error('Failed to create circular image:', e);
+          return null;
+        }
+      };
+
       // Header - taller to accommodate larger profile picture
       doc.setFillColor(59, 130, 246); // Blue
-      doc.rect(0, 0, pageWidth, 50, 'F');
+      doc.rect(0, 0, pageWidth, 55, 'F');
       
       // Add profile picture if available
       let profileImageLoaded = false;
-      const imgSize = 30; // Square size for profile image
-      const imgX = margin + 5;
-      const imgY = 10;
-      const circleRadius = imgSize / 2;
-      const circleCenterX = imgX + circleRadius;
-      const circleCenterY = imgY + circleRadius;
+      const imgSize = 32; // Size in PDF mm
+      const canvasSize = 200; // Higher resolution for canvas
+      const imgX = margin + 3;
+      const imgY = 12;
       
       if (profile.profile_picture) {
         try {
-          const imgData = await loadImageAsBase64(profile.profile_picture);
-          if (imgData) {
-            // Draw white circular border/background
-            doc.setFillColor(255, 255, 255);
-            doc.circle(circleCenterX, circleCenterY, circleRadius + 2, 'F');
-            
-            // Add the image - properly centered and sized to fit within circle
-            doc.addImage(imgData, 'JPEG', imgX, imgY, imgSize, imgSize);
+          const circularImgData = await createCircularImage(profile.profile_picture, canvasSize);
+          if (circularImgData) {
+            // Add the circular image directly - it already has white border
+            doc.addImage(circularImgData, 'PNG', imgX, imgY, imgSize, imgSize);
             profileImageLoaded = true;
           }
         } catch (e) {
