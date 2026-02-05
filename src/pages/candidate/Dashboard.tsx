@@ -152,6 +152,7 @@ const CandidateDashboard = () => {
   
   // Upskill course suggestions based on mock interview performance
   const [upskillCourseSuggestions, setUpskillCourseSuggestions] = useState<any[]>([]);
+  const [mockInterviewSessions, setMockInterviewSessions] = useState<any[]>([]);
   const [mockInterviewStageResults, setMockInterviewStageResults] = useState<any[]>([]);
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
 
@@ -1150,36 +1151,43 @@ const CandidateDashboard = () => {
     
     setIsLoadingUpskillCourses(true);
     try {
-      // Get the most recent completed mock interview session
-      const { data: recentSession } = await supabase
+      // Get all mock interview sessions for this candidate
+      const { data: allSessions } = await supabase
         .from('mock_interview_sessions')
         .select('*')
         .eq('candidate_id', profile.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
+
+      if (allSessions && allSessions.length > 0) {
+        setMockInterviewSessions(allSessions);
+      }
+
+      // Get the most recent completed mock interview session
+      const recentSession = allSessions?.find(s => s.status === 'completed') || allSessions?.[0];
 
       if (!recentSession) {
         setIsLoadingUpskillCourses(false);
         return;
       }
 
-      // Get stage results for this session
-      const { data: resultsData } = await supabase
+      // Get all stage results for all sessions
+      const sessionIds = allSessions?.map(s => s.id) || [];
+      const { data: allResultsData } = await supabase
         .from('mock_interview_stage_results')
         .select('*')
-        .eq('session_id', recentSession.id)
+        .in('session_id', sessionIds)
         .order('stage_order', { ascending: true });
 
-      if (resultsData) {
-        setMockInterviewStageResults(resultsData);
+      if (allResultsData) {
+        setMockInterviewStageResults(allResultsData);
         
-        // Generate course suggestions based on improvements
-        const improvements = resultsData.flatMap((r: any) => r.improvements || []);
-        const overallScore = resultsData.length > 0 
-          ? resultsData.filter((r: any) => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4)
+        // Generate course suggestions based on improvements from the most recent session
+        const recentSessionResults = allResultsData.filter((r: any) => r.session_id === recentSession.id);
+        const improvements = recentSessionResults.flatMap((r: any) => r.improvements || []);
+        const overallScore = recentSessionResults.length > 0 
+          ? recentSessionResults.filter((r: any) => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4)
               .reduce((sum: number, r: any) => sum + (r.ai_score || 0), 0) / 
-            (resultsData.filter((r: any) => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4).length || 1)
+            (recentSessionResults.filter((r: any) => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4).length || 1)
           : 0;
 
         const courses: any[] = [];
@@ -1289,7 +1297,7 @@ const CandidateDashboard = () => {
         }
 
         // Add default courses if none matched
-        if (courses.length === 0 && resultsData.length > 0) {
+        if (courses.length === 0 && recentSessionResults.length > 0) {
           courses.push({
             id: 'def-1',
             title: 'Advanced Teaching Strategies',
@@ -1660,7 +1668,9 @@ const CandidateDashboard = () => {
                       experienceRecords,
                       familyRecords,
                       addressData,
-                      mockTestResults: mockTestSessions
+                      mockTestResults: mockTestSessions,
+                      mockInterviewSessions,
+                      mockInterviewStageResults
                     });
                   }
                 }}

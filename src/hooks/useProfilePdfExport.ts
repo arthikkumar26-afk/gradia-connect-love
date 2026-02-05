@@ -92,6 +92,32 @@ interface MockTestResult {
   completed_at?: string;
 }
 
+interface MockInterviewStageResult {
+  id: string;
+  session_id: string;
+  stage_name: string;
+  stage_order: number;
+  ai_score?: number;
+  ai_feedback?: string;
+  passed?: boolean;
+  strengths?: string[];
+  improvements?: string[];
+  questions?: any[];
+  answers?: any[];
+  question_scores?: any[];
+  completed_at?: string;
+  time_taken_seconds?: number;
+}
+
+interface MockInterviewSession {
+  id: string;
+  status: string;
+  overall_score?: number;
+  overall_feedback?: string;
+  completed_at?: string;
+  started_at?: string;
+}
+
 interface ProfilePdfExportData {
   profile: Profile;
   resumeAnalysis?: ResumeAnalysis | null;
@@ -100,13 +126,15 @@ interface ProfilePdfExportData {
   familyRecords?: FamilyRecord[];
   addressData?: AddressData | null;
   mockTestResults?: MockTestResult[];
+  mockInterviewSessions?: MockInterviewSession[];
+  mockInterviewStageResults?: MockInterviewStageResult[];
 }
 
 export const useProfilePdfExport = () => {
   const { toast } = useToast();
 
   const exportProfileToPdf = async (data: ProfilePdfExportData) => {
-    const { profile, resumeAnalysis, educationRecords, experienceRecords, familyRecords, addressData, mockTestResults } = data;
+    const { profile, resumeAnalysis, educationRecords, experienceRecords, familyRecords, addressData, mockTestResults, mockInterviewSessions, mockInterviewStageResults } = data;
     
     try {
       const doc = new jsPDF();
@@ -554,6 +582,251 @@ export const useProfilePdfExport = () => {
         }
       }
 
+      // Mock Interview Pipeline Results - Detailed for Skillory AI
+      if (mockInterviewSessions && mockInterviewSessions.length > 0 && mockInterviewStageResults && mockInterviewStageResults.length > 0) {
+        const completedSessions = mockInterviewSessions.filter(s => s.status === 'completed');
+        
+        if (completedSessions.length > 0) {
+          addSection('MOCK INTERVIEW PIPELINE RESULTS', [79, 70, 229]);
+          
+          completedSessions.forEach((session, sessionIdx) => {
+            checkPageBreak(20);
+            
+            // Session header
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(79, 70, 229);
+            const sessionDate = session.completed_at ? new Date(session.completed_at).toLocaleDateString('en-IN') : 'N/A';
+            doc.text(`Session ${sessionIdx + 1} - Completed: ${sessionDate}`, margin, yPos);
+            yPos += 6;
+            
+            // Overall session score
+            if (session.overall_score !== undefined) {
+              doc.setFontSize(9);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(0, 0, 0);
+              doc.text(`Overall Score: ${session.overall_score}%`, margin + 5, yPos);
+              yPos += 5;
+            }
+            
+            if (session.overall_feedback) {
+              const feedbackLines = doc.splitTextToSize(`Feedback: ${session.overall_feedback}`, contentWidth - 15);
+              doc.text(feedbackLines, margin + 5, yPos);
+              yPos += feedbackLines.length * 4 + 3;
+            }
+            
+            // Stage results for this session
+            const sessionStages = mockInterviewStageResults
+              .filter(sr => sr.session_id === session.id)
+              .sort((a, b) => a.stage_order - b.stage_order);
+            
+            sessionStages.forEach((stage) => {
+              checkPageBreak(40);
+              
+              // Stage header with pass/fail indicator
+              doc.setFontSize(9);
+              doc.setFont('helvetica', 'bold');
+              const stageColor: [number, number, number] = stage.passed ? [34, 139, 34] : [220, 53, 69];
+              doc.setTextColor(...stageColor);
+              doc.text(`${stage.passed ? '✓' : '✗'} Stage ${stage.stage_order}: ${stage.stage_name}`, margin + 5, yPos);
+              yPos += 5;
+              
+              doc.setTextColor(0, 0, 0);
+              doc.setFont('helvetica', 'normal');
+              
+              // Stage score and time
+              const stageScore = stage.ai_score !== undefined ? `${stage.ai_score}%` : '-';
+              const stageTime = stage.time_taken_seconds ? `${Math.floor(stage.time_taken_seconds / 60)}m ${stage.time_taken_seconds % 60}s` : '-';
+              doc.text(`Score: ${stageScore} | Time: ${stageTime} | Status: ${stage.passed ? 'PASSED' : 'FAILED'}`, margin + 10, yPos);
+              yPos += 5;
+              
+              // AI Feedback for this stage
+              if (stage.ai_feedback) {
+                doc.setFontSize(8);
+                doc.setTextColor(80, 80, 80);
+                const feedbackLines = doc.splitTextToSize(`AI Feedback: ${stage.ai_feedback}`, contentWidth - 20);
+                doc.text(feedbackLines, margin + 10, yPos);
+                yPos += feedbackLines.length * 3.5 + 2;
+              }
+              
+              // Stage strengths
+              if (stage.strengths && stage.strengths.length > 0) {
+                doc.setFontSize(8);
+                doc.setTextColor(34, 139, 34);
+                doc.text('Strengths:', margin + 10, yPos);
+                yPos += 4;
+                stage.strengths.forEach(s => {
+                  checkPageBreak(6);
+                  const sLines = doc.splitTextToSize(`• ${s}`, contentWidth - 25);
+                  doc.text(sLines, margin + 15, yPos);
+                  yPos += sLines.length * 3.5;
+                });
+                yPos += 2;
+              }
+              
+              // Stage improvements
+              if (stage.improvements && stage.improvements.length > 0) {
+                doc.setFontSize(8);
+                doc.setTextColor(180, 80, 0);
+                doc.text('Areas to Improve:', margin + 10, yPos);
+                yPos += 4;
+                stage.improvements.forEach(imp => {
+                  checkPageBreak(6);
+                  const impLines = doc.splitTextToSize(`• ${imp}`, contentWidth - 25);
+                  doc.text(impLines, margin + 15, yPos);
+                  yPos += impLines.length * 3.5;
+                });
+                yPos += 2;
+              }
+              
+              yPos += 4;
+            });
+            
+            yPos += 6;
+          });
+        }
+      }
+
+      // CV SCORE BREAKDOWN - Detailed for Skillory AI Compatibility
+      if (resumeAnalysis) {
+        checkPageBreak(60);
+        addSection('CV SCORE BREAKDOWN (Skillory AI Compatible)', [220, 38, 127]);
+        
+        const score = resumeAnalysis.overall_score || 0;
+        
+        // Score explanation header
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Your CV Score: ${score}/100`, margin, yPos);
+        yPos += 8;
+        
+        // Score breakdown explanation
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+        
+        // Why this score
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(79, 70, 229);
+        doc.text('WHY THIS SCORE?', margin, yPos);
+        yPos += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+        
+        const scoreExplanation = score >= 80 
+          ? 'Your CV demonstrates excellent completeness with strong professional details, comprehensive experience documentation, and well-articulated skills.'
+          : score >= 60 
+            ? 'Your CV shows good foundational content but lacks some key details that could strengthen your profile. Focus on adding quantifiable achievements and detailed project descriptions.'
+            : score >= 40
+              ? 'Your CV needs significant improvement. Missing critical sections like detailed work experience, quantifiable achievements, and comprehensive skill sets.'
+              : 'Your CV requires substantial work. Most essential sections are either incomplete or missing entirely.';
+        
+        const explanationLines = doc.splitTextToSize(scoreExplanation, contentWidth - 5);
+        doc.text(explanationLines, margin + 3, yPos);
+        yPos += explanationLines.length * 4 + 6;
+        
+        // What you have (strengths)
+        if (resumeAnalysis.strengths && resumeAnalysis.strengths.length > 0) {
+          checkPageBreak(25);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(34, 139, 34);
+          doc.text('✓ WHAT YOU HAVE (Contributing to your score):', margin, yPos);
+          yPos += 6;
+          doc.setFont('helvetica', 'normal');
+          resumeAnalysis.strengths.forEach(strength => {
+            checkPageBreak(8);
+            const sLines = doc.splitTextToSize(`• ${strength}`, contentWidth - 10);
+            doc.text(sLines, margin + 5, yPos);
+            yPos += sLines.length * 4;
+          });
+          yPos += 4;
+        }
+        
+        // What's missing (improvements)
+        if (resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0) {
+          checkPageBreak(25);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(220, 53, 69);
+          doc.text('✗ WHAT\'S MISSING (Areas reducing your score):', margin, yPos);
+          yPos += 6;
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(180, 80, 0);
+          resumeAnalysis.improvements.forEach(improvement => {
+            checkPageBreak(8);
+            const iLines = doc.splitTextToSize(`• ${improvement}`, contentWidth - 10);
+            doc.text(iLines, margin + 5, yPos);
+            yPos += iLines.length * 4;
+          });
+          yPos += 4;
+        }
+        
+        // Actionable recommendations
+        checkPageBreak(40);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(79, 70, 229);
+        doc.text('📋 ACTION ITEMS TO IMPROVE YOUR CV:', margin, yPos);
+        yPos += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+        
+        const recommendations = [
+          'Add quantifiable achievements (e.g., "Increased student engagement by 25%")',
+          'Include specific project descriptions with outcomes',
+          'List certifications, awards, and professional development courses',
+          'Add detailed technical skills with proficiency levels',
+          'Include keywords relevant to your target role for ATS optimization',
+          'Ensure contact information and professional summary are complete',
+          'Add references or testimonials if available'
+        ];
+        
+        recommendations.forEach(rec => {
+          checkPageBreak(8);
+          const recLines = doc.splitTextToSize(`→ ${rec}`, contentWidth - 10);
+          doc.text(recLines, margin + 5, yPos);
+          yPos += recLines.length * 4;
+        });
+        yPos += 6;
+        
+        // Profile completeness checklist
+        checkPageBreak(50);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(168, 85, 247);
+        doc.text('📊 PROFILE COMPLETENESS CHECKLIST:', margin, yPos);
+        yPos += 6;
+        
+        const checklistItems = [
+          { item: 'Personal Information', hasData: !!(profile.full_name && profile.email && profile.mobile) },
+          { item: 'Educational Qualifications', hasData: educationRecords && educationRecords.length > 0 },
+          { item: 'Work Experience', hasData: experienceRecords && experienceRecords.length > 0 },
+          { item: 'Professional Summary', hasData: !!resumeAnalysis.experience_summary },
+          { item: 'Skills & Competencies', hasData: resumeAnalysis.skill_highlights && resumeAnalysis.skill_highlights.length > 0 },
+          { item: 'Location Preferences', hasData: !!(profile.preferred_state && profile.preferred_district) },
+          { item: 'Resume Uploaded', hasData: !!profile.resume_url },
+          { item: 'Profile Picture', hasData: !!profile.profile_picture },
+          { item: 'Address Details', hasData: !!addressData },
+          { item: 'Family Details', hasData: familyRecords && familyRecords.length > 0 },
+        ];
+        
+        doc.setFontSize(8);
+        checklistItems.forEach(check => {
+          checkPageBreak(6);
+          doc.setTextColor(check.hasData ? 34 : 180, check.hasData ? 139 : 80, check.hasData ? 34 : 0);
+          doc.text(`${check.hasData ? '✓' : '✗'} ${check.item}`, margin + 5, yPos);
+          yPos += 5;
+        });
+        
+        const completedItems = checklistItems.filter(c => c.hasData).length;
+        const completionPercent = Math.round((completedItems / checklistItems.length) * 100);
+        yPos += 4;
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(completionPercent >= 70 ? 34 : completionPercent >= 50 ? 180 : 220, 
+                         completionPercent >= 70 ? 139 : completionPercent >= 50 ? 80 : 53, 
+                         completionPercent >= 70 ? 34 : completionPercent >= 50 ? 0 : 69);
+        doc.text(`Profile Completion: ${completedItems}/${checklistItems.length} (${completionPercent}%)`, margin + 5, yPos);
+        yPos += 8;
+      }
+
       // Footer
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
@@ -561,7 +834,7 @@ export const useProfilePdfExport = () => {
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, 290, { align: 'center' });
-        doc.text('Gradia - Candidate Profile Report', margin, 290);
+        doc.text('Gradia - Candidate Profile Report | Skillory AI Compatible', margin, 290);
       }
 
       // Save
