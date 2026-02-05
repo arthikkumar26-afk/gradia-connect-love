@@ -346,45 +346,108 @@ export const useProfilePdfExport = () => {
         addRow('Career Level', resumeAnalysis.career_level || '-');
         yPos += 4;
         
-        // Score Explanation - Why this score?
-        checkPageBreak(35);
-        doc.setFillColor(254, 243, 199); // Light yellow background
-        doc.roundedRect(margin, yPos, contentWidth, 30, 2, 2, 'F');
-        doc.setDrawColor(245, 158, 11); // Orange border
-        doc.setLineWidth(0.5);
-        doc.roundedRect(margin, yPos, contentWidth, 30, 2, 2, 'S');
-        
-        yPos += 5;
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(180, 83, 9);
-        doc.text('Why This Score?', margin + 3, yPos);
-        yPos += 5;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(100, 70, 20);
-        doc.setFontSize(8);
-        
-        // Generate score explanation based on analysis
+        // Score Explanation - Why this score? (DETAILED)
         const strengthsCount = resumeAnalysis.strengths?.length || 0;
         const improvementsCount = resumeAnalysis.improvements?.length || 0;
         const skillsCount = resumeAnalysis.skill_highlights?.length || 0;
         const hasExperience = resumeAnalysis.experience_summary && resumeAnalysis.experience_summary.length > 20;
+        const hasEducation = educationRecords && educationRecords.length > 0;
+        const hasWorkExp = experienceRecords && experienceRecords.length > 0;
+        const hasAddress = addressData && (addressData.present_state || addressData.permanent_state);
+        const hasFamily = familyRecords && familyRecords.length > 0;
         
-        let scoreExplanation = '';
+        // Calculate component scores
+        const profileScore = (profile.full_name ? 10 : 0) + (profile.email ? 10 : 0) + (profile.mobile ? 10 : 0) + 
+                            (profile.date_of_birth ? 5 : 0) + (profile.gender ? 5 : 0) + (profile.highest_qualification ? 10 : 0);
+        const skillsScore = Math.min(skillsCount * 5, 25);
+        const experienceScore = hasWorkExp ? (experienceRecords.length >= 2 ? 20 : 10) : 0;
+        const educationScore = hasEducation ? (educationRecords.length >= 2 ? 15 : 8) : 0;
+        const strengthsScore = Math.min(strengthsCount * 3, 15);
+        
+        // Calculate height needed for explanation box
+        const explanationBoxHeight = 85;
+        checkPageBreak(explanationBoxHeight + 10);
+        
+        doc.setFillColor(254, 243, 199); // Light yellow background
+        doc.roundedRect(margin, yPos, contentWidth, explanationBoxHeight, 2, 2, 'F');
+        doc.setDrawColor(245, 158, 11); // Orange border
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin, yPos, contentWidth, explanationBoxHeight, 2, 2, 'S');
+        
+        yPos += 6;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(180, 83, 9);
+        doc.text('DETAILED SCORE ANALYSIS - Why This Score?', margin + 3, yPos);
+        yPos += 7;
+        
+        // Score breakdown header
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(80, 50, 10);
+        doc.text('SCORE BREAKDOWN:', margin + 3, yPos);
+        yPos += 5;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(100, 70, 20);
+        
+        // Component breakdown with points
+        const components = [
+          { name: 'Personal Information', earned: profileScore, max: 50, detail: `Name, Email, Mobile, DOB, Gender, Qualification` },
+          { name: 'Skills & Competencies', earned: skillsScore, max: 25, detail: `${skillsCount} skills identified` },
+          { name: 'Work Experience', earned: experienceScore, max: 20, detail: hasWorkExp ? `${experienceRecords.length} experience(s) documented` : 'No experience added' },
+          { name: 'Educational Background', earned: educationScore, max: 15, detail: hasEducation ? `${educationRecords.length} qualification(s) listed` : 'No education added' },
+          { name: 'Profile Strengths', earned: strengthsScore, max: 15, detail: `${strengthsCount} strengths found by AI` },
+        ];
+        
+        components.forEach(comp => {
+          const percentage = comp.max > 0 ? Math.round((comp.earned / comp.max) * 100) : 0;
+          const status = percentage >= 70 ? 'Good' : percentage >= 40 ? 'Fair' : 'Needs Work';
+          doc.text(`  - ${comp.name}: ${comp.earned}/${comp.max} pts (${percentage}% - ${status}) | ${comp.detail}`, margin + 3, yPos);
+          yPos += 4;
+        });
+        
+        yPos += 3;
+        
+        // Detailed explanation
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text('ANALYSIS SUMMARY:', margin + 3, yPos);
+        yPos += 5;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        
+        let detailedExplanation = '';
         if (score >= 80) {
-          scoreExplanation = `Excellent CV! Your profile demonstrates ${strengthsCount} key strengths, ${skillsCount} relevant skills, and ${hasExperience ? 'comprehensive' : 'basic'} experience documentation. Strong alignment with job requirements and clear career progression.`;
+          detailedExplanation = `EXCELLENT PROFILE: Your CV scored ${score}/100 because it demonstrates comprehensive coverage across all key areas. ` +
+            `You have ${strengthsCount} identified strengths, ${skillsCount} relevant skills, and ${hasExperience ? 'detailed' : 'documented'} experience. ` +
+            `Your profile shows clear career direction, well-articulated qualifications, and professional presentation. ` +
+            `AI analysis found strong alignment with industry standards and potential for high employability.`;
         } else if (score >= 60) {
-          scoreExplanation = `Good CV with room for improvement. Found ${strengthsCount} strengths and ${improvementsCount} areas needing attention. ${skillsCount > 3 ? 'Good skill coverage' : 'Consider adding more skills'}. ${hasExperience ? 'Experience well documented' : 'Experience section needs more detail'}.`;
+          detailedExplanation = `GOOD PROFILE WITH GAPS: Your CV scored ${score}/100 indicating solid foundation but missing elements. ` +
+            `Positive: ${strengthsCount} strengths and ${skillsCount} skills identified. ` +
+            `Areas needing attention: ${improvementsCount} improvement points found. ` +
+            `${!hasWorkExp ? 'Missing work experience details. ' : ''}${!hasEducation ? 'Education section incomplete. ' : ''}` +
+            `${skillsCount < 5 ? 'Add more technical/soft skills. ' : ''}Enhance with quantifiable achievements for better scoring.`;
         } else if (score >= 40) {
-          scoreExplanation = `Average CV needing significant enhancement. Identified ${improvementsCount} improvement areas vs ${strengthsCount} strengths. ${skillsCount < 3 ? 'Skills section incomplete' : 'Skills present but need elaboration'}. Add quantifiable achievements and detailed experience.`;
+          detailedExplanation = `AVERAGE PROFILE - NEEDS WORK: Your CV scored ${score}/100 due to significant gaps. ` +
+            `Only ${strengthsCount} strengths found vs ${improvementsCount} improvement areas. ` +
+            `Critical missing elements: ${!hasWorkExp ? 'Work Experience, ' : ''}${!hasEducation ? 'Education Details, ' : ''}` +
+            `${skillsCount < 3 ? 'Skills (only ' + skillsCount + ' found), ' : ''}${!hasAddress ? 'Address Information, ' : ''}. ` +
+            `Recommendation: Complete all profile sections, add detailed job descriptions, and include measurable accomplishments.`;
         } else {
-          scoreExplanation = `CV requires major improvements. Found ${improvementsCount} critical gaps. Missing key sections: ${skillsCount < 2 ? 'skills, ' : ''}${!hasExperience ? 'experience details, ' : ''}achievements, and professional summary. Recommend complete restructuring.`;
+          detailedExplanation = `INCOMPLETE PROFILE - MAJOR IMPROVEMENTS NEEDED: Your CV scored only ${score}/100 indicating critical deficiencies. ` +
+            `Issues found: ${improvementsCount} major problems, only ${strengthsCount} strengths. ` +
+            `Missing sections: ${!hasWorkExp ? 'Work History, ' : ''}${!hasEducation ? 'Education, ' : ''}${skillsCount < 2 ? 'Skills, ' : ''}` +
+            `${!hasAddress ? 'Address, ' : ''}${!profile.resume_url ? 'Resume Upload, ' : ''}. ` +
+            `Action Required: Complete profile from scratch with all mandatory fields, upload professional resume, and add detailed career information.`;
         }
         
-        const explanationLines = doc.splitTextToSize(scoreExplanation, contentWidth - 8);
+        const explanationLines = doc.splitTextToSize(detailedExplanation, contentWidth - 8);
         doc.text(explanationLines, margin + 3, yPos);
-        yPos += Math.min(explanationLines.length * 3.5, 18) + 8;
+        yPos += Math.min(explanationLines.length * 3, 25) + 10;
         
         // Experience Summary with better formatting
         if (resumeAnalysis.experience_summary) {
