@@ -358,7 +358,7 @@ export const useProfilePdfExport = () => {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(180, 83, 9);
-        doc.text('📊 Why This Score?', margin + 3, yPos);
+        doc.text('Why This Score?', margin + 3, yPos);
         yPos += 5;
         
         doc.setFont('helvetica', 'normal');
