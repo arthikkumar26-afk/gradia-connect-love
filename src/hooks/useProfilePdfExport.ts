@@ -138,21 +138,29 @@ export const useProfilePdfExport = () => {
         }
       };
 
-      // Header
+      // Header - taller to accommodate larger profile picture
       doc.setFillColor(59, 130, 246); // Blue
-      doc.rect(0, 0, pageWidth, 45, 'F');
+      doc.rect(0, 0, pageWidth, 50, 'F');
       
       // Add profile picture if available
       let profileImageLoaded = false;
+      const imgSize = 30; // Square size for profile image
+      const imgX = margin + 5;
+      const imgY = 10;
+      const circleRadius = imgSize / 2;
+      const circleCenterX = imgX + circleRadius;
+      const circleCenterY = imgY + circleRadius;
+      
       if (profile.profile_picture) {
         try {
           const imgData = await loadImageAsBase64(profile.profile_picture);
           if (imgData) {
-            // Draw white circular background
+            // Draw white circular border/background
             doc.setFillColor(255, 255, 255);
-            doc.circle(margin + 15, 22, 14, 'F');
-            // Add the image
-            doc.addImage(imgData, 'JPEG', margin + 3, 10, 24, 24);
+            doc.circle(circleCenterX, circleCenterY, circleRadius + 2, 'F');
+            
+            // Add the image - properly centered and sized to fit within circle
+            doc.addImage(imgData, 'JPEG', imgX, imgY, imgSize, imgSize);
             profileImageLoaded = true;
           }
         } catch (e) {
@@ -160,35 +168,35 @@ export const useProfilePdfExport = () => {
         }
       }
       
-      const textOffset = profileImageLoaded ? 35 : 0;
+      const textOffset = profileImageLoaded ? imgSize + 15 : 0;
       
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      doc.text('GRADIA', margin + textOffset, 18);
+      doc.text('GRADIA', margin + textOffset, 20);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text('Candidate Profile Report', margin + textOffset, 28);
+      doc.text('Candidate Profile Report', margin + textOffset, 30);
       
       // Candidate name in header
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text(profile.full_name, margin + textOffset, 38);
+      doc.text(profile.full_name, margin + textOffset, 42);
       
       // Registration number on right
       if (profile.registration_number) {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`REG: ${profile.registration_number}`, pageWidth - margin - 50, 18);
+        doc.text(`REG: ${profile.registration_number}`, pageWidth - margin - 50, 20);
       }
       
       // Generated date
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}`, pageWidth - margin - 50, 28);
+      doc.text(`Generated: ${new Date().toLocaleDateString('en-IN')}`, pageWidth - margin - 50, 30);
       
-      yPos = 55;
+      yPos = 58;
       doc.setTextColor(0, 0, 0);
 
       // Section helper
