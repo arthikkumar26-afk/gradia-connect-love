@@ -1202,7 +1202,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.7,
             category: 'Communication Skills',
-            url: 'https://www.coursera.org/search?query=communication%20skills'
+            url: 'https://skillory.in'
           });
         }
 
@@ -1216,7 +1216,7 @@ const CandidateDashboard = () => {
             level: 'Intermediate',
             rating: 4.8,
             category: 'Subject Expertise',
-            url: 'https://www.edx.org/'
+            url: 'https://skillory.in'
           });
         }
 
@@ -1230,7 +1230,7 @@ const CandidateDashboard = () => {
             level: 'Intermediate',
             rating: 4.6,
             category: 'Teaching Methods',
-            url: 'https://www.udemy.com/courses/teaching-and-academics/'
+            url: 'https://skillory.in'
           });
           courses.push({
             id: 'teach-2',
@@ -1240,7 +1240,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.5,
             category: 'Presentation Skills',
-            url: 'https://www.linkedin.com/learning/topics/presentation-skills'
+            url: 'https://skillory.in'
           });
         }
 
@@ -1254,7 +1254,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.4,
             category: 'Productivity',
-            url: 'https://www.skillshare.com/browse/time-management'
+            url: 'https://skillory.in'
           });
         }
 
@@ -1268,7 +1268,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.6,
             category: 'Personal Development',
-            url: 'https://www.coursera.org/search?query=confidence'
+            url: 'https://skillory.in'
           });
         }
 
@@ -1282,7 +1282,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.8,
             category: 'Teaching Foundation',
-            url: 'https://www.khanacademy.org/'
+            url: 'https://skillory.in'
           });
           courses.push({
             id: 'gen-2',
@@ -1292,7 +1292,7 @@ const CandidateDashboard = () => {
             level: 'Intermediate',
             rating: 4.5,
             category: 'Career Development',
-            url: 'https://www.udemy.com/courses/personal-development/career-development/'
+            url: 'https://skillory.in'
           });
         }
 
@@ -1306,7 +1306,7 @@ const CandidateDashboard = () => {
             level: 'Advanced',
             rating: 4.7,
             category: 'Professional Growth',
-            url: 'https://www.edx.org/learn/teaching'
+            url: 'https://skillory.in'
           });
         }
 
@@ -1319,9 +1319,9 @@ const CandidateDashboard = () => {
     }
   };
 
-  // Fetch upskill course suggestions when activeMenu is 'upskill'
+  // Fetch mock interview data on dashboard load (for PDF export) and upskill tab
   useEffect(() => {
-    if (activeMenu === 'upskill' && profile?.id && upskillCourseSuggestions.length === 0) {
+    if ((activeMenu === 'upskill' || activeMenu === 'dashboard') && profile?.id && mockInterviewSessions.length === 0) {
       fetchMockInterviewCourseSuggestions();
     }
   }, [activeMenu, profile?.id]);
