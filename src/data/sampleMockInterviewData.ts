@@ -1,11 +1,12 @@
-// Sample mock interview data for PDF export when no real completed sessions exist
-// This ensures the PDF always has review data for Skillory AI compatibility
+// Sample mock interview data for PDF export and demo mode
+// Stage names MUST match the edge function definitions in process-mock-interview-stage
 
 export const getSampleMockInterviewSession = () => ({
   id: 'sample-session-001',
   status: 'completed',
+  current_stage_order: 8,
   overall_score: 72,
-  overall_feedback: 'Good performance overall. Demonstrated solid subject knowledge and communication skills. Areas for improvement include time management during demonstrations and incorporating more interactive teaching methods.',
+  overall_feedback: 'Selected for Next Round',
   completed_at: new Date().toISOString(),
   started_at: new Date(Date.now() - 3600000).toISOString(),
 });
@@ -63,8 +64,21 @@ export const getSampleMockInterviewStageResults = (sessionId: string) => [
   {
     id: 'sample-result-004',
     session_id: sessionId,
-    stage_name: 'Demo Round',
+    stage_name: 'Demo Slot Booking',
     stage_order: 4,
+    ai_score: 100,
+    ai_feedback: 'Demo interview slot booked successfully.',
+    passed: true,
+    strengths: ['Slot booked promptly', 'Selected an appropriate time slot'],
+    improvements: [],
+    completed_at: new Date(Date.now() - 2800000).toISOString(),
+    time_taken_seconds: 120,
+  },
+  {
+    id: 'sample-result-005',
+    session_id: sessionId,
+    stage_name: 'Demo Round',
+    stage_order: 5,
     ai_score: 68,
     ai_feedback: 'The demonstration showed good subject knowledge and teaching ability. Voice modulation and classroom engagement techniques need improvement. The lesson plan was well-organized but could include more interactive elements.',
     passed: true,
@@ -85,12 +99,12 @@ export const getSampleMockInterviewStageResults = (sessionId: string) => [
     time_taken_seconds: 900,
   },
   {
-    id: 'sample-result-005',
+    id: 'sample-result-006',
     session_id: sessionId,
-    stage_name: 'Management Feedback',
-    stage_order: 5,
+    stage_name: 'Demo Feedback',
+    stage_order: 6,
     ai_score: 70,
-    ai_feedback: 'Management review indicates a promising candidate with good foundational skills. Recommended for further training in advanced teaching methodologies and classroom management techniques.',
+    ai_feedback: 'Demo feedback reviewed. Performance indicates a promising candidate with good foundational skills. Recommended for further training in advanced teaching methodologies and classroom management techniques.',
     passed: true,
     strengths: [
       'Professional attitude and willingness to learn',
@@ -108,31 +122,19 @@ export const getSampleMockInterviewStageResults = (sessionId: string) => [
     time_taken_seconds: 600,
   },
   {
-    id: 'sample-result-006',
-    session_id: sessionId,
-    stage_name: 'HR Documents',
-    stage_order: 6,
-    ai_score: 100,
-    ai_feedback: 'All required HR documents submitted and verified successfully.',
-    passed: true,
-    strengths: ['All documents submitted on time', 'Documents were clear and properly formatted'],
-    improvements: [],
-    completed_at: new Date(Date.now() - 1200000).toISOString(),
-    time_taken_seconds: 300,
-  },
-  {
     id: 'sample-result-007',
     session_id: sessionId,
-    stage_name: 'HR Negotiation',
+    stage_name: 'Final Review (HR)',
     stage_order: 7,
     ai_score: 80,
-    ai_feedback: 'Salary expectations are within the acceptable range. Candidate showed flexibility in joining date and relocation preferences. Good negotiation approach.',
+    ai_feedback: 'Salary expectations are within the acceptable range. Candidate showed flexibility in joining date and relocation preferences. Good negotiation approach. All required HR documents submitted and verified successfully.',
     passed: true,
     strengths: [
       'Realistic salary expectations aligned with market standards',
       'Flexible on joining timeline',
       'Open to relocation if required',
-      'Professional negotiation approach'
+      'Professional negotiation approach',
+      'All documents submitted on time'
     ],
     improvements: [
       'Research industry salary benchmarks for better positioning',
@@ -145,7 +147,7 @@ export const getSampleMockInterviewStageResults = (sessionId: string) => [
   {
     id: 'sample-result-008',
     session_id: sessionId,
-    stage_name: 'Final Review',
+    stage_name: 'All Reviews',
     stage_order: 8,
     ai_score: 72,
     ai_feedback: 'Overall, the candidate has shown good potential with solid fundamentals. Performance across all stages indicates readiness for the role with additional training. Recommended for onboarding with a structured development plan.',
