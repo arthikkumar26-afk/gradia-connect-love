@@ -18,7 +18,6 @@ import {
   LogOut,
   User,
   ClipboardList,
-  BellRing,
   Megaphone,
   Grid3X3,
   UserCheck,
@@ -256,7 +255,6 @@ const EmployerDashboard = () => {
     { id: "jobs", label: "Vacancies List", icon: Briefcase, path: "/employer/jobs" },
     { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
     { id: "talent-pool", label: "Candidate Data", icon: Users, path: "/employer/talent-pool" },
-    { id: "job-alert", label: "Job Alert", icon: BellRing, path: "/employer/job-alert" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "mock-interview-pipeline", label: "Mock Interview Pipeline", icon: ClipboardList, path: "/employer/mock-interview-pipeline" },
     
@@ -511,7 +509,7 @@ const EmployerDashboard = () => {
             {activeMenu === "viva" && <VivaContent />}
             {activeMenu === "subscriptions" && <SubscriptionsContent />}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
-            {activeMenu === "job-alert" && <JobAlertContent />}
+            
             {activeMenu === "smm" && <SMMContent />}
             {activeMenu === "feedback-matrix" && <FeedbackMatrixContent />}
             {activeMenu === "confirmation" && <ConfirmationContent />}
