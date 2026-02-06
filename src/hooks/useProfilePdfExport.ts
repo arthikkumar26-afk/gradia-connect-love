@@ -399,32 +399,16 @@ export const useProfilePdfExport = () => {
       addTableRow('PREFERRED STATE 2', profile.preferred_state_2 || '-', 'PREFERRED DISTRICT 2', profile.preferred_district_2 || '-', true);
       yPos += 6;
 
-      // AI Resume Analysis
+      // AI Resume Analysis - Table Style
       if (resumeAnalysis) {
-        addSection('AI RESUME ANALYSIS', [249, 115, 22]);
+        addTableHeader('AI RESUME ANALYSIS', [249, 115, 22]);
         
-        // Score and Career Level with visual indicator
-        checkPageBreak(20);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text('Overall Score:', margin, yPos);
-        
-        // Score badge
+        // Score and Career Level row
         const score = resumeAnalysis.overall_score || 0;
-        const scoreColor: [number, number, number] = score >= 70 ? [34, 139, 34] : score >= 50 ? [255, 165, 0] : [220, 53, 69];
-        doc.setFillColor(...scoreColor);
-        doc.roundedRect(margin + 35, yPos - 4, 25, 7, 2, 2, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.text(`${score}/100`, margin + 37, yPos);
-        yPos += 8;
-        
-        doc.setTextColor(0, 0, 0);
-        addRow('Career Level', resumeAnalysis.career_level || '-');
+        addTableRow('OVERALL SCORE', `${score}/100`, 'CAREER LEVEL', resumeAnalysis.career_level || '-', false);
         yPos += 4;
         
-        // Score Explanation - Why this score? (DETAILED)
+        // Score Explanation variables
         const strengthsCount = resumeAnalysis.strengths?.length || 0;
         const improvementsCount = resumeAnalysis.improvements?.length || 0;
         const skillsCount = resumeAnalysis.skill_highlights?.length || 0;
@@ -432,7 +416,6 @@ export const useProfilePdfExport = () => {
         const hasEducation = educationRecords && educationRecords.length > 0;
         const hasWorkExp = experienceRecords && experienceRecords.length > 0;
         const hasAddress = addressData && (addressData.present_state || addressData.permanent_state);
-        const hasFamily = familyRecords && familyRecords.length > 0;
         
         // Calculate component scores
         const profileScore = (profile.full_name ? 10 : 0) + (profile.email ? 10 : 0) + (profile.mobile ? 10 : 0) + 
@@ -442,162 +425,182 @@ export const useProfilePdfExport = () => {
         const educationScore = hasEducation ? (educationRecords.length >= 2 ? 15 : 8) : 0;
         const strengthsScore = Math.min(strengthsCount * 3, 15);
         
-        // Calculate height needed for explanation box
-        const explanationBoxHeight = 85;
-        checkPageBreak(explanationBoxHeight + 10);
-        
-        doc.setFillColor(254, 243, 199); // Light yellow background
-        doc.roundedRect(margin, yPos, contentWidth, explanationBoxHeight, 2, 2, 'F');
-        doc.setDrawColor(245, 158, 11); // Orange border
-        doc.setLineWidth(0.5);
-        doc.roundedRect(margin, yPos, contentWidth, explanationBoxHeight, 2, 2, 'S');
-        
-        yPos += 6;
-        doc.setFontSize(10);
+        // Score Breakdown Table Header
+        checkPageBreak(60);
+        doc.setFillColor(255, 251, 235);
+        doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+        doc.setDrawColor(249, 115, 22);
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPos + 6, margin + contentWidth, yPos + 6);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(180, 83, 9);
-        doc.text('DETAILED SCORE ANALYSIS - Why This Score?', margin + 3, yPos);
-        yPos += 7;
+        doc.text('SCORE BREAKDOWN', margin + 3, yPos + 4);
+        yPos += 9;
         
-        // Score breakdown header
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(80, 50, 10);
-        doc.text('SCORE BREAKDOWN:', margin + 3, yPos);
-        yPos += 5;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        doc.setTextColor(100, 70, 20);
-        
-        // Component breakdown with points
+        // Component breakdown as table rows
         const components = [
-          { name: 'Personal Information', earned: profileScore, max: 50, detail: `Name, Email, Mobile, DOB, Gender, Qualification` },
+          { name: 'Personal Information', earned: profileScore, max: 50, detail: 'Name, Email, Mobile, DOB, Gender' },
           { name: 'Skills & Competencies', earned: skillsScore, max: 25, detail: `${skillsCount} skills identified` },
-          { name: 'Work Experience', earned: experienceScore, max: 20, detail: hasWorkExp ? `${experienceRecords.length} experience(s) documented` : 'No experience added' },
-          { name: 'Educational Background', earned: educationScore, max: 15, detail: hasEducation ? `${educationRecords.length} qualification(s) listed` : 'No education added' },
-          { name: 'Profile Strengths', earned: strengthsScore, max: 15, detail: `${strengthsCount} strengths found by AI` },
+          { name: 'Work Experience', earned: experienceScore, max: 20, detail: hasWorkExp ? `${experienceRecords.length} exp(s)` : 'Not added' },
+          { name: 'Educational Background', earned: educationScore, max: 15, detail: hasEducation ? `${educationRecords.length} qual(s)` : 'Not added' },
+          { name: 'Profile Strengths', earned: strengthsScore, max: 15, detail: `${strengthsCount} by AI` },
         ];
         
-        components.forEach(comp => {
+        components.forEach((comp, idx) => {
           const percentage = comp.max > 0 ? Math.round((comp.earned / comp.max) * 100) : 0;
           const status = percentage >= 70 ? 'Good' : percentage >= 40 ? 'Fair' : 'Needs Work';
-          doc.text(`  - ${comp.name}: ${comp.earned}/${comp.max} pts (${percentage}% - ${status}) | ${comp.detail}`, margin + 3, yPos);
-          yPos += 4;
+          const scoreText = `${comp.earned}/${comp.max} pts (${percentage}% - ${status})`;
+          addTableRow(comp.name.toUpperCase(), scoreText, 'DETAIL', comp.detail, idx % 2 === 0);
         });
-        
-        yPos += 3;
-        
-        // Detailed explanation
+        yPos += 4;
+
+        // Analysis Summary Table
+        checkPageBreak(30);
+        doc.setFillColor(255, 251, 235);
+        doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+        doc.setDrawColor(249, 115, 22);
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPos + 6, margin + contentWidth, yPos + 6);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.text('ANALYSIS SUMMARY:', margin + 3, yPos);
-        yPos += 5;
+        doc.setTextColor(180, 83, 9);
+        doc.text('ANALYSIS SUMMARY', margin + 3, yPos + 4);
+        yPos += 9;
         
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        
-        let detailedExplanation = '';
+        let summaryText = '';
         if (score >= 80) {
-          detailedExplanation = `EXCELLENT PROFILE: Your CV scored ${score}/100 because it demonstrates comprehensive coverage across all key areas. ` +
-            `You have ${strengthsCount} identified strengths, ${skillsCount} relevant skills, and ${hasExperience ? 'detailed' : 'documented'} experience. ` +
-            `Your profile shows clear career direction, well-articulated qualifications, and professional presentation. ` +
-            `AI analysis found strong alignment with industry standards and potential for high employability.`;
+          summaryText = `Excellent profile with ${strengthsCount} strengths and ${skillsCount} skills. Strong employability.`;
         } else if (score >= 60) {
-          detailedExplanation = `GOOD PROFILE WITH GAPS: Your CV scored ${score}/100 indicating solid foundation but missing elements. ` +
-            `Positive: ${strengthsCount} strengths and ${skillsCount} skills identified. ` +
-            `Areas needing attention: ${improvementsCount} improvement points found. ` +
-            `${!hasWorkExp ? 'Missing work experience details. ' : ''}${!hasEducation ? 'Education section incomplete. ' : ''}` +
-            `${skillsCount < 5 ? 'Add more technical/soft skills. ' : ''}Enhance with quantifiable achievements for better scoring.`;
+          summaryText = `Good profile. ${strengthsCount} strengths, ${skillsCount} skills. ${improvementsCount} areas to improve.`;
         } else if (score >= 40) {
-          detailedExplanation = `AVERAGE PROFILE - NEEDS WORK: Your CV scored ${score}/100 due to significant gaps. ` +
-            `Only ${strengthsCount} strengths found vs ${improvementsCount} improvement areas. ` +
-            `Critical missing elements: ${!hasWorkExp ? 'Work Experience, ' : ''}${!hasEducation ? 'Education Details, ' : ''}` +
-            `${skillsCount < 3 ? 'Skills (only ' + skillsCount + ' found), ' : ''}${!hasAddress ? 'Address Information, ' : ''}. ` +
-            `Recommendation: Complete all profile sections, add detailed job descriptions, and include measurable accomplishments.`;
+          summaryText = `Average profile. ${improvementsCount} issues found. Add more details for better scoring.`;
         } else {
-          detailedExplanation = `INCOMPLETE PROFILE - MAJOR IMPROVEMENTS NEEDED: Your CV scored only ${score}/100 indicating critical deficiencies. ` +
-            `Issues found: ${improvementsCount} major problems, only ${strengthsCount} strengths. ` +
-            `Missing sections: ${!hasWorkExp ? 'Work History, ' : ''}${!hasEducation ? 'Education, ' : ''}${skillsCount < 2 ? 'Skills, ' : ''}` +
-            `${!hasAddress ? 'Address, ' : ''}${!profile.resume_url ? 'Resume Upload, ' : ''}. ` +
-            `Action Required: Complete profile from scratch with all mandatory fields, upload professional resume, and add detailed career information.`;
+          summaryText = `Incomplete profile. Major improvements needed in work history and skills.`;
         }
         
-        const explanationLines = doc.splitTextToSize(detailedExplanation, contentWidth - 8);
-        doc.text(explanationLines, margin + 3, yPos);
-        yPos += Math.min(explanationLines.length * 3, 25) + 10;
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, yPos - 1, contentWidth, 10, 'F');
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(60, 60, 60);
+        const summaryLines = doc.splitTextToSize(summaryText, contentWidth - 8);
+        doc.text(summaryLines, margin + 3, yPos + 4);
+        yPos += summaryLines.length * 4 + 8;
         
-        // Experience Summary with better formatting
+        // Experience Summary - Table Style
         if (resumeAnalysis.experience_summary) {
           checkPageBreak(25);
+          doc.setFillColor(245, 247, 250);
+          doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
           doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(100, 100, 100);
-          doc.text('Experience Summary:', margin, yPos);
-          yPos += 5;
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(50, 50, 50);
-          const summaryLines = doc.splitTextToSize(resumeAnalysis.experience_summary, contentWidth - 5);
-          doc.text(summaryLines, margin + 3, yPos);
-          yPos += summaryLines.length * 4 + 5;
-        }
-
-        // Key Skills
-        if (resumeAnalysis.skill_highlights?.length > 0) {
-          checkPageBreak(15);
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(100, 100, 100);
-          doc.text('Key Skills:', margin, yPos);
-          yPos += 5;
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(59, 130, 246);
-          const skillsText = resumeAnalysis.skill_highlights.join(' • ');
-          const skillLines = doc.splitTextToSize(skillsText, contentWidth - 5);
-          doc.text(skillLines, margin + 3, yPos);
-          yPos += skillLines.length * 4 + 5;
-        }
-
-        // STRENGTHS (Positives) - Show FIRST
-        if (resumeAnalysis.strengths?.length > 0) {
-          checkPageBreak(20);
-          doc.setFillColor(34, 197, 94);
-          doc.roundedRect(margin, yPos, contentWidth, 7, 1, 1, 'F');
-          doc.setTextColor(255, 255, 255);
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text('✓ STRENGTHS (Positives)', margin + 3, yPos + 5);
-          yPos += 10;
+          doc.text('EXPERIENCE SUMMARY', margin + 3, yPos + 4);
+          yPos += 9;
           
+          doc.setFillColor(252, 252, 253);
+          const expLines = doc.splitTextToSize(resumeAnalysis.experience_summary, contentWidth - 8);
+          const expBoxHeight = expLines.length * 4 + 6;
+          doc.rect(margin, yPos - 1, contentWidth, expBoxHeight, 'F');
+          doc.setDrawColor(230, 230, 230);
+          doc.setLineWidth(0.2);
+          doc.rect(margin, yPos - 1, contentWidth, expBoxHeight, 'S');
           doc.setFont('helvetica', 'normal');
-          doc.setTextColor(34, 139, 34);
-          resumeAnalysis.strengths.forEach((strength) => {
-            checkPageBreak(8);
-            const strengthLines = doc.splitTextToSize(`• ${strength}`, contentWidth - 10);
-            doc.text(strengthLines, margin + 3, yPos);
-            yPos += strengthLines.length * 4 + 2;
+          doc.setFontSize(8);
+          doc.setTextColor(50, 50, 50);
+          doc.text(expLines, margin + 3, yPos + 4);
+          yPos += expBoxHeight + 4;
+        }
+
+        // Key Skills - Table Style
+        if (resumeAnalysis.skill_highlights?.length > 0) {
+          checkPageBreak(20);
+          doc.setFillColor(239, 246, 255);
+          doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(59, 130, 246);
+          doc.text('KEY SKILLS', margin + 3, yPos + 4);
+          yPos += 9;
+          
+          const skillsText = resumeAnalysis.skill_highlights.join(' • ');
+          const skillLines = doc.splitTextToSize(skillsText, contentWidth - 8);
+          const skillBoxHeight = skillLines.length * 4 + 6;
+          doc.setFillColor(248, 251, 255);
+          doc.rect(margin, yPos - 1, contentWidth, skillBoxHeight, 'F');
+          doc.setDrawColor(200, 220, 255);
+          doc.setLineWidth(0.2);
+          doc.rect(margin, yPos - 1, contentWidth, skillBoxHeight, 'S');
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(37, 99, 235);
+          doc.text(skillLines, margin + 3, yPos + 4);
+          yPos += skillBoxHeight + 4;
+        }
+
+        // STRENGTHS - Table Style
+        if (resumeAnalysis.strengths?.length > 0) {
+          checkPageBreak(25);
+          doc.setFillColor(220, 252, 231);
+          doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(22, 163, 74);
+          doc.text('STRENGTHS (Positives)', margin + 3, yPos + 4);
+          yPos += 9;
+          
+          resumeAnalysis.strengths.forEach((strength, idx) => {
+            checkPageBreak(10);
+            if (idx % 2 === 0) {
+              doc.setFillColor(248, 255, 248);
+            } else {
+              doc.setFillColor(255, 255, 255);
+            }
+            const strLines = doc.splitTextToSize(`• ${strength}`, contentWidth - 10);
+            const strHeight = strLines.length * 4 + 3;
+            doc.rect(margin, yPos - 1, contentWidth, strHeight, 'F');
+            doc.setDrawColor(200, 240, 200);
+            doc.setLineWidth(0.1);
+            doc.line(margin, yPos + strHeight - 1, margin + contentWidth, yPos + strHeight - 1);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(34, 139, 34);
+            doc.text(strLines, margin + 3, yPos + 3);
+            yPos += strHeight;
           });
           yPos += 4;
         }
 
-        // IMPROVEMENTS (Negatives) - Show SECOND
+        // IMPROVEMENTS - Table Style
         if (resumeAnalysis.improvements?.length > 0) {
-          checkPageBreak(20);
-          doc.setFillColor(239, 68, 68);
-          doc.roundedRect(margin, yPos, contentWidth, 7, 1, 1, 'F');
-          doc.setTextColor(255, 255, 255);
+          checkPageBreak(25);
+          doc.setFillColor(254, 226, 226);
+          doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
           doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.text('✗ AREAS FOR IMPROVEMENT (Negatives)', margin + 3, yPos + 5);
-          yPos += 10;
+          doc.setTextColor(220, 38, 38);
+          doc.text('AREAS FOR IMPROVEMENT', margin + 3, yPos + 4);
+          yPos += 9;
           
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(180, 80, 0);
-          resumeAnalysis.improvements.forEach((item) => {
-            checkPageBreak(8);
-            const improvementLines = doc.splitTextToSize(`• ${item}`, contentWidth - 10);
-            doc.text(improvementLines, margin + 3, yPos);
-            yPos += improvementLines.length * 4 + 2;
+          resumeAnalysis.improvements.forEach((item, idx) => {
+            checkPageBreak(10);
+            if (idx % 2 === 0) {
+              doc.setFillColor(255, 250, 250);
+            } else {
+              doc.setFillColor(255, 255, 255);
+            }
+            const impLines = doc.splitTextToSize(`• ${item}`, contentWidth - 10);
+            const impHeight = impLines.length * 4 + 3;
+            doc.rect(margin, yPos - 1, contentWidth, impHeight, 'F');
+            doc.setDrawColor(250, 200, 200);
+            doc.setLineWidth(0.1);
+            doc.line(margin, yPos + impHeight - 1, margin + contentWidth, yPos + impHeight - 1);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(180, 80, 0);
+            doc.text(impLines, margin + 3, yPos + 3);
+            yPos += impHeight;
           });
           yPos += 4;
         }
