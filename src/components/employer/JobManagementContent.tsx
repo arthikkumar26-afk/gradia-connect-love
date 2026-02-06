@@ -148,7 +148,7 @@ export const JobManagementContent = () => {
             {/* CTA Button */}
             <Button variant="cta" size="lg" className="rounded-full px-10 gap-2 text-base" asChild>
               <Link to="/employer/post-job">
-                Create Vacancy
+                Templates
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
