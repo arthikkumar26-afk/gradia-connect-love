@@ -28,6 +28,10 @@ interface Profile {
   languages?: string[];
   resume_url?: string;
   profile_picture?: string;
+  current_salary?: number;
+  expected_salary?: number;
+  available_from?: string;
+  program?: string;
 }
 
 interface ResumeAnalysis {
@@ -288,38 +292,112 @@ export const useProfilePdfExport = () => {
         yPos += 6;
       };
 
-      // Personal Information
-      addSection('PERSONAL INFORMATION');
-      addRow('Full Name', profile.full_name);
-      addRow('Email', profile.email);
-      addRow('Mobile', profile.mobile || '-');
-      addRow('Alternate Mobile', profile.alternate_number || '-');
-      addRow('Date of Birth', profile.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN') : '-');
-      addRow('Gender', profile.gender || '-');
-      addRow('Current State', profile.current_state || '-');
-      addRow('Current District', profile.current_district || '-');
-      yPos += 4;
+      // Table-style helper - creates a professional 4-column table layout
+      const rowHeight = 8;
+      const col1Width = 55; // Label 1 width
+      const col2Width = 50; // Value 1 width
+      const col3Width = 55; // Label 2 width
+      const col4Width = contentWidth - col1Width - col2Width - col3Width; // Value 2 width
+      
+      const addTableHeader = (title: string, color: [number, number, number] = [0, 128, 128]) => {
+        checkPageBreak(15);
+        // Draw header background
+        doc.setFillColor(245, 250, 250); // Light teal background
+        doc.rect(margin, yPos, contentWidth, 10, 'F');
+        // Draw left accent
+        doc.setFillColor(...color);
+        doc.rect(margin, yPos, 4, 10, 'F');
+        // Add title text
+        doc.setTextColor(...color);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin + 8, yPos + 7);
+        yPos += 12;
+        doc.setTextColor(0, 0, 0);
+      };
 
-      // Professional Information
-      addSection('PROFESSIONAL INFORMATION', [34, 197, 94]);
-      addRow('Qualification', profile.highest_qualification || '-');
-      addRow('Experience Level', profile.experience_level || '-');
-      addRow('Preferred Role', profile.preferred_role || '-');
-      addRow('Primary Subject', profile.primary_subject || '-');
-      addRow('Classes Handled', profile.classes_handled || '-');
-      addRow('Office Type', profile.office_type || '-');
-      addRow('Segment', profile.segment || '-');
-      addRow('Category', profile.category || '-');
-      addRow('Batch', profile.batch || '-');
-      yPos += 4;
+      const addTableRow = (
+        label1: string, value1: string, 
+        label2?: string, value2?: string,
+        isAlternate: boolean = false
+      ) => {
+        checkPageBreak(rowHeight + 2);
+        
+        // Alternate row background
+        if (isAlternate) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(margin, yPos - 1, contentWidth, rowHeight, 'F');
+        }
+        
+        // Draw subtle grid lines
+        doc.setDrawColor(230, 230, 230);
+        doc.setLineWidth(0.2);
+        doc.line(margin, yPos + rowHeight - 1, margin + contentWidth, yPos + rowHeight - 1);
+        
+        // Column 1 - Label 1 (teal color)
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 128, 128);
+        doc.text(label1.toUpperCase(), margin + 3, yPos + 5);
+        
+        // Column 2 - Value 1
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(30, 30, 30);
+        const val1 = value1 || '-';
+        const truncatedVal1 = val1.length > 25 ? val1.substring(0, 22) + '...' : val1;
+        doc.text(truncatedVal1, margin + col1Width + 3, yPos + 5);
+        
+        // Column 3 - Label 2 (if provided)
+        if (label2 !== undefined) {
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(0, 128, 128);
+          doc.text(label2.toUpperCase(), margin + col1Width + col2Width + 3, yPos + 5);
+          
+          // Column 4 - Value 2
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(30, 30, 30);
+          const val2 = value2 || '-';
+          const truncatedVal2 = val2.length > 25 ? val2.substring(0, 22) + '...' : val2;
+          doc.text(truncatedVal2, margin + col1Width + col2Width + col3Width + 3, yPos + 5);
+        }
+        
+        yPos += rowHeight;
+      };
 
-      // Location Preferences
-      addSection('LOCATION PREFERENCES', [168, 85, 247]);
-      addRow('Preferred State 1', profile.preferred_state || '-');
-      addRow('Preferred District 1', profile.preferred_district || '-');
-      addRow('Preferred State 2', profile.preferred_state_2 || '-');
-      addRow('Preferred District 2', profile.preferred_district_2 || '-');
-      yPos += 4;
+      // Registration Number Header Row
+      checkPageBreak(15);
+      doc.setFillColor(245, 250, 250);
+      doc.rect(margin, yPos, contentWidth, 10, 'F');
+      doc.setFillColor(0, 128, 128);
+      doc.rect(margin, yPos, 4, 10, 'F');
+      doc.setTextColor(0, 128, 128);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REG. NUMBER', margin + 8, yPos + 7);
+      doc.setTextColor(0, 100, 100);
+      doc.setFontSize(11);
+      doc.text(profile.registration_number || 'N/A', margin + 55, yPos + 7);
+      yPos += 14;
+
+      // Personal & Professional Information Table
+      addTableRow('NAME', profile.full_name, 'Date', new Date().toLocaleDateString('en-IN'), false);
+      addTableRow('CURRENT STATE', profile.current_state || '-', 'CURRENT DISTRICT', profile.current_district || '-', true);
+      addTableRow('DOB', profile.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-IN') : '-', 'GENDER', profile.gender || '-', false);
+      addTableRow('QUALIFICATION', profile.highest_qualification || '-', 'OFFICE TYPE', profile.office_type || '-', true);
+      addTableRow('SEGMENT', profile.segment || '-', 'CATEGORY', profile.category || '-', false);
+      addTableRow('CURRENT SALARY', profile.current_salary ? `₹${profile.current_salary}` : '-', 'EXPECTED SALARY', profile.expected_salary ? `₹${profile.expected_salary}` : '-', true);
+      addTableRow('AVAILABLE FROM', profile.available_from ? new Date(profile.available_from).toLocaleDateString('en-IN') : '-', 'PROGRAM', profile.program || 'Full Time', false);
+      addTableRow('CLASSES HANDLED', profile.classes_handled || '-', 'LANGUAGES KNOWN', profile.languages?.join(', ') || '-', true);
+      addTableRow('PRIMARY SUBJECT', profile.primary_subject || '-', 'BATCH', profile.batch || '-', false);
+      addTableRow('EMAIL', profile.email, 'MOBILE', profile.mobile || '-', true);
+      addTableRow('PREFERRED ROLE', profile.preferred_role || '-', 'EXPERIENCE', profile.experience_level || '-', false);
+      yPos += 6;
+      
+      // Location Preferences Table
+      addTableHeader('LOCATION PREFERENCES', [168, 85, 247]);
+      addTableRow('PREFERRED STATE 1', profile.preferred_state || '-', 'PREFERRED DISTRICT 1', profile.preferred_district || '-', false);
+      addTableRow('PREFERRED STATE 2', profile.preferred_state_2 || '-', 'PREFERRED DISTRICT 2', profile.preferred_district_2 || '-', true);
+      yPos += 6;
 
       // AI Resume Analysis
       if (resumeAnalysis) {
