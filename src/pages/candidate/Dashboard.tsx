@@ -1458,20 +1458,27 @@ const CandidateDashboard = () => {
 
       if (error) throw error;
       
-      // Filter jobs based on candidate's profile preferences
-      let suitableJobs = data || [];
+      const allJobs = data || [];
       
-      if (profile) {
-        suitableJobs = suitableJobs.filter((job) => {
-          let matches = false;
-          
+      // Score and rank jobs based on candidate's profile
+      const scoredJobs = allJobs.map((job) => {
+        let score = 0;
+        const matchReasons: string[] = [];
+        
+        if (profile) {
           // Match by preferred role (job title contains preferred role)
           if (profile.preferred_role && job.job_title) {
             const preferredRoleLower = profile.preferred_role.toLowerCase();
             const jobTitleLower = job.job_title.toLowerCase();
             const jobDeptLower = job.department?.toLowerCase() || '';
-            if (jobTitleLower.includes(preferredRoleLower) || preferredRoleLower.includes(jobTitleLower) || jobDeptLower.includes(preferredRoleLower)) {
-              matches = true;
+            const descLower = job.description?.toLowerCase() || '';
+            
+            if (jobTitleLower.includes(preferredRoleLower) || preferredRoleLower.includes(jobTitleLower)) {
+              score += 30;
+              matchReasons.push('role');
+            } else if (jobDeptLower.includes(preferredRoleLower) || descLower.includes(preferredRoleLower)) {
+              score += 15;
+              matchReasons.push('role_partial');
             }
           }
           
@@ -1479,22 +1486,23 @@ const CandidateDashboard = () => {
           if (job.location) {
             const jobLocationLower = job.location.toLowerCase();
             if (profile.preferred_district && jobLocationLower.includes(profile.preferred_district.toLowerCase())) {
-              matches = true;
-            }
-            if (profile.preferred_state && jobLocationLower.includes(profile.preferred_state.toLowerCase())) {
-              matches = true;
-            }
-            if (profile.preferred_district_2 && jobLocationLower.includes(profile.preferred_district_2.toLowerCase())) {
-              matches = true;
-            }
-            if (profile.preferred_state_2 && jobLocationLower.includes(profile.preferred_state_2.toLowerCase())) {
-              matches = true;
-            }
-            if (profile.current_district && jobLocationLower.includes(profile.current_district.toLowerCase())) {
-              matches = true;
-            }
-            if (profile.current_state && jobLocationLower.includes(profile.current_state.toLowerCase())) {
-              matches = true;
+              score += 20;
+              matchReasons.push('location_district');
+            } else if (profile.preferred_state && jobLocationLower.includes(profile.preferred_state.toLowerCase())) {
+              score += 15;
+              matchReasons.push('location_state');
+            } else if (profile.preferred_district_2 && jobLocationLower.includes(profile.preferred_district_2.toLowerCase())) {
+              score += 15;
+              matchReasons.push('location_district2');
+            } else if (profile.preferred_state_2 && jobLocationLower.includes(profile.preferred_state_2.toLowerCase())) {
+              score += 10;
+              matchReasons.push('location_state2');
+            } else if (profile.current_district && jobLocationLower.includes(profile.current_district.toLowerCase())) {
+              score += 10;
+              matchReasons.push('location_current');
+            } else if (profile.current_state && jobLocationLower.includes(profile.current_state.toLowerCase())) {
+              score += 5;
+              matchReasons.push('location_current_state');
             }
           }
           
@@ -1504,16 +1512,84 @@ const CandidateDashboard = () => {
             const jobTitleLower = job.job_title.toLowerCase();
             const descLower = job.description?.toLowerCase() || '';
             if (jobTitleLower.includes(subjectLower) || descLower.includes(subjectLower)) {
-              matches = true;
+              score += 25;
+              matchReasons.push('subject');
             }
           }
           
-          return matches;
-        });
-      }
+          // Match by segment (education/software)
+          if (profile.segment && job.department) {
+            const segmentLower = profile.segment.toLowerCase();
+            const deptLower = job.department.toLowerCase();
+            if (deptLower.includes(segmentLower) || segmentLower.includes(deptLower)) {
+              score += 15;
+              matchReasons.push('segment');
+            }
+          }
+          
+          // Match by experience level
+          if (profile.experience_level && job.experience_required) {
+            const expLower = profile.experience_level.toLowerCase();
+            const jobExpLower = job.experience_required.toLowerCase();
+            
+            // Check if fresher and job is for freshers/0-1 years
+            if ((expLower.includes('fresher') || expLower === '0') && 
+                (jobExpLower.includes('fresher') || jobExpLower.includes('0-1') || jobExpLower.includes('entry'))) {
+              score += 20;
+              matchReasons.push('experience');
+            } else if (expLower.includes('1-3') && jobExpLower.includes('1-3')) {
+              score += 20;
+              matchReasons.push('experience');
+            } else if (expLower.includes('3-5') && (jobExpLower.includes('3-5') || jobExpLower.includes('2-5'))) {
+              score += 20;
+              matchReasons.push('experience');
+            } else if (expLower.includes('5+') && (jobExpLower.includes('5+') || jobExpLower.includes('5-'))) {
+              score += 20;
+              matchReasons.push('experience');
+            }
+          }
+          
+          // Match by skills from resume analysis
+          const jobSkills = (job as any).skills as string[] | null;
+          if (jobSkills && jobSkills.length > 0 && resumeAnalysis?.skill_highlights) {
+            const candidateSkills = resumeAnalysis.skill_highlights.map((s: string) => s.toLowerCase());
+            const matchedSkills = jobSkills.filter((skill: string) => 
+              candidateSkills.some((cs: string) => cs.includes(skill.toLowerCase()) || skill.toLowerCase().includes(cs))
+            );
+            if (matchedSkills.length > 0) {
+              score += Math.min(25, matchedSkills.length * 8);
+              matchReasons.push('skills');
+            }
+          }
+          
+          // Bonus for classes handled matching education jobs
+          if (profile.classes_handled && job.job_title) {
+            const classesLower = profile.classes_handled.toLowerCase();
+            const jobTitleLower = job.job_title.toLowerCase();
+            const descLower = job.description?.toLowerCase() || '';
+            if (jobTitleLower.includes(classesLower) || descLower.includes(classesLower)) {
+              score += 10;
+              matchReasons.push('classes');
+            }
+          }
+        }
+        
+        return { ...job, matchScore: score, matchReasons };
+      });
       
-      // Limit to 10 suitable jobs
-      setJobs(suitableJobs.slice(0, 10));
+      // Sort by score (descending) and take top jobs
+      const sortedJobs = scoredJobs.sort((a, b) => b.matchScore - a.matchScore);
+      
+      // If no strong matches, show all jobs with at least some relevance or just recent jobs
+      const suitableJobs = sortedJobs.filter(job => job.matchScore > 0);
+      
+      // If we have suitable jobs, show them; otherwise show recent jobs
+      if (suitableJobs.length > 0) {
+        setJobs(suitableJobs.slice(0, 10) as Job[]);
+      } else {
+        // Show recent jobs as fallback recommendations
+        setJobs(sortedJobs.slice(0, 10) as Job[]);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -2638,8 +2714,9 @@ const CandidateDashboard = () => {
                     {jobs.length > 0 ? (
                       <div className="grid gap-4">
                         {jobs.slice(0, 4).map((job) => {
-                          // Calculate match reasons
+                          // Generate human-readable match reasons
                           const matchReasons: string[] = [];
+                          const jobWithScore = job as Job & { matchScore?: number; matchReasons?: string[] };
                           
                           if (profile?.preferred_role && job.job_title) {
                             const preferredRoleLower = profile.preferred_role.toLowerCase();
@@ -2658,6 +2735,8 @@ const CandidateDashboard = () => {
                               matchReasons.push(`Located in your preferred state: ${profile.preferred_state}`);
                             } else if (profile.current_district && jobLocationLower.includes(profile.current_district.toLowerCase())) {
                               matchReasons.push(`Near your current location`);
+                            } else if (profile.current_state && jobLocationLower.includes(profile.current_state.toLowerCase())) {
+                              matchReasons.push(`In your current state: ${profile.current_state}`);
                             }
                           }
                           
@@ -2670,8 +2749,35 @@ const CandidateDashboard = () => {
                             }
                           }
                           
-                          // Calculate match percentage based on reasons
-                          const matchScore = Math.min(95, 60 + (matchReasons.length * 12));
+                          if (profile?.segment && job.department) {
+                            const segmentLower = profile.segment.toLowerCase();
+                            const deptLower = job.department.toLowerCase();
+                            if (deptLower.includes(segmentLower) || segmentLower.includes(deptLower)) {
+                              matchReasons.push(`Matches your ${profile.segment} background`);
+                            }
+                          }
+                          
+                          // Check for skill matches
+                          const jobSkills = (job as any).skills as string[] | null;
+                          if (jobSkills && jobSkills.length > 0 && resumeAnalysis?.skill_highlights) {
+                            const candidateSkills = resumeAnalysis.skill_highlights.map((s: string) => s.toLowerCase());
+                            const matchedSkills = jobSkills.filter((skill: string) => 
+                              candidateSkills.some((cs: string) => cs.includes(skill.toLowerCase()) || skill.toLowerCase().includes(cs))
+                            );
+                            if (matchedSkills.length > 0) {
+                              matchReasons.push(`${matchedSkills.length} skills match: ${matchedSkills.slice(0, 2).join(', ')}${matchedSkills.length > 2 ? '...' : ''}`);
+                            }
+                          }
+                          
+                          // Use stored matchScore or calculate based on reasons
+                          const matchScore = jobWithScore.matchScore 
+                            ? Math.min(95, 50 + Math.round(jobWithScore.matchScore * 0.5)) 
+                            : Math.min(95, 55 + (matchReasons.length * 10));
+                          
+                          // Default reason if no matches found but job is shown
+                          if (matchReasons.length === 0) {
+                            matchReasons.push('Recently posted opportunity');
+                          }
                           
                           return (
                             <Card 
@@ -2712,19 +2818,17 @@ const CandidateDashboard = () => {
                                       </div>
                                       
                                       {/* Match Reasons */}
-                                      {matchReasons.length > 0 && (
-                                        <div className="mt-2 flex flex-wrap gap-1.5">
-                                          {matchReasons.slice(0, 2).map((reason, idx) => (
-                                            <span 
-                                              key={idx}
-                                              className="inline-flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-0.5 rounded-full"
-                                            >
-                                              <CheckCircle className="h-3 w-3" />
-                                              {reason}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
+                                      <div className="mt-2 flex flex-wrap gap-1.5">
+                                        {matchReasons.slice(0, 2).map((reason, idx) => (
+                                          <span 
+                                            key={idx}
+                                            className="inline-flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-0.5 rounded-full"
+                                          >
+                                            <CheckCircle className="h-3 w-3" />
+                                            {reason}
+                                          </span>
+                                        ))}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -2746,17 +2850,22 @@ const CandidateDashboard = () => {
                           );
                         })}
                       </div>
+                    ) : isLoading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-3"></div>
+                        <p className="text-sm text-muted-foreground">Loading job recommendations...</p>
+                      </div>
                     ) : (
                       <div className="text-center py-8">
                         <div className="p-4 bg-muted/50 rounded-full w-fit mx-auto mb-3">
                           <Briefcase className="h-8 w-8 text-muted-foreground" />
                         </div>
-                        <h4 className="font-medium text-foreground mb-1">No matching jobs found</h4>
+                        <h4 className="font-medium text-foreground mb-1">No jobs available</h4>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Update your profile preferences to see personalized job recommendations
+                          Check back later or update your profile to match more opportunities
                         </p>
-                        <Button variant="outline" size="sm" onClick={() => navigate('/candidate/edit-profile')}>
-                          Update Preferences
+                        <Button variant="outline" size="sm" onClick={() => navigate('/profile/edit')}>
+                          Update Profile
                         </Button>
                       </div>
                     )}
