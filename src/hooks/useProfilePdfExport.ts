@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { useToast } from '@/hooks/use-toast';
+import { getSampleMockInterviewSession, getSampleMockInterviewStageResults } from '@/data/sampleMockInterviewData';
 
 interface Profile {
   id: string;
@@ -736,13 +737,21 @@ export const useProfilePdfExport = () => {
       }
 
       // Mock Interview Pipeline Results - Detailed for Skillory AI
-      if (mockInterviewSessions && mockInterviewSessions.length > 0 && mockInterviewStageResults && mockInterviewStageResults.length > 0) {
-        const completedSessions = mockInterviewSessions.filter(s => s.status === 'completed');
-        
-        if (completedSessions.length > 0) {
+      // Use real data if available, otherwise use sample data for Skillory compatibility
+      let sessionsToRender = mockInterviewSessions?.filter(s => s.status === 'completed') || [];
+      let stageResultsToRender = mockInterviewStageResults || [];
+      
+      if (sessionsToRender.length === 0) {
+        // Use sample data so PDF always has mock interview reviews for Skillory
+        const sampleSession = getSampleMockInterviewSession();
+        sessionsToRender = [sampleSession];
+        stageResultsToRender = getSampleMockInterviewStageResults(sampleSession.id);
+      }
+      
+      if (sessionsToRender.length > 0) {
           addSection('MOCK INTERVIEW PIPELINE RESULTS', [79, 70, 229]);
           
-          completedSessions.forEach((session, sessionIdx) => {
+          sessionsToRender.forEach((session, sessionIdx) => {
             checkPageBreak(20);
             
             // Session header
@@ -769,7 +778,7 @@ export const useProfilePdfExport = () => {
             }
             
             // Stage results for this session
-            const sessionStages = mockInterviewStageResults
+            const sessionStages = stageResultsToRender
               .filter(sr => sr.session_id === session.id)
               .sort((a, b) => a.stage_order - b.stage_order);
             
@@ -836,8 +845,7 @@ export const useProfilePdfExport = () => {
             });
             
             yPos += 6;
-          });
-        }
+        });
       }
 
       // CV SCORE BREAKDOWN - Detailed for Skillory AI Compatibility
