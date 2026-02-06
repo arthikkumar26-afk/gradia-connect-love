@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getSampleMockInterviewStageResults } from "@/data/sampleMockInterviewData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -995,7 +996,66 @@ export const MockInterviewTab = () => {
     }
   };
 
-  // Submit HR Negotiation
+  // Load demo results - auto-complete all stages with sample review data
+  const loadDemoResults = async () => {
+    if (!user || !profile) {
+      toast.error("Please complete your profile first");
+      return;
+    }
+
+    setIsStarting(true);
+    try {
+      // Create a new session marked as completed
+      const { data: session, error: sessionError } = await supabase
+        .from('mock_interview_sessions')
+        .insert({
+          candidate_id: user.id,
+          status: 'completed',
+          current_stage_order: 8,
+          started_at: new Date(Date.now() - 3600000).toISOString(),
+          completed_at: new Date().toISOString(),
+          overall_score: 72,
+          overall_feedback: 'Selected for Next Round'
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      // Insert all sample stage results
+      const sampleResults = getSampleMockInterviewStageResults(session.id);
+      
+      for (const result of sampleResults) {
+        const { error: insertError } = await supabase
+          .from('mock_interview_stage_results')
+          .insert({
+            session_id: result.session_id,
+            stage_name: result.stage_name,
+            stage_order: result.stage_order,
+            ai_score: result.ai_score,
+            ai_feedback: result.ai_feedback,
+            passed: result.passed,
+            strengths: result.strengths,
+            improvements: result.improvements,
+            completed_at: result.completed_at,
+            time_taken_seconds: result.time_taken_seconds
+          });
+        
+        if (insertError) {
+          console.error(`Error inserting stage ${result.stage_order}:`, insertError);
+        }
+      }
+
+      toast.success("Demo results loaded! All stages completed with sample reviews.");
+      loadData();
+    } catch (error) {
+      console.error('Error loading demo results:', error);
+      toast.error("Failed to load demo results");
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
   const submitHRNegotiation = async () => {
     if (!currentSession || !profile || !user || !hrNegotiationType) return;
     
@@ -1108,7 +1168,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.7,
         category: 'Communication Skills',
-        url: 'https://www.coursera.org/search?query=communication%20skills'
+        url: 'https://skillory.in'
       });
     }
 
@@ -1122,7 +1182,7 @@ export const MockInterviewTab = () => {
         level: 'Intermediate',
         rating: 4.8,
         category: 'Subject Expertise',
-        url: 'https://www.edx.org/'
+        url: 'https://skillory.in'
       });
     }
 
@@ -1136,7 +1196,7 @@ export const MockInterviewTab = () => {
         level: 'Intermediate',
         rating: 4.6,
         category: 'Teaching Methods',
-        url: 'https://www.udemy.com/courses/teaching-and-academics/'
+        url: 'https://skillory.in'
       });
       courses.push({
         id: 'teach-2',
@@ -1146,7 +1206,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.5,
         category: 'Presentation Skills',
-        url: 'https://www.linkedin.com/learning/topics/presentation-skills'
+        url: 'https://skillory.in'
       });
     }
 
@@ -1160,7 +1220,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.4,
         category: 'Productivity',
-        url: 'https://www.skillshare.com/browse/time-management'
+        url: 'https://skillory.in'
       });
     }
 
@@ -1174,7 +1234,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.6,
         category: 'Personal Development',
-        url: 'https://www.coursera.org/search?query=confidence'
+        url: 'https://skillory.in'
       });
     }
 
@@ -1188,7 +1248,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.8,
         category: 'Teaching Foundation',
-        url: 'https://www.khanacademy.org/'
+        url: 'https://skillory.in'
       });
       courses.push({
         id: 'gen-2',
@@ -1198,7 +1258,7 @@ export const MockInterviewTab = () => {
         level: 'Intermediate',
         rating: 4.5,
         category: 'Career Development',
-        url: 'https://www.udemy.com/courses/personal-development/career-development/'
+        url: 'https://skillory.in'
       });
     }
 
@@ -1212,7 +1272,7 @@ export const MockInterviewTab = () => {
         level: 'Advanced',
         rating: 4.7,
         category: 'Professional Growth',
-        url: 'https://www.edx.org/learn/teaching'
+        url: 'https://skillory.in'
       });
     }
 
@@ -1249,6 +1309,18 @@ export const MockInterviewTab = () => {
           <p className="text-muted-foreground mt-2">
             Practice your interview skills with AI-powered mock tests
           </p>
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={loadDemoResults}
+              disabled={isStarting}
+              className="gap-2 text-xs"
+            >
+              {isStarting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ListChecks className="h-3 w-3" />}
+              Load Demo Results (All Stages)
+            </Button>
+          </div>
         </div>
 
         {/* Interview Type Selection */}
@@ -1456,6 +1528,10 @@ export const MockInterviewTab = () => {
         <div className="flex items-center gap-2">
           <Button onClick={() => loadData()} disabled={isLoading} variant="outline" size="icon" className="h-10 w-10">
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button onClick={loadDemoResults} disabled={isStarting} variant="outline" className="gap-2 text-xs">
+            {isStarting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ListChecks className="h-3 w-3" />}
+            Load Demo Results
           </Button>
           <Button onClick={startNewSession} disabled={isStarting} variant="default" className="gap-2">
             {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
@@ -2662,7 +2738,7 @@ export const MockInterviewTab = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => window.open('/learning', '_blank')}
+                onClick={() => window.open('https://skillory.in', '_blank')}
                 className="gap-2"
               >
                 <GraduationCap className="h-4 w-4" />
