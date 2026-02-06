@@ -605,143 +605,112 @@ export const useProfilePdfExport = () => {
         yPos += 4;
       }
 
-      // Education
+      // Education - Table Style
       if (educationRecords && educationRecords.length > 0) {
-        addSection('EDUCATIONAL QUALIFICATIONS', [99, 102, 241]);
+        addTableHeader('EDUCATIONAL QUALIFICATIONS', [99, 102, 241]);
         educationRecords.forEach((edu, idx) => {
-          checkPageBreak(25);
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${idx + 1}. ${edu.education_level}`, margin, yPos);
-          yPos += 5;
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          if (edu.school_college_name) {
-            doc.text(`School/College: ${edu.school_college_name}`, margin + 5, yPos);
-            yPos += 4;
-          }
-          if (edu.specialization) {
-            doc.text(`Specialization: ${edu.specialization}`, margin + 5, yPos);
-            yPos += 4;
-          }
-          if (edu.board_university) {
-            doc.text(`Board/University: ${edu.board_university}`, margin + 5, yPos);
-            yPos += 4;
-          }
-          const yearMarks = [];
-          if (edu.year_of_passing) yearMarks.push(`Year: ${edu.year_of_passing}`);
-          if (edu.percentage_marks) yearMarks.push(`Marks: ${edu.percentage_marks}%`);
-          if (yearMarks.length > 0) {
-            doc.text(yearMarks.join(' | '), margin + 5, yPos);
-            yPos += 4;
-          }
-          yPos += 3;
-        });
-      }
-
-      // Work Experience
-      if (experienceRecords && experienceRecords.length > 0) {
-        addSection('WORK EXPERIENCE', [236, 72, 153]);
-        experienceRecords.forEach((exp, idx) => {
-          checkPageBreak(25);
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${idx + 1}. ${exp.designation} at ${exp.organization}`, margin, yPos);
-          yPos += 5;
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          if (exp.department) {
-            doc.text(`Department: ${exp.department}`, margin + 5, yPos);
-            yPos += 4;
-          }
-          if (exp.from_date || exp.to_date) {
-            const from = exp.from_date ? new Date(exp.from_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '';
-            const to = exp.to_date ? new Date(exp.to_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : 'Present';
-            doc.text(`Duration: ${from} - ${to}`, margin + 5, yPos);
-            yPos += 4;
-          }
-          if (exp.place) {
-            doc.text(`Location: ${exp.place}`, margin + 5, yPos);
-            yPos += 4;
-          }
-          yPos += 3;
-        });
-      }
-
-      // Family Details
-      if (familyRecords && familyRecords.length > 0) {
-        addSection('FAMILY DETAILS', [20, 184, 166]);
-        familyRecords.forEach((fam, idx) => {
-          checkPageBreak(15);
+          checkPageBreak(35);
+          // Education level header row
+          doc.setFillColor(240, 245, 255);
+          doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+          doc.setDrawColor(99, 102, 241);
+          doc.setLineWidth(0.3);
+          doc.line(margin, yPos + 6, margin + contentWidth, yPos + 6);
           doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.text(`${idx + 1}. ${fam.blood_relation}`, margin, yPos);
-          doc.setFont('helvetica', 'normal');
-          const details = [];
-          if (fam.name_as_per_aadhar) details.push(fam.name_as_per_aadhar);
-          if (fam.age) details.push(`Age: ${fam.age}`);
-          if (fam.is_dependent) details.push('(Dependent)');
-          if (details.length > 0) {
-            doc.text(` - ${details.join(', ')}`, margin + doc.getTextWidth(`${idx + 1}. ${fam.blood_relation}`), yPos);
-          }
-          yPos += 6;
+          doc.setTextColor(99, 102, 241);
+          doc.text(`${idx + 1}. ${edu.education_level}`, margin + 3, yPos + 4);
+          yPos += 9;
+          
+          // Education details in table rows
+          addTableRow('SCHOOL/COLLEGE', edu.school_college_name || '-', 'SPECIALIZATION', edu.specialization || '-', idx % 2 === 0);
+          addTableRow('BOARD/UNIVERSITY', edu.board_university || '-', 'YEAR OF PASSING', edu.year_of_passing?.toString() || '-', idx % 2 !== 0);
+          addTableRow('PERCENTAGE/MARKS', edu.percentage_marks ? `${edu.percentage_marks}%` : '-', '', '', idx % 2 === 0);
+          yPos += 4;
         });
         yPos += 4;
       }
 
-      // Address
+      // Work Experience - Table Style
+      if (experienceRecords && experienceRecords.length > 0) {
+        addTableHeader('WORK EXPERIENCE', [236, 72, 153]);
+        experienceRecords.forEach((exp, idx) => {
+          checkPageBreak(35);
+          // Organization header row
+          doc.setFillColor(255, 240, 245);
+          doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+          doc.setDrawColor(236, 72, 153);
+          doc.setLineWidth(0.3);
+          doc.line(margin, yPos + 6, margin + contentWidth, yPos + 6);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(236, 72, 153);
+          doc.text(`${idx + 1}. ${exp.designation || 'Position'} at ${exp.organization}`, margin + 3, yPos + 4);
+          yPos += 9;
+          
+          // Experience details in table rows
+          addTableRow('DEPARTMENT', exp.department || '-', 'LOCATION', exp.place || '-', idx % 2 === 0);
+          const fromDate = exp.from_date ? new Date(exp.from_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '-';
+          const toDate = exp.to_date ? new Date(exp.to_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : 'Present';
+          addTableRow('FROM DATE', fromDate, 'TO DATE', toDate, idx % 2 !== 0);
+          addTableRow('SALARY (₹/MONTH)', exp.salary_per_month ? `₹${exp.salary_per_month.toLocaleString()}` : '-', '', '', idx % 2 === 0);
+          yPos += 4;
+        });
+        yPos += 4;
+      }
+
+      // Family Details - Table Style
+      if (familyRecords && familyRecords.length > 0) {
+        addTableHeader('FAMILY DETAILS', [20, 184, 166]);
+        familyRecords.forEach((fam, idx) => {
+          checkPageBreak(12);
+          const dobFormatted = fam.date_of_birth ? new Date(fam.date_of_birth).toLocaleDateString('en-IN') : '-';
+          const dependentStatus = fam.is_dependent ? 'Yes' : 'No';
+          addTableRow('RELATION', fam.blood_relation, 'NAME', fam.name_as_per_aadhar || '-', idx % 2 === 0);
+          addTableRow('DATE OF BIRTH', dobFormatted, 'AGE', fam.age?.toString() || '-', idx % 2 !== 0);
+          addTableRow('IS DEPENDENT', dependentStatus, '', '', idx % 2 === 0);
+          yPos += 2;
+        });
+        yPos += 4;
+      }
+
+      // Address - Table Style
       if (addressData) {
-        addSection('ADDRESS DETAILS', [107, 114, 128]);
+        addTableHeader('ADDRESS DETAILS', [107, 114, 128]);
         
-        checkPageBreak(25);
+        checkPageBreak(30);
+        // Present Address sub-header
+        doc.setFillColor(245, 247, 250);
+        doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text('Present Address:', margin, yPos);
-        yPos += 5;
-        doc.setFont('helvetica', 'normal');
-        const presentAddr = [
-          addressData.present_door_flat_no,
-          addressData.present_street,
-          addressData.present_village_area,
-          addressData.present_mandal,
-          addressData.present_district,
-          addressData.present_state,
-          addressData.present_pin_code
-        ].filter(Boolean).join(', ');
-        if (presentAddr) {
-          const presentLines = doc.splitTextToSize(presentAddr, contentWidth - 10);
-          doc.text(presentLines, margin + 3, yPos);
-          yPos += presentLines.length * 4 + 3;
-        } else {
-          doc.text('Not provided', margin + 3, yPos);
-          yPos += 6;
-        }
+        doc.setTextColor(107, 114, 128);
+        doc.text('PRESENT ADDRESS', margin + 3, yPos + 4);
+        yPos += 9;
+        
+        addTableRow('DOOR/FLAT NO', addressData.present_door_flat_no || '-', 'STREET', addressData.present_street || '-', false);
+        addTableRow('VILLAGE/AREA', addressData.present_village_area || '-', 'MANDAL', addressData.present_mandal || '-', true);
+        addTableRow('DISTRICT', addressData.present_district || '-', 'STATE', addressData.present_state || '-', false);
+        addTableRow('PIN CODE', addressData.present_pin_code || '-', '', '', true);
+        yPos += 4;
 
         if (!addressData.same_as_present) {
+          checkPageBreak(30);
+          // Permanent Address sub-header
+          doc.setFillColor(245, 247, 250);
+          doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'bold');
-          doc.text('Permanent Address:', margin, yPos);
-          yPos += 5;
-          doc.setFont('helvetica', 'normal');
-          const permanentAddr = [
-            addressData.permanent_door_flat_no,
-            addressData.permanent_street,
-            addressData.permanent_village_area,
-            addressData.permanent_mandal,
-            addressData.permanent_district,
-            addressData.permanent_state,
-            addressData.permanent_pin_code
-          ].filter(Boolean).join(', ');
-          if (permanentAddr) {
-            const permLines = doc.splitTextToSize(permanentAddr, contentWidth - 10);
-            doc.text(permLines, margin + 3, yPos);
-            yPos += permLines.length * 4 + 3;
-          } else {
-            doc.text('Not provided', margin + 3, yPos);
-            yPos += 6;
-          }
+          doc.setTextColor(107, 114, 128);
+          doc.text('PERMANENT ADDRESS', margin + 3, yPos + 4);
+          yPos += 9;
+          
+          addTableRow('DOOR/FLAT NO', addressData.permanent_door_flat_no || '-', 'STREET', addressData.permanent_street || '-', false);
+          addTableRow('VILLAGE/AREA', addressData.permanent_village_area || '-', 'MANDAL', addressData.permanent_mandal || '-', true);
+          addTableRow('DISTRICT', addressData.permanent_district || '-', 'STATE', addressData.permanent_state || '-', false);
+          addTableRow('PIN CODE', addressData.permanent_pin_code || '-', '', '', true);
         } else {
-          doc.text('Permanent Address: Same as Present Address', margin, yPos);
-          yPos += 6;
+          addTableRow('PERMANENT ADDRESS', 'Same as Present Address', '', '', false);
         }
         yPos += 4;
       }
