@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, Pencil, Plus, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search, Filter, Eye, Pencil, Plus, Loader2, Briefcase, MapPin, Clock, ChevronRight } from "lucide-react";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +34,6 @@ export const JobManagementContent = () => {
   const [, setSearchParams] = useSearchParams();
 
   const handleViewPipeline = (candidateId: string, jobId: string) => {
-    // Navigate to Interview Pipeline tab with the selected candidate
     setSearchParams({ tab: "interview-pipeline", candidateId, jobId });
   };
 
@@ -93,16 +92,16 @@ export const JobManagementContent = () => {
     setDrawerOpen(true);
   };
 
-  const getStatusVariant = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "Open":
-        return "default";
+        return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
       case "Under Review":
-        return "secondary";
+        return "bg-amber-500/20 text-amber-400 border-amber-500/30";
       case "Closed":
-        return "outline";
+        return "bg-muted text-muted-foreground border-border";
       default:
-        return "default";
+        return "bg-primary/20 text-primary border-primary/30";
     }
   };
 
@@ -115,7 +114,6 @@ export const JobManagementContent = () => {
   return (
     <>
       <div className="space-y-6">
-
         {/* Actions Row */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full sm:w-auto">
@@ -141,98 +139,125 @@ export const JobManagementContent = () => {
           </Button>
         </div>
 
-        {/* Table Card */}
-        <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gradient-subtle border-b">
-                  <TableHead className="font-semibold">Job Title</TableHead>
-                  <TableHead className="font-semibold">Department</TableHead>
-                  <TableHead className="font-semibold">Experience</TableHead>
-                  <TableHead className="font-semibold">Skills</TableHead>
-                  <TableHead className="font-semibold">Type</TableHead>
-                  <TableHead className="font-semibold">Location</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold text-center">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mt-2">Loading jobs...</p>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredJobs.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      <p className="text-muted-foreground">No jobs found</p>
-                      <Button variant="link" asChild className="mt-2">
-                        <Link to="/employer/post-job">Create your first vacancy</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredJobs.map((job) => (
-                    <TableRow 
-                      key={job.id}
-                      className="hover:bg-accent/5 transition-colors"
-                    >
-                      <TableCell className="font-medium">{job.jobTitle}</TableCell>
-                      <TableCell>{job.department}</TableCell>
-                      <TableCell>{job.experience}</TableCell>
-                      <TableCell className="max-w-xs truncate">{job.skills}</TableCell>
-                      <TableCell>{job.type}</TableCell>
-                      <TableCell>{job.location}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
-                          {job.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleViewJob(job)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleEditJob(job)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+        {/* Job Cards Grid */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground mt-3">Loading jobs...</p>
           </div>
+        ) : filteredJobs.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Briefcase className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-1">No Vacancies Found</h3>
+              <p className="text-muted-foreground text-sm mb-4">Create your first vacancy to get started</p>
+              <Button variant="cta" asChild>
+                <Link to="/employer/post-job">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Vacancy
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {filteredJobs.map((job) => (
+              <Card
+                key={job.id}
+                className="group hover:shadow-lg transition-all duration-300 hover:border-primary/30 cursor-pointer overflow-hidden"
+                onClick={() => handleViewJob(job)}
+              >
+                <CardContent className="p-0">
+                  {/* Card Header with Icon */}
+                  <div className="flex flex-col items-center pt-6 pb-4 px-6">
+                    <div className="h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <Briefcase className="h-7 w-7 text-primary" />
+                    </div>
+                    <h3 className="text-base font-bold text-center line-clamp-2 mb-1">
+                      {job.jobTitle}
+                    </h3>
+                    <p className="text-xs text-muted-foreground text-center line-clamp-2">
+                      {job.department} · {job.experience} experience
+                    </p>
+                  </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-            <p className="text-sm text-muted-foreground">
-              Showing <span className="font-medium">{filteredJobs.length}</span> of <span className="font-medium">{jobs.length}</span> jobs
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" disabled>
-                Next
-              </Button>
-            </div>
+                  {/* Tags/Badges */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 px-6 pb-4">
+                    <Badge variant="outline" className="text-xs font-normal gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {job.location}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs font-normal gap-1">
+                      <Clock className="h-3 w-3" />
+                      {job.type}
+                    </Badge>
+                    <Badge className={`text-xs border ${getStatusColor(job.status)}`}>
+                      {job.status}
+                    </Badge>
+                  </div>
+
+                  {/* Skills preview */}
+                  {job.skills && job.skills !== "Not specified" && (
+                    <div className="px-6 pb-4">
+                      <p className="text-xs text-muted-foreground text-center line-clamp-1">
+                        {job.skills}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Footer */}
+                  <div className="border-t border-border px-6 py-3 flex items-center justify-between bg-muted/30">
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewJob(job);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditJob(job);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs gap-1 text-primary hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewJob(job);
+                      }}
+                    >
+                      View Details
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
+        )}
+
+        {/* Results count */}
+        {!isLoading && filteredJobs.length > 0 && (
+          <p className="text-sm text-muted-foreground text-center">
+            Showing <span className="font-medium">{filteredJobs.length}</span> of <span className="font-medium">{jobs.length}</span> vacancies
+          </p>
+        )}
       </div>
 
       <JobDetailsDrawer
