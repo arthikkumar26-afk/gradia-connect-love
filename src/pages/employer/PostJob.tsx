@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Briefcase, ArrowLeft, Sparkles, RefreshCw } from "lucide-react";
+import { Loader2, Briefcase, ArrowLeft, Sparkles, RefreshCw, CheckCircle2, Bot, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { getPipelineTypesForInterviewType, getPipelineStages, type PipelineStage } from "@/data/interviewPipelineConfig";
 
 const jobFormSchema = z.object({
   job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
@@ -39,6 +41,7 @@ const PostJob = () => {
   const [refineFeedback, setRefineFeedback] = useState("");
   const [isRefining, setIsRefining] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [selectedPipelineType, setSelectedPipelineType] = useState("");
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -56,6 +59,11 @@ const PostJob = () => {
       interview_type: "standard",
     },
   });
+
+  const watchedInterviewType = form.watch("interview_type");
+  const pipelineTypes = getPipelineTypesForInterviewType(watchedInterviewType);
+  const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType) : [];
+
 
   const handleRefineWithAI = async () => {
     if (!refineFeedback.trim()) {
@@ -399,38 +407,104 @@ const PostJob = () => {
                   />
                 </div>
 
-                {/* Interview Type */}
-                <FormField
-                  control={form.control}
-                  name="interview_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Interview Type *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select interview type" />
-                          </SelectTrigger>
-                        </FormControl>
+                {/* Interview Type & Pipeline Type */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="interview_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Interview Type *</FormLabel>
+                        <Select
+                          onValueChange={(val) => {
+                            field.onChange(val);
+                            setSelectedPipelineType("");
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select interview type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="standard">Standard (MCQ-based)</SelectItem>
+                            <SelectItem value="technical">Technical (Coding + MCQ)</SelectItem>
+                            <SelectItem value="education">Education (Includes Demo Video Round)</SelectItem>
+                            <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
+                            <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {field.value === 'education' && "📹 Includes Demo Video round"}
+                          {field.value === 'technical' && "💻 Includes coding assessments"}
+                          {field.value === 'sales' && "📊 Includes presentation assessment"}
+                          {field.value === 'management' && "📋 Includes case study analysis"}
+                          {field.value === 'standard' && "📝 Standard MCQ-based interviews"}
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {pipelineTypes.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        Interview Pipeline Type *
+                      </label>
+                      <Select
+                        value={selectedPipelineType}
+                        onValueChange={setSelectedPipelineType}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select pipeline type" />
+                        </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="standard">Standard (MCQ-based)</SelectItem>
-                          <SelectItem value="technical">Technical (Coding + MCQ)</SelectItem>
-                          <SelectItem value="education">Education (Includes Demo Video Round)</SelectItem>
-                          <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
-                          <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
+                          {pipelineTypes.map((pt) => (
+                            <SelectItem key={pt.value} value={pt.value}>
+                              {pt.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {field.value === 'education' && "📹 Includes Demo Video round for teachers/principals to record teaching demos"}
-                        {field.value === 'technical' && "💻 Includes technical coding assessments"}
-                        {field.value === 'sales' && "📊 Includes presentation skills assessment"}
-                        {field.value === 'management' && "📋 Includes case study analysis"}
-                        {field.value === 'standard' && "📝 Standard MCQ-based interviews across all stages"}
+                      <p className="text-xs text-muted-foreground">
+                        Choose the role type to see the interview stages
                       </p>
-                      <FormMessage />
-                    </FormItem>
+                    </div>
                   )}
-                />
+                </div>
+
+                {/* Pipeline Stages Preview */}
+                {pipelineStages.length > 0 && (
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <h4 className="text-sm font-semibold">
+                        Interview Pipeline Stages ({pipelineStages.length} stages)
+                      </h4>
+                    </div>
+                    <div className="space-y-2">
+                      {pipelineStages.map((stage, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 rounded-md border bg-background p-3"
+                        >
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{stage.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{stage.description}</p>
+                          </div>
+                          <Badge variant={stage.isAutomated ? "default" : "outline"} className="shrink-0 text-[10px] gap-1">
+                            {stage.isAutomated ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
+                            {stage.isAutomated ? 'AI' : 'Manual'}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Salary Range & Closing Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
