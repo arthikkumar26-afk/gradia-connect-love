@@ -2919,39 +2919,15 @@ const CandidateDashboard = () => {
                             variant="outline" 
                             size="sm" 
                             className="gap-1 h-7 text-xs px-2"
-                            onClick={() => window.open('https://www.coursera.org', '_blank')}
+                            onClick={() => window.open('https://skillory.in', '_blank')}
                           >
-                            Coursera <ExternalLink className="h-2.5 w-2.5" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-1 h-7 text-xs px-2"
-                            onClick={() => window.open('https://www.udemy.com', '_blank')}
-                          >
-                            Udemy <ExternalLink className="h-2.5 w-2.5" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-1 h-7 text-xs px-2"
-                            onClick={() => window.open('https://www.linkedin.com/learning', '_blank')}
-                          >
-                            LinkedIn Learning <ExternalLink className="h-2.5 w-2.5" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-1 h-7 text-xs px-2"
-                            onClick={() => window.open('https://www.edx.org', '_blank')}
-                          >
-                            edX <ExternalLink className="h-2.5 w-2.5" />
+                            Skillory <ExternalLink className="h-2.5 w-2.5" />
                           </Button>
                         </div>
                         <Button 
                           variant="outline"
                           size="sm"
-                          onClick={() => setActiveMenu("upskill")}
+                          onClick={() => window.open('https://skillory.in', '_blank')}
                         >
                           Explore Courses
                         </Button>
@@ -3129,42 +3105,18 @@ const CandidateDashboard = () => {
                           </p>
                           <div className="flex flex-wrap gap-2 justify-center">
                             <a 
-                              href="https://www.coursera.org" 
+                              href="https://skillory.in" 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
                             >
-                              Coursera <ExternalLink className="h-3 w-3" />
-                            </a>
-                            <a 
-                              href="https://www.udemy.com" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                            >
-                              Udemy <ExternalLink className="h-3 w-3" />
-                            </a>
-                            <a 
-                              href="https://www.linkedin.com/learning" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                            >
-                              LinkedIn Learning <ExternalLink className="h-3 w-3" />
-                            </a>
-                            <a 
-                              href="https://www.edx.org" 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                            >
-                              edX <ExternalLink className="h-3 w-3" />
+                              Skillory <ExternalLink className="h-3 w-3" />
                             </a>
                           </div>
                         </div>
                         <Button 
                           variant="outline" 
-                          onClick={() => navigate('/learning')}
+                          onClick={() => window.open('https://skillory.in', '_blank')}
                           className="gap-2 mt-2"
                         >
                           Explore Courses
