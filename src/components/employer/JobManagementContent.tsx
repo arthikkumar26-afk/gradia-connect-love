@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, Pencil, Plus, Loader2 } from "lucide-react";
+import { Search, Filter, Eye, Pencil, Plus, Loader2, FilePlus2, ArrowRight } from "lucide-react";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +34,6 @@ export const JobManagementContent = () => {
   const [, setSearchParams] = useSearchParams();
 
   const handleViewPipeline = (candidateId: string, jobId: string) => {
-    // Navigate to Interview Pipeline tab with the selected candidate
     setSearchParams({ tab: "interview-pipeline", candidateId, jobId });
   };
 
@@ -115,6 +114,46 @@ export const JobManagementContent = () => {
   return (
     <>
       <div className="space-y-6">
+        {/* Hero Card - Job Templates Style */}
+        <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
+          <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+            {/* Icon Circle */}
+            <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-5">
+              <FilePlus2 className="h-10 w-10 text-primary-foreground" />
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Vacancies List
+            </h2>
+
+            {/* Description */}
+            <p className="text-muted-foreground text-sm max-w-md mb-5">
+              Manage all your job postings, track applications, and create new vacancies for quick and consistent hiring
+            </p>
+
+            {/* Tags */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+              <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                Active Jobs
+              </Badge>
+              <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                Quick Posting
+              </Badge>
+              <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                Pipeline Tracking
+              </Badge>
+            </div>
+
+            {/* CTA Button */}
+            <Button variant="cta" size="lg" className="rounded-full px-10 gap-2 text-base" asChild>
+              <Link to="/employer/post-job">
+                Create Vacancy
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
 
         {/* Actions Row */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
