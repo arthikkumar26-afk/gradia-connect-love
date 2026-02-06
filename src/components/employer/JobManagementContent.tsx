@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Filter, Eye, Pencil, Plus, Loader2, FilePlus2, ArrowRight, ArrowLeft } from "lucide-react";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
+import { InlineJobCreationForm } from "./InlineJobCreationForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useSearchParams } from "react-router-dom";
 
 interface Job {
   id: string;
@@ -31,6 +31,7 @@ export const JobManagementContent = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
 
@@ -248,41 +249,54 @@ export const JobManagementContent = () => {
             </div>
           </div>
 
-          {/* Create Vacancy Card */}
-          <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
-            <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-              <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-5">
-                <Plus className="h-10 w-10 text-primary-foreground" />
-              </div>
+          {/* Create Vacancy Card or Inline Form */}
+          {showCreateForm ? (
+            <InlineJobCreationForm
+              onJobCreated={() => {
+                setShowCreateForm(false);
+                fetchJobs();
+              }}
+              onCancel={() => setShowCreateForm(false)}
+            />
+          ) : (
+            <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
+              <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+                <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-5">
+                  <Plus className="h-10 w-10 text-primary-foreground" />
+                </div>
 
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                Create Vacancy
-              </h2>
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  Create Vacancy
+                </h2>
 
-              <p className="text-muted-foreground text-sm max-w-md mb-5">
-                Post a new job vacancy with interview pipeline, requirements, and start receiving applications instantly
-              </p>
+                <p className="text-muted-foreground text-sm max-w-md mb-5">
+                  Post a new job vacancy with interview pipeline, requirements, and start receiving applications instantly
+                </p>
 
-              <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-                <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-                  Job Posting
-                </Badge>
-                <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-                  Pipeline Setup
-                </Badge>
-                <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-                  AI Screening
-                </Badge>
-              </div>
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+                  <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                    Job Posting
+                  </Badge>
+                  <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                    Pipeline Setup
+                  </Badge>
+                  <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                    AI Screening
+                  </Badge>
+                </div>
 
-              <Button variant="cta" size="lg" className="rounded-full px-10 gap-2 text-base" asChild>
-                <Link to="/employer/post-job">
+                <Button
+                  variant="cta"
+                  size="lg"
+                  className="rounded-full px-10 gap-2 text-base"
+                  onClick={() => setShowCreateForm(true)}
+                >
                   Continue
                   <ArrowRight className="h-5 w-5" />
-                </Link>
-              </Button>
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <JobDetailsDrawer
