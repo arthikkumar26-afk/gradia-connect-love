@@ -150,20 +150,20 @@ export const JobManagementContent = () => {
           </div>
 
           {/* Jobs Table */}
-          <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
+          <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
+            <div className="overflow-x-auto w-full">
+              <Table className="table-fixed w-full">
                 <TableHeader>
                   <TableRow className="bg-gradient-subtle border-b">
-                    <TableHead className="font-semibold">Job ID</TableHead>
-                    <TableHead className="font-semibold">Job Title</TableHead>
-                    <TableHead className="font-semibold">Department</TableHead>
-                    <TableHead className="font-semibold">Experience</TableHead>
-                    <TableHead className="font-semibold">Skills</TableHead>
-                    <TableHead className="font-semibold">Type</TableHead>
-                    <TableHead className="font-semibold">Location</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold text-center">Actions</TableHead>
+                    <TableHead className="font-semibold w-[80px]">Job ID</TableHead>
+                    <TableHead className="font-semibold w-[15%]">Job Title</TableHead>
+                    <TableHead className="font-semibold w-[12%]">Department</TableHead>
+                    <TableHead className="font-semibold w-[10%]">Exp.</TableHead>
+                    <TableHead className="font-semibold w-[20%]">Skills</TableHead>
+                    <TableHead className="font-semibold w-[8%]">Type</TableHead>
+                    <TableHead className="font-semibold w-[10%]">Location</TableHead>
+                    <TableHead className="font-semibold w-[8%]">Status</TableHead>
+                    <TableHead className="font-semibold text-center w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -194,12 +194,12 @@ export const JobManagementContent = () => {
                             {job.id.slice(0, 8)}
                           </code>
                         </TableCell>
-                        <TableCell className="font-medium">{job.jobTitle}</TableCell>
-                        <TableCell>{job.department}</TableCell>
-                        <TableCell>{job.experience}</TableCell>
-                        <TableCell className="max-w-xs truncate">{job.skills}</TableCell>
-                        <TableCell>{job.type}</TableCell>
-                        <TableCell>{job.location}</TableCell>
+                        <TableCell className="font-medium truncate">{job.jobTitle}</TableCell>
+                        <TableCell className="truncate">{job.department}</TableCell>
+                        <TableCell className="truncate">{job.experience}</TableCell>
+                        <TableCell className="truncate" title={job.skills}>{job.skills}</TableCell>
+                        <TableCell className="truncate">{job.type}</TableCell>
+                        <TableCell className="truncate">{job.location}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
                             {job.status}
