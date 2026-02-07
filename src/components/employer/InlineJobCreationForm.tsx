@@ -512,14 +512,37 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select designation" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="1st_language">1st Language</SelectItem>
-                        <SelectItem value="2nd_language">2nd Language</SelectItem>
-                        <SelectItem value="3rd_language">3rd Language</SelectItem>
-                        <SelectItem value="maths">MATHS</SelectItem>
-                        <SelectItem value="physics">PHYSICS</SelectItem>
-                        <SelectItem value="chemistry">CHEMISTRY</SelectItem>
-                        <SelectItem value="biology">BIOLOGY</SelectItem>
-                        <SelectItem value="social">SOCIAL</SelectItem>
+                        {dynamicFieldValues["hs_classes"] === "class_9_10" ? (
+                          <>
+                            <SelectItem value="1st_language">1st Language</SelectItem>
+                            <SelectItem value="2nd_language">2nd Language</SelectItem>
+                            <SelectItem value="3rd_language">3rd Language</SelectItem>
+                            <SelectItem value="maths">MATHS</SelectItem>
+                            <SelectItem value="physics">PHYSICS</SelectItem>
+                            <SelectItem value="chemistry">CHEMISTRY</SelectItem>
+                            <SelectItem value="biology">BIOLOGY</SelectItem>
+                            <SelectItem value="botany">BOTANY</SelectItem>
+                            <SelectItem value="zoology">ZOOLOGY</SelectItem>
+                            <SelectItem value="social">SOCIAL</SelectItem>
+                            <SelectItem value="academic">ACADEMIC</SelectItem>
+                            <SelectItem value="dean">DEAN</SelectItem>
+                            <SelectItem value="computers">COMPUTERS</SelectItem>
+                            <SelectItem value="physical_education">PHYSICAL EDUCATION</SelectItem>
+                            <SelectItem value="soft_skills">SOFT SKILLS</SelectItem>
+                            <SelectItem value="trainer">TRAINER</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="1st_language">1st Language</SelectItem>
+                            <SelectItem value="2nd_language">2nd Language</SelectItem>
+                            <SelectItem value="3rd_language">3rd Language</SelectItem>
+                            <SelectItem value="maths">MATHS</SelectItem>
+                            <SelectItem value="physics">PHYSICS</SelectItem>
+                            <SelectItem value="chemistry">CHEMISTRY</SelectItem>
+                            <SelectItem value="biology">BIOLOGY</SelectItem>
+                            <SelectItem value="social">SOCIAL</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
