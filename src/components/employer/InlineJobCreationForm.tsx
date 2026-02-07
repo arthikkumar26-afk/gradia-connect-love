@@ -339,7 +339,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <label className="text-sm font-medium leading-none">Category</label>
                 <Select
                   value={dynamicFieldValues["category"] || ""}
-                  onValueChange={(val) => handleDynamicFieldChange("category", val)}
+                  onValueChange={(val) => {
+                    handleDynamicFieldChange("category", val);
+                    // Reset function when category changes
+                    handleDynamicFieldChange("function", "");
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
@@ -361,9 +365,18 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                     <SelectValue placeholder="Select function" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="teaching">Teaching</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="support">Support</SelectItem>
+                    {dynamicFieldValues["category"] === "non_academic" ? (
+                      <>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="coaching_center">Coaching Center</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="teaching">Teaching</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="support">Support</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
