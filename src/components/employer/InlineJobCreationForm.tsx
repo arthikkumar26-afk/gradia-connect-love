@@ -386,7 +386,32 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
 
               {/* Primary: Classes, Department, Designation */}
-              {dynamicFieldValues["segment"] === "Primary" ? (
+              {dynamicFieldValues["segment"] === "Primary" && dynamicFieldValues["category"] === "non_academic" && dynamicFieldValues["function"] === "admin" ? (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Designation</label>
+                    <Select
+                      key={`desig-admin-primary`}
+                      value={dynamicFieldValues["designation"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("designation", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select designation" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        <SelectItem value="vice_principal">Vice-Principal</SelectItem>
+                        <SelectItem value="principal">Principal</SelectItem>
+                        <SelectItem value="zonal_coordinator">Zonal Coordinator</SelectItem>
+                        <SelectItem value="resource_person">Resource Person</SelectItem>
+                        <SelectItem value="sme">SME</SelectItem>
+                        <SelectItem value="rnd_head">R&D Head</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div />
+                  <div />
+                </>
+              ) : dynamicFieldValues["segment"] === "Primary" ? (
                 <>
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium leading-none">Classes</label>
