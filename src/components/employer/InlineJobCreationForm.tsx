@@ -394,7 +394,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   <SelectContent className="bg-popover z-[200]">
                     {dynamicFieldValues["segment"] === "Pre-Primary" ? (
                       <>
-                        <SelectItem value="pre_mother_teacher">Pre-Mother Teacher</SelectItem>
+                        <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
                         <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
                         <SelectItem value="care_taker">Care Taker</SelectItem>
                       </>
