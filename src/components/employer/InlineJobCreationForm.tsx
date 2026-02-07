@@ -321,9 +321,9 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Sector / Division</label>
                 <Select
-                  value={dynamicFieldValues["sector_division"] || ""}
-                  onValueChange={(val) => handleDynamicFieldChange("sector_division", val)}
-                >
+                   value={dynamicFieldValues["sector_division"] || ""}
+                   onValueChange={(val) => handleDynamicFieldChange("sector_division", val, { category: "", function: "", segment: "", department_type: "" })}
+                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select sector" />
                   </SelectTrigger>
@@ -335,22 +335,38 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Category</label>
                 <Select
-                  value={dynamicFieldValues["category"] || ""}
-                  onValueChange={(val) => {
-                    handleDynamicFieldChange("category", val, { function: "", segment: "", department_type: "" });
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="non_academic">Non-Academic</SelectItem>
-                  </SelectContent>
-                </Select>
+                   key={`category-${dynamicFieldValues["sector_division"] || "default"}`}
+                   value={dynamicFieldValues["category"] || undefined}
+                   onValueChange={(val) => {
+                     handleDynamicFieldChange("category", val, { function: "", segment: "", department_type: "" });
+                   }}
+                 >
+                   <SelectTrigger>
+                     <SelectValue placeholder="Select category" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {dynamicFieldValues["sector_division"] === "school" ? (
+                       <>
+                         <SelectItem value="academic">Academic</SelectItem>
+                         <SelectItem value="non_academic">Non-Academic</SelectItem>
+                       </>
+                     ) : dynamicFieldValues["sector_division"] === "college" ? (
+                       <>
+                         <SelectItem value="academic">Academic</SelectItem>
+                         <SelectItem value="non_academic">Non-Academic</SelectItem>
+                         <SelectItem value="research">Research</SelectItem>
+                       </>
+                     ) : (
+                       <>
+                         <SelectItem value="academic">Academic</SelectItem>
+                         <SelectItem value="non_academic">Non-Academic</SelectItem>
+                       </>
+                     )}
+                   </SelectContent>
+                 </Select>
               </div>
 
               <div className="space-y-1.5">
