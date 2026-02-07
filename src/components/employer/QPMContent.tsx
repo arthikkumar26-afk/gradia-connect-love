@@ -767,6 +767,103 @@ export const QPMContent = () => {
         ))}
       </div>
 
+      {/* Review Question Papers - Show all created sets inline */}
+      {papers.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Eye className="h-4 w-4 text-primary" />
+            Review Question Papers ({papers.length} set{papers.length > 1 ? "s" : ""} created)
+          </h3>
+          
+          <Accordion type="multiple" className="space-y-2">
+            {papers.map((paper) => (
+              <AccordionItem key={paper.id} value={paper.id} className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-4 py-2 hover:no-underline hover:bg-muted/30">
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold shrink-0">
+                      {paper.set_number}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{paper.title}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {paper.questions.length} questions • {paper.questions.reduce((sum, q) => sum + q.marks, 0)} total marks
+                      </p>
+                    </div>
+                    {paper.is_active ? (
+                      <Badge variant="default" className="text-[10px] ml-auto mr-2">Active</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px] ml-auto mr-2">Inactive</Badge>
+                    )}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-3">
+                  <div className="space-y-2 pt-1">
+                    {paper.questions.map((q, idx) => (
+                      <div key={idx} className={`p-3 rounded-lg border ${idx % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
+                        <div className="flex items-start gap-2">
+                          <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">Q{q.question_number}</Badge>
+                          <div className="flex-1 space-y-1.5">
+                            <p className="text-xs font-medium leading-relaxed">{q.question_text}</p>
+                            
+                            {/* MCQ Options */}
+                            {q.question_type === "multiple_choice" && q.options && (
+                              <div className="grid grid-cols-2 gap-1 ml-1">
+                                {q.options.map((opt, oIdx) => (
+                                  <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                    q.answer_text.toUpperCase().startsWith(String.fromCharCode(65 + oIdx))
+                                      ? "bg-accent/10 border-accent/40 text-accent-foreground font-medium"
+                                      : "bg-muted/30 border-border"
+                                  }`}>
+                                    {String.fromCharCode(65 + oIdx)}) {opt}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* True/False */}
+                            {q.question_type === "true_false" && (
+                              <div className="flex gap-2 ml-1">
+                                <span className={`text-[10px] px-2 py-0.5 rounded border ${
+                                  q.answer_text.toLowerCase().includes("true") 
+                                    ? "bg-accent/10 border-accent/40 font-medium" : "bg-muted/30"
+                                }`}>True</span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded border ${
+                                  q.answer_text.toLowerCase().includes("false") 
+                                    ? "bg-accent/10 border-accent/40 font-medium" : "bg-muted/30"
+                                }`}>False</span>
+                              </div>
+                            )}
+
+                            {/* Answer */}
+                            <div className="p-1.5 bg-primary/5 rounded border border-primary/15">
+                              <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.answer_text}</p>
+                              {q.keywords.length > 0 && (
+                                <p className="text-[9px] text-muted-foreground mt-0.5">Keywords: {q.keywords.join(", ")}</p>
+                              )}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Quick actions */}
+                  <div className="flex gap-2 mt-3 pt-2 border-t">
+                    <Button variant="outline" size="sm" className="text-[10px] h-6" onClick={() => handleEditPaper(paper)}>
+                      Edit Set {paper.set_number}
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-[10px] h-6 text-destructive" onClick={() => handleDeletePaper(paper.id)}>
+                      <Trash2 className="h-3 w-3 mr-0.5" /> Delete
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      )}
+
       {/* AI Paper Detection Section */}
       <AIPaperDetection
         jobId={selectedJob.id}
