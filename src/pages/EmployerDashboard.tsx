@@ -304,7 +304,7 @@ const EmployerDashboard = () => {
       <aside 
         className={`${
           sidebarOpen ? "w-64 min-w-64" : "w-16 min-w-16"
-        } bg-card border-r border-border transition-all duration-300 flex flex-col flex-shrink-0`}
+        } bg-card border-r border-border transition-all duration-300 flex flex-col flex-shrink-0 sticky top-[64px] h-[calc(100vh-64px)]`}
       >
         {/* User Info */}
         {sidebarOpen && (
@@ -323,7 +323,7 @@ const EmployerDashboard = () => {
           </div>
         )}
 
-        <nav className="flex-1 p-4 space-y-1 pt-6">
+        <nav className="flex-1 p-4 space-y-1 pt-6 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeMenu === item.id;
