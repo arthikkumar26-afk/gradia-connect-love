@@ -275,10 +275,10 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             )}
 
 
-            {/* Sector/Division, Category, Function */}
+            {/* Sector, Category, Function */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium leading-none">Sector / Division</label>
+                <label className="text-sm font-medium leading-none">Sector</label>
                 <Select
                    value={dynamicFieldValues["sector_division"] || ""}
                    onValueChange={(val) => handleDynamicFieldChange("sector_division", val, { category: "", function: "", segment: "", department_type: "" })}

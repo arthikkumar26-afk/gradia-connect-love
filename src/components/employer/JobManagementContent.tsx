@@ -300,7 +300,7 @@ export const JobManagementContent = () => {
                   <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-2 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
                     <TableHead className="font-semibold">Date & Time</TableHead>
                     <TableHead className="font-semibold">Job ID</TableHead>
-                    <TableHead className="font-semibold">Sector/Division</TableHead>
+                    <TableHead className="font-semibold">Sector</TableHead>
                     <TableHead className="font-semibold">Category</TableHead>
                     <TableHead className="font-semibold">Function</TableHead>
                     <TableHead className="font-semibold">Segment</TableHead>
