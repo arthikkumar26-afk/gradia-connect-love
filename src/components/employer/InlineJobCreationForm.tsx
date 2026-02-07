@@ -388,7 +388,10 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <Select
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
-                  onValueChange={(val) => handleDynamicFieldChange("segment", val)}
+                  onValueChange={(val) => {
+                    handleDynamicFieldChange("segment", val);
+                    handleDynamicFieldChange("department_type", "");
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select segment" />
@@ -419,23 +422,34 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Department</label>
                 <Select
-                  value={dynamicFieldValues["department_type"] || ""}
+                  key={`dept-${dynamicFieldValues["segment"] || "default"}`}
+                  value={dynamicFieldValues["department_type"] || undefined}
                   onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="academics">Academics</SelectItem>
-                    <SelectItem value="administration">Administration</SelectItem>
-                    <SelectItem value="sports">Sports & Physical Education</SelectItem>
-                    <SelectItem value="library">Library</SelectItem>
-                    <SelectItem value="lab">Laboratory</SelectItem>
-                    <SelectItem value="counseling">Counseling</SelectItem>
-                    <SelectItem value="it">IT / Computer Lab</SelectItem>
-                    <SelectItem value="accounts">Accounts & Finance</SelectItem>
-                    <SelectItem value="transport">Transport</SelectItem>
-                    <SelectItem value="hostel">Hostel</SelectItem>
+                    {dynamicFieldValues["segment"] === "Pre-Primary" ? (
+                      <>
+                        <SelectItem value="pre_mother_teacher">Pre-Mother Teacher</SelectItem>
+                        <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                        <SelectItem value="care_taker">Care Taker</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="academics">Academics</SelectItem>
+                        <SelectItem value="administration">Administration</SelectItem>
+                        <SelectItem value="sports">Sports & Physical Education</SelectItem>
+                        <SelectItem value="library">Library</SelectItem>
+                        <SelectItem value="lab">Laboratory</SelectItem>
+                        <SelectItem value="counseling">Counseling</SelectItem>
+                        <SelectItem value="it">IT / Computer Lab</SelectItem>
+                        <SelectItem value="accounts">Accounts & Finance</SelectItem>
+                        <SelectItem value="transport">Transport</SelectItem>
+                        <SelectItem value="hostel">Hostel</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
