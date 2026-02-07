@@ -352,7 +352,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "" });
+                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "", classes: "" });
                   }}
                 >
                   <SelectTrigger>
@@ -381,123 +381,193 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium leading-none">Department</label>
-                <Select
-                  key={`dept-${dynamicFieldValues["segment"] || "none"}-${dynamicFieldValues["function"] || "none"}`}
-                  value={dynamicFieldValues["department_type"] || undefined}
-                  onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-[200]">
-                    {dynamicFieldValues["segment"] === "Pre-Primary" ? (
-                      <>
-                        <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
-                        <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
-                        <SelectItem value="care_taker">Care Taker</SelectItem>
-                      </>
-                    ) : (
-                      <>
+              {/* Primary: Classes, Department, Designation */}
+              {dynamicFieldValues["segment"] === "Primary" ? (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Classes</label>
+                    <Select
+                      key={`classes-primary`}
+                      value={dynamicFieldValues["classes"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("classes", val, { department_type: "", designation: "" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        <SelectItem value="1st">1st Class</SelectItem>
+                        <SelectItem value="2nd">2nd Class</SelectItem>
+                        <SelectItem value="3rd">3rd Class</SelectItem>
+                        <SelectItem value="4th">4th Class</SelectItem>
+                        <SelectItem value="5th">5th Class</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Department</label>
+                    <Select
+                      key={`dept-primary-${dynamicFieldValues["classes"] || "none"}`}
+                      value={dynamicFieldValues["department_type"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
                         <SelectItem value="academics">Academics</SelectItem>
                         <SelectItem value="administration">Administration</SelectItem>
                         <SelectItem value="sports">Sports & Physical Education</SelectItem>
                         <SelectItem value="library">Library</SelectItem>
-                        <SelectItem value="lab">Laboratory</SelectItem>
                         <SelectItem value="counseling">Counseling</SelectItem>
-                        <SelectItem value="it">IT / Computer Lab</SelectItem>
-                        <SelectItem value="accounts">Accounts & Finance</SelectItem>
-                        <SelectItem value="transport">Transport</SelectItem>
-                        <SelectItem value="hostel">Hostel</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium leading-none">Designation</label>
-                <Select
-                  key={`desig-${dynamicFieldValues["segment"] || "none"}`}
-                  value={dynamicFieldValues["designation"] || undefined}
-                  onValueChange={(val) => handleDynamicFieldChange("designation", val)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select designation" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-[200]">
-                    {dynamicFieldValues["segment"] === "Pre-Primary" ? (
-                      <>
-                        <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
-                        <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
-                        <SelectItem value="care_taker">Care Taker</SelectItem>
-                      </>
-                    ) : (
-                      <>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Designation</label>
+                    <Select
+                      key={`desig-primary-${dynamicFieldValues["classes"] || "none"}`}
+                      value={dynamicFieldValues["designation"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("designation", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select designation" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
                         <SelectItem value="PRT">PRT (Primary Teacher)</SelectItem>
-                        <SelectItem value="TGT">TGT (Trained Graduate Teacher)</SelectItem>
-                        <SelectItem value="PGT">PGT (Post Graduate Teacher)</SelectItem>
-                        <SelectItem value="Head Teacher">Head Teacher / HoD</SelectItem>
-                        <SelectItem value="Vice Principal">Vice Principal</SelectItem>
-                        <SelectItem value="Principal">Principal</SelectItem>
+                        <SelectItem value="Head Teacher">Head Teacher</SelectItem>
                         <SelectItem value="Coordinator">Academic Coordinator</SelectItem>
                         <SelectItem value="Counselor">Counselor</SelectItem>
                         <SelectItem value="Librarian">Librarian</SelectItem>
-                        <SelectItem value="Lab Assistant">Lab Assistant</SelectItem>
                         <SelectItem value="Sports Coach">Sports Coach / PET</SelectItem>
                         <SelectItem value="Special Educator">Special Educator</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Pre-Primary / Other: Department, Designation, Subjects */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Department</label>
+                    <Select
+                      key={`dept-${dynamicFieldValues["segment"] || "none"}-${dynamicFieldValues["function"] || "none"}`}
+                      value={dynamicFieldValues["department_type"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        {dynamicFieldValues["segment"] === "Pre-Primary" ? (
+                          <>
+                            <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
+                            <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                            <SelectItem value="care_taker">Care Taker</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="academics">Academics</SelectItem>
+                            <SelectItem value="administration">Administration</SelectItem>
+                            <SelectItem value="sports">Sports & Physical Education</SelectItem>
+                            <SelectItem value="library">Library</SelectItem>
+                            <SelectItem value="lab">Laboratory</SelectItem>
+                            <SelectItem value="counseling">Counseling</SelectItem>
+                            <SelectItem value="it">IT / Computer Lab</SelectItem>
+                            <SelectItem value="accounts">Accounts & Finance</SelectItem>
+                            <SelectItem value="transport">Transport</SelectItem>
+                            <SelectItem value="hostel">Hostel</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium leading-none">Subjects</label>
-                <Select
-                  key={`subj-${dynamicFieldValues["segment"] || "none"}`}
-                  value={dynamicFieldValues["subjects"] || undefined}
-                  onValueChange={(val) => handleDynamicFieldChange("subjects", val)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-[200]">
-                    {dynamicFieldValues["segment"] === "Pre-Primary" ? (
-                      <>
-                        <SelectItem value="Numeracy">Numeracy</SelectItem>
-                        <SelectItem value="Literacy">Literacy</SelectItem>
-                        <SelectItem value="Rhymes">Rhymes</SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="Mathematics">Mathematics</SelectItem>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Biology">Biology</SelectItem>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Hindi">Hindi</SelectItem>
-                        <SelectItem value="Telugu">Telugu</SelectItem>
-                        <SelectItem value="Social Studies">Social Studies</SelectItem>
-                        <SelectItem value="Science">Science (General)</SelectItem>
-                        <SelectItem value="Computer Science">Computer Science</SelectItem>
-                        <SelectItem value="Commerce">Commerce / Accounts</SelectItem>
-                        <SelectItem value="Economics">Economics</SelectItem>
-                        <SelectItem value="Political Science">Political Science</SelectItem>
-                        <SelectItem value="History">History</SelectItem>
-                        <SelectItem value="Geography">Geography</SelectItem>
-                        <SelectItem value="Physical Education">Physical Education</SelectItem>
-                        <SelectItem value="Art">Art & Craft</SelectItem>
-                        <SelectItem value="Music">Music</SelectItem>
-                        <SelectItem value="Sanskrit">Sanskrit</SelectItem>
-                        <SelectItem value="EVS">EVS (Environmental Studies)</SelectItem>
-                        <SelectItem value="All Subjects">All Subjects</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Designation</label>
+                    <Select
+                      key={`desig-${dynamicFieldValues["segment"] || "none"}`}
+                      value={dynamicFieldValues["designation"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("designation", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select designation" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        {dynamicFieldValues["segment"] === "Pre-Primary" ? (
+                          <>
+                            <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
+                            <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                            <SelectItem value="care_taker">Care Taker</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="PRT">PRT (Primary Teacher)</SelectItem>
+                            <SelectItem value="TGT">TGT (Trained Graduate Teacher)</SelectItem>
+                            <SelectItem value="PGT">PGT (Post Graduate Teacher)</SelectItem>
+                            <SelectItem value="Head Teacher">Head Teacher / HoD</SelectItem>
+                            <SelectItem value="Vice Principal">Vice Principal</SelectItem>
+                            <SelectItem value="Principal">Principal</SelectItem>
+                            <SelectItem value="Coordinator">Academic Coordinator</SelectItem>
+                            <SelectItem value="Counselor">Counselor</SelectItem>
+                            <SelectItem value="Librarian">Librarian</SelectItem>
+                            <SelectItem value="Lab Assistant">Lab Assistant</SelectItem>
+                            <SelectItem value="Sports Coach">Sports Coach / PET</SelectItem>
+                            <SelectItem value="Special Educator">Special Educator</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Subjects</label>
+                    <Select
+                      key={`subj-${dynamicFieldValues["segment"] || "none"}`}
+                      value={dynamicFieldValues["subjects"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("subjects", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subject" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        {dynamicFieldValues["segment"] === "Pre-Primary" ? (
+                          <>
+                            <SelectItem value="Numeracy">Numeracy</SelectItem>
+                            <SelectItem value="Literacy">Literacy</SelectItem>
+                            <SelectItem value="Rhymes">Rhymes</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="Mathematics">Mathematics</SelectItem>
+                            <SelectItem value="Physics">Physics</SelectItem>
+                            <SelectItem value="Chemistry">Chemistry</SelectItem>
+                            <SelectItem value="Biology">Biology</SelectItem>
+                            <SelectItem value="English">English</SelectItem>
+                            <SelectItem value="Hindi">Hindi</SelectItem>
+                            <SelectItem value="Telugu">Telugu</SelectItem>
+                            <SelectItem value="Social Studies">Social Studies</SelectItem>
+                            <SelectItem value="Science">Science (General)</SelectItem>
+                            <SelectItem value="Computer Science">Computer Science</SelectItem>
+                            <SelectItem value="Commerce">Commerce / Accounts</SelectItem>
+                            <SelectItem value="Economics">Economics</SelectItem>
+                            <SelectItem value="Political Science">Political Science</SelectItem>
+                            <SelectItem value="History">History</SelectItem>
+                            <SelectItem value="Geography">Geography</SelectItem>
+                            <SelectItem value="Physical Education">Physical Education</SelectItem>
+                            <SelectItem value="Art">Art & Craft</SelectItem>
+                            <SelectItem value="Music">Music</SelectItem>
+                            <SelectItem value="Sanskrit">Sanskrit</SelectItem>
+                            <SelectItem value="EVS">EVS (Environmental Studies)</SelectItem>
+                            <SelectItem value="All Subjects">All Subjects</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Job Title */}
