@@ -386,7 +386,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Segment / Board</label>
                 <Select
-                  value={dynamicFieldValues["segment"] || ""}
+                  key={`segment-${dynamicFieldValues["function"] || "default"}`}
+                  value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => handleDynamicFieldChange("segment", val)}
                 >
                   <SelectTrigger>
