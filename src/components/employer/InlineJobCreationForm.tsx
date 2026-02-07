@@ -458,11 +458,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                           </>
                         ) : (
                           <>
-                            <SelectItem value="Mathematics">Mathematics</SelectItem>
-                            <SelectItem value="English">English</SelectItem>
-                            <SelectItem value="EVS">EVS</SelectItem>
-                            <SelectItem value="Telugu">Telugu</SelectItem>
-                            <SelectItem value="Hindi">Hindi</SelectItem>
+                            <SelectItem value="Teacher">Teacher</SelectItem>
                           </>
                         )}
                       </SelectContent>
