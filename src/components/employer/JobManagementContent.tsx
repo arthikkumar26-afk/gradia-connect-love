@@ -313,11 +313,12 @@ export const JobManagementContent = () => {
                               />
                             ) : (
                               <span
-                                className="cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors"
+                                className="inline-flex items-center gap-1 cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors group"
                                 onClick={() => startEditing(job.id, "boardExperience", job.boardExperience)}
                                 title="Click to edit"
                               >
                                 {job.boardExperience}
+                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                               </span>
                             )}
                           </TableCell>
@@ -334,11 +335,12 @@ export const JobManagementContent = () => {
                               />
                             ) : (
                               <span
-                                className="cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors"
+                                className="inline-flex items-center gap-1 cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors group"
                                 onClick={() => startEditing(job.id, "organisation", job.organisation)}
                                 title="Click to edit"
                               >
                                 {job.organisation}
+                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                               </span>
                             )}
                           </TableCell>
