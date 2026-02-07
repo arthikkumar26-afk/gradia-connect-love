@@ -62,11 +62,21 @@ export const JobManagementContent = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from("jobs")
-        .select("*")
-        .eq("employer_id", user.id)
-        .order("created_at", { ascending: false });
+      const [jobsResult, regResult] = await Promise.all([
+        supabase
+          .from("jobs")
+          .select("*")
+          .eq("employer_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("employer_registrations")
+          .select("company_name")
+          .eq("employer_id", user.id)
+          .maybeSingle(),
+      ]);
+
+      const { data, error } = jobsResult;
+      const companyName = regResult.data?.company_name || "—";
 
       if (error) throw error;
 
@@ -116,7 +126,7 @@ export const JobManagementContent = () => {
           board: job.interview_type === "education" ? (job.description?.match(/\b(CBSE|ICSE|ISC|IGCSE|IB|State Board|Cambridge|NIOS)\b/i)?.[0] || "—") : "—",
           boardExperience: job.experience_required || "—",
           salary: job.salary_range || "—",
-          organisation: job.location || "—",
+          organisation: companyName,
           published: job.status === "active",
           display: displayChannels.join(", "),
           status: job.status === "active" ? "Open" : job.status === "closed" ? "Closed" : "Under Review",
