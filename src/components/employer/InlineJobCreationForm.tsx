@@ -395,11 +395,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select class" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="1st">1st Class</SelectItem>
-                        <SelectItem value="2nd">2nd Class</SelectItem>
-                        <SelectItem value="3rd">3rd Class</SelectItem>
-                        <SelectItem value="4th">4th Class</SelectItem>
-                        <SelectItem value="5th">5th Class</SelectItem>
+                        <SelectItem value="1">1</SelectItem>
+                        <SelectItem value="2">2</SelectItem>
+                        <SelectItem value="3">3</SelectItem>
+                        <SelectItem value="4">4</SelectItem>
+                        <SelectItem value="5">5</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
