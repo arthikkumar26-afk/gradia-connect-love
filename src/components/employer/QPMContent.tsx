@@ -66,13 +66,23 @@ export const QPMContent = () => {
   const [editingPaper, setEditingPaper] = useState<QuestionPaper | null>(null);
   const [viewingPaper, setViewingPaper] = useState<QuestionPaper | null>(null);
 
-  // Fetch jobs
+  // Fetch jobs - with auth state listener for reliability
   useEffect(() => {
     fetchJobs();
+    
+    // Also listen for auth state changes to refetch if needed
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        fetchJobs();
+      }
+    });
+    
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchJobs = async () => {
     try {
+      setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -387,8 +397,8 @@ export const QPMContent = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Question Paper Management</h2>
-            <p className="text-sm text-muted-foreground">Select a job vacancy to manage its question papers</p>
+            <h2 className="text-lg font-semibold text-foreground">Written Test Papers</h2>
+            <p className="text-sm text-muted-foreground">Select a job vacancy to manage its written test papers</p>
           </div>
         </div>
 
@@ -428,7 +438,7 @@ export const QPMContent = () => {
                     </TableCell>
                     <TableCell>
                       <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); handleSelectJob(job); }}>
-                        <BookOpen className="h-3 w-3 mr-1" /> Manage QPM
+                        <BookOpen className="h-3 w-3 mr-1" /> Manage Papers
                       </Button>
                     </TableCell>
                   </TableRow>

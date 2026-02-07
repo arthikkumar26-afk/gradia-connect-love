@@ -503,7 +503,7 @@ const EmployerDashboard = () => {
 
             {activeMenu === "registration" && <RegistrationContent />}
             {activeMenu === "jobs" && <JobManagementContent />}
-            {activeMenu === "qpm" && <QPMContent />}
+            {activeMenu === "qpm" && <QPMContent key="qpm-refresh" />}
             {activeMenu === "talent-pool" && <TalentPoolContent />}
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
