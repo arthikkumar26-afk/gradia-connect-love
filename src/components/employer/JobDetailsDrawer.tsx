@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles, Link2, Copy, Check, ExternalLink } from "lucide-react";
+import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles, Link2, Copy, Check, ExternalLink, QrCode, Download } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -520,42 +521,89 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
             )}
           </div>
 
-          {/* Share Job Link (View Only) */}
+          {/* Share Job Link & QR Code (View Only) */}
           {!isEditMode && (
-            <div className="space-y-3 bg-primary/5 border border-primary/20 p-4 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-primary" />
-                <h4 className="font-semibold text-sm">Share Job Link</h4>
+            <div className="space-y-4">
+              <div className="space-y-3 bg-primary/5 border border-primary/20 p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-sm">Share Job Link</h4>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Share this link with candidates to apply for this position
+                </p>
+                <div className="flex gap-2">
+                  <Input 
+                    readOnly 
+                    value={getJobApplicationLink()} 
+                    className="text-xs bg-background"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={handleCopyLink}
+                    className="shrink-0"
+                  >
+                    {isCopied ? (
+                      <Check className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => window.open(getJobApplicationLink(), '_blank')}
+                    className="shrink-0"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Share this link with candidates to apply for this position
-              </p>
-              <div className="flex gap-2">
-                <Input 
-                  readOnly 
-                  value={getJobApplicationLink()} 
-                  className="text-xs bg-background"
-                />
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={handleCopyLink}
-                  className="shrink-0"
-                >
-                  {isCopied ? (
-                    <Check className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  onClick={() => window.open(getJobApplicationLink(), '_blank')}
-                  className="shrink-0"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
+
+              {/* QR Code Section */}
+              <div className="space-y-3 bg-muted/30 border border-border p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <QrCode className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-sm">Job QR Code</h4>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Unique QR code for this position — candidates can scan to apply directly
+                </p>
+                <div className="flex flex-col items-center gap-3 py-3">
+                  <div className="bg-white p-4 rounded-lg shadow-sm border" id={`qr-${job.id}`}>
+                    <QRCodeSVG value={getJobApplicationLink()} size={160} />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground text-center max-w-[200px] truncate" title={getJobApplicationLink()}>
+                    {getJobApplicationLink()}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      const svg = document.querySelector(`#qr-${job.id} svg`);
+                      if (!svg) return;
+                      const svgData = new XMLSerializer().serializeToString(svg);
+                      const canvas = document.createElement("canvas");
+                      canvas.width = 320;
+                      canvas.height = 320;
+                      const ctx = canvas.getContext("2d");
+                      const img = new Image();
+                      img.onload = () => {
+                        ctx?.drawImage(img, 0, 0, 320, 320);
+                        const link = document.createElement("a");
+                        link.download = `job-qr-${job.id.slice(0, 8)}.png`;
+                        link.href = canvas.toDataURL("image/png");
+                        link.click();
+                      };
+                      img.src = "data:image/svg+xml;base64," + btoa(svgData);
+                    }}
+                  >
+                    <Download className="h-4 w-4" />
+                    Download QR Code
+                  </Button>
+                </div>
               </div>
             </div>
           )}
