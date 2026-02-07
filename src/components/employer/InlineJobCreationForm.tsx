@@ -352,7 +352,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("segment", val, { department_type: "" });
+                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "" });
                   }}
                 >
                   <SelectTrigger>
@@ -419,25 +419,36 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Designation</label>
                 <Select
-                  value={dynamicFieldValues["designation"] || ""}
+                  key={`desig-${dynamicFieldValues["segment"] || "none"}`}
+                  value={dynamicFieldValues["designation"] || undefined}
                   onValueChange={(val) => handleDynamicFieldChange("designation", val)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select designation" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PRT">PRT (Primary Teacher)</SelectItem>
-                    <SelectItem value="TGT">TGT (Trained Graduate Teacher)</SelectItem>
-                    <SelectItem value="PGT">PGT (Post Graduate Teacher)</SelectItem>
-                    <SelectItem value="Head Teacher">Head Teacher / HoD</SelectItem>
-                    <SelectItem value="Vice Principal">Vice Principal</SelectItem>
-                    <SelectItem value="Principal">Principal</SelectItem>
-                    <SelectItem value="Coordinator">Academic Coordinator</SelectItem>
-                    <SelectItem value="Counselor">Counselor</SelectItem>
-                    <SelectItem value="Librarian">Librarian</SelectItem>
-                    <SelectItem value="Lab Assistant">Lab Assistant</SelectItem>
-                    <SelectItem value="Sports Coach">Sports Coach / PET</SelectItem>
-                    <SelectItem value="Special Educator">Special Educator</SelectItem>
+                  <SelectContent className="bg-popover z-[200]">
+                    {dynamicFieldValues["segment"] === "Pre-Primary" ? (
+                      <>
+                        <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
+                        <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                        <SelectItem value="care_taker">Care Taker</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="PRT">PRT (Primary Teacher)</SelectItem>
+                        <SelectItem value="TGT">TGT (Trained Graduate Teacher)</SelectItem>
+                        <SelectItem value="PGT">PGT (Post Graduate Teacher)</SelectItem>
+                        <SelectItem value="Head Teacher">Head Teacher / HoD</SelectItem>
+                        <SelectItem value="Vice Principal">Vice Principal</SelectItem>
+                        <SelectItem value="Principal">Principal</SelectItem>
+                        <SelectItem value="Coordinator">Academic Coordinator</SelectItem>
+                        <SelectItem value="Counselor">Counselor</SelectItem>
+                        <SelectItem value="Librarian">Librarian</SelectItem>
+                        <SelectItem value="Lab Assistant">Lab Assistant</SelectItem>
+                        <SelectItem value="Sports Coach">Sports Coach / PET</SelectItem>
+                        <SelectItem value="Special Educator">Special Educator</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
