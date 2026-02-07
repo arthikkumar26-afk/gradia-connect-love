@@ -144,8 +144,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   };
 
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden w-full">
-      <div className="p-4 sm:p-6">
+    <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
+      <div className="p-6 sm:p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-primary/10 rounded-lg">
             <Briefcase className="h-6 w-6 text-primary" />
