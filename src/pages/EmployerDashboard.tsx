@@ -412,7 +412,7 @@ const EmployerDashboard = () => {
 
         {/* Dashboard Content */}
         <main className="flex-1 p-4 overflow-y-auto">
-          <div className="max-w-6xl mx-auto">
+          <div className={activeMenu === "jobs" ? "w-full" : "max-w-6xl mx-auto"}>
           {activeMenu === "dashboard" && (
               <>
                 {/* Summary Cards Grid */}
