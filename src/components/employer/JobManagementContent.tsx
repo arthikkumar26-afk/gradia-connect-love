@@ -113,7 +113,7 @@ export const JobManagementContent = () => {
           location: job.location || "Remote",
           state,
           city,
-          board: job.department || "Not specified",
+          board: job.interview_type === "education" ? (job.description?.match(/\b(CBSE|ICSE|ISC|IGCSE|IB|State Board|Cambridge|NIOS)\b/i)?.[0] || "—") : "—",
           boardExperience: job.experience_required || "—",
           salary: job.salary_range || "—",
           organisation: job.location || "—",
