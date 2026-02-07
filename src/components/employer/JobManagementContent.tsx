@@ -310,13 +310,13 @@ export const JobManagementContent = () => {
             <div className="overflow-x-auto w-full">
               <Table className="w-full min-w-[1100px] text-xs">
                 <TableHeader>
-                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-3 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide">
+                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-2 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
                     <TableHead className="font-semibold">Date & Time</TableHead>
                     <TableHead className="font-semibold">Job ID</TableHead>
                     <TableHead className="font-semibold">Designation</TableHead>
                     <TableHead className="font-semibold">Department</TableHead>
                     <TableHead className="font-semibold">Exp.</TableHead>
-                    <TableHead className="font-semibold">Skills</TableHead>
+                    <TableHead className="font-semibold max-w-[120px]">Skills</TableHead>
                     <TableHead className="font-semibold">Type</TableHead>
                     <TableHead className="font-semibold">Location</TableHead>
                     <TableHead className="font-semibold">State</TableHead>
@@ -353,7 +353,7 @@ export const JobManagementContent = () => {
                       return (
                         <TableRow 
                           key={job.id}
-                          className="hover:bg-accent/5 transition-colors [&_td]:px-3 [&_td]:py-2.5 cursor-pointer"
+                          className="hover:bg-accent/5 transition-colors [&_td]:px-2 [&_td]:py-2.5 cursor-pointer"
                           onClick={() => handleViewJob(job)}
                         >
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{job.dateTime}</TableCell>
@@ -369,8 +369,8 @@ export const JobManagementContent = () => {
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "experience", "w-24")}
                           </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "skills", "w-32")}
+                          <TableCell className="max-w-[120px] truncate" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "skills", "w-28")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "type", "w-24")}
