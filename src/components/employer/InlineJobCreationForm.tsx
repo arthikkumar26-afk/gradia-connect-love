@@ -74,8 +74,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     setSelectedPipelineType("");
   }, [watchedInterviewType]);
 
-  const handleDynamicFieldChange = (fieldName: string, value: string) => {
-    setDynamicFieldValues(prev => ({ ...prev, [fieldName]: value }));
+  const handleDynamicFieldChange = (fieldName: string, value: string, additionalResets?: Record<string, string>) => {
+    setDynamicFieldValues(prev => ({ ...prev, [fieldName]: value, ...additionalResets }));
   };
 
   const handleGenerateJD = async () => {
@@ -340,9 +340,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <Select
                   value={dynamicFieldValues["category"] || ""}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("category", val);
-                    // Reset function when category changes
-                    handleDynamicFieldChange("function", "");
+                    handleDynamicFieldChange("category", val, { function: "", segment: "", department_type: "" });
                   }}
                 >
                   <SelectTrigger>
@@ -360,8 +358,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <Select
                   value={dynamicFieldValues["function"] || ""}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("function", val);
-                    handleDynamicFieldChange("segment", "");
+                    handleDynamicFieldChange("function", val, { segment: "", department_type: "" });
                   }}
                 >
                   <SelectTrigger>
@@ -389,8 +386,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("segment", val);
-                    handleDynamicFieldChange("department_type", "");
+                    handleDynamicFieldChange("segment", val, { department_type: "" });
                   }}
                 >
                   <SelectTrigger>
