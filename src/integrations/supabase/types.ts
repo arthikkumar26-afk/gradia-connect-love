@@ -1740,6 +1740,51 @@ export type Database = {
           },
         ]
       }
+      social_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          employer_id: string
+          id: string
+          is_active: boolean
+          platform: string
+          platform_display_name: string | null
+          platform_user_id: string | null
+          platform_username: string | null
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          employer_id: string
+          id?: string
+          is_active?: boolean
+          platform: string
+          platform_display_name?: string | null
+          platform_user_id?: string | null
+          platform_username?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          employer_id?: string
+          id?: string
+          is_active?: boolean
+          platform?: string
+          platform_display_name?: string | null
+          platform_user_id?: string | null
+          platform_username?: string | null
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sponsor_analytics: {
         Row: {
           created_at: string | null
