@@ -287,18 +287,16 @@ export default function LiveDemoView() {
         return;
       }
 
-      // Get candidate details
+      // Get candidate details using safe RPC function (no sensitive data exposed)
       const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name, email, primary_subject')
-        .eq('id', sessionData.candidate_id)
+        .rpc('get_demo_candidate_profile', { p_session_token: token })
         .single();
 
       setSession({
         ...sessionData,
-        candidate_name: profileData?.full_name,
-        candidate_email: profileData?.email,
-        primary_subject: profileData?.primary_subject
+        candidate_name: profileData?.full_name || undefined,
+        candidate_email: undefined, // Email not exposed for privacy
+        primary_subject: profileData?.primary_subject || undefined
       });
 
       setIsStreamActive(sessionData.live_view_active || false);
@@ -432,10 +430,6 @@ export default function LiveDemoView() {
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{session.candidate_name || "N/A"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground text-sm">{session.candidate_email || "N/A"}</span>
                 </div>
                 {session.primary_subject && (
                   <div className="flex items-center gap-2">

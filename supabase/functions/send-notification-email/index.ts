@@ -226,6 +226,63 @@ const generateEmailContent = (data: NotificationRequest) => {
   }
 };
 
+// Authorization helper: verify user owns the interview candidate relationship
+async function verifyOwnership(
+  supabaseAdmin: any, 
+  userId: string, 
+  rawData: any
+): Promise<{ authorized: boolean; error?: string; statusCode?: number }> {
+  // For types that reference an interview candidate, verify ownership
+  if (rawData.interviewCandidateId && 
+      (rawData.type === 'stage_invitation' || rawData.type === 'hr_round_invitation')) {
+    const { data: ic, error: icError } = await supabaseAdmin
+      .from('interview_candidates')
+      .select('id, candidate_id, job_id')
+      .eq('id', rawData.interviewCandidateId)
+      .single();
+
+    if (icError || !ic) {
+      return { authorized: false, error: 'Interview candidate not found', statusCode: 404 };
+    }
+
+    // Get job employer
+    const { data: job, error: jobError } = await supabaseAdmin
+      .from('jobs')
+      .select('employer_id')
+      .eq('id', ic.job_id)
+      .single();
+
+    if (jobError || !job) {
+      return { authorized: false, error: 'Job not found', statusCode: 404 };
+    }
+
+    const isEmployer = job.employer_id === userId;
+    const isCandidate = ic.candidate_id === userId;
+
+    // Check admin/owner role
+    const { data: roles } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+    
+    const isAdminOrOwner = roles?.some((r: any) => r.role === 'admin' || r.role === 'owner');
+
+    if (!isEmployer && !isCandidate && !isAdminOrOwner) {
+      return { authorized: false, error: 'Unauthorized - you do not have access to this interview', statusCode: 403 };
+    }
+
+    return { authorized: true };
+  }
+
+  // For stage_change, comment_added, offer_response - require authenticated user  
+  // These are typically sent by employers/admins about their own candidates
+  if (userId) {
+    return { authorized: true };
+  }
+
+  return { authorized: false, error: 'Authentication required', statusCode: 401 };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -233,9 +290,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Authentication check - support both user tokens and service role calls
+    // Authentication check - REQUIRE valid auth for user-initiated calls
     const authHeader = req.headers.get("Authorization");
     let userId: string | null = null;
+    
+    // Create a service role client for ownership verification
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
     
     if (authHeader?.startsWith("Bearer ")) {
       const supabaseClient = createClient(
@@ -244,23 +307,37 @@ const handler = async (req: Request): Promise<Response> => {
         { global: { headers: { Authorization: authHeader } } }
       );
 
-      // Try to validate the token - but don't fail if it's a service call
       try {
-        const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-        if (!userError && user) {
-          userId = user.id;
+        const token = authHeader.replace('Bearer ', '');
+        const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+        if (!claimsError && claimsData?.claims?.sub) {
+          userId = claimsData.claims.sub;
           console.log("Authenticated user for notification:", userId);
         }
       } catch (authErr) {
-        // Token validation failed - might be a service-to-service call
-        console.log("Token validation skipped - proceeding as service call");
+        // Token validation failed
+        console.log("Token validation failed:", authErr);
       }
     }
-    
-    // Log the request source
-    console.log("Processing notification email request, authenticated:", !!userId);
+
+    // Require authentication - reject unauthenticated requests
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - valid authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const rawData = await req.json();
+
+    // Verify ownership/authorization before proceeding
+    const authResult = await verifyOwnership(supabaseAdmin, userId, rawData);
+    if (!authResult.authorized) {
+      return new Response(
+        JSON.stringify({ error: authResult.error }),
+        { status: authResult.statusCode || 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Support both 'to' and 'recipientEmail' field names
     const recipientEmail = rawData.recipientEmail || rawData.to;
@@ -299,6 +376,32 @@ const handler = async (req: Request): Promise<Response> => {
       meetingLink: sanitizeInput(rawData.meetingLink, 500),
       scheduledDate: sanitizeInput(rawData.scheduledDate, 50),
     };
+
+    // For stage_invitation/hr_round_invitation with an interviewCandidateId, 
+    // verify and use the actual candidate email from the database
+    if (notificationData.interviewCandidateId && 
+        (notificationData.type === 'stage_invitation' || notificationData.type === 'hr_round_invitation')) {
+      const { data: ic } = await supabaseAdmin
+        .from('interview_candidates')
+        .select('candidate_id')
+        .eq('id', notificationData.interviewCandidateId)
+        .single();
+
+      if (ic) {
+        const { data: candidateProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', ic.candidate_id)
+          .single();
+
+        if (candidateProfile) {
+          // Use verified email from database instead of user-supplied
+          notificationData.recipientEmail = candidateProfile.email;
+          notificationData.recipientName = notificationData.recipientName || candidateProfile.full_name;
+          notificationData.candidateName = notificationData.candidateName || candidateProfile.full_name;
+        }
+      }
+    }
     
     console.log('Sending email notification:', notificationData.type, 'for user:', userId);
 
