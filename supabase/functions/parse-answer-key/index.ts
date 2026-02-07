@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,10 +12,33 @@ serve(async (req) => {
   }
 
   try {
-    const { pdfText, questionCount, isSolution } = await req.json();
+    const { pdfText, pdfBase64, questionCount, isSolution } = await req.json();
     
-    if (!pdfText) {
-      throw new Error('PDF text content is required');
+    let textContent = pdfText || '';
+
+    // If base64 PDF is provided, extract text using unpdf
+    if (pdfBase64 && !textContent) {
+      console.log('Extracting text from Answer Key PDF binary data...');
+      try {
+        const binaryString = atob(pdfBase64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const pdf = await getDocumentProxy(bytes);
+        const { text } = await extractText(pdf, { mergePages: true });
+        textContent = text;
+        console.log('Successfully extracted text from Answer Key PDF, length:', textContent.length);
+      } catch (pdfError) {
+        console.error('PDF extraction error:', pdfError);
+        if (!pdfText) {
+          throw new Error('Failed to extract text from PDF: ' + (pdfError instanceof Error ? pdfError.message : 'Unknown error'));
+        }
+      }
+    }
+    
+    if (!textContent) {
+      throw new Error('No text content available - please provide either pdfText or pdfBase64');
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
