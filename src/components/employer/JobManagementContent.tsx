@@ -165,24 +165,23 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="w-full min-w-[1500px]">
+              <Table className="w-full min-w-[1200px] text-sm">
                 <TableHeader>
-                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-4 [&_th]:h-14 [&_th]:text-secondary-foreground">
-                    <TableHead className="font-semibold w-[130px]">Date & Time</TableHead>
-                    <TableHead className="font-semibold w-[90px]">Job ID</TableHead>
-                    <TableHead className="font-semibold w-[130px]">Designation</TableHead>
-                    <TableHead className="font-semibold w-[100px]">Department</TableHead>
-                    <TableHead className="font-semibold w-[70px]">Exp.</TableHead>
-                    <TableHead className="font-semibold w-[150px]">Skills</TableHead>
-                    <TableHead className="font-semibold w-[80px]">Type</TableHead>
-                    <TableHead className="font-semibold w-[100px]">Location</TableHead>
-                    
-                    <TableHead className="font-semibold w-[90px]">Board</TableHead>
-                    <TableHead className="font-semibold w-[100px]">Board Exp.</TableHead>
-                    <TableHead className="font-semibold w-[90px]">Salary</TableHead>
-                    <TableHead className="font-semibold w-[110px]">Organisation</TableHead>
-                    <TableHead className="font-semibold w-[80px]">Status</TableHead>
-                    <TableHead className="font-semibold text-center w-[80px]">Actions</TableHead>
+                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-3 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide">
+                    <TableHead className="font-semibold">Date & Time</TableHead>
+                    <TableHead className="font-semibold">Job ID</TableHead>
+                    <TableHead className="font-semibold">Designation</TableHead>
+                    <TableHead className="font-semibold">Department</TableHead>
+                    <TableHead className="font-semibold">Exp.</TableHead>
+                    <TableHead className="font-semibold">Skills</TableHead>
+                    <TableHead className="font-semibold">Type</TableHead>
+                    <TableHead className="font-semibold">Location</TableHead>
+                    <TableHead className="font-semibold">Board</TableHead>
+                    <TableHead className="font-semibold">Board Exp.</TableHead>
+                    <TableHead className="font-semibold">Salary</TableHead>
+                    <TableHead className="font-semibold">Organisation</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -206,44 +205,24 @@ export const JobManagementContent = () => {
                     filteredJobs.map((job) => (
                       <TableRow 
                         key={job.id}
-                        className="hover:bg-accent/5 transition-colors"
+                        className="hover:bg-accent/5 transition-colors [&_td]:px-3 [&_td]:py-2.5"
                       >
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{job.dateTime}</TableCell>
                         <TableCell>
-                          <span className="block truncate max-w-[130px] text-xs text-muted-foreground" title={job.dateTime}>{job.dateTime}</span>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{job.id.slice(0, 8)}</code>
                         </TableCell>
+                        <TableCell className="font-medium whitespace-nowrap">{job.jobTitle}</TableCell>
+                        <TableCell className="whitespace-nowrap">{job.department}</TableCell>
+                        <TableCell className="whitespace-nowrap">{job.experience}</TableCell>
                         <TableCell>
-                          <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                            {job.id.slice(0, 8)}
-                          </code>
+                          <span className="block truncate max-w-[160px]" title={job.skills}>{job.skills}</span>
                         </TableCell>
-                        <TableCell className="font-medium">
-                          <span className="block truncate max-w-[130px]" title={job.jobTitle}>{job.jobTitle}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[100px]" title={job.department}>{job.department}</span>
-                        </TableCell>
-                        <TableCell>{job.experience}</TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[150px]" title={job.skills}>{job.skills}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[80px]" title={job.type}>{job.type}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[100px]" title={job.location}>{job.location}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[90px]" title={job.board}>{job.board}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[100px]" title={job.boardExperience}>{job.boardExperience}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[90px]" title={job.salary}>{job.salary}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[110px]" title={job.organisation}>{job.organisation}</span>
-                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{job.type}</TableCell>
+                        <TableCell className="whitespace-nowrap">{job.location}</TableCell>
+                        <TableCell className="whitespace-nowrap">{job.board}</TableCell>
+                        <TableCell className="whitespace-nowrap">{job.boardExperience}</TableCell>
+                        <TableCell className="whitespace-nowrap">{job.salary}</TableCell>
+                        <TableCell className="whitespace-nowrap">{job.organisation}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
                             {job.status}
