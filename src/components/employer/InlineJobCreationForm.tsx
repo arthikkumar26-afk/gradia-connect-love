@@ -421,10 +421,16 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                           </>
                         ) : (
                           <>
-                            <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
-                            <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
                             <SelectItem value="1st_language">1st Language</SelectItem>
                             <SelectItem value="2nd_language">2nd Language</SelectItem>
+                            <SelectItem value="3rd_language">3rd Language</SelectItem>
+                            <SelectItem value="maths">MATHS</SelectItem>
+                            <SelectItem value="english">ENGLISH</SelectItem>
+                            <SelectItem value="gen_science">GEN.SCIENCE</SelectItem>
+                            <SelectItem value="social">SOCIAL</SelectItem>
+                            <SelectItem value="computers">COMPUTERS</SelectItem>
+                            <SelectItem value="physical_education">PHYSICAL EDUCATION</SelectItem>
+                            <SelectItem value="cca_art_craft">CCA-Art&Craft</SelectItem>
                           </>
                         )}
                       </SelectContent>
