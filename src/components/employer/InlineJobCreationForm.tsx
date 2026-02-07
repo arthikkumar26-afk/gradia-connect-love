@@ -148,7 +148,13 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         closing_date: values.closing_date || null,
         status: "active",
         interview_type: values.interview_type,
-      }]);
+        sector_division: dynamicFieldValues["sector_division"] || null,
+        category: dynamicFieldValues["category"] || null,
+        function_type: dynamicFieldValues["function"] || null,
+        segment: dynamicFieldValues["segment"] || null,
+        designation: dynamicFieldValues["designation"] || null,
+        subjects: dynamicFieldValues["subjects"] || null,
+      } as any]);
 
       if (error) throw error;
 
