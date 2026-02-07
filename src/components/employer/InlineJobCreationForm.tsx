@@ -395,11 +395,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select class" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="classes_1_2">Classes 1&2</SelectItem>
+                        <SelectItem value="classes_3_4_5">Classes 3,4&5</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -415,10 +412,21 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
-                        <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
-                        <SelectItem value="1st_language">1st Language</SelectItem>
-                        <SelectItem value="2nd_language">2nd Language</SelectItem>
+                        {dynamicFieldValues["classes"] === "classes_1_2" ? (
+                          <>
+                            <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                            <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
+                            <SelectItem value="1st_language">1st Language</SelectItem>
+                            <SelectItem value="2nd_language">2nd Language</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                            <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
+                            <SelectItem value="1st_language">1st Language</SelectItem>
+                            <SelectItem value="2nd_language">2nd Language</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -434,11 +442,23 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select designation" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="Mathematics">Mathematics</SelectItem>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="EVS">EVS</SelectItem>
-                        <SelectItem value="Telugu">Telugu</SelectItem>
-                        <SelectItem value="Hindi">Hindi</SelectItem>
+                        {dynamicFieldValues["classes"] === "classes_1_2" ? (
+                          <>
+                            <SelectItem value="Mathematics">Mathematics</SelectItem>
+                            <SelectItem value="English">English</SelectItem>
+                            <SelectItem value="EVS">EVS</SelectItem>
+                            <SelectItem value="Telugu">Telugu</SelectItem>
+                            <SelectItem value="Hindi">Hindi</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="Mathematics">Mathematics</SelectItem>
+                            <SelectItem value="English">English</SelectItem>
+                            <SelectItem value="EVS">EVS</SelectItem>
+                            <SelectItem value="Telugu">Telugu</SelectItem>
+                            <SelectItem value="Hindi">Hindi</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
