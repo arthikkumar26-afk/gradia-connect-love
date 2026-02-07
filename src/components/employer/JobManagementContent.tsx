@@ -371,35 +371,35 @@ export const JobManagementContent = () => {
             />
           ) : (
             <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-              <div className="flex flex-col items-center justify-center py-5 px-4 text-center">
-                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-3">
-                  <Plus className="h-6 w-6 text-primary-foreground" />
+              <div className="flex flex-col items-center justify-center py-7 px-5 text-center">
+                <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mb-4">
+                  <Plus className="h-7 w-7 text-primary-foreground" />
                 </div>
 
-                <h2 className="text-lg font-bold text-foreground mb-1">
+                <h2 className="text-xl font-bold text-foreground mb-1.5">
                   Create Position
                 </h2>
 
-                <p className="text-muted-foreground text-xs max-w-sm mb-3">
+                <p className="text-muted-foreground text-sm max-w-md mb-4">
                   Post a new education position with interview pipeline, requirements, and start receiving applications instantly
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center gap-1.5 mb-4">
-                  <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-medium border-primary/30 text-primary">
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
+                  <Badge variant="outline" className="rounded-full px-3.5 py-0.5 text-xs font-medium border-primary/30 text-primary">
                     Job Posting
                   </Badge>
-                  <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-medium border-primary/30 text-primary">
+                  <Badge variant="outline" className="rounded-full px-3.5 py-0.5 text-xs font-medium border-primary/30 text-primary">
                     Pipeline Setup
                   </Badge>
-                  <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-medium border-primary/30 text-primary">
+                  <Badge variant="outline" className="rounded-full px-3.5 py-0.5 text-xs font-medium border-primary/30 text-primary">
                     AI Screening
                   </Badge>
                 </div>
 
                 <Button
                   variant="cta"
-                  size="default"
-                  className="rounded-full px-8 gap-2 text-sm"
+                  size="lg"
+                  className="rounded-full px-9 gap-2 text-sm"
                   onClick={() => setShowCreateForm(true)}
                 >
                   Continue
