@@ -378,6 +378,116 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             </div>
 
+            {/* Segment, Department, Designation, Subjects */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Segment / Board</label>
+                <Select
+                  value={dynamicFieldValues["segment"] || ""}
+                  onValueChange={(val) => handleDynamicFieldChange("segment", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select segment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CBSE">CBSE</SelectItem>
+                    <SelectItem value="ICSE">ICSE / ISC</SelectItem>
+                    <SelectItem value="State Board">State Board</SelectItem>
+                    <SelectItem value="IB">IB (International Baccalaureate)</SelectItem>
+                    <SelectItem value="Cambridge">Cambridge (IGCSE)</SelectItem>
+                    <SelectItem value="Montessori">Montessori</SelectItem>
+                    <SelectItem value="Play School">Play School / Pre-School</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Department</label>
+                <Select
+                  value={dynamicFieldValues["department_type"] || ""}
+                  onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="academics">Academics</SelectItem>
+                    <SelectItem value="administration">Administration</SelectItem>
+                    <SelectItem value="sports">Sports & Physical Education</SelectItem>
+                    <SelectItem value="library">Library</SelectItem>
+                    <SelectItem value="lab">Laboratory</SelectItem>
+                    <SelectItem value="counseling">Counseling</SelectItem>
+                    <SelectItem value="it">IT / Computer Lab</SelectItem>
+                    <SelectItem value="accounts">Accounts & Finance</SelectItem>
+                    <SelectItem value="transport">Transport</SelectItem>
+                    <SelectItem value="hostel">Hostel</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Designation</label>
+                <Select
+                  value={dynamicFieldValues["designation"] || ""}
+                  onValueChange={(val) => handleDynamicFieldChange("designation", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select designation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PRT">PRT (Primary Teacher)</SelectItem>
+                    <SelectItem value="TGT">TGT (Trained Graduate Teacher)</SelectItem>
+                    <SelectItem value="PGT">PGT (Post Graduate Teacher)</SelectItem>
+                    <SelectItem value="Head Teacher">Head Teacher / HoD</SelectItem>
+                    <SelectItem value="Vice Principal">Vice Principal</SelectItem>
+                    <SelectItem value="Principal">Principal</SelectItem>
+                    <SelectItem value="Coordinator">Academic Coordinator</SelectItem>
+                    <SelectItem value="Counselor">Counselor</SelectItem>
+                    <SelectItem value="Librarian">Librarian</SelectItem>
+                    <SelectItem value="Lab Assistant">Lab Assistant</SelectItem>
+                    <SelectItem value="Sports Coach">Sports Coach / PET</SelectItem>
+                    <SelectItem value="Special Educator">Special Educator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Subjects</label>
+                <Select
+                  value={dynamicFieldValues["subjects"] || ""}
+                  onValueChange={(val) => handleDynamicFieldChange("subjects", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mathematics">Mathematics</SelectItem>
+                    <SelectItem value="Physics">Physics</SelectItem>
+                    <SelectItem value="Chemistry">Chemistry</SelectItem>
+                    <SelectItem value="Biology">Biology</SelectItem>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="Telugu">Telugu</SelectItem>
+                    <SelectItem value="Social Studies">Social Studies</SelectItem>
+                    <SelectItem value="Science">Science (General)</SelectItem>
+                    <SelectItem value="Computer Science">Computer Science</SelectItem>
+                    <SelectItem value="Commerce">Commerce / Accounts</SelectItem>
+                    <SelectItem value="Economics">Economics</SelectItem>
+                    <SelectItem value="Political Science">Political Science</SelectItem>
+                    <SelectItem value="History">History</SelectItem>
+                    <SelectItem value="Geography">Geography</SelectItem>
+                    <SelectItem value="Physical Education">Physical Education</SelectItem>
+                    <SelectItem value="Art">Art & Craft</SelectItem>
+                    <SelectItem value="Music">Music</SelectItem>
+                    <SelectItem value="Sanskrit">Sanskrit</SelectItem>
+                    <SelectItem value="EVS">EVS (Environmental Studies)</SelectItem>
+                    <SelectItem value="All Subjects">All Subjects</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {/* Job Title */}
             <FormField
               control={form.control}
