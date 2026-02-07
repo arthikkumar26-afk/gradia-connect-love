@@ -22,6 +22,7 @@ import {
   Grid3X3,
   UserCheck,
   FileText,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -51,6 +52,7 @@ import { SMMContent } from "@/components/employer/SMMContent";
 import { FeedbackMatrixContent } from "@/components/employer/FeedbackMatrixContent";
 import { ConfirmationContent } from "@/components/employer/ConfirmationContent";
 import { OfferLetterContent } from "@/components/employer/OfferLetterContent";
+import { QPMContent } from "@/components/employer/QPMContent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -253,6 +255,7 @@ const EmployerDashboard = () => {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
     { id: "jobs", label: "Vacancies List", icon: Briefcase, path: "/employer/jobs" },
+    { id: "qpm", label: "QPM", icon: BookOpen, path: "/employer/qpm" },
     { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
     { id: "talent-pool", label: "Candidate Data", icon: Users, path: "/employer/talent-pool" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
@@ -500,6 +503,7 @@ const EmployerDashboard = () => {
 
             {activeMenu === "registration" && <RegistrationContent />}
             {activeMenu === "jobs" && <JobManagementContent />}
+            {activeMenu === "qpm" && <QPMContent />}
             {activeMenu === "talent-pool" && <TalentPoolContent />}
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}

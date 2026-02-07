@@ -820,8 +820,10 @@ export type Database = {
           designation: string | null
           id: string
           is_active: boolean
-          pdf_url: string
+          job_id: string | null
+          pdf_url: string | null
           segment: string | null
+          set_number: number | null
           stage_type: string
           title: string
           updated_at: string
@@ -835,8 +837,10 @@ export type Database = {
           designation?: string | null
           id?: string
           is_active?: boolean
-          pdf_url: string
+          job_id?: string | null
+          pdf_url?: string | null
           segment?: string | null
+          set_number?: number | null
           stage_type: string
           title: string
           updated_at?: string
@@ -850,8 +854,10 @@ export type Database = {
           designation?: string | null
           id?: string
           is_active?: boolean
-          pdf_url?: string
+          job_id?: string | null
+          pdf_url?: string | null
           segment?: string | null
+          set_number?: number | null
           stage_type?: string
           title?: string
           updated_at?: string
@@ -862,6 +868,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interview_question_papers_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
         ]
