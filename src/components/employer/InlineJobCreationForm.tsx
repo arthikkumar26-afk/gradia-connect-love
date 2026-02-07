@@ -502,31 +502,6 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium leading-none">Department</label>
-                    <Select
-                      key={`dept-highschool-${dynamicFieldValues["hs_classes"] || "none"}`}
-                      value={dynamicFieldValues["department_type"] || undefined}
-                      onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="academics">Academics</SelectItem>
-                        <SelectItem value="administration">Administration</SelectItem>
-                        <SelectItem value="sports">Sports & Physical Education</SelectItem>
-                        <SelectItem value="library">Library</SelectItem>
-                        <SelectItem value="lab">Laboratory</SelectItem>
-                        <SelectItem value="counseling">Counseling</SelectItem>
-                        <SelectItem value="it">IT / Computer Lab</SelectItem>
-                        <SelectItem value="accounts">Accounts & Finance</SelectItem>
-                        <SelectItem value="transport">Transport</SelectItem>
-                        <SelectItem value="hostel">Hostel</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
                     <label className="text-sm font-medium leading-none">Designation</label>
                     <Select
                       key={`desig-highschool-${dynamicFieldValues["hs_classes"] || "none"}`}
@@ -537,9 +512,14 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select designation" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="Teacher">Teacher</SelectItem>
-                        <SelectItem value="Senior_Teacher">Senior Teacher</SelectItem>
-                        <SelectItem value="HOD">HOD</SelectItem>
+                        <SelectItem value="1st_language">1st Language</SelectItem>
+                        <SelectItem value="2nd_language">2nd Language</SelectItem>
+                        <SelectItem value="3rd_language">3rd Language</SelectItem>
+                        <SelectItem value="maths">MATHS</SelectItem>
+                        <SelectItem value="physics">PHYSICS</SelectItem>
+                        <SelectItem value="chemistry">CHEMISTRY</SelectItem>
+                        <SelectItem value="biology">BIOLOGY</SelectItem>
+                        <SelectItem value="social">SOCIAL</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
