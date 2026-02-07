@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User } from "lucide-react";
 import { getPipelineTypesForInterviewType, getPipelineStages } from "@/data/interviewPipelineConfig";
+import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 
 const jobFormSchema = z.object({
   job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
@@ -40,6 +41,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
+  const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string>>({});
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -62,6 +64,20 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const pipelineTypes = getPipelineTypesForInterviewType(watchedInterviewType);
   const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType) : [];
 
+  // Get dynamic form config based on interview type
+  const formConfig = getFormConfigForInterviewType(watchedInterviewType);
+  const activeConfig = formConfig || defaultFormConfig;
+
+  // Reset dynamic fields when interview type changes
+  useEffect(() => {
+    setDynamicFieldValues({});
+    setSelectedPipelineType("");
+  }, [watchedInterviewType]);
+
+  const handleDynamicFieldChange = (fieldName: string, value: string) => {
+    setDynamicFieldValues(prev => ({ ...prev, [fieldName]: value }));
+  };
+
   const handleGenerateJD = async () => {
     const jobTitle = form.getValues("job_title");
     const department = form.getValues("department");
@@ -82,7 +98,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-job-description", {
-        body: { jobTitle, department, jobType, location, experienceRequired, skills },
+        body: { jobTitle, department, jobType, location, experienceRequired, skills, interviewType: watchedInterviewType, dynamicFields: dynamicFieldValues },
       });
 
       if (error) throw error;
@@ -158,7 +174,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            {/* Interview Type & Pipeline Type - shown first as dropdown */}
+            {/* Interview Type & Pipeline Type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <FormField
                 control={form.control}
@@ -179,19 +195,19 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="education">Education (Includes Demo Video Round)</SelectItem>
                         <SelectItem value="standard">Standard (MCQ-based)</SelectItem>
                         <SelectItem value="technical">Technical (Coding + MCQ)</SelectItem>
-                        <SelectItem value="education">Education (Includes Demo Video Round)</SelectItem>
                         <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
                         <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {field.value === 'education' && "📹 Includes Demo Video round"}
-                      {field.value === 'technical' && "💻 Includes coding assessments"}
-                      {field.value === 'sales' && "📊 Includes presentation assessment"}
-                      {field.value === 'management' && "📋 Includes case study analysis"}
-                      {field.value === 'standard' && "📝 Standard MCQ-based interviews"}
+                      {field.value === 'education' && "📹 Includes Demo Video round for teaching positions"}
+                      {field.value === 'technical' && "💻 For IT companies — includes coding assessments"}
+                      {field.value === 'sales' && "📊 Includes presentation & pitch assessment"}
+                      {field.value === 'management' && "📋 Includes case study & leadership analysis"}
+                      {field.value === 'standard' && "📝 Standard MCQ-based screening interviews"}
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -249,6 +265,57 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
+            {/* ─── Dynamic Fields based on Interview Type ─── */}
+            {formConfig && formConfig.fields.length > 0 && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <h4 className="text-sm font-semibold text-foreground">
+                    {watchedInterviewType === 'education' && 'Education Position Details'}
+                    {watchedInterviewType === 'technical' && 'Technical Role Details'}
+                    {watchedInterviewType === 'sales' && 'Sales Role Details'}
+                    {watchedInterviewType === 'management' && 'Management Role Details'}
+                    {watchedInterviewType === 'standard' && 'Position Details'}
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {formConfig.fields.map((fieldConfig) => (
+                    <div key={fieldConfig.name} className="space-y-1.5">
+                      <label className="text-sm font-medium leading-none">
+                        {fieldConfig.label}
+                      </label>
+                      {fieldConfig.type === 'select' && fieldConfig.options ? (
+                        <Select
+                          value={dynamicFieldValues[fieldConfig.name] || ""}
+                          onValueChange={(val) => handleDynamicFieldChange(fieldConfig.name, val)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={fieldConfig.placeholder} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fieldConfig.options.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          placeholder={fieldConfig.placeholder}
+                          value={dynamicFieldValues[fieldConfig.name] || ""}
+                          onChange={(e) => handleDynamicFieldChange(fieldConfig.name, e.target.value)}
+                        />
+                      )}
+                      {fieldConfig.helpText && (
+                        <p className="text-[11px] text-muted-foreground">{fieldConfig.helpText}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Job Title */}
             <FormField
               control={form.control}
@@ -257,7 +324,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <FormItem>
                   <FormLabel>Job Title *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Senior Software Engineer" {...field} />
+                    <Input placeholder={activeConfig.jobTitlePlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -271,9 +338,9 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="department"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Department</FormLabel>
+                    <FormLabel>{activeConfig.departmentLabel}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Engineering" {...field} />
+                      <Input placeholder={activeConfig.departmentPlaceholder} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -293,11 +360,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Full-time">Full-time</SelectItem>
-                        <SelectItem value="Part-time">Part-time</SelectItem>
-                        <SelectItem value="Contract">Contract</SelectItem>
-                        <SelectItem value="Internship">Internship</SelectItem>
-                        <SelectItem value="Remote">Remote</SelectItem>
+                        {activeConfig.jobTypeOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -335,11 +402,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="0-1 years">0-1 years (Entry Level)</SelectItem>
-                        <SelectItem value="1-3 years">1-3 years</SelectItem>
-                        <SelectItem value="3-5 years">3-5 years</SelectItem>
-                        <SelectItem value="5-8 years">5-8 years</SelectItem>
-                        <SelectItem value="8+ years">8+ years (Senior)</SelectItem>
+                        {activeConfig.experienceOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -357,7 +424,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   <FormItem>
                     <FormLabel>Salary Range</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., ₹10-15 LPA" {...field} />
+                      <Input placeholder={activeConfig.salaryPlaceholder} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -387,7 +454,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <FormItem>
                   <FormLabel>Skills (comma-separated) *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., React, Node.js, TypeScript, AWS" {...field} />
+                    <Input placeholder={activeConfig.skillsPlaceholder} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
