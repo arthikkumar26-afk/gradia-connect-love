@@ -19,7 +19,7 @@ interface Job {
   skills: string;
   type: string;
   location: string;
-  salaryRange: string;
+  
   board: string;
   boardExperience: string;
   salary: string;
@@ -71,7 +71,7 @@ export const JobManagementContent = () => {
         skills: job.skills?.join(", ") || "Not specified",
         type: job.job_type || "Full-Time",
         location: job.location || "Remote",
-        salaryRange: job.salary_range || "Not specified",
+        
         board: job.department || "Not specified",
         boardExperience: job.experience_required || "—",
         salary: job.salary_range || "—",
@@ -165,7 +165,7 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="w-full min-w-[1600px]">
+              <Table className="w-full min-w-[1500px]">
                 <TableHeader>
                   <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-4 [&_th]:h-14 [&_th]:text-secondary-foreground">
                     <TableHead className="font-semibold w-[130px]">Date & Time</TableHead>
@@ -176,7 +176,7 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold w-[150px]">Skills</TableHead>
                     <TableHead className="font-semibold w-[80px]">Type</TableHead>
                     <TableHead className="font-semibold w-[100px]">Location</TableHead>
-                    <TableHead className="font-semibold w-[110px]">Salary Range</TableHead>
+                    
                     <TableHead className="font-semibold w-[90px]">Board</TableHead>
                     <TableHead className="font-semibold w-[100px]">Board Exp.</TableHead>
                     <TableHead className="font-semibold w-[90px]">Salary</TableHead>
@@ -188,14 +188,14 @@ export const JobManagementContent = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={15} className="text-center py-8">
+                      <TableCell colSpan={14} className="text-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                         <p className="text-sm text-muted-foreground mt-2">Loading positions...</p>
                       </TableCell>
                     </TableRow>
                   ) : filteredJobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={15} className="text-center py-8">
+                      <TableCell colSpan={14} className="text-center py-8">
                         <p className="text-muted-foreground">No positions found</p>
                         <Button variant="link" asChild className="mt-2">
                           <Link to="/employer/post-job">Create your first position</Link>
@@ -231,9 +231,6 @@ export const JobManagementContent = () => {
                         </TableCell>
                         <TableCell>
                           <span className="block truncate max-w-[100px]" title={job.location}>{job.location}</span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="block truncate max-w-[110px]" title={job.salaryRange}>{job.salaryRange}</span>
                         </TableCell>
                         <TableCell>
                           <span className="block truncate max-w-[90px]" title={job.board}>{job.board}</span>
