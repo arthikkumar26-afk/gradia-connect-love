@@ -426,8 +426,8 @@ export const QPMContent = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {jobs.map((job) => (
-                  <TableRow key={job.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => handleSelectJob(job)}>
+                {jobs.map((job, index) => (
+                  <TableRow key={job.id} className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`} onClick={() => handleSelectJob(job)}>
                     <TableCell className="text-xs font-medium">{job.job_title}</TableCell>
                     <TableCell className="text-xs">{job.organisation || "—"}</TableCell>
                     <TableCell className="text-xs">{job.department || "—"}</TableCell>
