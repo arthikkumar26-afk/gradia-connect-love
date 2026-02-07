@@ -5,63 +5,110 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { QRCodeSVG } from "qrcode.react";
-import { Download, FileText, Briefcase, MapPin, Phone, Mail, Globe } from "lucide-react";
+import { Download, FileText, Briefcase, MapPin, Phone, Mail, Globe, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import gradiaLogo from "@/assets/gradia-logo.png";
+
+interface JobData {
+  id: string;
+  job_title: string;
+  designation?: string | null;
+  organisation?: string | null;
+  location?: string | null;
+  salary_range?: string | null;
+  segment?: string | null;
+  category?: string | null;
+  sector_division?: string | null;
+}
 
 interface QRFlyerModalProps {
   employerId: string;
   companyName?: string;
   companyLogo?: string;
+  jobData?: JobData | null;
   trigger?: React.ReactNode;
 }
 
-const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, trigger }: QRFlyerModalProps) => {
+const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, jobData, trigger }: QRFlyerModalProps) => {
   const [open, setOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const flyerRef = useRef<HTMLDivElement>(null);
   
   const [flyerData, setFlyerData] = useState({
     headline: "We're Hiring!",
     tagline: "Join our growing team and build your career",
-    positions: "Multiple Positions Available",
-    location: "Hyderabad, India",
+    positions: jobData?.designation || jobData?.job_title || "Multiple Positions Available",
+    location: jobData?.location || "Hyderabad, India",
     contactPhone: "+91 98765 43210",
     contactEmail: "careers@company.com",
     website: "www.company.com",
   });
 
-  const qrUrl = `${window.location.origin}/company/${employerId}/jobs`;
+  const qrUrl = jobData?.id
+    ? `${window.location.origin}/jobs-results?job=${jobData.id}&apply=true`
+    : `${window.location.origin}/company/${employerId}/jobs`;
+
+  const handleAIGenerate = async () => {
+    if (!jobData) {
+      toast.error("No job selected. Please select a job to generate AI content.");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-flyer-content", {
+        body: { job: jobData, companyName },
+      });
+
+      if (error) {
+        // Check for rate limit / payment errors
+        if (error.message?.includes("429")) {
+          toast.error("Rate limit exceeded. Please try again in a moment.");
+        } else if (error.message?.includes("402")) {
+          toast.error("AI credits exhausted. Please add credits to continue.");
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      if (data?.flyerContent) {
+        const content = data.flyerContent;
+        setFlyerData(prev => ({
+          ...prev,
+          headline: content.headline || prev.headline,
+          tagline: content.tagline || prev.tagline,
+          positions: content.positions || prev.positions,
+          contactEmail: content.contactEmail || prev.contactEmail,
+          website: content.website || prev.website,
+        }));
+        toast.success("AI content generated! You can edit the fields further.");
+      }
+    } catch (error: any) {
+      console.error("AI generation error:", error);
+      toast.error(error.message || "Failed to generate AI content. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleDownload = async () => {
     if (!flyerRef.current) return;
 
     try {
-      // Use html2canvas approach via canvas
       const flyer = flyerRef.current;
       const canvas = document.createElement("canvas");
-      const scale = 2; // Higher resolution
+      const scale = 2;
       canvas.width = flyer.offsetWidth * scale;
       canvas.height = flyer.offsetHeight * scale;
       const ctx = canvas.getContext("2d");
       
       if (!ctx) return;
 
-      // Draw background
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Create image from the flyer HTML
-      const svgData = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${flyer.offsetWidth}" height="${flyer.offsetHeight}">
-          <foreignObject width="100%" height="100%">
-            <div xmlns="http://www.w3.org/1999/xhtml">
-              ${flyer.outerHTML}
-            </div>
-          </foreignObject>
-        </svg>
-      `;
-
-      // Alternative: Use dom-to-image style approach
       const dataUrl = await generateFlyerImage();
       
       const downloadLink = document.createElement("a");
@@ -94,9 +141,7 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, t
     canvas.height = height;
     const ctx = canvas.getContext("2d");
     
-    if (!ctx) {
-      return "";
-    }
+    if (!ctx) return "";
 
     // Background gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -168,7 +213,6 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, t
     ctx.font = "bold 18px Arial";
     ctx.fillText("SCAN TO APPLY", width / 2, 710);
     
-    // Arrow pointer
     ctx.fillStyle = "#48bb78";
     ctx.font = "24px Arial";
     ctx.fillText("👆", width / 2, 740);
@@ -193,17 +237,14 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, t
     ctx.font = "14px Arial";
     ctx.fillText("Powered by Gradia - Your Next Step", width / 2, 1000);
 
-    // Gradia branding
     ctx.fillStyle = "#48bb78";
     ctx.font = "bold 16px Arial";
     ctx.fillText("gradia.jobs", width / 2, 1030);
 
-    // Try to load and draw Gradia logo
     try {
       const logoImg = await loadImage(gradiaLogo);
       ctx.drawImage(logoImg, width / 2 - 40, 1040, 80, 30);
     } catch (e) {
-      // Logo load failed, text is already there as fallback
       console.error("Failed to load Gradia logo:", e);
     }
 
@@ -232,6 +273,31 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, t
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form Section */}
           <div className="space-y-4">
+            {/* AI Generate Button */}
+            <Button
+              onClick={handleAIGenerate}
+              disabled={isGenerating || !jobData}
+              variant="outline"
+              className="w-full border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating with AI...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  AI Generate Flyer Content
+                </>
+              )}
+            </Button>
+            {!jobData && (
+              <p className="text-xs text-muted-foreground text-center -mt-2">
+                Select a specific job to enable AI suggestions
+              </p>
+            )}
+
             <div>
               <Label htmlFor="headline">Headline</Label>
               <Input
