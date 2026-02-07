@@ -352,7 +352,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "", classes: "" });
+                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "", classes: "", program: "" });
                   }}
                 >
                   <SelectTrigger>
@@ -461,6 +461,68 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                             <SelectItem value="Teacher">Teacher</SelectItem>
                           </>
                         )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              ) : dynamicFieldValues["segment"] === "High School" ? (
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Program</label>
+                    <Select
+                      key={`program-highschool`}
+                      value={dynamicFieldValues["program"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("program", val, { department_type: "", designation: "" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select program" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        <SelectItem value="board">Board</SelectItem>
+                        <SelectItem value="competitive">Competitive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Department</label>
+                    <Select
+                      key={`dept-highschool-${dynamicFieldValues["program"] || "none"}`}
+                      value={dynamicFieldValues["department_type"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        <SelectItem value="academics">Academics</SelectItem>
+                        <SelectItem value="administration">Administration</SelectItem>
+                        <SelectItem value="sports">Sports & Physical Education</SelectItem>
+                        <SelectItem value="library">Library</SelectItem>
+                        <SelectItem value="lab">Laboratory</SelectItem>
+                        <SelectItem value="counseling">Counseling</SelectItem>
+                        <SelectItem value="it">IT / Computer Lab</SelectItem>
+                        <SelectItem value="accounts">Accounts & Finance</SelectItem>
+                        <SelectItem value="transport">Transport</SelectItem>
+                        <SelectItem value="hostel">Hostel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Designation</label>
+                    <Select
+                      key={`desig-highschool-${dynamicFieldValues["program"] || "none"}`}
+                      value={dynamicFieldValues["designation"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("designation", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select designation" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        <SelectItem value="Teacher">Teacher</SelectItem>
+                        <SelectItem value="Senior_Teacher">Senior Teacher</SelectItem>
+                        <SelectItem value="HOD">HOD</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
