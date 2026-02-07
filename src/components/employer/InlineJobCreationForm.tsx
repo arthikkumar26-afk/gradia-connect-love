@@ -689,8 +689,27 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                       </SelectContent>
                     </Select>
                   </div>
-                  <div />
-                  <div />
+                  {dynamicFieldValues["designation"] && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium leading-none">Specialized Subjects</label>
+                      <Select
+                        key={`specialized-subjects-admin-preprimary`}
+                        value={dynamicFieldValues["specialized_subjects"] || undefined}
+                        onValueChange={(val) => handleDynamicFieldChange("specialized_subjects", val)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select specialized subject" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover z-[200]">
+                          <SelectItem value="telugu">Telugu</SelectItem>
+                          <SelectItem value="hindi">Hindi</SelectItem>
+                          <SelectItem value="numeracy">Numeracy</SelectItem>
+                          <SelectItem value="literacy">Literacy</SelectItem>
+                          <SelectItem value="rhymes">Rhymes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
