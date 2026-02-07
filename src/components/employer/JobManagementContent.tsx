@@ -327,7 +327,6 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold">Organisation</TableHead>
                     <TableHead className="font-semibold text-center">QR Code</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="font-semibold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -419,8 +418,8 @@ export const JobManagementContent = () => {
                               {job.status}
                             </Badge>
                           </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-center gap-1">
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                            <div className="inline-flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
