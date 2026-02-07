@@ -196,12 +196,6 @@ export const JobManagementContent = () => {
                 Filter
               </Button>
             </div>
-            <Button variant="cta" className="gap-2 w-full sm:w-auto" asChild>
-              <Link to="/employer/post-job">
-                <Plus className="h-4 w-4" />
-                Create Position
-              </Link>
-            </Button>
           </div>
 
           {/* Jobs Table */}
