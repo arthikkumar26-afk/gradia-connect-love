@@ -659,7 +659,27 @@ export const QPMContent = () => {
     );
   }
 
-  // === RENDER: Paper Sets for Selected Job ===
+  // === RENDER: Paper Sets for Selected Job (always show 4 slots) ===
+  const allSets = [1, 2, 3, 4].map(setNum => {
+    const existing = papers.find(p => p.set_number === setNum);
+    return { setNumber: setNum, paper: existing || null };
+  });
+
+  const handleCreateSet = (setNum: number) => {
+    if (!selectedJob) return;
+    setEditingPaper({
+      id: "",
+      title: `Set ${setNum} - ${selectedJob.job_title}`,
+      set_number: setNum,
+      job_id: selectedJob.id,
+      is_active: true,
+      description: null,
+      stage_type: "technical_assessment",
+      questions: [createEmptyQuestion(1)],
+    });
+    setViewingPaper(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -674,77 +694,87 @@ export const QPMContent = () => {
             </p>
           </div>
         </div>
-        {papers.length < 4 && (
-          <Button size="sm" onClick={handleCreateNewSet}>
-            <Plus className="h-4 w-4 mr-1" /> Create New Set
-          </Button>
-        )}
       </div>
 
-      {papers.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center">
-            <BookOpen className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-            <p className="text-muted-foreground mb-2">No question papers yet for this job</p>
-            <p className="text-xs text-muted-foreground mb-4">You can create up to 4 sets. AI will pick random questions from these sets during the interview.</p>
-            <Button size="sm" onClick={handleCreateNewSet}>
-              <Plus className="h-4 w-4 mr-1" /> Create First Set
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {papers.map((paper) => (
-            <Card key={paper.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
+      {/* Always show 4 set slots */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {allSets.map(({ setNumber, paper }) => (
+          <Card 
+            key={setNumber} 
+            className={`transition-shadow ${paper ? "hover:shadow-md" : "border-dashed bg-muted/20"}`}
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    paper ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  }`}>
+                    {setNumber}
+                  </div>
                   <div>
-                    <CardTitle className="text-sm">{paper.title}</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {paper.questions.length} questions • Set {paper.set_number}
+                    <CardTitle className="text-sm">
+                      {paper ? paper.title : `Set ${setNumber}`}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {paper 
+                        ? `${paper.questions.length} questions` 
+                        : "Not created yet"
+                      }
                     </p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Badge variant={paper.is_active ? "default" : "secondary"} className="text-[10px]">
-                      {paper.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {paper.description && (
-                  <p className="text-xs text-muted-foreground mb-3">{paper.description}</p>
+                {paper && (
+                  <Badge variant={paper.is_active ? "default" : "secondary"} className="text-[10px]">
+                    {paper.is_active ? "Active" : "Inactive"}
+                  </Badge>
                 )}
-                
-                {/* Question preview */}
-                <div className="space-y-1 mb-3">
-                  {paper.questions.slice(0, 3).map((q, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3 w-3 text-primary/50 shrink-0" />
-                      <span className="truncate">{q.question_text}</span>
-                    </div>
-                  ))}
-                  {paper.questions.length > 3 && (
-                    <p className="text-[10px] text-muted-foreground ml-5">+{paper.questions.length - 3} more questions</p>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {paper ? (
+                <>
+                  {paper.description && (
+                    <p className="text-xs text-muted-foreground mb-3">{paper.description}</p>
                   )}
-                </div>
+                  
+                  {/* Question preview */}
+                  <div className="space-y-1 mb-3">
+                    {paper.questions.slice(0, 3).map((q, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 text-primary/50 shrink-0" />
+                        <span className="truncate">{q.question_text}</span>
+                      </div>
+                    ))}
+                    {paper.questions.length > 3 && (
+                      <p className="text-[10px] text-muted-foreground ml-5">+{paper.questions.length - 3} more questions</p>
+                    )}
+                  </div>
 
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="text-xs h-7 flex-1" onClick={() => handleViewPaper(paper)}>
-                    <Eye className="h-3 w-3 mr-1" /> View
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-xs h-7 flex-1" onClick={() => handleEditPaper(paper)}>
-                    Edit
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive" onClick={() => handleDeletePaper(paper.id)}>
-                    <Trash2 className="h-3 w-3" />
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="text-xs h-7 flex-1" onClick={() => handleViewPaper(paper)}>
+                      <Eye className="h-3 w-3 mr-1" /> View
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-xs h-7 flex-1" onClick={() => handleEditPaper(paper)}>
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive" onClick={() => handleDeletePaper(paper.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <BookOpen className="h-6 w-6 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-xs text-muted-foreground mb-3">Add questions for this set</p>
+                  <Button size="sm" variant="outline" onClick={() => handleCreateSet(setNumber)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Create Set {setNumber}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Info about how QPM works */}
       <Card className="bg-muted/30 border-dashed">
