@@ -150,6 +150,29 @@ export const JobManagementContent = () => {
     setDrawerOpen(true);
   };
 
+  // Map UI field names to database column names
+  const fieldToDbColumn: Record<string, string> = {
+    jobTitle: "job_title",
+    department: "department",
+    experience: "experience_required",
+    skills: "skills",
+    type: "job_type",
+    location: "location",
+    salary: "salary_range",
+    boardExperience: "experience_required",
+    organisation: "location",
+    board: "department",
+    state: "_state",
+    city: "_city",
+  };
+
+  // Fields that share the same DB column
+  const linkedFields: Record<string, string[]> = {
+    department: ["department", "board"],
+    experience_required: ["experience", "boardExperience"],
+    location: ["location", "organisation"],
+  };
+
   const startEditing = (jobId: string, field: string, currentValue: string) => {
     setEditingCell({ jobId, field });
     setEditValue(currentValue === "—" ? "" : currentValue);
@@ -158,17 +181,37 @@ export const JobManagementContent = () => {
   const saveInlineEdit = async () => {
     if (!editingCell) return;
     const { jobId, field } = editingCell;
-    
+
+    const dbColumn = fieldToDbColumn[field];
+    if (!dbColumn || dbColumn.startsWith("_")) {
+      // Non-directly-editable field (state/city are derived)
+      cancelEditing();
+      return;
+    }
+
     try {
-      const dbField = field === "boardExperience" ? "experience_required" : "location";
+      const updateValue = field === "skills"
+        ? editValue.split(",").map(s => s.trim()).filter(s => s.length > 0)
+        : (editValue || null);
+
       const { error } = await supabase
         .from("jobs")
-        .update({ [dbField]: editValue || null })
+        .update({ [dbColumn]: updateValue })
         .eq("id", jobId);
 
       if (error) throw error;
 
-      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, [field]: editValue || "—" } : j));
+      // Update local state, including linked fields
+      const linked = linkedFields[dbColumn] || [field];
+      setJobs(prev => prev.map(j => {
+        if (j.id !== jobId) return j;
+        const updated = { ...j };
+        linked.forEach(f => {
+          (updated as any)[f] = editValue || "—";
+        });
+        return updated;
+      }));
+
       toast({ title: "Updated successfully" });
     } catch (error: any) {
       toast({ title: "Update failed", description: error.message, variant: "destructive" });
@@ -181,6 +224,35 @@ export const JobManagementContent = () => {
   const cancelEditing = () => {
     setEditingCell(null);
     setEditValue("");
+  };
+
+  const renderEditableCell = (job: Job, field: keyof Job, width: string = "w-24") => {
+    const value = String(job[field] || "—");
+    if (editingCell?.jobId === job.id && editingCell?.field === field) {
+      return (
+        <Input
+          autoFocus
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={saveInlineEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") saveInlineEdit();
+            if (e.key === "Escape") cancelEditing();
+          }}
+          className={`h-7 text-xs ${width}`}
+        />
+      );
+    }
+    return (
+      <span
+        className="inline-flex items-center gap-1 cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors group"
+        onClick={() => startEditing(job.id, field, value)}
+        title="Click to edit"
+      >
+        <span className="truncate max-w-[120px]">{value}</span>
+        <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      </span>
+    );
   };
 
   const getStatusVariant = (status: string) => {
@@ -290,59 +362,41 @@ export const JobManagementContent = () => {
                           <TableCell>
                             <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{job.id.slice(0, 8)}</code>
                           </TableCell>
-                          <TableCell className="font-medium whitespace-nowrap">{job.jobTitle}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.department}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.experience}</TableCell>
-                          <TableCell>
-                            <span className="block truncate max-w-[140px]" title={job.skills}>{job.skills}</span>
+                          <TableCell className="font-medium whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "jobTitle", "w-32")}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">{job.type}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.location}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.state}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.city}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.board}</TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {editingCell?.jobId === job.id && editingCell?.field === "boardExperience" ? (
-                              <Input
-                                autoFocus
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={saveInlineEdit}
-                                onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") cancelEditing(); }}
-                                className="h-7 text-xs w-24"
-                              />
-                            ) : (
-                              <span
-                                className="inline-flex items-center gap-1 cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors group"
-                                onClick={() => startEditing(job.id, "boardExperience", job.boardExperience)}
-                                title="Click to edit"
-                              >
-                                {job.boardExperience}
-                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                              </span>
-                            )}
+                            {renderEditableCell(job, "department", "w-24")}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap">{job.salary}</TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {editingCell?.jobId === job.id && editingCell?.field === "organisation" ? (
-                              <Input
-                                autoFocus
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={saveInlineEdit}
-                                onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") cancelEditing(); }}
-                                className="h-7 text-xs w-28"
-                              />
-                            ) : (
-                              <span
-                                className="inline-flex items-center gap-1 cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors group"
-                                onClick={() => startEditing(job.id, "organisation", job.organisation)}
-                                title="Click to edit"
-                              >
-                                {job.organisation}
-                                <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                              </span>
-                            )}
+                            {renderEditableCell(job, "experience", "w-24")}
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "skills", "w-32")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "type", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "location", "w-28")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "state", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "city", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "board", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "boardExperience", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "salary", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "organisation", "w-28")}
                           </TableCell>
                           {/* QR Code */}
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>

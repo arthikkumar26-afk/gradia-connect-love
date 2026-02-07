@@ -20,6 +20,12 @@ interface Job {
   skills: string;
   type: string;
   location: string;
+  state?: string;
+  city?: string;
+  board?: string;
+  boardExperience?: string;
+  salary?: string;
+  organisation?: string;
   status: "Open" | "Under Review" | "Closed";
   description?: string;
   requirements?: string;
@@ -74,6 +80,12 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
   const [skills, setSkills] = useState("");
   const [jobType, setJobType] = useState("");
   const [location, setLocation] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [board, setBoard] = useState("");
+  const [boardExperience, setBoardExperience] = useState("");
+  const [salary, setSalary] = useState("");
+  const [organisation, setOrganisation] = useState("");
   const [status, setStatus] = useState<"Open" | "Under Review" | "Closed">("Open");
   const [description, setDescription] = useState("");
   const [requirements, setRequirements] = useState("");
@@ -87,6 +99,12 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
       setSkills(job.skills);
       setJobType(job.type);
       setLocation(job.location);
+      setState(job.state || "");
+      setCity(job.city || "");
+      setBoard(job.board || "");
+      setBoardExperience(job.boardExperience || "");
+      setSalary(job.salary || "");
+      setOrganisation(job.organisation || "");
       setStatus(job.status);
       setDescription(job.description || "");
       setRequirements(job.requirements || "");
@@ -169,6 +187,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
           skills: skillsArray,
           job_type: jobType,
           location: location,
+          salary_range: salary || null,
           status: dbStatus,
           description: description || null,
           requirements: requirements || null,
@@ -328,6 +347,65 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                   <span>{job.location}</span>
                 </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Additional Details Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              {isEditMode ? (
+                <Input id="state" value={state} onChange={(e) => setState(e.target.value)} />
+              ) : (
+                <p className="text-sm">{job.state || "—"}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city">City/Town</Label>
+              {isEditMode ? (
+                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+              ) : (
+                <p className="text-sm">{job.city || "—"}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="board">Board</Label>
+              {isEditMode ? (
+                <Input id="board" value={board} onChange={(e) => setBoard(e.target.value)} />
+              ) : (
+                <p className="text-sm">{job.board || "—"}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="boardExperience">Board Exp.</Label>
+              {isEditMode ? (
+                <Input id="boardExperience" value={boardExperience} onChange={(e) => setBoardExperience(e.target.value)} />
+              ) : (
+                <p className="text-sm">{job.boardExperience || "—"}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="salary">Salary</Label>
+              {isEditMode ? (
+                <Input id="salary" value={salary} onChange={(e) => setSalary(e.target.value)} />
+              ) : (
+                <p className="text-sm">{job.salary || "—"}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="organisation">Organisation</Label>
+              {isEditMode ? (
+                <Input id="organisation" value={organisation} onChange={(e) => setOrganisation(e.target.value)} />
+              ) : (
+                <p className="text-sm">{job.organisation || "—"}</p>
               )}
             </div>
           </div>
