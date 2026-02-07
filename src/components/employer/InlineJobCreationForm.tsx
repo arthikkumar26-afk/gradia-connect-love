@@ -363,7 +363,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                     <SelectValue placeholder="Select segment" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dynamicFieldValues["function"] === "teaching" ? (
+                    {dynamicFieldValues["function"] === "teaching" || (dynamicFieldValues["category"] === "non_academic" && dynamicFieldValues["function"] === "admin") ? (
                       <>
                         <SelectItem value="Pre-Primary">Pre-Primary</SelectItem>
                         <SelectItem value="Primary">Primary</SelectItem>
