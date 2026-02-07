@@ -69,10 +69,10 @@ export const JobManagementContent = () => {
       if (error) throw error;
 
       const formattedJobs: Job[] = (data || []).map((job) => {
-        // Parse location into state and city if possible (format: "City, State" or just location)
+        // Parse location: "City, State" or "City, Country" or just "City"
         const locationParts = (job.location || "").split(",").map(p => p.trim());
         const city = locationParts[0] || "—";
-        const state = locationParts.length > 1 ? locationParts[1] : "—";
+        const state = locationParts.length > 1 ? locationParts[1] : city !== "—" ? city : "—";
         
         // Determine display channels
         const displayChannels: string[] = [];
