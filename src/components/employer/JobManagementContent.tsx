@@ -155,7 +155,7 @@ export const JobManagementContent = () => {
             <div className="overflow-x-auto w-full">
               <Table className="table-fixed w-full">
                 <TableHeader>
-                  <TableRow className="bg-secondary border-b [&_th]:py-4 [&_th]:h-14 [&_th]:text-secondary-foreground">
+                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-4 [&_th]:h-14 [&_th]:text-secondary-foreground">
                     <TableHead className="font-semibold w-[80px]">Job ID</TableHead>
                     <TableHead className="font-semibold w-[15%]">Job Title</TableHead>
                     <TableHead className="font-semibold w-[12%]">Department</TableHead>
