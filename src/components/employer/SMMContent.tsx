@@ -350,6 +350,7 @@ export const SMMContent = () => {
                         <QRFlyerModal
                           employerId={user?.id || ""}
                           companyName={companyName || profile?.company_name || "Company"}
+                          jobData={job}
                           trigger={
                             <Button variant="outline" size="sm" className="w-full">
                               <FileText className="h-4 w-4 mr-2" />
