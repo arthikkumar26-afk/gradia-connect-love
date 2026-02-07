@@ -69,10 +69,30 @@ export const JobManagementContent = () => {
       if (error) throw error;
 
       const formattedJobs: Job[] = (data || []).map((job) => {
-        // Parse location: "City, State" or "City, Country" or just "City"
+        // City-to-State mapping for Indian cities
+        const cityStateMap: Record<string, string> = {
+          "bangalore": "Karnataka", "banglore": "Karnataka", "bengaluru": "Karnataka", "mysore": "Karnataka", "mysuru": "Karnataka", "mangalore": "Karnataka", "hubli": "Karnataka",
+          "hyderabad": "Telangana", "warangal": "Telangana", "secunderabad": "Telangana",
+          "chennai": "Tamil Nadu", "coimbatore": "Tamil Nadu", "madurai": "Tamil Nadu", "salem": "Tamil Nadu",
+          "mumbai": "Maharashtra", "pune": "Maharashtra", "nagpur": "Maharashtra", "nashik": "Maharashtra", "thane": "Maharashtra",
+          "delhi": "Delhi", "new delhi": "Delhi", "noida": "Uttar Pradesh", "gurgaon": "Haryana", "gurugram": "Haryana", "faridabad": "Haryana",
+          "kolkata": "West Bengal", "howrah": "West Bengal",
+          "ahmedabad": "Gujarat", "surat": "Gujarat", "vadodara": "Gujarat", "rajkot": "Gujarat",
+          "jaipur": "Rajasthan", "jodhpur": "Rajasthan", "udaipur": "Rajasthan",
+          "lucknow": "Uttar Pradesh", "kanpur": "Uttar Pradesh", "varanasi": "Uttar Pradesh", "agra": "Uttar Pradesh",
+          "bhopal": "Madhya Pradesh", "indore": "Madhya Pradesh",
+          "patna": "Bihar", "ranchi": "Jharkhand",
+          "chandigarh": "Chandigarh", "ludhiana": "Punjab", "amritsar": "Punjab",
+          "kochi": "Kerala", "thiruvananthapuram": "Kerala", "kozhikode": "Kerala",
+          "bhubaneswar": "Odisha", "visakhapatnam": "Andhra Pradesh", "vijayawada": "Andhra Pradesh", "tirupati": "Andhra Pradesh",
+          "guwahati": "Assam", "dehradun": "Uttarakhand", "shimla": "Himachal Pradesh",
+          "raipur": "Chhattisgarh", "goa": "Goa", "panaji": "Goa",
+        };
+
         const locationParts = (job.location || "").split(",").map(p => p.trim());
         const city = locationParts[0] || "—";
-        const state = locationParts.length > 1 ? locationParts[1] : city !== "—" ? city : "—";
+        const cityLower = city.toLowerCase();
+        const state = locationParts.length > 1 ? locationParts[1] : (cityStateMap[cityLower] || "—");
         
         // Determine display channels
         const displayChannels: string[] = [];
