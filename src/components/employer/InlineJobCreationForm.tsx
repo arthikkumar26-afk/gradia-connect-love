@@ -265,56 +265,6 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
-            {/* ─── Dynamic Fields based on Interview Type ─── */}
-            {formConfig && formConfig.fields.length > 0 && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <h4 className="text-sm font-semibold text-foreground">
-                    {watchedInterviewType === 'education' && 'Education Position Details'}
-                    {watchedInterviewType === 'technical' && 'Technical Role Details'}
-                    {watchedInterviewType === 'sales' && 'Sales Role Details'}
-                    {watchedInterviewType === 'management' && 'Management Role Details'}
-                    {watchedInterviewType === 'standard' && 'Position Details'}
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {formConfig.fields.map((fieldConfig) => (
-                    <div key={fieldConfig.name} className="space-y-1.5">
-                      <label className="text-sm font-medium leading-none">
-                        {fieldConfig.label}
-                      </label>
-                      {fieldConfig.type === 'select' && fieldConfig.options ? (
-                        <Select
-                          value={dynamicFieldValues[fieldConfig.name] || ""}
-                          onValueChange={(val) => handleDynamicFieldChange(fieldConfig.name, val)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={fieldConfig.placeholder} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {fieldConfig.options.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          placeholder={fieldConfig.placeholder}
-                          value={dynamicFieldValues[fieldConfig.name] || ""}
-                          onChange={(e) => handleDynamicFieldChange(fieldConfig.name, e.target.value)}
-                        />
-                      )}
-                      {fieldConfig.helpText && (
-                        <p className="text-[11px] text-muted-foreground">{fieldConfig.helpText}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Sector/Division, Category, Function */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
