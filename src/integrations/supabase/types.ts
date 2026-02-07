@@ -1040,12 +1040,15 @@ export type Database = {
       }
       jobs: {
         Row: {
+          category: string | null
           closing_date: string | null
           created_at: string | null
           department: string | null
           description: string | null
+          designation: string | null
           employer_id: string
           experience_required: string | null
+          function_type: string | null
           id: string
           interview_type: string | null
           is_featured: boolean | null
@@ -1057,17 +1060,23 @@ export type Database = {
           posted_date: string | null
           requirements: string | null
           salary_range: string | null
+          sector_division: string | null
+          segment: string | null
           skills: string[] | null
           status: string | null
+          subjects: string | null
           updated_at: string | null
         }
         Insert: {
+          category?: string | null
           closing_date?: string | null
           created_at?: string | null
           department?: string | null
           description?: string | null
+          designation?: string | null
           employer_id: string
           experience_required?: string | null
+          function_type?: string | null
           id?: string
           interview_type?: string | null
           is_featured?: boolean | null
@@ -1079,17 +1088,23 @@ export type Database = {
           posted_date?: string | null
           requirements?: string | null
           salary_range?: string | null
+          sector_division?: string | null
+          segment?: string | null
           skills?: string[] | null
           status?: string | null
+          subjects?: string | null
           updated_at?: string | null
         }
         Update: {
+          category?: string | null
           closing_date?: string | null
           created_at?: string | null
           department?: string | null
           description?: string | null
+          designation?: string | null
           employer_id?: string
           experience_required?: string | null
+          function_type?: string | null
           id?: string
           interview_type?: string | null
           is_featured?: boolean | null
@@ -1101,8 +1116,11 @@ export type Database = {
           posted_date?: string | null
           requirements?: string | null
           salary_range?: string | null
+          sector_division?: string | null
+          segment?: string | null
           skills?: string[] | null
           status?: string | null
+          subjects?: string | null
           updated_at?: string | null
         }
         Relationships: [

@@ -40,6 +40,12 @@ interface JobItem {
   location: string | null;
   salary_range: string | null;
   description: string | null;
+  sector_division: string | null;
+  category: string | null;
+  function_type: string | null;
+  segment: string | null;
+  designation: string | null;
+  subjects: string | null;
 }
 
 interface QuestionPaper {
@@ -95,12 +101,12 @@ export const QPMContent = () => {
 
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, job_title, department, organisation, status, created_at, experience_required, skills, job_type, location, salary_range, description")
+        .select("id, job_title, department, organisation, status, created_at, experience_required, skills, job_type, location, salary_range, description, sector_division, category, function_type, segment, designation, subjects" as any)
         .eq("employer_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setJobs(data || []);
+      setJobs((data as any as JobItem[]) || []);
     } catch (err) {
       console.error("Error fetching jobs:", err);
       toast.error("Failed to load jobs");
@@ -422,17 +428,18 @@ export const QPMContent = () => {
           </Card>
         ) : (
           <div className="overflow-x-auto border rounded-lg">
-            <Table className="min-w-[1100px] text-xs">
+             <Table className="min-w-[1200px] text-xs">
               <TableHeader>
                 <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-2 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
                   <TableHead className="font-semibold">Date & Time</TableHead>
                   <TableHead className="font-semibold">Job ID</TableHead>
-                  <TableHead className="font-semibold">Designation</TableHead>
+                  <TableHead className="font-semibold">Sector</TableHead>
+                  <TableHead className="font-semibold">Category</TableHead>
+                  <TableHead className="font-semibold">Segment</TableHead>
                   <TableHead className="font-semibold">Department</TableHead>
+                  <TableHead className="font-semibold">Designation</TableHead>
+                  <TableHead className="font-semibold">Subjects</TableHead>
                   <TableHead className="font-semibold">Exp.</TableHead>
-                  <TableHead className="font-semibold max-w-[120px]">Skills</TableHead>
-                  <TableHead className="font-semibold">Type</TableHead>
-                  <TableHead className="font-semibold">Location</TableHead>
                   <TableHead className="font-semibold">Organisation</TableHead>
                   <TableHead className="font-semibold">Salary</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
@@ -444,23 +451,23 @@ export const QPMContent = () => {
                   const dateStr = job.created_at 
                     ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) + " " + new Date(job.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
                     : "—";
-                  const skillsStr = job.skills?.join(", ") || "—";
                   return (
                     <TableRow key={job.id} className={`cursor-pointer hover:bg-muted/50 [&_td]:px-2 [&_td]:py-2.5 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`} onClick={() => handleSelectJob(job)}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{dateStr}</TableCell>
                       <TableCell>
                         <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{job.id.slice(0, 8)}</code>
                       </TableCell>
-                      <TableCell className="text-xs font-medium">{job.job_title}</TableCell>
+                      <TableCell className="text-xs capitalize">{job.sector_division?.replace(/_/g, " ") || "—"}</TableCell>
+                      <TableCell className="text-xs capitalize">{job.category?.replace(/_/g, " ") || "—"}</TableCell>
+                      <TableCell className="text-xs">{job.segment || "—"}</TableCell>
                       <TableCell className="text-xs">{job.department || "—"}</TableCell>
+                      <TableCell className="text-xs font-medium">{job.designation || job.job_title || "—"}</TableCell>
+                      <TableCell className="text-xs">{job.subjects || "—"}</TableCell>
                       <TableCell className="text-xs">{job.experience_required || "—"}</TableCell>
-                      <TableCell className="text-xs max-w-[120px] truncate" title={skillsStr}>{skillsStr}</TableCell>
-                      <TableCell className="text-xs">{job.job_type || "—"}</TableCell>
-                      <TableCell className="text-xs">{job.location || "—"}</TableCell>
                       <TableCell className="text-xs">{job.organisation || "—"}</TableCell>
                       <TableCell className="text-xs">{job.salary_range || "—"}</TableCell>
                       <TableCell className="text-xs">
-                        <Badge variant={job.status === "Open" ? "default" : "secondary"} className="text-[10px]">
+                        <Badge variant={job.status === "active" ? "default" : "secondary"} className="text-[10px]">
                           {job.status || "Draft"}
                         </Badge>
                       </TableCell>
