@@ -18,6 +18,8 @@ interface Job {
   skills: string;
   type: string;
   location: string;
+  salaryRange: string;
+  board: string;
   status: "Open" | "Under Review" | "Closed";
   description?: string;
   requirements?: string;
@@ -64,6 +66,8 @@ export const JobManagementContent = () => {
         skills: job.skills?.join(", ") || "Not specified",
         type: job.job_type || "Full-Time",
         location: job.location || "Remote",
+        salaryRange: job.salary_range || "Not specified",
+        board: job.department || "Not specified",
         status: job.status === "active" ? "Open" : job.status === "closed" ? "Closed" : "Under Review",
         description: job.description || "",
         requirements: job.requirements || "",
@@ -122,7 +126,7 @@ export const JobManagementContent = () => {
             onClick={() => setShowTemplates(false)}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Vacancies
+            Back to Positions
           </Button>
 
           {/* Header row with search, filter, and Create Vacancy */}
@@ -131,7 +135,7 @@ export const JobManagementContent = () => {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by title, department, skills, or Job ID..."
+                  placeholder="Search by designation, department, skills, or Job ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -145,7 +149,7 @@ export const JobManagementContent = () => {
             <Button variant="cta" className="gap-2 w-full sm:w-auto" asChild>
               <Link to="/employer/post-job">
                 <Plus className="h-4 w-4" />
-                Create Vacancy
+                Create Position
               </Link>
             </Button>
           </div>
@@ -153,34 +157,36 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="table-fixed w-full">
+              <Table className="w-full">
                 <TableHeader>
                   <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-4 [&_th]:h-14 [&_th]:text-secondary-foreground">
-                    <TableHead className="font-semibold w-[80px]">Job ID</TableHead>
-                    <TableHead className="font-semibold w-[15%]">Job Title</TableHead>
-                    <TableHead className="font-semibold w-[12%]">Department</TableHead>
-                    <TableHead className="font-semibold w-[10%]">Exp.</TableHead>
-                    <TableHead className="font-semibold w-[20%]">Skills</TableHead>
-                    <TableHead className="font-semibold w-[8%]">Type</TableHead>
-                    <TableHead className="font-semibold w-[10%]">Location</TableHead>
-                    <TableHead className="font-semibold w-[8%]">Status</TableHead>
-                    <TableHead className="font-semibold text-center w-[80px]">Actions</TableHead>
+                    <TableHead className="font-semibold">Job ID</TableHead>
+                    <TableHead className="font-semibold">Designation</TableHead>
+                    <TableHead className="font-semibold">Department</TableHead>
+                    <TableHead className="font-semibold">Exp.</TableHead>
+                    <TableHead className="font-semibold">Skills</TableHead>
+                    <TableHead className="font-semibold">Type</TableHead>
+                    <TableHead className="font-semibold">Location</TableHead>
+                    <TableHead className="font-semibold">Salary Range</TableHead>
+                    <TableHead className="font-semibold">Board</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={11} className="text-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground mt-2">Loading jobs...</p>
+                        <p className="text-sm text-muted-foreground mt-2">Loading positions...</p>
                       </TableCell>
                     </TableRow>
                   ) : filteredJobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
-                        <p className="text-muted-foreground">No jobs found</p>
+                      <TableCell colSpan={11} className="text-center py-8">
+                        <p className="text-muted-foreground">No positions found</p>
                         <Button variant="link" asChild className="mt-2">
-                          <Link to="/employer/post-job">Create your first vacancy</Link>
+                          <Link to="/employer/post-job">Create your first position</Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -201,6 +207,8 @@ export const JobManagementContent = () => {
                         <TableCell className="truncate" title={job.skills}>{job.skills}</TableCell>
                         <TableCell className="truncate">{job.type}</TableCell>
                         <TableCell className="truncate">{job.location}</TableCell>
+                        <TableCell className="truncate">{job.salaryRange}</TableCell>
+                        <TableCell className="truncate">{job.board}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
                             {job.status}
@@ -236,7 +244,7 @@ export const JobManagementContent = () => {
             {/* Pagination */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-border">
               <p className="text-sm text-muted-foreground">
-                Showing <span className="font-medium">{filteredJobs.length}</span> of <span className="font-medium">{jobs.length}</span> jobs
+                Showing <span className="font-medium">{filteredJobs.length}</span> of <span className="font-medium">{jobs.length}</span> positions
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" disabled>
@@ -266,11 +274,11 @@ export const JobManagementContent = () => {
                 </div>
 
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Create Vacancy
+                  Create Position
                 </h2>
 
                 <p className="text-muted-foreground text-sm max-w-md mb-5">
-                  Post a new job vacancy with interview pipeline, requirements, and start receiving applications instantly
+                  Post a new education position with interview pipeline, requirements, and start receiving applications instantly
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
@@ -322,16 +330,16 @@ export const JobManagementContent = () => {
           </div>
 
           <h2 className="text-2xl font-bold text-foreground mb-2">
-            Vacancies List
+            Education Positions
           </h2>
 
           <p className="text-muted-foreground text-sm max-w-md mb-5">
-            Manage all your job postings, track applications, and create new vacancies for quick and consistent hiring
+            Manage all your education sector positions, track applications, and create new openings for quick and consistent hiring
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-              Active Jobs
+              Active Positions
             </Badge>
             <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
               Quick Posting
