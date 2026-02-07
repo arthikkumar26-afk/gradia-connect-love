@@ -408,11 +408,11 @@ export const QPMContent = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-secondary">
-                  <TableHead className="text-xs font-semibold text-secondary-foreground whitespace-nowrap">Job Title</TableHead>
-                  <TableHead className="text-xs font-semibold text-secondary-foreground whitespace-nowrap">Organisation</TableHead>
-                  <TableHead className="text-xs font-semibold text-secondary-foreground whitespace-nowrap">Department</TableHead>
-                  <TableHead className="text-xs font-semibold text-secondary-foreground whitespace-nowrap">Status</TableHead>
-                  <TableHead className="text-xs font-semibold text-secondary-foreground whitespace-nowrap">Action</TableHead>
+                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Job Title</TableHead>
+                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Organisation</TableHead>
+                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Department</TableHead>
+                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Status</TableHead>
+                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
