@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
 import { 
   QrCode, 
@@ -18,7 +19,9 @@ import {
   Copy,
   Check,
   Briefcase,
-  ExternalLink
+  ExternalLink,
+  MapPin,
+  IndianRupee
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +33,13 @@ interface Job {
   job_title: string;
   location: string | null;
   status: string | null;
+  designation: string | null;
+  organisation: string | null;
+  salary_range: string | null;
+  segment: string | null;
+  category: string | null;
+  sector_division: string | null;
+  created_at: string | null;
 }
 
 export const SMMContent = () => {
@@ -45,9 +55,9 @@ export const SMMContent = () => {
       
       const { data } = await supabase
         .from("jobs")
-        .select("id, job_title, location, status")
+        .select("id, job_title, location, status, designation, organisation, salary_range, segment, category, sector_division, created_at")
         .eq("employer_id", user.id)
-        .eq("status", "active");
+        .order("created_at", { ascending: false });
       
       if (data) {
         setJobs(data);
@@ -80,6 +90,24 @@ export const SMMContent = () => {
     ? `${window.location.origin}/jobs/${selectedJob}` 
     : `${window.location.origin}/company/${user?.id}/jobs`;
   const companyJobsUrl = `${window.location.origin}/company/${user?.id}/jobs`;
+
+  const getJobLabel = (job: Job) => {
+    const parts = [job.designation || job.job_title];
+    if (job.organisation) parts.push(job.organisation);
+    if (job.location) parts.push(job.location);
+    return parts.join(" — ");
+  };
+
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case "active":
+        return <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-green-600">Active</Badge>;
+      case "closed":
+        return <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Closed</Badge>;
+      default:
+        return <Badge variant="outline" className="text-[10px] px-1.5 py-0">Draft</Badge>;
+    }
+  };
 
   const handleCopyLink = async () => {
     try {
@@ -118,9 +146,14 @@ export const SMMContent = () => {
   };
 
   const shareToSocialMedia = (platform: string) => {
+    const title = selectedJobData?.designation || selectedJobData?.job_title || "open position";
+    const org = selectedJobData?.organisation || companyName || "our company";
+    const loc = selectedJobData?.location ? ` in ${selectedJobData.location}` : "";
+    const salary = selectedJobData?.salary_range ? ` | ${selectedJobData.salary_range}` : "";
+
     const text = selectedJobData 
-      ? `We're hiring! Check out this ${selectedJobData.job_title} position at ${companyName || "our company"}.`
-      : `Check out our job openings at ${companyName || "our company"}!`;
+      ? `🚀 We're hiring! ${title} at ${org}${loc}${salary}. Apply now!`
+      : `Check out our job openings at ${org}!`;
     
     const encodedText = encodeURIComponent(text);
     const encodedUrl = encodeURIComponent(jobUrl);
@@ -138,7 +171,6 @@ export const SMMContent = () => {
         shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
         break;
       case "instagram":
-        // Instagram doesn't have a direct share URL, copy link instead
         navigator.clipboard.writeText(`${text} ${jobUrl}`);
         toast.success("Content copied! Open Instagram and paste in your post.");
         return;
@@ -199,12 +231,36 @@ export const SMMContent = () => {
                         <SelectItem value="all">All Jobs (Company Page)</SelectItem>
                         {jobs.map((job) => (
                           <SelectItem key={job.id} value={job.id}>
-                            {job.job_title} {job.location && `- ${job.location}`}
+                            <span className="flex items-center gap-2">
+                              {getJobLabel(job)}
+                              {getStatusBadge(job.status)}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Selected Job Details */}
+                  {selectedJobData && selectedJob !== "all" && (
+                    <div className="bg-muted/30 rounded-lg p-3 space-y-1.5 text-sm">
+                      <p className="font-medium text-foreground">{selectedJobData.designation || selectedJobData.job_title}</p>
+                      {selectedJobData.organisation && (
+                        <p className="text-muted-foreground">{selectedJobData.organisation}</p>
+                      )}
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        {selectedJobData.location && (
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{selectedJobData.location}</span>
+                        )}
+                        {selectedJobData.salary_range && (
+                          <span className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{selectedJobData.salary_range}</span>
+                        )}
+                        {selectedJobData.segment && (
+                          <span>{selectedJobData.segment}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <Label>Job URL</Label>
@@ -244,7 +300,7 @@ export const SMMContent = () => {
                     />
                   </div>
                   <p className="text-sm text-muted-foreground mt-4 text-center">
-                    {selectedJobData ? selectedJobData.job_title : "All Job Openings"}
+                    {selectedJobData ? (selectedJobData.designation || selectedJobData.job_title) : "All Job Openings"}
                   </p>
                   <p className="text-xs text-muted-foreground">Scan to apply</p>
                 </div>
@@ -270,14 +326,27 @@ export const SMMContent = () => {
                 {jobs.length === 0 ? (
                   <div className="col-span-full text-center py-8 text-muted-foreground">
                     <Briefcase className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No active jobs found. Post a job first to create flyers.</p>
+                    <p>No jobs found. Post a job first to create flyers.</p>
                   </div>
                 ) : (
                   jobs.map((job) => (
                     <Card key={job.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
-                        <h3 className="font-semibold text-foreground mb-1">{job.job_title}</h3>
-                        <p className="text-sm text-muted-foreground mb-4">{job.location || "Remote"}</p>
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground text-sm">{job.designation || job.job_title}</h3>
+                          {getStatusBadge(job.status)}
+                        </div>
+                        {job.organisation && (
+                          <p className="text-xs text-muted-foreground mb-0.5">{job.organisation}</p>
+                        )}
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-3">
+                          {job.location && (
+                            <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{job.location}</span>
+                          )}
+                          {job.salary_range && (
+                            <span className="flex items-center gap-0.5"><IndianRupee className="h-3 w-3" />{job.salary_range}</span>
+                          )}
+                        </div>
                         <QRFlyerModal
                           employerId={user?.id || ""}
                           companyName={companyName || profile?.company_name || "Company"}
@@ -339,12 +408,40 @@ export const SMMContent = () => {
                     <SelectItem value="all">All Jobs (Company Page)</SelectItem>
                     {jobs.map((job) => (
                       <SelectItem key={job.id} value={job.id}>
-                        {job.job_title} {job.location && `- ${job.location}`}
+                        <span className="flex items-center gap-2">
+                          {getJobLabel(job)}
+                          {getStatusBadge(job.status)}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Selected Job Preview */}
+              {selectedJobData && selectedJob !== "all" && (
+                <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-foreground">{selectedJobData.designation || selectedJobData.job_title}</p>
+                      {selectedJobData.organisation && (
+                        <p className="text-sm text-muted-foreground">{selectedJobData.organisation}</p>
+                      )}
+                    </div>
+                    {getStatusBadge(selectedJobData.status)}
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    {selectedJobData.location && (
+                      <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{selectedJobData.location}</span>
+                    )}
+                    {selectedJobData.salary_range && (
+                      <span className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{selectedJobData.salary_range}</span>
+                    )}
+                    {selectedJobData.segment && <Badge variant="outline" className="text-[10px]">{selectedJobData.segment}</Badge>}
+                    {selectedJobData.category && <Badge variant="outline" className="text-[10px]">{selectedJobData.category}</Badge>}
+                  </div>
+                </div>
+              )}
 
               {/* Social Media Buttons */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
