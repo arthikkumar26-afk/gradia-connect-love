@@ -157,20 +157,20 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="w-full">
+              <Table className="w-full min-w-[1200px]">
                 <TableHeader>
                   <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-4 [&_th]:h-14 [&_th]:text-secondary-foreground">
-                    <TableHead className="font-semibold">Job ID</TableHead>
-                    <TableHead className="font-semibold">Designation</TableHead>
-                    <TableHead className="font-semibold">Department</TableHead>
-                    <TableHead className="font-semibold">Exp.</TableHead>
-                    <TableHead className="font-semibold">Skills</TableHead>
-                    <TableHead className="font-semibold">Type</TableHead>
-                    <TableHead className="font-semibold">Location</TableHead>
-                    <TableHead className="font-semibold">Salary Range</TableHead>
-                    <TableHead className="font-semibold">Board</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold text-center">Actions</TableHead>
+                    <TableHead className="font-semibold w-[90px]">Job ID</TableHead>
+                    <TableHead className="font-semibold w-[140px]">Designation</TableHead>
+                    <TableHead className="font-semibold w-[120px]">Department</TableHead>
+                    <TableHead className="font-semibold w-[80px]">Exp.</TableHead>
+                    <TableHead className="font-semibold w-[180px]">Skills</TableHead>
+                    <TableHead className="font-semibold w-[90px]">Type</TableHead>
+                    <TableHead className="font-semibold w-[110px]">Location</TableHead>
+                    <TableHead className="font-semibold w-[120px]">Salary Range</TableHead>
+                    <TableHead className="font-semibold w-[100px]">Board</TableHead>
+                    <TableHead className="font-semibold w-[90px]">Status</TableHead>
+                    <TableHead className="font-semibold text-center w-[80px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -201,14 +201,28 @@ export const JobManagementContent = () => {
                             {job.id.slice(0, 8)}
                           </code>
                         </TableCell>
-                        <TableCell className="font-medium truncate">{job.jobTitle}</TableCell>
-                        <TableCell className="truncate">{job.department}</TableCell>
-                        <TableCell className="truncate">{job.experience}</TableCell>
-                        <TableCell className="truncate" title={job.skills}>{job.skills}</TableCell>
-                        <TableCell className="truncate">{job.type}</TableCell>
-                        <TableCell className="truncate">{job.location}</TableCell>
-                        <TableCell className="truncate">{job.salaryRange}</TableCell>
-                        <TableCell className="truncate">{job.board}</TableCell>
+                        <TableCell className="font-medium">
+                          <span className="block truncate max-w-[140px]" title={job.jobTitle}>{job.jobTitle}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="block truncate max-w-[120px]" title={job.department}>{job.department}</span>
+                        </TableCell>
+                        <TableCell>{job.experience}</TableCell>
+                        <TableCell>
+                          <span className="block truncate max-w-[180px]" title={job.skills}>{job.skills}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="block truncate max-w-[90px]" title={job.type}>{job.type}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="block truncate max-w-[110px]" title={job.location}>{job.location}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="block truncate max-w-[120px]" title={job.salaryRange}>{job.salaryRange}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="block truncate max-w-[100px]" title={job.board}>{job.board}</span>
+                        </TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
                             {job.status}
