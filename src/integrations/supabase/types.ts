@@ -2359,6 +2359,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_demo_candidate_profile: {
+        Args: { p_session_token: string }
+        Returns: {
+          experience_level: string
+          full_name: string
+          id: string
+          preferred_role: string
+          primary_subject: string
+          profile_picture: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
