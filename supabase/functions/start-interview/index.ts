@@ -386,12 +386,59 @@ serve(async (req) => {
     let questions: any[] = [];
     let usingAdminQuestions = false;
 
-    // FIRST: Try to fetch questions from admin-uploaded question papers
-    // Match based on candidate's segment, category, class_level, and designation
-    if (candidateSegment || candidateCategory || candidateDesignation || candidateClassLevel) {
-      console.log('Searching for admin-uploaded question papers matching candidate profile...');
+    // Helper to transform question paper questions into interview format
+    const transformPaperQuestions = (paperQuestions: any[]) => {
+      return paperQuestions.map((q: any) => {
+        const answerKey = q.interview_answer_keys?.[0];
+        return {
+          question: q.question_text,
+          type: q.question_type === 'multiple_choice' ? 'mcq' : q.question_type,
+          options: q.options?.options || q.options || [],
+          correctAnswer: answerKey?.answer_text ? 
+            (q.options?.options || q.options || []).findIndex(
+              (opt: string) => opt.toLowerCase().includes(answerKey.answer_text.toLowerCase().charAt(0))
+            ) : 0,
+          explanation: answerKey?.answer_text || 'Correct answer based on the answer key.',
+          questionId: q.id,
+          marks: q.marks || 1
+        };
+      });
+    };
+
+    // PRIORITY 1: Try to fetch question papers linked to THIS specific job
+    console.log(`Searching for question papers linked to job_id: ${job.id}`);
+    const { data: jobPapers, error: jobPaperError } = await supabase
+      .from('interview_question_papers')
+      .select(`
+        *,
+        interview_questions(
+          *,
+          interview_answer_keys(*)
+        )
+      `)
+      .eq('job_id', job.id)
+      .eq('is_active', true)
+      .limit(10);
+
+    if (!jobPaperError && jobPapers && jobPapers.length > 0) {
+      // Filter to papers that actually have questions
+      const papersWithQuestions = jobPapers.filter((p: any) => p.interview_questions && p.interview_questions.length > 0);
       
-      // Build query to find matching question paper
+      if (papersWithQuestions.length > 0) {
+        // Randomly select one paper set from this job
+        const selectedPaper = papersWithQuestions[Math.floor(Math.random() * papersWithQuestions.length)];
+        console.log(`Using job-specific paper: "${selectedPaper.title}" (Set ${selectedPaper.set_number}, ${selectedPaper.interview_questions.length} questions)`);
+        
+        questions = transformPaperQuestions(selectedPaper.interview_questions);
+        usingAdminQuestions = true;
+        console.log(`Loaded ${questions.length} questions from job-specific question paper`);
+      }
+    }
+
+    // PRIORITY 2: Fall back to segment/category/designation matching
+    if (!usingAdminQuestions && (candidateSegment || candidateCategory || candidateDesignation || candidateClassLevel)) {
+      console.log('No job-specific papers found. Searching by candidate profile match...');
+      
       let query = supabase
         .from('interview_question_papers')
         .select(`
@@ -403,57 +450,26 @@ serve(async (req) => {
         `)
         .eq('is_active', true);
 
-      // Add filters based on available candidate data
-      if (candidateSegment) {
-        query = query.eq('segment', candidateSegment);
-      }
-      if (candidateCategory) {
-        query = query.eq('category', candidateCategory);
-      }
-      if (candidateClassLevel) {
-        query = query.eq('class_level', candidateClassLevel);
-      }
-      if (candidateDesignation) {
-        query = query.eq('designation', candidateDesignation);
-      }
+      if (candidateSegment) query = query.eq('segment', candidateSegment);
+      if (candidateCategory) query = query.eq('category', candidateCategory);
+      if (candidateClassLevel) query = query.eq('class_level', candidateClassLevel);
+      if (candidateDesignation) query = query.eq('designation', candidateDesignation);
 
       const { data: matchingPapers, error: paperError } = await query.limit(5);
 
-      if (paperError) {
-        console.error('Error fetching question papers:', paperError);
-      } else if (matchingPapers && matchingPapers.length > 0) {
-        console.log(`Found ${matchingPapers.length} matching question papers from admin uploads`);
+      if (!paperError && matchingPapers && matchingPapers.length > 0) {
+        const papersWithQuestions = matchingPapers.filter((p: any) => p.interview_questions && p.interview_questions.length > 0);
         
-        // Randomly select one paper if multiple matches
-        const selectedPaper = matchingPapers[Math.floor(Math.random() * matchingPapers.length)];
-        console.log(`Selected paper: ${selectedPaper.title} (ID: ${selectedPaper.id})`);
-
-        const paperQuestions = selectedPaper.interview_questions || [];
-        
-        if (paperQuestions.length > 0) {
-          // Transform admin questions to interview format
-          questions = paperQuestions.map((q: any) => {
-            const answerKey = q.interview_answer_keys?.[0];
-            
-            return {
-              question: q.question_text,
-              type: q.question_type === 'multiple_choice' ? 'mcq' : q.question_type,
-              options: q.options?.options || q.options || [],
-              correctAnswer: answerKey?.answer_text ? 
-                (q.options?.options || q.options || []).findIndex(
-                  (opt: string) => opt.toLowerCase().includes(answerKey.answer_text.toLowerCase().charAt(0))
-                ) : 0,
-              explanation: answerKey?.answer_text || 'Correct answer based on the answer key.',
-              questionId: q.id,
-              marks: q.marks || 1
-            };
-          });
-
+        if (papersWithQuestions.length > 0) {
+          const selectedPaper = papersWithQuestions[Math.floor(Math.random() * papersWithQuestions.length)];
+          console.log(`Using profile-matched paper: "${selectedPaper.title}" (ID: ${selectedPaper.id})`);
+          
+          questions = transformPaperQuestions(selectedPaper.interview_questions);
           usingAdminQuestions = true;
-          console.log(`Loaded ${questions.length} questions from admin-uploaded paper`);
+          console.log(`Loaded ${questions.length} questions from profile-matched paper`);
         }
       } else {
-        console.log('No matching question papers found for candidate profile. Falling back to AI generation.');
+        console.log('No matching question papers found. Falling back to AI generation.');
       }
     }
 
