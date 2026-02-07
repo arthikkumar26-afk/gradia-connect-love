@@ -359,7 +359,10 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <label className="text-sm font-medium leading-none">Function</label>
                 <Select
                   value={dynamicFieldValues["function"] || ""}
-                  onValueChange={(val) => handleDynamicFieldChange("function", val)}
+                  onValueChange={(val) => {
+                    handleDynamicFieldChange("function", val);
+                    handleDynamicFieldChange("segment", "");
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select function" />
@@ -390,14 +393,24 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                     <SelectValue placeholder="Select segment" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CBSE">CBSE</SelectItem>
-                    <SelectItem value="ICSE">ICSE / ISC</SelectItem>
-                    <SelectItem value="State Board">State Board</SelectItem>
-                    <SelectItem value="IB">IB (International Baccalaureate)</SelectItem>
-                    <SelectItem value="Cambridge">Cambridge (IGCSE)</SelectItem>
-                    <SelectItem value="Montessori">Montessori</SelectItem>
-                    <SelectItem value="Play School">Play School / Pre-School</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    {dynamicFieldValues["function"] === "teaching" ? (
+                      <>
+                        <SelectItem value="Pre-Primary">Pre-Primary</SelectItem>
+                        <SelectItem value="Primary">Primary</SelectItem>
+                        <SelectItem value="High School">High School</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="CBSE">CBSE</SelectItem>
+                        <SelectItem value="ICSE">ICSE / ISC</SelectItem>
+                        <SelectItem value="State Board">State Board</SelectItem>
+                        <SelectItem value="IB">IB (International Baccalaureate)</SelectItem>
+                        <SelectItem value="Cambridge">Cambridge (IGCSE)</SelectItem>
+                        <SelectItem value="Montessori">Montessori</SelectItem>
+                        <SelectItem value="Play School">Play School / Pre-School</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
