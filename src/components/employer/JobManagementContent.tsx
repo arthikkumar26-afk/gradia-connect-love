@@ -201,7 +201,7 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="w-full min-w-[850px] text-xs">
+              <Table className="w-full min-w-[1100px] text-xs">
                 <TableHeader>
                   <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-3 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide">
                     <TableHead className="font-semibold">Date & Time</TableHead>
