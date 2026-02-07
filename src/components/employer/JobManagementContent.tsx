@@ -370,40 +370,40 @@ export const JobManagementContent = () => {
               onCancel={() => setShowCreateForm(false)}
             />
           ) : (
-            <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
-              <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-                <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-5">
-                  <Plus className="h-10 w-10 text-primary-foreground" />
+            <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+              <div className="flex flex-col items-center justify-center py-5 px-4 text-center">
+                <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mb-3">
+                  <Plus className="h-6 w-6 text-primary-foreground" />
                 </div>
 
-                <h2 className="text-2xl font-bold text-foreground mb-2">
+                <h2 className="text-lg font-bold text-foreground mb-1">
                   Create Position
                 </h2>
 
-                <p className="text-muted-foreground text-sm max-w-md mb-5">
+                <p className="text-muted-foreground text-xs max-w-sm mb-3">
                   Post a new education position with interview pipeline, requirements, and start receiving applications instantly
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-                  <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mb-4">
+                  <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-medium border-primary/30 text-primary">
                     Job Posting
                   </Badge>
-                  <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                  <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-medium border-primary/30 text-primary">
                     Pipeline Setup
                   </Badge>
-                  <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
+                  <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-medium border-primary/30 text-primary">
                     AI Screening
                   </Badge>
                 </div>
 
                 <Button
                   variant="cta"
-                  size="lg"
-                  className="rounded-full px-10 gap-2 text-base"
+                  size="default"
+                  className="rounded-full px-8 gap-2 text-sm"
                   onClick={() => setShowCreateForm(true)}
                 >
                   Continue
-                  <ArrowRight className="h-5 w-5" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
