@@ -1040,6 +1040,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          board: string | null
           category: string | null
           classes: string | null
           closing_date: string | null
@@ -1070,6 +1071,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          board?: string | null
           category?: string | null
           classes?: string | null
           closing_date?: string | null
@@ -1100,6 +1102,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          board?: string | null
           category?: string | null
           classes?: string | null
           closing_date?: string | null

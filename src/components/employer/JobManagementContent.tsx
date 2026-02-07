@@ -23,6 +23,7 @@ interface Job {
   segment: string;
   program: string;
   classes: string;
+  board: string;
   department: string;
   designation: string;
   subjects: string;
@@ -101,6 +102,7 @@ export const JobManagementContent = () => {
           segment: job.segment || "—",
           program: job.program || "—",
           classes: job.classes || "—",
+          board: job.board || "—",
           department: job.department || "—",
           designation: job.designation || "—",
           subjects: job.subjects || "—",
@@ -152,6 +154,7 @@ export const JobManagementContent = () => {
     segment: "segment",
     program: "program",
     classes: "classes",
+    board: "board",
     department: "department",
     designation: "designation",
     subjects: "subjects",
@@ -312,6 +315,7 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold">Segment</TableHead>
                     <TableHead className="font-semibold">Program</TableHead>
                     <TableHead className="font-semibold">Classes</TableHead>
+                    <TableHead className="font-semibold">Board</TableHead>
                     <TableHead className="font-semibold">Department</TableHead>
                     <TableHead className="font-semibold">Designation</TableHead>
                     <TableHead className="font-semibold">Subjects</TableHead>
@@ -329,14 +333,14 @@ export const JobManagementContent = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={20} className="text-center py-8">
+                          <TableCell colSpan={21} className="text-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                         <p className="text-sm text-muted-foreground mt-2">Loading positions...</p>
                       </TableCell>
                     </TableRow>
                   ) : filteredJobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={20} className="text-center py-8">
+                      <TableCell colSpan={21} className="text-center py-8">
                         <p className="text-muted-foreground">No positions found</p>
                         <Button variant="link" asChild className="mt-2">
                           <Link to="/employer/post-job">Create your first position</Link>
@@ -373,6 +377,9 @@ export const JobManagementContent = () => {
                           </TableCell>
                           <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "classes", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "board", "w-24")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "department", "w-24")}
