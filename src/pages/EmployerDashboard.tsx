@@ -255,7 +255,7 @@ const EmployerDashboard = () => {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/employer/dashboard" },
     { id: "jobs", label: "Vacancies List", icon: Briefcase, path: "/employer/jobs" },
-    { id: "qpm", label: "QPM", icon: BookOpen, path: "/employer/qpm" },
+    { id: "qpm", label: "Written Test Papers", icon: BookOpen, path: "/employer/qpm" },
     { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
     { id: "talent-pool", label: "Candidate Data", icon: Users, path: "/employer/talent-pool" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
