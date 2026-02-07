@@ -352,7 +352,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "", classes: "", program: "" });
+                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "", classes: "", program: "", hs_classes: "" });
                   }}
                 >
                   <SelectTrigger>
@@ -472,7 +472,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                     <Select
                       key={`program-highschool`}
                       value={dynamicFieldValues["program"] || undefined}
-                      onValueChange={(val) => handleDynamicFieldChange("program", val, { department_type: "", designation: "" })}
+                      onValueChange={(val) => handleDynamicFieldChange("program", val, { hs_classes: "", department_type: "", designation: "" })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select program" />
@@ -485,9 +485,26 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   </div>
 
                   <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Classes</label>
+                    <Select
+                      key={`hs-classes-${dynamicFieldValues["program"] || "none"}`}
+                      value={dynamicFieldValues["hs_classes"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("hs_classes", val, { department_type: "", designation: "" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        <SelectItem value="class_6_7_8">CLASS-6,7&8</SelectItem>
+                        <SelectItem value="class_9_10">CLASS-9&10</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
                     <label className="text-sm font-medium leading-none">Department</label>
                     <Select
-                      key={`dept-highschool-${dynamicFieldValues["program"] || "none"}`}
+                      key={`dept-highschool-${dynamicFieldValues["hs_classes"] || "none"}`}
                       value={dynamicFieldValues["department_type"] || undefined}
                       onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
                     >
@@ -512,7 +529,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium leading-none">Designation</label>
                     <Select
-                      key={`desig-highschool-${dynamicFieldValues["program"] || "none"}`}
+                      key={`desig-highschool-${dynamicFieldValues["hs_classes"] || "none"}`}
                       value={dynamicFieldValues["designation"] || undefined}
                       onValueChange={(val) => handleDynamicFieldChange("designation", val)}
                     >
