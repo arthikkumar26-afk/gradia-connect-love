@@ -415,11 +415,10 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="academics">Academics</SelectItem>
-                        <SelectItem value="administration">Administration</SelectItem>
-                        <SelectItem value="sports">Sports & Physical Education</SelectItem>
-                        <SelectItem value="library">Library</SelectItem>
-                        <SelectItem value="counseling">Counseling</SelectItem>
+                        <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                        <SelectItem value="mother_teacher">Mother Teacher</SelectItem>
+                        <SelectItem value="1st_language">1st Language</SelectItem>
+                        <SelectItem value="2nd_language">2nd Language</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
