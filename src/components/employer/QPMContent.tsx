@@ -873,13 +873,30 @@ export const QPMContent = () => {
       />
 
       {/* Info about how QPM works */}
-      <Card className="bg-muted/30 border-dashed">
-        <CardContent className="py-3">
-          <p className="text-xs text-muted-foreground">
-            <strong>How it works:</strong> Create up to 4 question paper sets. During the interview, AI will randomly pick questions 
-            from these sets and present them to the candidate. After the candidate submits answers, AI compares them against 
-            your solutions and keywords to determine correct/wrong answers automatically.
-          </p>
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="py-5 px-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-foreground">📋 How it works</h3>
+              <div className="space-y-1.5">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">1. Create</span> — Build up to 4 question paper sets with MCQ, Text, or True/False questions and their solutions.
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">2. Interview</span> — During the Technical Assessment round, AI randomly picks one of your question sets and presents it to the candidate.
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">3. Evaluate</span> — After submission, AI compares answers against your solutions & keywords to auto-score correct/wrong answers.
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground/80 pt-1 italic">
+                Your question papers are saved permanently and reused for every candidate applying to this job.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
