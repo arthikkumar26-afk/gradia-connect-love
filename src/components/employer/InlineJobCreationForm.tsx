@@ -316,6 +316,59 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
+            {/* Sector/Division, Category, Function */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Sector / Division</label>
+                <Select
+                  value={dynamicFieldValues["sector_division"] || ""}
+                  onValueChange={(val) => handleDynamicFieldChange("sector_division", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select sector" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="school">School</SelectItem>
+                    <SelectItem value="college">College</SelectItem>
+                    <SelectItem value="coaching_center">Coaching Center</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Category</label>
+                <Select
+                  value={dynamicFieldValues["category"] || ""}
+                  onValueChange={(val) => handleDynamicFieldChange("category", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="academic">Academic</SelectItem>
+                    <SelectItem value="non_academic">Non-Academic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Function</label>
+                <Select
+                  value={dynamicFieldValues["function"] || ""}
+                  onValueChange={(val) => handleDynamicFieldChange("function", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select function" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="teaching">Teaching</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="support">Support</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {/* Job Title */}
             <FormField
               control={form.control}
