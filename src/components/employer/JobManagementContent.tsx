@@ -326,8 +326,7 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold">Salary</TableHead>
                     <TableHead className="font-semibold">Organisation</TableHead>
                     <TableHead className="font-semibold text-center">QR Code</TableHead>
-                    <TableHead className="font-semibold text-center">Publish</TableHead>
-                    <TableHead className="font-semibold">Display</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="font-semibold text-center">Actions</TableHead>
                   </TableRow>
@@ -335,14 +334,14 @@ export const JobManagementContent = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={19} className="text-center py-8">
+                      <TableCell colSpan={17} className="text-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                         <p className="text-sm text-muted-foreground mt-2">Loading positions...</p>
                       </TableCell>
                     </TableRow>
                   ) : filteredJobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={19} className="text-center py-8">
+                      <TableCell colSpan={17} className="text-center py-8">
                         <p className="text-muted-foreground">No positions found</p>
                         <Button variant="link" asChild className="mt-2">
                           <Link to="/employer/post-job">Create your first position</Link>
@@ -414,31 +413,6 @@ export const JobManagementContent = () => {
                                 </div>
                               </PopoverContent>
                             </Popover>
-                          </TableCell>
-                          {/* Publish */}
-                          <TableCell className="text-center">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge 
-                                    variant={job.published ? "default" : "outline"} 
-                                    className={`cursor-default text-[10px] px-2 ${job.published ? "bg-green-600 hover:bg-green-600 text-white" : ""}`}
-                                  >
-                                    {job.published ? "Live" : "Draft"}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{job.published ? "This position is published and accepting applications" : "This position is in draft mode"}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </TableCell>
-                          {/* Display */}
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
-                              <span className="text-xs whitespace-nowrap">{job.display}</span>
-                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
