@@ -384,7 +384,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="boardExperience">Board Exp.</Label>
+              <Label htmlFor="boardExperience">Experience</Label>
               {isEditMode ? (
                 <Input id="boardExperience" value={boardExperience} onChange={(e) => setBoardExperience(e.target.value)} />
               ) : (
