@@ -492,8 +492,29 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                       </SelectContent>
                     </Select>
                   </div>
-                  {/* Empty placeholders for grid alignment */}
-                  <div />
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">Specialized Subjects</label>
+                    <Select
+                      key={`specialized-subjects-admin-hs`}
+                      value={dynamicFieldValues["specialized_subjects"] || undefined}
+                      onValueChange={(val) => handleDynamicFieldChange("specialized_subjects", val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subject" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-[200]">
+                        <SelectItem value="telugu">Telugu</SelectItem>
+                        <SelectItem value="hindi">Hindi</SelectItem>
+                        <SelectItem value="english">English</SelectItem>
+                        <SelectItem value="maths">Maths</SelectItem>
+                        <SelectItem value="physics">Physics</SelectItem>
+                        <SelectItem value="chemistry">Chemistry</SelectItem>
+                        <SelectItem value="biology">Biology</SelectItem>
+                        <SelectItem value="science">Science</SelectItem>
+                        <SelectItem value="computer">Computer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div />
                 </>
               ) : dynamicFieldValues["segment"] === "High School" ? (
