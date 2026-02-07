@@ -17,15 +17,17 @@ interface Job {
   id: string;
   dateTime: string;
   jobTitle: string;
+  sectorDivision: string;
+  category: string;
+  functionType: string;
+  segment: string;
   department: string;
+  designation: string;
+  subjects: string;
   experience: string;
   skills: string;
   type: string;
   location: string;
-  state: string;
-  city: string;
-  board: string;
-  boardExperience: string;
   salary: string;
   organisation: string;
   published: boolean;
@@ -81,31 +83,6 @@ export const JobManagementContent = () => {
       if (error) throw error;
 
       const formattedJobs: Job[] = (data || []).map((job) => {
-        // City-to-State mapping for Indian cities
-        const cityStateMap: Record<string, string> = {
-          "bangalore": "Karnataka", "banglore": "Karnataka", "bengaluru": "Karnataka", "mysore": "Karnataka", "mysuru": "Karnataka", "mangalore": "Karnataka", "hubli": "Karnataka",
-          "hyderabad": "Telangana", "warangal": "Telangana", "secunderabad": "Telangana",
-          "chennai": "Tamil Nadu", "coimbatore": "Tamil Nadu", "madurai": "Tamil Nadu", "salem": "Tamil Nadu",
-          "mumbai": "Maharashtra", "pune": "Maharashtra", "nagpur": "Maharashtra", "nashik": "Maharashtra", "thane": "Maharashtra",
-          "delhi": "Delhi", "new delhi": "Delhi", "noida": "Uttar Pradesh", "gurgaon": "Haryana", "gurugram": "Haryana", "faridabad": "Haryana",
-          "kolkata": "West Bengal", "howrah": "West Bengal",
-          "ahmedabad": "Gujarat", "surat": "Gujarat", "vadodara": "Gujarat", "rajkot": "Gujarat",
-          "jaipur": "Rajasthan", "jodhpur": "Rajasthan", "udaipur": "Rajasthan",
-          "lucknow": "Uttar Pradesh", "kanpur": "Uttar Pradesh", "varanasi": "Uttar Pradesh", "agra": "Uttar Pradesh",
-          "bhopal": "Madhya Pradesh", "indore": "Madhya Pradesh",
-          "patna": "Bihar", "ranchi": "Jharkhand",
-          "chandigarh": "Chandigarh", "ludhiana": "Punjab", "amritsar": "Punjab",
-          "kochi": "Kerala", "thiruvananthapuram": "Kerala", "kozhikode": "Kerala",
-          "bhubaneswar": "Odisha", "visakhapatnam": "Andhra Pradesh", "vijayawada": "Andhra Pradesh", "tirupati": "Andhra Pradesh",
-          "guwahati": "Assam", "dehradun": "Uttarakhand", "shimla": "Himachal Pradesh",
-          "raipur": "Chhattisgarh", "goa": "Goa", "panaji": "Goa",
-        };
-
-        const locationParts = (job.location || "").split(",").map(p => p.trim());
-        const city = locationParts[0] || "—";
-        const cityLower = city.toLowerCase();
-        const state = locationParts.length > 1 ? locationParts[1] : (cityStateMap[cityLower] || "—");
-        
         // Determine display channels
         const displayChannels: string[] = [];
         if (job.status === "active") displayChannels.push("Website");
@@ -116,15 +93,17 @@ export const JobManagementContent = () => {
           id: job.id,
           dateTime: job.created_at ? new Date(job.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date(job.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "—",
           jobTitle: job.job_title,
-          department: job.department || "General",
-          experience: job.experience_required || "Not specified",
-          skills: job.skills?.join(", ") || "Not specified",
+          sectorDivision: job.sector_division || "—",
+          category: job.category || "—",
+          functionType: job.function_type || "—",
+          segment: job.segment || "—",
+          department: job.department || "—",
+          designation: job.designation || "—",
+          subjects: job.subjects || "—",
+          experience: job.experience_required || "—",
+          skills: job.skills?.join(", ") || "—",
           type: job.job_type || "Full-Time",
           location: job.location || "Remote",
-          state,
-          city,
-          board: job.interview_type === "education" ? (job.description?.match(/\b(CBSE|ICSE|ISC|IGCSE|IB|State Board|Cambridge|NIOS)\b/i)?.[0] || "—") : "—",
-          boardExperience: job.experience_required || "—",
           salary: job.salary_range || "—",
           organisation: job.organisation || companyName,
           published: job.status === "active",
@@ -163,24 +142,23 @@ export const JobManagementContent = () => {
   // Map UI field names to database column names
   const fieldToDbColumn: Record<string, string> = {
     jobTitle: "job_title",
+    sectorDivision: "sector_division",
+    category: "category",
+    functionType: "function_type",
+    segment: "segment",
     department: "department",
+    designation: "designation",
+    subjects: "subjects",
     experience: "experience_required",
     skills: "skills",
     type: "job_type",
     location: "location",
     salary: "salary_range",
-    boardExperience: "experience_required",
     organisation: "organisation",
-    board: "department",
-    state: "_state",
-    city: "_city",
   };
 
   // Fields that share the same DB column
-  const linkedFields: Record<string, string[]> = {
-    department: ["department", "board"],
-    experience_required: ["experience", "boardExperience"],
-  };
+  const linkedFields: Record<string, string[]> = {};
 
   const startEditing = (jobId: string, field: string, currentValue: string) => {
     setEditingCell({ jobId, field });
@@ -318,20 +296,21 @@ export const JobManagementContent = () => {
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
               <Table className="w-full min-w-[1100px] text-xs">
-                <TableHeader>
+                 <TableHeader>
                   <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-2 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
                     <TableHead className="font-semibold">Date & Time</TableHead>
                     <TableHead className="font-semibold">Job ID</TableHead>
-                    <TableHead className="font-semibold">Designation</TableHead>
+                    <TableHead className="font-semibold">Sector/Division</TableHead>
+                    <TableHead className="font-semibold">Category</TableHead>
+                    <TableHead className="font-semibold">Function</TableHead>
+                    <TableHead className="font-semibold">Segment</TableHead>
                     <TableHead className="font-semibold">Department</TableHead>
+                    <TableHead className="font-semibold">Designation</TableHead>
+                    <TableHead className="font-semibold">Subjects</TableHead>
                     <TableHead className="font-semibold">Exp.</TableHead>
                     <TableHead className="font-semibold max-w-[120px]">Skills</TableHead>
                     <TableHead className="font-semibold">Type</TableHead>
                     <TableHead className="font-semibold">Location</TableHead>
-                    <TableHead className="font-semibold">State</TableHead>
-                    <TableHead className="font-semibold">City/Town</TableHead>
-                    <TableHead className="font-semibold">Board</TableHead>
-                    <TableHead className="font-semibold">Experience</TableHead>
                     <TableHead className="font-semibold">Salary</TableHead>
                     <TableHead className="font-semibold">Organisation</TableHead>
                     <TableHead className="font-semibold text-center">QR Code</TableHead>
@@ -342,14 +321,14 @@ export const JobManagementContent = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={17} className="text-center py-8">
+                      <TableCell colSpan={18} className="text-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                         <p className="text-sm text-muted-foreground mt-2">Loading positions...</p>
                       </TableCell>
                     </TableRow>
                   ) : filteredJobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={17} className="text-center py-8">
+                      <TableCell colSpan={18} className="text-center py-8">
                         <p className="text-muted-foreground">No positions found</p>
                         <Button variant="link" asChild className="mt-2">
                           <Link to="/employer/post-job">Create your first position</Link>
@@ -369,11 +348,26 @@ export const JobManagementContent = () => {
                           <TableCell>
                             <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{job.id.slice(0, 8)}</code>
                           </TableCell>
-                          <TableCell className="font-medium whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "jobTitle", "w-32")}
+                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "sectorDivision", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "category", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "functionType", "w-24")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "segment", "w-24")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "department", "w-24")}
+                          </TableCell>
+                          <TableCell className="font-medium whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "designation", "w-28")}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "subjects", "w-24")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "experience", "w-24")}
@@ -386,18 +380,6 @@ export const JobManagementContent = () => {
                           </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "location", "w-28")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "state", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "city", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "board", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "boardExperience", "w-24")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "salary", "w-24")}
