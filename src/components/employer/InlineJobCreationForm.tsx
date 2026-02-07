@@ -352,7 +352,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "" });
+                    handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "" });
                   }}
                 >
                   <SelectTrigger>
@@ -456,34 +456,45 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Subjects</label>
                 <Select
-                  value={dynamicFieldValues["subjects"] || ""}
+                  key={`subj-${dynamicFieldValues["segment"] || "none"}`}
+                  value={dynamicFieldValues["subjects"] || undefined}
                   onValueChange={(val) => handleDynamicFieldChange("subjects", val)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select subject" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mathematics">Mathematics</SelectItem>
-                    <SelectItem value="Physics">Physics</SelectItem>
-                    <SelectItem value="Chemistry">Chemistry</SelectItem>
-                    <SelectItem value="Biology">Biology</SelectItem>
-                    <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Hindi">Hindi</SelectItem>
-                    <SelectItem value="Telugu">Telugu</SelectItem>
-                    <SelectItem value="Social Studies">Social Studies</SelectItem>
-                    <SelectItem value="Science">Science (General)</SelectItem>
-                    <SelectItem value="Computer Science">Computer Science</SelectItem>
-                    <SelectItem value="Commerce">Commerce / Accounts</SelectItem>
-                    <SelectItem value="Economics">Economics</SelectItem>
-                    <SelectItem value="Political Science">Political Science</SelectItem>
-                    <SelectItem value="History">History</SelectItem>
-                    <SelectItem value="Geography">Geography</SelectItem>
-                    <SelectItem value="Physical Education">Physical Education</SelectItem>
-                    <SelectItem value="Art">Art & Craft</SelectItem>
-                    <SelectItem value="Music">Music</SelectItem>
-                    <SelectItem value="Sanskrit">Sanskrit</SelectItem>
-                    <SelectItem value="EVS">EVS (Environmental Studies)</SelectItem>
-                    <SelectItem value="All Subjects">All Subjects</SelectItem>
+                  <SelectContent className="bg-popover z-[200]">
+                    {dynamicFieldValues["segment"] === "Pre-Primary" ? (
+                      <>
+                        <SelectItem value="Numeracy">Numeracy</SelectItem>
+                        <SelectItem value="Literacy">Literacy</SelectItem>
+                        <SelectItem value="Rhymes">Rhymes</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="Mathematics">Mathematics</SelectItem>
+                        <SelectItem value="Physics">Physics</SelectItem>
+                        <SelectItem value="Chemistry">Chemistry</SelectItem>
+                        <SelectItem value="Biology">Biology</SelectItem>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Hindi">Hindi</SelectItem>
+                        <SelectItem value="Telugu">Telugu</SelectItem>
+                        <SelectItem value="Social Studies">Social Studies</SelectItem>
+                        <SelectItem value="Science">Science (General)</SelectItem>
+                        <SelectItem value="Computer Science">Computer Science</SelectItem>
+                        <SelectItem value="Commerce">Commerce / Accounts</SelectItem>
+                        <SelectItem value="Economics">Economics</SelectItem>
+                        <SelectItem value="Political Science">Political Science</SelectItem>
+                        <SelectItem value="History">History</SelectItem>
+                        <SelectItem value="Geography">Geography</SelectItem>
+                        <SelectItem value="Physical Education">Physical Education</SelectItem>
+                        <SelectItem value="Art">Art & Craft</SelectItem>
+                        <SelectItem value="Music">Music</SelectItem>
+                        <SelectItem value="Sanskrit">Sanskrit</SelectItem>
+                        <SelectItem value="EVS">EVS (Environmental Studies)</SelectItem>
+                        <SelectItem value="All Subjects">All Subjects</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
