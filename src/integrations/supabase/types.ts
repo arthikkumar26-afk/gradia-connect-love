@@ -1041,6 +1041,7 @@ export type Database = {
       jobs: {
         Row: {
           category: string | null
+          classes: string | null
           closing_date: string | null
           created_at: string | null
           department: string | null
@@ -1058,6 +1059,7 @@ export type Database = {
           moderation_status: string | null
           organisation: string | null
           posted_date: string | null
+          program: string | null
           requirements: string | null
           salary_range: string | null
           sector_division: string | null
@@ -1069,6 +1071,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          classes?: string | null
           closing_date?: string | null
           created_at?: string | null
           department?: string | null
@@ -1086,6 +1089,7 @@ export type Database = {
           moderation_status?: string | null
           organisation?: string | null
           posted_date?: string | null
+          program?: string | null
           requirements?: string | null
           salary_range?: string | null
           sector_division?: string | null
@@ -1097,6 +1101,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          classes?: string | null
           closing_date?: string | null
           created_at?: string | null
           department?: string | null
@@ -1114,6 +1119,7 @@ export type Database = {
           moderation_status?: string | null
           organisation?: string | null
           posted_date?: string | null
+          program?: string | null
           requirements?: string | null
           salary_range?: string | null
           sector_division?: string | null

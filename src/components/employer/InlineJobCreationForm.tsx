@@ -152,6 +152,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         category: dynamicFieldValues["category"] || null,
         function_type: dynamicFieldValues["function"] || null,
         segment: dynamicFieldValues["segment"] || null,
+        program: dynamicFieldValues["program"] || null,
+        classes: dynamicFieldValues["hs_classes"] || null,
         designation: dynamicFieldValues["designation"] || null,
         subjects: dynamicFieldValues["subjects"] || null,
       } as any]);
