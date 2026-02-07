@@ -254,7 +254,8 @@ export const JobManagementContent = () => {
                       return (
                         <TableRow 
                           key={job.id}
-                          className="hover:bg-accent/5 transition-colors [&_td]:px-3 [&_td]:py-2.5"
+                          className="hover:bg-accent/5 transition-colors [&_td]:px-3 [&_td]:py-2.5 cursor-pointer"
+                          onClick={() => handleViewJob(job)}
                         >
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{job.dateTime}</TableCell>
                           <TableCell>
@@ -275,7 +276,7 @@ export const JobManagementContent = () => {
                           <TableCell className="whitespace-nowrap">{job.salary}</TableCell>
                           <TableCell className="whitespace-nowrap">{job.organisation}</TableCell>
                           {/* QR Code */}
-                          <TableCell className="text-center">
+                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -321,13 +322,13 @@ export const JobManagementContent = () => {
                               {job.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 w-7 p-0"
-                                onClick={() => handleViewJob(job)}
+                                onClick={(e) => { e.stopPropagation(); handleViewJob(job); }}
                               >
                                 <Eye className="h-3.5 w-3.5" />
                               </Button>
@@ -335,7 +336,7 @@ export const JobManagementContent = () => {
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 w-7 p-0"
-                                onClick={() => handleEditJob(job)}
+                                onClick={(e) => { e.stopPropagation(); handleEditJob(job); }}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
