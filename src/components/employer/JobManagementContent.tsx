@@ -126,7 +126,7 @@ export const JobManagementContent = () => {
           board: job.interview_type === "education" ? (job.description?.match(/\b(CBSE|ICSE|ISC|IGCSE|IB|State Board|Cambridge|NIOS)\b/i)?.[0] || "—") : "—",
           boardExperience: job.experience_required || "—",
           salary: job.salary_range || "—",
-          organisation: companyName,
+          organisation: job.organisation || companyName,
           published: job.status === "active",
           display: displayChannels.join(", "),
           status: job.status === "active" ? "Open" : job.status === "closed" ? "Closed" : "Under Review",
@@ -170,7 +170,7 @@ export const JobManagementContent = () => {
     location: "location",
     salary: "salary_range",
     boardExperience: "experience_required",
-    organisation: "location",
+    organisation: "organisation",
     board: "department",
     state: "_state",
     city: "_city",
@@ -180,7 +180,6 @@ export const JobManagementContent = () => {
   const linkedFields: Record<string, string[]> = {
     department: ["department", "board"],
     experience_required: ["experience", "boardExperience"],
-    location: ["location", "organisation"],
   };
 
   const startEditing = (jobId: string, field: string, currentValue: string) => {

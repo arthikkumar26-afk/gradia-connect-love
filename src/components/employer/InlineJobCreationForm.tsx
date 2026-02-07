@@ -21,6 +21,7 @@ const jobFormSchema = z.object({
   location: z.string().min(2, "Location is required"),
   experience_required: z.string().min(1, "Please select experience level"),
   salary_range: z.string().optional(),
+  organisation: z.string().optional(),
   description: z.string().min(50, "Description must be at least 50 characters").max(5000),
   requirements: z.string().min(20, "Requirements must be at least 20 characters").max(3000),
   skills: z.string().min(2, "Please add at least one skill"),
@@ -52,6 +53,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
       location: "",
       experience_required: "",
       salary_range: "",
+      organisation: "",
       description: "",
       requirements: "",
       skills: "",
@@ -139,6 +141,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         location: values.location,
         experience_required: values.experience_required,
         salary_range: values.salary_range || null,
+        organisation: values.organisation || null,
         description: values.description,
         requirements: values.requirements,
         skills: skillsArray,
@@ -892,8 +895,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               />
             </div>
 
-            {/* Location & Experience */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Location, Organisation & Experience */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <FormField
                 control={form.control}
                 name="location"
@@ -902,6 +905,20 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                     <FormLabel>Location *</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Bangalore, India" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="organisation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organisation / School / College</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Delhi Public School" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

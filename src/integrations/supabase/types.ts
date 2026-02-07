@@ -1040,6 +1040,7 @@ export type Database = {
           job_type: string | null
           location: string | null
           moderation_status: string | null
+          organisation: string | null
           posted_date: string | null
           requirements: string | null
           salary_range: string | null
@@ -1061,6 +1062,7 @@ export type Database = {
           job_type?: string | null
           location?: string | null
           moderation_status?: string | null
+          organisation?: string | null
           posted_date?: string | null
           requirements?: string | null
           salary_range?: string | null
@@ -1082,6 +1084,7 @@ export type Database = {
           job_type?: string | null
           location?: string | null
           moderation_status?: string | null
+          organisation?: string | null
           posted_date?: string | null
           requirements?: string | null
           salary_range?: string | null
