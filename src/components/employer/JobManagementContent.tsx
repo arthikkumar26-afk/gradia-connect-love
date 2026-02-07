@@ -44,6 +44,8 @@ export const JobManagementContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingCell, setEditingCell] = useState<{ jobId: string; field: string } | null>(null);
+  const [editValue, setEditValue] = useState("");
   const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
 
@@ -146,6 +148,39 @@ export const JobManagementContent = () => {
     setSelectedJob(job);
     setDrawerMode("edit");
     setDrawerOpen(true);
+  };
+
+  const startEditing = (jobId: string, field: string, currentValue: string) => {
+    setEditingCell({ jobId, field });
+    setEditValue(currentValue === "—" ? "" : currentValue);
+  };
+
+  const saveInlineEdit = async () => {
+    if (!editingCell) return;
+    const { jobId, field } = editingCell;
+    
+    try {
+      const dbField = field === "boardExperience" ? "experience_required" : "location";
+      const { error } = await supabase
+        .from("jobs")
+        .update({ [dbField]: editValue || null })
+        .eq("id", jobId);
+
+      if (error) throw error;
+
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, [field]: editValue || "—" } : j));
+      toast({ title: "Updated successfully" });
+    } catch (error: any) {
+      toast({ title: "Update failed", description: error.message, variant: "destructive" });
+    } finally {
+      setEditingCell(null);
+      setEditValue("");
+    }
+  };
+
+  const cancelEditing = () => {
+    setEditingCell(null);
+    setEditValue("");
   };
 
   const getStatusVariant = (status: string) => {
@@ -266,9 +301,47 @@ export const JobManagementContent = () => {
                           <TableCell className="whitespace-nowrap">{job.state}</TableCell>
                           <TableCell className="whitespace-nowrap">{job.city}</TableCell>
                           <TableCell className="whitespace-nowrap">{job.board}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.boardExperience}</TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {editingCell?.jobId === job.id && editingCell?.field === "boardExperience" ? (
+                              <Input
+                                autoFocus
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={saveInlineEdit}
+                                onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") cancelEditing(); }}
+                                className="h-7 text-xs w-24"
+                              />
+                            ) : (
+                              <span
+                                className="cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors"
+                                onClick={() => startEditing(job.id, "boardExperience", job.boardExperience)}
+                                title="Click to edit"
+                              >
+                                {job.boardExperience}
+                              </span>
+                            )}
+                          </TableCell>
                           <TableCell className="whitespace-nowrap">{job.salary}</TableCell>
-                          <TableCell className="whitespace-nowrap">{job.organisation}</TableCell>
+                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            {editingCell?.jobId === job.id && editingCell?.field === "organisation" ? (
+                              <Input
+                                autoFocus
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={saveInlineEdit}
+                                onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(); if (e.key === "Escape") cancelEditing(); }}
+                                className="h-7 text-xs w-28"
+                              />
+                            ) : (
+                              <span
+                                className="cursor-pointer hover:bg-muted/60 px-1.5 py-0.5 rounded transition-colors"
+                                onClick={() => startEditing(job.id, "organisation", job.organisation)}
+                                title="Click to edit"
+                              >
+                                {job.organisation}
+                              </span>
+                            )}
+                          </TableCell>
                           {/* QR Code */}
                           <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                             <Popover>
