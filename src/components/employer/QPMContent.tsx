@@ -696,78 +696,58 @@ export const QPMContent = () => {
         </div>
       </div>
 
-      {/* Always show 4 set slots */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Always show 4 set slots side by side */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {allSets.map(({ setNumber, paper }) => (
           <Card 
             key={setNumber} 
             className={`transition-shadow ${paper ? "hover:shadow-md" : "border-dashed bg-muted/20"}`}
           >
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    paper ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}>
-                    {setNumber}
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm">
-                      {paper ? paper.title : `Set ${setNumber}`}
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {paper 
-                        ? `${paper.questions.length} questions` 
-                        : "Not created yet"
-                      }
-                    </p>
-                  </div>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                  paper ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                }`}>
+                  {setNumber}
                 </div>
-                {paper && (
-                  <Badge variant={paper.is_active ? "default" : "secondary"} className="text-[10px]">
-                    {paper.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate">
+                    {paper ? paper.title : `Set ${setNumber}`}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {paper 
+                      ? `${paper.questions.length} questions` 
+                      : "Not created yet"
+                    }
+                  </p>
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
+
               {paper ? (
                 <>
-                  {paper.description && (
-                    <p className="text-xs text-muted-foreground mb-3">{paper.description}</p>
+                  {paper.is_active ? (
+                    <Badge variant="default" className="text-[10px] mb-2">Active</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px] mb-2">Inactive</Badge>
                   )}
-                  
-                  {/* Question preview */}
-                  <div className="space-y-1 mb-3">
-                    {paper.questions.slice(0, 3).map((q, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3 w-3 text-primary/50 shrink-0" />
-                        <span className="truncate">{q.question_text}</span>
-                      </div>
-                    ))}
-                    {paper.questions.length > 3 && (
-                      <p className="text-[10px] text-muted-foreground ml-5">+{paper.questions.length - 3} more questions</p>
-                    )}
-                  </div>
 
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="text-xs h-7 flex-1" onClick={() => handleViewPaper(paper)}>
-                      <Eye className="h-3 w-3 mr-1" /> View
+                  <div className="flex gap-1.5 mt-1">
+                    <Button variant="outline" size="sm" className="text-[10px] h-6 px-2 flex-1" onClick={() => handleViewPaper(paper)}>
+                      <Eye className="h-3 w-3 mr-0.5" /> View
                     </Button>
-                    <Button variant="outline" size="sm" className="text-xs h-7 flex-1" onClick={() => handleEditPaper(paper)}>
+                    <Button variant="outline" size="sm" className="text-[10px] h-6 px-2 flex-1" onClick={() => handleEditPaper(paper)}>
                       Edit
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-xs h-7 text-destructive" onClick={() => handleDeletePaper(paper.id)}>
+                    <Button variant="ghost" size="sm" className="text-[10px] h-6 px-1 text-destructive" onClick={() => handleDeletePaper(paper.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </>
               ) : (
-                <div className="text-center py-4">
-                  <BookOpen className="h-6 w-6 mx-auto text-muted-foreground/50 mb-2" />
-                  <p className="text-xs text-muted-foreground mb-3">Add questions for this set</p>
-                  <Button size="sm" variant="outline" onClick={() => handleCreateSet(setNumber)}>
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Create Set {setNumber}
+                <div className="text-center pt-1">
+                  <BookOpen className="h-5 w-5 mx-auto text-muted-foreground/40 mb-1.5" />
+                  <Button size="sm" variant="outline" className="text-[10px] h-6 px-2" onClick={() => handleCreateSet(setNumber)}>
+                    <Plus className="h-3 w-3 mr-0.5" /> Create Set {setNumber}
                   </Button>
                 </div>
               )}
