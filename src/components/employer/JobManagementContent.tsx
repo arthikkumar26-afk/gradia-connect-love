@@ -322,7 +322,7 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold">State</TableHead>
                     <TableHead className="font-semibold">City/Town</TableHead>
                     <TableHead className="font-semibold">Board</TableHead>
-                    <TableHead className="font-semibold">Board Exp.</TableHead>
+                    <TableHead className="font-semibold">Experience</TableHead>
                     <TableHead className="font-semibold">Salary</TableHead>
                     <TableHead className="font-semibold">Organisation</TableHead>
                     <TableHead className="font-semibold text-center">QR Code</TableHead>
