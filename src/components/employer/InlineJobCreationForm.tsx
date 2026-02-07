@@ -504,7 +504,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium leading-none">Designation</label>
                     <Select
-                      key={`desig-highschool-${dynamicFieldValues["hs_classes"] || "none"}`}
+                      key={`desig-highschool-${dynamicFieldValues["program"] || "none"}-${dynamicFieldValues["hs_classes"] || "none"}`}
                       value={dynamicFieldValues["designation"] || undefined}
                       onValueChange={(val) => handleDynamicFieldChange("designation", val)}
                     >
@@ -512,7 +512,31 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select designation" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        {dynamicFieldValues["hs_classes"] === "class_9_10" ? (
+                        {dynamicFieldValues["program"] === "competitive" ? (
+                          dynamicFieldValues["hs_classes"] === "class_9_10" ? (
+                            <>
+                              <SelectItem value="maths">MATHS</SelectItem>
+                              <SelectItem value="physics">PHYSICS</SelectItem>
+                              <SelectItem value="chemistry">CHEMISTRY</SelectItem>
+                              <SelectItem value="biology">BIOLOGY</SelectItem>
+                              <SelectItem value="botany">BOTANY</SelectItem>
+                              <SelectItem value="zoology">ZOOLOGY</SelectItem>
+                              <SelectItem value="mental_ability">MENTAL ABILITY</SelectItem>
+                              <SelectItem value="counsellor">COUNSELLOR</SelectItem>
+                            </>
+                          ) : (
+                            <>
+                              <SelectItem value="maths">MATHS</SelectItem>
+                              <SelectItem value="physics">PHYSICS</SelectItem>
+                              <SelectItem value="chemistry">CHEMISTRY</SelectItem>
+                              <SelectItem value="biology">BIOLOGY</SelectItem>
+                              <SelectItem value="botany">BOTANY</SelectItem>
+                              <SelectItem value="zoology">ZOOLOGY</SelectItem>
+                              <SelectItem value="mental_ability">MENTAL ABILITY</SelectItem>
+                              <SelectItem value="counsellor">COUNSELLOR</SelectItem>
+                            </>
+                          )
+                        ) : dynamicFieldValues["hs_classes"] === "class_9_10" ? (
                           <>
                             <SelectItem value="1st_language">1st Language</SelectItem>
                             <SelectItem value="2nd_language">2nd Language</SelectItem>
