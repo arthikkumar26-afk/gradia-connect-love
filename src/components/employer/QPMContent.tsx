@@ -34,6 +34,12 @@ interface JobItem {
   organisation: string | null;
   status: string | null;
   created_at: string | null;
+  experience_required: string | null;
+  skills: string[] | null;
+  job_type: string | null;
+  location: string | null;
+  salary_range: string | null;
+  description: string | null;
 }
 
 interface QuestionPaper {
@@ -89,7 +95,7 @@ export const QPMContent = () => {
 
       const { data, error } = await supabase
         .from("jobs")
-        .select("id, job_title, department, organisation, status, created_at")
+        .select("id, job_title, department, organisation, status, created_at, experience_required, skills, job_type, location, salary_range, description")
         .eq("employer_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -416,34 +422,56 @@ export const QPMContent = () => {
           </Card>
         ) : (
           <div className="overflow-x-auto border rounded-lg">
-            <Table>
+            <Table className="min-w-[1100px] text-xs">
               <TableHeader>
-                <TableRow className="bg-secondary">
-                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Job Title</TableHead>
-                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Organisation</TableHead>
-                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Department</TableHead>
-                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Status</TableHead>
-                  <TableHead className="text-xs font-semibold !text-white whitespace-nowrap">Action</TableHead>
+                <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-2 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
+                  <TableHead className="font-semibold">Date & Time</TableHead>
+                  <TableHead className="font-semibold">Job ID</TableHead>
+                  <TableHead className="font-semibold">Designation</TableHead>
+                  <TableHead className="font-semibold">Department</TableHead>
+                  <TableHead className="font-semibold">Exp.</TableHead>
+                  <TableHead className="font-semibold max-w-[120px]">Skills</TableHead>
+                  <TableHead className="font-semibold">Type</TableHead>
+                  <TableHead className="font-semibold">Location</TableHead>
+                  <TableHead className="font-semibold">Organisation</TableHead>
+                  <TableHead className="font-semibold">Salary</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold text-center">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {jobs.map((job, index) => (
-                  <TableRow key={job.id} className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`} onClick={() => handleSelectJob(job)}>
-                    <TableCell className="text-xs font-medium">{job.job_title}</TableCell>
-                    <TableCell className="text-xs">{job.organisation || "—"}</TableCell>
-                    <TableCell className="text-xs">{job.department || "—"}</TableCell>
-                    <TableCell className="text-xs">
-                      <Badge variant={job.status === "Open" ? "default" : "secondary"} className="text-[10px]">
-                        {job.status || "Draft"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); handleSelectJob(job); }}>
-                        <BookOpen className="h-3 w-3 mr-1" /> Manage Papers
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {jobs.map((job, index) => {
+                  const dateStr = job.created_at 
+                    ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) + " " + new Date(job.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+                    : "—";
+                  const skillsStr = job.skills?.join(", ") || "—";
+                  return (
+                    <TableRow key={job.id} className={`cursor-pointer hover:bg-muted/50 [&_td]:px-2 [&_td]:py-2.5 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`} onClick={() => handleSelectJob(job)}>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{dateStr}</TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{job.id.slice(0, 8)}</code>
+                      </TableCell>
+                      <TableCell className="text-xs font-medium">{job.job_title}</TableCell>
+                      <TableCell className="text-xs">{job.department || "—"}</TableCell>
+                      <TableCell className="text-xs">{job.experience_required || "—"}</TableCell>
+                      <TableCell className="text-xs max-w-[120px] truncate" title={skillsStr}>{skillsStr}</TableCell>
+                      <TableCell className="text-xs">{job.job_type || "—"}</TableCell>
+                      <TableCell className="text-xs">{job.location || "—"}</TableCell>
+                      <TableCell className="text-xs">{job.organisation || "—"}</TableCell>
+                      <TableCell className="text-xs">{job.salary_range || "—"}</TableCell>
+                      <TableCell className="text-xs">
+                        <Badge variant={job.status === "Open" ? "default" : "secondary"} className="text-[10px]">
+                          {job.status || "Draft"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); handleSelectJob(job); }}>
+                          <BookOpen className="h-3 w-3 mr-1" /> Manage Papers
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
