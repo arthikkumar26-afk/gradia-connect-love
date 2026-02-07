@@ -433,44 +433,37 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Department</label>
-                {dynamicFieldValues["segment"] === "Pre-Primary" ? (
-                  <Select
-                    key="dept-pre-primary"
-                    value={dynamicFieldValues["department_type"] || undefined}
-                    onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pre_mother_teacher">Pre-Mother Teacher</SelectItem>
-                      <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
-                      <SelectItem value="care_taker">Care Taker</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Select
-                    key={`dept-${dynamicFieldValues["segment"] || "default"}`}
-                    value={dynamicFieldValues["department_type"] || undefined}
-                    onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="academics">Academics</SelectItem>
-                      <SelectItem value="administration">Administration</SelectItem>
-                      <SelectItem value="sports">Sports & Physical Education</SelectItem>
-                      <SelectItem value="library">Library</SelectItem>
-                      <SelectItem value="lab">Laboratory</SelectItem>
-                      <SelectItem value="counseling">Counseling</SelectItem>
-                      <SelectItem value="it">IT / Computer Lab</SelectItem>
-                      <SelectItem value="accounts">Accounts & Finance</SelectItem>
-                      <SelectItem value="transport">Transport</SelectItem>
-                      <SelectItem value="hostel">Hostel</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+                <Select
+                  key={`dept-${dynamicFieldValues["segment"] || "none"}-${dynamicFieldValues["function"] || "none"}`}
+                  value={dynamicFieldValues["department_type"] || undefined}
+                  onValueChange={(val) => handleDynamicFieldChange("department_type", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-[200]">
+                    {dynamicFieldValues["segment"] === "Pre-Primary" ? (
+                      <>
+                        <SelectItem value="pre_mother_teacher">Pre-Mother Teacher</SelectItem>
+                        <SelectItem value="asso_teacher">Asso.Teacher</SelectItem>
+                        <SelectItem value="care_taker">Care Taker</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="academics">Academics</SelectItem>
+                        <SelectItem value="administration">Administration</SelectItem>
+                        <SelectItem value="sports">Sports & Physical Education</SelectItem>
+                        <SelectItem value="library">Library</SelectItem>
+                        <SelectItem value="lab">Laboratory</SelectItem>
+                        <SelectItem value="counseling">Counseling</SelectItem>
+                        <SelectItem value="it">IT / Computer Lab</SelectItem>
+                        <SelectItem value="accounts">Accounts & Finance</SelectItem>
+                        <SelectItem value="transport">Transport</SelectItem>
+                        <SelectItem value="hostel">Hostel</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
