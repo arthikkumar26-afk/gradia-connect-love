@@ -434,8 +434,8 @@ export const useInterviewPipeline = () => {
         if (error) throw error;
       }
 
-      // If stage is completed, move to next stage and send invitation email
-      if (status === 'completed' && nextStage && !skipEmail) {
+      // If stage is completed, always move to next stage
+      if (status === 'completed' && nextStage) {
         // Move candidate to next stage
         await supabase
           .from('interview_candidates')
@@ -445,26 +445,28 @@ export const useInterviewPipeline = () => {
           })
           .eq('id', interviewCandidateId);
 
-        // Send invitation email for next stage
-        try {
-          const scheduledDate = new Date();
-          scheduledDate.setDate(scheduledDate.getDate() + 2); // Schedule for 2 days from now
-          
-          const { error: inviteError } = await supabase.functions.invoke('send-interview-invitation', {
-            body: {
-              interviewCandidateId,
-              stageName: nextStage.name,
-              scheduledDate: scheduledDate.toISOString(),
-            }
-          });
+        // Send invitation email for next stage (only if not skipped)
+        if (!skipEmail) {
+          try {
+            const scheduledDate = new Date();
+            scheduledDate.setDate(scheduledDate.getDate() + 2); // Schedule for 2 days from now
+            
+            const { error: inviteError } = await supabase.functions.invoke('send-interview-invitation', {
+              body: {
+                interviewCandidateId,
+                stageName: nextStage.name,
+                scheduledDate: scheduledDate.toISOString(),
+              }
+            });
 
-          if (inviteError) {
-            console.error('Failed to send invitation email:', inviteError);
-          } else {
-            toast.success(`Invitation email sent for ${nextStage.name}`);
+            if (inviteError) {
+              console.error('Failed to send invitation email:', inviteError);
+            } else {
+              toast.success(`Invitation email sent for ${nextStage.name}`);
+            }
+          } catch (emailErr) {
+            console.error('Error sending stage invitation:', emailErr);
           }
-        } catch (emailErr) {
-          console.error('Error sending stage invitation:', emailErr);
         }
       }
 
