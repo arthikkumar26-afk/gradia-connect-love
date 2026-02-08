@@ -1069,6 +1069,7 @@ export type Database = {
           status: string | null
           subjects: string | null
           updated_at: string | null
+          use_ai_questions: boolean
         }
         Insert: {
           board?: string | null
@@ -1100,6 +1101,7 @@ export type Database = {
           status?: string | null
           subjects?: string | null
           updated_at?: string | null
+          use_ai_questions?: boolean
         }
         Update: {
           board?: string | null
@@ -1131,6 +1133,7 @@ export type Database = {
           status?: string | null
           subjects?: string | null
           updated_at?: string | null
+          use_ai_questions?: boolean
         }
         Relationships: [
           {
