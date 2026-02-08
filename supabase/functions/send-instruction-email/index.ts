@@ -116,17 +116,17 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 1:</strong> 📋 Instruction Round (You are here)
+                    <strong>Step 1:</strong> 📋 Interview Guidelines (You are here)
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 2:</strong> 📄 Resume Screening — AI-powered resume analysis
+                    <strong>Step 2:</strong> 📄 CV/Resume — AI-powered resume analysis
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 3:</strong> 💻 Technical Assessment — MCQ-based test
+                    <strong>Step 3:</strong> 💻 Written Test — MCQ-based test
                   </td>
                 </tr>
                 <tr>
@@ -234,11 +234,11 @@ serve(async (req) => {
     const emailResult = await emailResponse.json();
     console.log('Instruction email sent:', emailResult);
 
-    // Mark the Instruction Round stage as completed and create an event
+    // Mark the Interview Guidelines stage as completed and create an event
     const { data: instructionStage } = await supabase
       .from('interview_stages')
       .select('id')
-      .eq('name', 'Instruction Round')
+      .eq('name', 'Interview Guidelines')
       .single();
 
     if (instructionStage) {
