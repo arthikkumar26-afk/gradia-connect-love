@@ -84,10 +84,10 @@ serve(async (req) => {
     <tr>
       <td style="padding: 32px 24px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 8px 8px 0 0;">
         <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">
-          📅 Book Your Interview Slot
+          📅 Book Your ${stageName} Slot
         </h1>
         <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">
-          ${stageName} Round for ${job.job_title}
+          ${stageName} for ${job.job_title}
         </p>
       </td>
     </tr>

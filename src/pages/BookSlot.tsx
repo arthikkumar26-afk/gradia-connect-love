@@ -324,9 +324,9 @@ const BookSlot = () => {
         <CardHeader className="text-center pb-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
           <CardTitle className="text-xl flex items-center justify-center gap-2">
             <Calendar className="h-5 w-5" />
-            Book Your Interview Slot
+            Book Your {stageName} Slot
           </CardTitle>
-          <p className="text-blue-100 text-sm mt-1">{stageName} Round</p>
+          <p className="text-blue-100 text-sm mt-1">{stageName} for {candidateInfo?.jobTitle}</p>
         </CardHeader>
         <CardContent className="pt-6 space-y-6">
           {/* Candidate Info */}
@@ -428,9 +428,25 @@ const BookSlot = () => {
           {/* Info Note */}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <p className="text-xs text-amber-800">
-              <strong>Note:</strong> Once booked, you'll receive an email with your interview link. 
-              The assessment consists of 10 MCQ questions with 90 seconds per question. 
-              Ensure you have a stable internet connection.
+              {stageName.toLowerCase().includes("hr") ? (
+                <>
+                  <strong>Note:</strong> Once booked, you'll receive a confirmation email with meeting details. 
+                  This will be a live video meeting with the management team (15-30 minutes). 
+                  Ensure you have a stable internet connection and a quiet environment.
+                </>
+              ) : stageName.toLowerCase().includes("demo") ? (
+                <>
+                  <strong>Note:</strong> Once booked, you'll receive a confirmation email with meeting details. 
+                  This will be a live teaching demo session (20-30 minutes). 
+                  Ensure you have a stable internet connection and your teaching materials ready.
+                </>
+              ) : (
+                <>
+                  <strong>Note:</strong> Once booked, you'll receive an email with your interview link. 
+                  The assessment consists of 10 MCQ questions with 90 seconds per question. 
+                  Ensure you have a stable internet connection.
+                </>
+              )}
             </p>
           </div>
 
