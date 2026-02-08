@@ -22,6 +22,12 @@ import {
   Mail,
   UserCheck,
   FileCheck,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Award,
+  ThumbsUp,
+  TrendingUp,
 } from "lucide-react";
 
 interface InterviewStage {
@@ -48,6 +54,32 @@ interface InterviewEvent {
   ai_score: number | null;
   ai_feedback: any;
   notes: string | null;
+}
+
+interface InterviewResponse {
+  id: string;
+  interview_event_id: string;
+  score: number | null;
+  total_questions: number;
+  correct_answers: number | null;
+  time_taken_seconds: number | null;
+  completed_at: string | null;
+}
+
+interface ManagementReview {
+  id: string;
+  interview_candidate_id: string;
+  reviewer_name: string | null;
+  overall_rating: number | null;
+  feedback_text: string | null;
+  recommendation: string | null;
+  strengths: string[] | null;
+  areas_for_improvement: string[] | null;
+  teaching_skills_rating: number | null;
+  communication_rating: number | null;
+  subject_knowledge_rating: number | null;
+  status: string | null;
+  submitted_at: string | null;
 }
 
 interface InterviewCandidate {
@@ -79,6 +111,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [isLoading, setIsLoading] = useState(true);
   const [slotBookings, setSlotBookings] = useState<SlotBooking[]>([]);
   const [selectedInterview, setSelectedInterview] = useState<string | null>(null);
+  const [expandedStage, setExpandedStage] = useState<string | null>(null);
+  const [responses, setResponses] = useState<InterviewResponse[]>([]);
+  const [reviews, setReviews] = useState<ManagementReview[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -138,6 +173,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       setInterviews(interviewsWithEvents);
       if (interviewsWithEvents.length > 0) {
         setSelectedInterview(interviewsWithEvents[0].id);
+        
+        // Fetch responses and reviews for the first interview
+        await fetchReviewData(interviewsWithEvents[0]);
       }
 
       // Fetch slot bookings for this candidate
@@ -155,6 +193,40 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     }
   };
 
+  const fetchReviewData = async (interview: InterviewCandidate) => {
+    try {
+      // Fetch interview responses (test scores)
+      const eventIds = interview.events.map(e => e.id);
+      if (eventIds.length > 0) {
+        const { data: responsesData } = await supabase
+          .from('interview_responses')
+          .select('id, interview_event_id, score, total_questions, correct_answers, time_taken_seconds, completed_at')
+          .in('interview_event_id', eventIds);
+        setResponses(responsesData || []);
+      }
+
+      // Fetch management reviews (demo feedback)
+      const { data: reviewsData } = await supabase
+        .from('management_reviews')
+        .select('id, interview_candidate_id, reviewer_name, overall_rating, feedback_text, recommendation, strengths, areas_for_improvement, teaching_skills_rating, communication_rating, subject_knowledge_rating, status, submitted_at')
+        .eq('interview_candidate_id', interview.id)
+        .eq('status', 'submitted');
+      setReviews(reviewsData || []);
+    } catch (error) {
+      console.error('Error fetching review data:', error);
+    }
+  };
+
+  // When selected interview changes, fetch its review data
+  useEffect(() => {
+    if (selectedInterview) {
+      const interview = interviews.find(i => i.id === selectedInterview);
+      if (interview) {
+        fetchReviewData(interview);
+      }
+    }
+  }, [selectedInterview]);
+
   const getStageIcon = (stageName: string) => {
     switch (stageName) {
       case 'Interview Guidelines':
@@ -169,6 +241,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         return Calendar;
       case 'Demo Round':
         return Video;
+      case 'Demo Feedback':
+        return MessageSquare;
+      case 'HR Round Slot Booking':
+        return Calendar;
       case 'HR Round':
         return UserCheck;
       case 'Final Review':
@@ -181,10 +257,12 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   };
 
   const getStageStatus = (stageId: string, events: InterviewEvent[], currentStageId: string | null) => {
+    // Check for completed or passed events first
+    const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
+    if (completedEvent) return 'completed';
+    
     const event = events.find(e => e.stage_id === stageId);
-    if (event) {
-      return event.status;
-    }
+    if (event) return event.status;
     
     const stage = stages.find(s => s.id === stageId);
     const currentStage = stages.find(s => s.id === currentStageId);
@@ -225,6 +303,290 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     if (!currentStageId) return 1;
     const stage = stages.find(s => s.id === currentStageId);
     return stage?.stage_order || 1;
+  };
+
+  const renderStarRating = (rating: number | null, max: number = 5) => {
+    if (!rating) return null;
+    return (
+      <div className="flex items-center gap-0.5">
+        {Array.from({ length: max }).map((_, i) => (
+          <Star
+            key={i}
+            className={`h-3.5 w-3.5 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground/30'}`}
+          />
+        ))}
+        <span className="text-xs text-muted-foreground ml-1">({rating}/{max})</span>
+      </div>
+    );
+  };
+
+  const getStageReviewContent = (stage: InterviewStage, event: InterviewEvent | undefined) => {
+    const currentInterview = interviews.find(i => i.id === selectedInterview);
+    if (!currentInterview) return null;
+
+    const status = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
+    if (status !== 'completed' && status !== 'passed') return null;
+
+    switch (stage.name) {
+      case 'CV/Resume':
+      case 'Resume Screening': {
+        const analysis = currentInterview.ai_analysis;
+        const score = event?.ai_score || currentInterview.ai_score;
+        return (
+          <div className="space-y-3">
+            {score && (
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">ATS Score:</span>
+                <Badge className={`${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+                  {score}%
+                </Badge>
+              </div>
+            )}
+            {analysis?.summary && (
+              <p className="text-sm text-muted-foreground">{analysis.summary}</p>
+            )}
+            {analysis?.strengths && analysis.strengths.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-foreground mb-1">Strengths:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {analysis.strengths.slice(0, 5).map((s: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="text-xs">
+                      <ThumbsUp className="h-3 w-3 mr-1 text-green-500" />
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {event?.ai_feedback && typeof event.ai_feedback === 'object' && (
+              <div className="text-sm text-muted-foreground">
+                {event.ai_feedback.experience_match && (
+                  <p>📋 Experience: {event.ai_feedback.experience_match}</p>
+                )}
+                {event.ai_feedback.skill_match && (
+                  <p>🎯 Skills: {event.ai_feedback.skill_match}</p>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case 'Written Test':
+      case 'Technical Assessment': {
+        const response = event ? responses.find(r => r.interview_event_id === event.id) : null;
+        const score = event?.ai_score;
+        return (
+          <div className="space-y-3">
+            {score != null && (
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Score:</span>
+                <Badge className={`${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+                  {score}%
+                </Badge>
+              </div>
+            )}
+            {response && (
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="bg-muted/50 rounded-lg p-2 text-center">
+                  <p className="text-xs text-muted-foreground">Correct</p>
+                  <p className="font-semibold text-foreground">{response.correct_answers}/{response.total_questions}</p>
+                </div>
+                {response.time_taken_seconds && (
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-xs text-muted-foreground">Time Taken</p>
+                    <p className="font-semibold text-foreground">{Math.round(response.time_taken_seconds / 60)} min</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {event?.ai_feedback && typeof event.ai_feedback === 'string' && (
+              <p className="text-sm text-muted-foreground">{event.ai_feedback}</p>
+            )}
+          </div>
+        );
+      }
+
+      case 'Demo Round': {
+        const score = event?.ai_score;
+        return (
+          <div className="space-y-3">
+            {score != null && (
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Demo Score:</span>
+                <Badge className={`${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+                  {score}%
+                </Badge>
+              </div>
+            )}
+            {event?.notes && (
+              <p className="text-sm text-muted-foreground">{event.notes}</p>
+            )}
+          </div>
+        );
+      }
+
+      case 'Demo Feedback': {
+        const submittedReviews = reviews.filter(r => r.status === 'submitted');
+        if (submittedReviews.length === 0) {
+          return (
+            <p className="text-sm text-muted-foreground">Feedback collected from observers.</p>
+          );
+        }
+        return (
+          <div className="space-y-3">
+            {submittedReviews.map((review, idx) => (
+              <div key={review.id} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground">
+                    {review.reviewer_name || `Reviewer ${idx + 1}`}
+                  </span>
+                  {review.recommendation && (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        review.recommendation === 'strongly_recommend' || review.recommendation === 'recommend' 
+                          ? 'border-green-500/30 text-green-600' 
+                          : review.recommendation === 'not_recommend' 
+                          ? 'border-red-500/30 text-red-600' 
+                          : 'border-yellow-500/30 text-yellow-600'
+                      }`}
+                    >
+                      {review.recommendation === 'strongly_recommend' ? '✅ Strongly Recommended' :
+                       review.recommendation === 'recommend' ? '✅ Recommended' :
+                       review.recommendation === 'needs_improvement' ? '⚠️ Needs Improvement' :
+                       review.recommendation === 'not_recommend' ? '❌ Not Recommended' :
+                       review.recommendation}
+                    </Badge>
+                  )}
+                </div>
+                
+                {review.overall_rating && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Overall:</span>
+                    {renderStarRating(review.overall_rating)}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-3 gap-2">
+                  {review.teaching_skills_rating && (
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">Teaching</p>
+                      {renderStarRating(review.teaching_skills_rating)}
+                    </div>
+                  )}
+                  {review.communication_rating && (
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">Communication</p>
+                      {renderStarRating(review.communication_rating)}
+                    </div>
+                  )}
+                  {review.subject_knowledge_rating && (
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">Knowledge</p>
+                      {renderStarRating(review.subject_knowledge_rating)}
+                    </div>
+                  )}
+                </div>
+
+                {review.strengths && review.strengths.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Strengths:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {review.strengths.map((s, i) => (
+                        <Badge key={i} variant="secondary" className="text-[10px]">
+                          <ThumbsUp className="h-2.5 w-2.5 mr-0.5 text-green-500" /> {s}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {review.feedback_text && (
+                  <p className="text-xs text-muted-foreground italic">"{review.feedback_text}"</p>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+
+      case 'HR Round': {
+        const score = event?.ai_score;
+        return (
+          <div className="space-y-3">
+            {score != null && (
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">HR Score:</span>
+                <Badge className={`${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+                  {score}%
+                </Badge>
+              </div>
+            )}
+            {event?.notes && (
+              <p className="text-sm text-muted-foreground">{event.notes}</p>
+            )}
+            {!score && !event?.notes && (
+              <p className="text-sm text-muted-foreground">HR Round completed successfully.</p>
+            )}
+          </div>
+        );
+      }
+
+      case 'Final Review': {
+        const score = event?.ai_score;
+        return (
+          <div className="space-y-3">
+            {score != null && (
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Final Score:</span>
+                <Badge className={`${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+                  {score}%
+                </Badge>
+              </div>
+            )}
+            {event?.ai_feedback && typeof event.ai_feedback === 'object' && event.ai_feedback.overall_summary && (
+              <p className="text-sm text-muted-foreground">{event.ai_feedback.overall_summary}</p>
+            )}
+            {event?.notes && (
+              <p className="text-sm text-muted-foreground">{event.notes}</p>
+            )}
+            {!score && !event?.notes && (
+              <p className="text-sm text-muted-foreground">Final review completed.</p>
+            )}
+          </div>
+        );
+      }
+
+      case 'Offer Stage': {
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Gift className="h-4 w-4 text-green-500" />
+              <span className="text-sm font-medium text-green-600">Offer Extended! 🎉</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Check your email for the offer letter details.</p>
+          </div>
+        );
+      }
+
+      default: {
+        if (event?.ai_score) {
+          return (
+            <div className="flex items-center gap-2">
+              <Award className="h-4 w-4 text-primary" />
+              <span className="text-sm">Score: {event.ai_score}%</span>
+            </div>
+          );
+        }
+        return <p className="text-sm text-muted-foreground">Stage completed.</p>;
+      }
+    }
   };
 
   if (isLoading) {
@@ -346,88 +708,125 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           />
         </div>
 
-        {/* Pipeline Stages */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {stages.map((stage) => {
+        {/* Pipeline Stages - Vertical Timeline */}
+        <div className="space-y-3">
+          {stages.map((stage, index) => {
             const status = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
+            const isExpanded = expandedStage === stage.id;
+            const hasReviewData = status === 'completed' || status === 'passed';
             
             return (
-              <div
-                key={stage.id}
-                className={`relative p-4 rounded-lg border-2 transition-all ${getStatusColor(status)}`}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center mb-2 ${
-                    status === 'completed' ? 'bg-green-500 text-white' :
-                    status === 'current' || status === 'pending' || status === 'scheduled' ? 'bg-primary text-primary-foreground' :
-                    'bg-muted text-muted-foreground'
-                  }`}>
-                    {status === 'completed' ? (
-                      <CheckCircle2 className="h-5 w-5" />
-                    ) : (
-                      <Icon className="h-5 w-5" />
-                    )}
-                  </div>
-                  <p className="text-xs font-medium line-clamp-2">{stage.name}</p>
-                  
-                  {/* Status indicator */}
-                  <div className="mt-2">
-                    {status === 'completed' && event?.ai_score && (
-                      <Badge variant="secondary" className="text-xs">
-                        {event.ai_score}%
-                      </Badge>
-                    )}
-                    {status === 'current' && (
-                      <Badge className="bg-primary text-primary-foreground text-xs">Current</Badge>
-                    )}
-                    {status === 'scheduled' && event?.scheduled_at && (
-                      <Badge variant="outline" className="text-xs">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {formatDate(event.scheduled_at)}
-                      </Badge>
-                    )}
-                    {status === 'upcoming' && (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">Upcoming</Badge>
-                    )}
-                    {/* Show slot booking info for Demo Slot Booking stage */}
-                    {stage.name === 'Demo Slot Booking' && (() => {
-                      const demoBooking = slotBookings.find(b => 
-                        b.booking_type === 'demo_round' || b.booking_type === 'Demo Round'
-                      );
-                      if (demoBooking) {
-                        return (
-                          <div className="mt-1 space-y-1">
+              <div key={stage.id} className="relative">
+                {/* Connector line */}
+                {index < stages.length - 1 && (
+                  <div className={`absolute left-5 top-12 w-0.5 h-[calc(100%-24px)] ${
+                    status === 'completed' ? 'bg-green-500/40' : 'bg-border'
+                  }`} />
+                )}
+
+                <div
+                  className={`relative rounded-lg border-2 transition-all cursor-pointer ${getStatusColor(status)} ${
+                    isExpanded ? 'shadow-md' : ''
+                  }`}
+                  onClick={() => hasReviewData ? setExpandedStage(isExpanded ? null : stage.id) : null}
+                >
+                  <div className="flex items-center gap-3 p-3">
+                    {/* Stage icon */}
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      status === 'completed' ? 'bg-green-500 text-white' :
+                      status === 'current' || status === 'pending' || status === 'scheduled' ? 'bg-primary text-primary-foreground' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {status === 'completed' ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : (
+                        <Icon className="h-5 w-5" />
+                      )}
+                    </div>
+
+                    {/* Stage info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{stage.name}</p>
+                        {status === 'completed' && event?.ai_score && (
+                          <Badge variant="secondary" className="text-xs">
+                            {event.ai_score}%
+                          </Badge>
+                        )}
+                        {status === 'completed' && !event?.ai_score && currentInterview.ai_score && stage.name === 'CV/Resume' && (
+                          <Badge variant="secondary" className="text-xs">
+                            {currentInterview.ai_score}%
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {status === 'completed' && event?.completed_at 
+                          ? `Completed ${formatDate(event.completed_at)}`
+                          : status === 'completed' ? 'Completed'
+                          : status === 'current' ? 'In Progress'
+                          : status === 'scheduled' && event?.scheduled_at 
+                          ? `Scheduled for ${formatDate(event.scheduled_at)}`
+                          : 'Upcoming'
+                        }
+                      </p>
+                    </div>
+
+                    {/* Status badge + expand arrow */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {status === 'current' && (
+                        <Badge className="bg-primary text-primary-foreground text-xs">Current</Badge>
+                      )}
+                      
+                      {/* Show slot booking for Demo/HR Slot Booking stages */}
+                      {stage.name === 'Demo Slot Booking' && (() => {
+                        const demoBooking = slotBookings.find(b => 
+                          b.booking_type === 'demo_round' || b.booking_type === 'Demo Round'
+                        );
+                        if (demoBooking) {
+                          return (
                             <Badge variant="secondary" className="text-xs">
                               <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(demoBooking.booking_date)}
+                              {formatDate(demoBooking.booking_date)} • {demoBooking.booking_time}
                             </Badge>
-                            <p className="text-[10px] text-muted-foreground">
-                              {demoBooking.booking_time}
-                            </p>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-[10px] ${
-                                demoBooking.status === 'confirmed' 
-                                  ? 'border-green-500/30 text-green-600' 
-                                  : 'border-yellow-500/30 text-yellow-600'
-                              }`}
-                            >
-                              {demoBooking.status === 'confirmed' ? 'Confirmed' : 'Booked'}
-                            </Badge>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
-                </div>
+                          );
+                        }
+                        return null;
+                      })()}
 
-                {/* Stage connector line */}
-                {stage.stage_order < stages.length && (
-                  <div className="hidden lg:block absolute top-1/2 -right-2 w-4 h-0.5 bg-border" />
-                )}
+                      {stage.name === 'HR Round Slot Booking' && (() => {
+                        const hrBooking = slotBookings.find(b => 
+                          b.booking_type === 'hr_round' || b.booking_type === 'HR Round'
+                        );
+                        if (hrBooking) {
+                          return (
+                            <Badge variant="secondary" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {formatDate(hrBooking.booking_date)} • {hrBooking.booking_time}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      {hasReviewData && (
+                        isExpanded ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded review content */}
+                  {isExpanded && hasReviewData && (
+                    <div className="px-3 pb-3 pt-1 ml-[52px] border-t border-border/50">
+                      {getStageReviewContent(stage, event)}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
