@@ -34,7 +34,8 @@ import {
   Play,
   Eye,
   RotateCcw,
-  Link2
+  Link2,
+  Plus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -715,6 +716,7 @@ const ClickableStagesList = ({
   const [editTime, setEditTime] = useState("");
   const [isSavingSlot, setIsSavingSlot] = useState(false);
   const [observerEmail, setObserverEmail] = useState("");
+  const [observerEmails, setObserverEmails] = useState<string[]>([]);
   const [isSavingObserver, setIsSavingObserver] = useState(false);
 
   // Fetch slot booking details for this candidate
@@ -740,7 +742,8 @@ const ClickableStagesList = ({
           
           setSlotBooking(demoBooking);
           if (demoBooking?.observer_email) {
-            setObserverEmail(demoBooking.observer_email);
+            const emails = demoBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setObserverEmails(emails);
           }
         }
       } catch (err) {
@@ -779,21 +782,56 @@ const ClickableStagesList = ({
     }
   };
 
-  const handleSaveObserverEmail = async () => {
+  const handleAddObserverEmail = async () => {
     if (!slotBooking || !observerEmail.trim()) return;
+    const email = observerEmail.trim().toLowerCase();
+    // Basic email validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (observerEmails.includes(email)) {
+      toast.error('This email is already added');
+      return;
+    }
     setIsSavingObserver(true);
     try {
+      const updatedEmails = [...observerEmails, email];
       const { error } = await supabase
         .from('slot_bookings')
-        .update({ observer_email: observerEmail.trim(), updated_at: new Date().toISOString() })
+        .update({ observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() })
         .eq('id', slotBooking.id);
 
       if (error) throw error;
-      setSlotBooking({ ...slotBooking, observer_email: observerEmail.trim(), updated_at: new Date().toISOString() });
-      toast.success('Observer email saved');
+      setObserverEmails(updatedEmails);
+      setSlotBooking({ ...slotBooking, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() });
+      setObserverEmail('');
+      toast.success('Observer email added');
     } catch (err) {
       console.error('Error saving observer email:', err);
       toast.error('Failed to save observer email');
+    } finally {
+      setIsSavingObserver(false);
+    }
+  };
+
+  const handleRemoveObserverEmail = async (emailToRemove: string) => {
+    if (!slotBooking) return;
+    setIsSavingObserver(true);
+    try {
+      const updatedEmails = observerEmails.filter(e => e !== emailToRemove);
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() })
+        .eq('id', slotBooking.id);
+
+      if (error) throw error;
+      setObserverEmails(updatedEmails);
+      setSlotBooking({ ...slotBooking, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() });
+      toast.success('Observer email removed');
+    } catch (err) {
+      console.error('Error removing observer email:', err);
+      toast.error('Failed to remove observer email');
     } finally {
       setIsSavingObserver(false);
     }
@@ -973,37 +1011,48 @@ const ClickableStagesList = ({
                           <p className="text-[10px] text-muted-foreground">Stage: {slotBooking.subject}</p>
                         )}
                         
-                        {/* Observer Email Input */}
+                        {/* Observer Email Input - Multiple Emails */}
                         <div className="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1" onClick={(e) => e.stopPropagation()}>
                           <label className="text-[10px] font-medium text-blue-700 flex items-center gap-1">
                             <Mail className="h-3 w-3" />
-                            Observer/Employer Email
+                            Observer/Employer Emails
                           </label>
                           <div className="flex gap-1.5">
                             <Input
                               type="email"
-                              placeholder="employer@company.com"
+                              placeholder="Add email address"
                               value={observerEmail}
                               onChange={(e) => setObserverEmail(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddObserverEmail(); }}}
                               className="h-6 text-[10px] flex-1 border-blue-200"
                             />
                             <Button
                               size="sm"
                               className="h-6 text-[9px] px-2 bg-blue-600 hover:bg-blue-700"
-                              onClick={handleSaveObserverEmail}
+                              onClick={handleAddObserverEmail}
                               disabled={isSavingObserver || !observerEmail.trim()}
                             >
-                              {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                              {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                             </Button>
                           </div>
-                          {slotBooking.observer_email && (
-                            <p className="text-[9px] text-emerald-600 flex items-center gap-1">
-                              <CheckCircle2 className="h-2.5 w-2.5" />
-                              Saved: {slotBooking.observer_email}
-                            </p>
+                          {observerEmails.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {observerEmails.map((email) => (
+                                <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
+                                  <CheckCircle2 className="h-2.5 w-2.5" />
+                                  {email}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleRemoveObserverEmail(email); }}
+                                    className="ml-0.5 hover:text-red-500 transition-colors"
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
                           )}
                           <p className="text-[9px] text-muted-foreground">
-                            This email will receive a notification when the Demo Round starts
+                            These emails will receive notifications when the Demo Round starts
                           </p>
                         </div>
                       </>
@@ -1016,7 +1065,7 @@ const ClickableStagesList = ({
                   <DemoRoundOptions
                     interviewCandidateId={interviewCandidateId}
                     candidateName={candidateName}
-                    observerEmail={slotBooking?.observer_email || observerEmail || undefined}
+                    observerEmail={slotBooking?.observer_email || observerEmails.join(',') || undefined}
                     existingMeetLink={slotBooking?.demo_meet_link || undefined}
                     existingMeetType={slotBooking?.demo_meet_type || undefined}
                     onUpdate={() => {}}
