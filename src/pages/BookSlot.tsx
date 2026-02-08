@@ -173,8 +173,9 @@ const BookSlot = () => {
         });
       }
 
-      // Check if this is a Demo Round slot booking
+      // Check if this is a Demo or HR Round slot booking
       const isDemoSlotBooking = stageName.toLowerCase().includes("demo");
+      const isHrSlotBooking = stageName.toLowerCase().includes("hr");
 
       // Send interview invitation with the scheduled time
       const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
@@ -192,7 +193,6 @@ const BookSlot = () => {
       // Auto-advance to Demo Round and send dual emails
       if (isDemoSlotBooking) {
         try {
-          // Advance from Demo Slot Booking to Demo Round
           await supabase.functions.invoke("process-interview-stage", {
             body: {
               interviewCandidateId: candidateId,
@@ -200,15 +200,29 @@ const BookSlot = () => {
               feedback: "Slot booked by candidate, auto-advancing to Demo Round",
             },
           });
-
-          // Send demo round emails to candidate + observer
           await supabase.functions.invoke("send-demo-round-emails", {
-            body: {
-              interviewCandidateId: candidateId,
-            },
+            body: { interviewCandidateId: candidateId },
           });
         } catch (advanceErr) {
           console.error("Error auto-advancing to Demo Round:", advanceErr);
+        }
+      }
+
+      // Auto-advance to HR Round and send dual emails
+      if (isHrSlotBooking) {
+        try {
+          await supabase.functions.invoke("process-interview-stage", {
+            body: {
+              interviewCandidateId: candidateId,
+              action: "advance",
+              feedback: "Slot booked by candidate, auto-advancing to HR Round",
+            },
+          });
+          await supabase.functions.invoke("send-hr-round-emails", {
+            body: { interviewCandidateId: candidateId },
+          });
+        } catch (advanceErr) {
+          console.error("Error auto-advancing to HR Round:", advanceErr);
         }
       }
 
@@ -283,6 +297,10 @@ const BookSlot = () => {
             {stageName.toLowerCase().includes("demo") ? (
               <p className="text-sm text-muted-foreground">
                 📧 You will receive a Demo Round invitation email with instructions shortly. Please check your inbox.
+              </p>
+            ) : stageName.toLowerCase().includes("hr") ? (
+              <p className="text-sm text-muted-foreground">
+                📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
