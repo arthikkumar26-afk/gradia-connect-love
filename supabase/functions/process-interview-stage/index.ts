@@ -58,7 +58,7 @@ serve(async (req) => {
       throw new Error('No interview stages configured');
     }
 
-    const currentStageOrder = interviewCandidate.current_stage?.stage_order || 1;
+    const currentStageOrder = interviewCandidate.current_stage?.stage_order ?? 0;
     const currentStage = stages.find(s => s.stage_order === currentStageOrder);
     const nextStage = stages.find(s => s.stage_order === currentStageOrder + 1);
 
