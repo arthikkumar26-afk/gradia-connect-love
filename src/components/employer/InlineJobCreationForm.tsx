@@ -583,7 +583,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             {/* Segment, Department, Designation, Subjects */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium leading-none">Segment / Board-Syllabus</label>
+                <label className="text-sm font-medium leading-none">Segment</label>
                 <Select
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
