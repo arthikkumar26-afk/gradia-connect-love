@@ -27,6 +27,11 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  ChevronDown,
+  ChevronUp,
+  Phone,
+  Mail,
+  User,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,6 +47,12 @@ interface Job {
   requirements: string | null;
   posted_date: string | null;
   skills: string[] | null;
+  designation: string | null;
+  subjects: string | null;
+  classes: string | null;
+  board: string | null;
+  segment: string | null;
+  organisation: string | null;
 }
 
 interface Company {
@@ -53,7 +64,7 @@ interface Company {
   profile_picture: string | null;
 }
 
-type AnalysisStep = "idle" | "uploading" | "analyzing" | "complete" | "error";
+type AnalysisStep = "idle" | "uploading" | "analyzing" | "submitting" | "complete" | "error";
 
 const CompanyJobs = () => {
   const { employerId } = useParams<{ employerId: string }>();
@@ -61,11 +72,13 @@ const CompanyJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
   // Application state
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
+  const [candidatePhone, setCandidatePhone] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [analysisStep, setAnalysisStep] = useState<AnalysisStep>("idle");
@@ -117,8 +130,8 @@ const CompanyJobs = () => {
         toast.error("File size must be less than 5MB");
         return;
       }
-      if (!file.type.includes("pdf") && !file.type.includes("word")) {
-        toast.error("Please upload a PDF or Word document");
+      if (!file.type.includes("pdf") && !file.type.includes("image")) {
+        toast.error("Please upload a PDF or image file (JPG/PNG)");
         return;
       }
       setResumeFile(file);
@@ -128,6 +141,12 @@ const CompanyJobs = () => {
   const handleApply = async () => {
     if (!selectedJob || !resumeFile || !candidateName || !candidateEmail) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Validate email
+    if (!candidateEmail.includes("@")) {
+      toast.error("Please enter a valid email address");
       return;
     }
 
@@ -153,55 +172,66 @@ const CompanyJobs = () => {
       setAnalysisStep("analyzing");
 
       // Call AI analysis function
-      const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
-        "analyze-resume",
+      let score: number | null = null;
+      let analysis: any = null;
+
+      try {
+        const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
+          "analyze-resume",
+          {
+            body: {
+              resumeUrl,
+              jobTitle: selectedJob.job_title,
+              jobDescription: selectedJob.description,
+              requirements: selectedJob.requirements,
+              skills: selectedJob.skills,
+            },
+          }
+        );
+
+        if (!analysisError && analysisData) {
+          score = analysisData.score;
+          analysis = analysisData.analysis;
+        }
+      } catch (err) {
+        console.error("AI analysis error:", err);
+      }
+
+      setAiScore(score);
+      setAiAnalysis(analysis);
+      setAnalysisStep("submitting");
+
+      // Submit application via edge function (handles user creation, application, email)
+      const { data: submitData, error: submitError } = await supabase.functions.invoke(
+        "submit-qr-application",
         {
           body: {
+            candidateName,
+            candidateEmail,
+            candidatePhone,
             resumeUrl,
-            jobTitle: selectedJob.job_title,
-            jobDescription: selectedJob.description,
-            requirements: selectedJob.requirements,
-            skills: selectedJob.skills,
+            jobId: selectedJob.id,
+            employerId,
+            coverLetter,
+            aiScore: score,
+            aiAnalysis: analysis,
           },
         }
       );
 
-      if (analysisError) {
-        console.error("AI analysis error:", analysisError);
-        // Continue without AI score
+      if (submitError) {
+        console.error("Submit error:", submitError);
+        throw new Error("Failed to submit application");
       }
 
-      const score = analysisData?.score || Math.floor(Math.random() * 30) + 70;
-      const analysis = analysisData?.analysis || { summary: "Resume analyzed successfully" };
-
-      setAiScore(score);
-      setAiAnalysis(analysis);
-
-      // Fetch the first interview stage (Resume Screening)
-      const { data: firstStage } = await supabase
-        .from('interview_stages')
-        .select('id')
-        .order('stage_order', { ascending: true })
-        .limit(1)
-        .single();
-
-      // Create interview candidate record
-      const { error: candidateError } = await supabase.from("interview_candidates").insert({
-        job_id: selectedJob.id,
-        candidate_id: employerId, // Using employer ID as placeholder for public applications
-        resume_url: resumeUrl,
-        ai_score: score,
-        ai_analysis: analysis,
-        status: "active",
-        current_stage_id: firstStage?.id || null,
-      });
-
-      if (candidateError) {
-        console.error("Error creating candidate record:", candidateError);
+      if (submitData?.alreadyApplied) {
+        toast.error("You have already applied for this job");
+        setAnalysisStep("idle");
+        return;
       }
 
       setAnalysisStep("complete");
-      toast.success("Application submitted successfully!");
+      toast.success("Application submitted! Check your email for confirmation.");
     } catch (error) {
       console.error("Error submitting application:", error);
       setAnalysisStep("error");
@@ -214,6 +244,7 @@ const CompanyJobs = () => {
     setIsApplyModalOpen(false);
     setCandidateName("");
     setCandidateEmail("");
+    setCandidatePhone("");
     setCoverLetter("");
     setResumeFile(null);
     setAnalysisStep("idle");
@@ -224,9 +255,11 @@ const CompanyJobs = () => {
   const getProgress = () => {
     switch (analysisStep) {
       case "uploading":
-        return 33;
+        return 25;
       case "analyzing":
-        return 66;
+        return 50;
+      case "submitting":
+        return 75;
       case "complete":
         return 100;
       default:
@@ -240,8 +273,10 @@ const CompanyJobs = () => {
         return "Uploading your resume...";
       case "analyzing":
         return "AI is analyzing your resume against job requirements...";
+      case "submitting":
+        return "Submitting your application...";
       case "complete":
-        return "Analysis complete!";
+        return "Application submitted successfully!";
       case "error":
         return "Something went wrong. Please try again.";
       default:
@@ -354,82 +389,163 @@ const CompanyJobs = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {jobs.map((job) => (
-                <Card
-                  key={job.id}
-                  className="hover:shadow-large transition-all duration-300 cursor-pointer"
-                  onClick={() => {
-                    setSelectedJob(job);
-                    setIsApplyModalOpen(true);
-                  }}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-xl mb-2">{job.job_title}</CardTitle>
-                    <div className="flex flex-wrap gap-2">
-                      {job.department && (
-                        <Badge variant="outline">{job.department}</Badge>
-                      )}
-                      {job.job_type && (
-                        <Badge variant="secondary">{job.job_type}</Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 mb-4">
-                      {job.location && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{job.location}</span>
+            <div className="grid grid-cols-1 gap-6">
+              {jobs.map((job) => {
+                const isExpanded = expandedJobId === job.id;
+                return (
+                  <Card
+                    key={job.id}
+                    className="hover:shadow-large transition-all duration-300"
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-xl mb-2">{job.job_title}</CardTitle>
+                          <div className="flex flex-wrap gap-2">
+                            {job.department && <Badge variant="outline">{job.department}</Badge>}
+                            {job.job_type && <Badge variant="secondary">{job.job_type}</Badge>}
+                            {job.designation && <Badge variant="outline">{job.designation}</Badge>}
+                            {job.board && <Badge variant="outline">{job.board}</Badge>}
+                            {job.segment && <Badge variant="secondary">{job.segment}</Badge>}
+                          </div>
                         </div>
-                      )}
-                      {job.salary_range && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <DollarSign className="h-4 w-4" />
-                          <span>{job.salary_range}</span>
-                        </div>
-                      )}
-                      {job.experience_required && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{job.experience_required}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {job.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                        {job.description}
-                      </p>
-                    )}
-
-                    {job.skills && job.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-4">
-                        {job.skills.slice(0, 4).map((skill, i) => (
-                          <Badge key={i} variant="outline" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {job.skills.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{job.skills.length - 4}
-                          </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedJobId(isExpanded ? null : job.id)}
+                        >
+                          {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        {job.location && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4 flex-shrink-0" />
+                            <span>{job.location}</span>
+                          </div>
+                        )}
+                        {job.salary_range && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <DollarSign className="h-4 w-4 flex-shrink-0" />
+                            <span>{job.salary_range}</span>
+                          </div>
+                        )}
+                        {job.experience_required && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4 flex-shrink-0" />
+                            <span>{job.experience_required}</span>
+                          </div>
+                        )}
+                        {job.organisation && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Building2 className="h-4 w-4 flex-shrink-0" />
+                            <span>{job.organisation}</span>
+                          </div>
                         )}
                       </div>
-                    )}
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Posted {formatDate(job.posted_date)}
-                      </span>
-                      <Button size="sm" variant="cta">
-                        <Upload className="h-4 w-4 mr-2" />
-                        Apply Now
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      {/* Additional info row */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {job.subjects && (
+                          <Badge variant="outline" className="text-xs">Subjects: {job.subjects}</Badge>
+                        )}
+                        {job.classes && (
+                          <Badge variant="outline" className="text-xs">Classes: {job.classes}</Badge>
+                        )}
+                      </div>
+
+                      {/* Brief description always shown */}
+                      {!isExpanded && job.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                          {job.description}
+                        </p>
+                      )}
+
+                      {/* Full job details when expanded */}
+                      {isExpanded && (
+                        <div className="space-y-4 mb-4 bg-muted/30 rounded-lg p-4">
+                          {job.description && (
+                            <div>
+                              <h4 className="font-semibold text-sm mb-1">Job Description</h4>
+                              <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                {job.description}
+                              </p>
+                            </div>
+                          )}
+                          {job.requirements && (
+                            <div>
+                              <h4 className="font-semibold text-sm mb-1">Requirements</h4>
+                              <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                {job.requirements}
+                              </p>
+                            </div>
+                          )}
+                          {job.skills && job.skills.length > 0 && (
+                            <div>
+                              <h4 className="font-semibold text-sm mb-1">Required Skills</h4>
+                              <div className="flex flex-wrap gap-1">
+                                {job.skills.map((skill, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Skills preview when collapsed */}
+                      {!isExpanded && job.skills && job.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {job.skills.slice(0, 4).map((skill, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {job.skills.length > 4 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{job.skills.length - 4}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="text-xs text-muted-foreground">
+                          Posted {formatDate(job.posted_date)}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedJobId(isExpanded ? null : job.id);
+                            }}
+                          >
+                            {isExpanded ? "Less Details" : "View Details"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="cta"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedJob(job);
+                              setIsApplyModalOpen(true);
+                            }}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Apply Now
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>
@@ -437,7 +553,7 @@ const CompanyJobs = () => {
 
       {/* Application Modal */}
       <Dialog open={isApplyModalOpen} onOpenChange={(open) => !open && resetModal()}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {analysisStep === "complete" ? "Application Submitted!" : `Apply for ${selectedJob?.job_title}`}
@@ -449,7 +565,7 @@ const CompanyJobs = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {analysisStep !== "idle" && analysisStep !== "complete" && (
+          {analysisStep !== "idle" && analysisStep !== "complete" && analysisStep !== "error" && (
             <div className="py-6">
               <Progress value={getProgress()} className="mb-4" />
               <div className="flex items-center justify-center gap-2 text-muted-foreground">
@@ -459,18 +575,23 @@ const CompanyJobs = () => {
             </div>
           )}
 
-          {analysisStep === "complete" && aiScore && (
+          {analysisStep === "complete" && (
             <div className="py-6 text-center">
               <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-12 w-12 text-accent" />
               </div>
-              <div className="mb-4">
-                <span className="text-4xl font-bold text-accent">{aiScore}%</span>
-                <p className="text-muted-foreground">AI Match Score</p>
-              </div>
+              {aiScore && (
+                <div className="mb-4">
+                  <span className="text-4xl font-bold text-accent">{aiScore}%</span>
+                  <p className="text-muted-foreground">AI Match Score</p>
+                </div>
+              )}
               {aiAnalysis?.summary && (
                 <p className="text-sm text-muted-foreground mb-4">{aiAnalysis.summary}</p>
               )}
+              <p className="text-sm text-muted-foreground mb-4">
+                A confirmation email has been sent to your email address.
+              </p>
               <Button onClick={resetModal} className="w-full">
                 Done
               </Button>
@@ -479,23 +600,54 @@ const CompanyJobs = () => {
 
           {analysisStep === "idle" && (
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              {/* Selected job brief */}
+              {selectedJob && (
+                <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                  <p className="font-semibold">{selectedJob.job_title}</p>
+                  <div className="flex flex-wrap gap-2 mt-1 text-muted-foreground">
+                    {selectedJob.location && <span>📍 {selectedJob.location}</span>}
+                    {selectedJob.salary_range && <span>💰 {selectedJob.salary_range}</span>}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Name *</label>
+                  <label className="text-sm font-medium mb-2 block">
+                    <User className="h-3.5 w-3.5 inline mr-1" />
+                    Full Name *
+                  </label>
                   <Input
-                    placeholder="Your full name"
+                    placeholder="Enter your full name"
                     value={candidateName}
                     onChange={(e) => setCandidateName(e.target.value)}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Email *</label>
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={candidateEmail}
-                    onChange={(e) => setCandidateEmail(e.target.value)}
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      <Mail className="h-3.5 w-3.5 inline mr-1" />
+                      Email *
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={candidateEmail}
+                      onChange={(e) => setCandidateEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      <Phone className="h-3.5 w-3.5 inline mr-1" />
+                      Phone
+                    </label>
+                    <Input
+                      type="tel"
+                      placeholder="Mobile number"
+                      value={candidatePhone}
+                      onChange={(e) => setCandidatePhone(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -504,7 +656,7 @@ const CompanyJobs = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,image/*"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -525,8 +677,9 @@ const CompanyJobs = () => {
                     <>
                       <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        Click to upload PDF or Word document
+                        Click to upload PDF or Image (JPG/PNG)
                       </p>
+                      <p className="text-xs text-muted-foreground mt-1">Max 5MB</p>
                     </>
                   )}
                 </div>
