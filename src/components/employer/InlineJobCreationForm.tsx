@@ -1249,21 +1249,6 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               />
             </div>
 
-            {/* Skills */}
-            <FormField
-              control={form.control}
-              name="skills"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Skills (comma-separated) *</FormLabel>
-                  <FormControl>
-                    <Input placeholder={activeConfig.skillsPlaceholder} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* Generate JD Button */}
             <div className="flex justify-end gap-3">
               {hasGenerated && (
@@ -1280,6 +1265,21 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 )}
               </Button>
             </div>
+
+            {/* Skills */}
+            <FormField
+              control={form.control}
+              name="skills"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Skills (comma-separated) *</FormLabel>
+                  <FormControl>
+                    <Input placeholder={activeConfig.skillsPlaceholder} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Job Description */}
             <FormField
