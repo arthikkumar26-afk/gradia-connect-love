@@ -1682,11 +1682,14 @@ export type Database = {
           class_level: string | null
           class_type: string | null
           created_at: string
+          demo_meet_link: string | null
+          demo_meet_type: string | null
           department: string | null
           designation: string | null
           district: string | null
           id: string
           location: string | null
+          observer_email: string | null
           pincode: string | null
           programme: string | null
           segment: string | null
@@ -1704,11 +1707,14 @@ export type Database = {
           class_level?: string | null
           class_type?: string | null
           created_at?: string
+          demo_meet_link?: string | null
+          demo_meet_type?: string | null
           department?: string | null
           designation?: string | null
           district?: string | null
           id?: string
           location?: string | null
+          observer_email?: string | null
           pincode?: string | null
           programme?: string | null
           segment?: string | null
@@ -1726,11 +1732,14 @@ export type Database = {
           class_level?: string | null
           class_type?: string | null
           created_at?: string
+          demo_meet_link?: string | null
+          demo_meet_type?: string | null
           department?: string | null
           designation?: string | null
           district?: string | null
           id?: string
           location?: string | null
+          observer_email?: string | null
           pincode?: string | null
           programme?: string | null
           segment?: string | null
