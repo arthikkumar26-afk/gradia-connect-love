@@ -2655,6 +2655,19 @@ export const InterviewPipelineContent = () => {
     setSelectedCandidate(candidate);
   };
 
+  // Sync selectedCandidate with fresh stages data after any refetch
+  useEffect(() => {
+    if (selectedCandidate) {
+      const updatedCandidate = stages
+        .flatMap(s => s.candidates)
+        .find(c => c.interviewCandidateId === selectedCandidate.interviewCandidateId);
+      
+      if (updatedCandidate) {
+        setSelectedCandidate(updatedCandidate);
+      }
+    }
+  }, [stages]);
+
   const handleUpdateStep = async (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => {
     if (!selectedCandidate) return;
     

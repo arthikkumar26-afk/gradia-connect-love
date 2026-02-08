@@ -188,7 +188,7 @@ export const useInterviewPipeline = () => {
             
             // Build interview steps from stages and events
             // Get the current stage order
-            const currentStageOrder = dbStages.find(st => st.id === c.current_stage_id)?.stage_order || 1;
+            const currentStageOrder = dbStages.find(st => st.id === c.current_stage_id)?.stage_order ?? 0;
             
             const interviewSteps: InterviewStep[] = dbStages.map((s) => {
               // Find the most relevant event for this stage (completed > in_progress > pending)
