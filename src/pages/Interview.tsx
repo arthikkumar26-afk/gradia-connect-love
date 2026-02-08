@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Clock, CheckCircle, XCircle, AlertCircle, Video, Loader2, RefreshCw, Camera } from "lucide-react";
 import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
+import { DraggableWebcam } from "@/components/interview/DraggableWebcam";
 
 interface Question {
   question: string;
@@ -936,25 +937,12 @@ const Interview = () => {
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-2xl mx-auto relative">
-        {/* Webcam Preview - Fixed bottom right */}
+        {/* Webcam Preview - Draggable */}
         {cameraReady && webcamStreamRef.current && (
-          <div className="fixed bottom-4 right-4 z-50 rounded-lg overflow-hidden shadow-lg border-2 border-primary">
-            <video
-              ref={webcamVideoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-32 h-24 object-cover"
-            />
-            {isRecording && (
-              <div className="absolute top-1 left-1">
-                <span className="flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                </span>
-              </div>
-            )}
-          </div>
+          <DraggableWebcam
+            webcamVideoRef={webcamVideoRef}
+            isRecording={isRecording}
+          />
         )}
 
         {/* Header */}
