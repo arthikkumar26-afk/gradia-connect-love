@@ -214,17 +214,15 @@ serve(async (req) => {
           <li style="margin-bottom: 6px;">Provide feedback through the employer dashboard</li>
         </ul>
         
-        ${isManualMeet && meetLink ? `
         <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
           <tr>
             <td align="center">
-              <a href="${meetLink}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);">
-                🔗 Join as Observer
+              <a href="${interviewLink}" style="display: inline-block; background-color: #8b5cf6; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);">
+                ${isManualMeet ? '🔗 Join Meeting as Observer' : '🎥 Watch Live Demo'}
               </a>
             </td>
           </tr>
         </table>
-        ` : ''}
         
         <p style="margin: 0;">Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
       </td>
