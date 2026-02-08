@@ -53,7 +53,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
   // Generate shareable job link
   const getJobApplicationLink = () => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/jobs-results?job=${job?.id}&apply=true`;
+    return `${baseUrl}/job/${job?.id}/apply`;
   };
 
   const handleCopyLink = async () => {
