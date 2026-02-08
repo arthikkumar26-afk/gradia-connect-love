@@ -390,25 +390,6 @@ export const AIActionPanel = ({
             </div>
           )}
 
-          {/* AI Auto-Progress All Button */}
-          <Button
-            size="sm"
-            onClick={handleAutoProgressAll}
-            disabled={isAutoProgressing || !interviewCandidateId}
-            className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white"
-          >
-            {isAutoProgressing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                AI Processing All Stages...
-              </>
-            ) : (
-              <>
-                <PlayCircle className="h-4 w-4 mr-2" />
-                AI Auto-Progress Pipeline
-              </>
-            )}
-          </Button>
 
 
           {/* Action Buttons */}

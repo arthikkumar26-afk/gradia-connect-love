@@ -593,19 +593,6 @@ export const CandidateFullProfile = () => {
                   </div>
                 </div>
 
-                {/* AI Auto-Progress Button */}
-                <Button 
-                  className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white"
-                  onClick={handleAiAutoProgress}
-                  disabled={aiActionLoading === 'auto-progress'}
-                >
-                  {aiActionLoading === 'auto-progress' ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Play className="h-4 w-4 mr-2" />
-                  )}
-                  AI Auto-Progress Pipeline
-                </Button>
 
                 {/* Action Grid */}
                 <div className="grid grid-cols-2 gap-2">
