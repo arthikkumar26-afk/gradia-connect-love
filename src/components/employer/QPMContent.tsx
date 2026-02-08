@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { 
   ArrowLeft, Plus, Trash2, Save, FileText, Loader2, 
-  ChevronDown, ChevronUp, BookOpen, CheckCircle2, Eye
+  ChevronDown, ChevronUp, BookOpen, CheckCircle2, Eye, Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -78,6 +79,8 @@ export const QPMContent = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [editingPaper, setEditingPaper] = useState<QuestionPaper | null>(null);
   const [viewingPaper, setViewingPaper] = useState<QuestionPaper | null>(null);
+  const [useAiQuestions, setUseAiQuestions] = useState(false);
+  const [isTogglingAi, setIsTogglingAi] = useState(false);
 
   // Fetch jobs - with auth state listener for reliability
   useEffect(() => {
@@ -182,6 +185,46 @@ export const QPMContent = () => {
     setEditingPaper(null);
     setViewingPaper(null);
     fetchPapers(job.id);
+    fetchAiQuestionsSetting(job.id);
+  };
+
+  const fetchAiQuestionsSetting = async (jobId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("use_ai_questions" as any)
+        .eq("id", jobId)
+        .single();
+
+      if (!error && data) {
+        setUseAiQuestions((data as any).use_ai_questions || false);
+      }
+    } catch (err) {
+      console.error("Error fetching AI questions setting:", err);
+    }
+  };
+
+  const handleToggleAiQuestions = async (enabled: boolean) => {
+    if (!selectedJob) return;
+    setIsTogglingAi(true);
+    try {
+      const { error } = await supabase
+        .from("jobs")
+        .update({ use_ai_questions: enabled } as any)
+        .eq("id", selectedJob.id);
+
+      if (error) throw error;
+      setUseAiQuestions(enabled);
+      toast.success(enabled 
+        ? "AI Question Papers enabled — AI will generate questions for candidates" 
+        : "AI Question Papers disabled — Manual question sets will be used"
+      );
+    } catch (err) {
+      console.error("Error toggling AI questions:", err);
+      toast.error("Failed to update setting");
+    } finally {
+      setIsTogglingAi(false);
+    }
   };
 
   const handleCreateNewSet = () => {
@@ -742,7 +785,47 @@ export const QPMContent = () => {
         </div>
       </div>
 
+      {/* AI Question Papers Toggle */}
+      <Card className={`border-2 transition-colors ${useAiQuestions ? "border-primary bg-primary/5" : "border-dashed border-muted-foreground/30"}`}>
+        <CardContent className="py-4 px-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                useAiQuestions ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}>
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">AI Question Papers</p>
+                <p className="text-xs text-muted-foreground">
+                  {useAiQuestions 
+                    ? "AI will auto-generate questions for each candidate based on the job profile" 
+                    : "Enable to let AI generate questions instead of using manual question sets below"
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isTogglingAi && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+              <Switch 
+                checked={useAiQuestions} 
+                onCheckedChange={handleToggleAiQuestions}
+                disabled={isTogglingAi}
+              />
+            </div>
+          </div>
+          {useAiQuestions && (
+            <div className="mt-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <p className="text-xs text-primary font-medium">
+                ✨ AI mode is active — When candidates take the Written Test, AI will generate 10 MCQ questions tailored to the job requirements, skills, and candidate profile. Manual question sets below will be ignored.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Always show 4 set slots side by side */}
+      {!useAiQuestions && (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {allSets.map(({ setNumber, paper }) => (
           <Card 
@@ -801,9 +884,10 @@ export const QPMContent = () => {
           </Card>
         ))}
       </div>
+      )}
 
-      {/* Review Question Papers - Show all created sets inline */}
-      {papers.length > 0 && (
+      {/* Review Question Papers - Show all created sets inline (only when AI mode is off) */}
+      {!useAiQuestions && papers.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" />
@@ -899,13 +983,15 @@ export const QPMContent = () => {
         </div>
       )}
 
-      {/* AI Paper Detection Section */}
-      <AIPaperDetection
-        jobId={selectedJob.id}
-        jobTitle={selectedJob.job_title}
-        existingSets={papers.map(p => p.set_number)}
-        onSaved={() => fetchPapers(selectedJob.id)}
-      />
+      {/* AI Paper Detection Section (only when AI mode is off) */}
+      {!useAiQuestions && (
+        <AIPaperDetection
+          jobId={selectedJob.id}
+          jobTitle={selectedJob.job_title}
+          existingSets={papers.map(p => p.set_number)}
+          onSaved={() => fetchPapers(selectedJob.id)}
+        />
+      )}
 
       {/* Info about how QPM works */}
       <Card className="bg-primary/5 border-primary/20">

@@ -421,6 +421,10 @@ serve(async (req) => {
     let questions: any[] = [];
     let usingAdminQuestions = false;
 
+    // Check if the job has AI question generation enabled
+    const useAiQuestions = job.use_ai_questions === true;
+    console.log(`Job use_ai_questions setting: ${useAiQuestions}`);
+
     // Helper to transform question paper questions into interview format
     const transformPaperQuestions = (paperQuestions: any[]) => {
       return paperQuestions.map((q: any) => {
@@ -440,38 +444,41 @@ serve(async (req) => {
       });
     };
 
-    // PRIORITY 1: Try to fetch question papers linked to THIS specific job
-    console.log(`Searching for question papers linked to job_id: ${job.id}`);
-    const { data: jobPapers, error: jobPaperError } = await supabase
-      .from('interview_question_papers')
-      .select(`
-        *,
-        interview_questions(
+    // If AI questions is enabled, skip manual paper lookup entirely
+    if (!useAiQuestions) {
+      // PRIORITY 1: Try to fetch question papers linked to THIS specific job
+      console.log(`Searching for question papers linked to job_id: ${job.id}`);
+      const { data: jobPapers, error: jobPaperError } = await supabase
+        .from('interview_question_papers')
+        .select(`
           *,
-          interview_answer_keys(*)
-        )
-      `)
-      .eq('job_id', job.id)
-      .eq('is_active', true)
-      .limit(10);
+          interview_questions(
+            *,
+            interview_answer_keys(*)
+          )
+        `)
+        .eq('job_id', job.id)
+        .eq('is_active', true)
+        .limit(10);
 
-    if (!jobPaperError && jobPapers && jobPapers.length > 0) {
-      // Filter to papers that actually have questions
-      const papersWithQuestions = jobPapers.filter((p: any) => p.interview_questions && p.interview_questions.length > 0);
-      
-      if (papersWithQuestions.length > 0) {
-        // Randomly select one paper set from this job
-        const selectedPaper = papersWithQuestions[Math.floor(Math.random() * papersWithQuestions.length)];
-        console.log(`Using job-specific paper: "${selectedPaper.title}" (Set ${selectedPaper.set_number}, ${selectedPaper.interview_questions.length} questions)`);
+      if (!jobPaperError && jobPapers && jobPapers.length > 0) {
+        // Filter to papers that actually have questions
+        const papersWithQuestions = jobPapers.filter((p: any) => p.interview_questions && p.interview_questions.length > 0);
         
-        questions = transformPaperQuestions(selectedPaper.interview_questions);
-        usingAdminQuestions = true;
-        console.log(`Loaded ${questions.length} questions from job-specific question paper`);
+        if (papersWithQuestions.length > 0) {
+          // Randomly select one paper set from this job
+          const selectedPaper = papersWithQuestions[Math.floor(Math.random() * papersWithQuestions.length)];
+          console.log(`Using job-specific paper: "${selectedPaper.title}" (Set ${selectedPaper.set_number}, ${selectedPaper.interview_questions.length} questions)`);
+          
+          questions = transformPaperQuestions(selectedPaper.interview_questions);
+          usingAdminQuestions = true;
+          console.log(`Loaded ${questions.length} questions from job-specific question paper`);
+        }
       }
     }
 
-    // PRIORITY 2: Fall back to segment/category/designation matching
-    if (!usingAdminQuestions && (candidateSegment || candidateCategory || candidateDesignation || candidateClassLevel)) {
+    // PRIORITY 2: Fall back to segment/category/designation matching (only if AI mode is off)
+    if (!useAiQuestions && !usingAdminQuestions && (candidateSegment || candidateCategory || candidateDesignation || candidateClassLevel)) {
       console.log('No job-specific papers found. Searching by candidate profile match...');
       
       let query = supabase
@@ -506,6 +513,10 @@ serve(async (req) => {
       } else {
         console.log('No matching question papers found. Falling back to AI generation.');
       }
+    }
+
+    if (useAiQuestions) {
+      console.log('AI Question Papers enabled for this job — skipping manual papers, using AI generation');
     }
 
     // FALLBACK: Generate questions via AI if no admin questions found
