@@ -150,11 +150,32 @@ serve(async (req) => {
     const invitationToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     
-    // Interview link - use provided meeting link for manual interviews, or generate app link
-    const appDomain = Deno.env.get('APP_DOMAIN') || 'b06fa647-568a-470e-9033-ffe17071d8a6.lovableproject.com';
-    const interviewLink = isManualInterview && meetingLink 
-      ? meetingLink 
-      : `https://${appDomain}/interview?token=${invitationToken}`;
+    // Interview link - use published URL with direct candidateId/stageId links
+    const baseUrl = "https://gradia-link-shine.lovable.app";
+    let interviewLink: string;
+    
+    if (isManualInterview && meetingLink) {
+      interviewLink = meetingLink;
+    } else {
+      // Get the stage ID for direct link
+      const { data: stageDataForLink } = await supabase
+        .from('interview_stages')
+        .select('id')
+        .eq('name', stageName)
+        .single();
+      
+      const linkStageId = stageDataForLink?.id || interviewCandidate.current_stage_id;
+      
+      // Determine interview type based on stage name
+      let interviewType = 'general';
+      if (stageName.toLowerCase().includes('ai') || stageName === 'AI Technical Interview') {
+        interviewType = 'ai-technical';
+      } else if (stageName === 'Technical Assessment') {
+        interviewType = 'technical';
+      }
+      
+      interviewLink = `${baseUrl}/interview?candidateId=${interviewCandidateId}&stageId=${linkStageId}&type=${interviewType}`;
+    }
 
     // Get or create stage
     const { data: stageData } = await supabase
