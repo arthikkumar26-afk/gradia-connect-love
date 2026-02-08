@@ -503,8 +503,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Sector</label>
                 <Select
-                   value={dynamicFieldValues["sector_division"] || ""}
-                   onValueChange={(val) => handleDynamicFieldChange("sector_division", val, { category: "", function: "", segment: "", department_type: "" })}
+                   value={dynamicFieldValues["sector_division"] || undefined}
+                   onValueChange={(val) => handleDynamicFieldChange("sector_division", val, { category: "", function: "", board: "", segment: "", department_type: "" })}
                  >
                   <SelectTrigger>
                     <SelectValue placeholder="Select sector" />
@@ -554,9 +554,9 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Function</label>
                 <Select
-                  value={dynamicFieldValues["function"] || ""}
+                  value={dynamicFieldValues["function"] || undefined}
                   onValueChange={(val) => {
-                    handleDynamicFieldChange("function", val, { segment: "", department_type: "" });
+                    handleDynamicFieldChange("function", val, { board: "", segment: "", department_type: "" });
                   }}
                 >
                   <SelectTrigger>
