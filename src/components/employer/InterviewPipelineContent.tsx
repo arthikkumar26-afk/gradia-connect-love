@@ -1846,9 +1846,12 @@ const CandidateProfileInline = ({
     }
   };
 
-  // Restart Interview - resets all progress and starts from beginning
-  const handleRestartInterview = async () => {
+  // Reset Interview - clears all progress so Start Interview begins from first stage
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  
+  const handleResetInterview = async () => {
     setIsRestartingInterview(true);
+    setShowResetConfirm(false);
     try {
       // Get all stages to find the first one
       const { data: allStages } = await supabase
@@ -1864,7 +1867,6 @@ const CandidateProfileInline = ({
       const firstStage = allStages[0];
 
       // Delete all interview events for this candidate first (before resetting candidate)
-      // This prevents realtime triggers from re-fetching stale data
       const { data: existingEvents } = await supabase
         .from('interview_events')
         .select('id')
@@ -1886,17 +1888,45 @@ const CandidateProfileInline = ({
           .in('interview_event_id', eventIds);
 
         // Delete the events themselves
-        const { error: eventsError } = await supabase
+        await supabase
           .from('interview_events')
           .delete()
           .eq('interview_candidate_id', candidate.interviewCandidateId);
-
-        if (eventsError) {
-          console.error('Error clearing events:', eventsError);
-        }
       }
 
-      // Reset candidate to first stage AND clear ai_analysis
+      // Clear slot bookings for this candidate
+      const { data: candidateData } = await supabase
+        .from('interview_candidates')
+        .select('candidate_id')
+        .eq('id', candidate.interviewCandidateId)
+        .single();
+
+      if (candidateData?.candidate_id) {
+        await supabase
+          .from('slot_bookings')
+          .delete()
+          .eq('candidate_id', candidateData.candidate_id);
+      }
+
+      // Clear AI interview sessions for this candidate
+      await supabase
+        .from('ai_interview_sessions')
+        .delete()
+        .eq('interview_candidate_id', candidate.interviewCandidateId);
+
+      // Clear management reviews for this candidate
+      await supabase
+        .from('management_reviews')
+        .delete()
+        .eq('interview_candidate_id', candidate.interviewCandidateId);
+
+      // Clear offer letters for this candidate
+      await supabase
+        .from('offer_letters')
+        .delete()
+        .eq('interview_candidate_id', candidate.interviewCandidateId);
+
+      // Reset candidate to first stage AND clear all scores/analysis
       const { error: resetError } = await supabase
         .from('interview_candidates')
         .update({
@@ -1904,39 +1934,23 @@ const CandidateProfileInline = ({
           ai_score: null,
           ai_analysis: null,
           status: 'active',
+          resume_url: null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', candidate.interviewCandidateId);
 
       if (resetError) throw resetError;
 
-      // Send instruction email for the first stage
-      const { error: emailError } = await supabase.functions.invoke('send-notification-email', {
-        body: {
-          to: candidate.email,
-          candidateName: candidate.name,
-          jobTitle: candidate.role,
-          stageName: firstStage.name,
-          type: 'stage_invitation',
-          interviewCandidateId: candidate.interviewCandidateId,
-          stageId: firstStage.id,
-        },
-      });
-
-      if (emailError) {
-        console.error('Email send error:', emailError);
-      }
-
-      toast.success('Interview restarted from the beginning!', {
-        description: `Instruction email sent for ${firstStage.name}`,
+      toast.success('Interview reset successfully!', {
+        description: 'All progress cleared. Click "Start Interview" to begin fresh.',
         duration: 4000,
       });
 
       // Refresh data
       onRefresh?.();
     } catch (error) {
-      console.error('Error restarting interview:', error);
-      toast.error('Failed to restart interview');
+      console.error('Error resetting interview:', error);
+      toast.error('Failed to reset interview');
     } finally {
       setIsRestartingInterview(false);
     }
@@ -2274,22 +2288,41 @@ const CandidateProfileInline = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={handleRestartInterview}
+                      onClick={() => setShowResetConfirm(true)}
                       disabled={isRestartingInterview || (!hasStarted && completedSteps === 0)}
                     >
                       {isRestartingInterview ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Restarting...
+                          Resetting...
                         </>
                       ) : (
                         <>
                           <RotateCcw className="h-4 w-4 mr-2" />
-                          Restart
+                          Reset
                         </>
                       )}
                     </Button>
                   </div>
+
+                  {/* Reset Confirmation Dialog */}
+                  <AlertDialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Reset Interview Pipeline?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will clear all interview progress, slot bookings, scores, and results for {candidate.name}. 
+                          After reset, click "Start Interview" to begin the process from Interview Guidelines.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleResetInterview}>
+                          Yes, Reset
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
 
                   <ClickableStagesList
                     interviewSteps={candidate.interviewSteps}
