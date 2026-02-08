@@ -18,6 +18,10 @@ import {
   Star,
   Calendar,
   MapPin,
+  Video,
+  Mail,
+  UserCheck,
+  FileCheck,
 } from "lucide-react";
 
 interface InterviewStage {
@@ -25,6 +29,14 @@ interface InterviewStage {
   name: string;
   stage_order: number;
   is_ai_automated: boolean;
+}
+
+interface SlotBooking {
+  id: string;
+  booking_date: string;
+  booking_time: string;
+  booking_type: string;
+  status: string;
 }
 
 interface InterviewEvent {
@@ -65,6 +77,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [interviews, setInterviews] = useState<InterviewCandidate[]>([]);
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [slotBookings, setSlotBookings] = useState<SlotBooking[]>([]);
   const [selectedInterview, setSelectedInterview] = useState<string | null>(null);
 
   useEffect(() => {
@@ -126,6 +139,15 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       if (interviewsWithEvents.length > 0) {
         setSelectedInterview(interviewsWithEvents[0].id);
       }
+
+      // Fetch slot bookings for this candidate
+      const { data: bookingsData } = await supabase
+        .from('slot_bookings')
+        .select('id, booking_date, booking_time, booking_type, status')
+        .eq('candidate_id', candidateId)
+        .order('created_at', { ascending: false });
+
+      setSlotBookings(bookingsData || []);
     } catch (error) {
       console.error('Error fetching interview data:', error);
     } finally {
@@ -135,16 +157,24 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   const getStageIcon = (stageName: string) => {
     switch (stageName) {
+      case 'Interview Guidelines':
+        return Mail;
+      case 'CV/Resume':
       case 'Resume Screening':
         return FileText;
+      case 'Written Test':
       case 'Technical Assessment':
         return Code;
+      case 'Demo Slot Booking':
+        return Calendar;
+      case 'Demo Round':
+        return Video;
       case 'HR Round':
-        return Users;
+        return UserCheck;
       case 'Viva':
         return ClipboardCheck;
       case 'Final Review':
-        return ClipboardCheck;
+        return FileCheck;
       case 'Offer Stage':
         return Gift;
       default:
@@ -363,6 +393,36 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                     {status === 'upcoming' && (
                       <Badge variant="outline" className="text-xs text-muted-foreground">Upcoming</Badge>
                     )}
+                    {/* Show slot booking info for Demo Slot Booking stage */}
+                    {stage.name === 'Demo Slot Booking' && (() => {
+                      const demoBooking = slotBookings.find(b => 
+                        b.booking_type === 'demo_round' || b.booking_type === 'Demo Round'
+                      );
+                      if (demoBooking) {
+                        return (
+                          <div className="mt-1 space-y-1">
+                            <Badge variant="secondary" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {formatDate(demoBooking.booking_date)}
+                            </Badge>
+                            <p className="text-[10px] text-muted-foreground">
+                              {demoBooking.booking_time}
+                            </p>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-[10px] ${
+                                demoBooking.status === 'confirmed' 
+                                  ? 'border-green-500/30 text-green-600' 
+                                  : 'border-yellow-500/30 text-yellow-600'
+                              }`}
+                            >
+                              {demoBooking.status === 'confirmed' ? 'Confirmed' : 'Booked'}
+                            </Badge>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
 
