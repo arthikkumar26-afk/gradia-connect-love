@@ -1122,9 +1122,26 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Salary Range</FormLabel>
-                    <FormControl>
-                      <Input placeholder={activeConfig.salaryPlaceholder} {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select salary range" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="₹5,000 - ₹10,000">₹5,000 - ₹10,000</SelectItem>
+                        <SelectItem value="₹10,000 - ₹15,000">₹10,000 - ₹15,000</SelectItem>
+                        <SelectItem value="₹15,000 - ₹20,000">₹15,000 - ₹20,000</SelectItem>
+                        <SelectItem value="₹20,000 - ₹25,000">₹20,000 - ₹25,000</SelectItem>
+                        <SelectItem value="₹25,000 - ₹30,000">₹25,000 - ₹30,000</SelectItem>
+                        <SelectItem value="₹30,000 - ₹40,000">₹30,000 - ₹40,000</SelectItem>
+                        <SelectItem value="₹40,000 - ₹50,000">₹40,000 - ₹50,000</SelectItem>
+                        <SelectItem value="₹50,000 - ₹75,000">₹50,000 - ₹75,000</SelectItem>
+                        <SelectItem value="₹75,000 - ₹1,00,000">₹75,000 - ₹1,00,000</SelectItem>
+                        <SelectItem value="₹1,00,000+">₹1,00,000+</SelectItem>
+                        <SelectItem value="Negotiable">Negotiable</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
