@@ -206,20 +206,28 @@ const StageActionButtons = ({
   const handleResendInvitation = async () => {
     setIsSendingInvite(true);
     try {
-      const { error } = await supabase.functions.invoke('send-notification-email', {
-        body: {
-          to: candidateEmail,
-          candidateName,
-          jobTitle,
-          stageName: step.title,
-          type: 'stage_invitation',
-          interviewCandidateId,
-          stageId: step.id,
-        },
-      });
-
-      if (error) throw error;
-      toast.success(`Invitation resent for ${step.title}`);
+      // For CV/Resume stage, send ATS results email instead of generic invitation
+      if (step.title === 'CV/Resume') {
+        const { error } = await supabase.functions.invoke('send-cv-results-email', {
+          body: { interviewCandidateId },
+        });
+        if (error) throw error;
+        toast.success('CV/Resume ATS results email resent');
+      } else {
+        const { error } = await supabase.functions.invoke('send-notification-email', {
+          body: {
+            to: candidateEmail,
+            candidateName,
+            jobTitle,
+            stageName: step.title,
+            type: 'stage_invitation',
+            interviewCandidateId,
+            stageId: step.id,
+          },
+        });
+        if (error) throw error;
+        toast.success(`Invitation resent for ${step.title}`);
+      }
     } catch (error) {
       console.error('Error resending invitation:', error);
       toast.error('Failed to resend invitation');
@@ -245,8 +253,17 @@ const StageActionButtons = ({
       // Update local UI state
       onUpdateStep(step.id, "completed");
       
-      // If advancing from CV/Resume, auto-send slot booking email for Written Test
+      // If advancing from CV/Resume, send CV results email and auto-send slot booking email for Written Test
       if (step.title === 'CV/Resume' && data?.currentStage === 'Written Test') {
+        // Send CV/Resume results email to candidate
+        try {
+          await supabase.functions.invoke('send-cv-results-email', {
+            body: { interviewCandidateId }
+          });
+        } catch (cvEmailError) {
+          console.error('Error sending CV results email:', cvEmailError);
+        }
+
         try {
           await supabase.functions.invoke('send-slot-booking-email', {
             body: {
@@ -254,8 +271,8 @@ const StageActionButtons = ({
               stageName: 'Written Test',
             }
           });
-          toast.success(`✓ CV/Resume cleared! Slot booking email sent for Written Test`, {
-            description: `Candidate will receive an email to book their Written Test slot`,
+          toast.success(`✓ CV/Resume cleared! ATS results & slot booking email sent`, {
+            description: `Candidate will receive their CV score and Written Test slot booking link`,
             duration: 5000,
           });
         } catch (slotError) {
