@@ -169,16 +169,34 @@ serve(async (req) => {
       }
 
       // Find or create interview event for this candidate + stage
-      let { data: existingEvent, error: eventError } = await supabase
+      // First try to find a non-completed event (pending or in_progress)
+      let { data: activeEvents } = await supabase
         .from('interview_events')
         .select('*')
         .eq('interview_candidate_id', interviewCandidateId)
         .eq('stage_id', stageId)
+        .in('status', ['pending', 'in_progress'])
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      let existingEvent = activeEvents?.[0] || null;
 
       if (!existingEvent) {
+        // No active event found - check if there's a completed one
+        const { data: completedEvents } = await supabase
+          .from('interview_events')
+          .select('*')
+          .eq('interview_candidate_id', interviewCandidateId)
+          .eq('stage_id', stageId)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (completedEvents && completedEvents.length > 0) {
+          // Previous attempt was completed - create a new event for a retry
+          console.log('Previous attempt completed, creating new event for retry');
+        }
+
         // Create a new interview event
         const { data: newEvent, error: createError } = await supabase
           .from('interview_events')
@@ -309,10 +327,27 @@ serve(async (req) => {
       .from('interview_responses')
       .select('*')
       .eq('interview_event_id', interviewEvent.id)
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (existingResponse && existingResponse.completed_at) {
-      throw new Error('This interview has already been completed');
+      // Instead of throwing, return the existing results so the candidate can see them
+      console.log('Interview already completed, returning existing results for review');
+      const questions = existingResponse.questions as any[];
+      return new Response(JSON.stringify({
+        success: true,
+        responseId: existingResponse.id,
+        questions: questions,
+        candidateName: candidate.full_name,
+        jobTitle: job.job_title,
+        stageName: stageName,
+        alreadyCompleted: true,
+        score: existingResponse.score,
+        correctAnswers: existingResponse.correct_answers,
+      }), {
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     // Handle Demo Video stage - no questions needed

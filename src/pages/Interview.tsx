@@ -130,6 +130,28 @@ const Interview = () => {
         if (fnError) throw new Error(fnError.message);
         if (data?.error) throw new Error(data.error);
 
+        // Handle already completed interview - show results directly
+        if (data.alreadyCompleted) {
+          setCandidateName(data.candidateName || 'Candidate');
+          setJobTitle(data.jobTitle || 'Position');
+          setStageName(data.stageName || 'Interview');
+          setFinalScore(data.score || 0);
+          setCompleted(true);
+          
+          // Build results from questions data
+          const questionsData = data.questions || [];
+          setResults(questionsData.map((q: any) => ({
+            question: q.question,
+            options: q.options,
+            userAnswer: -1,
+            correctAnswer: q.correctAnswer,
+            explanation: q.explanation,
+            isCorrect: false,
+          })));
+          setLoading(false);
+          return;
+        }
+
         setResponseId(data.responseId);
         setQuestions(data.questions || []);
         setAnswers(new Array((data.questions || []).length).fill(null));
@@ -312,7 +334,11 @@ const Interview = () => {
           await webcamVideo.play();
         }
 
+        // Use a ref-like flag for the animation loop to avoid stale closure
+        let recordingActive = true;
+        
         const drawFrame = () => {
+          if (!recordingActive) return;
           ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
           if (webcamStreamRef.current) {
             const webcamWidth = 320;
@@ -327,10 +353,13 @@ const Interview = () => {
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, webcamWidth, webcamHeight);
           }
-          if (isRecording) {
-            requestAnimationFrame(drawFrame);
-          }
+          requestAnimationFrame(drawFrame);
         };
+
+        // Stop the drawing loop when screen stream ends
+        screenStream.getVideoTracks()[0]?.addEventListener('ended', () => {
+          recordingActive = false;
+        });
 
         setIsRecording(true);
         requestAnimationFrame(drawFrame);
