@@ -169,7 +169,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     // High School
     if (segment === "High School") {
       const classLabel = hs_classes === "class_6_7_8" ? "CLASS 6,7&8" : hs_classes === "class_9_10" ? "CLASS 9&10" : "";
-      const programLabel = program === "competitive" ? "Competitive" : "Board-Syllabus";
+      const programLabel = program === "competitive" ? "Competitive" : "Board";
 
       if (designation) {
         const desigLabels: Record<string, string> = {
@@ -809,7 +809,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select program" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="board">Board-Syllabus</SelectItem>
+                        <SelectItem value="board">Board</SelectItem>
                         <SelectItem value="competitive">Competitive</SelectItem>
                       </SelectContent>
                     </Select>
