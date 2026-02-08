@@ -662,7 +662,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select subject" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="all">All Subjects</SelectItem>
                         <SelectItem value="telugu">Telugu</SelectItem>
                         <SelectItem value="hindi">Hindi</SelectItem>
                         <SelectItem value="english">English</SelectItem>
@@ -792,7 +792,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select subject" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="all">All Subjects</SelectItem>
                         <SelectItem value="telugu">Telugu</SelectItem>
                         <SelectItem value="hindi">Hindi</SelectItem>
                         <SelectItem value="english">English</SelectItem>
@@ -946,7 +946,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                           <SelectValue placeholder="Select specialized subject" />
                         </SelectTrigger>
                         <SelectContent className="bg-popover z-[200]">
-                          <SelectItem value="all">All</SelectItem>
+                          <SelectItem value="all">All Subjects</SelectItem>
                           <SelectItem value="telugu">Telugu</SelectItem>
                           <SelectItem value="hindi">Hindi</SelectItem>
                           <SelectItem value="numeracy">Numeracy</SelectItem>
