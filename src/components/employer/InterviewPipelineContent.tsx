@@ -33,7 +33,8 @@ import {
   Trash2,
   Play,
   Eye,
-  RotateCcw
+  RotateCcw,
+  Link2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,7 @@ import { StageRecordingPlayer } from "./StageRecordingPlayer";
 import { StageResultsModal } from "./StageResultsModal";
 import { ManualInterviewScheduleModal } from "./ManualInterviewScheduleModal";
 import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
+import { DemoRoundOptions } from "./DemoRoundOptions";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -313,6 +315,25 @@ const StageActionButtons = ({
           console.error('Error sending demo slot booking email:', slotError);
           toast.success(`✓ Written Test cleared! Moved to Demo Slot Booking`, {
             description: 'Note: Slot booking email failed to send. You can resend manually.',
+            duration: 5000,
+          });
+        }
+      } else if (step.title === 'Demo Slot Booking' && data?.currentStage === 'Demo Round') {
+        // Send dual emails when advancing from Demo Slot Booking to Demo Round
+        try {
+          await supabase.functions.invoke('send-demo-round-emails', {
+            body: {
+              interviewCandidateId,
+            }
+          });
+          toast.success(`✓ Demo Slot Booking cleared! Demo round invitations sent`, {
+            description: `Emails sent to candidate and observer`,
+            duration: 5000,
+          });
+        } catch (demoError) {
+          console.error('Error sending demo round emails:', demoError);
+          toast.success(`✓ Demo Slot Booking cleared! Moved to Demo Round`, {
+            description: 'Note: Demo emails failed to send. You can send manually from Demo Round.',
             duration: 5000,
           });
         }
@@ -688,11 +709,13 @@ const ClickableStagesList = ({
   const [selectedStageForResults, setSelectedStageForResults] = useState<InterviewStep | null>(null);
   const [hrScheduleModalOpen, setHrScheduleModalOpen] = useState(false);
   const [selectedHRStep, setSelectedHRStep] = useState<InterviewStep | null>(null);
-  const [slotBooking, setSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string } | null>(null);
+  const [slotBooking, setSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string; observer_email: string | null; demo_meet_link: string | null; demo_meet_type: string | null } | null>(null);
   const [isEditingSlot, setIsEditingSlot] = useState(false);
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [isSavingSlot, setIsSavingSlot] = useState(false);
+  const [observerEmail, setObserverEmail] = useState("");
+  const [isSavingObserver, setIsSavingObserver] = useState(false);
 
   // Fetch slot booking details for this candidate
   useEffect(() => {
@@ -707,7 +730,7 @@ const ClickableStagesList = ({
         if (icData?.candidate_id) {
           const { data: bookings } = await supabase
             .from('slot_bookings')
-            .select('id, booking_date, booking_time, status, subject, updated_at, created_at')
+            .select('id, booking_date, booking_time, status, subject, updated_at, created_at, observer_email, demo_meet_link, demo_meet_type')
             .eq('candidate_id', icData.candidate_id)
             .order('created_at', { ascending: false });
 
@@ -716,6 +739,9 @@ const ClickableStagesList = ({
           ) || bookings?.[0] || null;
           
           setSlotBooking(demoBooking);
+          if (demoBooking?.observer_email) {
+            setObserverEmail(demoBooking.observer_email);
+          }
         }
       } catch (err) {
         console.error('Error fetching slot booking:', err);
@@ -750,6 +776,26 @@ const ClickableStagesList = ({
       toast.error('Failed to update slot booking');
     } finally {
       setIsSavingSlot(false);
+    }
+  };
+
+  const handleSaveObserverEmail = async () => {
+    if (!slotBooking || !observerEmail.trim()) return;
+    setIsSavingObserver(true);
+    try {
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ observer_email: observerEmail.trim(), updated_at: new Date().toISOString() })
+        .eq('id', slotBooking.id);
+
+      if (error) throw error;
+      setSlotBooking({ ...slotBooking, observer_email: observerEmail.trim(), updated_at: new Date().toISOString() });
+      toast.success('Observer email saved');
+    } catch (err) {
+      console.error('Error saving observer email:', err);
+      toast.error('Failed to save observer email');
+    } finally {
+      setIsSavingObserver(false);
     }
   };
 
@@ -926,9 +972,55 @@ const ClickableStagesList = ({
                         {slotBooking.subject && (
                           <p className="text-[10px] text-muted-foreground">Stage: {slotBooking.subject}</p>
                         )}
+                        
+                        {/* Observer Email Input */}
+                        <div className="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1" onClick={(e) => e.stopPropagation()}>
+                          <label className="text-[10px] font-medium text-blue-700 flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            Observer/Employer Email
+                          </label>
+                          <div className="flex gap-1.5">
+                            <Input
+                              type="email"
+                              placeholder="employer@company.com"
+                              value={observerEmail}
+                              onChange={(e) => setObserverEmail(e.target.value)}
+                              className="h-6 text-[10px] flex-1 border-blue-200"
+                            />
+                            <Button
+                              size="sm"
+                              className="h-6 text-[9px] px-2 bg-blue-600 hover:bg-blue-700"
+                              onClick={handleSaveObserverEmail}
+                              disabled={isSavingObserver || !observerEmail.trim()}
+                            >
+                              {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                            </Button>
+                          </div>
+                          {slotBooking.observer_email && (
+                            <p className="text-[9px] text-emerald-600 flex items-center gap-1">
+                              <CheckCircle2 className="h-2.5 w-2.5" />
+                              Saved: {slotBooking.observer_email}
+                            </p>
+                          )}
+                          <p className="text-[9px] text-muted-foreground">
+                            This email will receive a notification when the Demo Round starts
+                          </p>
+                        </div>
                       </>
                     )}
                   </div>
+                )}
+
+                {/* Demo Round Options - Show AI Video Call or Manual Meet Link */}
+                {step.title === 'Demo Round' && (step.status === 'current' || step.status === 'in_progress') && (
+                  <DemoRoundOptions
+                    interviewCandidateId={interviewCandidateId}
+                    candidateName={candidateName}
+                    observerEmail={slotBooking?.observer_email || observerEmail || undefined}
+                    existingMeetLink={slotBooking?.demo_meet_link || undefined}
+                    existingMeetType={slotBooking?.demo_meet_type || undefined}
+                    onUpdate={() => {}}
+                  />
                 )}
 
                 {/* Show interview link for current stages (not expanded content) */}
