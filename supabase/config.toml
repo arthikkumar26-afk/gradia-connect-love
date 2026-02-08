@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.submit-qr-application]
 verify_jwt = false
+
+[functions.send-slot-booking-email]
+verify_jwt = false
