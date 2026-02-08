@@ -65,10 +65,8 @@ serve(async (req) => {
 
     const baseUrl = "https://gradia-link-shine.lovable.app";
     
-    const isManualMeet = meetType === 'manual_link' && meetLink;
-    const interviewLink = isManualMeet 
-      ? meetLink 
-      : `${baseUrl}/interview?candidateId=${interviewCandidateId}&type=hr`;
+    // HR Round is always a live meeting, not an assessment
+    const interviewLink = meetLink || `${baseUrl}/interview?candidateId=${interviewCandidateId}&type=hr`;
 
     const emailResults = [];
 
@@ -108,7 +106,7 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr><td style="padding: 8px 0; border-bottom: 1px solid #c7d2fe;"><strong>Date:</strong> ${bookingDate}</td></tr>
                 <tr><td style="padding: 8px 0; border-bottom: 1px solid #c7d2fe;"><strong>Time:</strong> ${bookingTime}</td></tr>
-                <tr><td style="padding: 8px 0; border-bottom: 1px solid #c7d2fe;"><strong>Format:</strong> ${isManualMeet ? 'Live Video Call' : 'AI Video Interview'}</td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #c7d2fe;"><strong>Format:</strong> Live Video Meeting</td></tr>
                 <tr><td style="padding: 8px 0;"><strong>Duration:</strong> 15-30 minutes</td></tr>
               </table>
             </td>
@@ -121,14 +119,14 @@ serve(async (req) => {
           <li style="margin-bottom: 6px;">Be ready to discuss your career goals and motivations</li>
           <li style="margin-bottom: 6px;">Prepare questions about the role and company</li>
           <li style="margin-bottom: 6px;">Ensure good internet, clear audio, and a quiet environment</li>
-          ${isManualMeet ? '<li style="margin-bottom: 6px;">Join the meeting link at the scheduled time</li>' : '<li style="margin-bottom: 6px;">Click the button below to start your HR interview</li>'}
+          <li style="margin-bottom: 6px;">Join the meeting link at the scheduled time</li>
         </ul>
         
         <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
           <tr>
             <td align="center">
               <a href="${interviewLink}" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);">
-                ${isManualMeet ? '🔗 Join HR Meeting' : '📋 Start HR Interview'}
+                🔗 Join HR Meeting
               </a>
             </td>
           </tr>
@@ -220,7 +218,7 @@ serve(async (req) => {
           <tr>
             <td align="center">
               <a href="${interviewLink}" style="display: inline-block; background-color: #6366f1; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);">
-                ${isManualMeet ? '🔗 Join Meeting as Observer' : '👁️ Watch HR Interview'}
+                🔗 Join Meeting as Observer
               </a>
             </td>
           </tr>

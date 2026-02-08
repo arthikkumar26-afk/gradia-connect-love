@@ -1456,17 +1456,7 @@ const ClickableStagesList = ({
                   </div>
                 )}
 
-                {/* HR Round Options - Show meeting link options */}
-                {step.title === 'HR Round' && (step.status === 'current' || step.status === 'in_progress') && (
-                  <DemoRoundOptions
-                    interviewCandidateId={interviewCandidateId}
-                    candidateName={candidateName}
-                    observerEmail={hrSlotBooking?.observer_email || hrObserverEmails.join(',') || undefined}
-                    existingMeetLink={hrSlotBooking?.observer_email ? undefined : undefined}
-                    existingMeetType={undefined}
-                    onUpdate={() => {}}
-                  />
-                )}
+                {/* HR Round - Schedule Meeting button is provided via StageActionButtons */}
 
                 {step.status === "current" && (
                   <StageRecordingPlayer
