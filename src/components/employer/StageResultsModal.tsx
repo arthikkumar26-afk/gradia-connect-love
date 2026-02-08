@@ -76,17 +76,33 @@ export const StageResultsModal = ({
       setError(null);
       
       try {
-        // Get interview event for this stage
-        const { data: event, error: eventError } = await supabase
+        // Get interview event for this stage - prefer completed events
+        // First try to find a completed event
+        let { data: event, error: eventError } = await supabase
           .from('interview_events')
           .select('id, status, completed_at, ai_score, ai_feedback, notes')
           .eq('interview_candidate_id', interviewCandidateId)
           .eq('stage_id', stageId)
+          .in('status', ['completed', 'passed'])
+          .not('completed_at', 'is', null)
           .order('completed_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (eventError || !event) {
+        // Fallback: get any event for this stage if no completed one found
+        if (!event) {
+          const { data: fallbackEvent } = await supabase
+            .from('interview_events')
+            .select('id, status, completed_at, ai_score, ai_feedback, notes')
+            .eq('interview_candidate_id', interviewCandidateId)
+            .eq('stage_id', stageId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          event = fallbackEvent;
+        }
+
+        if (!event) {
           setError("No interview event found for this stage");
           setLoading(false);
           return;
