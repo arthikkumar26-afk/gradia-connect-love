@@ -78,6 +78,7 @@ import { toast } from "sonner";
 
 // Stage icon mapping
 const stageIcons: Record<string, React.ElementType> = {
+  'Instruction Round': Mail,
   'Resume Screening': Users,
   'Technical Assessment': Code,
   'HR Round': UserCheck,
@@ -87,6 +88,7 @@ const stageIcons: Record<string, React.ElementType> = {
 };
 
 const stageColors: Record<string, string> = {
+  'Instruction Round': 'bg-indigo-500',
   'Resume Screening': 'bg-blue-500',
   'Technical Assessment': 'bg-orange-500',
   'HR Round': 'bg-green-500',
@@ -856,38 +858,57 @@ const CandidateProfileInline = ({
   const allStagesCompleted = completedSteps === candidate.interviewSteps.length;
   const hasStarted = completedSteps > 0 || candidate.interviewSteps.some(s => s.status === "current" || s.status === "in_progress");
 
-  // Start Interview - sends instruction email for first stage and starts the process
+  // Start Interview - sends instruction email with suggestions & account creation link, then auto-advances to Resume Screening
   const handleStartInterview = async () => {
     setIsStartingInterview(true);
     try {
-      const firstStep = candidate.interviewSteps.find(s => s.status === "current" || s.status === "pending");
-      if (!firstStep) {
-        toast.error("No pending stages to start");
+      // Find the Instruction Round stage (first stage)
+      const instructionStep = candidate.interviewSteps.find(s => s.title === 'Instruction Round');
+      
+      if (!instructionStep) {
+        // Fallback: if no instruction round, use old behavior
+        const firstStep = candidate.interviewSteps.find(s => s.status === "current" || s.status === "pending");
+        if (!firstStep) {
+          toast.error("No pending stages to start");
+          return;
+        }
+        onUpdateStep(firstStep.id, "current", true);
+        toast.success(`Interview started for ${firstStep.title}`);
         return;
       }
 
-      // Send instruction email for the current/first stage
-      const { error } = await supabase.functions.invoke('send-notification-email', {
+      // 1. Send instruction email with suggestions and account creation link
+      const { error: instrError } = await supabase.functions.invoke('send-instruction-email', {
         body: {
-          to: candidate.email,
-          candidateName: candidate.name,
-          jobTitle: candidate.role,
-          stageName: firstStep.title,
-          type: 'stage_invitation',
           interviewCandidateId: candidate.interviewCandidateId,
-          stageId: firstStep.id,
         },
       });
 
-      if (error) throw error;
+      if (instrError) throw instrError;
 
-      // Update the stage to "current" status (skip email since we already sent instruction email above)
-      onUpdateStep(firstStep.id, "current", true);
-      
-      toast.success(`Interview started! Instruction email sent for ${firstStep.title}`, {
-        description: `Email sent to ${candidate.email}`,
-        duration: 4000,
+      // 2. Mark Instruction Round as completed and advance to Resume Screening
+      onUpdateStep(instructionStep.id, "completed", true);
+
+      // 3. Find Resume Screening stage and advance candidate to it
+      const { data, error: advanceError } = await supabase.functions.invoke('process-interview-stage', {
+        body: {
+          interviewCandidateId: candidate.interviewCandidateId,
+          action: 'advance',
+          feedback: 'Instruction email sent, advancing to Resume Screening',
+        }
       });
+
+      if (advanceError) {
+        console.error('Error advancing past instruction round:', advanceError);
+      }
+
+      toast.success(`Interview started! Instruction email sent to ${candidate.name}`, {
+        description: `Instructions, tips & account creation link sent to ${candidate.email}`,
+        duration: 5000,
+      });
+
+      // Refresh data
+      onRefresh?.();
     } catch (error) {
       console.error('Error starting interview:', error);
       toast.error('Failed to start interview');

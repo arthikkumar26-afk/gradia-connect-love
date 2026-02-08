@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.send-slot-booking-email]
 verify_jwt = false
+
+[functions.send-instruction-email]
+verify_jwt = false
