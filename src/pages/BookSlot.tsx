@@ -69,16 +69,16 @@ const BookSlot = () => {
     fetchDetails();
   }, [candidateId]);
 
-  // Generate available dates (next 7 days, excluding Sundays)
+  // Generate available dates (today + next 7 days, excluding Sundays)
   const getAvailableDates = () => {
     const dates: { value: string; label: string }[] = [];
     const today = new Date();
     let count = 0;
     let daysChecked = 0;
     
-    while (count < 7 && daysChecked < 14) {
+    while (count < 8 && daysChecked < 14) {
       const date = new Date(today);
-      date.setDate(today.getDate() + daysChecked + 1);
+      date.setDate(today.getDate() + daysChecked);
       daysChecked++;
       
       // Skip Sundays
@@ -91,10 +91,36 @@ const BookSlot = () => {
         day: "numeric",
         year: "numeric",
       });
-      dates.push({ value, label });
+      dates.push({ value, label: daysChecked === 1 ? `Today - ${label}` : label });
       count++;
     }
     return dates;
+  };
+
+  const getTodayDate = () => {
+    const today = new Date();
+    if (today.getDay() === 0) return null; // Sunday
+    return today.toISOString().split("T")[0];
+  };
+
+  const getNext10MinTime = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 10);
+    // Round up to nearest 30-min slot
+    const minutes = now.getMinutes();
+    const roundedMinutes = minutes < 30 ? 30 : 0;
+    if (roundedMinutes === 0) now.setHours(now.getHours() + 1);
+    now.setMinutes(roundedMinutes);
+    
+    const hour = now.getHours();
+    const minute = now.getMinutes().toString().padStart(2, "0");
+    
+    // Check if within valid range (9 AM - 5:30 PM)
+    if (hour < 9 || hour > 17 || (hour === 17 && parseInt(minute) > 0)) {
+      return "09:00"; // Default to 9 AM if outside range
+    }
+    
+    return `${hour.toString().padStart(2, "0")}:${minute}`;
   };
 
   // Generate time slots (9 AM to 6 PM, 30-min intervals)
@@ -267,10 +293,23 @@ const BookSlot = () => {
 
           {/* Date Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
-              Select Date *
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                Select Date *
+              </label>
+              {getTodayDate() && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs border-blue-300 text-blue-600 hover:bg-blue-50"
+                  onClick={() => setSelectedDate(getTodayDate()!)}
+                >
+                  📅 Today
+                </Button>
+              )}
+            </div>
             <Select value={selectedDate} onValueChange={setSelectedDate}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a date" />
@@ -287,10 +326,27 @@ const BookSlot = () => {
 
           {/* Time Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-600" />
-              Select Time *
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Clock className="h-4 w-4 text-blue-600" />
+                Select Time *
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs border-blue-300 text-blue-600 hover:bg-blue-50"
+                onClick={() => {
+                  const nextTime = getNext10MinTime();
+                  setSelectedTime(nextTime);
+                  if (!selectedDate && getTodayDate()) {
+                    setSelectedDate(getTodayDate()!);
+                  }
+                }}
+              >
+                ⏰ Next 10 mins
+              </Button>
+            </div>
             <Select value={selectedTime} onValueChange={setSelectedTime}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a time slot" />
