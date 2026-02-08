@@ -801,7 +801,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate('/book-slot?type=demo_round');
+                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageName=Demo Round&type=demo_round`);
                               }}
                               className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
                             >
@@ -829,7 +829,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate('/book-slot?type=written_test');
+                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageName=Written Test&type=written_test`);
                               }}
                               className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
                             >
@@ -857,7 +857,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate('/book-slot?type=hr_round');
+                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageName=HR Round&type=hr_round`);
                               }}
                               className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
                             >
