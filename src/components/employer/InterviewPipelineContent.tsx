@@ -75,6 +75,7 @@ import { StageResultsModal } from "./StageResultsModal";
 import { ManualInterviewScheduleModal } from "./ManualInterviewScheduleModal";
 import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
 import { DemoRoundOptions } from "./DemoRoundOptions";
+import { DemoFeedbackResults } from "./DemoFeedbackResults";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -353,11 +354,22 @@ const StageActionButtons = ({
           });
         }
       } else if (step.title === 'Demo Round' && data?.currentStage === 'Demo Feedback') {
-        // Demo Round → Demo Feedback (management review)
-        toast.success(`✓ Demo Round cleared! Moved to Demo Feedback`, {
-          description: `Management can now review the demo performance`,
-          duration: 5000,
-        });
+        // Demo Round → Demo Feedback: auto-send feedback request to observers
+        try {
+          await supabase.functions.invoke('send-demo-feedback-email', {
+            body: { interviewCandidateId }
+          });
+          toast.success(`✓ Demo Round cleared! Feedback request sent to observers`, {
+            description: `Observers will receive an email with a feedback link`,
+            duration: 5000,
+          });
+        } catch (feedbackError) {
+          console.error('Error sending demo feedback emails:', feedbackError);
+          toast.success(`✓ Demo Round cleared! Moved to Demo Feedback`, {
+            description: 'Note: Feedback email failed to send. You can resend manually.',
+            duration: 5000,
+          });
+        }
       } else if (step.title === 'Demo Feedback' && data?.currentStage === 'HR Round Slot Booking') {
         // Demo Feedback → HR Round Slot Booking
         try {
@@ -1236,6 +1248,11 @@ const ClickableStagesList = ({
                     existingMeetType={slotBooking?.demo_meet_type || undefined}
                     onUpdate={() => {}}
                   />
+                )}
+
+                {/* Demo Feedback - Show feedback results */}
+                {step.title === 'Demo Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} />
                 )}
 
                 {/* HR Round Slot Booking Details */}

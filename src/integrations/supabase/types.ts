@@ -1151,13 +1151,14 @@ export type Database = {
           feedback_token: string | null
           feedback_token_expires_at: string | null
           id: string
+          interview_candidate_id: string | null
           overall_rating: number | null
           recommendation: string | null
           reviewer_email: string | null
           reviewer_id: string | null
           reviewer_name: string | null
           sent_at: string | null
-          session_id: string
+          session_id: string | null
           status: string | null
           strengths: string[] | null
           subject_knowledge_rating: number | null
@@ -1173,13 +1174,14 @@ export type Database = {
           feedback_token?: string | null
           feedback_token_expires_at?: string | null
           id?: string
+          interview_candidate_id?: string | null
           overall_rating?: number | null
           recommendation?: string | null
           reviewer_email?: string | null
           reviewer_id?: string | null
           reviewer_name?: string | null
           sent_at?: string | null
-          session_id: string
+          session_id?: string | null
           status?: string | null
           strengths?: string[] | null
           subject_knowledge_rating?: number | null
@@ -1195,13 +1197,14 @@ export type Database = {
           feedback_token?: string | null
           feedback_token_expires_at?: string | null
           id?: string
+          interview_candidate_id?: string | null
           overall_rating?: number | null
           recommendation?: string | null
           reviewer_email?: string | null
           reviewer_id?: string | null
           reviewer_name?: string | null
           sent_at?: string | null
-          session_id?: string
+          session_id?: string | null
           status?: string | null
           strengths?: string[] | null
           subject_knowledge_rating?: number | null
@@ -1210,6 +1213,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "management_reviews_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "management_reviews_reviewer_id_fkey"
             columns: ["reviewer_id"]
