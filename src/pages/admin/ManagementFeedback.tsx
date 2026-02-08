@@ -103,36 +103,61 @@ export default function ManagementFeedback() {
         return;
       }
 
-      // Get session and candidate details
-      const { data: sessionData } = await supabase
-        .from('mock_interview_sessions')
-        .select('candidate_id')
-        .eq('id', reviewData.session_id)
-        .single();
-
-      if (sessionData) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('id', sessionData.candidate_id)
+      // Try to get candidate details - support both mock interview sessions and employer pipeline
+      if (reviewData.session_id) {
+        // Mock interview flow
+        const { data: sessionData } = await supabase
+          .from('mock_interview_sessions')
+          .select('candidate_id')
+          .eq('id', reviewData.session_id)
           .single();
 
-        // Get demo round results
-        const { data: demoResult } = await supabase
-          .from('mock_interview_stage_results')
-          .select('ai_score, ai_feedback, recording_url')
-          .eq('session_id', reviewData.session_id)
-          .eq('stage_order', 4)
+        if (sessionData) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', sessionData.candidate_id)
+            .single();
+
+          const { data: demoResult } = await supabase
+            .from('mock_interview_stage_results')
+            .select('ai_score, ai_feedback, recording_url')
+            .eq('session_id', reviewData.session_id)
+            .eq('stage_order', 4)
+            .single();
+
+          setReview({
+            ...reviewData,
+            candidate_name: profileData?.full_name,
+            candidate_email: profileData?.email,
+            demo_score: demoResult?.ai_score,
+            demo_feedback: demoResult?.ai_feedback,
+            demo_recording_url: demoResult?.recording_url
+          });
+        } else {
+          setReview(reviewData);
+        }
+      } else if (reviewData.interview_candidate_id) {
+        // Employer pipeline flow
+        const { data: icData } = await supabase
+          .from('interview_candidates')
+          .select(`
+            *,
+            candidate:profiles(full_name, email),
+            job:jobs(job_title)
+          `)
+          .eq('id', reviewData.interview_candidate_id)
           .single();
 
-        setReview({
-          ...reviewData,
-          candidate_name: profileData?.full_name,
-          candidate_email: profileData?.email,
-          demo_score: demoResult?.ai_score,
-          demo_feedback: demoResult?.ai_feedback,
-          demo_recording_url: demoResult?.recording_url
-        });
+        if (icData) {
+          setReview({
+            ...reviewData,
+            candidate_name: icData.candidate?.full_name,
+            candidate_email: icData.candidate?.email,
+          });
+        } else {
+          setReview(reviewData);
+        }
       } else {
         setReview(reviewData);
       }
