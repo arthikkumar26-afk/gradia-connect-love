@@ -580,39 +580,50 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             </div>
 
-            {/* Segment, Department, Designation, Subjects */}
+            {/* Board, Segment, Department, Designation, Subjects */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium leading-none">Board</label>
+                <Select
+                  key={`board-select-${dynamicFieldValues["function"] || "default"}`}
+                  value={dynamicFieldValues["board"] || undefined}
+                  onValueChange={(val) => {
+                    handleDynamicFieldChange("board", val, { segment: "", department_type: "", designation: "", subjects: "", classes: "", program: "", hs_classes: "" });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select board" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-[200]">
+                    <SelectItem value="CBSE">CBSE</SelectItem>
+                    <SelectItem value="ICSE">ICSE / ISC</SelectItem>
+                    <SelectItem value="State Board">State Board</SelectItem>
+                    <SelectItem value="IB">IB (International Baccalaureate)</SelectItem>
+                    <SelectItem value="Cambridge">Cambridge (IGCSE)</SelectItem>
+                    <SelectItem value="Montessori">Montessori</SelectItem>
+                    <SelectItem value="Play School">Play School / Pre-School</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Segment</label>
                 <Select
-                  key={`segment-${dynamicFieldValues["function"] || "default"}`}
+                  key={`segment-${dynamicFieldValues["board"] || "default"}-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
                   onValueChange={(val) => {
                     handleDynamicFieldChange("segment", val, { department_type: "", designation: "", subjects: "", classes: "", program: "", hs_classes: "" });
                   }}
+                  disabled={!dynamicFieldValues["board"]}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select segment" />
+                    <SelectValue placeholder={dynamicFieldValues["board"] ? "Select segment" : "Select board first"} />
                   </SelectTrigger>
-                  <SelectContent>
-                    {dynamicFieldValues["function"] === "teaching" || (dynamicFieldValues["category"] === "non_academic" && dynamicFieldValues["function"] === "admin") ? (
-                      <>
-                        <SelectItem value="Pre-Primary">Pre-Primary</SelectItem>
-                        <SelectItem value="Primary">Primary</SelectItem>
-                        <SelectItem value="High School">High School</SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="CBSE">CBSE</SelectItem>
-                        <SelectItem value="ICSE">ICSE / ISC</SelectItem>
-                        <SelectItem value="State Board">State Board</SelectItem>
-                        <SelectItem value="IB">IB (International Baccalaureate)</SelectItem>
-                        <SelectItem value="Cambridge">Cambridge (IGCSE)</SelectItem>
-                        <SelectItem value="Montessori">Montessori</SelectItem>
-                        <SelectItem value="Play School">Play School / Pre-School</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </>
-                    )}
+                  <SelectContent className="bg-popover z-[200]">
+                    <SelectItem value="Pre-Primary">Pre-Primary</SelectItem>
+                    <SelectItem value="Primary">Primary</SelectItem>
+                    <SelectItem value="High School">High School</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
