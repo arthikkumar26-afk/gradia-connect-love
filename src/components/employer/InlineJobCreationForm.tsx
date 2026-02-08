@@ -1249,30 +1249,30 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               />
             </div>
 
-            {/* Generate JD Button */}
-            <div className="flex justify-end gap-3">
-              {hasGenerated && (
-                <Button type="button" variant="outline" disabled={isGenerating} className="gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  Refine with AI
-                </Button>
-              )}
-              <Button type="button" variant="outline" onClick={handleGenerateJD} disabled={isGenerating} className="gap-2">
-                {isGenerating ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" /> Generate JD</>
-                )}
-              </Button>
-            </div>
-
             {/* Skills */}
             <FormField
               control={form.control}
               name="skills"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Skills (comma-separated) *</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Skills (comma-separated) *</FormLabel>
+                    <div className="flex gap-2">
+                      {hasGenerated && (
+                        <Button type="button" variant="outline" size="sm" disabled={isGenerating} className="gap-1.5 h-7 text-xs">
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          Refine with AI
+                        </Button>
+                      )}
+                      <Button type="button" variant="outline" size="sm" onClick={handleGenerateJD} disabled={isGenerating} className="gap-1.5 h-7 text-xs">
+                        {isGenerating ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating...</>
+                        ) : (
+                          <><Sparkles className="h-3.5 w-3.5" /> Generate JD</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                   <FormControl>
                     <Input placeholder={activeConfig.skillsPlaceholder} {...field} />
                   </FormControl>
@@ -1297,31 +1297,32 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             />
 
             {/* Requirements */}
-            <div className="flex justify-end gap-3">
-              {hasGeneratedReq && (
-                <Button type="button" variant="outline" onClick={handleRefineRequirements} disabled={isRefiningReq} className="gap-2">
-                  {isRefiningReq ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Refining...</>
-                  ) : (
-                    <><RefreshCw className="h-4 w-4" /> Refine with AI</>
-                  )}
-                </Button>
-              )}
-              <Button type="button" variant="outline" onClick={handleGenerateRequirements} disabled={isGeneratingReq} className="gap-2">
-                {isGeneratingReq ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
-                ) : (
-                  <><Sparkles className="h-4 w-4" /> Generate Requirements</>
-                )}
-              </Button>
-            </div>
-
             <FormField
               control={form.control}
               name="requirements"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Requirements *</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Requirements *</FormLabel>
+                    <div className="flex gap-2">
+                      {hasGeneratedReq && (
+                        <Button type="button" variant="outline" size="sm" onClick={handleRefineRequirements} disabled={isRefiningReq} className="gap-1.5 h-7 text-xs">
+                          {isRefiningReq ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Refining...</>
+                          ) : (
+                            <><RefreshCw className="h-3.5 w-3.5" /> Refine with AI</>
+                          )}
+                        </Button>
+                      )}
+                      <Button type="button" variant="outline" size="sm" onClick={handleGenerateRequirements} disabled={isGeneratingReq} className="gap-1.5 h-7 text-xs">
+                        {isGeneratingReq ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating...</>
+                        ) : (
+                          <><Sparkles className="h-3.5 w-3.5" /> Generate Requirements</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                   <FormControl>
                     <Textarea placeholder="List the qualifications and experience required..." className="min-h-[100px]" {...field} />
                   </FormControl>
