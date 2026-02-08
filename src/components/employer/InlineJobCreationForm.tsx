@@ -41,6 +41,9 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [isGeneratingReq, setIsGeneratingReq] = useState(false);
+  const [hasGeneratedReq, setHasGeneratedReq] = useState(false);
+  const [isRefiningReq, setIsRefiningReq] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string>>({});
 
@@ -237,10 +240,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
       if (data?.error) throw new Error(data.error);
       if (!data?.description || !data?.requirements || !data?.skills) throw new Error("Invalid response from AI service");
 
-      form.setValue("description", String(data.description));
-      form.setValue("requirements", String(data.requirements));
-      form.setValue("skills", String(data.skills));
+      form.setValue("description", typeof data.description === 'string' ? data.description : JSON.stringify(data.description));
+      form.setValue("requirements", typeof data.requirements === 'string' ? data.requirements : Array.isArray(data.requirements) ? data.requirements.join('\n') : JSON.stringify(data.requirements));
+      form.setValue("skills", typeof data.skills === 'string' ? data.skills : Array.isArray(data.skills) ? data.skills.join(', ') : JSON.stringify(data.skills));
       setHasGenerated(true);
+      setHasGeneratedReq(true);
 
       toast({ title: "Job description generated!", description: "AI has generated job description, requirements, and skills." });
     } catch (error: any) {
@@ -248,6 +252,89 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
       toast({ title: "Failed to generate description", description: error.message || "Please try again later.", variant: "destructive" });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateRequirements = async () => {
+    const jobTitle = form.getValues("job_title");
+    const jobType = form.getValues("job_type");
+    const location = form.getValues("location");
+    const experienceRequired = form.getValues("experience_required");
+    const skills = form.getValues("skills");
+    const department = form.getValues("department");
+
+    if (!jobTitle || !jobType || !location || !experienceRequired) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in Job Title, Job Type, Location, and Experience Required to generate requirements.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingReq(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-job-description", {
+        body: { jobTitle, department, jobType, location, experienceRequired, skills, interviewType: watchedInterviewType, dynamicFields: dynamicFieldValues },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.requirements) throw new Error("Invalid response from AI service");
+
+      form.setValue("requirements", typeof data.requirements === 'string' ? data.requirements : Array.isArray(data.requirements) ? data.requirements.join('\n') : JSON.stringify(data.requirements));
+      setHasGeneratedReq(true);
+
+      toast({ title: "Requirements generated!", description: "AI has generated the requirements for this position." });
+    } catch (error: any) {
+      console.error("Error generating requirements:", error);
+      toast({ title: "Failed to generate requirements", description: error.message || "Please try again later.", variant: "destructive" });
+    } finally {
+      setIsGeneratingReq(false);
+    }
+  };
+
+  const handleRefineRequirements = async () => {
+    const currentRequirements = form.getValues("requirements");
+    if (!currentRequirements || currentRequirements.length < 10) {
+      toast({
+        title: "No requirements to refine",
+        description: "Please generate or enter requirements first before refining.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRefiningReq(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-job-description", {
+        body: {
+          jobTitle: form.getValues("job_title"),
+          department: form.getValues("department"),
+          jobType: form.getValues("job_type"),
+          location: form.getValues("location"),
+          experienceRequired: form.getValues("experience_required"),
+          skills: form.getValues("skills"),
+          isRefinement: true,
+          currentDescription: form.getValues("description"),
+          currentRequirements,
+          currentSkills: form.getValues("skills"),
+          feedback: "Please improve and refine the requirements section to be more comprehensive, well-structured, and professional.",
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.requirements) throw new Error("Invalid response from AI service");
+
+      form.setValue("requirements", typeof data.requirements === 'string' ? data.requirements : Array.isArray(data.requirements) ? data.requirements.join('\n') : JSON.stringify(data.requirements));
+
+      toast({ title: "Requirements refined!", description: "AI has improved the requirements." });
+    } catch (error: any) {
+      console.error("Error refining requirements:", error);
+      toast({ title: "Failed to refine requirements", description: error.message || "Please try again later.", variant: "destructive" });
+    } finally {
+      setIsRefiningReq(false);
     }
   };
 
@@ -1210,6 +1297,25 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             />
 
             {/* Requirements */}
+            <div className="flex justify-end gap-3">
+              {hasGeneratedReq && (
+                <Button type="button" variant="outline" onClick={handleRefineRequirements} disabled={isRefiningReq} className="gap-2">
+                  {isRefiningReq ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Refining...</>
+                  ) : (
+                    <><RefreshCw className="h-4 w-4" /> Refine with AI</>
+                  )}
+                </Button>
+              )}
+              <Button type="button" variant="outline" onClick={handleGenerateRequirements} disabled={isGeneratingReq} className="gap-2">
+                {isGeneratingReq ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
+                ) : (
+                  <><Sparkles className="h-4 w-4" /> Generate Requirements</>
+                )}
+              </Button>
+            </div>
+
             <FormField
               control={form.control}
               name="requirements"
