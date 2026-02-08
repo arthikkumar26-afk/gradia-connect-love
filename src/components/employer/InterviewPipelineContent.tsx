@@ -76,6 +76,7 @@ import { ManualInterviewScheduleModal } from "./ManualInterviewScheduleModal";
 import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
 import { DemoRoundOptions } from "./DemoRoundOptions";
 import { DemoFeedbackResults } from "./DemoFeedbackResults";
+import { AllStagesReviewSummary } from "./AllStagesReviewSummary";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1455,6 +1456,11 @@ const ClickableStagesList = ({
                 )}
 
                 {/* HR Round - Schedule Meeting button is provided via StageActionButtons */}
+
+                {/* Final Review - Show all stages review summary */}
+                {step.title === 'Final Review' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <AllStagesReviewSummary interviewCandidateId={interviewCandidateId} />
+                )}
 
                 {step.status === "current" && (
                   <StageRecordingPlayer
