@@ -81,6 +81,8 @@ const stageIcons: Record<string, React.ElementType> = {
   'Interview Guidelines': Mail,
   'CV/Resume': Users,
   'Written Test': Code,
+  'Demo Slot Booking': Calendar,
+  'Demo Round': Video,
   'HR Round': UserCheck,
   'Viva': Video,
   'Final Review': FileCheck,
@@ -91,6 +93,8 @@ const stageColors: Record<string, string> = {
   'Interview Guidelines': 'bg-indigo-500',
   'CV/Resume': 'bg-blue-500',
   'Written Test': 'bg-orange-500',
+  'Demo Slot Booking': 'bg-purple-500',
+  'Demo Round': 'bg-pink-500',
   'HR Round': 'bg-green-500',
   'Viva': 'bg-yellow-500',
   'Final Review': 'bg-cyan-500',
@@ -282,6 +286,26 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
+      } else if (step.title === 'Written Test' && data?.currentStage === 'Demo Slot Booking') {
+        // Auto-send Demo Slot Booking email when advancing from Written Test
+        try {
+          await supabase.functions.invoke('send-slot-booking-email', {
+            body: {
+              interviewCandidateId,
+              stageName: 'Demo Round',
+            }
+          });
+          toast.success(`✓ Written Test cleared! Demo slot booking email sent`, {
+            description: `Candidate will receive a Demo Round slot booking link`,
+            duration: 5000,
+          });
+        } catch (slotError) {
+          console.error('Error sending demo slot booking email:', slotError);
+          toast.success(`✓ Written Test cleared! Moved to Demo Slot Booking`, {
+            description: 'Note: Slot booking email failed to send. You can resend manually.',
+            duration: 5000,
+          });
+        }
       } else {
         // Show clear success message with current stage cleared and next stage info
         const clearedMessage = `✓ ${step.title} cleared!`;
@@ -324,6 +348,7 @@ const StageActionButtons = ({
   // Current or In Progress stage - show action buttons based on stage type
   if (step.status === "current" || step.status === "in_progress" || step.isLive) {
     const isWrittenTest = step.title === 'Written Test';
+    const isDemoSlotBooking = step.title === 'Demo Slot Booking';
     
     return (
       <div className="flex flex-wrap gap-1 mt-2">
@@ -354,11 +379,11 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Written Test */}
-            {isWrittenTest && (
+            {/* Send Slot Booking email for Written Test or Demo Slot Booking */}
+            {(isWrittenTest || isDemoSlotBooking) && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
-                stageName={step.title}
+                stageName={isDemoSlotBooking ? 'Demo Round' : step.title}
               />
             )}
           </>
@@ -392,6 +417,7 @@ const StageActionButtons = ({
   // Pending stages - show resend button for all (except HR Round which shows Schedule Meeting)
   if (step.status === "pending") {
     const isWrittenTest = step.title === 'Written Test';
+    const isDemoSlotBooking = step.title === 'Demo Slot Booking';
     
     return (
       <div className="flex gap-1 mt-2">
@@ -421,11 +447,11 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Written Test (pending) */}
-            {isWrittenTest && isFirstPending && (
+            {/* Send Slot Booking email for Written Test or Demo Slot Booking (pending) */}
+            {(isWrittenTest || isDemoSlotBooking) && isFirstPending && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
-                stageName={step.title}
+                stageName={isDemoSlotBooking ? 'Demo Round' : step.title}
               />
             )}
           </>
