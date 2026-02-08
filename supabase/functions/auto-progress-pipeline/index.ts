@@ -377,6 +377,15 @@ serve(async (req) => {
         console.error('Error recording event:', eventError);
       }
 
+      // Update ai_score on interview_candidates with latest evaluation score
+      const avgScore = Math.round(
+        results.reduce((sum, r) => sum + (r?.score || 0), evaluation.score) / (results.length + 1)
+      );
+      await supabase
+        .from('interview_candidates')
+        .update({ ai_score: avgScore })
+        .eq('id', interviewCandidateId);
+
       results.push({
         stage: stage.name,
         stageOrder: stage.stage_order,
@@ -394,7 +403,8 @@ serve(async (req) => {
           .from('interview_candidates')
           .update({ 
             status: 'rejected',
-            current_stage_id: stage.id
+            current_stage_id: stage.id,
+            ai_score: avgScore
           })
           .eq('id', interviewCandidateId);
 
