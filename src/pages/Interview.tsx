@@ -277,94 +277,98 @@ const Interview = () => {
   // Start combined screen + webcam recording
   const startRecording = async () => {
     try {
-      // Get screen stream
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { width: 1920, height: 1080 },
-        audio: true
-      });
-      screenStreamRef.current = screenStream;
+      let combinedStream: MediaStream;
+      let hasScreenShare = false;
 
-      // Get webcam stream if not already initialized
-      if (!webcamStreamRef.current) {
-        await initWebcam();
-      }
+      // Try screen + webcam combined recording first
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { width: 1920, height: 1080 },
+          audio: true
+        });
+        screenStreamRef.current = screenStream;
+        hasScreenShare = true;
 
-      // Create a canvas to combine both streams
-      const canvas = document.createElement('canvas');
-      canvas.width = 1920;
-      canvas.height = 1080;
-      const ctx = canvas.getContext('2d')!;
+        // Get webcam stream if not already initialized
+        if (!webcamStreamRef.current) {
+          await initWebcam();
+        }
 
-      // Create video elements for streams
-      const screenVideo = document.createElement('video');
-      screenVideo.srcObject = screenStream;
-      screenVideo.muted = true;
-      await screenVideo.play();
+        // Create a canvas to combine both streams
+        const canvas = document.createElement('canvas');
+        canvas.width = 1920;
+        canvas.height = 1080;
+        const ctx = canvas.getContext('2d')!;
 
-      const webcamVideo = document.createElement('video');
-      if (webcamStreamRef.current) {
-        webcamVideo.srcObject = webcamStreamRef.current;
-        webcamVideo.muted = true;
-        await webcamVideo.play();
-      }
+        const screenVideo = document.createElement('video');
+        screenVideo.srcObject = screenStream;
+        screenVideo.muted = true;
+        await screenVideo.play();
 
-      // Draw combined frame
-      const drawFrame = () => {
-        // Draw screen (full canvas)
-        ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
-        
-        // Draw webcam in bottom-right corner with border
+        const webcamVideo = document.createElement('video');
         if (webcamStreamRef.current) {
-          const webcamWidth = 320;
-          const webcamHeight = 240;
-          const padding = 20;
-          const x = canvas.width - webcamWidth - padding;
-          const y = canvas.height - webcamHeight - padding;
-          
-          // Draw border/shadow
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-          ctx.fillRect(x - 4, y - 4, webcamWidth + 8, webcamHeight + 8);
-          
-          // Draw webcam feed
-          ctx.drawImage(webcamVideo, x, y, webcamWidth, webcamHeight);
-          
-          // Draw border
-          ctx.strokeStyle = '#ffffff';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, webcamWidth, webcamHeight);
+          webcamVideo.srcObject = webcamStreamRef.current;
+          webcamVideo.muted = true;
+          await webcamVideo.play();
+        }
+
+        const drawFrame = () => {
+          ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+          if (webcamStreamRef.current) {
+            const webcamWidth = 320;
+            const webcamHeight = 240;
+            const padding = 20;
+            const x = canvas.width - webcamWidth - padding;
+            const y = canvas.height - webcamHeight - padding;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(x - 4, y - 4, webcamWidth + 8, webcamHeight + 8);
+            ctx.drawImage(webcamVideo, x, y, webcamWidth, webcamHeight);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, webcamWidth, webcamHeight);
+          }
+          if (isRecording) {
+            requestAnimationFrame(drawFrame);
+          }
+        };
+
+        setIsRecording(true);
+        requestAnimationFrame(drawFrame);
+
+        const canvasStream = canvas.captureStream(30);
+        const audioContext = new AudioContext();
+        const destination = audioContext.createMediaStreamDestination();
+
+        if (webcamStreamRef.current?.getAudioTracks().length) {
+          const webcamAudio = audioContext.createMediaStreamSource(webcamStreamRef.current);
+          webcamAudio.connect(destination);
+        }
+        if (screenStream.getAudioTracks().length) {
+          const screenAudio = audioContext.createMediaStreamSource(screenStream);
+          screenAudio.connect(destination);
+        }
+
+        combinedStream = new MediaStream([
+          ...canvasStream.getVideoTracks(),
+          ...destination.stream.getAudioTracks()
+        ]);
+      } catch (screenErr) {
+        // Screen sharing declined - fall back to webcam-only recording
+        console.log('Screen sharing declined, falling back to webcam-only recording');
+        
+        if (!webcamStreamRef.current) {
+          await initWebcam();
         }
         
-        if (isRecording) {
-          requestAnimationFrame(drawFrame);
+        if (!webcamStreamRef.current) {
+          toast.error("Could not access camera for recording. You can still proceed.");
+          return;
         }
-      };
 
-      // Start drawing
-      setIsRecording(true);
-      requestAnimationFrame(drawFrame);
-
-      // Create combined stream from canvas
-      const canvasStream = canvas.captureStream(30);
-      
-      // Add audio from webcam and screen
-      const audioContext = new AudioContext();
-      const destination = audioContext.createMediaStreamDestination();
-      
-      if (webcamStreamRef.current?.getAudioTracks().length) {
-        const webcamAudio = audioContext.createMediaStreamSource(webcamStreamRef.current);
-        webcamAudio.connect(destination);
+        combinedStream = webcamStreamRef.current;
+        setIsRecording(true);
+        toast.info("Recording with webcam only (no screen share)");
       }
-      
-      if (screenStream.getAudioTracks().length) {
-        const screenAudio = audioContext.createMediaStreamSource(screenStream);
-        screenAudio.connect(destination);
-      }
-
-      // Combine video and audio
-      const combinedStream = new MediaStream([
-        ...canvasStream.getVideoTracks(),
-        ...destination.stream.getAudioTracks()
-      ]);
 
       const mediaRecorder = new MediaRecorder(combinedStream, {
         mimeType: 'video/webm;codecs=vp9'
@@ -378,7 +382,9 @@ const Interview = () => {
 
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start(1000);
-      toast.success("Recording started (Screen + Camera)");
+      if (hasScreenShare) {
+        toast.success("Recording started (Screen + Camera)");
+      }
     } catch (err) {
       console.error('Recording error:', err);
       toast.error("Could not start recording. You can still proceed with the interview.");

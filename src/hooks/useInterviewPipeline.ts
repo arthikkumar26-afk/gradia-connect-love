@@ -191,7 +191,12 @@ export const useInterviewPipeline = () => {
             const currentStageOrder = dbStages.find(st => st.id === c.current_stage_id)?.stage_order || 1;
             
             const interviewSteps: InterviewStep[] = dbStages.map((s) => {
-              const event = events.find((e) => e.stage_id === s.id);
+              // Find the most relevant event for this stage (completed > in_progress > pending)
+              const stageEvents = events.filter((e) => e.stage_id === s.id);
+              const event = stageEvents.find((e) => e.status === 'completed' || e.status === 'passed')
+                || stageEvents.find((e) => e.status === 'in_progress')
+                || stageEvents.find((e) => e.status === 'failed')
+                || stageEvents[0] || null;
               let status: InterviewStep["status"] = "pending";
               let isLive = false;
               let liveStatus: InterviewStep["liveStatus"] = undefined;
