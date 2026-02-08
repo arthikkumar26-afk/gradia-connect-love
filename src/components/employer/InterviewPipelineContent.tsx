@@ -688,13 +688,16 @@ const ClickableStagesList = ({
   const [selectedStageForResults, setSelectedStageForResults] = useState<InterviewStep | null>(null);
   const [hrScheduleModalOpen, setHrScheduleModalOpen] = useState(false);
   const [selectedHRStep, setSelectedHRStep] = useState<InterviewStep | null>(null);
-  const [slotBooking, setSlotBooking] = useState<{ booking_date: string; booking_time: string; status: string; subject: string | null } | null>(null);
+  const [slotBooking, setSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string } | null>(null);
+  const [isEditingSlot, setIsEditingSlot] = useState(false);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [isSavingSlot, setIsSavingSlot] = useState(false);
 
   // Fetch slot booking details for this candidate
   useEffect(() => {
     const fetchSlotBooking = async () => {
       try {
-        // Get candidate_id from interview_candidates
         const { data: icData } = await supabase
           .from('interview_candidates')
           .select('candidate_id')
@@ -704,11 +707,10 @@ const ClickableStagesList = ({
         if (icData?.candidate_id) {
           const { data: bookings } = await supabase
             .from('slot_bookings')
-            .select('booking_date, booking_time, status, subject')
+            .select('id, booking_date, booking_time, status, subject, updated_at, created_at')
             .eq('candidate_id', icData.candidate_id)
             .order('created_at', { ascending: false });
 
-          // Find demo round booking
           const demoBooking = bookings?.find(b => 
             b.subject?.toLowerCase().includes('demo')
           ) || bookings?.[0] || null;
@@ -721,6 +723,37 @@ const ClickableStagesList = ({
     };
     fetchSlotBooking();
   }, [interviewCandidateId]);
+
+  const handleEditSlot = () => {
+    if (slotBooking) {
+      setEditDate(slotBooking.booking_date);
+      setEditTime(slotBooking.booking_time);
+      setIsEditingSlot(true);
+    }
+  };
+
+  const handleSaveSlotEdit = async () => {
+    if (!slotBooking || !editDate || !editTime) return;
+    setIsSavingSlot(true);
+    try {
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ booking_date: editDate, booking_time: editTime, updated_at: new Date().toISOString() })
+        .eq('id', slotBooking.id);
+
+      if (error) throw error;
+      setSlotBooking({ ...slotBooking, booking_date: editDate, booking_time: editTime, updated_at: new Date().toISOString() });
+      setIsEditingSlot(false);
+      toast.success('Slot booking updated');
+    } catch (err) {
+      console.error('Error updating slot booking:', err);
+      toast.error('Failed to update slot booking');
+    } finally {
+      setIsSavingSlot(false);
+    }
+  };
+
+  const isSlotEdited = slotBooking && slotBooking.updated_at !== slotBooking.created_at;
   
   const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview");
   const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
@@ -814,28 +847,86 @@ const ClickableStagesList = ({
                 
                 {/* Slot Booking Details for Demo Slot Booking stage */}
                 {step.title === 'Demo Slot Booking' && slotBooking && (
-                  <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-2 space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
-                      <Calendar className="h-3 w-3" />
-                      Slot Booked
+                  <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
+                        <Calendar className="h-3 w-3" />
+                        Slot Booked
+                        {isSlotEdited && (
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-400 text-amber-600 bg-amber-50">
+                            Edited
+                          </Badge>
+                        )}
+                      </div>
+                      {!isEditingSlot && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 text-[10px] px-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                          onClick={(e) => { e.stopPropagation(); handleEditSlot(); }}
+                        >
+                          ✏️ Edit
+                        </Button>
+                      )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
-                        📅 {new Date(slotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                      </Badge>
-                      <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
-                        🕐 {slotBooking.booking_time}
-                      </Badge>
-                      <Badge className={`text-[10px] py-0 ${
-                        slotBooking.status === 'confirmed' 
-                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                      }`}>
-                        {slotBooking.status === 'confirmed' ? '✓ Confirmed' : slotBooking.status}
-                      </Badge>
-                    </div>
-                    {slotBooking.subject && (
-                      <p className="text-[10px] text-muted-foreground">Stage: {slotBooking.subject}</p>
+
+                    {isEditingSlot ? (
+                      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-2">
+                          <Input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                            className="h-7 text-xs flex-1"
+                          />
+                          <Input
+                            type="time"
+                            value={editTime}
+                            onChange={(e) => setEditTime(e.target.value)}
+                            className="h-7 text-xs w-28"
+                          />
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            className="h-6 text-[10px] px-2"
+                            onClick={handleSaveSlotEdit}
+                            disabled={isSavingSlot || !editDate || !editTime}
+                          >
+                            {isSavingSlot ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-[10px] px-2"
+                            onClick={() => setIsEditingSlot(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
+                            📅 {new Date(slotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
+                            🕐 {slotBooking.booking_time}
+                          </Badge>
+                          <Badge className={`text-[10px] py-0 ${
+                            slotBooking.status === 'confirmed' 
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+                              : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                          }`}>
+                            {slotBooking.status === 'confirmed' ? '✓ Confirmed' : slotBooking.status}
+                          </Badge>
+                        </div>
+                        {slotBooking.subject && (
+                          <p className="text-[10px] text-muted-foreground">Stage: {slotBooking.subject}</p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
