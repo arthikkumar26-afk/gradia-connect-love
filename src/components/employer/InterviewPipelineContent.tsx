@@ -86,6 +86,7 @@ const stageIcons: Record<string, React.ElementType> = {
   'Written Test': Code,
   'Demo Slot Booking': Calendar,
   'Demo Round': Video,
+  'Demo Feedback': MessageSquare,
   'HR Round Slot Booking': Calendar,
   'HR Round': UserCheck,
   'Viva': Video,
@@ -99,6 +100,7 @@ const stageColors: Record<string, string> = {
   'Written Test': 'bg-orange-500',
   'Demo Slot Booking': 'bg-purple-500',
   'Demo Round': 'bg-pink-500',
+  'Demo Feedback': 'bg-amber-500',
   'HR Round Slot Booking': 'bg-teal-500',
   'HR Round': 'bg-green-500',
   'Viva': 'bg-yellow-500',
@@ -350,8 +352,14 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Round' && data?.currentStage === 'HR Round Slot Booking') {
-        // Auto-send HR Slot Booking email when advancing from Demo Round
+      } else if (step.title === 'Demo Round' && data?.currentStage === 'Demo Feedback') {
+        // Demo Round → Demo Feedback (management review)
+        toast.success(`✓ Demo Round cleared! Moved to Demo Feedback`, {
+          description: `Management can now review the demo performance`,
+          duration: 5000,
+        });
+      } else if (step.title === 'Demo Feedback' && data?.currentStage === 'HR Round Slot Booking') {
+        // Demo Feedback → HR Round Slot Booking
         try {
           await supabase.functions.invoke('send-slot-booking-email', {
             body: {
@@ -359,13 +367,13 @@ const StageActionButtons = ({
               stageName: 'HR Round',
             }
           });
-          toast.success(`✓ Demo Round cleared! HR slot booking email sent`, {
+          toast.success(`✓ Demo Feedback cleared! HR slot booking email sent`, {
             description: `Candidate will receive an HR Round slot booking link`,
             duration: 5000,
           });
         } catch (slotError) {
           console.error('Error sending HR slot booking email:', slotError);
-          toast.success(`✓ Demo Round cleared! Moved to HR Round Slot Booking`, {
+          toast.success(`✓ Demo Feedback cleared! Moved to HR Round Slot Booking`, {
             description: 'Note: Slot booking email failed to send. You can resend manually.',
             duration: 5000,
           });
