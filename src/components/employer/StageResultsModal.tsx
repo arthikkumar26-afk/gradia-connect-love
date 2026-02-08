@@ -18,7 +18,9 @@ import {
   ExternalLink,
   FileText,
   Award,
-  AlertCircle
+  AlertCircle,
+  Brain,
+  Sparkles
 } from "lucide-react";
 
 interface InterviewResponse {
@@ -33,6 +35,15 @@ interface InterviewResponse {
   demo_video_url: string | null;
   completed_at: string | null;
   interview_event_id: string;
+}
+
+interface EventData {
+  id: string;
+  status: string;
+  completed_at: string | null;
+  ai_score: number | null;
+  ai_feedback: any;
+  notes: string | null;
 }
 
 interface StageResultsModalProps {
@@ -54,6 +65,7 @@ export const StageResultsModal = ({
 }: StageResultsModalProps) => {
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState<InterviewResponse | null>(null);
+  const [eventData, setEventData] = useState<EventData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,10 +79,12 @@ export const StageResultsModal = ({
         // Get interview event for this stage
         const { data: event, error: eventError } = await supabase
           .from('interview_events')
-          .select('id, status, completed_at, ai_score, ai_feedback')
+          .select('id, status, completed_at, ai_score, ai_feedback, notes')
           .eq('interview_candidate_id', interviewCandidateId)
           .eq('stage_id', stageId)
-          .single();
+          .order('completed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
         if (eventError || !event) {
           setError("No interview event found for this stage");
@@ -78,23 +92,22 @@ export const StageResultsModal = ({
           return;
         }
 
-        // Get response for this event (completed interview)
-        const { data: responseData, error: responseError } = await supabase
+        setEventData(event as EventData);
+
+        // Try to get response for this event (completed interview with MCQ/video)
+        const { data: responseData } = await supabase
           .from('interview_responses')
           .select('*')
           .eq('interview_event_id', event.id)
           .not('completed_at', 'is', null)
           .order('completed_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (responseError || !responseData) {
-          setError("No completed interview response found");
-          setLoading(false);
-          return;
+        if (responseData) {
+          setResponse(responseData as InterviewResponse);
         }
-
-        setResponse(responseData as InterviewResponse);
+        // If no response, we still have eventData with AI feedback to show
       } catch (err) {
         console.error('Error fetching stage results:', err);
         setError("Failed to load interview results");
@@ -115,8 +128,20 @@ export const StageResultsModal = ({
 
   const videoUrl = response?.demo_video_url || response?.recording_url;
   const hasMCQResults = response && response.total_questions > 0 && response.questions?.length > 0;
-  const scorePercentage = response?.score || 0;
+  
+  // Use response score if available, otherwise use event AI score
+  const scorePercentage = response?.score || eventData?.ai_score || 0;
   const isPassed = scorePercentage >= 50;
+  const hasEventData = eventData && (eventData.ai_score !== null || eventData.ai_feedback || eventData.notes);
+
+  // Parse AI feedback from event
+  const aiFeedback = eventData?.ai_feedback;
+  const feedbackText = typeof aiFeedback === 'string' 
+    ? aiFeedback 
+    : aiFeedback?.feedback || aiFeedback?.next_stage_recommendations || null;
+  const keyObservations = aiFeedback?.key_observations || [];
+  const areasOfConcern = aiFeedback?.areas_of_concern || [];
+  const confidenceLevel = aiFeedback?.confidence_level || null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -148,7 +173,7 @@ export const StageResultsModal = ({
                   The candidate may not have completed this stage yet.
                 </p>
               </div>
-            ) : response ? (
+            ) : (
               <>
                 {/* Score Summary Card */}
                 <div className={`rounded-xl p-6 border-2 ${
@@ -180,24 +205,92 @@ export const StageResultsModal = ({
                       </Badge>
                       {hasMCQResults && (
                         <p className="text-sm text-muted-foreground">
-                          {response.correct_answers}/{response.total_questions} correct answers
+                          {response?.correct_answers}/{response?.total_questions} correct answers
                         </p>
                       )}
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground justify-end">
-                        <Clock className="h-4 w-4" />
-                        Time: {formatTime(response.time_taken_seconds)}
-                      </div>
+                      {response?.time_taken_seconds && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground justify-end">
+                          <Clock className="h-4 w-4" />
+                          Time: {formatTime(response.time_taken_seconds)}
+                        </div>
+                      )}
+                      {confidenceLevel && (
+                        <Badge variant="outline" className="text-xs capitalize">
+                          <Brain className="h-3 w-3 mr-1" />
+                          {confidenceLevel} confidence
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                  {response.completed_at && (
+                  {(response?.completed_at || eventData?.completed_at) && (
                     <p className="text-xs text-muted-foreground mt-4 border-t pt-4">
-                      Completed: {new Date(response.completed_at).toLocaleString('en-IN', {
+                      Completed: {new Date(response?.completed_at || eventData?.completed_at || '').toLocaleString('en-IN', {
                         dateStyle: 'full',
                         timeStyle: 'short'
                       })}
                     </p>
                   )}
                 </div>
+
+                {/* AI Feedback Section - shown when auto-progressed (no MCQ response) */}
+                {hasEventData && !response && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      AI Evaluation
+                    </h3>
+
+                    {/* Feedback text */}
+                    {(feedbackText || eventData?.notes) && (
+                      <div className="p-4 rounded-lg bg-muted/50 border">
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {feedbackText || eventData?.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Key Observations */}
+                    {keyObservations.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-foreground">Key Observations</h4>
+                        <div className="space-y-1.5">
+                          {keyObservations.map((obs: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 text-sm">
+                              <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                              <span className="text-muted-foreground">{obs}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Areas of Concern */}
+                    {areasOfConcern.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-foreground">Areas of Concern</h4>
+                        <div className="space-y-1.5">
+                          {areasOfConcern.map((concern: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 text-sm">
+                              <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                              <span className="text-muted-foreground">{concern}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Status badge */}
+                    <div className="flex items-center gap-2 pt-2">
+                      <Badge variant="secondary" className="text-xs">
+                        <Brain className="h-3 w-3 mr-1" />
+                        AI Auto-Evaluated
+                      </Badge>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        Status: {eventData?.status}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
 
                 {/* Video Recording Section */}
                 {videoUrl && (
@@ -230,7 +323,7 @@ export const StageResultsModal = ({
                 )}
 
                 {/* Questions & Answers Section */}
-                {hasMCQResults && response.questions && (
+                {hasMCQResults && response?.questions && (
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
                       <FileText className="h-5 w-5 text-primary" />
@@ -329,14 +422,14 @@ export const StageResultsModal = ({
                 )}
 
                 {/* No MCQ but has video - show message */}
-                {!hasMCQResults && videoUrl && (
+                {!hasMCQResults && videoUrl && !hasEventData && (
                   <div className="text-center py-4 text-muted-foreground">
                     <p>This stage had a video submission without MCQ questions.</p>
                   </div>
                 )}
 
                 {/* No content at all */}
-                {!hasMCQResults && !videoUrl && (
+                {!hasMCQResults && !videoUrl && !hasEventData && (
                   <div className="text-center py-8 text-muted-foreground">
                     <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                     <p>No detailed results available for this stage.</p>
@@ -344,7 +437,7 @@ export const StageResultsModal = ({
                   </div>
                 )}
               </>
-            ) : null}
+            )}
           </div>
         </ScrollArea>
       </DialogContent>
