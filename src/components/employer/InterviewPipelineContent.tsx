@@ -217,6 +217,16 @@ const StageActionButtons = ({
         });
         if (error) throw error;
         toast.success('CV/Resume ATS results email resent');
+      } else if (step.title === 'Demo Slot Booking') {
+        // For Demo Slot Booking, send slot booking email (not interview invitation)
+        const { error } = await supabase.functions.invoke('send-slot-booking-email', {
+          body: {
+            interviewCandidateId,
+            stageName: 'Demo Round',
+          },
+        });
+        if (error) throw error;
+        toast.success('Demo slot booking email resent');
       } else {
         const { error } = await supabase.functions.invoke('send-notification-email', {
           body: {
