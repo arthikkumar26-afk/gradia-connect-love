@@ -91,7 +91,7 @@ serve(async (req) => {
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-radius: 8px; margin: 24px 0; border: 1px solid #f59e0b;">
           <tr>
             <td style="padding: 20px;">
-              <p style="margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #92400e;">⚠️ IMPORTANT: Create Your Gradia Account First</p>
+              <p style="margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #92400e;">⚠️ IMPORTANT: Create Your Gradia Account</p>
               <p style="margin: 0 0 12px; font-size: 13px; color: #78350f;">
                 Before proceeding with the interview, please create your Gradia candidate account. This account is required for interview monitoring, tracking your progress, and receiving interview updates.
               </p>
