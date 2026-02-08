@@ -171,8 +171,6 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         return Video;
       case 'HR Round':
         return UserCheck;
-      case 'Viva':
-        return ClipboardCheck;
       case 'Final Review':
         return FileCheck;
       case 'Offer Stage':
