@@ -688,6 +688,39 @@ const ClickableStagesList = ({
   const [selectedStageForResults, setSelectedStageForResults] = useState<InterviewStep | null>(null);
   const [hrScheduleModalOpen, setHrScheduleModalOpen] = useState(false);
   const [selectedHRStep, setSelectedHRStep] = useState<InterviewStep | null>(null);
+  const [slotBooking, setSlotBooking] = useState<{ booking_date: string; booking_time: string; status: string; subject: string | null } | null>(null);
+
+  // Fetch slot booking details for this candidate
+  useEffect(() => {
+    const fetchSlotBooking = async () => {
+      try {
+        // Get candidate_id from interview_candidates
+        const { data: icData } = await supabase
+          .from('interview_candidates')
+          .select('candidate_id')
+          .eq('id', interviewCandidateId)
+          .single();
+
+        if (icData?.candidate_id) {
+          const { data: bookings } = await supabase
+            .from('slot_bookings')
+            .select('booking_date, booking_time, status, subject')
+            .eq('candidate_id', icData.candidate_id)
+            .order('created_at', { ascending: false });
+
+          // Find demo round booking
+          const demoBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('demo')
+          ) || bookings?.[0] || null;
+          
+          setSlotBooking(demoBooking);
+        }
+      } catch (err) {
+        console.error('Error fetching slot booking:', err);
+      }
+    };
+    fetchSlotBooking();
+  }, [interviewCandidateId]);
   
   const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview");
   const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
@@ -779,6 +812,34 @@ const ClickableStagesList = ({
                   </div>
                 )}
                 
+                {/* Slot Booking Details for Demo Slot Booking stage */}
+                {step.title === 'Demo Slot Booking' && slotBooking && (
+                  <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-2 space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
+                      <Calendar className="h-3 w-3" />
+                      Slot Booked
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
+                        📅 {new Date(slotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                      </Badge>
+                      <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
+                        🕐 {slotBooking.booking_time}
+                      </Badge>
+                      <Badge className={`text-[10px] py-0 ${
+                        slotBooking.status === 'confirmed' 
+                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                      }`}>
+                        {slotBooking.status === 'confirmed' ? '✓ Confirmed' : slotBooking.status}
+                      </Badge>
+                    </div>
+                    {slotBooking.subject && (
+                      <p className="text-[10px] text-muted-foreground">Stage: {slotBooking.subject}</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Show interview link for current stages (not expanded content) */}
                 {step.status === "current" && (
                   <StageRecordingPlayer
