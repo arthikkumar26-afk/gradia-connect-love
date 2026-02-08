@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +107,7 @@ interface InterviewPipelineTabProps {
 }
 
 export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps) => {
+  const navigate = useNavigate();
   const [interviews, setInterviews] = useState<InterviewCandidate[]>([]);
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -234,6 +236,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       case 'CV/Resume':
       case 'Resume Screening':
         return FileText;
+      case 'Written Test Slot Booking':
+        return Calendar;
       case 'Written Test':
       case 'Technical Assessment':
         return Code;
@@ -792,6 +796,47 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             </Badge>
                           );
                         }
+                        if (status === 'current') {
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/book-slot?type=demo_round');
+                              }}
+                              className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
+                            >
+                              Book Slot
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      {stage.name === 'Written Test Slot Booking' && (() => {
+                        const wtBooking = slotBookings.find(b => 
+                          b.booking_type === 'written_test' || b.booking_type === 'Written Test'
+                        );
+                        if (wtBooking) {
+                          return (
+                            <Badge variant="secondary" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {formatDate(wtBooking.booking_date)} • {wtBooking.booking_time}
+                            </Badge>
+                          );
+                        }
+                        if (status === 'current') {
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/book-slot?type=written_test');
+                              }}
+                              className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
+                            >
+                              Book Slot
+                            </button>
+                          );
+                        }
                         return null;
                       })()}
 
@@ -805,6 +850,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                               <Calendar className="h-3 w-3 mr-1" />
                               {formatDate(hrBooking.booking_date)} • {hrBooking.booking_time}
                             </Badge>
+                          );
+                        }
+                        if (status === 'current') {
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate('/book-slot?type=hr_round');
+                              }}
+                              className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
+                            >
+                              Book Slot
+                            </button>
                           );
                         }
                         return null;
