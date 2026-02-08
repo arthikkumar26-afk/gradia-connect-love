@@ -315,7 +315,7 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold">Segment</TableHead>
                     <TableHead className="font-semibold">Program</TableHead>
                     <TableHead className="font-semibold">Classes</TableHead>
-                    <TableHead className="font-semibold">Board</TableHead>
+                    <TableHead className="font-semibold">Board-Syllabus</TableHead>
                     <TableHead className="font-semibold">Department</TableHead>
                     <TableHead className="font-semibold">Designation</TableHead>
                     <TableHead className="font-semibold">Subjects</TableHead>

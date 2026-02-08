@@ -363,7 +363,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             {/* Segment, Department, Designation, Subjects */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium leading-none">Segment / Board</label>
+                <label className="text-sm font-medium leading-none">Segment / Board-Syllabus</label>
                 <Select
                   key={`segment-${dynamicFieldValues["function"] || "default"}`}
                   value={dynamicFieldValues["segment"] || undefined}
@@ -589,7 +589,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectValue placeholder="Select program" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-[200]">
-                        <SelectItem value="board">Board</SelectItem>
+                        <SelectItem value="board">Board-Syllabus</SelectItem>
                         <SelectItem value="competitive">Competitive</SelectItem>
                       </SelectContent>
                     </Select>
