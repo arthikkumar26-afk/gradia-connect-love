@@ -260,12 +260,28 @@ export const JobManagementContent = () => {
     }
   };
 
-  const filteredJobs = jobs.filter((job) =>
-    job.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.skills.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredJobs = jobs.filter((job) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      job.jobTitle.toLowerCase().includes(q) ||
+      job.id.toLowerCase().includes(q) ||
+      job.sectorDivision.toLowerCase().includes(q) ||
+      job.category.toLowerCase().includes(q) ||
+      job.functionType.toLowerCase().includes(q) ||
+      job.board.toLowerCase().includes(q) ||
+      job.segment.toLowerCase().includes(q) ||
+      job.program.toLowerCase().includes(q) ||
+      job.classes.toLowerCase().includes(q) ||
+      job.department.toLowerCase().includes(q) ||
+      job.designation.toLowerCase().includes(q) ||
+      job.subjects.toLowerCase().includes(q) ||
+      job.experience.toLowerCase().includes(q) ||
+      job.skills.toLowerCase().includes(q) ||
+      job.type.toLowerCase().includes(q) ||
+      job.location.toLowerCase().includes(q) ||
+      job.salary.toLowerCase().includes(q)
+    );
+  });
 
   // Templates full page view
   if (showTemplates) {
@@ -288,7 +304,7 @@ export const JobManagementContent = () => {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by designation, department, skills, or Job ID..."
+                  placeholder="Search by Job Title, Job ID, Sector, Category, Board, Subjects, Location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
