@@ -456,8 +456,6 @@ const StageActionButtons = ({
 
       if (error) throw error;
 
-      onUpdateStep(step.id, "completed", true);
-
       // Send feedback request to observers
       try {
         await supabase.functions.invoke('send-demo-feedback-email', {

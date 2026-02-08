@@ -386,7 +386,7 @@ export const useInterviewPipeline = () => {
       // Get stage info
       const { data: stageData } = await supabase
         .from('interview_stages')
-        .select('*, next:interview_stages!stage_order(id, name, stage_order)')
+        .select('id, name, stage_order')
         .eq('id', stageId)
         .single();
 
