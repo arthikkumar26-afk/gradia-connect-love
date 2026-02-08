@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Loader2, FileText, Code, Video, MessageSquare, UserCheck, 
   FileCheck, Star, CheckCircle2, XCircle, Clock, Award, Brain,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import { toast } from "sonner";
 
 interface StageReview {
   stageName: string;
@@ -63,10 +66,25 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
   const [stageReviews, setStageReviews] = useState<StageReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [candidateName, setCandidateName] = useState<string>('Candidate');
+  const [jobTitle, setJobTitle] = useState<string>('Position');
 
   useEffect(() => {
     const fetchAllReviews = async () => {
       try {
+        // Fetch candidate and job info
+        const { data: icData } = await supabase
+          .from('interview_candidates')
+          .select('candidate_id, job_id, candidate:profiles(full_name), job:jobs(job_title)')
+          .eq('id', interviewCandidateId)
+          .single();
+        
+        if (icData) {
+          setCandidateName((icData.candidate as any)?.full_name || 'Candidate');
+          setJobTitle((icData.job as any)?.job_title || 'Position');
+        }
+
         // Fetch all stages
         const { data: stages } = await supabase
           .from('interview_stages')
@@ -100,9 +118,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
 
         // Build stage reviews
         const reviews: StageReview[] = stages
-          .filter(s => s.name !== 'Offer Stage') // Exclude Offer Stage from reviews
+          .filter(s => s.name !== 'Offer Stage')
           .map(stage => {
-            // Find the best event for this stage (completed > in_progress > any)
             const stageEvents = (events || []).filter(e => e.stage_id === stage.id);
             const event = stageEvents.find(e => e.status === 'completed' || e.status === 'passed')
               || stageEvents.find(e => e.status === 'in_progress')
@@ -118,7 +135,6 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
               aiFeedback: event?.ai_feedback || null,
             };
 
-            // Add Written Test response data
             if (stage.name === 'Written Test' && event) {
               const resp = responses.find(r => r.interview_event_id === event.id);
               if (resp) {
@@ -129,7 +145,6 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
               }
             }
 
-            // Add Demo Feedback reviews
             if (stage.name === 'Demo Feedback') {
               const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted');
               if (submittedReviews.length > 0) {
@@ -142,7 +157,6 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   recommendation: r.recommendation,
                   feedbackText: r.feedback_text,
                 }));
-                // Average overall rating as score
                 const avgRating = submittedReviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / submittedReviews.length;
                 review.score = Math.round((avgRating / 5) * 100);
               }
@@ -161,6 +175,152 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
 
     fetchAllReviews();
   }, [interviewCandidateId]);
+
+  const handleDownloadPDF = useCallback(() => {
+    setIsDownloading(true);
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let y = 20;
+
+      // Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Interview Review Report', pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Candidate: ${candidateName}`, 14, y);
+      y += 6;
+      doc.text(`Position: ${jobTitle}`, 14, y);
+      y += 6;
+      doc.text(`Date: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, 14, y);
+      y += 10;
+
+      // Overall Score
+      const completedReviewsForPdf = stageReviews.filter(r => r.status === 'completed' || r.status === 'passed' || r.completedAt);
+      const overallScoreForPdf = completedReviewsForPdf.length > 0
+        ? Math.round(completedReviewsForPdf.reduce((sum, r) => sum + (r.score || 0), 0) / completedReviewsForPdf.filter(r => r.score).length)
+        : null;
+
+      if (overallScoreForPdf !== null) {
+        doc.setFillColor(240, 253, 244);
+        doc.rect(14, y, pageWidth - 28, 12, 'F');
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Overall Score: ${overallScoreForPdf}%`, 20, y + 8);
+        doc.text(`${completedReviewsForPdf.filter(r => r.score).length} stages evaluated`, pageWidth - 20, y + 8, { align: 'right' });
+        y += 18;
+      }
+
+      // Separator
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, y, pageWidth - 14, y);
+      y += 8;
+
+      // Stage-by-stage details
+      for (const review of stageReviews) {
+        const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
+        
+        // Check if we need a new page
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+
+        // Stage header
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        const statusText = isCompleted ? '✓' : '○';
+        doc.text(`${statusText} ${review.stageName}`, 14, y);
+        if (review.score !== null && review.score !== undefined) {
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Score: ${review.score}%`, pageWidth - 20, y, { align: 'right' });
+        }
+        y += 6;
+
+        if (isCompleted) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+
+          // CV/Resume AI Feedback
+          if (review.stageName === 'CV/Resume' && review.aiFeedback) {
+            if (typeof review.aiFeedback === 'object' && review.aiFeedback.feedback) {
+              const lines = doc.splitTextToSize(review.aiFeedback.feedback, pageWidth - 34);
+              doc.text(lines, 20, y);
+              y += lines.length * 4 + 2;
+            }
+          }
+
+          // Written Test Results
+          if (review.stageName === 'Written Test' && review.totalQuestions) {
+            doc.text(`Correct: ${review.correctAnswers}/${review.totalQuestions}  |  Time: ${review.timeTaken ? `${Math.floor(review.timeTaken / 60)}m ${review.timeTaken % 60}s` : 'N/A'}`, 20, y);
+            y += 5;
+          }
+
+          // Demo Feedback Reviews
+          if (review.stageName === 'Demo Feedback' && review.reviews) {
+            for (const r of review.reviews) {
+              if (y > 260) { doc.addPage(); y = 20; }
+              doc.setFont('helvetica', 'bold');
+              doc.text(`${r.reviewerName || 'Observer'}:`, 20, y);
+              y += 4;
+              doc.setFont('helvetica', 'normal');
+              doc.text(`Teaching: ${r.teachingRating || 0}/5  |  Communication: ${r.communicationRating || 0}/5  |  Knowledge: ${r.knowledgeRating || 0}/5`, 24, y);
+              y += 4;
+              if (r.recommendation) {
+                doc.text(`Recommendation: ${r.recommendation.replace(/_/g, ' ')}`, 24, y);
+                y += 4;
+              }
+              if (r.feedbackText) {
+                const fbLines = doc.splitTextToSize(`"${r.feedbackText}"`, pageWidth - 50);
+                doc.text(fbLines, 24, y);
+                y += fbLines.length * 4;
+              }
+              y += 2;
+            }
+          }
+
+          // General notes/feedback
+          if (!['CV/Resume', 'Written Test', 'Demo Feedback'].includes(review.stageName) && review.notes) {
+            const noteLines = doc.splitTextToSize(review.notes, pageWidth - 34);
+            doc.text(noteLines, 20, y);
+            y += noteLines.length * 4 + 2;
+          }
+
+          if (review.completedAt) {
+            doc.setFontSize(8);
+            doc.text(`Completed: ${new Date(review.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`, 20, y);
+            y += 5;
+          }
+        } else {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'italic');
+          doc.text('Pending', 20, y);
+          y += 5;
+        }
+
+        // Stage separator
+        doc.setDrawColor(230, 230, 230);
+        doc.line(14, y, pageWidth - 14, y);
+        y += 6;
+      }
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.text(`Generated by Gradia Job Portal on ${new Date().toLocaleString('en-IN')}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+
+      doc.save(`${candidateName.replace(/\s+/g, '_')}_Interview_Review.pdf`);
+      toast.success('Review report downloaded successfully');
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      toast.error('Failed to download review report');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [stageReviews, candidateName, jobTitle]);
 
   if (isLoading) {
     return (
@@ -185,6 +345,23 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
 
   return (
     <div className="mt-3 space-y-3">
+      {/* Download Button */}
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDownloadPDF}
+          disabled={isDownloading}
+          className="h-7 text-xs"
+        >
+          {isDownloading ? (
+            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+          ) : (
+            <Download className="h-3.5 w-3.5 mr-1.5" />
+          )}
+          Download Report
+        </Button>
+      </div>
       {/* Overall Summary */}
       {overallScore !== null && (
         <div className={cn(

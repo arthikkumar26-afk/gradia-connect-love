@@ -479,9 +479,63 @@ const StageActionButtons = ({
     }
   };
 
+  // Handle moving specifically from HR Round to Final Review
+  const handleMoveToFinalReview = async () => {
+    setIsMovingNext(true);
+    try {
+      // First, set the candidate's current stage to HR Round so the edge function advances correctly
+      const { data: hrRoundStage } = await supabase
+        .from('interview_stages')
+        .select('id, stage_order')
+        .eq('name', 'HR Round')
+        .single();
+
+      if (!hrRoundStage) throw new Error('HR Round stage not found');
+
+      // Set current_stage_id to HR Round first
+      await supabase
+        .from('interview_candidates')
+        .update({ current_stage_id: hrRoundStage.id })
+        .eq('id', interviewCandidateId);
+
+      // Now call the edge function to advance from HR Round → Final Review
+      const { data, error } = await supabase.functions.invoke('process-interview-stage', {
+        body: {
+          interviewCandidateId,
+          action: 'advance',
+          feedback: 'Manually advanced from HR Round to Final Review'
+        }
+      });
+
+      if (error) throw error;
+
+      // Update local UI state
+      onUpdateStep(step.id, "completed", true);
+
+      toast.success(`✓ HR Round cleared! Moved to Final Review`, {
+        description: 'All stages review summary is now available',
+        duration: 5000,
+      });
+    } catch (error) {
+      console.error('Error moving to Final Review:', error);
+      toast.error('Failed to move to Final Review');
+    } finally {
+      setIsMovingNext(false);
+    }
+  };
+
   // Completed stage - show resend mail button and Next button for all stages
   if (step.status === "completed") {
     const isDemoRound = step.title === 'Demo Round';
+    const isHRRoundCompleted = step.title === 'HR Round';
+    
+    // Determine the correct handler based on stage
+    const getNextHandler = () => {
+      if (isDemoRound) return handleMoveToDemoFeedback;
+      if (isHRRoundCompleted) return handleMoveToFinalReview;
+      return handleMoveToNextStep;
+    };
+
     return (
       <div className="flex gap-1 mt-2">
         <Button 
@@ -500,7 +554,7 @@ const StageActionButtons = ({
         </Button>
         <Button 
           size="sm"
-          onClick={isDemoRound ? handleMoveToDemoFeedback : handleMoveToNextStep}
+          onClick={getNextHandler()}
           disabled={isMovingNext}
           className="h-6 text-[10px] px-2"
         >
