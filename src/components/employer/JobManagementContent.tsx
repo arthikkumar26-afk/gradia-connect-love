@@ -365,7 +365,7 @@ export const JobManagementContent = () => {
                     </TableRow>
                   ) : (
                     filteredJobs.map((job) => {
-                      const jobUrl = `${window.location.origin}/jobs-results?job=${job.id}&apply=true`;
+                      const jobUrl = `${window.location.origin}/job/${job.id}/apply`;
                       return (
                         <TableRow 
                           key={job.id}

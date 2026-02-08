@@ -65,6 +65,7 @@ import CandidateDashboard from "./pages/candidate/Dashboard";
 import EditProfile from "./pages/EditProfile";
 import PostJob from "./pages/employer/PostJob";
 import CompanyJobs from "./pages/CompanyJobs";
+import JobApply from "./pages/JobApply";
 import Interview from "./pages/Interview";
 import CandidateProfilePage from "./pages/employer/CandidateProfile";
 
@@ -145,7 +146,7 @@ const MainRoutes = () => (
       <Route path="/jobs/software" element={<JobsSoftware />} />
       <Route path="/jobs/education" element={<JobsEducation />} />
       <Route path="/job/:id" element={<PlaceholderPage title="Job Details" />} />
-      <Route path="/job/:id/apply" element={<PlaceholderPage title="Apply for Job" />} />
+      <Route path="/job/:jobId/apply" element={<JobApply />} />
       <Route path="/candidate/signup" element={<CandidateSignup />} />
       <Route path="/candidate/login" element={<CandidateLogin />} />
       <Route path="/candidate/forgot-password" element={<ForgotPassword />} />
