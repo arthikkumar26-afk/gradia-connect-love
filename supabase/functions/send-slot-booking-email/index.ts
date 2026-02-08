@@ -119,12 +119,12 @@ serve(async (req) => {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #bfdbfe;">
-                    <strong style="color: #374151;">Format:</strong> Technical MCQ Assessment (10 questions)
+                    <strong style="color: #374151;">Format:</strong> ${stageName === 'HR Round' ? 'Live Video Meeting / Interview' : stageName === 'Demo Round' ? 'Live Teaching Demo' : 'Technical MCQ Assessment (10 questions)'}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0;">
-                    <strong style="color: #374151;">Duration:</strong> 15-20 minutes
+                    <strong style="color: #374151;">Duration:</strong> ${stageName === 'HR Round' ? '15-30 minutes' : stageName === 'Demo Round' ? '20-30 minutes' : '15-20 minutes'}
                   </td>
                 </tr>
               </table>
