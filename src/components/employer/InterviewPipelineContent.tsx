@@ -145,7 +145,7 @@ const StageActionButtons = ({
   candidateEmail: string;
   jobTitle: string;
   interviewCandidateId: string;
-  onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
+  onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   onScheduleHRRound?: (step: InterviewStep) => void;
 }) => {
   const [isSendingInvite, setIsSendingInvite] = useState(false);
@@ -533,7 +533,7 @@ const ClickableStagesList = ({
   candidateName: string;
   candidateEmail: string;
   jobTitle: string;
-  onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
+  onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   getStepIcon: (step: InterviewStep) => React.ReactNode;
   getStatusBadge: (step: InterviewStep) => React.ReactNode;
 }) => {
@@ -734,7 +734,7 @@ const CandidateProfileInline = ({
 }: { 
   candidate: Candidate;
   onBack: () => void;
-  onUpdateStep: (stepId: string, status: InterviewStep["status"]) => void;
+  onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   onRefresh?: () => void;
 }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -790,8 +790,8 @@ const CandidateProfileInline = ({
 
       if (error) throw error;
 
-      // Update the stage to "current" status
-      onUpdateStep(firstStep.id, "current");
+      // Update the stage to "current" status (skip email since we already sent instruction email above)
+      onUpdateStep(firstStep.id, "current", true);
       
       toast.success(`Interview started! Instruction email sent for ${firstStep.title}`, {
         description: `Email sent to ${candidate.email}`,
@@ -1557,11 +1557,11 @@ export const InterviewPipelineContent = () => {
     setSelectedCandidate(candidate);
   };
 
-  const handleUpdateStep = async (stepId: string, status: InterviewStep["status"]) => {
+  const handleUpdateStep = async (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => {
     if (!selectedCandidate) return;
     
     const dbStatus = status === "current" ? "in_progress" : status;
-    await updateEventStatus(selectedCandidate.interviewCandidateId, stepId, dbStatus);
+    await updateEventStatus(selectedCandidate.interviewCandidateId, stepId, dbStatus, undefined, skipEmail);
     
     // Refresh selected candidate data
     await refetch();
