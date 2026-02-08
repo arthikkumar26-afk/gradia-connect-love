@@ -231,24 +231,34 @@ Format the response as JSON with three fields: "description", "requirements", an
       throw new Error("Invalid response format from AI");
     }
 
-    // Ensure all fields are strings (in case AI returns arrays or other types)
-    const description = typeof parsedContent.description === 'string' 
-      ? parsedContent.description 
-      : Array.isArray(parsedContent.description) 
-        ? parsedContent.description.join('\n') 
-        : String(parsedContent.description);
+    // Helper to convert any value to a readable string
+    function toReadableString(value: unknown, separator = '\n'): string {
+      if (typeof value === 'string') return value;
+      if (Array.isArray(value)) {
+        return value.map(item => toReadableString(item, separator)).join(separator);
+      }
+      if (value && typeof value === 'object') {
+        // Handle objects with known keys like { title, items } or { heading, details }
+        const obj = value as Record<string, unknown>;
+        const parts: string[] = [];
+        for (const [key, val] of Object.entries(obj)) {
+          if (typeof val === 'string') {
+            parts.push(val);
+          } else if (Array.isArray(val)) {
+            parts.push(...val.map(item => typeof item === 'string' ? `- ${item}` : toReadableString(item, separator)));
+          } else if (val && typeof val === 'object') {
+            parts.push(toReadableString(val, separator));
+          }
+        }
+        return parts.join(separator);
+      }
+      return String(value);
+    }
 
-    const requirements = typeof parsedContent.requirements === 'string' 
-      ? parsedContent.requirements 
-      : Array.isArray(parsedContent.requirements) 
-        ? parsedContent.requirements.join('\n') 
-        : String(parsedContent.requirements);
-
-    const skills = typeof parsedContent.skills === 'string' 
-      ? parsedContent.skills 
-      : Array.isArray(parsedContent.skills) 
-        ? parsedContent.skills.join(', ') 
-        : String(parsedContent.skills);
+    // Ensure all fields are strings (in case AI returns arrays, objects, or other types)
+    const description = toReadableString(parsedContent.description);
+    const requirements = toReadableString(parsedContent.requirements);
+    const skills = toReadableString(parsedContent.skills, ', ');
 
     console.log("Successfully generated job description, requirements, and skills");
 
