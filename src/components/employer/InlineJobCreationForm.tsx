@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User } from "lucide-react";
 import { getPipelineTypesForInterviewType, getPipelineStages } from "@/data/interviewPipelineConfig";
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
+import { indiaLocationData } from "@/data/indiaLocations";
 
 const jobFormSchema = z.object({
   job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
@@ -46,6 +47,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [isRefiningReq, setIsRefiningReq] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string>>({});
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -1145,21 +1148,59 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               />
             </div>
 
-            {/* Location, Organisation & Experience */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* State, City, Organisation & Experience */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               <FormField
                 control={form.control}
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Bangalore, India" {...field} />
-                    </FormControl>
+                    <FormLabel>State *</FormLabel>
+                    <Select
+                      value={selectedState || undefined}
+                      onValueChange={(val) => {
+                        setSelectedState(val);
+                        setSelectedCity("");
+                        field.onChange(val);
+                      }}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-popover z-[200] max-h-60">
+                        {Object.keys(indiaLocationData).sort().map((state) => (
+                          <SelectItem key={state} value={state}>{state}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">City *</label>
+                <Select
+                  key={`city-${selectedState}`}
+                  value={selectedCity || undefined}
+                  onValueChange={(val) => {
+                    setSelectedCity(val);
+                    form.setValue("location", `${val}, ${selectedState}`);
+                  }}
+                  disabled={!selectedState}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={selectedState ? "Select city" : "Select state first"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover z-[200] max-h-60">
+                    {selectedState && Object.keys(indiaLocationData[selectedState] || {}).sort().map((district) => (
+                      <SelectItem key={district} value={district}>{district}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <FormField
                 control={form.control}
