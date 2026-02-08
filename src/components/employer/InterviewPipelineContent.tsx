@@ -426,6 +426,62 @@ const StageActionButtons = ({
     }
   };
 
+  // Handle moving specifically from Demo Round to Demo Feedback
+  const handleMoveToDemoFeedback = async () => {
+    setIsMovingNext(true);
+    try {
+      // First, set the candidate's current stage to Demo Round so the edge function advances correctly
+      const { data: demoRoundStage } = await supabase
+        .from('interview_stages')
+        .select('id, stage_order')
+        .eq('name', 'Demo Round')
+        .single();
+
+      if (!demoRoundStage) throw new Error('Demo Round stage not found');
+
+      // Set current_stage_id to Demo Round first
+      await supabase
+        .from('interview_candidates')
+        .update({ current_stage_id: demoRoundStage.id })
+        .eq('id', interviewCandidateId);
+
+      // Now call the edge function to advance from Demo Round → Demo Feedback
+      const { data, error } = await supabase.functions.invoke('process-interview-stage', {
+        body: {
+          interviewCandidateId,
+          action: 'advance',
+          feedback: 'Manually advanced from Demo Round to Demo Feedback'
+        }
+      });
+
+      if (error) throw error;
+
+      onUpdateStep(step.id, "completed", true);
+
+      // Send feedback request to observers
+      try {
+        await supabase.functions.invoke('send-demo-feedback-email', {
+          body: { interviewCandidateId }
+        });
+        toast.success(`✓ Demo Round cleared! Feedback request sent to observers`, {
+          description: `Observers will receive an email with a feedback link`,
+          duration: 5000,
+        });
+      } catch (feedbackError) {
+        console.error('Error sending demo feedback emails:', feedbackError);
+        toast.success(`✓ Demo Round cleared! Moved to Demo Feedback`, {
+          description: 'Note: Feedback email failed to send. You can resend manually.',
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      console.error('Error moving to Demo Feedback:', error);
+      toast.error('Failed to move to Demo Feedback');
+    } finally {
+      setIsMovingNext(false);
+    }
+  };
+
   // Completed stage - show resend mail button (and Next for Demo Round)
   if (step.status === "completed") {
     const showNextButton = step.title === 'Demo Round';
@@ -448,7 +504,7 @@ const StageActionButtons = ({
         {showNextButton && (
           <Button 
             size="sm"
-            onClick={handleMoveToNextStep}
+            onClick={handleMoveToDemoFeedback}
             disabled={isMovingNext}
             className="h-6 text-[10px] px-2"
           >
