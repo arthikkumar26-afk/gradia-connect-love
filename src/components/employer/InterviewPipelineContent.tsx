@@ -128,6 +128,53 @@ const formatRelativeDate = (dateString: string): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
+// Send Slot Booking Button Component
+const SendSlotBookingButton = ({
+  interviewCandidateId,
+  stageName,
+}: {
+  interviewCandidateId: string;
+  stageName: string;
+}) => {
+  const [isSending, setIsSending] = useState(false);
+
+  const handleSendSlotBooking = async () => {
+    setIsSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-slot-booking-email', {
+        body: {
+          interviewCandidateId,
+          stageName,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Slot booking email sent for ${stageName}`);
+    } catch (err) {
+      console.error('Error sending slot booking email:', err);
+      toast.error('Failed to send slot booking email');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={handleSendSlotBooking}
+      disabled={isSending}
+      className="h-6 text-[10px] px-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+    >
+      {isSending ? (
+        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+      ) : (
+        <Calendar className="h-3 w-3 mr-1" />
+      )}
+      Book Slot
+    </Button>
+  );
+};
+
 // Stage Action Buttons Component
 const StageActionButtons = ({
   step,
@@ -196,13 +243,35 @@ const StageActionButtons = ({
       // Update local UI state
       onUpdateStep(step.id, "completed");
       
-      // Show clear success message with current stage cleared and next stage info
-      const clearedMessage = `✓ ${step.title} cleared!`;
-      const nextStageMessage = data?.currentStage ? ` Moved to ${data.currentStage}` : '';
-      toast.success(clearedMessage + nextStageMessage, {
-        description: data?.action === 'hired' ? 'Candidate is ready for hire!' : undefined,
-        duration: 4000,
-      });
+      // If advancing from Resume Screening, auto-send slot booking email for Technical Assessment
+      if (step.title === 'Resume Screening' && data?.currentStage === 'Technical Assessment') {
+        try {
+          await supabase.functions.invoke('send-slot-booking-email', {
+            body: {
+              interviewCandidateId,
+              stageName: 'Technical Assessment',
+            }
+          });
+          toast.success(`✓ Resume Screening cleared! Slot booking email sent for Technical Assessment`, {
+            description: `Candidate will receive an email to book their Technical Assessment slot`,
+            duration: 5000,
+          });
+        } catch (slotError) {
+          console.error('Error sending slot booking email:', slotError);
+          toast.success(`✓ Resume Screening cleared! Moved to Technical Assessment`, {
+            description: 'Note: Slot booking email failed to send. You can resend manually.',
+            duration: 5000,
+          });
+        }
+      } else {
+        // Show clear success message with current stage cleared and next stage info
+        const clearedMessage = `✓ ${step.title} cleared!`;
+        const nextStageMessage = data?.currentStage ? ` Moved to ${data.currentStage}` : '';
+        toast.success(clearedMessage + nextStageMessage, {
+          description: data?.action === 'hired' ? 'Candidate is ready for hire!' : undefined,
+          duration: 4000,
+        });
+      }
     } catch (error) {
       console.error('Error moving to next step:', error);
       toast.error('Failed to move to next stage');
@@ -235,6 +304,8 @@ const StageActionButtons = ({
 
   // Current or In Progress stage - show action buttons based on stage type
   if (step.status === "current" || step.status === "in_progress" || step.isLive) {
+    const isTechnicalAssessment = step.title === 'Technical Assessment';
+    
     return (
       <div className="flex flex-wrap gap-1 mt-2">
         {/* HR Round - Manual meeting link scheduling */}
@@ -249,20 +320,29 @@ const StageActionButtons = ({
             Schedule Meeting
           </Button>
         ) : (
-          <Button 
-            size="sm" 
-            variant="ghost"
-            onClick={handleResendInvitation}
-            disabled={isSendingInvite}
-            className="h-6 text-[10px] px-2"
-          >
-            {isSendingInvite ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-            ) : (
-              <Mail className="h-3 w-3 mr-1" />
+          <>
+            <Button 
+              size="sm" 
+              variant="ghost"
+              onClick={handleResendInvitation}
+              disabled={isSendingInvite}
+              className="h-6 text-[10px] px-2"
+            >
+              {isSendingInvite ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Mail className="h-3 w-3 mr-1" />
+              )}
+              Resend
+            </Button>
+            {/* Send Slot Booking email for Technical Assessment */}
+            {isTechnicalAssessment && (
+              <SendSlotBookingButton
+                interviewCandidateId={interviewCandidateId}
+                stageName={step.title}
+              />
             )}
-            Resend
-          </Button>
+          </>
         )}
         <Button 
           size="sm" 
@@ -292,6 +372,8 @@ const StageActionButtons = ({
 
   // Pending stages - show resend button for all (except HR Round which shows Schedule Meeting)
   if (step.status === "pending") {
+    const isTechnicalAssessment = step.title === 'Technical Assessment';
+    
     return (
       <div className="flex gap-1 mt-2">
         {isHRRound && isFirstPending ? (
@@ -305,20 +387,29 @@ const StageActionButtons = ({
             Schedule Meeting
           </Button>
         ) : (
-          <Button 
-            size="sm" 
-            variant="ghost"
-            onClick={handleResendInvitation}
-            disabled={isSendingInvite}
-            className="h-6 text-[10px] px-2"
-          >
-            {isSendingInvite ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-            ) : (
-              <Mail className="h-3 w-3 mr-1" />
+          <>
+            <Button 
+              size="sm" 
+              variant="ghost"
+              onClick={handleResendInvitation}
+              disabled={isSendingInvite}
+              className="h-6 text-[10px] px-2"
+            >
+              {isSendingInvite ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Mail className="h-3 w-3 mr-1" />
+              )}
+              Resend
+            </Button>
+            {/* Send Slot Booking email for Technical Assessment (pending) */}
+            {isTechnicalAssessment && isFirstPending && (
+              <SendSlotBookingButton
+                interviewCandidateId={interviewCandidateId}
+                stageName={step.title}
+              />
             )}
-            Resend
-          </Button>
+          </>
         )}
         {isFirstPending && !isHRRound && (
           <Button 

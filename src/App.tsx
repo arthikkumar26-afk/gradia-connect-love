@@ -67,6 +67,7 @@ import PostJob from "./pages/employer/PostJob";
 import CompanyJobs from "./pages/CompanyJobs";
 import JobApply from "./pages/JobApply";
 import Interview from "./pages/Interview";
+import BookSlot from "./pages/BookSlot";
 import CandidateProfilePage from "./pages/employer/CandidateProfile";
 
 // Admin & Owner Pages
@@ -291,8 +292,9 @@ const MainRoutes = () => (
       <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
       <Route path="/sponsor-support-portal" element={<SupportPortal />} />
 
-      {/* Interview page - standalone */}
+      {/* Interview & Booking pages - standalone */}
       <Route path="/interview" element={<Interview />} />
+      <Route path="/book-slot" element={<BookSlot />} />
 
       {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />
