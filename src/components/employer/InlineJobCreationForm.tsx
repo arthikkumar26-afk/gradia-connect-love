@@ -78,7 +78,137 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
 
   const handleDynamicFieldChange = (fieldName: string, value: string, additionalResets?: Record<string, string>) => {
     setDynamicFieldValues(prev => ({ ...prev, [fieldName]: value, ...additionalResets }));
+    // Clear job title when upstream fields change so user re-selects
+    form.setValue("job_title", "");
   };
+
+  // Generate job title options based on selected cascading fields
+  const getJobTitleOptions = (): string[] => {
+    const { segment, designation, subjects, specialized_subjects, department_type, program, hs_classes, category, function: fn } = dynamicFieldValues;
+    const sector = dynamicFieldValues["sector_division"];
+    const titles: string[] = [];
+
+    if (!sector) return titles;
+
+    // Non-Academic Admin roles — use designation directly
+    if (category === "non_academic" && fn === "admin") {
+      const adminDesignationMap: Record<string, string> = {
+        cluster: "Cluster Head",
+        principal: "Principal",
+        vice_principal: "Vice-Principal",
+        zonal_coordinator: "Zonal Coordinator",
+        resource_person: "Resource Person",
+        sme: "Subject Matter Expert (SME)",
+        rnd_head: "R&D Head",
+      };
+      if (designation && adminDesignationMap[designation]) {
+        const base = adminDesignationMap[designation];
+        const subj = specialized_subjects && specialized_subjects !== "all" ? ` - ${specialized_subjects.charAt(0).toUpperCase() + specialized_subjects.slice(1)}` : "";
+        titles.push(`${base}${subj}`);
+        if (specialized_subjects === "all") titles.push(`${base} - All Subjects`);
+      }
+      return titles;
+    }
+
+    // Pre-Primary teaching
+    if (segment === "Pre-Primary") {
+      const preDesigMap: Record<string, string> = {
+        mother_teacher: "Mother Teacher",
+        asso_teacher: "Associate Teacher",
+        care_taker: "Care Taker",
+      };
+      if (designation && preDesigMap[designation]) {
+        titles.push(preDesigMap[designation]);
+      }
+      if (subjects) {
+        titles.push(`${subjects} Teacher - Pre-Primary`);
+      }
+      return titles;
+    }
+
+    // Primary teaching
+    if (segment === "Primary") {
+      const classLabel = hs_classes === "classes_1_2" ? "Classes 1&2" : dynamicFieldValues["classes"] === "classes_1_2" ? "Classes 1&2" : dynamicFieldValues["classes"] === "classes_3_4_5" ? "Classes 3,4&5" : "";
+      if (designation) {
+        const desigLabel = designation.charAt(0).toUpperCase() + designation.slice(1);
+        if (classLabel) {
+          titles.push(`${desigLabel} Teacher - ${classLabel}`);
+        } else {
+          titles.push(`${desigLabel} Teacher`);
+        }
+      }
+      if (department_type) {
+        const deptLabels: Record<string, string> = {
+          asso_teacher: "Associate Teacher",
+          mother_teacher: "Mother Teacher",
+          "1st_language": "1st Language Teacher",
+          "2nd_language": "2nd Language Teacher",
+          "3rd_language": "3rd Language Teacher",
+          maths: "Mathematics Teacher",
+          english: "English Teacher",
+          gen_science: "General Science Teacher",
+          social: "Social Studies Teacher",
+          computers: "Computer Teacher",
+          physical_education: "Physical Education Teacher",
+          cca_art_craft: "Art & Craft Teacher",
+        };
+        if (deptLabels[department_type]) {
+          const deptTitle = deptLabels[department_type];
+          titles.push(classLabel ? `${deptTitle} - ${classLabel}` : deptTitle);
+        }
+      }
+      return [...new Set(titles)];
+    }
+
+    // High School
+    if (segment === "High School") {
+      const classLabel = hs_classes === "class_6_7_8" ? "CLASS 6,7&8" : hs_classes === "class_9_10" ? "CLASS 9&10" : "";
+      const programLabel = program === "competitive" ? "Competitive" : "Board-Syllabus";
+
+      if (designation) {
+        const desigLabels: Record<string, string> = {
+          "1st_language": "1st Language",
+          "2nd_language": "2nd Language",
+          "3rd_language": "3rd Language",
+          maths: "Mathematics",
+          physics: "Physics",
+          chemistry: "Chemistry",
+          biology: "Biology",
+          botany: "Botany",
+          zoology: "Zoology",
+          social: "Social Studies",
+          academic: "Academic Coordinator",
+          dean: "Dean",
+          computers: "Computer Science",
+          physical_education: "Physical Education",
+          soft_skills: "Soft Skills",
+          trainer: "Trainer",
+          mental_ability: "Mental Ability",
+          counsellor: "Counsellor",
+        };
+        const desigName = desigLabels[designation] || designation;
+        const suffix = program === "competitive" ? "Faculty" : "Teacher";
+
+        if (classLabel) {
+          titles.push(`${desigName} ${suffix} - ${classLabel} (${programLabel})`);
+          titles.push(`${desigName} ${suffix} - ${classLabel}`);
+        } else {
+          titles.push(`${desigName} ${suffix} (${programLabel})`);
+        }
+      }
+      return titles;
+    }
+
+    // Fallback: general designations
+    if (designation) {
+      titles.push(designation);
+      if (subjects) titles.push(`${designation} - ${subjects}`);
+    }
+
+    return titles;
+  };
+
+  const jobTitleOptions = getJobTitleOptions();
 
   const handleGenerateJD = async () => {
     const jobTitle = form.getValues("job_title");
@@ -857,9 +987,30 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Job Title *</FormLabel>
-                  <FormControl>
-                    <Input placeholder={activeConfig.jobTitlePlaceholder} {...field} />
-                  </FormControl>
+                  <Select
+                    key={`job-title-${JSON.stringify(dynamicFieldValues)}`}
+                    value={field.value || undefined}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={jobTitleOptions.length > 0 ? "Select job title" : "Select fields above to see job titles"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-popover z-[200]">
+                      {jobTitleOptions.length > 0 ? (
+                        jobTitleOptions.map((title) => (
+                          <SelectItem key={title} value={title}>
+                            {title}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          Please select Sector, Segment & Designation first
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
