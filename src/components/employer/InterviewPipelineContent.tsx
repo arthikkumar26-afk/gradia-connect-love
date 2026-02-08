@@ -85,6 +85,7 @@ import { toast } from "sonner";
 const stageIcons: Record<string, React.ElementType> = {
   'Interview Guidelines': Mail,
   'CV/Resume': Users,
+  'Written Test Slot Booking': Calendar,
   'Written Test': Code,
   'Demo Slot Booking': Calendar,
   'Demo Round': Video,
@@ -98,6 +99,7 @@ const stageIcons: Record<string, React.ElementType> = {
 const stageColors: Record<string, string> = {
   'Interview Guidelines': 'bg-indigo-500',
   'CV/Resume': 'bg-blue-500',
+  'Written Test Slot Booking': 'bg-orange-400',
   'Written Test': 'bg-orange-500',
   'Demo Slot Booking': 'bg-purple-500',
   'Demo Round': 'bg-pink-500',
@@ -224,6 +226,16 @@ const StageActionButtons = ({
         });
         if (error) throw error;
         toast.success('CV/Resume ATS results email resent');
+      } else if (step.title === 'Written Test Slot Booking') {
+        // For Written Test Slot Booking, send slot booking email
+        const { error } = await supabase.functions.invoke('send-slot-booking-email', {
+          body: {
+            interviewCandidateId,
+            stageName: 'Written Test',
+          },
+        });
+        if (error) throw error;
+        toast.success('Written Test slot booking email resent');
       } else if (step.title === 'Demo Slot Booking') {
         // For Demo Slot Booking, send slot booking email (not interview invitation)
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
@@ -285,7 +297,7 @@ const StageActionButtons = ({
       onUpdateStep(step.id, "completed", true);
       
       // If advancing from CV/Resume, send CV results email and auto-send slot booking email for Written Test
-      if (step.title === 'CV/Resume' && data?.currentStage === 'Written Test') {
+      if (step.title === 'CV/Resume' && data?.currentStage === 'Written Test Slot Booking') {
         // Send CV/Resume results email to candidate
         try {
           await supabase.functions.invoke('send-cv-results-email', {
@@ -308,11 +320,17 @@ const StageActionButtons = ({
           });
         } catch (slotError) {
           console.error('Error sending slot booking email:', slotError);
-          toast.success(`✓ CV/Resume cleared! Moved to Written Test`, {
+          toast.success(`✓ CV/Resume cleared! Moved to Written Test Slot Booking`, {
             description: 'Note: Slot booking email failed to send. You can resend manually.',
             duration: 5000,
           });
         }
+      } else if (step.title === 'Written Test Slot Booking' && data?.currentStage === 'Written Test') {
+        // Written Test Slot Booking → Written Test: Send interview invitation
+        toast.success(`✓ Written Test Slot Booking cleared! Moved to Written Test`, {
+          description: `Candidate will now take the Written Test`,
+          duration: 5000,
+        });
       } else if (step.title === 'Written Test' && data?.currentStage === 'Demo Slot Booking') {
         // Auto-send Demo Slot Booking email when advancing from Written Test
         try {
@@ -571,10 +589,10 @@ const StageActionButtons = ({
 
   // Current or In Progress stage - show action buttons based on stage type
   if (step.status === "current" || step.status === "in_progress" || step.isLive) {
-    const isWrittenTest = step.title === 'Written Test';
+    const isWrittenTestSlotBooking = step.title === 'Written Test Slot Booking';
     const isDemoSlotBooking = step.title === 'Demo Slot Booking';
     const isHRSlotBooking = step.title === 'HR Round Slot Booking';
-    const isSlotBookingStage = isWrittenTest || isDemoSlotBooking || isHRSlotBooking;
+    const isSlotBookingStage = isWrittenTestSlotBooking || isDemoSlotBooking || isHRSlotBooking;
     
     return (
       <div className="flex flex-wrap gap-1 mt-2">
@@ -605,11 +623,11 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Written Test, Demo Slot Booking, or HR Round Slot Booking */}
+            {/* Send Slot Booking email for Written Test Slot Booking, Demo Slot Booking, or HR Round Slot Booking */}
             {isSlotBookingStage && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
-                stageName={isDemoSlotBooking ? 'Demo Round' : isHRSlotBooking ? 'HR Round' : step.title}
+                stageName={isWrittenTestSlotBooking ? 'Written Test' : isDemoSlotBooking ? 'Demo Round' : isHRSlotBooking ? 'HR Round' : step.title}
               />
             )}
           </>
@@ -642,10 +660,10 @@ const StageActionButtons = ({
 
   // Pending stages - show resend button for all (except HR Round which shows Schedule Meeting)
   if (step.status === "pending") {
-    const isWrittenTest = step.title === 'Written Test';
+    const isWrittenTestSlotBooking = step.title === 'Written Test Slot Booking';
     const isDemoSlotBooking = step.title === 'Demo Slot Booking';
     const isHRSlotBooking = step.title === 'HR Round Slot Booking';
-    const isSlotBookingStage = isWrittenTest || isDemoSlotBooking || isHRSlotBooking;
+    const isSlotBookingStage = isWrittenTestSlotBooking || isDemoSlotBooking || isHRSlotBooking;
     
     return (
       <div className="flex gap-1 mt-2">
@@ -675,11 +693,11 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Written Test, Demo Slot Booking, or HR Slot Booking (pending) */}
+            {/* Send Slot Booking email for Written Test Slot Booking, Demo Slot Booking, or HR Slot Booking (pending) */}
             {isSlotBookingStage && isFirstPending && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
-                stageName={isDemoSlotBooking ? 'Demo Round' : isHRSlotBooking ? 'HR Round' : step.title}
+                stageName={isWrittenTestSlotBooking ? 'Written Test' : isDemoSlotBooking ? 'Demo Round' : isHRSlotBooking ? 'HR Round' : step.title}
               />
             )}
           </>
@@ -915,6 +933,13 @@ const ClickableStagesList = ({
   const [observerEmails, setObserverEmails] = useState<string[]>([]);
   const [isSavingObserver, setIsSavingObserver] = useState(false);
 
+  // Written Test Slot Booking states
+  const [writtenTestSlotBooking, setWrittenTestSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string } | null>(null);
+  const [isEditingWrittenTestSlot, setIsEditingWrittenTestSlot] = useState(false);
+  const [editWrittenTestDate, setEditWrittenTestDate] = useState("");
+  const [editWrittenTestTime, setEditWrittenTestTime] = useState("");
+  const [isSavingWrittenTestSlot, setIsSavingWrittenTestSlot] = useState(false);
+
   // HR Round Slot Booking states
   const [hrSlotBooking, setHrSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string; observer_email: string | null } | null>(null);
   const [isEditingHrSlot, setIsEditingHrSlot] = useState(false);
@@ -951,6 +976,12 @@ const ClickableStagesList = ({
             const emails = demoBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
             setObserverEmails(emails);
           }
+
+          // Find Written Test slot booking
+          const writtenTestBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('written test')
+          ) || null;
+          setWrittenTestSlotBooking(writtenTestBooking);
 
           // Find HR Round slot booking
           const hrBooking = bookings?.find(b => 
@@ -1055,7 +1086,37 @@ const ClickableStagesList = ({
   };
 
   const isSlotEdited = slotBooking && slotBooking.updated_at !== slotBooking.created_at;
+  const isWrittenTestSlotEdited = writtenTestSlotBooking && writtenTestSlotBooking.updated_at !== writtenTestSlotBooking.created_at;
   const isHrSlotEdited = hrSlotBooking && hrSlotBooking.updated_at !== hrSlotBooking.created_at;
+
+  // Written Test Slot Booking handlers
+  const handleEditWrittenTestSlot = () => {
+    if (writtenTestSlotBooking) {
+      setEditWrittenTestDate(writtenTestSlotBooking.booking_date);
+      setEditWrittenTestTime(writtenTestSlotBooking.booking_time);
+      setIsEditingWrittenTestSlot(true);
+    }
+  };
+
+  const handleSaveWrittenTestSlotEdit = async () => {
+    if (!writtenTestSlotBooking || !editWrittenTestDate || !editWrittenTestTime) return;
+    setIsSavingWrittenTestSlot(true);
+    try {
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ booking_date: editWrittenTestDate, booking_time: editWrittenTestTime, updated_at: new Date().toISOString() })
+        .eq('id', writtenTestSlotBooking.id);
+      if (error) throw error;
+      setWrittenTestSlotBooking({ ...writtenTestSlotBooking, booking_date: editWrittenTestDate, booking_time: editWrittenTestTime, updated_at: new Date().toISOString() });
+      setIsEditingWrittenTestSlot(false);
+      toast.success('Written Test slot booking updated');
+    } catch (err) {
+      console.error('Error updating Written Test slot booking:', err);
+      toast.error('Failed to update Written Test slot booking');
+    } finally {
+      setIsSavingWrittenTestSlot(false);
+    }
+  };
 
   // HR Round Slot Booking handlers
   const handleEditHrSlot = () => {
@@ -1228,6 +1289,87 @@ const ClickableStagesList = ({
                   </div>
                 )}
                 
+                {/* Written Test Slot Booking Details */}
+                {step.title === 'Written Test Slot Booking' && writtenTestSlotBooking && (
+                  <div className="mt-2 bg-orange-50 border border-orange-200 rounded-md p-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-orange-700">
+                        <Calendar className="h-3 w-3" />
+                        Slot Booked
+                        {isWrittenTestSlotEdited && (
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-400 text-amber-600 bg-amber-50">
+                            Edited
+                          </Badge>
+                        )}
+                      </div>
+                      {!isEditingWrittenTestSlot && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 text-[10px] px-1.5 text-orange-600 hover:text-orange-700 hover:bg-orange-100"
+                          onClick={(e) => { e.stopPropagation(); handleEditWrittenTestSlot(); }}
+                        >
+                          ✏️ Edit
+                        </Button>
+                      )}
+                    </div>
+
+                    {isEditingWrittenTestSlot ? (
+                      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-2">
+                          <Input
+                            type="date"
+                            value={editWrittenTestDate}
+                            onChange={(e) => setEditWrittenTestDate(e.target.value)}
+                            className="h-7 text-xs flex-1"
+                          />
+                          <Input
+                            type="time"
+                            value={editWrittenTestTime}
+                            onChange={(e) => setEditWrittenTestTime(e.target.value)}
+                            className="h-7 text-xs w-28"
+                          />
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            className="h-6 text-[10px] px-2"
+                            onClick={handleSaveWrittenTestSlotEdit}
+                            disabled={isSavingWrittenTestSlot || !editWrittenTestDate || !editWrittenTestTime}
+                          >
+                            {isSavingWrittenTestSlot ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-[10px] px-2"
+                            onClick={() => setIsEditingWrittenTestSlot(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 border-orange-200">
+                          📅 {new Date(writtenTestSlotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                        </Badge>
+                        <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 border-orange-200">
+                          🕐 {writtenTestSlotBooking.booking_time}
+                        </Badge>
+                        <Badge className={`text-[10px] py-0 ${
+                          writtenTestSlotBooking.status === 'confirmed' 
+                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+                            : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                        }`}>
+                          {writtenTestSlotBooking.status === 'confirmed' ? '✓ Confirmed' : writtenTestSlotBooking.status}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Slot Booking Details for Demo Slot Booking stage */}
                 {step.title === 'Demo Slot Booking' && slotBooking && (
                   <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-2 space-y-1.5">

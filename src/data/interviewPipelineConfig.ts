@@ -23,14 +23,15 @@ export interface InterviewTypeConfig {
 // Common stages used across many pipelines
 const commonStages = {
   resumeScreening: { order: 1, name: 'CV/Resume', description: 'AI-powered resume analysis & scoring', isAutomated: true },
-  technicalAssessment: { order: 2, name: 'Written Test', description: '10 MCQ questions (90 sec each)', isAutomated: true },
-  demoSlotBooking: { order: 3, name: 'Demo Slot Booking', description: 'Candidate books demo slot', isAutomated: true },
-  demoRound: { order: 4, name: 'Demo Round', description: 'Live teaching/presentation demo', isAutomated: false },
-  demoFeedback: { order: 5, name: 'Demo Feedback', description: 'Management review & feedback', isAutomated: false },
-  hrRoundSlotBooking: { order: 5, name: 'HR Round Slot Booking', description: 'Candidate books HR round slot', isAutomated: true },
-  hrRound: { order: 6, name: 'HR Round', description: 'HR interview & negotiation', isAutomated: false },
-  finalReview: { order: 7, name: 'Final Review', description: 'Final evaluation & decision', isAutomated: true },
-  offerStage: { order: 8, name: 'Offer Stage', description: 'Offer letter generation & sending', isAutomated: true },
+  writtenTestSlotBooking: { order: 2, name: 'Written Test Slot Booking', description: 'Candidate books Written Test slot', isAutomated: true },
+  technicalAssessment: { order: 3, name: 'Written Test', description: '10 MCQ questions (90 sec each)', isAutomated: true },
+  demoSlotBooking: { order: 4, name: 'Demo Slot Booking', description: 'Candidate books demo slot', isAutomated: true },
+  demoRound: { order: 5, name: 'Demo Round', description: 'Live teaching/presentation demo', isAutomated: false },
+  demoFeedback: { order: 6, name: 'Demo Feedback', description: 'Management review & feedback', isAutomated: false },
+  hrRoundSlotBooking: { order: 7, name: 'HR Round Slot Booking', description: 'Candidate books HR round slot', isAutomated: true },
+  hrRound: { order: 8, name: 'HR Round', description: 'HR interview & negotiation', isAutomated: false },
+  finalReview: { order: 9, name: 'Final Review', description: 'Final evaluation & decision', isAutomated: true },
+  offerStage: { order: 10, name: 'Offer Stage', description: 'Offer letter generation & sending', isAutomated: true },
 };
 
 export const interviewPipelineConfig: InterviewTypeConfig[] = [
@@ -72,6 +73,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Teacher',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
           commonStages.demoSlotBooking,
           commonStages.demoRound,
@@ -132,6 +134,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'General',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
@@ -144,8 +147,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Executive',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 3, name: 'Aptitude Test', description: 'Logical & analytical reasoning', isAutomated: true },
+          { order: 4, name: 'Aptitude Test', description: 'Logical & analytical reasoning', isAutomated: true },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
@@ -157,6 +161,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Associate',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
@@ -175,8 +180,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         stages: [
           commonStages.resumeScreening,
           { order: 2, name: 'Coding Challenge', description: 'Online coding test (2 problems)', isAutomated: true },
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 4, name: 'System Design', description: 'System design discussion', isAutomated: false },
+          { order: 5, name: 'System Design', description: 'System design discussion', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
@@ -189,6 +195,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         stages: [
           commonStages.resumeScreening,
           { order: 2, name: 'SQL & Analytics Test', description: 'SQL queries & data analysis', isAutomated: true },
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
@@ -202,6 +209,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         stages: [
           commonStages.resumeScreening,
           { order: 2, name: 'Infrastructure Test', description: 'Cloud & CI/CD assessment', isAutomated: true },
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
@@ -220,8 +228,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Sales Executive',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 3, name: 'Sales Pitch', description: 'Product presentation & pitch', isAutomated: false },
+          { order: 4, name: 'Sales Pitch', description: 'Product presentation & pitch', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
@@ -233,8 +242,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Business Development',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 3, name: 'Strategy Presentation', description: 'Market strategy & growth plan', isAutomated: false },
+          { order: 4, name: 'Strategy Presentation', description: 'Market strategy & growth plan', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
@@ -246,8 +256,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Account Manager',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 3, name: 'Client Scenario', description: 'Client management simulation', isAutomated: false },
+          { order: 4, name: 'Client Scenario', description: 'Client management simulation', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
@@ -265,9 +276,10 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Project Manager',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 3, name: 'Case Study', description: 'Project management case study', isAutomated: false },
-          { order: 4, name: 'Leadership Assessment', description: 'Leadership & team management', isAutomated: false },
+          { order: 4, name: 'Case Study', description: 'Project management case study', isAutomated: false },
+          { order: 5, name: 'Leadership Assessment', description: 'Leadership & team management', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
@@ -279,8 +291,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Operations Manager',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 3, name: 'Operations Case Study', description: 'Process optimization scenario', isAutomated: false },
+          { order: 4, name: 'Operations Case Study', description: 'Process optimization scenario', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
@@ -292,8 +305,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Team Lead',
         stages: [
           commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 3, name: 'Team Scenario', description: 'Team conflict & management scenario', isAutomated: false },
+          { order: 4, name: 'Team Scenario', description: 'Team conflict & management scenario', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
