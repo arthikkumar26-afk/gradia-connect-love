@@ -178,7 +178,7 @@ serve(async (req) => {
 
       try {
         await resend.emails.send({
-          from: `${companyName} <onboarding@resend.dev>`,
+          from: `${companyName} <noreply@gradia.co.in>`,
           to: [email],
           subject: `📝 Demo Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
           html: htmlContent,
