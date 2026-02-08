@@ -479,9 +479,9 @@ const StageActionButtons = ({
     }
   };
 
-  // Completed stage - show resend mail button (and Next for Demo Round)
+  // Completed stage - show resend mail button and Next button for all stages
   if (step.status === "completed") {
-    const showNextButton = step.title === 'Demo Round';
+    const isDemoRound = step.title === 'Demo Round';
     return (
       <div className="flex gap-1 mt-2">
         <Button 
@@ -498,21 +498,19 @@ const StageActionButtons = ({
           )}
           Resend
         </Button>
-        {showNextButton && (
-          <Button 
-            size="sm"
-            onClick={handleMoveToDemoFeedback}
-            disabled={isMovingNext}
-            className="h-6 text-[10px] px-2"
-          >
-            {isMovingNext ? (
-              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-            ) : (
-              <ChevronRight className="h-3 w-3 mr-1" />
-            )}
-            Next
-          </Button>
-        )}
+        <Button 
+          size="sm"
+          onClick={isDemoRound ? handleMoveToDemoFeedback : handleMoveToNextStep}
+          disabled={isMovingNext}
+          className="h-6 text-[10px] px-2"
+        >
+          {isMovingNext ? (
+            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+          ) : (
+            <ChevronRight className="h-3 w-3 mr-1" />
+          )}
+          Next
+        </Button>
       </div>
     );
   }
