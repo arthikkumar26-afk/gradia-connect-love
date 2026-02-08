@@ -719,6 +719,16 @@ const ClickableStagesList = ({
   const [observerEmails, setObserverEmails] = useState<string[]>([]);
   const [isSavingObserver, setIsSavingObserver] = useState(false);
 
+  // HR Round Slot Booking states
+  const [hrSlotBooking, setHrSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string; observer_email: string | null } | null>(null);
+  const [isEditingHrSlot, setIsEditingHrSlot] = useState(false);
+  const [editHrDate, setEditHrDate] = useState("");
+  const [editHrTime, setEditHrTime] = useState("");
+  const [isSavingHrSlot, setIsSavingHrSlot] = useState(false);
+  const [hrObserverEmail, setHrObserverEmail] = useState("");
+  const [hrObserverEmails, setHrObserverEmails] = useState<string[]>([]);
+  const [isSavingHrObserver, setIsSavingHrObserver] = useState(false);
+
   // Fetch slot booking details for this candidate
   useEffect(() => {
     const fetchSlotBooking = async () => {
@@ -738,12 +748,23 @@ const ClickableStagesList = ({
 
           const demoBooking = bookings?.find(b => 
             b.subject?.toLowerCase().includes('demo')
-          ) || bookings?.[0] || null;
+          ) || null;
           
           setSlotBooking(demoBooking);
           if (demoBooking?.observer_email) {
             const emails = demoBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
             setObserverEmails(emails);
+          }
+
+          // Find HR Round slot booking
+          const hrBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('hr')
+          ) || null;
+          
+          setHrSlotBooking(hrBooking);
+          if (hrBooking?.observer_email) {
+            const emails = hrBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setHrObserverEmails(emails);
           }
         }
       } catch (err) {
@@ -838,7 +859,89 @@ const ClickableStagesList = ({
   };
 
   const isSlotEdited = slotBooking && slotBooking.updated_at !== slotBooking.created_at;
-  
+  const isHrSlotEdited = hrSlotBooking && hrSlotBooking.updated_at !== hrSlotBooking.created_at;
+
+  // HR Round Slot Booking handlers
+  const handleEditHrSlot = () => {
+    if (hrSlotBooking) {
+      setEditHrDate(hrSlotBooking.booking_date);
+      setEditHrTime(hrSlotBooking.booking_time);
+      setIsEditingHrSlot(true);
+    }
+  };
+
+  const handleSaveHrSlotEdit = async () => {
+    if (!hrSlotBooking || !editHrDate || !editHrTime) return;
+    setIsSavingHrSlot(true);
+    try {
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ booking_date: editHrDate, booking_time: editHrTime, updated_at: new Date().toISOString() })
+        .eq('id', hrSlotBooking.id);
+      if (error) throw error;
+      setHrSlotBooking({ ...hrSlotBooking, booking_date: editHrDate, booking_time: editHrTime, updated_at: new Date().toISOString() });
+      setIsEditingHrSlot(false);
+      toast.success('HR slot booking updated');
+    } catch (err) {
+      console.error('Error updating HR slot booking:', err);
+      toast.error('Failed to update HR slot booking');
+    } finally {
+      setIsSavingHrSlot(false);
+    }
+  };
+
+  const handleAddHrObserverEmail = async () => {
+    if (!hrSlotBooking || !hrObserverEmail.trim()) return;
+    const email = hrObserverEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (hrObserverEmails.includes(email)) {
+      toast.error('This email is already added');
+      return;
+    }
+    setIsSavingHrObserver(true);
+    try {
+      const updatedEmails = [...hrObserverEmails, email];
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() })
+        .eq('id', hrSlotBooking.id);
+      if (error) throw error;
+      setHrObserverEmails(updatedEmails);
+      setHrSlotBooking({ ...hrSlotBooking, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() });
+      setHrObserverEmail('');
+      toast.success('Observer email added');
+    } catch (err) {
+      console.error('Error saving HR observer email:', err);
+      toast.error('Failed to save observer email');
+    } finally {
+      setIsSavingHrObserver(false);
+    }
+  };
+
+  const handleRemoveHrObserverEmail = async (emailToRemove: string) => {
+    if (!hrSlotBooking) return;
+    setIsSavingHrObserver(true);
+    try {
+      const updatedEmails = hrObserverEmails.filter(e => e !== emailToRemove);
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() })
+        .eq('id', hrSlotBooking.id);
+      if (error) throw error;
+      setHrObserverEmails(updatedEmails);
+      setHrSlotBooking({ ...hrSlotBooking, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() });
+      toast.success('Observer email removed');
+    } catch (err) {
+      console.error('Error removing HR observer email:', err);
+      toast.error('Failed to remove observer email');
+    } finally {
+      setIsSavingHrObserver(false);
+    }
+  };
+
   const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview");
   const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
 
@@ -1072,7 +1175,149 @@ const ClickableStagesList = ({
                   />
                 )}
 
-                {/* Show interview link for current stages (not expanded content) */}
+                {/* HR Round Slot Booking Details */}
+                {step.title === 'HR Round Slot Booking' && hrSlotBooking && (
+                  <div className="mt-2 bg-indigo-50 border border-indigo-200 rounded-md p-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700">
+                        <Calendar className="h-3 w-3" />
+                        Slot Booked
+                        {isHrSlotEdited && (
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-400 text-amber-600 bg-amber-50">
+                            Edited
+                          </Badge>
+                        )}
+                      </div>
+                      {!isEditingHrSlot && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 text-[10px] px-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100"
+                          onClick={(e) => { e.stopPropagation(); handleEditHrSlot(); }}
+                        >
+                          ✏️ Edit
+                        </Button>
+                      )}
+                    </div>
+
+                    {isEditingHrSlot ? (
+                      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-2">
+                          <Input
+                            type="date"
+                            value={editHrDate}
+                            onChange={(e) => setEditHrDate(e.target.value)}
+                            className="h-7 text-xs flex-1"
+                          />
+                          <Input
+                            type="time"
+                            value={editHrTime}
+                            onChange={(e) => setEditHrTime(e.target.value)}
+                            className="h-7 text-xs w-28"
+                          />
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            className="h-6 text-[10px] px-2"
+                            onClick={handleSaveHrSlotEdit}
+                            disabled={isSavingHrSlot || !editHrDate || !editHrTime}
+                          >
+                            {isSavingHrSlot ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 text-[10px] px-2"
+                            onClick={() => setIsEditingHrSlot(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
+                            📅 {new Date(hrSlotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
+                            🕐 {hrSlotBooking.booking_time}
+                          </Badge>
+                          <Badge className={`text-[10px] py-0 ${
+                            hrSlotBooking.status === 'confirmed' 
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+                              : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                          }`}>
+                            {hrSlotBooking.status === 'confirmed' ? '✓ Confirmed' : hrSlotBooking.status}
+                          </Badge>
+                        </div>
+                        {hrSlotBooking.subject && (
+                          <p className="text-[10px] text-muted-foreground">Stage: {hrSlotBooking.subject}</p>
+                        )}
+                        
+                        {/* Observer Email Input - Multiple Emails for HR Round */}
+                        <div className="mt-1.5 pt-1.5 border-t border-indigo-200 space-y-1" onClick={(e) => e.stopPropagation()}>
+                          <label className="text-[10px] font-medium text-indigo-700 flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            Observer/Employer Emails
+                          </label>
+                          <div className="flex gap-1.5">
+                            <Input
+                              type="email"
+                              placeholder="Add email address"
+                              value={hrObserverEmail}
+                              onChange={(e) => setHrObserverEmail(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddHrObserverEmail(); }}}
+                              className="h-6 text-[10px] flex-1 border-indigo-200"
+                            />
+                            <Button
+                              size="sm"
+                              className="h-6 text-[9px] px-2 bg-indigo-600 hover:bg-indigo-700"
+                              onClick={handleAddHrObserverEmail}
+                              disabled={isSavingHrObserver || !hrObserverEmail.trim()}
+                            >
+                              {isSavingHrObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                            </Button>
+                          </div>
+                          {hrObserverEmails.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {hrObserverEmails.map((email) => (
+                                <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
+                                  <CheckCircle2 className="h-2.5 w-2.5" />
+                                  {email}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleRemoveHrObserverEmail(email); }}
+                                    className="ml-0.5 hover:text-red-500 transition-colors"
+                                  >
+                                    <X className="h-2.5 w-2.5" />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-[9px] text-muted-foreground">
+                            These emails will receive notifications when the HR Round starts
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* HR Round Options - Show meeting link options */}
+                {step.title === 'HR Round' && (step.status === 'current' || step.status === 'in_progress') && (
+                  <DemoRoundOptions
+                    interviewCandidateId={interviewCandidateId}
+                    candidateName={candidateName}
+                    observerEmail={hrSlotBooking?.observer_email || hrObserverEmails.join(',') || undefined}
+                    existingMeetLink={hrSlotBooking?.observer_email ? undefined : undefined}
+                    existingMeetType={undefined}
+                    onUpdate={() => {}}
+                  />
+                )}
+
                 {step.status === "current" && (
                   <StageRecordingPlayer
                     interviewCandidateId={interviewCandidateId}
