@@ -161,10 +161,13 @@ serve(async (req) => {
     emailResults.push({ type: 'candidate', result: candidateResult });
     console.log('Candidate demo email sent:', candidateResult);
 
-    // EMAIL 2: Send to observer/employer if email provided
-    const finalObserverEmail = observerEmail || slotBooking?.observer_email;
+    // EMAIL 2: Send to observer/employer emails (supports multiple comma-separated)
+    const rawObserverEmails = observerEmail || slotBooking?.observer_email;
+    const observerEmailList = rawObserverEmails 
+      ? rawObserverEmails.split(',').map((e: string) => e.trim()).filter(Boolean)
+      : [];
     
-    if (finalObserverEmail) {
+    for (const singleObserverEmail of observerEmailList) {
       const observerEmailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -173,7 +176,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           from: `${companyName} Hiring <noreply@gradia.co.in>`,
-          to: [finalObserverEmail],
+          to: [singleObserverEmail],
           reply_to: 'support@gradia.co.in',
           subject: `👁️ Demo Round Observer - ${candidate.full_name} for ${job.job_title}`,
           html: `
@@ -247,8 +250,8 @@ serve(async (req) => {
       });
 
       const observerResult = await observerEmailResponse.json();
-      emailResults.push({ type: 'observer', result: observerResult });
-      console.log('Observer demo email sent:', observerResult);
+      emailResults.push({ type: 'observer', email: singleObserverEmail, result: observerResult });
+      console.log(`Observer demo email sent to ${singleObserverEmail}:`, observerResult);
     }
 
     return new Response(JSON.stringify({ 
