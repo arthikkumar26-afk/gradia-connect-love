@@ -291,25 +291,54 @@ const BookSlot = () => {
             </div>
           </div>
 
+          {/* Quick Action Buttons */}
+          <div className="flex gap-2">
+            {getTodayDate() && (
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-11 text-sm font-semibold border-2 border-blue-400 text-blue-700 hover:bg-blue-100 bg-blue-50"
+                onClick={() => setSelectedDate(getTodayDate()!)}
+              >
+                📅 Today
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 h-11 text-sm font-semibold border-2 border-green-400 text-green-700 hover:bg-green-100 bg-green-50"
+              onClick={() => {
+                const nextTime = getNext10MinTime();
+                setSelectedTime(nextTime);
+                if (!selectedDate && getTodayDate()) {
+                  setSelectedDate(getTodayDate()!);
+                }
+              }}
+            >
+              ⏰ Next 10 mins
+            </Button>
+          </div>
+
+          {/* Today's Current Time Info */}
+          {selectedDate === getTodayDate() && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-blue-600 shrink-0" />
+              <p className="text-xs text-blue-700">
+                <strong>Current time:</strong>{" "}
+                {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                {" • "}
+                <strong>Next available slot:</strong>{" "}
+                {getTimeSlots().find((s) => s.value === getNext10MinTime())?.label || getNext10MinTime()}
+              </p>
+            </div>
+          )}
+
           {/* Date Selection */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                Select Date *
-              </label>
-              {getTodayDate() && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs border-blue-300 text-blue-600 hover:bg-blue-50"
-                  onClick={() => setSelectedDate(getTodayDate()!)}
-                >
-                  📅 Today
-                </Button>
-              )}
-            </div>
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-600" />
+              Select Date *
+            </label>
             <Select value={selectedDate} onValueChange={setSelectedDate}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a date" />
@@ -326,27 +355,10 @@ const BookSlot = () => {
 
           {/* Time Selection */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium flex items-center gap-2">
-                <Clock className="h-4 w-4 text-blue-600" />
-                Select Time *
-              </label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs border-blue-300 text-blue-600 hover:bg-blue-50"
-                onClick={() => {
-                  const nextTime = getNext10MinTime();
-                  setSelectedTime(nextTime);
-                  if (!selectedDate && getTodayDate()) {
-                    setSelectedDate(getTodayDate()!);
-                  }
-                }}
-              >
-                ⏰ Next 10 mins
-              </Button>
-            </div>
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Clock className="h-4 w-4 text-blue-600" />
+              Select Time *
+            </label>
             <Select value={selectedTime} onValueChange={setSelectedTime}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a time slot" />
