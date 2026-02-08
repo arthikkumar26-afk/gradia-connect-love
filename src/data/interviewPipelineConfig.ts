@@ -22,8 +22,8 @@ export interface InterviewTypeConfig {
 
 // Common stages used across many pipelines
 const commonStages = {
-  resumeScreening: { order: 1, name: 'Resume Screening', description: 'AI-powered resume analysis & scoring', isAutomated: true },
-  technicalAssessment: { order: 2, name: 'Technical Assessment', description: '10 MCQ questions (90 sec each)', isAutomated: true },
+  resumeScreening: { order: 1, name: 'CV/Resume', description: 'AI-powered resume analysis & scoring', isAutomated: true },
+  technicalAssessment: { order: 2, name: 'Written Test', description: '10 MCQ questions (90 sec each)', isAutomated: true },
   demoSlotBooking: { order: 3, name: 'Demo Slot Booking', description: 'Candidate books demo slot', isAutomated: true },
   demoRound: { order: 4, name: 'Demo Round', description: 'Live teaching/presentation demo', isAutomated: false },
   demoFeedback: { order: 5, name: 'Demo Feedback', description: 'Management review & feedback', isAutomated: false },

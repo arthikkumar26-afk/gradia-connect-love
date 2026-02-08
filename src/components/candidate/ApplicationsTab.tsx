@@ -249,7 +249,7 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                       )}
                     </div>
                     <span className="text-xs text-primary font-medium">
-                      {app.interview_candidate.current_stage?.name || 'Resume Screening'}
+                      {app.interview_candidate.current_stage?.name || 'CV/Resume'}
                     </span>
                   </div>
                   <Progress 

@@ -78,9 +78,9 @@ import { toast } from "sonner";
 
 // Stage icon mapping
 const stageIcons: Record<string, React.ElementType> = {
-  'Instruction Round': Mail,
-  'Resume Screening': Users,
-  'Technical Assessment': Code,
+  'Interview Guidelines': Mail,
+  'CV/Resume': Users,
+  'Written Test': Code,
   'HR Round': UserCheck,
   'Viva': Video,
   'Final Review': FileCheck,
@@ -88,9 +88,9 @@ const stageIcons: Record<string, React.ElementType> = {
 };
 
 const stageColors: Record<string, string> = {
-  'Instruction Round': 'bg-indigo-500',
-  'Resume Screening': 'bg-blue-500',
-  'Technical Assessment': 'bg-orange-500',
+  'Interview Guidelines': 'bg-indigo-500',
+  'CV/Resume': 'bg-blue-500',
+  'Written Test': 'bg-orange-500',
   'HR Round': 'bg-green-500',
   'Viva': 'bg-yellow-500',
   'Final Review': 'bg-cyan-500',
@@ -245,22 +245,22 @@ const StageActionButtons = ({
       // Update local UI state
       onUpdateStep(step.id, "completed");
       
-      // If advancing from Resume Screening, auto-send slot booking email for Technical Assessment
-      if (step.title === 'Resume Screening' && data?.currentStage === 'Technical Assessment') {
+      // If advancing from CV/Resume, auto-send slot booking email for Written Test
+      if (step.title === 'CV/Resume' && data?.currentStage === 'Written Test') {
         try {
           await supabase.functions.invoke('send-slot-booking-email', {
             body: {
               interviewCandidateId,
-              stageName: 'Technical Assessment',
+              stageName: 'Written Test',
             }
           });
-          toast.success(`✓ Resume Screening cleared! Slot booking email sent for Technical Assessment`, {
-            description: `Candidate will receive an email to book their Technical Assessment slot`,
+          toast.success(`✓ CV/Resume cleared! Slot booking email sent for Written Test`, {
+            description: `Candidate will receive an email to book their Written Test slot`,
             duration: 5000,
           });
         } catch (slotError) {
           console.error('Error sending slot booking email:', slotError);
-          toast.success(`✓ Resume Screening cleared! Moved to Technical Assessment`, {
+          toast.success(`✓ CV/Resume cleared! Moved to Written Test`, {
             description: 'Note: Slot booking email failed to send. You can resend manually.',
             duration: 5000,
           });
@@ -306,7 +306,7 @@ const StageActionButtons = ({
 
   // Current or In Progress stage - show action buttons based on stage type
   if (step.status === "current" || step.status === "in_progress" || step.isLive) {
-    const isTechnicalAssessment = step.title === 'Technical Assessment';
+    const isWrittenTest = step.title === 'Written Test';
     
     return (
       <div className="flex flex-wrap gap-1 mt-2">
@@ -337,8 +337,8 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Technical Assessment */}
-            {isTechnicalAssessment && (
+            {/* Send Slot Booking email for Written Test */}
+            {isWrittenTest && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
                 stageName={step.title}
@@ -374,7 +374,7 @@ const StageActionButtons = ({
 
   // Pending stages - show resend button for all (except HR Round which shows Schedule Meeting)
   if (step.status === "pending") {
-    const isTechnicalAssessment = step.title === 'Technical Assessment';
+    const isWrittenTest = step.title === 'Written Test';
     
     return (
       <div className="flex gap-1 mt-2">
@@ -404,8 +404,8 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Technical Assessment (pending) */}
-            {isTechnicalAssessment && isFirstPending && (
+            {/* Send Slot Booking email for Written Test (pending) */}
+            {isWrittenTest && isFirstPending && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
                 stageName={step.title}
@@ -858,12 +858,12 @@ const CandidateProfileInline = ({
   const allStagesCompleted = completedSteps === candidate.interviewSteps.length;
   const hasStarted = completedSteps > 0 || candidate.interviewSteps.some(s => s.status === "current" || s.status === "in_progress");
 
-  // Start Interview - sends instruction email with suggestions & account creation link, then auto-advances to Resume Screening
+   // Start Interview - sends instruction email with suggestions & account creation link, then auto-advances to CV/Resume
   const handleStartInterview = async () => {
     setIsStartingInterview(true);
     try {
-      // Find the Instruction Round stage (first stage)
-      const instructionStep = candidate.interviewSteps.find(s => s.title === 'Instruction Round');
+      // Find the Interview Guidelines stage (first stage)
+      const instructionStep = candidate.interviewSteps.find(s => s.title === 'Interview Guidelines');
       
       if (!instructionStep) {
         // Fallback: if no instruction round, use old behavior
@@ -886,15 +886,15 @@ const CandidateProfileInline = ({
 
       if (instrError) throw instrError;
 
-      // 2. Mark Instruction Round as completed and advance to Resume Screening
+      // 2. Mark Interview Guidelines as completed and advance to CV/Resume
       onUpdateStep(instructionStep.id, "completed", true);
 
-      // 3. Find Resume Screening stage and advance candidate to it
+      // 3. Find CV/Resume stage and advance candidate to it
       const { data, error: advanceError } = await supabase.functions.invoke('process-interview-stage', {
         body: {
           interviewCandidateId: candidate.interviewCandidateId,
           action: 'advance',
-          feedback: 'Instruction email sent, advancing to Resume Screening',
+          feedback: 'Instruction email sent, advancing to CV/Resume',
         }
       });
 
