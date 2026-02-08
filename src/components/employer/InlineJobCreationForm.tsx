@@ -373,10 +373,10 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         function_type: dynamicFieldValues["function"] || null,
         segment: dynamicFieldValues["segment"] || null,
         program: dynamicFieldValues["program"] || null,
-        classes: dynamicFieldValues["hs_classes"] || null,
+        classes: dynamicFieldValues["hs_classes"] || dynamicFieldValues["classes"] || null,
         board: dynamicFieldValues["board"] || null,
         designation: dynamicFieldValues["designation"] || null,
-        subjects: dynamicFieldValues["subjects"] || null,
+        subjects: dynamicFieldValues["subjects"] || dynamicFieldValues["specialized_subjects"] || null,
       } as any]);
 
       if (error) throw error;
