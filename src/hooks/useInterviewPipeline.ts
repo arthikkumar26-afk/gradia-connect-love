@@ -374,7 +374,8 @@ export const useInterviewPipeline = () => {
     interviewCandidateId: string,
     stageId: string,
     status: string,
-    notes?: string
+    notes?: string,
+    skipEmail?: boolean
   ) => {
     try {
       // Get stage info
@@ -429,7 +430,7 @@ export const useInterviewPipeline = () => {
       }
 
       // If stage is completed, move to next stage and send invitation email
-      if (status === 'completed' && nextStage) {
+      if (status === 'completed' && nextStage && !skipEmail) {
         // Move candidate to next stage
         await supabase
           .from('interview_candidates')
@@ -463,7 +464,7 @@ export const useInterviewPipeline = () => {
       }
 
       // If starting a stage (in_progress), send invitation email for current stage
-      if (status === 'in_progress') {
+      if (status === 'in_progress' && !skipEmail) {
         try {
           const scheduledDate = new Date();
           scheduledDate.setHours(scheduledDate.getHours() + 1); // Schedule for 1 hour from now
