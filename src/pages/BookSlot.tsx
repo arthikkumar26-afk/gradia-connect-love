@@ -173,6 +173,9 @@ const BookSlot = () => {
         });
       }
 
+      // Check if this is a Demo Round slot booking
+      const isDemoSlotBooking = stageName.toLowerCase().includes("demo");
+
       // Send interview invitation with the scheduled time
       const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
         body: {
@@ -182,10 +185,35 @@ const BookSlot = () => {
         },
       });
 
-      if (inviteError) throw inviteError;
+      if (inviteError) {
+        console.error("Error sending invitation:", inviteError);
+      }
+
+      // Auto-advance to Demo Round and send dual emails
+      if (isDemoSlotBooking) {
+        try {
+          // Advance from Demo Slot Booking to Demo Round
+          await supabase.functions.invoke("process-interview-stage", {
+            body: {
+              interviewCandidateId: candidateId,
+              action: "advance",
+              feedback: "Slot booked by candidate, auto-advancing to Demo Round",
+            },
+          });
+
+          // Send demo round emails to candidate + observer
+          await supabase.functions.invoke("send-demo-round-emails", {
+            body: {
+              interviewCandidateId: candidateId,
+            },
+          });
+        } catch (advanceErr) {
+          console.error("Error auto-advancing to Demo Round:", advanceErr);
+        }
+      }
 
       setIsBooked(true);
-      toast.success("Slot booked successfully! Check your email for the interview link.");
+      toast.success("Slot booked successfully! Check your email for details.");
     } catch (err) {
       console.error("Error booking slot:", err);
       toast.error("Failed to book slot. Please try again.");
@@ -252,9 +280,15 @@ const BookSlot = () => {
                 </span>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
-            </p>
+            {stageName.toLowerCase().includes("demo") ? (
+              <p className="text-sm text-muted-foreground">
+                📧 You will receive a Demo Round invitation email with instructions shortly. Please check your inbox.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
+              </p>
+            )}
             <div className="pt-2">
               <Badge className="bg-blue-100 text-blue-800 border-blue-200">
                 {candidateInfo?.jobTitle} at {candidateInfo?.companyName}
