@@ -822,28 +822,52 @@ const CandidateProfileInline = ({
 
       const firstStage = allStages[0];
 
-      // Reset candidate to first stage
+      // Delete all interview events for this candidate first (before resetting candidate)
+      // This prevents realtime triggers from re-fetching stale data
+      const { data: existingEvents } = await supabase
+        .from('interview_events')
+        .select('id')
+        .eq('interview_candidate_id', candidate.interviewCandidateId);
+
+      if (existingEvents && existingEvents.length > 0) {
+        const eventIds = existingEvents.map(e => e.id);
+
+        // Delete interview responses tied to these events
+        await supabase
+          .from('interview_responses')
+          .delete()
+          .in('interview_event_id', eventIds);
+
+        // Delete interview invitations tied to these events
+        await supabase
+          .from('interview_invitations')
+          .delete()
+          .in('interview_event_id', eventIds);
+
+        // Delete the events themselves
+        const { error: eventsError } = await supabase
+          .from('interview_events')
+          .delete()
+          .eq('interview_candidate_id', candidate.interviewCandidateId);
+
+        if (eventsError) {
+          console.error('Error clearing events:', eventsError);
+        }
+      }
+
+      // Reset candidate to first stage AND clear ai_analysis
       const { error: resetError } = await supabase
         .from('interview_candidates')
         .update({
           current_stage_id: firstStage.id,
           ai_score: null,
+          ai_analysis: null,
           status: 'active',
           updated_at: new Date().toISOString(),
         })
         .eq('id', candidate.interviewCandidateId);
 
       if (resetError) throw resetError;
-
-      // Delete all interview events for this candidate to reset progress
-      const { error: eventsError } = await supabase
-        .from('interview_events')
-        .delete()
-        .eq('interview_candidate_id', candidate.interviewCandidateId);
-
-      if (eventsError) {
-        console.error('Error clearing events:', eventsError);
-      }
 
       // Send instruction email for the first stage
       const { error: emailError } = await supabase.functions.invoke('send-notification-email', {
