@@ -22,147 +22,110 @@ interface CustomTemplate {
   is_active: boolean;
 }
 
-// Send stage transition email notification with custom template support
-async function sendStageTransitionEmail(
-  supabase: any,
-  employerId: string,
+// Send a single consolidated pipeline summary email instead of per-stage emails
+async function sendPipelineSummaryEmail(
   candidateEmail: string,
   candidateName: string,
   jobTitle: string,
   companyName: string,
-  stageName: string,
-  passed: boolean,
-  score: number,
-  feedback: string,
-  nextStageName?: string
+  results: Array<{ stage: string; score: number; passed: boolean; feedback: string }>,
+  finalStatus: 'completed' | 'rejected' | 'progressed',
+  currentStageName?: string
 ): Promise<void> {
   if (!RESEND_API_KEY) {
     console.log('RESEND_API_KEY not configured, skipping email');
     return;
   }
 
-  // Try to fetch custom template for this employer and stage
-  let customTemplate: CustomTemplate | null = null;
-  try {
-    const { data } = await supabase
-      .from('email_templates')
-      .select('*')
-      .eq('employer_id', employerId)
-      .eq('stage_name', stageName)
-      .eq('template_type', 'stage_transition')
-      .eq('is_active', true)
-      .single();
-    
-    if (data) {
-      customTemplate = data;
-      console.log(`Using custom template for stage: ${stageName}`);
-    }
-  } catch (e) {
-    console.log(`No custom template found for stage: ${stageName}, using default`);
-  }
-
-  const baseStyles = `
-    <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0; }
-      .content { background: #ffffff; padding: 30px; }
-      .info-card { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid; }
-      .score-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 18px; }
-      .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; border-radius: 0 0 12px 12px; }
-    </style>
-  `;
+  const allPassed = results.every(r => r.passed);
+  const failedStage = results.find(r => !r.passed);
 
   const stageIcons: Record<string, string> = {
     'Resume Screening': '📄',
-    'AI Phone Interview': '📞',
     'Technical Assessment': '💻',
     'HR Round': '👥',
+    'Viva': '🎤',
     'Final Review': '🎯',
     'Offer Stage': '🎁'
   };
 
-  const stageIcon = stageIcons[stageName] || '📋';
-  
-  // Use custom template colors or defaults
-  const primaryColor = customTemplate?.primary_color || (passed ? '#10b981' : '#ef4444');
-  const headerColor = passed 
-    ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)` 
+  const primaryColor = allPassed ? '#10b981' : '#ef4444';
+  const headerColor = allPassed
+    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
     : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-  
-  // Use custom header text or default
-  const headerText = customTemplate?.header_text || (passed ? 'Stage Completed!' : 'Application Update');
-  const statusIcon = passed ? '✅' : '📋';
 
-  // Replace placeholders in custom template
-  const replacePlaceholders = (text: string) => {
-    return text
-      .replace(/\{\{candidateName\}\}/g, candidateName)
-      .replace(/\{\{jobTitle\}\}/g, jobTitle)
-      .replace(/\{\{companyName\}\}/g, companyName)
-      .replace(/\{\{stageName\}\}/g, stageName)
-      .replace(/\{\{score\}\}/g, String(score))
-      .replace(/\{\{nextStage\}\}/g, nextStageName || 'N/A');
-  };
+  const stageRows = results.map(r => {
+    const icon = stageIcons[r.stage] || '📋';
+    const statusIcon = r.passed ? '✅' : '❌';
+    const scoreColor = r.passed ? '#10b981' : '#ef4444';
+    return `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${icon} ${r.stage}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+          <span style="color: ${scoreColor}; font-weight: bold;">${r.score}%</span>
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${statusIcon}</td>
+      </tr>`;
+  }).join('');
 
-  // Use custom body text or default
-  const bodyContent = customTemplate?.body_text 
-    ? replacePlaceholders(customTemplate.body_text)
-    : (passed 
-        ? `Great news! You have successfully completed the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.`
-        : `Thank you for participating in the <strong>${stageName}</strong> stage for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.`);
+  let statusMessage = '';
+  if (finalStatus === 'completed') {
+    statusMessage = `<div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin: 0 0 8px; color: #065f46;">🎉 Congratulations!</h3>
+      <p style="margin: 0; color: #047857;">You've successfully completed all interview stages! We'll be in touch soon with the next steps regarding your offer.</p>
+    </div>`;
+  } else if (finalStatus === 'rejected') {
+    statusMessage = `<div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 0; color: #991b1b;">Unfortunately, we've decided to move forward with other candidates at the <strong>${failedStage?.stage}</strong> stage. We encourage you to apply for other opportunities that match your skills.</p>
+    </div>`;
+  } else if (currentStageName) {
+    statusMessage = `<div style="background: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin: 0 0 8px; color: #6d28d9;">🚀 Next Step</h3>
+      <p style="margin: 0; color: #5b21b6;">You're now at the <strong>${currentStageName}</strong> stage. Stay tuned for further updates.</p>
+    </div>`;
+  }
 
-  // Use custom footer or default
-  const footerContent = customTemplate?.footer_text 
-    ? replacePlaceholders(customTemplate.footer_text)
-    : `Best regards,\nThe ${companyName} Hiring Team`;
-
-  let emailHtml = `
+  const emailHtml = `
     <!DOCTYPE html>
     <html>
-    <head>${baseStyles}</head>
+    <head>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0; color: white; }
+        .content { background: #ffffff; padding: 30px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; border-radius: 0 0 12px 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; background: #f8fafc; border-bottom: 2px solid #e2e8f0; font-size: 14px; color: #475569; }
+      </style>
+    </head>
     <body>
       <div class="container">
-        <div class="header" style="background: ${headerColor}; color: white;">
-          <h1 style="margin: 0;">${statusIcon} ${headerText}</h1>
-          <p style="margin: 10px 0 0; opacity: 0.9;">${stageIcon} ${stageName}</p>
+        <div class="header" style="background: ${headerColor};">
+          <h1 style="margin: 0;">📋 Interview Pipeline Update</h1>
+          <p style="margin: 10px 0 0; opacity: 0.9;">${jobTitle} at ${companyName}</p>
         </div>
         <div class="content">
           <p>Dear ${candidateName},</p>
-          <p>${bodyContent}</p>
+          <p>Here's a summary of your interview pipeline progress for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>:</p>
           
-          <div class="info-card" style="border-color: ${passed ? primaryColor : '#64748b'}; text-align: center;">
-            <h3 style="margin-top: 0; color: ${passed ? primaryColor : '#64748b'};">Your Score</h3>
-            <span class="score-badge" style="background: ${passed ? `${primaryColor}15` : '#f1f5f9'}; color: ${passed ? primaryColor : '#475569'};">
-              ${score}%
-            </span>
-          </div>
+          <table style="margin: 20px 0;">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th style="text-align: center;">Score</th>
+                <th style="text-align: center;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${stageRows}
+            </tbody>
+          </table>
 
-          <div class="info-card" style="border-color: #3b82f6;">
-            <h3 style="margin-top: 0; color: #1d4ed8;">💬 Feedback</h3>
-            <p style="margin: 0;">${feedback}</p>
-          </div>
-
-          ${passed && nextStageName ? `
-            <div class="info-card" style="border-color: #8b5cf6; background: #f5f3ff;">
-              <h3 style="margin-top: 0; color: #6d28d9;">🚀 Next Step</h3>
-              <p style="margin: 0;">You're advancing to the <strong>${nextStageName}</strong> stage! Stay tuned for updates.</p>
-            </div>
-          ` : ''}
-
-          ${passed && !nextStageName ? `
-            <div class="info-card" style="border-color: #f59e0b; background: #fffbeb;">
-              <h3 style="margin-top: 0; color: #d97706;">🎉 Congratulations!</h3>
-              <p style="margin: 0;">You've completed all interview stages! We'll be in touch soon with the next steps.</p>
-            </div>
-          ` : ''}
-
-          ${!passed ? `
-            <p style="color: #666;">While we've decided to move forward with other candidates for this position, we encourage you to apply for other opportunities that match your skills.</p>
-          ` : ''}
+          ${statusMessage}
         </div>
         <div class="footer">
-          <p style="white-space: pre-line;">${footerContent}</p>
+          <p>Best regards,<br>The ${companyName} Hiring Team</p>
           <p style="font-size: 12px; color: #999;">Powered by Gradia Job Portal</p>
         </div>
       </div>
@@ -170,12 +133,11 @@ async function sendStageTransitionEmail(
     </html>
   `;
 
-  // Use custom subject or default
-  const subject = customTemplate?.subject 
-    ? replacePlaceholders(customTemplate.subject)
-    : (passed 
-        ? `${stageIcon} ${stageName} Complete - ${jobTitle} at ${companyName}`
-        : `Application Update: ${jobTitle} at ${companyName}`);
+  const subject = allPassed
+    ? `🎉 Interview Pipeline Complete - ${jobTitle} at ${companyName}`
+    : (finalStatus === 'rejected'
+      ? `Application Update - ${jobTitle} at ${companyName}`
+      : `📋 Pipeline Progress Update - ${jobTitle} at ${companyName}`);
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -193,9 +155,9 @@ async function sendStageTransitionEmail(
     });
 
     const result = await response.json();
-    console.log(`Stage transition email sent to ${candidateEmail}:`, result);
+    console.log(`Pipeline summary email sent to ${candidateEmail}:`, result);
   } catch (error) {
-    console.error('Failed to send stage transition email:', error);
+    console.error('Failed to send pipeline summary email:', error);
   }
 }
 
@@ -423,25 +385,8 @@ serve(async (req) => {
         feedback: evaluation.feedback
       });
 
-      // Find next stage name for email
+      // Find next stage
       const nextStage = stages.find(s => s.stage_order === stage.stage_order + 1);
-
-      // Send email notification for this stage transition
-      if (candidateEmail) {
-        await sendStageTransitionEmail(
-          supabase,
-          candidate.jobs?.employer_id,
-          candidateEmail,
-          candidateName,
-          jobTitle,
-          companyName,
-          stage.name,
-          evaluation.passed,
-          evaluation.score,
-          evaluation.feedback,
-          evaluation.passed ? nextStage?.name : undefined
-        );
-      }
 
       if (!evaluation.passed) {
         // Candidate failed this stage
@@ -452,6 +397,14 @@ serve(async (req) => {
             current_stage_id: stage.id
           })
           .eq('id', interviewCandidateId);
+
+        // Send single summary email for rejection
+        if (candidateEmail) {
+          await sendPipelineSummaryEmail(
+            candidateEmail, candidateName, jobTitle, companyName,
+            results, 'rejected'
+          );
+        }
 
         return new Response(JSON.stringify({
           success: true,
@@ -472,6 +425,14 @@ serve(async (req) => {
           .eq('id', interviewCandidateId);
 
         if (!autoProgressAll) {
+          // Send single summary email for single-step progress
+          if (candidateEmail) {
+            await sendPipelineSummaryEmail(
+              candidateEmail, candidateName, jobTitle, companyName,
+              results, 'progressed', nextStage.name
+            );
+          }
+
           return new Response(JSON.stringify({
             success: true,
             status: 'progressed',
@@ -488,6 +449,14 @@ serve(async (req) => {
           .from('interview_candidates')
           .update({ status: 'hired' })
           .eq('id', interviewCandidateId);
+
+        // Send single summary email for completion
+        if (candidateEmail) {
+          await sendPipelineSummaryEmail(
+            candidateEmail, candidateName, jobTitle, companyName,
+            results, 'completed'
+          );
+        }
 
         return new Response(JSON.stringify({
           success: true,
@@ -509,6 +478,14 @@ serve(async (req) => {
       .select('*, current_stage:interview_stages(*)')
       .eq('id', interviewCandidateId)
       .single();
+
+    // Send single summary email for partial progress
+    if (candidateEmail) {
+      await sendPipelineSummaryEmail(
+        candidateEmail, candidateName, jobTitle, companyName,
+        results, 'progressed', finalCandidate?.current_stage?.name
+      );
+    }
 
     return new Response(JSON.stringify({
       success: true,
