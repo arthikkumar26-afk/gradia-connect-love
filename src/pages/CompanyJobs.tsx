@@ -130,8 +130,8 @@ const CompanyJobs = () => {
         toast.error("File size must be less than 5MB");
         return;
       }
-      if (!file.type.includes("pdf") && !file.type.includes("image")) {
-        toast.error("Please upload a PDF or image file (JPG/PNG)");
+      if (!file.type.includes("pdf") && !file.type.includes("msword") && !file.type.includes("wordprocessingml")) {
+        toast.error("Please upload a PDF or Word document (.pdf, .doc, .docx)");
         return;
       }
       setResumeFile(file);
@@ -656,7 +656,7 @@ const CompanyJobs = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,image/*"
+                  accept=".pdf,.doc,.docx"
                   onChange={handleFileChange}
                   className="hidden"
                 />
@@ -677,7 +677,7 @@ const CompanyJobs = () => {
                     <>
                       <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        Click to upload PDF or Image (JPG/PNG)
+                        Click to upload PDF or Word document
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">Max 5MB</p>
                     </>

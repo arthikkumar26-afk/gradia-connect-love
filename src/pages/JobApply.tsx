@@ -124,8 +124,8 @@ const JobApply = () => {
         toast.error("File size must be less than 5MB");
         return;
       }
-      if (!file.type.includes("pdf") && !file.type.includes("image")) {
-        toast.error("Please upload a PDF or image file (JPG/PNG)");
+      if (!file.type.includes("pdf") && !file.type.includes("msword") && !file.type.includes("wordprocessingml")) {
+        toast.error("Please upload a PDF or Word document (.pdf, .doc, .docx)");
         return;
       }
       setResumeFile(file);
@@ -515,7 +515,7 @@ const JobApply = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
+                    accept=".pdf,.doc,.docx"
                     className="hidden"
                     onChange={handleFileChange}
                     disabled={analysisStep !== "idle" && analysisStep !== "error"}
@@ -529,7 +529,7 @@ const JobApply = () => {
                     <>
                       <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                       <p className="text-sm text-muted-foreground">
-                        Click to upload your resume (PDF, JPG, PNG — max 5MB)
+                        Click to upload your resume (PDF or Word — max 5MB)
                       </p>
                     </>
                   )}
