@@ -86,6 +86,7 @@ const stageIcons: Record<string, React.ElementType> = {
   'Written Test': Code,
   'Demo Slot Booking': Calendar,
   'Demo Round': Video,
+  'HR Round Slot Booking': Calendar,
   'HR Round': UserCheck,
   'Viva': Video,
   'Final Review': FileCheck,
@@ -98,6 +99,7 @@ const stageColors: Record<string, string> = {
   'Written Test': 'bg-orange-500',
   'Demo Slot Booking': 'bg-purple-500',
   'Demo Round': 'bg-pink-500',
+  'HR Round Slot Booking': 'bg-teal-500',
   'HR Round': 'bg-green-500',
   'Viva': 'bg-yellow-500',
   'Final Review': 'bg-cyan-500',
@@ -230,6 +232,16 @@ const StageActionButtons = ({
         });
         if (error) throw error;
         toast.success('Demo slot booking email resent');
+      } else if (step.title === 'HR Round Slot Booking') {
+        // For HR Round Slot Booking, send slot booking email
+        const { error } = await supabase.functions.invoke('send-slot-booking-email', {
+          body: {
+            interviewCandidateId,
+            stageName: 'HR Round',
+          },
+        });
+        if (error) throw error;
+        toast.success('HR slot booking email resent');
       } else {
         const { error } = await supabase.functions.invoke('send-notification-email', {
           body: {
@@ -267,8 +279,8 @@ const StageActionButtons = ({
 
       if (error) throw error;
       
-      // Update local UI state
-      onUpdateStep(step.id, "completed");
+      // Update local UI state - skipEmail=true since edge function already handles advancement
+      onUpdateStep(step.id, "completed", true);
       
       // If advancing from CV/Resume, send CV results email and auto-send slot booking email for Written Test
       if (step.title === 'CV/Resume' && data?.currentStage === 'Written Test') {
@@ -338,6 +350,45 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
+      } else if (step.title === 'Demo Round' && data?.currentStage === 'HR Round Slot Booking') {
+        // Auto-send HR Slot Booking email when advancing from Demo Round
+        try {
+          await supabase.functions.invoke('send-slot-booking-email', {
+            body: {
+              interviewCandidateId,
+              stageName: 'HR Round',
+            }
+          });
+          toast.success(`✓ Demo Round cleared! HR slot booking email sent`, {
+            description: `Candidate will receive an HR Round slot booking link`,
+            duration: 5000,
+          });
+        } catch (slotError) {
+          console.error('Error sending HR slot booking email:', slotError);
+          toast.success(`✓ Demo Round cleared! Moved to HR Round Slot Booking`, {
+            description: 'Note: Slot booking email failed to send. You can resend manually.',
+            duration: 5000,
+          });
+        }
+      } else if (step.title === 'HR Round Slot Booking' && data?.currentStage === 'HR Round') {
+        // Send dual emails when advancing from HR Round Slot Booking to HR Round
+        try {
+          await supabase.functions.invoke('send-hr-round-emails', {
+            body: {
+              interviewCandidateId,
+            }
+          });
+          toast.success(`✓ HR Round Slot Booking cleared! HR round invitations sent`, {
+            description: `Emails sent to candidate and observer`,
+            duration: 5000,
+          });
+        } catch (hrError) {
+          console.error('Error sending HR round emails:', hrError);
+          toast.success(`✓ HR Round Slot Booking cleared! Moved to HR Round`, {
+            description: 'Note: HR emails failed to send. You can send manually from HR Round.',
+            duration: 5000,
+          });
+        }
       } else {
         // Show clear success message with current stage cleared and next stage info
         const clearedMessage = `✓ ${step.title} cleared!`;
@@ -381,6 +432,8 @@ const StageActionButtons = ({
   if (step.status === "current" || step.status === "in_progress" || step.isLive) {
     const isWrittenTest = step.title === 'Written Test';
     const isDemoSlotBooking = step.title === 'Demo Slot Booking';
+    const isHRSlotBooking = step.title === 'HR Round Slot Booking';
+    const isSlotBookingStage = isWrittenTest || isDemoSlotBooking || isHRSlotBooking;
     
     return (
       <div className="flex flex-wrap gap-1 mt-2">
@@ -411,11 +464,11 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Written Test or Demo Slot Booking */}
-            {(isWrittenTest || isDemoSlotBooking) && (
+            {/* Send Slot Booking email for Written Test, Demo Slot Booking, or HR Round Slot Booking */}
+            {isSlotBookingStage && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
-                stageName={isDemoSlotBooking ? 'Demo Round' : step.title}
+                stageName={isDemoSlotBooking ? 'Demo Round' : isHRSlotBooking ? 'HR Round' : step.title}
               />
             )}
           </>
@@ -450,6 +503,8 @@ const StageActionButtons = ({
   if (step.status === "pending") {
     const isWrittenTest = step.title === 'Written Test';
     const isDemoSlotBooking = step.title === 'Demo Slot Booking';
+    const isHRSlotBooking = step.title === 'HR Round Slot Booking';
+    const isSlotBookingStage = isWrittenTest || isDemoSlotBooking || isHRSlotBooking;
     
     return (
       <div className="flex gap-1 mt-2">
@@ -479,11 +534,11 @@ const StageActionButtons = ({
               )}
               Resend
             </Button>
-            {/* Send Slot Booking email for Written Test or Demo Slot Booking (pending) */}
-            {(isWrittenTest || isDemoSlotBooking) && isFirstPending && (
+            {/* Send Slot Booking email for Written Test, Demo Slot Booking, or HR Slot Booking (pending) */}
+            {isSlotBookingStage && isFirstPending && (
               <SendSlotBookingButton
                 interviewCandidateId={interviewCandidateId}
-                stageName={isDemoSlotBooking ? 'Demo Round' : step.title}
+                stageName={isDemoSlotBooking ? 'Demo Round' : isHRSlotBooking ? 'HR Round' : step.title}
               />
             )}
           </>
