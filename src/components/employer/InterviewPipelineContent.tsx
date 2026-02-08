@@ -90,7 +90,6 @@ const stageIcons: Record<string, React.ElementType> = {
   'Demo Feedback': MessageSquare,
   'HR Round Slot Booking': Calendar,
   'HR Round': UserCheck,
-  'Viva': Video,
   'Final Review': FileCheck,
   'Offer Stage': FileText,
 };
@@ -104,7 +103,6 @@ const stageColors: Record<string, string> = {
   'Demo Feedback': 'bg-amber-500',
   'HR Round Slot Booking': 'bg-teal-500',
   'HR Round': 'bg-green-500',
-  'Viva': 'bg-yellow-500',
   'Final Review': 'bg-cyan-500',
   'Offer Stage': 'bg-emerald-500',
 };

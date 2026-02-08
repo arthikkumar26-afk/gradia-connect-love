@@ -36,9 +36,8 @@ const PIPELINE_STAGES = [
   { order: 1, name: "Resume Screening" },
   { order: 2, name: "Technical Assessment" },
   { order: 3, name: "HR Round" },
-  { order: 4, name: "Viva" },
-  { order: 5, name: "Final Review" },
-  { order: 6, name: "Offer Stage" },
+  { order: 4, name: "Final Review" },
+  { order: 5, name: "Offer Stage" },
 ];
 
 export const JobApplicantsModal = ({ 

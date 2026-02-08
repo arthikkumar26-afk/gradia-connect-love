@@ -42,7 +42,7 @@ import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
 import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
 import { EmailTemplatesEditor } from "@/components/employer/EmailTemplatesEditor";
-import { VivaContent } from "@/components/employer/VivaContent";
+
 import { RegistrationContent } from "@/components/employer/RegistrationContent";
 import { SubscriptionsContent } from "@/components/employer/SubscriptionsContent";
 import { JobAlertContent } from "@/components/employer/JobAlertContent";
@@ -510,7 +510,7 @@ const EmployerDashboard = () => {
             {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
             {activeMenu === "mock-interview-pipeline" && <EmployerInterviewPipelineTracker />}
             {activeMenu === "live-interviews" && <LiveInterviewMonitor />}
-            {activeMenu === "viva" && <VivaContent />}
+            
             {activeMenu === "subscriptions" && <SubscriptionsContent />}
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
             

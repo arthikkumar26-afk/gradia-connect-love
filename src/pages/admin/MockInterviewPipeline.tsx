@@ -800,7 +800,6 @@ export default function MockInterviewPipeline() {
     switch (stageType) {
       case 'technical_assessment': return 'Technical Assessment';
       case 'demo_round': return 'Demo Round';
-      case 'viva': return 'Viva';
       case 'all': return 'All Stages';
       default: return stageType;
     }

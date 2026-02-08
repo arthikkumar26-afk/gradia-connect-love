@@ -27,7 +27,6 @@ const stageIconsByName: Record<string, React.ComponentType<{ className?: string 
   'Resume Screening': FileText,
   'Technical Assessment': Code,
   'HR Round': UserCheck,
-  'Viva': Video,
   'Final Review': ListChecks,
   'Offer Stage': Mail,
 };
@@ -37,9 +36,8 @@ const stageIconsByOrder: Record<number, React.ComponentType<{ className?: string
   1: FileText,        // Resume Screening
   2: Code,            // Technical Assessment
   3: UserCheck,       // HR Round
-  4: Video,           // Viva
-  5: ListChecks,      // Final Review
-  6: Mail,            // Offer Stage
+  4: ListChecks,      // Final Review
+  5: Mail,            // Offer Stage
 };
 
 export const InterviewProgressTracker = ({
