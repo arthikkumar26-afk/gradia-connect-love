@@ -44,8 +44,31 @@ serve(async (req) => {
     const job = interviewCandidate.job;
     const employer = job?.employer;
     const companyName = employer?.company_name || 'Gradia';
-    const aiAnalysis = interviewCandidate.ai_analysis as Record<string, any> || {};
-    const aiScore = interviewCandidate.ai_score || 0;
+
+    // Get CV/Resume stage analysis from interview_events (the original source)
+    // interview_candidates.ai_analysis gets overwritten by later stages, so we need the event data
+    const { data: cvStageEvent } = await supabase
+      .from('interview_events')
+      .select('ai_feedback, ai_score')
+      .eq('interview_candidate_id', interviewCandidateId)
+      .eq('stage_id', (
+        await supabase
+          .from('interview_stages')
+          .select('id')
+          .eq('name', 'CV/Resume')
+          .single()
+      ).data?.id || '')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Use CV stage event data first, fall back to interview_candidates data
+    const cvFeedback = (cvStageEvent?.ai_feedback as Record<string, any>) || {};
+    const aiAnalysis = cvFeedback.overall_score ? cvFeedback : (interviewCandidate.ai_analysis as Record<string, any> || {});
+    const aiScore = cvStageEvent?.ai_score || interviewCandidate.ai_score || 0;
+
+    console.log('CV analysis source:', cvFeedback.overall_score ? 'interview_events' : 'interview_candidates');
+    console.log('AI Analysis data:', JSON.stringify(aiAnalysis));
 
     // Extract analysis details
     const overallScore = aiAnalysis.overall_score || aiScore;
@@ -54,7 +77,6 @@ serve(async (req) => {
     const locationMatchScore = aiAnalysis.location_match_score || 0;
     const recommendation = aiAnalysis.recommendation || 'pending';
     const strengths: string[] = Array.isArray(aiAnalysis.strengths) ? aiAnalysis.strengths : [];
-    const concerns: string[] = Array.isArray(aiAnalysis.concerns) ? aiAnalysis.concerns : [];
     const summary = aiAnalysis.summary || 'Your resume has been reviewed.';
     const suggestedFocus: string[] = Array.isArray(aiAnalysis.suggested_interview_focus) ? aiAnalysis.suggested_interview_focus : [];
 
@@ -83,11 +105,6 @@ serve(async (req) => {
     const strengthsHtml = strengths.length > 0
       ? strengths.map(s => `<li style="margin-bottom: 6px; color: #166534; font-size: 13px;">✅ ${s}</li>`).join('')
       : '<li style="color: #6b7280; font-size: 13px;">No specific strengths identified yet</li>';
-
-    // Build concerns/improvements HTML
-    const concernsHtml = concerns.length > 0
-      ? concerns.map(c => `<li style="margin-bottom: 6px; color: #991b1b; font-size: 13px;">⚠️ ${c}</li>`).join('')
-      : '<li style="color: #6b7280; font-size: 13px;">No major concerns identified</li>';
 
     // Build focus areas HTML
     const focusHtml = suggestedFocus.length > 0
