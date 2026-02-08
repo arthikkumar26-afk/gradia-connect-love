@@ -32,7 +32,8 @@ import {
   X,
   Trash2,
   Play,
-  Eye
+  Eye,
+  RotateCcw
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -740,6 +741,8 @@ const CandidateProfileInline = ({
   const [selectedStageForSchedule, setSelectedStageForSchedule] = useState<InterviewStep | null>(null);
   const [jobInterviewType, setJobInterviewType] = useState<string | null>(null);
   const [showAIInterviewDialog, setShowAIInterviewDialog] = useState(false);
+  const [isStartingInterview, setIsStartingInterview] = useState(false);
+  const [isRestartingInterview, setIsRestartingInterview] = useState(false);
   
   // Fetch job interview type
   useEffect(() => {
@@ -759,6 +762,121 @@ const CandidateProfileInline = ({
 
   const completedSteps = candidate.interviewSteps.filter(s => s.status === "completed").length;
   const progress = (completedSteps / candidate.interviewSteps.length) * 100;
+  const allStagesCompleted = completedSteps === candidate.interviewSteps.length;
+  const hasStarted = completedSteps > 0 || candidate.interviewSteps.some(s => s.status === "current" || s.status === "in_progress");
+
+  // Start Interview - sends instruction email for first stage and starts the process
+  const handleStartInterview = async () => {
+    setIsStartingInterview(true);
+    try {
+      const firstStep = candidate.interviewSteps.find(s => s.status === "current" || s.status === "pending");
+      if (!firstStep) {
+        toast.error("No pending stages to start");
+        return;
+      }
+
+      // Send instruction email for the current/first stage
+      const { error } = await supabase.functions.invoke('send-notification-email', {
+        body: {
+          to: candidate.email,
+          candidateName: candidate.name,
+          jobTitle: candidate.role,
+          stageName: firstStep.title,
+          type: 'stage_invitation',
+          interviewCandidateId: candidate.interviewCandidateId,
+          stageId: firstStep.id,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update the stage to "current" status
+      onUpdateStep(firstStep.id, "current");
+      
+      toast.success(`Interview started! Instruction email sent for ${firstStep.title}`, {
+        description: `Email sent to ${candidate.email}`,
+        duration: 4000,
+      });
+    } catch (error) {
+      console.error('Error starting interview:', error);
+      toast.error('Failed to start interview');
+    } finally {
+      setIsStartingInterview(false);
+    }
+  };
+
+  // Restart Interview - resets all progress and starts from beginning
+  const handleRestartInterview = async () => {
+    setIsRestartingInterview(true);
+    try {
+      // Get all stages to find the first one
+      const { data: allStages } = await supabase
+        .from('interview_stages')
+        .select('id, name, stage_order')
+        .order('stage_order', { ascending: true });
+
+      if (!allStages || allStages.length === 0) {
+        toast.error("No interview stages found");
+        return;
+      }
+
+      const firstStage = allStages[0];
+
+      // Reset candidate to first stage
+      const { error: resetError } = await supabase
+        .from('interview_candidates')
+        .update({
+          current_stage_id: firstStage.id,
+          ai_score: null,
+          status: 'active',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', candidate.interviewCandidateId);
+
+      if (resetError) throw resetError;
+
+      // Delete all interview events for this candidate to reset progress
+      const { error: eventsError } = await supabase
+        .from('interview_events')
+        .delete()
+        .eq('interview_candidate_id', candidate.interviewCandidateId);
+
+      if (eventsError) {
+        console.error('Error clearing events:', eventsError);
+      }
+
+      // Send instruction email for the first stage
+      const { error: emailError } = await supabase.functions.invoke('send-notification-email', {
+        body: {
+          to: candidate.email,
+          candidateName: candidate.name,
+          jobTitle: candidate.role,
+          stageName: firstStage.name,
+          type: 'stage_invitation',
+          interviewCandidateId: candidate.interviewCandidateId,
+          stageId: firstStage.id,
+        },
+      });
+
+      if (emailError) {
+        console.error('Email send error:', emailError);
+      }
+
+      toast.success('Interview restarted from the beginning!', {
+        description: `Instruction email sent for ${firstStage.name}`,
+        duration: 4000,
+      });
+
+      // Refresh data
+      onRefresh?.();
+    } catch (error) {
+      console.error('Error restarting interview:', error);
+      toast.error('Failed to restart interview');
+    } finally {
+      setIsRestartingInterview(false);
+    }
+  };
+
 
   const getStepIcon = (step: InterviewStep) => {
     // Show live pulsing indicator for active interviews
@@ -1067,7 +1185,47 @@ const CandidateProfileInline = ({
                     </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-3">
+                  {/* Start Interview & Restart Interview Buttons */}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={handleStartInterview}
+                      disabled={isStartingInterview || allStagesCompleted}
+                    >
+                      {isStartingInterview ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Starting...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Start Interview
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRestartInterview}
+                      disabled={isRestartingInterview || (!hasStarted && completedSteps === 0)}
+                    >
+                      {isRestartingInterview ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Restarting...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Restart
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
                   <ClickableStagesList
                     interviewSteps={candidate.interviewSteps}
                     interviewCandidateId={candidate.interviewCandidateId}
