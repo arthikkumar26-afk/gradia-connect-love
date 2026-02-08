@@ -312,10 +312,10 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold">Sector</TableHead>
                     <TableHead className="font-semibold">Category</TableHead>
                     <TableHead className="font-semibold">Function</TableHead>
+                    <TableHead className="font-semibold">Board</TableHead>
                     <TableHead className="font-semibold">Segment</TableHead>
                     <TableHead className="font-semibold">Program</TableHead>
                     <TableHead className="font-semibold">Classes</TableHead>
-                    <TableHead className="font-semibold">Board</TableHead>
                     <TableHead className="font-semibold">Department</TableHead>
                     <TableHead className="font-semibold">Designation</TableHead>
                     <TableHead className="font-semibold">Subjects</TableHead>
@@ -369,6 +369,9 @@ export const JobManagementContent = () => {
                           <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "functionType", "w-24")}
                           </TableCell>
+                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                            {renderEditableCell(job, "board", "w-24")}
+                          </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "segment", "w-24")}
                           </TableCell>
@@ -377,9 +380,6 @@ export const JobManagementContent = () => {
                           </TableCell>
                           <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "classes", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "board", "w-24")}
                           </TableCell>
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "department", "w-24")}
