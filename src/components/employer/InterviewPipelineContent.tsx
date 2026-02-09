@@ -2678,40 +2678,49 @@ export const InterviewPipelineContent = () => {
     await refetch();
   };
 
+  const deleteCandidateCompletely = async (interviewCandidateId: string, candidateId: string) => {
+    // Get interview events for this candidate
+    const { data: events } = await supabase
+      .from('interview_events')
+      .select('id')
+      .eq('interview_candidate_id', interviewCandidateId);
+
+    // Delete in dependency order
+    if (events?.length) {
+      const eventIds = events.map(e => e.id);
+      await Promise.all([
+        supabase.from('interview_invitations').delete().in('interview_event_id', eventIds),
+        supabase.from('interview_responses').delete().in('interview_event_id', eventIds),
+      ]);
+    }
+
+    // Delete all records referencing interview_candidate
+    await Promise.all([
+      supabase.from('interview_events').delete().eq('interview_candidate_id', interviewCandidateId),
+      supabase.from('ai_interview_sessions').delete().eq('interview_candidate_id', interviewCandidateId),
+      supabase.from('management_reviews').delete().eq('interview_candidate_id', interviewCandidateId),
+      supabase.from('offer_letters').delete().eq('interview_candidate_id', interviewCandidateId),
+      supabase.from('viva_evaluations').delete().eq('interview_candidate_id', interviewCandidateId),
+      supabase.from('viva_sessions').delete().eq('interview_candidate_id', interviewCandidateId),
+      supabase.from('slot_bookings').delete().eq('candidate_id', candidateId),
+    ]);
+
+    // Delete the interview candidate record itself
+    const { error } = await supabase
+      .from('interview_candidates')
+      .delete()
+      .eq('id', interviewCandidateId);
+
+    if (error) throw error;
+  };
+
   const handleDeleteCandidate = async () => {
     if (!deleteCandidate) return;
     
     setIsDeleting(true);
     try {
-      // Get interview events for this candidate
-      const { data: events } = await supabase
-        .from('interview_events')
-        .select('id')
-        .eq('interview_candidate_id', deleteCandidate.interviewCandidateId);
-      
-      // Delete interview responses first
-      if (events?.length) {
-        await supabase
-          .from('interview_responses')
-          .delete()
-          .in('interview_event_id', events.map(e => e.id));
-      }
-      
-      // Delete interview events
-      await supabase
-        .from('interview_events')
-        .delete()
-        .eq('interview_candidate_id', deleteCandidate.interviewCandidateId);
-      
-      // Delete the interview candidate record
-      const { error } = await supabase
-        .from('interview_candidates')
-        .delete()
-        .eq('id', deleteCandidate.interviewCandidateId);
-      
-      if (error) throw error;
-      
-      toast.success('Candidate removed from pipeline');
+      await deleteCandidateCompletely(deleteCandidate.interviewCandidateId, deleteCandidate.id);
+      toast.success('Candidate permanently removed');
       setDeleteCandidate(null);
       refetch();
     } catch (error: any) {
@@ -2719,6 +2728,32 @@ export const InterviewPipelineContent = () => {
       toast.error(error.message || 'Failed to remove candidate');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    setIsBulkDeleting(true);
+    try {
+      const candidatesToDelete = allCandidates.filter(c => selectedIds.has(c.interviewCandidateId));
+      
+      for (const candidate of candidatesToDelete) {
+        await deleteCandidateCompletely(candidate.interviewCandidateId, candidate.id);
+      }
+      
+      toast.success(`${candidatesToDelete.length} candidate(s) permanently removed`);
+      setSelectedIds(new Set());
+      setShowBulkDeleteConfirm(false);
+      refetch();
+    } catch (error: any) {
+      console.error('Bulk delete error:', error);
+      toast.error(error.message || 'Failed to delete some candidates');
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -2863,40 +2898,48 @@ export const InterviewPipelineContent = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button 
-                  onClick={handleBulkMove} 
-                  disabled={!bulkTargetStage || isBulkMoving}
-                  size="sm"
-                >
-                  {isBulkMoving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Moving...
-                    </>
-                  ) : (
-                    <>
-                      <ChevronRight className="h-4 w-4 mr-2" />
-                      Move Selected
-                    </>
-                  )}
-                </Button>
+                  <Button 
+                    onClick={handleBulkMove} 
+                    disabled={!bulkTargetStage || isBulkMoving}
+                    size="sm"
+                  >
+                    {isBulkMoving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Moving...
+                      </>
+                    ) : (
+                      <>
+                        <ChevronRight className="h-4 w-4 mr-2" />
+                        Move Selected
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={() => setShowBulkDeleteConfirm(true)}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Selected
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Candidates Grid */}
+        {allCandidates.length === 0 ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <Users className="h-12 w-12 text-muted-foreground" />
+              <div>
+                <p className="text-lg font-medium text-foreground">No candidates yet</p>
+                <p className="text-sm text-muted-foreground">Candidates will appear here when they apply</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Candidates Grid */}
-      {allCandidates.length === 0 ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <Users className="h-12 w-12 text-muted-foreground" />
-            <div>
-              <p className="text-lg font-medium text-foreground">No candidates yet</p>
-              <p className="text-sm text-muted-foreground">Candidates will appear here when they apply</p>
-            </div>
           </div>
-        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {allCandidates.map((candidate) => (
@@ -2915,14 +2958,14 @@ export const InterviewPipelineContent = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Single Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteCandidate} onOpenChange={(open) => !open && setDeleteCandidate(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Candidate</AlertDialogTitle>
+            <AlertDialogTitle>Permanently Delete Candidate</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove {deleteCandidate?.name} from the interview pipeline? 
-              This will delete all interview records and cannot be undone.
+              Are you sure you want to permanently delete <span className="font-semibold">{deleteCandidate?.name}</span>? 
+              This will remove all interview records, responses, bookings, reviews, and offer letters. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -2932,7 +2975,36 @@ export const InterviewPipelineContent = () => {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? 'Removing...' : 'Remove'}
+              {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} Candidate{selectedIds.size > 1 ? 's' : ''}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <span className="font-semibold">{selectedIds.size} candidate{selectedIds.size > 1 ? 's' : ''}</span> and all their interview records, responses, bookings, reviews, and offer letters from the database. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isBulkDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                `Delete ${selectedIds.size} Candidate${selectedIds.size > 1 ? 's' : ''}`
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
