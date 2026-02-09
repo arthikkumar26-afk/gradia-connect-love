@@ -1,10 +1,11 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useMemo } from "react";
-import { Search, ArrowRight, X } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Search, ArrowRight, X, Loader2 } from "lucide-react";
 import JobCard from "@/components/ui/JobCard";
-import { sampleJobs, getFeaturedJobs } from "@/data/sampleJobs";
+import { sampleJobs, getFeaturedJobs, Job } from "@/data/sampleJobs";
+import { supabase } from "@/integrations/supabase/client";
 
 type FilterType = "all" | "software" | "education" | "remote" | "entry";
 
@@ -14,7 +15,78 @@ const Hero = () => {
   const [location, setLocation] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [isSearchActive, setIsSearchActive] = useState(false);
-  const allFeaturedJobs = getFeaturedJobs();
+  const [dbJobs, setDbJobs] = useState<Job[]>([]);
+  const [isLoadingDb, setIsLoadingDb] = useState(true);
+  const fallbackJobs = getFeaturedJobs();
+
+  // Fetch featured jobs from database
+  useEffect(() => {
+    const fetchFeaturedJobs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('id, job_title, location, job_type, salary_range, experience_required, created_at, skills, description, employer_id')
+          .eq('is_featured', true)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const employerIds = [...new Set(data.map(job => job.employer_id))];
+          const { data: employers } = await supabase
+            .from('profiles')
+            .select('id, company_name, full_name')
+            .in('id', employerIds);
+
+          const employerMap = new Map(employers?.map(e => [e.id, e]) || []);
+
+          const getPostedTime = (createdAt: string | null) => {
+            if (!createdAt) return 'Recently';
+            const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24));
+            if (days === 0) return 'Today';
+            if (days === 1) return '1 day ago';
+            return `${days} days ago`;
+          };
+
+          const mappedJobs: Job[] = data.map(job => {
+            const employer = employerMap.get(job.employer_id);
+            const jobType = job.job_type?.toLowerCase() || '';
+            const category: "software" | "education" = 
+              (jobType.includes('teacher') || jobType.includes('education') || jobType.includes('principal'))
+                ? "education" : "software";
+
+            return {
+              id: job.id,
+              title: job.job_title,
+              company: employer?.company_name || employer?.full_name || 'Company',
+              location: job.location || 'Location not specified',
+              type: (job.job_type as any) || 'full-time',
+              category,
+              salary: job.salary_range || undefined,
+              experience: job.experience_required || 'Not specified',
+              posted: getPostedTime(job.created_at),
+              description: job.description || 'No description available',
+              skills: job.skills || [],
+              featured: true,
+            };
+          });
+
+          setDbJobs(mappedJobs);
+        }
+      } catch (error) {
+        console.error('Error fetching featured jobs:', error);
+      } finally {
+        setIsLoadingDb(false);
+      }
+    };
+
+    fetchFeaturedJobs();
+  }, []);
+
+  // Use DB jobs if available, otherwise fallback
+  const allFeaturedJobs = dbJobs.length > 0 ? dbJobs : fallbackJobs;
 
   const filteredJobs = useMemo(() => {
     // If search is active, search through all jobs
