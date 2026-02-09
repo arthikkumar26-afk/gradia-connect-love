@@ -2592,9 +2592,27 @@ export const InterviewPipelineContent = () => {
   const [isBulkMoving, setIsBulkMoving] = useState(false);
   const [deleteCandidate, setDeleteCandidate] = useState<Candidate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("newest");
 
-  // Get all candidates from all stages
-  const allCandidates = stages.flatMap(stage => stage.candidates);
+  // Get all candidates from all stages and sort them
+  const allCandidates = stages.flatMap(stage => stage.candidates).sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime();
+      case "oldest":
+        return new Date(a.appliedDate).getTime() - new Date(b.appliedDate).getTime();
+      case "name_asc":
+        return a.name.localeCompare(b.name);
+      case "name_desc":
+        return b.name.localeCompare(a.name);
+      case "score_high":
+        return (b.aiScore || 0) - (a.aiScore || 0);
+      case "score_low":
+        return (a.aiScore || 0) - (b.aiScore || 0);
+      default:
+        return new Date(b.appliedDate).getTime() - new Date(a.appliedDate).getTime();
+    }
+  });
 
   const handleToggleSelect = (candidateId: string) => {
     setSelectedIds(prev => {
@@ -2851,6 +2869,19 @@ export const InterviewPipelineContent = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40 h-9 text-xs">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="name_asc">Name A-Z</SelectItem>
+              <SelectItem value="name_desc">Name Z-A</SelectItem>
+              <SelectItem value="score_high">Score: High to Low</SelectItem>
+              <SelectItem value="score_low">Score: Low to High</SelectItem>
+            </SelectContent>
+          </Select>
           <Button onClick={refetch} variant="ghost" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
