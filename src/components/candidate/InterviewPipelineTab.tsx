@@ -401,6 +401,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       case 'Technical Assessment': {
         const response = event ? responses.find(r => r.interview_event_id === event.id) : null;
         const score = event?.ai_score;
+        const feedback = event?.ai_feedback && typeof event.ai_feedback === 'object' ? event.ai_feedback as any : null;
+        const correctAnswers = response?.correct_answers ?? feedback?.correctAnswers;
+        const totalQuestions = response?.total_questions ?? feedback?.totalQuestions;
+        const timeTaken = response?.time_taken_seconds ?? feedback?.timeTaken;
         return (
           <div className="space-y-3">
             {score != null && (
@@ -412,16 +416,16 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                 </Badge>
               </div>
             )}
-            {response && (
+            {(correctAnswers != null || totalQuestions != null) && (
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="bg-muted/50 rounded-lg p-2 text-center">
                   <p className="text-xs text-muted-foreground">Correct</p>
-                  <p className="font-semibold text-foreground">{response.correct_answers}/{response.total_questions}</p>
+                  <p className="font-semibold text-foreground">{correctAnswers ?? 0}/{totalQuestions ?? 0}</p>
                 </div>
-                {response.time_taken_seconds && (
+                {timeTaken != null && (
                   <div className="bg-muted/50 rounded-lg p-2 text-center">
                     <p className="text-xs text-muted-foreground">Time Taken</p>
-                    <p className="font-semibold text-foreground">{Math.round(response.time_taken_seconds / 60)} min</p>
+                    <p className="font-semibold text-foreground">{timeTaken < 120 ? `${timeTaken} sec` : `${Math.round(timeTaken / 60)} min`}</p>
                   </div>
                 )}
               </div>
