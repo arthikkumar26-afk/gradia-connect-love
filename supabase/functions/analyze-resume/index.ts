@@ -30,166 +30,6 @@ interface ResumeAnalysisRequest {
   };
 }
 
-async function sendEmailWithRetry(
-  apiKey: string, 
-  emailPayload: any, 
-  maxRetries: number = 3,
-  retryDelayMs: number = 1000
-): Promise<{ success: boolean; result?: any; error?: any }> {
-  let lastError: any = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`Email send attempt ${attempt}/${maxRetries}`);
-      
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailPayload),
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok) {
-        console.log(`Email sent successfully on attempt ${attempt}! ID:`, result.id);
-        return { success: true, result };
-      }
-      
-      // Check for non-retryable errors
-      if (response.status === 400 || response.status === 401 || response.status === 403) {
-        console.error(`Non-retryable error (${response.status}):`, result);
-        return { success: false, error: result };
-      }
-      
-      // Retryable error
-      lastError = result;
-      console.warn(`Email attempt ${attempt} failed (${response.status}):`, result);
-      
-      if (attempt < maxRetries) {
-        const delay = retryDelayMs * Math.pow(2, attempt - 1); // Exponential backoff
-        console.log(`Waiting ${delay}ms before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    } catch (error) {
-      lastError = error;
-      console.error(`Email attempt ${attempt} threw error:`, error);
-      
-      if (attempt < maxRetries) {
-        const delay = retryDelayMs * Math.pow(2, attempt - 1);
-        console.log(`Waiting ${delay}ms before retry...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-  
-  console.error(`All ${maxRetries} email attempts failed. Last error:`, lastError);
-  return { success: false, error: lastError };
-}
-
-async function sendFirstRoundInterviewEmail(apiKey: string, params: {
-  candidateName: string;
-  candidateEmail: string;
-  jobTitle: string;
-  companyName: string;
-  stageName: string;
-  aiScore: number;
-  interviewLink: string;
-  expiresAt: string;
-}): Promise<{ success: boolean; result?: any; error?: any }> {
-  console.log('Sending first round interview invitation email to:', params.candidateEmail);
-  
-  const emailPayload = {
-    from: `${params.companyName} Hiring <noreply@gradia.co.in>`,
-    to: [params.candidateEmail],
-    reply_to: 'support@gradia.co.in',
-    subject: `Interview Invitation - ${params.jobTitle} at ${params.companyName}`,
-    headers: {
-      'List-Unsubscribe': '<mailto:unsubscribe@gradia.co.in>',
-      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-    },
-    html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <tr>
-      <td style="padding: 32px 24px; border-bottom: 1px solid #e5e7eb;">
-        <h1 style="margin: 0; font-size: 18px; font-weight: 600; color: #111827;">🎉 Congratulations! You're Invited to Interview</h1>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px;">
-        <p style="margin: 0 0 16px;">Dear ${params.candidateName},</p>
-        
-        <p style="margin: 0 0 16px;">Great news! Your application for the <strong>${params.jobTitle}</strong> position at <strong>${params.companyName}</strong> has been reviewed and we're excited to invite you to the first round interview.</p>
-        
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ecfdf5; border-radius: 6px; margin: 24px 0; border: 1px solid #a7f3d0;">
-          <tr>
-            <td style="padding: 20px;">
-              <p style="margin: 0 0 8px; font-size: 13px; color: #059669; font-weight: 600;">Interview Details</p>
-              <p style="margin: 0 0 8px;"><strong>Position:</strong> ${params.jobTitle}</p>
-              <p style="margin: 0 0 8px;"><strong>Company:</strong> ${params.companyName}</p>
-              <p style="margin: 0 0 8px;"><strong>Round:</strong> ${params.stageName} (MCQ Assessment)</p>
-              <p style="margin: 0 0 8px;"><strong>Format:</strong> 5 Multiple Choice Questions, 60 seconds each</p>
-              <p style="margin: 0;"><strong>Your Match Score:</strong> ${params.aiScore}%</p>
-            </td>
-          </tr>
-        </table>
-        
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-          <tr>
-            <td align="center">
-              <a href="${params.interviewLink}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px;">Start Interview Now</a>
-            </td>
-          </tr>
-        </table>
-        
-        <p style="margin: 0 0 8px; font-weight: 600; color: #111827;">📋 Important Instructions:</p>
-        <ul style="margin: 0 0 24px; padding-left: 20px; color: #4b5563;">
-          <li style="margin-bottom: 8px;">Use a desktop/laptop with a stable internet connection</li>
-          <li style="margin-bottom: 8px;">Your screen will be recorded during the interview</li>
-          <li style="margin-bottom: 8px;">Each question has a <strong>60-second time limit</strong></li>
-          <li style="margin-bottom: 8px;">You <strong>cannot pause or go back</strong> once started</li>
-          <li style="margin-bottom: 8px;">Complete the interview before <strong>${params.expiresAt}</strong></li>
-        </ul>
-        
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border-radius: 6px; margin: 24px 0; border: 1px solid #fcd34d;">
-          <tr>
-            <td style="padding: 16px;">
-              <p style="margin: 0; font-size: 13px; color: #92400e;">
-                <strong>⚠️ Note:</strong> This interview link is unique to you and will expire in 7 days. Make sure you're in a quiet environment before starting.
-              </p>
-            </td>
-          </tr>
-        </table>
-        
-        <p style="margin: 0;">Best of luck!<br>The ${params.companyName} Hiring Team</p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
-        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-          This email was sent by Gradia Job Portal on behalf of ${params.companyName}.<br>
-          <a href="mailto:unsubscribe@gradia.co.in?subject=Unsubscribe" style="color: #9ca3af;">Unsubscribe</a> from these notifications.
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `,
-  };
-  
-  return sendEmailWithRetry(apiKey, emailPayload, 3, 1000);
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -199,11 +39,6 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
-    }
-
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    if (!RESEND_API_KEY) {
-      console.warn('RESEND_API_KEY not configured - email notifications will be skipped');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -231,11 +66,9 @@ serve(async (req) => {
         .maybeSingle();
 
       if (existingProfile) {
-        // Use existing profile's ID
         actualCandidateId = existingProfile.id;
         console.log('Found existing profile for candidate:', existingProfile.email, 'ID:', actualCandidateId);
         
-        // Update profile with parsed resume data if missing
         await supabase
           .from('profiles')
           .update({
@@ -248,7 +81,6 @@ serve(async (req) => {
           })
           .eq('id', existingProfile.id);
       } else {
-        // Create a new profile for this candidate (using service role bypasses RLS)
         const newCandidateId = crypto.randomUUID();
         const { error: profileError } = await supabase
           .from('profiles')
@@ -274,7 +106,7 @@ serve(async (req) => {
       }
     }
 
-    // Build prompt for AI analysis with all available candidate data
+    // Build prompt for AI analysis
     const candidateSkills = candidateProfile.skills?.join(', ') || 'Not specified';
     
     const prompt = `You are an expert HR analyst. Analyze this candidate's profile against the job requirements and provide a comprehensive evaluation.
@@ -366,15 +198,12 @@ Provide your analysis using the suggest_analysis function.`;
     let analysis;
     
     if (toolCall) {
-      // Standard tool call response
       analysis = JSON.parse(toolCall.function.arguments);
     } else {
-      // Fallback: Try to extract from content if tool call wasn't used
       const content = aiResponse.choices?.[0]?.message?.content;
       console.log('No tool call, trying content fallback:', content?.substring(0, 200));
       
       if (content) {
-        // Try to parse JSON from content
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           try {
@@ -385,7 +214,6 @@ Provide your analysis using the suggest_analysis function.`;
         }
       }
       
-      // If still no analysis, create a default one
       if (!analysis) {
         console.log('Creating default analysis due to AI response format');
         analysis = {
@@ -402,7 +230,7 @@ Provide your analysis using the suggest_analysis function.`;
       }
     }
     
-    // Include parsed candidate profile data in the analysis for display in talent pool
+    // Include parsed candidate profile data in the analysis
     const enrichedAnalysis = {
       ...analysis,
       candidate_data: {
@@ -419,22 +247,24 @@ Provide your analysis using the suggest_analysis function.`;
     
     console.log('AI Analysis completed with candidate data:', enrichedAnalysis);
 
-    // Get the second stage (AI Phone Interview) for next step
+    // Get all interview stages
     const { data: stages } = await supabase
       .from('interview_stages')
       .select('id, name, stage_order')
       .order('stage_order', { ascending: true });
 
+    const interviewGuidelinesStage = stages?.find(s => s.stage_order === 0);
     const resumeScreeningStage = stages?.find(s => s.stage_order === 1);
-    const nextStage = stages?.find(s => s.stage_order === 2);
+    const writtenTestSlotBookingStage = stages?.find(s => s.stage_order === 2);
 
-    // Create interview candidate record with enriched analysis data
+    // Create interview candidate record - start at Written Test Slot Booking stage
+    // (Interview Guidelines and CV/Resume will be marked as completed via events)
     const { data: interviewCandidate, error: candidateError } = await supabase
       .from('interview_candidates')
       .upsert({
         job_id: jobId,
         candidate_id: actualCandidateId,
-        current_stage_id: nextStage?.id || resumeScreeningStage?.id,
+        current_stage_id: writtenTestSlotBookingStage?.id || resumeScreeningStage?.id,
         ai_score: enrichedAnalysis.overall_score,
         ai_analysis: enrichedAnalysis,
         resume_url: resumeUrl,
@@ -450,136 +280,59 @@ Provide your analysis using the suggest_analysis function.`;
 
     console.log('Interview candidate created:', interviewCandidate.id);
 
-    // Create interview event for resume screening as completed
-    const { error: screeningEventError } = await supabase
-      .from('interview_events')
-      .insert({
-        interview_candidate_id: interviewCandidate.id,
-        stage_id: resumeScreeningStage?.id,
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        ai_feedback: enrichedAnalysis,
-        ai_score: enrichedAnalysis.overall_score
-      });
-
-    if (screeningEventError) {
-      console.error('Error creating screening event:', screeningEventError);
-    }
-
-    // Generate invitation token for MCQ interview
-    const invitationToken = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    // Use the published app domain for interview links
-    const appDomain = Deno.env.get('APP_DOMAIN') || 'gradia-link-shine.lovable.app';
-    const interviewLink = `https://${appDomain}/interview?token=${invitationToken}`;
-
-    // Create pending event for next stage (AI Phone Interview / MCQ Round)
-    let interviewEventId: string | null = null;
-    if (nextStage) {
-      const { data: nextEvent, error: nextEventError } = await supabase
+    // Create completed event for Interview Guidelines (stage 0)
+    if (interviewGuidelinesStage) {
+      const { error: guidelinesEventError } = await supabase
         .from('interview_events')
         .insert({
           interview_candidate_id: interviewCandidate.id,
-          stage_id: nextStage.id,
-          status: 'scheduled',
-          scheduled_at: expiresAt.toISOString()
-        })
-        .select()
-        .single();
-
-      if (nextEventError) {
-        console.error('Error creating next stage event:', nextEventError);
-      } else {
-        interviewEventId = nextEvent?.id;
-      }
-    }
-
-    // Create interview invitation record with token
-    if (interviewEventId) {
-      const { error: invitationError } = await supabase
-        .from('interview_invitations')
-        .insert({
-          interview_event_id: interviewEventId,
-          invitation_token: invitationToken,
-          meeting_link: interviewLink,
-          expires_at: expiresAt.toISOString(),
-          email_status: 'pending'
+          stage_id: interviewGuidelinesStage.id,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          notes: 'Interview guidelines sent to candidate',
         });
 
-      if (invitationError) {
-        console.error('Error creating invitation:', invitationError);
+      if (guidelinesEventError) {
+        console.error('Error creating guidelines event:', guidelinesEventError);
       }
     }
 
-    // Get employer/company info for email
-    const { data: jobWithEmployer } = await supabase
-      .from('jobs')
-      .select('*, employer:profiles!jobs_employer_id_fkey(company_name)')
-      .eq('id', jobId)
-      .single();
+    // Create completed event for CV/Resume screening (stage 1)
+    if (resumeScreeningStage) {
+      const { error: screeningEventError } = await supabase
+        .from('interview_events')
+        .insert({
+          interview_candidate_id: interviewCandidate.id,
+          stage_id: resumeScreeningStage.id,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          ai_feedback: enrichedAnalysis,
+          ai_score: enrichedAnalysis.overall_score
+        });
 
-    const companyName = jobWithEmployer?.employer?.company_name || 'Gradia';
-    const stageName = nextStage?.name || 'AI Phone Interview';
-
-    // Format expiry date for email
-    const formattedExpiry = expiresAt.toLocaleString('en-IN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Asia/Kolkata'
-    });
-
-    // Send first round interview invitation email with MCQ link (with retry)
-    let emailSent = false;
-    let emailError: any = null;
-    
-    if (RESEND_API_KEY && candidateProfile.email) {
-      const emailResult = await sendFirstRoundInterviewEmail(RESEND_API_KEY, {
-        candidateName: candidateProfile.full_name,
-        candidateEmail: candidateProfile.email,
-        jobTitle: jobDetails.job_title,
-        companyName: companyName,
-        stageName: stageName,
-        aiScore: analysis.overall_score,
-        interviewLink: interviewLink,
-        expiresAt: formattedExpiry
-      });
-      
-      emailSent = emailResult.success;
-      emailError = emailResult.error;
-      
-      console.log('First round interview invitation email result:', { 
-        sent: emailSent, 
-        emailId: emailResult.result?.id 
-      });
-
-      // Update invitation status based on result
-      if (invitationToken) {
-        await supabase
-          .from('interview_invitations')
-          .update({ 
-            email_sent_at: emailSent ? new Date().toISOString() : null,
-            email_status: emailSent ? 'sent' : 'failed'
-          })
-          .eq('invitation_token', invitationToken);
-      }
-      
-      if (!emailSent) {
-        console.error('Email failed after all retries:', emailError);
+      if (screeningEventError) {
+        console.error('Error creating screening event:', screeningEventError);
       }
     }
+
+    // Fire-and-forget: Trigger the post-application pipeline for timed email sequence
+    // This sends: Instruction email → (10s) → CV Results email → (10s) → Slot Booking email
+    console.log('Triggering post-application pipeline for timed email sequence...');
+    fetch(`${supabaseUrl}/functions/v1/post-application-pipeline`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ interviewCandidateId: interviewCandidate.id }),
+    }).catch(err => console.error('Failed to trigger post-application pipeline:', err));
 
     return new Response(JSON.stringify({
       success: true,
       interviewCandidateId: interviewCandidate.id,
       analysis: enrichedAnalysis,
-      emailSent,
-      interviewLink: interviewLink,
-      invitationToken: invitationToken,
-      nextStage: stageName
+      emailSent: true,
+      nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

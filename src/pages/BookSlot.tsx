@@ -162,20 +162,26 @@ const BookSlot = () => {
         .eq("id", candidateId)
         .single();
 
+      // Determine booking type based on stage name
+      const isWrittenTestSlotBooking = stageName.toLowerCase().includes("written");
+      const isDemoSlotBooking = stageName.toLowerCase().includes("demo");
+      const isHrSlotBooking = stageName.toLowerCase().includes("hr");
+
+      const bookingType = isDemoSlotBooking ? "demo_round" 
+        : isHrSlotBooking ? "hr_round" 
+        : isWrittenTestSlotBooking ? "written_test" 
+        : "technical_assessment";
+
       if (interviewCandidate?.candidate_id) {
         await supabase.from("slot_bookings").insert({
           candidate_id: interviewCandidate.candidate_id,
           booking_date: selectedDate,
           booking_time: selectedTime,
-          booking_type: "technical_assessment",
+          booking_type: bookingType,
           status: "confirmed",
           subject: stageName,
         });
       }
-
-      // Check if this is a Demo or HR Round slot booking
-      const isDemoSlotBooking = stageName.toLowerCase().includes("demo");
-      const isHrSlotBooking = stageName.toLowerCase().includes("hr");
 
       // Send interview invitation with the scheduled time
       const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
@@ -188,6 +194,21 @@ const BookSlot = () => {
 
       if (inviteError) {
         console.error("Error sending invitation:", inviteError);
+      }
+
+      // Auto-advance to Written Test and send invitation when Written Test slot is booked
+      if (isWrittenTestSlotBooking) {
+        try {
+          await supabase.functions.invoke("process-interview-stage", {
+            body: {
+              interviewCandidateId: candidateId,
+              action: "advance",
+              feedback: "Written Test slot booked by candidate, auto-advancing to Written Test",
+            },
+          });
+        } catch (advanceErr) {
+          console.error("Error auto-advancing to Written Test:", advanceErr);
+        }
       }
 
       // Auto-advance to Demo Round and send dual emails
