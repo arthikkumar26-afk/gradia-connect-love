@@ -316,6 +316,48 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
       },
     ],
   },
+  {
+    value: 'legal',
+    label: 'Legal (Instruction + Written + Management Meet)',
+    pipelineTypes: [
+      {
+        value: 'legal_advisor',
+        label: 'Legal Advisor',
+        stages: [
+          { order: 1, name: 'Instruction Mail', description: 'Send instruction email with guidelines & requirements', isAutomated: true },
+          commonStages.writtenTestSlotBooking,
+          { order: 3, name: 'Written Test', description: 'Legal knowledge & case law assessment', isAutomated: true },
+          { order: 4, name: 'Management Meet', description: 'Live meeting with management (manual link + observer)', isAutomated: false },
+          commonStages.finalReview,
+          commonStages.offerStage,
+        ],
+      },
+      {
+        value: 'legal_officer',
+        label: 'Legal Officer',
+        stages: [
+          { order: 1, name: 'Instruction Mail', description: 'Send instruction email with guidelines & requirements', isAutomated: true },
+          commonStages.writtenTestSlotBooking,
+          { order: 3, name: 'Written Test', description: 'Legal compliance & regulatory assessment', isAutomated: true },
+          { order: 4, name: 'Management Meet', description: 'Live meeting with management (manual link + observer)', isAutomated: false },
+          commonStages.finalReview,
+          commonStages.offerStage,
+        ],
+      },
+      {
+        value: 'compliance_manager',
+        label: 'Compliance Manager',
+        stages: [
+          { order: 1, name: 'Instruction Mail', description: 'Send instruction email with guidelines & requirements', isAutomated: true },
+          commonStages.writtenTestSlotBooking,
+          { order: 3, name: 'Written Test', description: 'Compliance framework & risk assessment', isAutomated: true },
+          { order: 4, name: 'Management Meet', description: 'Live meeting with management (manual link + observer)', isAutomated: false },
+          commonStages.finalReview,
+          commonStages.offerStage,
+        ],
+      },
+    ],
+  },
 ];
 
 export const getPipelineTypesForInterviewType = (interviewType: string): PipelineType[] => {
