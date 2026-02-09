@@ -320,19 +320,26 @@ Provide your analysis using the suggest_analysis function.`;
     }
 
     // Trigger post-application pipeline with analysis data passed directly
+    // MUST await to ensure the request completes before the isolate shuts down
     console.log('Triggering post-application pipeline...');
-    fetch(`${supabaseUrl}/functions/v1/post-application-pipeline`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        interviewCandidateId: interviewCandidate.id,
-        // Pass analysis data directly so email doesn't need to re-fetch
-        analysisData: enrichedAnalysis,
-      }),
-    }).catch(err => console.error('Failed to trigger post-application pipeline:', err));
+    try {
+      const pipelineResponse = await fetch(`${supabaseUrl}/functions/v1/post-application-pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          interviewCandidateId: interviewCandidate.id,
+          // Pass analysis data directly so email doesn't need to re-fetch
+          analysisData: enrichedAnalysis,
+        }),
+      });
+      const pipelineResult = await pipelineResponse.json();
+      console.log('Post-application pipeline triggered:', pipelineResult);
+    } catch (err) {
+      console.error('Failed to trigger post-application pipeline:', err);
+    }
 
     return new Response(JSON.stringify({
       success: true,
