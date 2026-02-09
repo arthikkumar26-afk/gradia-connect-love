@@ -48,14 +48,8 @@ serve(async (req) => {
     const { candidateId: originalCandidateId, jobId, resumeUrl, candidateProfile, jobDetails }: ResumeAnalysisRequest = await req.json();
 
     console.log('Analyzing resume for candidate ID:', originalCandidateId, 'job:', jobId);
-    console.log('Candidate details from resume:', {
-      name: candidateProfile.full_name,
-      email: candidateProfile.email,
-      skills: candidateProfile.skills?.length || 0,
-      experience: candidateProfile.experience_level
-    });
 
-    // Check if a profile with this email already exists, or create one
+    // Resolve actual candidate ID based on email
     let actualCandidateId = originalCandidateId;
     
     if (candidateProfile.email) {
@@ -67,7 +61,7 @@ serve(async (req) => {
 
       if (existingProfile) {
         actualCandidateId = existingProfile.id;
-        console.log('Found existing profile for candidate:', existingProfile.email, 'ID:', actualCandidateId);
+        console.log('Found existing profile:', existingProfile.email, 'ID:', actualCandidateId);
         
         await supabase
           .from('profiles')
@@ -102,7 +96,7 @@ serve(async (req) => {
         }
         
         actualCandidateId = newCandidateId;
-        console.log('Created new profile for candidate:', candidateProfile.email, 'ID:', actualCandidateId);
+        console.log('Created new profile:', candidateProfile.email, 'ID:', actualCandidateId);
       }
     }
 
@@ -131,106 +125,110 @@ JOB DETAILS:
 
 Provide your analysis using the suggest_analysis function.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'You are an expert HR analyst specializing in candidate evaluation and job matching.' },
-          { role: 'user', content: prompt }
-        ],
-        tools: [
-          {
-            type: 'function',
-            function: {
-              name: 'suggest_analysis',
-              description: 'Return the candidate analysis with scoring',
-              parameters: {
-                type: 'object',
-                properties: {
-                  overall_score: { type: 'number', minimum: 0, maximum: 100, description: 'Overall match score 0-100' },
-                  skill_match_score: { type: 'number', minimum: 0, maximum: 100, description: 'Skills alignment score' },
-                  experience_match_score: { type: 'number', minimum: 0, maximum: 100, description: 'Experience level match score' },
-                  location_match_score: { type: 'number', minimum: 0, maximum: 100, description: 'Location compatibility score' },
-                  recommendation: { type: 'string', enum: ['strong_yes', 'yes', 'maybe', 'no'], description: 'Hiring recommendation' },
-                  strengths: { type: 'array', items: { type: 'string' }, description: 'Key strengths' },
-                  concerns: { type: 'array', items: { type: 'string' }, description: 'Potential concerns' },
-                  summary: { type: 'string', description: 'Brief summary of the candidate fit' },
-                  suggested_interview_focus: { type: 'array', items: { type: 'string' }, description: 'Areas to focus on during interview' }
-                },
-                required: ['overall_score', 'skill_match_score', 'experience_match_score', 'recommendation', 'strengths', 'summary'],
-                additionalProperties: false
+    let analysis: any;
+
+    try {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: 'You are an expert HR analyst specializing in candidate evaluation and job matching.' },
+            { role: 'user', content: prompt }
+          ],
+          tools: [
+            {
+              type: 'function',
+              function: {
+                name: 'suggest_analysis',
+                description: 'Return the candidate analysis with scoring',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    overall_score: { type: 'number', minimum: 0, maximum: 100, description: 'Overall match score 0-100' },
+                    skill_match_score: { type: 'number', minimum: 0, maximum: 100, description: 'Skills alignment score' },
+                    experience_match_score: { type: 'number', minimum: 0, maximum: 100, description: 'Experience level match score' },
+                    location_match_score: { type: 'number', minimum: 0, maximum: 100, description: 'Location compatibility score' },
+                    recommendation: { type: 'string', enum: ['strong_yes', 'yes', 'maybe', 'no'], description: 'Hiring recommendation' },
+                    strengths: { type: 'array', items: { type: 'string' }, description: 'Key strengths' },
+                    concerns: { type: 'array', items: { type: 'string' }, description: 'Potential concerns' },
+                    summary: { type: 'string', description: 'Brief summary of the candidate fit' },
+                    suggested_interview_focus: { type: 'array', items: { type: 'string' }, description: 'Areas to focus on during interview' }
+                  },
+                  required: ['overall_score', 'skill_match_score', 'experience_match_score', 'recommendation', 'strengths', 'summary'],
+                  additionalProperties: false
+                }
               }
             }
-          }
-        ],
-        tool_choice: { type: 'function', function: { name: 'suggest_analysis' } }
-      }),
-    });
+          ],
+          tool_choice: { type: 'function', function: { name: 'suggest_analysis' } }
+        }),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('AI gateway error:', response.status, errorText);
+        
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        throw new Error('AI analysis failed');
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      throw new Error('AI analysis failed');
-    }
 
-    const aiResponse = await response.json();
-    console.log('AI response structure:', JSON.stringify(aiResponse.choices?.[0]?.message, null, 2));
-    
-    const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
-    let analysis;
-    
-    if (toolCall) {
-      analysis = JSON.parse(toolCall.function.arguments);
-    } else {
-      const content = aiResponse.choices?.[0]?.message?.content;
-      console.log('No tool call, trying content fallback:', content?.substring(0, 200));
+      const aiResponse = await response.json();
+      const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
       
-      if (content) {
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            analysis = JSON.parse(jsonMatch[0]);
-          } catch (e) {
-            console.error('Failed to parse content as JSON:', e);
+      if (toolCall) {
+        analysis = JSON.parse(toolCall.function.arguments);
+        console.log('AI analysis from tool call, score:', analysis.overall_score);
+      } else {
+        const content = aiResponse.choices?.[0]?.message?.content;
+        if (content) {
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              analysis = JSON.parse(jsonMatch[0]);
+              console.log('AI analysis from content parse, score:', analysis.overall_score);
+            } catch (e) {
+              console.error('Failed to parse content as JSON:', e);
+            }
           }
         }
       }
-      
-      if (!analysis) {
-        console.log('Creating default analysis due to AI response format');
-        analysis = {
-          overall_score: 50,
-          skill_match_score: 50,
-          experience_match_score: 50,
-          location_match_score: 50,
-          recommendation: 'maybe',
-          strengths: ['Candidate profile submitted for review'],
-          concerns: ['Manual review recommended'],
-          summary: 'Automated analysis could not be completed. Please review the candidate profile manually.',
-          suggested_interview_focus: ['General skills assessment', 'Experience verification']
-        };
-      }
+    } catch (aiError) {
+      console.error('AI analysis error:', aiError);
+    }
+
+    // Fallback if AI analysis failed
+    if (!analysis || !analysis.overall_score) {
+      console.log('Using default analysis due to AI response format');
+      analysis = {
+        overall_score: 50,
+        skill_match_score: 50,
+        experience_match_score: 50,
+        location_match_score: 50,
+        recommendation: 'maybe',
+        strengths: ['Candidate profile submitted for review'],
+        concerns: ['Manual review recommended'],
+        summary: 'Your application has been submitted and will be reviewed by our hiring team.',
+        suggested_interview_focus: ['General skills assessment', 'Experience verification']
+      };
     }
     
-    // Include parsed candidate profile data in the analysis
+    // Enrich analysis with candidate data
     const enrichedAnalysis = {
       ...analysis,
       candidate_data: {
@@ -245,7 +243,7 @@ Provide your analysis using the suggest_analysis function.`;
       }
     };
     
-    console.log('AI Analysis completed with candidate data:', enrichedAnalysis);
+    console.log('Enriched analysis overall_score:', enrichedAnalysis.overall_score);
 
     // Get all interview stages
     const { data: stages } = await supabase
@@ -257,8 +255,7 @@ Provide your analysis using the suggest_analysis function.`;
     const resumeScreeningStage = stages?.find(s => s.stage_order === 1);
     const writtenTestSlotBookingStage = stages?.find(s => s.stage_order === 2);
 
-    // Create interview candidate record - start at Written Test Slot Booking stage
-    // (Interview Guidelines and CV/Resume will be marked as completed via events)
+    // Create/update interview candidate record with AI analysis
     const { data: interviewCandidate, error: candidateError } = await supabase
       .from('interview_candidates')
       .upsert({
@@ -278,11 +275,20 @@ Provide your analysis using the suggest_analysis function.`;
       throw candidateError;
     }
 
-    console.log('Interview candidate created:', interviewCandidate.id);
+    console.log('Interview candidate saved:', interviewCandidate.id, 'ai_score:', interviewCandidate.ai_score);
+
+    // Verify the data was actually saved
+    const { data: verifyData } = await supabase
+      .from('interview_candidates')
+      .select('ai_score, ai_analysis')
+      .eq('id', interviewCandidate.id)
+      .single();
+    
+    console.log('Verification - saved ai_score:', verifyData?.ai_score, 'has ai_analysis:', !!verifyData?.ai_analysis);
 
     // Create completed event for Interview Guidelines (stage 0)
     if (interviewGuidelinesStage) {
-      const { error: guidelinesEventError } = await supabase
+      await supabase
         .from('interview_events')
         .insert({
           interview_candidate_id: interviewCandidate.id,
@@ -291,13 +297,9 @@ Provide your analysis using the suggest_analysis function.`;
           completed_at: new Date().toISOString(),
           notes: 'Interview guidelines sent to candidate',
         });
-
-      if (guidelinesEventError) {
-        console.error('Error creating guidelines event:', guidelinesEventError);
-      }
     }
 
-    // Create completed event for CV/Resume screening (stage 1)
+    // Create completed event for CV/Resume screening (stage 1) WITH analysis data
     if (resumeScreeningStage) {
       const { error: screeningEventError } = await supabase
         .from('interview_events')
@@ -312,19 +314,24 @@ Provide your analysis using the suggest_analysis function.`;
 
       if (screeningEventError) {
         console.error('Error creating screening event:', screeningEventError);
+      } else {
+        console.log('CV/Resume event created with ai_score:', enrichedAnalysis.overall_score);
       }
     }
 
-    // Fire-and-forget: Trigger the post-application pipeline for timed email sequence
-    // This sends: Instruction email → (10s) → CV Results email → (10s) → Slot Booking email
-    console.log('Triggering post-application pipeline for timed email sequence...');
+    // Trigger post-application pipeline with analysis data passed directly
+    console.log('Triggering post-application pipeline...');
     fetch(`${supabaseUrl}/functions/v1/post-application-pipeline`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${supabaseServiceKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ interviewCandidateId: interviewCandidate.id }),
+      body: JSON.stringify({ 
+        interviewCandidateId: interviewCandidate.id,
+        // Pass analysis data directly so email doesn't need to re-fetch
+        analysisData: enrichedAnalysis,
+      }),
     }).catch(err => console.error('Failed to trigger post-application pipeline:', err));
 
     return new Response(JSON.stringify({

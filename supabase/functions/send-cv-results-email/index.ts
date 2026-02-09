@@ -19,7 +19,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId } = await req.json();
+    const { interviewCandidateId, analysisData: passedAnalysisData } = await req.json();
 
     if (!interviewCandidateId) {
       throw new Error('interviewCandidateId is required');
@@ -45,30 +45,68 @@ serve(async (req) => {
     const employer = job?.employer;
     const companyName = employer?.company_name || 'Gradia';
 
-    // Get CV/Resume stage analysis from interview_events (the original source)
-    // interview_candidates.ai_analysis gets overwritten by later stages, so we need the event data
-    const { data: cvStageEvent } = await supabase
-      .from('interview_events')
-      .select('ai_feedback, ai_score')
-      .eq('interview_candidate_id', interviewCandidateId)
-      .eq('stage_id', (
-        await supabase
-          .from('interview_stages')
-          .select('id')
-          .eq('name', 'CV/Resume')
-          .single()
-      ).data?.id || '')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Try multiple sources for AI analysis data (in priority order):
+    // 1. Directly passed analysis data from the pipeline (most reliable)
+    // 2. CV/Resume stage event's ai_feedback
+    // 3. interview_candidates.ai_analysis
+    let aiAnalysis: Record<string, any> = {};
+    let aiScore = 0;
 
-    // Use CV stage event data first, fall back to interview_candidates data
-    const cvFeedback = (cvStageEvent?.ai_feedback as Record<string, any>) || {};
-    const aiAnalysis = cvFeedback.overall_score ? cvFeedback : (interviewCandidate.ai_analysis as Record<string, any> || {});
-    const aiScore = cvStageEvent?.ai_score || interviewCandidate.ai_score || 0;
+    // Source 1: Directly passed data
+    if (passedAnalysisData && typeof passedAnalysisData === 'object' && passedAnalysisData.overall_score) {
+      aiAnalysis = passedAnalysisData;
+      aiScore = passedAnalysisData.overall_score;
+      console.log('CV analysis source: passed directly, score:', aiScore);
+    } else {
+      // Source 2: CV/Resume stage event
+      const { data: cvStageId } = await supabase
+        .from('interview_stages')
+        .select('id')
+        .eq('name', 'CV/Resume')
+        .single();
 
-    console.log('CV analysis source:', cvFeedback.overall_score ? 'interview_events' : 'interview_candidates');
-    console.log('AI Analysis data:', JSON.stringify(aiAnalysis));
+      if (cvStageId) {
+        const { data: cvStageEvent } = await supabase
+          .from('interview_events')
+          .select('ai_feedback, ai_score')
+          .eq('interview_candidate_id', interviewCandidateId)
+          .eq('stage_id', cvStageId.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const cvFeedback = (cvStageEvent?.ai_feedback as Record<string, any>) || {};
+        if (cvFeedback.overall_score) {
+          aiAnalysis = cvFeedback;
+          aiScore = cvFeedback.overall_score;
+          console.log('CV analysis source: interview_events, score:', aiScore);
+        } else if (cvStageEvent?.ai_score) {
+          aiScore = cvStageEvent.ai_score;
+          console.log('CV analysis source: interview_events ai_score only, score:', aiScore);
+        }
+      }
+
+      // Source 3: interview_candidates record
+      if (!aiAnalysis.overall_score) {
+        const candidateAnalysis = interviewCandidate.ai_analysis as Record<string, any> || {};
+        if (candidateAnalysis.overall_score) {
+          aiAnalysis = candidateAnalysis;
+          aiScore = candidateAnalysis.overall_score;
+          console.log('CV analysis source: interview_candidates, score:', aiScore);
+        } else if (interviewCandidate.ai_score) {
+          aiScore = interviewCandidate.ai_score;
+          console.log('CV analysis source: interview_candidates ai_score only, score:', aiScore);
+        }
+      }
+    }
+
+    console.log('Final AI Analysis data:', JSON.stringify(aiAnalysis));
+    console.log('Final AI Score:', aiScore);
+
+    // If we still have no data, log a warning but still send with what we have
+    if (!aiAnalysis.overall_score && aiScore === 0) {
+      console.warn('WARNING: No AI analysis data found from any source for candidate:', interviewCandidateId);
+    }
 
     // Extract analysis details
     const overallScore = aiAnalysis.overall_score || aiScore;

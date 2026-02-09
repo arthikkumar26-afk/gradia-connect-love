@@ -11,7 +11,7 @@ const corsHeaders = {
  * 
  * This function handles the timed email sequence after a job application:
  * 1. Send Instruction email immediately
- * 2. Wait 10 seconds → Send CV/Resume ATS results email
+ * 2. Wait 10 seconds → Send CV/Resume ATS results email (with analysis data passed directly)
  * 3. Wait 10 seconds → Send Written Test Slot Booking email
  */
 serve(async (req) => {
@@ -24,13 +24,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId } = await req.json();
+    const { interviewCandidateId, analysisData } = await req.json();
 
     if (!interviewCandidateId) {
       throw new Error('interviewCandidateId is required');
     }
 
     console.log('Starting post-application pipeline for:', interviewCandidateId);
+    console.log('Analysis data received:', analysisData ? 'yes' : 'no');
 
     // Step 1: Send Instruction Email immediately
     console.log('Step 1: Sending instruction email...');
@@ -61,7 +62,11 @@ serve(async (req) => {
           'Authorization': `Bearer ${supabaseServiceKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ interviewCandidateId }),
+        body: JSON.stringify({ 
+          interviewCandidateId,
+          // Pass analysis data directly to avoid re-fetch issues
+          analysisData: analysisData || null,
+        }),
       });
       const cvResult = await cvResponse.json();
       console.log('CV results email result:', cvResult);
