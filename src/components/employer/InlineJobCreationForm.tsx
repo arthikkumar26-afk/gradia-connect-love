@@ -432,6 +432,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectItem value="technical">Technical (Coding + MCQ)</SelectItem>
                         <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
                         <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
+                        <SelectItem value="legal">Legal (Instruction + Written + Management Meet)</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -440,6 +441,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                       {field.value === 'sales' && "📊 Includes presentation & pitch assessment"}
                       {field.value === 'management' && "📋 Includes case study & leadership analysis"}
                       {field.value === 'standard' && "📝 Standard MCQ-based screening interviews"}
+                      {field.value === 'legal' && "⚖️ Instruction mail + Written test + Management meet"}
                     </p>
                     <FormMessage />
                   </FormItem>
