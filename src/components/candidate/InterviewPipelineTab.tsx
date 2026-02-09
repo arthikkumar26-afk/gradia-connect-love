@@ -113,7 +113,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [isLoading, setIsLoading] = useState(true);
   const [slotBookings, setSlotBookings] = useState<SlotBooking[]>([]);
   const [selectedInterview, setSelectedInterview] = useState<string | null>(null);
-  const [expandedStage, setExpandedStage] = useState<string | null>(null);
+  // expandedStage no longer needed - all results shown inline
   const [responses, setResponses] = useState<InterviewResponse[]>([]);
   const [reviews, setReviews] = useState<ManagementReview[]>([]);
 
@@ -738,7 +738,6 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const status = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
-            const isExpanded = expandedStage === stage.id;
             const hasReviewData = status === 'completed' || status === 'passed';
             
             return (
@@ -751,10 +750,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                 )}
 
                 <div
-                  className={`relative rounded-lg border-2 transition-all cursor-pointer ${getStatusColor(status)} ${
-                    isExpanded ? 'shadow-md' : ''
-                  }`}
-                  onClick={() => hasReviewData ? setExpandedStage(isExpanded ? null : stage.id) : null}
+                  className={`relative rounded-lg border-2 transition-all ${getStatusColor(status)}`}
                 >
                   <div className="flex items-center gap-3 p-3">
                     {/* Stage icon */}
@@ -888,18 +884,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         return null;
                       })()}
 
-                      {hasReviewData && (
-                        isExpanded ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        )
-                      )}
                     </div>
                   </div>
 
-                  {/* Expanded review content */}
-                  {isExpanded && hasReviewData && (
+                  {/* Always show review content for completed stages */}
+                  {hasReviewData && (
                     <div className="px-3 pb-3 pt-1 ml-[52px] border-t border-border/50">
                       {getStageReviewContent(stage, event)}
                     </div>
