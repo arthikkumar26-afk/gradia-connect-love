@@ -433,6 +433,7 @@ const PostJob = () => {
                             <SelectItem value="education">Education (Includes Demo Video Round)</SelectItem>
                             <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
                             <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
+                            <SelectItem value="legal">Legal (Instruction + Written + Management Meet)</SelectItem>
                           </SelectContent>
                         </Select>
                         <p className="text-xs text-muted-foreground mt-1">
@@ -441,6 +442,7 @@ const PostJob = () => {
                           {field.value === 'sales' && "📊 Includes presentation assessment"}
                           {field.value === 'management' && "📋 Includes case study analysis"}
                           {field.value === 'standard' && "📝 Standard MCQ-based interviews"}
+                          {field.value === 'legal' && "⚖️ Instruction mail + Written test + Management meet"}
                         </p>
                         <FormMessage />
                       </FormItem>
