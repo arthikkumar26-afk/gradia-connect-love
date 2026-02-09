@@ -334,11 +334,25 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     switch (stage.name) {
       case 'CV/Resume':
       case 'Resume Screening': {
-        const analysis = currentInterview.ai_analysis;
+        // Get analysis from multiple sources: event ai_feedback > interview ai_analysis
+        const eventFeedback = event?.ai_feedback && typeof event.ai_feedback === 'object' ? event.ai_feedback as any : null;
+        const analysis = eventFeedback?.overall_score ? eventFeedback : currentInterview.ai_analysis;
         const score = event?.ai_score || currentInterview.ai_score;
+        
+        if (!score && !analysis) {
+          return (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">ATS analysis is being processed...</span>
+              </div>
+            </div>
+          );
+        }
+        
         return (
           <div className="space-y-3">
-            {score && (
+            {score != null && score > 0 && (
               <div className="flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">ATS Score:</span>
@@ -363,14 +377,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                 </div>
               </div>
             )}
-            {event?.ai_feedback && typeof event.ai_feedback === 'object' && (
-              <div className="text-sm text-muted-foreground">
-                {event.ai_feedback.experience_match && (
-                  <p>📋 Experience: {event.ai_feedback.experience_match}</p>
-                )}
-                {event.ai_feedback.skill_match && (
-                  <p>🎯 Skills: {event.ai_feedback.skill_match}</p>
-                )}
+            {analysis?.skill_match_score != null && (
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="bg-muted/50 rounded-lg p-2 text-center">
+                  <p className="text-xs text-muted-foreground">Skills</p>
+                  <p className="font-semibold text-foreground">{analysis.skill_match_score}%</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-2 text-center">
+                  <p className="text-xs text-muted-foreground">Experience</p>
+                  <p className="font-semibold text-foreground">{analysis.experience_match_score || 0}%</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-2 text-center">
+                  <p className="text-xs text-muted-foreground">Location</p>
+                  <p className="font-semibold text-foreground">{analysis.location_match_score || 0}%</p>
+                </div>
               </div>
             )}
           </div>
