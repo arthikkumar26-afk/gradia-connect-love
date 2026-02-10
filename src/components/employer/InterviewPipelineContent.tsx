@@ -295,14 +295,18 @@ const StageActionButtons = ({
       
       // Update local UI state - skipEmail=true since edge function already handles advancement
       onUpdateStep(step.id, "completed", true);
+
+      // Use step.title to determine which emails to send (don't rely on response data matching)
+      const nextStageName = data?.currentStage;
       
       // If advancing from CV/Resume, send CV results email and auto-send slot booking email for Written Test
-      if (step.title === 'CV/Resume' && data?.currentStage === 'Written Test Slot Booking') {
+      if (step.title === 'CV/Resume') {
         // Send CV/Resume results email to candidate
         try {
           await supabase.functions.invoke('send-cv-results-email', {
             body: { interviewCandidateId }
           });
+          console.log('CV results email sent successfully');
         } catch (cvEmailError) {
           console.error('Error sending CV results email:', cvEmailError);
         }
@@ -325,13 +329,13 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Written Test Slot Booking' && data?.currentStage === 'Written Test') {
+      } else if (step.title === 'Written Test Slot Booking') {
         // Written Test Slot Booking → Written Test: Send interview invitation
         toast.success(`✓ Written Test Slot Booking cleared! Moved to Written Test`, {
           description: `Candidate will now take the Written Test`,
           duration: 5000,
         });
-      } else if (step.title === 'Written Test' && data?.currentStage === 'Demo Slot Booking') {
+      } else if (step.title === 'Written Test') {
         // Auto-send Demo Slot Booking email when advancing from Written Test
         try {
           await supabase.functions.invoke('send-slot-booking-email', {
@@ -351,7 +355,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Slot Booking' && data?.currentStage === 'Demo Round') {
+      } else if (step.title === 'Demo Slot Booking') {
         // Send dual emails when advancing from Demo Slot Booking to Demo Round
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
@@ -370,7 +374,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Round' && data?.currentStage === 'Demo Feedback') {
+      } else if (step.title === 'Demo Round') {
         // Demo Round → Demo Feedback: auto-send feedback request to observers
         try {
           await supabase.functions.invoke('send-demo-feedback-email', {
@@ -387,7 +391,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Feedback' && data?.currentStage === 'HR Round Slot Booking') {
+      } else if (step.title === 'Demo Feedback') {
         // Demo Feedback → HR Round Slot Booking
         try {
           await supabase.functions.invoke('send-slot-booking-email', {
@@ -407,7 +411,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'HR Round Slot Booking' && data?.currentStage === 'HR Round') {
+      } else if (step.title === 'HR Round Slot Booking') {
         // Send dual emails when advancing from HR Round Slot Booking to HR Round
         try {
           await supabase.functions.invoke('send-hr-round-emails', {
