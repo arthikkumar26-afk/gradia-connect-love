@@ -76,8 +76,8 @@ export const StageResultsModal = ({
       setError(null);
       
       try {
-        // Get interview event for this stage - prefer completed events
-        // First try to find a completed event
+        // Get interview event for this stage - prefer completed events with actual AI scores
+        // First try to find a completed event that has a real AI score (not 0/null from manual advance)
         let { data: event, error: eventError } = await supabase
           .from('interview_events')
           .select('id, status, completed_at, ai_score, ai_feedback, notes')
@@ -85,11 +85,27 @@ export const StageResultsModal = ({
           .eq('stage_id', stageId)
           .in('status', ['completed', 'passed'])
           .not('completed_at', 'is', null)
+          .not('ai_score', 'is', null)
+          .gt('ai_score', 0)
           .order('completed_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        // Fallback: get any event for this stage if no completed one found
+        // Fallback: get any completed event for this stage (including ones with 0 score)
+        if (!event) {
+          const { data: completedEvent } = await supabase
+            .from('interview_events')
+            .select('id, status, completed_at, ai_score, ai_feedback, notes')
+            .eq('interview_candidate_id', interviewCandidateId)
+            .eq('stage_id', stageId)
+            .in('status', ['completed', 'passed'])
+            .order('completed_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          event = completedEvent;
+        }
+
+        // Final fallback: get any event for this stage
         if (!event) {
           const { data: fallbackEvent } = await supabase
             .from('interview_events')
@@ -100,6 +116,24 @@ export const StageResultsModal = ({
             .limit(1)
             .maybeSingle();
           event = fallbackEvent;
+        }
+
+        // For CV/Resume stage: if event has no AI analysis, fallback to interview_candidates data
+        if (event && stageName === 'CV/Resume' && (!event.ai_score || event.ai_score === 0) && !event.ai_feedback) {
+          const { data: candidateData } = await supabase
+            .from('interview_candidates')
+            .select('ai_score, ai_analysis')
+            .eq('id', interviewCandidateId)
+            .single();
+
+          if (candidateData && (candidateData.ai_score || candidateData.ai_analysis)) {
+            // Override the event data with the candidate's actual analysis
+            event = {
+              ...event,
+              ai_score: candidateData.ai_score || event.ai_score,
+              ai_feedback: candidateData.ai_analysis || event.ai_feedback,
+            };
+          }
         }
 
         if (!event) {
@@ -133,7 +167,7 @@ export const StageResultsModal = ({
     };
 
     fetchData();
-  }, [isOpen, interviewCandidateId, stageId]);
+  }, [isOpen, interviewCandidateId, stageId, stageName]);
 
   const formatTime = (seconds: number | null) => {
     if (!seconds) return 'N/A';
@@ -150,14 +184,25 @@ export const StageResultsModal = ({
   const isPassed = scorePercentage >= 50;
   const hasEventData = eventData && (eventData.ai_score !== null || eventData.ai_feedback || eventData.notes);
 
-  // Parse AI feedback from event
+  // Parse AI feedback from event - handle both CV/Resume analysis format and generic AI feedback
   const aiFeedback = eventData?.ai_feedback;
+  const isCVAnalysis = aiFeedback && (aiFeedback?.skill_match_score !== undefined || aiFeedback?.recommendation !== undefined || aiFeedback?.overall_score !== undefined);
+  
   const feedbackText = typeof aiFeedback === 'string' 
     ? aiFeedback 
-    : aiFeedback?.feedback || aiFeedback?.next_stage_recommendations || null;
-  const keyObservations = aiFeedback?.key_observations || [];
-  const areasOfConcern = aiFeedback?.areas_of_concern || [];
+    : isCVAnalysis 
+      ? aiFeedback?.summary 
+      : aiFeedback?.feedback || aiFeedback?.next_stage_recommendations || null;
+  const keyObservations = isCVAnalysis ? (aiFeedback?.strengths || []) : (aiFeedback?.key_observations || []);
+  const areasOfConcern = isCVAnalysis ? (aiFeedback?.concerns || []) : (aiFeedback?.areas_of_concern || []);
   const confidenceLevel = aiFeedback?.confidence_level || null;
+  
+  // CV/Resume specific data
+  const skillMatchScore = aiFeedback?.skill_match_score;
+  const experienceMatchScore = aiFeedback?.experience_match_score;
+  const locationMatchScore = aiFeedback?.location_match_score;
+  const recommendation = aiFeedback?.recommendation;
+  const suggestedFocus = aiFeedback?.suggested_interview_focus || [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -248,12 +293,56 @@ export const StageResultsModal = ({
                   )}
                 </div>
 
+                {/* CV/Resume Match Breakdown - shown when analysis data is available */}
+                {isCVAnalysis && (skillMatchScore || experienceMatchScore || locationMatchScore) && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      ATS Match Breakdown
+                    </h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      {skillMatchScore !== undefined && (
+                        <div className="p-3 rounded-lg bg-muted/50 border text-center">
+                          <div className={`text-2xl font-bold ${skillMatchScore >= 70 ? 'text-green-600' : skillMatchScore >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                            {skillMatchScore}%
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">Skills Match</p>
+                        </div>
+                      )}
+                      {experienceMatchScore !== undefined && (
+                        <div className="p-3 rounded-lg bg-muted/50 border text-center">
+                          <div className={`text-2xl font-bold ${experienceMatchScore >= 70 ? 'text-green-600' : experienceMatchScore >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                            {experienceMatchScore}%
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">Experience Match</p>
+                        </div>
+                      )}
+                      {locationMatchScore !== undefined && (
+                        <div className="p-3 rounded-lg bg-muted/50 border text-center">
+                          <div className={`text-2xl font-bold ${locationMatchScore >= 70 ? 'text-green-600' : locationMatchScore >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                            {locationMatchScore}%
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">Location Match</p>
+                        </div>
+                      )}
+                    </div>
+                    {recommendation && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Recommendation:</span>
+                        <Badge variant={recommendation === 'strong_yes' || recommendation === 'yes' ? 'default' : 'secondary'} className="capitalize">
+                          {recommendation.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* AI Feedback Section - shown when auto-progressed (no MCQ response) */}
                 {hasEventData && !response && (
                   <div className="space-y-4">
                     <h3 className="font-semibold flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-primary" />
-                      AI Evaluation
+                      {isCVAnalysis ? 'AI Analysis Summary' : 'AI Evaluation'}
                     </h3>
 
                     {/* Feedback text */}
@@ -265,10 +354,10 @@ export const StageResultsModal = ({
                       </div>
                     )}
 
-                    {/* Key Observations */}
+                    {/* Key Observations / Strengths */}
                     {keyObservations.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-foreground">Key Observations</h4>
+                        <h4 className="text-sm font-medium text-foreground">{isCVAnalysis ? 'Strengths' : 'Key Observations'}</h4>
                         <div className="space-y-1.5">
                           {keyObservations.map((obs: string, idx: number) => (
                             <div key={idx} className="flex items-start gap-2 text-sm">
@@ -283,7 +372,7 @@ export const StageResultsModal = ({
                     {/* Areas of Concern */}
                     {areasOfConcern.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-foreground">Areas of Concern</h4>
+                        <h4 className="text-sm font-medium text-foreground">{isCVAnalysis ? 'Concerns' : 'Areas of Concern'}</h4>
                         <div className="space-y-1.5">
                           {areasOfConcern.map((concern: string, idx: number) => (
                             <div key={idx} className="flex items-start gap-2 text-sm">
@@ -295,11 +384,25 @@ export const StageResultsModal = ({
                       </div>
                     )}
 
+                    {/* Suggested Interview Focus (CV/Resume specific) */}
+                    {suggestedFocus.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-foreground">Suggested Interview Focus</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {suggestedFocus.map((focus: string, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {focus}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Status badge */}
                     <div className="flex items-center gap-2 pt-2">
                       <Badge variant="secondary" className="text-xs">
                         <Brain className="h-3 w-3 mr-1" />
-                        AI Auto-Evaluated
+                        {isCVAnalysis ? 'ATS Auto-Analyzed' : 'AI Auto-Evaluated'}
                       </Badge>
                       <Badge variant="outline" className="text-xs capitalize">
                         Status: {eventData?.status}
