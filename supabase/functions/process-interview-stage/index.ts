@@ -91,6 +91,17 @@ serve(async (req) => {
     }
 
     if (action === 'advance') {
+      // For CV/Resume stage, use the candidate's AI analysis data for the event
+      let eventAiScore = score || interviewCandidate.ai_score;
+      let eventAiFeedback: any = null;
+
+      if (currentStage?.name === 'CV/Resume' && interviewCandidate.ai_analysis) {
+        const analysis = interviewCandidate.ai_analysis as any;
+        eventAiScore = analysis.overall_score || interviewCandidate.ai_score || eventAiScore;
+        eventAiFeedback = analysis;
+        console.log('Using candidate AI analysis for CV/Resume event, score:', eventAiScore);
+      }
+
       // Mark current stage as completed
       await supabase
         .from('interview_events')
@@ -100,7 +111,8 @@ serve(async (req) => {
           status: 'passed',
           completed_at: new Date().toISOString(),
           notes: feedback,
-          ai_score: score || interviewCandidate.ai_score
+          ai_score: eventAiScore,
+          ai_feedback: eventAiFeedback
         });
 
       if (nextStage) {
