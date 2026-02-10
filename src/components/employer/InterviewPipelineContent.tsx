@@ -298,9 +298,23 @@ const StageActionButtons = ({
 
       // Use step.title to determine which emails to send (don't rely on response data matching)
       const nextStageName = data?.currentStage;
-      
-      // If advancing from CV/Resume, send CV results email and auto-send slot booking email for Written Test
-      if (step.title === 'CV/Resume') {
+
+      // If advancing from Interview Guidelines, send instruction email and trigger CV analysis
+      if (step.title === 'Interview Guidelines') {
+        // Send instruction email
+        try {
+          await supabase.functions.invoke('send-instruction-email', {
+            body: { interviewCandidateId }
+          });
+          console.log('Instruction email sent successfully');
+        } catch (instrError) {
+          console.error('Error sending instruction email:', instrError);
+        }
+        toast.success(`✓ Interview Guidelines cleared! Moved to CV/Resume`, {
+          description: `Instruction email sent to candidate`,
+          duration: 5000,
+        });
+      } else if (step.title === 'CV/Resume') {
         // Send CV/Resume results email to candidate
         try {
           await supabase.functions.invoke('send-cv-results-email', {
