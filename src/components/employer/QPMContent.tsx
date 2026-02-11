@@ -69,7 +69,10 @@ interface QuestionItem {
   marks: number;
   answer_text: string;
   keywords: string[];
+  section: string;
 }
+
+const SECTIONS = ["A", "B", "C", "D", "E"] as const;
 
 export const QPMContent = () => {
   const [jobs, setJobs] = useState<JobItem[]>([]);
@@ -158,6 +161,7 @@ export const QPMContent = () => {
             marks: q.marks || 1,
             answer_text: answerKey?.answer_text || "",
             keywords: answerKey?.keywords || [],
+            section: (q as any).section || "A",
           });
         }
 
@@ -257,7 +261,7 @@ export const QPMContent = () => {
     setViewingPaper(null);
   };
 
-  const createEmptyQuestion = (num: number): QuestionItem => ({
+  const createEmptyQuestion = (num: number, section: string = "A"): QuestionItem => ({
     question_number: num,
     question_text: "",
     question_type: "multiple_choice",
@@ -265,14 +269,15 @@ export const QPMContent = () => {
     marks: 1,
     answer_text: "",
     keywords: [],
+    section,
   });
 
-  const handleAddQuestion = () => {
+  const handleAddQuestion = (section: string = "A") => {
     if (!editingPaper) return;
     const nextNum = editingPaper.questions.length + 1;
     setEditingPaper({
       ...editingPaper,
-      questions: [...editingPaper.questions, createEmptyQuestion(nextNum)],
+      questions: [...editingPaper.questions, createEmptyQuestion(nextNum, section)],
     });
   };
 
@@ -581,113 +586,148 @@ export const QPMContent = () => {
           </CardContent>
         </Card>
 
-        {/* Questions */}
-        <div className="space-y-3">
-          {editingPaper.questions.map((q, qIndex) => (
-            <Card key={qIndex} className="border-l-4 border-l-primary/30">
-              <CardContent className="pt-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <Badge variant="outline" className="text-xs">Q{q.question_number}</Badge>
-                  <div className="flex items-center gap-2">
-                    <Select 
-                      value={q.question_type} 
-                      onValueChange={(v) => updateQuestion(qIndex, "question_type", v)}
-                    >
-                      <SelectTrigger className="w-[140px] h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="multiple_choice">MCQ</SelectItem>
-                        <SelectItem value="text">Text Answer</SelectItem>
-                        <SelectItem value="true_false">True/False</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input 
-                      type="number" 
-                      value={q.marks} 
-                      onChange={(e) => updateQuestion(qIndex, "marks", parseInt(e.target.value) || 1)}
-                      className="w-16 h-7 text-xs"
-                      min={1}
-                    />
-                    <span className="text-xs text-muted-foreground">marks</span>
-                    {editingPaper.questions.length > 1 && (
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemoveQuestion(qIndex)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
+        {/* Questions grouped by Section */}
+        <div className="space-y-4">
+          {SECTIONS.map((section) => {
+            const sectionQuestions = editingPaper.questions
+              .map((q, idx) => ({ ...q, _idx: idx }))
+              .filter(q => q.section === section);
 
-                {/* Question Text */}
-                <div>
-                  <Label className="text-xs">Question</Label>
-                  <Textarea 
-                    value={q.question_text}
-                    onChange={(e) => updateQuestion(qIndex, "question_text", e.target.value)}
-                    placeholder="Enter the question..."
-                    className="text-sm min-h-[60px]"
-                  />
-                </div>
-
-                {/* Options for MCQ */}
-                {q.question_type === "multiple_choice" && q.options && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {q.options.map((opt, oIndex) => (
-                      <div key={oIndex} className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] w-6 h-6 flex items-center justify-center p-0">
-                          {String.fromCharCode(65 + oIndex)}
-                        </Badge>
-                        <Input 
-                          value={opt}
-                          onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                          placeholder={`Option ${String.fromCharCode(65 + oIndex)}`}
-                          className="text-sm h-8"
-                        />
+            return (
+              <Card key={section} className="border-2 border-muted">
+                <CardHeader className="py-3 px-4 bg-muted/40 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                        {section}
                       </div>
-                    ))}
+                      <div>
+                        <CardTitle className="text-sm font-semibold">Section {section}</CardTitle>
+                        <p className="text-[10px] text-muted-foreground">
+                          {sectionQuestions.length} question{sectionQuestions.length !== 1 ? "s" : ""} • {sectionQuestions.reduce((sum, q) => sum + q.marks, 0)} marks
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => handleAddQuestion(section)}>
+                      <Plus className="h-3 w-3 mr-1" /> Add to Section {section}
+                    </Button>
                   </div>
-                )}
+                </CardHeader>
+                <CardContent className="p-3 space-y-3">
+                  {sectionQuestions.length === 0 ? (
+                    <div className="text-center py-4 text-xs text-muted-foreground">
+                      No questions in this section yet. Click "Add to Section {section}" above.
+                    </div>
+                  ) : (
+                    sectionQuestions.map((q) => {
+                      const qIndex = q._idx;
+                      return (
+                        <Card key={qIndex} className="border-l-4 border-l-primary/30">
+                          <CardContent className="pt-4 space-y-3">
+                            <div className="flex items-start justify-between">
+                              <Badge variant="outline" className="text-xs">Q{q.question_number}</Badge>
+                              <div className="flex items-center gap-2">
+                                <Select 
+                                  value={q.question_type} 
+                                  onValueChange={(v) => updateQuestion(qIndex, "question_type", v)}
+                                >
+                                  <SelectTrigger className="w-[140px] h-7 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="multiple_choice">MCQ</SelectItem>
+                                    <SelectItem value="text">Text Answer</SelectItem>
+                                    <SelectItem value="true_false">True/False</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Input 
+                                  type="number" 
+                                  value={q.marks} 
+                                  onChange={(e) => updateQuestion(qIndex, "marks", parseInt(e.target.value) || 1)}
+                                  className="w-16 h-7 text-xs"
+                                  min={1}
+                                />
+                                <span className="text-xs text-muted-foreground">marks</span>
+                                {editingPaper.questions.length > 1 && (
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRemoveQuestion(qIndex)}>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
 
-                {/* True/False Options */}
-                {q.question_type === "true_false" && (
-                  <div className="flex gap-4">
-                    <Badge variant="outline" className="text-xs">A) True</Badge>
-                    <Badge variant="outline" className="text-xs">B) False</Badge>
-                  </div>
-                )}
+                            {/* Question Text */}
+                            <div>
+                              <Label className="text-xs">Question</Label>
+                              <Textarea 
+                                value={q.question_text}
+                                onChange={(e) => updateQuestion(qIndex, "question_text", e.target.value)}
+                                placeholder="Enter the question..."
+                                className="text-sm min-h-[60px]"
+                              />
+                            </div>
 
-                {/* Answer / Solution */}
-                <div className="border-t pt-3">
-                  <Label className="text-xs text-primary font-semibold">✅ Correct Answer / Solution</Label>
-                  <Textarea 
-                    value={q.answer_text}
-                    onChange={(e) => updateQuestion(qIndex, "answer_text", e.target.value)}
-                    placeholder={q.question_type === "multiple_choice" 
-                      ? "e.g. A (or the full answer text)" 
-                      : "Enter the correct answer or solution..."
-                    }
-                    className="text-sm min-h-[50px] mt-1"
-                  />
-                </div>
+                            {/* Options for MCQ */}
+                            {q.question_type === "multiple_choice" && q.options && (
+                              <div className="grid grid-cols-2 gap-2">
+                                {q.options.map((opt, oIndex) => (
+                                  <div key={oIndex} className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-[10px] w-6 h-6 flex items-center justify-center p-0">
+                                      {String.fromCharCode(65 + oIndex)}
+                                    </Badge>
+                                    <Input 
+                                      value={opt}
+                                      onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                                      placeholder={`Option ${String.fromCharCode(65 + oIndex)}`}
+                                      className="text-sm h-8"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
 
-                {/* Keywords */}
-                <div>
-                  <Label className="text-xs text-muted-foreground">Keywords (comma separated, for AI matching)</Label>
-                  <Input 
-                    value={q.keywords.join(", ")}
-                    onChange={(e) => updateQuestion(qIndex, "keywords", e.target.value.split(",").map(k => k.trim()).filter(Boolean))}
-                    placeholder="keyword1, keyword2, keyword3"
-                    className="text-sm h-8"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                            {/* True/False Options */}
+                            {q.question_type === "true_false" && (
+                              <div className="flex gap-4">
+                                <Badge variant="outline" className="text-xs">A) True</Badge>
+                                <Badge variant="outline" className="text-xs">B) False</Badge>
+                              </div>
+                            )}
+
+                            {/* Answer / Solution */}
+                            <div className="border-t pt-3">
+                              <Label className="text-xs text-primary font-semibold">✅ Correct Answer / Solution</Label>
+                              <Textarea 
+                                value={q.answer_text}
+                                onChange={(e) => updateQuestion(qIndex, "answer_text", e.target.value)}
+                                placeholder={q.question_type === "multiple_choice" 
+                                  ? "e.g. A (or the full answer text)" 
+                                  : "Enter the correct answer or solution..."
+                                }
+                                className="text-sm min-h-[50px] mt-1"
+                              />
+                            </div>
+
+                            {/* Keywords */}
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Keywords (comma separated, for AI matching)</Label>
+                              <Input 
+                                value={q.keywords.join(", ")}
+                                onChange={(e) => updateQuestion(qIndex, "keywords", e.target.value.split(",").map(k => k.trim()).filter(Boolean))}
+                                placeholder="keyword1, keyword2, keyword3"
+                                className="text-sm h-8"
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
-
-        <Button variant="outline" className="w-full" onClick={handleAddQuestion}>
-          <Plus className="h-4 w-4 mr-2" /> Add Question
-        </Button>
       </div>
     );
   }
@@ -748,6 +788,7 @@ export const QPMContent = () => {
     );
   }
 
+  // === RENDER: Viewing a Paper ===
   // === RENDER: Paper Sets for Selected Job (always show 4 slots) ===
   const allSets = [1, 2, 3, 4].map(setNum => {
     const existing = papers.find(p => p.set_number === setNum);
