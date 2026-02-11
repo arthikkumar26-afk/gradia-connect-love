@@ -561,7 +561,7 @@ export const QPMContent = () => {
           </div>
         </div>
 
-        {/* Paper Title */}
+        {/* Paper Title & Details */}
         <Card>
           <CardContent className="pt-4 space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -582,6 +582,57 @@ export const QPMContent = () => {
                   placeholder="Brief description of this paper"
                   className="text-sm"
                 />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Part</Label>
+                <Select 
+                  value={(editingPaper as any).part || ""} 
+                  onValueChange={(v) => setEditingPaper({ ...editingPaper, part: v } as any)}
+                >
+                  <SelectTrigger className="text-sm h-9">
+                    <SelectValue placeholder="Select Part" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Part 1</SelectItem>
+                    <SelectItem value="2">Part 2</SelectItem>
+                    <SelectItem value="3">Part 3</SelectItem>
+                    <SelectItem value="4">Part 4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Topic</Label>
+                <Select 
+                  value={(editingPaper as any).topic || ""} 
+                  onValueChange={(v) => setEditingPaper({ ...editingPaper, topic: v } as any)}
+                >
+                  <SelectTrigger className="text-sm h-9">
+                    <SelectValue placeholder="Select Topic" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="segment_awareness">Segment Awareness</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Division</Label>
+                <Select 
+                  value={(editingPaper as any).division || ""} 
+                  onValueChange={(v) => setEditingPaper({ ...editingPaper, division: v } as any)}
+                >
+                  <SelectTrigger className="text-sm h-9">
+                    <SelectValue placeholder="Select Division" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">Division A</SelectItem>
+                    <SelectItem value="B">Division B</SelectItem>
+                    <SelectItem value="C">Division C</SelectItem>
+                    <SelectItem value="D">Division D</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
