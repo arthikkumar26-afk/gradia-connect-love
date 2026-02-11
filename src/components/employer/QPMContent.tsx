@@ -392,7 +392,8 @@ export const QPMContent = () => {
             options: q.options,
             marks: q.marks,
             display_order: q.question_number,
-          })
+            section: q.section,
+          } as any)
           .select()
           .single();
 
@@ -748,41 +749,64 @@ export const QPMContent = () => {
           </div>
         </div>
 
-        <div className="space-y-3">
-          {viewingPaper.questions.map((q, idx) => (
-            <Card key={idx}>
-              <CardContent className="pt-4">
-                <div className="flex items-start gap-3">
-                  <Badge className="text-xs shrink-0">Q{q.question_number}</Badge>
-                  <div className="flex-1 space-y-2">
-                    <p className="text-sm font-medium">{q.question_text}</p>
-                    
-                    {q.question_type === "multiple_choice" && q.options && (
-                      <div className="grid grid-cols-2 gap-1.5 ml-2">
-                        {q.options.map((opt, oIdx) => (
-                          <div key={oIdx} className={`text-xs px-2 py-1 rounded border ${
-                            q.answer_text.toUpperCase().startsWith(String.fromCharCode(65 + oIdx))
-                              ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300"
-                              : "bg-muted/50"
-                          }`}>
-                            {String.fromCharCode(65 + oIdx)}) {opt}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="mt-2 p-2 bg-primary/5 rounded border border-primary/20">
-                      <p className="text-xs font-semibold text-primary">Answer: {q.answer_text}</p>
-                      {q.keywords.length > 0 && (
-                        <p className="text-[10px] text-muted-foreground mt-1">Keywords: {q.keywords.join(", ")}</p>
-                      )}
+        <div className="space-y-4">
+          {SECTIONS.map((section) => {
+            const sectionQuestions = viewingPaper.questions.filter(q => q.section === section);
+            if (sectionQuestions.length === 0) return null;
+            return (
+              <Card key={section} className="border-2 border-muted">
+                <CardHeader className="py-3 px-4 bg-muted/40 border-b">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                      {section}
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-semibold">Section {section}</CardTitle>
+                      <p className="text-[10px] text-muted-foreground">
+                        {sectionQuestions.length} question{sectionQuestions.length !== 1 ? "s" : ""} • {sectionQuestions.reduce((sum, q) => sum + q.marks, 0)} marks
+                      </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-[10px]">{q.marks} mk</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent className="p-3 space-y-3">
+                  {sectionQuestions.map((q, idx) => (
+                    <Card key={idx}>
+                      <CardContent className="pt-4">
+                        <div className="flex items-start gap-3">
+                          <Badge className="text-xs shrink-0">Q{q.question_number}</Badge>
+                          <div className="flex-1 space-y-2">
+                            <p className="text-sm font-medium">{q.question_text}</p>
+                            
+                            {q.question_type === "multiple_choice" && q.options && (
+                              <div className="grid grid-cols-2 gap-1.5 ml-2">
+                                {q.options.map((opt, oIdx) => (
+                                  <div key={oIdx} className={`text-xs px-2 py-1 rounded border ${
+                                    q.answer_text.toUpperCase().startsWith(String.fromCharCode(65 + oIdx))
+                                      ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300"
+                                      : "bg-muted/50"
+                                  }`}>
+                                    {String.fromCharCode(65 + oIdx)}) {opt}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="mt-2 p-2 bg-primary/5 rounded border border-primary/20">
+                              <p className="text-xs font-semibold text-primary">Answer: {q.answer_text}</p>
+                              {q.keywords.length > 0 && (
+                                <p className="text-[10px] text-muted-foreground mt-1">Keywords: {q.keywords.join(", ")}</p>
+                              )}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-[10px]">{q.marks} mk</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     );
