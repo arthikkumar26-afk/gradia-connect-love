@@ -1,0 +1,1 @@
+ALTER TABLE public.interview_questions ADD COLUMN section TEXT NOT NULL DEFAULT 'A';

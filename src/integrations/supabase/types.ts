@@ -890,6 +890,7 @@ export type Database = {
           question_number: number
           question_text: string
           question_type: string
+          section: string
         }
         Insert: {
           created_at?: string
@@ -901,6 +902,7 @@ export type Database = {
           question_number: number
           question_text: string
           question_type?: string
+          section?: string
         }
         Update: {
           created_at?: string
@@ -912,6 +914,7 @@ export type Database = {
           question_number?: number
           question_text?: string
           question_type?: string
+          section?: string
         }
         Relationships: [
           {
