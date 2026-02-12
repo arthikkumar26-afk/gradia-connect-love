@@ -697,9 +697,11 @@ const EditProfile = () => {
                   <div className="space-y-2">
                     <Label htmlFor="industryCategory">Industry Category *</Label>
                     <Select value={industryCategory || undefined} onValueChange={(val) => {
-                      setIndustryCategory(val);
+                    setIndustryCategory(val);
                       // Reset category-specific fields
                       setPrimarySubject("");
+                      setHighestQualification("");
+                      setOfficeType("");
                       if (val !== "Education") {
                         setSegment("");
                         setProgram("");
@@ -1015,36 +1017,168 @@ const EditProfile = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="highestQualification">Highest Qualification *</Label>
-                    <Select value={highestQualification} onValueChange={setHighestQualification}>
+                    <Select value={highestQualification || undefined} onValueChange={setHighestQualification} key={`qual-${industryCategory}`}>
                       <SelectTrigger id="highestQualification" className="h-12">
                         <SelectValue placeholder="Select Qualification" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="10th">10th</SelectItem>
-                        <SelectItem value="12th">12th</SelectItem>
-                        <SelectItem value="Diploma">Diploma</SelectItem>
-                        <SelectItem value="Graduate">Graduate</SelectItem>
-                        <SelectItem value="Post Graduate">Post Graduate</SelectItem>
-                        <SelectItem value="PhD">PhD</SelectItem>
-                        <SelectItem value="B.Ed">B.Ed</SelectItem>
-                        <SelectItem value="M.Ed">M.Ed</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        {industryCategory === "IT Corporate" && (
+                          <>
+                            <SelectItem value="Diploma">Diploma</SelectItem>
+                            <SelectItem value="B.Tech / B.E">B.Tech / B.E</SelectItem>
+                            <SelectItem value="BCA">BCA</SelectItem>
+                            <SelectItem value="B.Sc (CS/IT)">B.Sc (CS/IT)</SelectItem>
+                            <SelectItem value="M.Tech / M.E">M.Tech / M.E</SelectItem>
+                            <SelectItem value="MCA">MCA</SelectItem>
+                            <SelectItem value="M.Sc (CS/IT)">M.Sc (CS/IT)</SelectItem>
+                            <SelectItem value="PhD">PhD</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Doctor" && (
+                          <>
+                            <SelectItem value="MBBS">MBBS</SelectItem>
+                            <SelectItem value="BDS">BDS</SelectItem>
+                            <SelectItem value="BAMS">BAMS</SelectItem>
+                            <SelectItem value="BHMS">BHMS</SelectItem>
+                            <SelectItem value="B.Pharm">B.Pharm</SelectItem>
+                            <SelectItem value="MD">MD</SelectItem>
+                            <SelectItem value="MS">MS</SelectItem>
+                            <SelectItem value="DM">DM</SelectItem>
+                            <SelectItem value="M.Pharm">M.Pharm</SelectItem>
+                            <SelectItem value="Nursing Diploma">Nursing Diploma</SelectItem>
+                            <SelectItem value="B.Sc Nursing">B.Sc Nursing</SelectItem>
+                            <SelectItem value="PhD">PhD</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Legal" && (
+                          <>
+                            <SelectItem value="LLB">LLB</SelectItem>
+                            <SelectItem value="BA LLB (5 Year)">BA LLB (5 Year)</SelectItem>
+                            <SelectItem value="LLM">LLM</SelectItem>
+                            <SelectItem value="PhD in Law">PhD in Law</SelectItem>
+                            <SelectItem value="Diploma in Law">Diploma in Law</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Civil Service" && (
+                          <>
+                            <SelectItem value="Graduate">Graduate</SelectItem>
+                            <SelectItem value="Post Graduate">Post Graduate</SelectItem>
+                            <SelectItem value="PhD">PhD</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Real Estate & Infrastructure" && (
+                          <>
+                            <SelectItem value="Diploma (Civil)">Diploma (Civil)</SelectItem>
+                            <SelectItem value="B.Tech (Civil)">B.Tech (Civil)</SelectItem>
+                            <SelectItem value="B.Arch">B.Arch</SelectItem>
+                            <SelectItem value="M.Tech (Civil)">M.Tech (Civil)</SelectItem>
+                            <SelectItem value="M.Arch">M.Arch</SelectItem>
+                            <SelectItem value="MBA (Real Estate)">MBA (Real Estate)</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Freelance / Independent Professionals" && (
+                          <>
+                            <SelectItem value="10th">10th</SelectItem>
+                            <SelectItem value="12th">12th</SelectItem>
+                            <SelectItem value="Diploma">Diploma</SelectItem>
+                            <SelectItem value="Graduate">Graduate</SelectItem>
+                            <SelectItem value="Post Graduate">Post Graduate</SelectItem>
+                            <SelectItem value="Self-Taught / Certified">Self-Taught / Certified</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </>
+                        )}
+                        {(industryCategory === "Education" || !industryCategory) && (
+                          <>
+                            <SelectItem value="10th">10th</SelectItem>
+                            <SelectItem value="12th">12th</SelectItem>
+                            <SelectItem value="Diploma">Diploma</SelectItem>
+                            <SelectItem value="Graduate">Graduate</SelectItem>
+                            <SelectItem value="Post Graduate">Post Graduate</SelectItem>
+                            <SelectItem value="PhD">PhD</SelectItem>
+                            <SelectItem value="B.Ed">B.Ed</SelectItem>
+                            <SelectItem value="M.Ed">M.Ed</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="officeType">Office Type *</Label>
-                    <Select value={officeType} onValueChange={setOfficeType}>
+                    <Select value={officeType || undefined} onValueChange={setOfficeType} key={`office-${industryCategory}`}>
                       <SelectTrigger id="officeType" className="h-12">
                         <SelectValue placeholder="Select Office Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Head Office">Head Office</SelectItem>
-                        <SelectItem value="Branch Office">Branch Office</SelectItem>
-                        <SelectItem value="Regional Office">Regional Office</SelectItem>
-                        <SelectItem value="Remote">Remote</SelectItem>
-                        <SelectItem value="Hybrid">Hybrid</SelectItem>
+                        {industryCategory === "IT Corporate" && (
+                          <>
+                            <SelectItem value="Corporate Office">Corporate Office</SelectItem>
+                            <SelectItem value="Tech Park">Tech Park</SelectItem>
+                            <SelectItem value="Remote">Remote</SelectItem>
+                            <SelectItem value="Hybrid">Hybrid</SelectItem>
+                            <SelectItem value="Co-working Space">Co-working Space</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Doctor" && (
+                          <>
+                            <SelectItem value="Hospital">Hospital</SelectItem>
+                            <SelectItem value="Clinic">Clinic</SelectItem>
+                            <SelectItem value="Nursing Home">Nursing Home</SelectItem>
+                            <SelectItem value="Diagnostic Center">Diagnostic Center</SelectItem>
+                            <SelectItem value="Pharmacy">Pharmacy</SelectItem>
+                            <SelectItem value="Medical College">Medical College</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Legal" && (
+                          <>
+                            <SelectItem value="Law Firm">Law Firm</SelectItem>
+                            <SelectItem value="Court">Court</SelectItem>
+                            <SelectItem value="Corporate Legal Dept">Corporate Legal Dept</SelectItem>
+                            <SelectItem value="Independent Chamber">Independent Chamber</SelectItem>
+                            <SelectItem value="Government Office">Government Office</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Civil Service" && (
+                          <>
+                            <SelectItem value="Government Office">Government Office</SelectItem>
+                            <SelectItem value="Collectorate">Collectorate</SelectItem>
+                            <SelectItem value="Secretariat">Secretariat</SelectItem>
+                            <SelectItem value="Field Office">Field Office</SelectItem>
+                            <SelectItem value="District Office">District Office</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Real Estate & Infrastructure" && (
+                          <>
+                            <SelectItem value="Site Office">Site Office</SelectItem>
+                            <SelectItem value="Corporate Office">Corporate Office</SelectItem>
+                            <SelectItem value="Project Site">Project Site</SelectItem>
+                            <SelectItem value="Design Studio">Design Studio</SelectItem>
+                            <SelectItem value="Branch Office">Branch Office</SelectItem>
+                          </>
+                        )}
+                        {industryCategory === "Freelance / Independent Professionals" && (
+                          <>
+                            <SelectItem value="Home Office">Home Office</SelectItem>
+                            <SelectItem value="Co-working Space">Co-working Space</SelectItem>
+                            <SelectItem value="Remote">Remote</SelectItem>
+                            <SelectItem value="Client Site">Client Site</SelectItem>
+                          </>
+                        )}
+                        {(industryCategory === "Education" || !industryCategory) && (
+                          <>
+                            <SelectItem value="Head Office">Head Office</SelectItem>
+                            <SelectItem value="Branch Office">Branch Office</SelectItem>
+                            <SelectItem value="Regional Office">Regional Office</SelectItem>
+                            <SelectItem value="Remote">Remote</SelectItem>
+                            <SelectItem value="Hybrid">Hybrid</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
