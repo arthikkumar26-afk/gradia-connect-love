@@ -424,6 +424,7 @@ export type Database = {
           district: string
           employer_id: string
           id: string
+          industry_category: string | null
           pin_code: string | null
           registration_status: string | null
           state: string
@@ -443,6 +444,7 @@ export type Database = {
           district: string
           employer_id: string
           id?: string
+          industry_category?: string | null
           pin_code?: string | null
           registration_status?: string | null
           state: string
@@ -462,6 +464,7 @@ export type Database = {
           district?: string
           employer_id?: string
           id?: string
+          industry_category?: string | null
           pin_code?: string | null
           registration_status?: string | null
           state?: string

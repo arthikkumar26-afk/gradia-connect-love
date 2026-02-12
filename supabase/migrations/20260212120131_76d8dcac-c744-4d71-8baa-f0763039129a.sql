@@ -1,0 +1,1 @@
+ALTER TABLE public.employer_registrations ADD COLUMN industry_category text DEFAULT null;

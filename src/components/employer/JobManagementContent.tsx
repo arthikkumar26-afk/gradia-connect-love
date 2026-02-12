@@ -51,12 +51,15 @@ export const JobManagementContent = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCell, setEditingCell] = useState<{ jobId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [industryCategory, setIndustryCategory] = useState<string>("");
   const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
 
   const handleViewPipeline = (candidateId: string, jobId: string) => {
     setSearchParams({ tab: "interview-pipeline", candidateId, jobId });
   };
+
+  const isEducation = industryCategory === "Education" || industryCategory === "";
 
   useEffect(() => {
     fetchJobs();
@@ -75,13 +78,15 @@ export const JobManagementContent = () => {
           .order("created_at", { ascending: false }),
         supabase
           .from("employer_registrations")
-          .select("company_name")
+          .select("company_name, industry_category" as any)
           .eq("employer_id", user.id)
           .maybeSingle(),
       ]);
 
       const { data, error } = jobsResult;
-      const companyName = regResult.data?.company_name || "—";
+      const regData = regResult.data as any;
+      const companyName = regData?.company_name || "—";
+      setIndustryCategory(regData?.industry_category || "");
 
       if (error) throw error;
 
@@ -328,13 +333,13 @@ export const JobManagementContent = () => {
                     <TableHead className="font-semibold">Sector</TableHead>
                     <TableHead className="font-semibold">Category</TableHead>
                     <TableHead className="font-semibold">Function</TableHead>
-                    <TableHead className="font-semibold">Board</TableHead>
-                    <TableHead className="font-semibold">Segment</TableHead>
-                    <TableHead className="font-semibold">Program</TableHead>
-                    <TableHead className="font-semibold">Classes</TableHead>
+                    {isEducation && <TableHead className="font-semibold">Board</TableHead>}
+                    {isEducation && <TableHead className="font-semibold">Segment</TableHead>}
+                    {isEducation && <TableHead className="font-semibold">Program</TableHead>}
+                    {isEducation && <TableHead className="font-semibold">Classes</TableHead>}
                     <TableHead className="font-semibold">Department</TableHead>
                     <TableHead className="font-semibold">Designation</TableHead>
-                    <TableHead className="font-semibold">Subjects</TableHead>
+                    {isEducation && <TableHead className="font-semibold">Subjects</TableHead>}
                     <TableHead className="font-semibold">Exp.</TableHead>
                     <TableHead className="font-semibold max-w-[120px]">Skills</TableHead>
                     <TableHead className="font-semibold">Type</TableHead>
@@ -349,14 +354,14 @@ export const JobManagementContent = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                          <TableCell colSpan={21} className="text-center py-8">
+                          <TableCell colSpan={isEducation ? 21 : 16} className="text-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                         <p className="text-sm text-muted-foreground mt-2">Loading positions...</p>
                       </TableCell>
                     </TableRow>
                   ) : filteredJobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={21} className="text-center py-8">
+                      <TableCell colSpan={isEducation ? 21 : 16} className="text-center py-8">
                         <p className="text-muted-foreground">No positions found</p>
                         <Button variant="link" asChild className="mt-2">
                           <Link to="/employer/post-job">Create your first position</Link>
@@ -385,27 +390,37 @@ export const JobManagementContent = () => {
                           <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "functionType", "w-24")}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "board", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "segment", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "program", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "classes", "w-24")}
-                          </TableCell>
+                          {isEducation && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "board", "w-24")}
+                            </TableCell>
+                          )}
+                          {isEducation && (
+                            <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "segment", "w-24")}
+                            </TableCell>
+                          )}
+                          {isEducation && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "program", "w-24")}
+                            </TableCell>
+                          )}
+                          {isEducation && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "classes", "w-24")}
+                            </TableCell>
+                          )}
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "department", "w-24")}
                           </TableCell>
                           <TableCell className="font-medium whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "designation", "w-28")}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "subjects", "w-24")}
-                          </TableCell>
+                          {isEducation && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "subjects", "w-24")}
+                            </TableCell>
+                          )}
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "experience", "w-24")}
                           </TableCell>

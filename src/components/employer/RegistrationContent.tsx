@@ -84,6 +84,7 @@ export const RegistrationContent = () => {
     companyPhone: "",
     companyWebsite: "",
     companyDescription: "",
+    industryCategory: "",
     state: "",
     district: "",
     townCity: "",
@@ -122,6 +123,7 @@ export const RegistrationContent = () => {
             companyPhone: data.company_phone || "",
             companyWebsite: data.company_website || "",
             companyDescription: data.company_description || "",
+            industryCategory: (data as any).industry_category || "",
             state: data.state || "",
             district: data.district || "",
             townCity: data.town_city || "",
@@ -189,13 +191,14 @@ export const RegistrationContent = () => {
 
     setIsSubmitting(true);
     try {
-      const registrationData = {
+      const registrationData: Record<string, any> = {
         employer_id: user.id,
         company_name: formData.companyName.trim(),
         company_email: formData.companyEmail.trim() || null,
         company_phone: formData.companyPhone.trim() || null,
         company_website: formData.companyWebsite.trim() || null,
         company_description: formData.companyDescription.trim() || null,
+        industry_category: formData.industryCategory || null,
         state: formData.state,
         district: formData.district,
         town_city: formData.townCity.trim() || null,
@@ -210,14 +213,14 @@ export const RegistrationContent = () => {
         // Update existing registration
         const result = await supabase
           .from('employer_registrations')
-          .update(registrationData)
+          .update(registrationData as any)
           .eq('employer_id', user.id);
         error = result.error;
       } else {
         // Insert new registration
         const result = await supabase
           .from('employer_registrations')
-          .insert(registrationData);
+          .insert(registrationData as any);
         error = result.error;
       }
 
@@ -323,6 +326,29 @@ export const RegistrationContent = () => {
               />
               {errors.companyWebsite && (
                 <p className="text-xs text-destructive">{errors.companyWebsite}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="industryCategory">Industry Category *</Label>
+              <Select
+                value={formData.industryCategory || undefined}
+                onValueChange={(value) => handleInputChange("industryCategory", value)}
+              >
+                <SelectTrigger className={errors.industryCategory ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Select Industry Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="IT Corporate">IT Corporate</SelectItem>
+                  <SelectItem value="Legal">Legal</SelectItem>
+                  <SelectItem value="Doctor">Doctor</SelectItem>
+                  <SelectItem value="Civil Service">Civil Service</SelectItem>
+                  <SelectItem value="Real Estate & Infrastructure">Real Estate & Infrastructure</SelectItem>
+                  <SelectItem value="Freelance / Independent Professionals">Freelance / Independent Professionals</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.industryCategory && (
+                <p className="text-xs text-destructive">{errors.industryCategory}</p>
               )}
             </div>
             <div className="space-y-2">
