@@ -58,6 +58,7 @@ const EditProfile = () => {
   const [languages, setLanguages] = useState("");
   const [currentState, setCurrentState] = useState("");
   const [currentDistrict, setCurrentDistrict] = useState("");
+  const [industryCategory, setIndustryCategory] = useState("");
   const [alternateNumber, setAlternateNumber] = useState("");
   const [highestQualification, setHighestQualification] = useState("");
   const [officeType, setOfficeType] = useState("");
@@ -103,6 +104,7 @@ const EditProfile = () => {
     setLanguages(profile.languages?.join(", ") || "");
     setCurrentState(profile.current_state || "");
     setCurrentDistrict(profile.current_district || "");
+    setIndustryCategory(profile.category || "");
     setAlternateNumber(profile.alternate_number || "");
     setHighestQualification(profile.highest_qualification || "");
     setOfficeType(profile.office_type || "");
@@ -398,6 +400,7 @@ const EditProfile = () => {
         updateData.classes_handled = classesHandled || null;
         updateData.batch = batch || null;
         updateData.primary_subject = primarySubject || null;
+        updateData.category = industryCategory || null;
       }
 
       const { error } = await supabase
@@ -689,6 +692,37 @@ const EditProfile = () => {
                   </div>
                 </div>
 
+                {/* Industry Category */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="industryCategory">Industry Category *</Label>
+                    <Select value={industryCategory || undefined} onValueChange={(val) => {
+                      setIndustryCategory(val);
+                      // Reset education-specific fields when switching away from Education
+                      if (val !== "Education") {
+                        setSegment("");
+                        setProgram("");
+                        setClassesHandled("");
+                        setBatch("");
+                        setPrimarySubject("");
+                      }
+                    }}>
+                      <SelectTrigger id="industryCategory" className="h-12">
+                        <SelectValue placeholder="Select Industry Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Education">Education</SelectItem>
+                        <SelectItem value="IT Corporate">IT Corporate</SelectItem>
+                        <SelectItem value="Legal">Legal</SelectItem>
+                        <SelectItem value="Doctor">Doctor</SelectItem>
+                        <SelectItem value="Civil Service">Civil Service</SelectItem>
+                        <SelectItem value="Real Estate & Infrastructure">Real Estate & Infrastructure</SelectItem>
+                        <SelectItem value="Freelance / Independent Professionals">Freelance / Independent Professionals</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 {/* Row 3: Alternate Number, Highest Qualification, Office Type */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
@@ -835,7 +869,7 @@ const EditProfile = () => {
                   </div>
                 </div>
 
-                {/* Row 5: Preferred District 2, Segment, Program */}
+                {/* Row 5: Preferred District 2 */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="preferredDistrict2">Preferred District 2 *</Label>
@@ -848,102 +882,108 @@ const EditProfile = () => {
                       className="h-12"
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="segment">Segment *</Label>
-                    <Select value={segment} onValueChange={setSegment}>
-                      <SelectTrigger id="segment" className="h-12">
-                        <SelectValue placeholder="Select Segment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Education">Education</SelectItem>
-                        <SelectItem value="Healthcare">Healthcare</SelectItem>
-                        <SelectItem value="IT">IT</SelectItem>
-                        <SelectItem value="Finance">Finance</SelectItem>
-                        <SelectItem value="Manufacturing">Manufacturing</SelectItem>
-                        <SelectItem value="Retail">Retail</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="program">Program</Label>
-                    <Select value={program} onValueChange={setProgram}>
-                      <SelectTrigger id="program" className="h-12">
-                        <SelectValue placeholder="Select Program" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Full Time">Full Time</SelectItem>
-                        <SelectItem value="Part Time">Part Time</SelectItem>
-                        <SelectItem value="Contract">Contract</SelectItem>
-                        <SelectItem value="Internship">Internship</SelectItem>
-                        <SelectItem value="Freelance">Freelance</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
-                {/* Row 6: Classes Handled, Batch, Primary Subject */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="classesHandled">Classes Handled *</Label>
-                    <Select value={classesHandled} onValueChange={setClassesHandled}>
-                      <SelectTrigger id="classesHandled" className="h-12">
-                        <SelectValue placeholder="Select Classes Handled" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pre-Primary">Pre-Primary</SelectItem>
-                        <SelectItem value="Primary (1-5)">Primary (1-5)</SelectItem>
-                        <SelectItem value="Middle (6-8)">Middle (6-8)</SelectItem>
-                        <SelectItem value="Secondary (9-10)">Secondary (9-10)</SelectItem>
-                        <SelectItem value="Higher Secondary (11-12)">Higher Secondary (11-12)</SelectItem>
-                        <SelectItem value="Graduation">Graduation</SelectItem>
-                        <SelectItem value="Post Graduation">Post Graduation</SelectItem>
-                        <SelectItem value="All Classes">All Classes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Education-specific fields - only show when Industry Category is Education */}
+                {industryCategory === "Education" && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="segment">Segment *</Label>
+                        <Select value={segment || undefined} onValueChange={setSegment}>
+                          <SelectTrigger id="segment" className="h-12">
+                            <SelectValue placeholder="Select Segment" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Education">Education</SelectItem>
+                            <SelectItem value="Healthcare">Healthcare</SelectItem>
+                            <SelectItem value="IT">IT</SelectItem>
+                            <SelectItem value="Finance">Finance</SelectItem>
+                            <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                            <SelectItem value="Retail">Retail</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="batch">Batch</Label>
-                    <Select value={batch} onValueChange={setBatch}>
-                      <SelectTrigger id="batch" className="h-12">
-                        <SelectValue placeholder="Select Batch" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Morning">Morning</SelectItem>
-                        <SelectItem value="Afternoon">Afternoon</SelectItem>
-                        <SelectItem value="Evening">Evening</SelectItem>
-                        <SelectItem value="Flexible">Flexible</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="program">Program</Label>
+                        <Select value={program || undefined} onValueChange={setProgram}>
+                          <SelectTrigger id="program" className="h-12">
+                            <SelectValue placeholder="Select Program" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Full Time">Full Time</SelectItem>
+                            <SelectItem value="Part Time">Part Time</SelectItem>
+                            <SelectItem value="Contract">Contract</SelectItem>
+                            <SelectItem value="Internship">Internship</SelectItem>
+                            <SelectItem value="Freelance">Freelance</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="primarySubject">Primary Subject *</Label>
-                    <Select value={primarySubject} onValueChange={setPrimarySubject}>
-                      <SelectTrigger id="primarySubject" className="h-12">
-                        <SelectValue placeholder="Select Subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Mathematics">Mathematics</SelectItem>
-                        <SelectItem value="Science">Science</SelectItem>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Hindi">Hindi</SelectItem>
-                        <SelectItem value="Social Studies">Social Studies</SelectItem>
-                        <SelectItem value="Physics">Physics</SelectItem>
-                        <SelectItem value="Chemistry">Chemistry</SelectItem>
-                        <SelectItem value="Biology">Biology</SelectItem>
-                        <SelectItem value="Computer Science">Computer Science</SelectItem>
-                        <SelectItem value="Commerce">Commerce</SelectItem>
-                        <SelectItem value="Arts">Arts</SelectItem>
-                        <SelectItem value="Physical Education">Physical Education</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="classesHandled">Classes Handled *</Label>
+                        <Select value={classesHandled || undefined} onValueChange={setClassesHandled}>
+                          <SelectTrigger id="classesHandled" className="h-12">
+                            <SelectValue placeholder="Select Classes Handled" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pre-Primary">Pre-Primary</SelectItem>
+                            <SelectItem value="Primary (1-5)">Primary (1-5)</SelectItem>
+                            <SelectItem value="Middle (6-8)">Middle (6-8)</SelectItem>
+                            <SelectItem value="Secondary (9-10)">Secondary (9-10)</SelectItem>
+                            <SelectItem value="Higher Secondary (11-12)">Higher Secondary (11-12)</SelectItem>
+                            <SelectItem value="Graduation">Graduation</SelectItem>
+                            <SelectItem value="Post Graduation">Post Graduation</SelectItem>
+                            <SelectItem value="All Classes">All Classes</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="batch">Batch</Label>
+                        <Select value={batch || undefined} onValueChange={setBatch}>
+                          <SelectTrigger id="batch" className="h-12">
+                            <SelectValue placeholder="Select Batch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Morning">Morning</SelectItem>
+                            <SelectItem value="Afternoon">Afternoon</SelectItem>
+                            <SelectItem value="Evening">Evening</SelectItem>
+                            <SelectItem value="Flexible">Flexible</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="primarySubject">Primary Subject *</Label>
+                        <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                          <SelectTrigger id="primarySubject" className="h-12">
+                            <SelectValue placeholder="Select Subject" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Mathematics">Mathematics</SelectItem>
+                            <SelectItem value="Science">Science</SelectItem>
+                            <SelectItem value="English">English</SelectItem>
+                            <SelectItem value="Hindi">Hindi</SelectItem>
+                            <SelectItem value="Social Studies">Social Studies</SelectItem>
+                            <SelectItem value="Physics">Physics</SelectItem>
+                            <SelectItem value="Chemistry">Chemistry</SelectItem>
+                            <SelectItem value="Biology">Biology</SelectItem>
+                            <SelectItem value="Computer Science">Computer Science</SelectItem>
+                            <SelectItem value="Commerce">Commerce</SelectItem>
+                            <SelectItem value="Arts">Arts</SelectItem>
+                            <SelectItem value="Physical Education">Physical Education</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Languages Known */}
                 <div className="space-y-2">
