@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2 } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload } from "lucide-react";
+import { toast as sonnerToast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -72,6 +73,7 @@ export default function ResumeBuilderTab() {
   const [selectedTemplate, setSelectedTemplate] = useState("modern");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [mockTestData, setMockTestData] = useState<any>(null);
   const [newSkill, setNewSkill] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -358,6 +360,81 @@ export default function ResumeBuilderTab() {
     });
   };
 
+  const handleUploadResume = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf,.docx,.doc,.jpg,.jpeg,.png";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setIsUploading(true);
+      sonnerToast.loading("AI is analyzing your resume...", { id: "resume-upload" });
+
+      try {
+        const formDataUpload = new FormData();
+        formDataUpload.append("file", file);
+
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: formDataUpload,
+          }
+        );
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || "Failed to parse resume");
+        }
+
+        const data = await response.json();
+
+        // Map AI-extracted data to resume form
+        setFormData(prev => ({
+          fullName: data.full_name || prev.fullName,
+          email: data.email || prev.email,
+          phone: data.mobile || prev.phone,
+          location: data.location || data.current_district || prev.location,
+          summary: data.experience_summary || prev.summary,
+          experience: data.experience && data.experience.length > 0
+            ? data.experience.map((exp: any) => ({
+                title: exp.designation || "",
+                company: exp.organization || "",
+                duration: `${exp.from_date || ""} - ${exp.to_date || "Present"}`,
+                description: exp.department || "",
+              }))
+            : prev.experience,
+          education: data.education && data.education.length > 0
+            ? data.education.map((edu: any) => ({
+                degree: `${edu.education_level || ""}${edu.specialization ? ` - ${edu.specialization}` : ""}`,
+                school: edu.school_college_name || edu.board_university || "",
+                year: edu.year_of_passing?.toString() || "",
+              }))
+            : prev.education,
+          skills: data.skills && data.skills.length > 0
+            ? [...new Set([...prev.skills, ...data.skills])]
+            : data.skill_highlights && data.skill_highlights.length > 0
+              ? [...new Set([...prev.skills, ...data.skill_highlights])]
+              : prev.skills,
+        }));
+
+        setHasUnsavedChanges(true);
+        sonnerToast.success("Resume parsed successfully! Review and save your details.", { id: "resume-upload" });
+      } catch (error: any) {
+        console.error("Resume upload error:", error);
+        sonnerToast.error(error.message || "Failed to analyze resume", { id: "resume-upload" });
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    input.click();
+  };
+
   const getTemplateStyles = () => {
     switch (selectedTemplate) {
       case "modern":
@@ -380,6 +457,14 @@ export default function ResumeBuilderTab() {
       {/* Header Actions */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex gap-2">
+          <Button variant="hero" size="sm" onClick={handleUploadResume} disabled={isUploading}>
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4 mr-1" />
+            )}
+            {isUploading ? "Analyzing..." : "Upload Resume"}
+          </Button>
           <Button variant="outline" size="sm" onClick={handleSyncFromMockTest} disabled={isLoading || !mockTestData}>
             <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
             Sync Mock Test
