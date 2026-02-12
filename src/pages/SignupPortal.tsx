@@ -629,26 +629,107 @@ const SignupPortal = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setEmployerOnboardingStep('form'); return; }
 
-      toast({ title: 'Processing payment...', description: 'Please wait' });
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // For free/basic plan (₹0), activate directly without payment
+      if (selectedPlan.price === 0) {
+        const { error } = await supabase.from("subscriptions").insert({
+          employer_id: user.id,
+          plan_id: planId,
+          plan_name: selectedPlan.name,
+          billing_cycle: 'monthly',
+          amount: 0,
+          currency: "INR",
+          status: "active",
+          payment_method: null,
+        });
+        if (error) throw error;
+        toast({ title: 'Plan Activated!', description: `${selectedPlan.name} plan activated` });
+        setEmployerOnboardingStep('job-alert-onboarding');
+        return;
+      }
 
-      const { error } = await supabase.from("subscriptions").insert({
-        employer_id: user.id,
-        plan_id: planId,
-        plan_name: selectedPlan.name,
-        billing_cycle: 'monthly',
-        amount: selectedPlan.price,
-        currency: "INR",
-        status: "active",
-        payment_method: planId === 'basic' ? null : 'card',
+      // For paid plans, use Razorpay
+      toast({ title: 'Initializing payment...', description: 'Please wait' });
+
+      // Create Razorpay order via edge function
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: selectedPlan.price,
+          currency: 'INR',
+          plan_id: planId,
+          plan_name: selectedPlan.name,
+          employer_id: user.id,
+        },
       });
 
-      if (error) throw error;
-      toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
-      setEmployerOnboardingStep('job-alert-onboarding');
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderData?.error || 'Failed to create payment order');
+      }
+
+      // Load Razorpay script if not loaded
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load Razorpay'));
+          document.body.appendChild(script);
+        });
+      }
+
+      // Open Razorpay checkout
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Gradia',
+        description: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+        order_id: orderData.order_id,
+        handler: async (response: any) => {
+          try {
+            // Verify payment via edge function
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_id: planId,
+                plan_name: selectedPlan.name,
+                amount: selectedPlan.price,
+                employer_id: user.id,
+                billing_cycle: 'monthly',
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error(verifyData?.error || 'Payment verification failed');
+            }
+
+            toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
+            setEmployerOnboardingStep('job-alert-onboarding');
+          } catch (err: any) {
+            toast({ title: 'Payment Verification Failed', description: err.message, variant: 'destructive' });
+          }
+        },
+        prefill: {
+          email: user.email || '',
+        },
+        theme: {
+          color: '#10b981',
+        },
+        modal: {
+          ondismiss: () => {
+            setPlanLoading(null);
+            toast({ title: 'Payment Cancelled', description: 'You can try again anytime', variant: 'destructive' });
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+      return; // Don't clear loading until modal closes
     } catch (error: any) {
       setRetryError('Failed to process payment. Please try again.');
-      toast({ title: 'Error', description: 'Failed to process plan selection', variant: 'destructive' });
+      toast({ title: 'Error', description: error.message || 'Failed to process plan selection', variant: 'destructive' });
     } finally {
       setPlanLoading(null);
     }
