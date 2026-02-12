@@ -48,6 +48,7 @@ import ResumeBuilder from "./pages/candidate/ResumeBuilder";
 import InterviewPrep from "./pages/candidate/InterviewPrep";
 import MockTest from "./pages/candidate/MockTest";
 import MockInterview from "./pages/candidate/MockInterview";
+import MockInterviewStart from "./pages/candidate/MockInterviewStart";
 import DemoRound from "./pages/candidate/DemoRound";
 import DemoFeedback from "./pages/candidate/DemoFeedback";
 import CareerCoaching from "./pages/candidate/CareerCoaching";
@@ -164,6 +165,7 @@ const MainRoutes = () => (
       <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
       <Route path="/candidate/mock-test/:sessionId" element={<MockTest />} />
       <Route path="/candidate/mock-interview/:sessionId/:stageOrder" element={<MockInterview />} />
+      <Route path="/candidate/mock-interview-start/:type" element={<MockInterviewStart />} />
       <Route path="/candidate/demo-round" element={<DemoRound />} />
       <Route path="/candidate/demo-feedback" element={<DemoFeedback />} />
       <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
