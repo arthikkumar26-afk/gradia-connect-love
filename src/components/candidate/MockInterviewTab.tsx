@@ -1332,7 +1332,7 @@ export const MockInterviewTab = () => {
                 ? 'border-2 border-primary ring-2 ring-primary/20' 
                 : 'border hover:border-primary/50'
             }`}
-            onClick={() => setSelectedInterviewType('new_employee')}
+            onClick={() => navigate('/candidate/mock-interview-start/new-employee')}
           >
             <CardHeader className="text-center pb-4">
               <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
@@ -1382,7 +1382,7 @@ export const MockInterviewTab = () => {
                 ? 'border-2 border-primary ring-2 ring-primary/20' 
                 : 'border hover:border-primary/50'
             }`}
-            onClick={() => setSelectedInterviewType('promotions')}
+            onClick={() => navigate('/candidate/mock-interview-start/promotions')}
           >
             <CardHeader className="text-center pb-4">
               <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
