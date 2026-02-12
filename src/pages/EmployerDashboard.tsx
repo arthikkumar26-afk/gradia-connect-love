@@ -23,6 +23,7 @@ import {
   UserCheck,
   FileText,
   BookOpen,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -57,6 +58,7 @@ import { ConfigurationContent } from "@/components/employer/ConfigurationContent
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { UpgradePlanContent } from "@/components/employer/UpgradePlanContent";
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -267,6 +269,7 @@ const EmployerDashboard = () => {
     { id: "confirmation", label: "Confirmation", icon: UserCheck, path: "/employer/confirmation" },
     { id: "offer-letter", label: "Offer Letter", icon: FileText, path: "/employer/offer-letter" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
+    { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
     { id: "configuration", label: "Configuration", icon: Sliders, path: "/employer/configuration" },
   ];
@@ -519,6 +522,7 @@ const EmployerDashboard = () => {
             {activeMenu === "feedback-matrix" && <FeedbackMatrixContent />}
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
+            {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "configuration" && <ConfigurationContent />}
           </div>
         </main>
