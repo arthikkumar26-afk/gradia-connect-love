@@ -36,41 +36,12 @@ interface ResumeData {
   skills: string[];
 }
 
-const RESUME_TEMPLATES = [
-  {
-    id: "modern",
-    name: "Modern",
-    description: "Clean design",
-    color: "from-blue-500 to-indigo-600",
-    preview: "bg-gradient-to-br from-blue-50 to-indigo-100"
-  },
-  {
-    id: "classic",
-    name: "Classic",
-    description: "Traditional style",
-    color: "from-gray-600 to-gray-800",
-    preview: "bg-gradient-to-br from-gray-50 to-gray-200"
-  },
-  {
-    id: "creative",
-    name: "Creative",
-    description: "Bold layout",
-    color: "from-purple-500 to-pink-500",
-    preview: "bg-gradient-to-br from-purple-50 to-pink-100"
-  },
-  {
-    id: "minimal",
-    name: "Minimal",
-    description: "Simple & elegant",
-    color: "from-emerald-500 to-teal-600",
-    preview: "bg-gradient-to-br from-emerald-50 to-teal-100"
-  }
-];
+import { TEMPLATE_CONFIG, getTemplateComponent } from "./ResumeTemplates";
 
 export default function ResumeBuilderTab() {
   const { toast } = useToast();
   const [showPreview, setShowPreview] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState("modern");
+  const [selectedTemplate, setSelectedTemplate] = useState("executive");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -435,22 +406,7 @@ export default function ResumeBuilderTab() {
     input.click();
   };
 
-  const getTemplateStyles = () => {
-    switch (selectedTemplate) {
-      case "modern":
-        return { headerBg: "bg-gradient-to-r from-blue-600 to-indigo-600", headerText: "text-white", accent: "text-blue-600" };
-      case "classic":
-        return { headerBg: "bg-gray-800", headerText: "text-white", accent: "text-gray-700" };
-      case "creative":
-        return { headerBg: "bg-gradient-to-r from-purple-600 to-pink-600", headerText: "text-white", accent: "text-purple-600" };
-      case "minimal":
-        return { headerBg: "bg-emerald-600", headerText: "text-white", accent: "text-emerald-600" };
-      default:
-        return { headerBg: "bg-blue-600", headerText: "text-white", accent: "text-blue-600" };
-    }
-  };
-
-  const templateStyles = getTemplateStyles();
+  const SelectedTemplateComponent = getTemplateComponent(selectedTemplate);
 
   return (
     <div className="space-y-4">
@@ -542,35 +498,41 @@ export default function ResumeBuilderTab() {
             <CardHeader className="py-2 px-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Palette className="h-4 w-4" />
-                Choose Template
+                Choose Template ({TEMPLATE_CONFIG.length} professional designs)
               </CardTitle>
             </CardHeader>
             <CardContent className="px-3 pb-3">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {RESUME_TEMPLATES.map((template) => (
-                  <div
-                    key={template.id}
-                    onClick={() => handleTemplateChange(template.id)}
-                    className={`cursor-pointer rounded-lg border-2 p-2 transition-all hover:shadow-md ${
-                      selectedTemplate === template.id
-                        ? "border-primary ring-2 ring-primary/20"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <div className={`h-14 rounded-md mb-1.5 ${template.preview} flex items-center justify-center`}>
-                      <div className={`h-2 w-12 rounded bg-gradient-to-r ${template.color}`} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-medium">{template.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{template.description}</p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {TEMPLATE_CONFIG.map((template) => {
+                  const TemplatePreview = template.component;
+                  return (
+                    <div
+                      key={template.id}
+                      onClick={() => handleTemplateChange(template.id)}
+                      className={`cursor-pointer rounded-lg border-2 transition-all hover:shadow-lg overflow-hidden ${
+                        selectedTemplate === template.id
+                          ? "border-primary ring-2 ring-primary/20 shadow-md"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {/* Live mini preview */}
+                      <div className="h-32 overflow-hidden relative">
+                        <div className="transform scale-[0.25] origin-top-left w-[400%] h-[400%]">
+                          <TemplatePreview data={formData} scale={true} />
+                        </div>
                       </div>
-                      {selectedTemplate === template.id && (
-                        <Check className="h-3 w-3 text-primary" />
-                      )}
+                      <div className="p-1.5 bg-background flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-medium">{template.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{template.description}</p>
+                        </div>
+                        {selectedTemplate === template.id && (
+                          <Check className="h-3 w-3 text-primary shrink-0" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -790,74 +752,10 @@ export default function ResumeBuilderTab() {
               </Card>
             </div>
           ) : (
-            /* Preview */
-            <Card className="p-4 overflow-hidden">
+            /* Preview - renders chosen template with form data */
+            <Card className="overflow-hidden">
               <div className="max-w-2xl mx-auto">
-                <div className={`${templateStyles.headerBg} ${templateStyles.headerText} -mx-4 -mt-4 px-4 py-4 mb-4`}>
-                  <h2 className="text-xl font-bold">{formData.fullName || "Your Name"}</h2>
-                  <p className="text-xs opacity-90">
-                    {[formData.email, formData.phone, formData.location].filter(Boolean).join(" | ") || "Contact Information"}
-                  </p>
-                </div>
-
-                {formData.summary && (
-                  <div className="mb-3">
-                    <h3 className={`text-sm font-semibold mb-1 ${templateStyles.accent}`}>Professional Summary</h3>
-                    <p className="text-xs text-muted-foreground">{formData.summary}</p>
-                  </div>
-                )}
-
-                <Separator className="my-3" />
-
-                {formData.experience.some(exp => exp.title || exp.company) && (
-                  <div className="mb-3">
-                    <h3 className={`text-sm font-semibold mb-2 ${templateStyles.accent}`}>Work Experience</h3>
-                    <div className="space-y-2">
-                      {formData.experience.filter(exp => exp.title || exp.company).map((exp, index) => (
-                        <div key={index}>
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="text-xs font-semibold">{exp.title}</h4>
-                              <p className="text-[10px] text-muted-foreground">{exp.company}</p>
-                            </div>
-                            <span className="text-[10px] text-muted-foreground">{exp.duration}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <Separator className="my-3" />
-
-                {formData.education.some(edu => edu.degree || edu.school) && (
-                  <div className="mb-3">
-                    <h3 className={`text-sm font-semibold mb-2 ${templateStyles.accent}`}>Education</h3>
-                    <div className="space-y-1">
-                      {formData.education.filter(edu => edu.degree || edu.school).map((edu, index) => (
-                        <div key={index}>
-                          <h4 className="text-xs font-semibold">{edu.degree}</h4>
-                          <p className="text-[10px] text-muted-foreground">{edu.school} {edu.year && `- ${edu.year}`}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <Separator className="my-3" />
-
-                {formData.skills.length > 0 && (
-                  <div>
-                    <h3 className={`text-sm font-semibold mb-1 ${templateStyles.accent}`}>Skills</h3>
-                    <div className="flex flex-wrap gap-1">
-                      {formData.skills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="text-[10px] px-1.5 py-0">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <SelectedTemplateComponent data={formData} />
               </div>
             </Card>
           )}
