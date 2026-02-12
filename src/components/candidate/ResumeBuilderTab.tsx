@@ -324,11 +324,105 @@ export default function ResumeBuilderTab() {
     setHasUnsavedChanges(true);
   };
 
-  const handleExport = () => {
-    toast({
-      title: "Resume Downloaded!",
-      description: "Your resume has been downloaded as PDF.",
-    });
+  const handleExport = async () => {
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const margin = 15;
+      const contentWidth = pageWidth - margin * 2;
+      let y = 20;
+
+      const addText = (text: string, x: number, fontSize: number, style: string = 'normal', color: [number, number, number] = [0, 0, 0]) => {
+        doc.setFontSize(fontSize);
+        doc.setFont('helvetica', style);
+        doc.setTextColor(...color);
+        const lines = doc.splitTextToSize(text, contentWidth - (x - margin));
+        doc.text(lines, x, y);
+        y += lines.length * (fontSize * 0.45) + 2;
+      };
+
+      // Header
+      doc.setFillColor(26, 35, 50);
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text(formData.fullName || 'Your Name', margin, 18);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const contactParts = [formData.email, formData.phone, formData.location].filter(Boolean);
+      doc.text(contactParts.join('  |  '), margin, 28);
+      if (formData.experience[0]?.title) {
+        doc.setFontSize(12);
+        doc.text(formData.experience[0].title, margin, 36);
+      }
+      y = 50;
+
+      // Summary
+      if (formData.summary) {
+        addText('PROFESSIONAL SUMMARY', margin, 12, 'bold', [30, 64, 175]);
+        doc.setDrawColor(30, 64, 175);
+        doc.line(margin, y - 1, margin + 50, y - 1);
+        y += 2;
+        addText(formData.summary, margin, 9, 'normal', [71, 85, 105]);
+        y += 4;
+      }
+
+      // Experience
+      if (formData.experience.some(e => e.title || e.company)) {
+        addText('WORK EXPERIENCE', margin, 12, 'bold', [30, 64, 175]);
+        doc.setDrawColor(30, 64, 175);
+        doc.line(margin, y - 1, margin + 50, y - 1);
+        y += 2;
+        formData.experience.filter(e => e.title || e.company).forEach(exp => {
+          if (y > 270) { doc.addPage(); y = 20; }
+          addText(exp.title, margin, 10, 'bold', [15, 23, 42]);
+          addText(`${exp.company}  |  ${exp.duration}`, margin, 9, 'normal', [100, 116, 139]);
+          if (exp.description) addText(exp.description, margin, 9, 'normal', [71, 85, 105]);
+          y += 2;
+        });
+        y += 2;
+      }
+
+      // Education
+      if (formData.education.some(e => e.degree || e.school)) {
+        if (y > 250) { doc.addPage(); y = 20; }
+        addText('EDUCATION', margin, 12, 'bold', [30, 64, 175]);
+        doc.setDrawColor(30, 64, 175);
+        doc.line(margin, y - 1, margin + 50, y - 1);
+        y += 2;
+        formData.education.filter(e => e.degree || e.school).forEach(edu => {
+          addText(edu.degree, margin, 10, 'bold', [15, 23, 42]);
+          addText(`${edu.school}${edu.year ? '  |  ' + edu.year : ''}`, margin, 9, 'normal', [100, 116, 139]);
+          y += 1;
+        });
+        y += 2;
+      }
+
+      // Skills
+      if (formData.skills.length > 0) {
+        if (y > 260) { doc.addPage(); y = 20; }
+        addText('SKILLS', margin, 12, 'bold', [30, 64, 175]);
+        doc.setDrawColor(30, 64, 175);
+        doc.line(margin, y - 1, margin + 50, y - 1);
+        y += 2;
+        addText(formData.skills.join('  •  '), margin, 9, 'normal', [71, 85, 105]);
+      }
+
+      doc.save(`${(formData.fullName || 'resume').replace(/\s+/g, '_')}_Resume.pdf`);
+      toast({
+        title: "Resume Downloaded!",
+        description: "Your resume has been downloaded as PDF.",
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUploadResume = async () => {
