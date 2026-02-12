@@ -53,6 +53,7 @@ import { FeedbackMatrixContent } from "@/components/employer/FeedbackMatrixConte
 import { ConfirmationContent } from "@/components/employer/ConfirmationContent";
 import { OfferLetterContent } from "@/components/employer/OfferLetterContent";
 import { QPMContent } from "@/components/employer/QPMContent";
+import { ConfigurationContent } from "@/components/employer/ConfigurationContent";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -518,6 +519,7 @@ const EmployerDashboard = () => {
             {activeMenu === "feedback-matrix" && <FeedbackMatrixContent />}
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
+            {activeMenu === "configuration" && <ConfigurationContent />}
           </div>
         </main>
       </div>
