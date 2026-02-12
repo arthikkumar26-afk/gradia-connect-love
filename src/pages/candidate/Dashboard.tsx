@@ -1893,9 +1893,9 @@ const CandidateDashboard = () => {
                                 <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.office_type || '-'}</td>
                               </tr>
                               {/* Row 5: Industry Category */}
-                              <tr className="border-b border-border bg-accent/5">
-                                <td className="px-3 py-2 bg-accent/10 font-medium text-accent">INDUSTRY CATEGORY</td>
-                                <td className="px-3 py-2 text-accent font-semibold" colSpan={4}>{profile?.category || '-'}</td>
+                              <tr className="border-b border-border">
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">INDUSTRY CATEGORY</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={4}>{profile?.category || '-'}</td>
                               </tr>
                               {/* Row 5a: Segment/Designation and Primary Subject/Skill */}
                               <tr className="border-b border-border">
