@@ -104,6 +104,26 @@ export const EmployerInterviewPipelineTracker = () => {
 
   const fetchSessions = async () => {
     try {
+      // Get current employer's user id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Get candidate IDs that belong to this employer's jobs
+      const { data: employerCandidates, error: ecError } = await supabase
+        .from('interview_candidates')
+        .select('candidate_id, jobs!inner(employer_id)')
+        .eq('jobs.employer_id', user.id);
+
+      if (ecError) throw ecError;
+
+      const candidateIds = [...new Set((employerCandidates || []).map(c => c.candidate_id))];
+
+      if (candidateIds.length === 0) {
+        setSessions([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('mock_interview_sessions')
         .select(`
@@ -133,6 +153,7 @@ export const EmployerInterviewPipelineTracker = () => {
             recording_url
           )
         `)
+        .in('candidate_id', candidateIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
