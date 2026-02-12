@@ -40,7 +40,7 @@ import { TEMPLATE_CONFIG, getTemplateComponent } from "./ResumeTemplates";
 
 export default function ResumeBuilderTab() {
   const { toast } = useToast();
-  const [showPreview, setShowPreview] = useState(false);
+  
   const [selectedTemplate, setSelectedTemplate] = useState("executive");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -440,10 +440,6 @@ export default function ResumeBuilderTab() {
           </Button>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)}>
-            <Eye className="h-4 w-4 mr-1" />
-            {showPreview ? "Edit" : "Preview"}
-          </Button>
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
             Export PDF
@@ -481,7 +477,7 @@ export default function ResumeBuilderTab() {
       )}
 
       <Tabs defaultValue="edit" className="space-y-3">
-        <TabsList className="grid w-full grid-cols-2 max-w-[200px] h-8">
+        <TabsList className="grid w-full grid-cols-3 max-w-[300px] h-8">
           <TabsTrigger value="edit" className="text-xs h-7">
             <Edit2 className="h-3 w-3 mr-1" />
             Edit
@@ -489,6 +485,10 @@ export default function ResumeBuilderTab() {
           <TabsTrigger value="templates" className="text-xs h-7">
             <Layout className="h-3 w-3 mr-1" />
             Templates
+          </TabsTrigger>
+          <TabsTrigger value="preview" className="text-xs h-7">
+            <Eye className="h-3 w-3 mr-1" />
+            Preview
           </TabsTrigger>
         </TabsList>
 
@@ -536,229 +536,169 @@ export default function ResumeBuilderTab() {
               </div>
             </CardContent>
           </Card>
+          {/* Live preview of selected template */}
+          <Card className="mt-4 overflow-hidden">
+            <CardHeader className="py-2 px-3">
+              <CardTitle className="text-sm">Live Preview — {TEMPLATE_CONFIG.find(t => t.id === selectedTemplate)?.name} Template</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-w-3xl mx-auto border-t">
+                <SelectedTemplateComponent data={formData} />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Preview Tab - full resume preview */}
+        <TabsContent value="preview">
+          <Card className="overflow-hidden">
+            <div className="max-w-3xl mx-auto">
+              <SelectedTemplateComponent data={formData} />
+            </div>
+          </Card>
         </TabsContent>
 
         {/* Edit Tab */}
         <TabsContent value="edit">
-          {!showPreview ? (
-            <div className="grid gap-3">
-              {/* Personal Information */}
-              <Card>
-                <CardHeader className="py-2 px-3">
-                  <CardTitle className="text-sm">Personal Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 px-3 pb-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Full Name</Label>
-                      <Input 
-                        placeholder="John Doe" 
-                        value={formData.fullName}
-                        onChange={(e) => handleInputChange('fullName', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Email</Label>
-                      <Input 
-                        type="email" 
-                        placeholder="john@example.com"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Phone</Label>
-                      <Input 
-                        placeholder="+91 9876543210"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Location</Label>
-                      <Input 
-                        placeholder="City, State"
-                        value={formData.location}
-                        onChange={(e) => handleInputChange('location', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    </div>
+          <div className="grid gap-3">
+            {/* Personal Information */}
+            <Card>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm">Personal Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 px-3 pb-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Full Name</Label>
+                    <Input 
+                      placeholder="John Doe" 
+                      value={formData.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      className="h-8 text-sm"
+                    />
                   </div>
                   <div>
-                    <Label className="text-xs">Professional Summary</Label>
-                    <Textarea
-                      placeholder="Brief summary of your experience..."
-                      rows={2}
-                      value={formData.summary}
-                      onChange={(e) => handleInputChange('summary', e.target.value)}
-                      className="text-sm"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Work Experience */}
-              <Card>
-                <CardHeader className="py-2 px-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">Work Experience</CardTitle>
-                    <Button size="sm" variant="outline" onClick={addExperience} className="h-6 text-xs px-2">
-                      <Plus className="h-3 w-3 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 px-3 pb-3">
-                  {formData.experience.map((exp, index) => (
-                    <div key={index} className="space-y-2 p-2 border rounded-lg relative">
-                      {formData.experience.length > 1 && (
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="absolute top-1 right-1 h-5 w-5 p-0"
-                          onClick={() => removeExperience(index)}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
-                      )}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">Job Title</Label>
-                          <Input 
-                            placeholder="Software Engineer" 
-                            value={exp.title}
-                            onChange={(e) => handleExperienceChange(index, 'title', e.target.value)}
-                            className="h-7 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Company</Label>
-                          <Input 
-                            placeholder="Tech Corp" 
-                            value={exp.company}
-                            onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
-                            className="h-7 text-xs"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Duration</Label>
-                        <Input 
-                          placeholder="Jan 2020 - Present" 
-                          value={exp.duration}
-                          onChange={(e) => handleExperienceChange(index, 'duration', e.target.value)}
-                          className="h-7 text-xs"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Education */}
-              <Card>
-                <CardHeader className="py-2 px-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">Education</CardTitle>
-                    <Button size="sm" variant="outline" onClick={addEducation} className="h-6 text-xs px-2">
-                      <Plus className="h-3 w-3 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 px-3 pb-3">
-                  {formData.education.map((edu, index) => (
-                    <div key={index} className="space-y-2 p-2 border rounded-lg relative">
-                      {formData.education.length > 1 && (
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="absolute top-1 right-1 h-5 w-5 p-0"
-                          onClick={() => removeEducation(index)}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
-                      )}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">Degree</Label>
-                          <Input 
-                            placeholder="Bachelor of Science" 
-                            value={edu.degree}
-                            onChange={(e) => handleEducationChange(index, 'degree', e.target.value)}
-                            className="h-7 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs">School</Label>
-                          <Input 
-                            placeholder="University Name" 
-                            value={edu.school}
-                            onChange={(e) => handleEducationChange(index, 'school', e.target.value)}
-                            className="h-7 text-xs"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs">Year</Label>
-                        <Input 
-                          placeholder="2016 - 2020" 
-                          value={edu.year}
-                          onChange={(e) => handleEducationChange(index, 'year', e.target.value)}
-                          className="h-7 text-xs"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Skills */}
-              <Card>
-                <CardHeader className="py-2 px-3">
-                  <CardTitle className="text-sm">Skills</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 px-3 pb-3">
-                  <div className="flex gap-2">
+                    <Label className="text-xs">Email</Label>
                     <Input 
-                      placeholder="e.g. JavaScript, React..." 
-                      value={newSkill}
-                      onChange={(e) => setNewSkill(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && addSkill()}
-                      className="h-7 text-xs"
+                      placeholder="john@example.com" 
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      className="h-8 text-sm"
                     />
-                    <Button size="sm" onClick={addSkill} className="h-7 px-2">
-                      <Plus className="h-3 w-3" />
-                    </Button>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {formData.skills.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="px-2 py-0.5 text-xs">
-                        {skill}
-                        <Trash2 
-                          className="h-2.5 w-2.5 ml-1 cursor-pointer hover:text-destructive" 
-                          onClick={() => removeSkill(skill)}
-                        />
-                      </Badge>
-                    ))}
-                    {formData.skills.length === 0 && (
-                      <p className="text-xs text-muted-foreground">No skills added yet</p>
-                    )}
+                  <div>
+                    <Label className="text-xs">Phone</Label>
+                    <Input 
+                      placeholder="+1 234 567 890" 
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      className="h-8 text-sm"
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            /* Preview - renders chosen template with form data */
-            <Card className="overflow-hidden">
-              <div className="max-w-2xl mx-auto">
-                <SelectedTemplateComponent data={formData} />
-              </div>
+                  <div>
+                    <Label className="text-xs">Location</Label>
+                    <Input 
+                      placeholder="New York, NY" 
+                      value={formData.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Professional Summary</Label>
+                  <Textarea 
+                    placeholder="Brief professional summary..." 
+                    value={formData.summary}
+                    onChange={(e) => handleInputChange('summary', e.target.value)}
+                    className="min-h-[60px] text-sm"
+                  />
+                </div>
+              </CardContent>
             </Card>
-          )}
+
+            {/* Experience */}
+            <Card>
+              <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Experience</CardTitle>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={addExperience}>
+                  <Plus className="h-3 w-3 mr-1" /> Add
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-2 px-3 pb-3">
+                {formData.experience.map((exp, index) => (
+                  <div key={index} className="border rounded-md p-2 space-y-1.5 relative">
+                    <Button variant="ghost" size="sm" className="absolute top-1 right-1 h-5 w-5 p-0" onClick={() => removeExperience(index)}>
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Input placeholder="Job Title" value={exp.title} onChange={(e) => handleExperienceChange(index, 'title', e.target.value)} className="h-7 text-xs" />
+                      <Input placeholder="Company" value={exp.company} onChange={(e) => handleExperienceChange(index, 'company', e.target.value)} className="h-7 text-xs" />
+                    </div>
+                    <Input placeholder="Duration (e.g., 2020 - Present)" value={exp.duration} onChange={(e) => handleExperienceChange(index, 'duration', e.target.value)} className="h-7 text-xs" />
+                    <Textarea placeholder="Description..." value={exp.description} onChange={(e) => handleExperienceChange(index, 'description', e.target.value)} className="min-h-[40px] text-xs" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Education */}
+            <Card>
+              <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Education</CardTitle>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={addEducation}>
+                  <Plus className="h-3 w-3 mr-1" /> Add
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-2 px-3 pb-3">
+                {formData.education.map((edu, index) => (
+                  <div key={index} className="border rounded-md p-2 space-y-1.5 relative">
+                    <Button variant="ghost" size="sm" className="absolute top-1 right-1 h-5 w-5 p-0" onClick={() => removeEducation(index)}>
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                    <Input placeholder="Degree" value={edu.degree} onChange={(e) => handleEducationChange(index, 'degree', e.target.value)} className="h-7 text-xs" />
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Input placeholder="School/University" value={edu.school} onChange={(e) => handleEducationChange(index, 'school', e.target.value)} className="h-7 text-xs" />
+                      <Input placeholder="Year" value={edu.year} onChange={(e) => handleEducationChange(index, 'year', e.target.value)} className="h-7 text-xs" />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Skills */}
+            <Card>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm">Skills</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 px-3 pb-3">
+                <div className="flex gap-1.5">
+                  <Input 
+                    placeholder="Add a skill..." 
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                    className="h-7 text-xs"
+                  />
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={addSkill}>Add</Button>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {formData.skills.map((skill) => (
+                    <Badge key={skill} variant="secondary" className="text-xs py-0 flex items-center gap-0.5">
+                      {skill}
+                      <Trash2 
+                        className="h-2.5 w-2.5 ml-1 cursor-pointer hover:text-destructive" 
+                        onClick={() => removeSkill(skill)}
+                      />
+                    </Badge>
+                  ))}
+                  {formData.skills.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No skills added yet</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
