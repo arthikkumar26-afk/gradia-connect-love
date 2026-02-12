@@ -692,21 +692,21 @@ const EditProfile = () => {
                   </div>
                 </div>
 
-                {/* Industry Category */}
+                {/* Industry Category + Category-specific fields */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="industryCategory">Industry Category *</Label>
                     <Select value={industryCategory || undefined} onValueChange={(val) => {
                       setIndustryCategory(val);
-                      // Reset education-specific fields when switching away from Education
+                      // Reset category-specific fields
+                      setPrimarySubject("");
                       if (val !== "Education") {
                         setSegment("");
                         setProgram("");
                         setClassesHandled("");
                         setBatch("");
-                        setPrimarySubject("");
                       }
-                    }}>
+                    }} key={`industry-${industryCategory}`}>
                       <SelectTrigger id="industryCategory" className="h-12">
                         <SelectValue placeholder="Select Industry Category" />
                       </SelectTrigger>
@@ -721,6 +721,282 @@ const EditProfile = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* IT Corporate fields */}
+                  {industryCategory === "IT Corporate" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="primarySubject">Skills / Domain *</Label>
+                        <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                          <SelectTrigger id="primarySubject" className="h-12">
+                            <SelectValue placeholder="Select Skill" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Python">Python</SelectItem>
+                            <SelectItem value="Java">Java</SelectItem>
+                            <SelectItem value="JavaScript">JavaScript</SelectItem>
+                            <SelectItem value="React">React</SelectItem>
+                            <SelectItem value="Node.js">Node.js</SelectItem>
+                            <SelectItem value="Cyber Security">Cyber Security</SelectItem>
+                            <SelectItem value="Data Science">Data Science</SelectItem>
+                            <SelectItem value="Cloud Computing">Cloud Computing</SelectItem>
+                            <SelectItem value="DevOps">DevOps</SelectItem>
+                            <SelectItem value="AI / Machine Learning">AI / Machine Learning</SelectItem>
+                            <SelectItem value="Full Stack Development">Full Stack Development</SelectItem>
+                            <SelectItem value="Mobile Development">Mobile Development</SelectItem>
+                            <SelectItem value="Database Administration">Database Administration</SelectItem>
+                            <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="segment">Designation</Label>
+                        <Select value={segment || undefined} onValueChange={setSegment}>
+                          <SelectTrigger id="segment" className="h-12">
+                            <SelectValue placeholder="Select Designation" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                            <SelectItem value="Senior Software Engineer">Senior Software Engineer</SelectItem>
+                            <SelectItem value="Tech Lead">Tech Lead</SelectItem>
+                            <SelectItem value="Project Manager">Project Manager</SelectItem>
+                            <SelectItem value="Business Analyst">Business Analyst</SelectItem>
+                            <SelectItem value="QA Engineer">QA Engineer</SelectItem>
+                            <SelectItem value="System Administrator">System Administrator</SelectItem>
+                            <SelectItem value="Data Analyst">Data Analyst</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Legal fields */}
+                  {industryCategory === "Legal" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="primarySubject">Specialization *</Label>
+                        <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                          <SelectTrigger id="primarySubject" className="h-12">
+                            <SelectValue placeholder="Select Specialization" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Corporate Law">Corporate Law</SelectItem>
+                            <SelectItem value="Criminal Law">Criminal Law</SelectItem>
+                            <SelectItem value="Civil Law">Civil Law</SelectItem>
+                            <SelectItem value="Family Law">Family Law</SelectItem>
+                            <SelectItem value="Intellectual Property">Intellectual Property</SelectItem>
+                            <SelectItem value="Tax Law">Tax Law</SelectItem>
+                            <SelectItem value="Labour Law">Labour Law</SelectItem>
+                            <SelectItem value="Constitutional Law">Constitutional Law</SelectItem>
+                            <SelectItem value="Real Estate Law">Real Estate Law</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="segment">Designation</Label>
+                        <Select value={segment || undefined} onValueChange={setSegment}>
+                          <SelectTrigger id="segment" className="h-12">
+                            <SelectValue placeholder="Select Designation" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Advocate">Advocate</SelectItem>
+                            <SelectItem value="Senior Advocate">Senior Advocate</SelectItem>
+                            <SelectItem value="Legal Advisor">Legal Advisor</SelectItem>
+                            <SelectItem value="Corporate Counsel">Corporate Counsel</SelectItem>
+                            <SelectItem value="Paralegal">Paralegal</SelectItem>
+                            <SelectItem value="Judge">Judge</SelectItem>
+                            <SelectItem value="Notary">Notary</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Doctor fields */}
+                  {industryCategory === "Doctor" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="primarySubject">Specialization *</Label>
+                        <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                          <SelectTrigger id="primarySubject" className="h-12">
+                            <SelectValue placeholder="Select Specialization" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="General Medicine">General Medicine</SelectItem>
+                            <SelectItem value="Cardiology">Cardiology</SelectItem>
+                            <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                            <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                            <SelectItem value="Dermatology">Dermatology</SelectItem>
+                            <SelectItem value="Neurology">Neurology</SelectItem>
+                            <SelectItem value="Gynecology">Gynecology</SelectItem>
+                            <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
+                            <SelectItem value="ENT">ENT</SelectItem>
+                            <SelectItem value="Dentistry">Dentistry</SelectItem>
+                            <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                            <SelectItem value="Surgery">Surgery</SelectItem>
+                            <SelectItem value="Radiology">Radiology</SelectItem>
+                            <SelectItem value="Ayurveda">Ayurveda</SelectItem>
+                            <SelectItem value="Homeopathy">Homeopathy</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="segment">Designation</Label>
+                        <Select value={segment || undefined} onValueChange={setSegment}>
+                          <SelectTrigger id="segment" className="h-12">
+                            <SelectValue placeholder="Select Designation" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MBBS">MBBS</SelectItem>
+                            <SelectItem value="MD">MD</SelectItem>
+                            <SelectItem value="MS">MS</SelectItem>
+                            <SelectItem value="DM">DM</SelectItem>
+                            <SelectItem value="BDS">BDS</SelectItem>
+                            <SelectItem value="BAMS">BAMS</SelectItem>
+                            <SelectItem value="BHMS">BHMS</SelectItem>
+                            <SelectItem value="Nursing">Nursing</SelectItem>
+                            <SelectItem value="Pharmacist">Pharmacist</SelectItem>
+                            <SelectItem value="Lab Technician">Lab Technician</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Civil Service fields */}
+                  {industryCategory === "Civil Service" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="primarySubject">Department *</Label>
+                        <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                          <SelectTrigger id="primarySubject" className="h-12">
+                            <SelectValue placeholder="Select Department" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="IAS">IAS</SelectItem>
+                            <SelectItem value="IPS">IPS</SelectItem>
+                            <SelectItem value="IFS">IFS</SelectItem>
+                            <SelectItem value="IRS">IRS</SelectItem>
+                            <SelectItem value="State Civil Services">State Civil Services</SelectItem>
+                            <SelectItem value="Public Administration">Public Administration</SelectItem>
+                            <SelectItem value="Revenue">Revenue</SelectItem>
+                            <SelectItem value="Education Department">Education Department</SelectItem>
+                            <SelectItem value="Health Department">Health Department</SelectItem>
+                            <SelectItem value="Police">Police</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="segment">Designation</Label>
+                        <Select value={segment || undefined} onValueChange={setSegment}>
+                          <SelectTrigger id="segment" className="h-12">
+                            <SelectValue placeholder="Select Designation" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Officer">Officer</SelectItem>
+                            <SelectItem value="Clerk">Clerk</SelectItem>
+                            <SelectItem value="Inspector">Inspector</SelectItem>
+                            <SelectItem value="Commissioner">Commissioner</SelectItem>
+                            <SelectItem value="Secretary">Secretary</SelectItem>
+                            <SelectItem value="Director">Director</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Real Estate & Infrastructure fields */}
+                  {industryCategory === "Real Estate & Infrastructure" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="primarySubject">Specialization *</Label>
+                        <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                          <SelectTrigger id="primarySubject" className="h-12">
+                            <SelectValue placeholder="Select Specialization" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
+                            <SelectItem value="Architecture">Architecture</SelectItem>
+                            <SelectItem value="Interior Design">Interior Design</SelectItem>
+                            <SelectItem value="Construction Management">Construction Management</SelectItem>
+                            <SelectItem value="Property Management">Property Management</SelectItem>
+                            <SelectItem value="Urban Planning">Urban Planning</SelectItem>
+                            <SelectItem value="Structural Engineering">Structural Engineering</SelectItem>
+                            <SelectItem value="Real Estate Sales">Real Estate Sales</SelectItem>
+                            <SelectItem value="Surveying">Surveying</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="segment">Designation</Label>
+                        <Select value={segment || undefined} onValueChange={setSegment}>
+                          <SelectTrigger id="segment" className="h-12">
+                            <SelectValue placeholder="Select Designation" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Site Engineer">Site Engineer</SelectItem>
+                            <SelectItem value="Project Manager">Project Manager</SelectItem>
+                            <SelectItem value="Architect">Architect</SelectItem>
+                            <SelectItem value="Contractor">Contractor</SelectItem>
+                            <SelectItem value="Real Estate Agent">Real Estate Agent</SelectItem>
+                            <SelectItem value="Quantity Surveyor">Quantity Surveyor</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Freelance / Independent Professionals fields */}
+                  {industryCategory === "Freelance / Independent Professionals" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="primarySubject">Domain *</Label>
+                        <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                          <SelectTrigger id="primarySubject" className="h-12">
+                            <SelectValue placeholder="Select Domain" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Content Writing">Content Writing</SelectItem>
+                            <SelectItem value="Graphic Design">Graphic Design</SelectItem>
+                            <SelectItem value="Web Development">Web Development</SelectItem>
+                            <SelectItem value="Digital Marketing">Digital Marketing</SelectItem>
+                            <SelectItem value="Photography">Photography</SelectItem>
+                            <SelectItem value="Video Editing">Video Editing</SelectItem>
+                            <SelectItem value="Consulting">Consulting</SelectItem>
+                            <SelectItem value="Translation">Translation</SelectItem>
+                            <SelectItem value="Accounting">Accounting</SelectItem>
+                            <SelectItem value="Tutoring">Tutoring</SelectItem>
+                            <SelectItem value="Event Management">Event Management</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="segment">Work Type</Label>
+                        <Select value={segment || undefined} onValueChange={setSegment}>
+                          <SelectTrigger id="segment" className="h-12">
+                            <SelectValue placeholder="Select Work Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Remote">Remote</SelectItem>
+                            <SelectItem value="On-site">On-site</SelectItem>
+                            <SelectItem value="Hybrid">Hybrid</SelectItem>
+                            <SelectItem value="Project Based">Project Based</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Row 3: Alternate Number, Highest Qualification, Office Type */}
