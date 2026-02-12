@@ -173,8 +173,11 @@ export const QPMContent = () => {
           is_active: paper.is_active,
           description: paper.description,
           stage_type: paper.stage_type,
+          part: (paper as any).part || null,
+          topic: (paper as any).topic || null,
+          division: (paper as any).division || null,
           questions,
-        });
+        } as any);
       }
 
       setPapers(papersWithQuestions);
@@ -354,6 +357,9 @@ export const QPMContent = () => {
             created_by: user.id,
             job_id: selectedJob.id,
             set_number: editingPaper.set_number,
+            part: (editingPaper as any).part || null,
+            topic: (editingPaper as any).topic || null,
+            division: (editingPaper as any).division || null,
           } as any)
           .select()
           .single();
@@ -368,7 +374,10 @@ export const QPMContent = () => {
             title: editingPaper.title,
             description: editingPaper.description,
             is_active: editingPaper.is_active,
-          })
+            part: (editingPaper as any).part || null,
+            topic: (editingPaper as any).topic || null,
+            division: (editingPaper as any).division || null,
+          } as any)
           .eq("id", paperId);
 
         if (updateError) throw updateError;
