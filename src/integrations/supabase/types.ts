@@ -818,14 +818,17 @@ export type Database = {
           created_by: string | null
           description: string | null
           designation: string | null
+          division: string | null
           id: string
           is_active: boolean
           job_id: string | null
+          part: string | null
           pdf_url: string | null
           segment: string | null
           set_number: number | null
           stage_type: string
           title: string
+          topic: string | null
           updated_at: string
         }
         Insert: {
@@ -835,14 +838,17 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           designation?: string | null
+          division?: string | null
           id?: string
           is_active?: boolean
           job_id?: string | null
+          part?: string | null
           pdf_url?: string | null
           segment?: string | null
           set_number?: number | null
           stage_type: string
           title: string
+          topic?: string | null
           updated_at?: string
         }
         Update: {
@@ -852,14 +858,17 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           designation?: string | null
+          division?: string | null
           id?: string
           is_active?: boolean
           job_id?: string | null
+          part?: string | null
           pdf_url?: string | null
           segment?: string | null
           set_number?: number | null
           stage_type?: string
           title?: string
+          topic?: string | null
           updated_at?: string
         }
         Relationships: [
