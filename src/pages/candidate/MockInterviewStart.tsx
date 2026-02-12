@@ -130,8 +130,8 @@ const MockInterviewStart = () => {
         toast.warning("Mock test started, but email sending failed.");
       }
 
-      // Navigate back to dashboard to show progress
-      navigate("/candidate/dashboard");
+      // Navigate to the first interview stage (stage 2 since stage 1 is auto-completed)
+      navigate(`/candidate/mock-interview/${session.id}/2`);
     } catch (error) {
       console.error("Error starting session:", error);
       toast.error("Failed to start mock test");
