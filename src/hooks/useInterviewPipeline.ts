@@ -506,9 +506,27 @@ export const useInterviewPipeline = () => {
     fetchPipelineData();
   }, [fetchPipelineData]);
 
-  // Real-time subscription for live updates
+  // Auto-polling every 15 seconds for reliable updates
+  // (realtime via service role may not always trigger for employer subscriptions)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchPipelineData();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [fetchPipelineData]);
+
+  // Real-time subscription for live updates (instant when it works)
   useEffect(() => {
     console.log('[Pipeline] Setting up real-time subscriptions...');
+    
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchPipelineData();
+      }, 1000);
+    };
     
     const channel = supabase
       .channel('interview-pipeline-changes')
@@ -517,9 +535,8 @@ export const useInterviewPipeline = () => {
         { event: '*', schema: 'public', table: 'interview_candidates' },
         (payload) => {
           console.log('[Pipeline] interview_candidates changed:', payload);
-          fetchPipelineData();
+          debouncedFetch();
           
-          // Show toast for stage changes
           if (payload.eventType === 'UPDATE' && payload.old && payload.new) {
             const oldStageId = (payload.old as any).current_stage_id;
             const newStageId = (payload.new as any).current_stage_id;
@@ -537,9 +554,8 @@ export const useInterviewPipeline = () => {
         { event: '*', schema: 'public', table: 'interview_events' },
         (payload) => {
           console.log('[Pipeline] interview_events changed:', payload);
-          fetchPipelineData();
+          debouncedFetch();
           
-          // Show toast for interview completions
           if (payload.eventType === 'UPDATE') {
             const newEvent = payload.new as any;
             if (newEvent.status === 'completed') {
@@ -556,7 +572,7 @@ export const useInterviewPipeline = () => {
         { event: '*', schema: 'public', table: 'interview_responses' },
         (payload) => {
           console.log('[Pipeline] interview_responses changed:', payload);
-          fetchPipelineData();
+          debouncedFetch();
         }
       )
       .on(
@@ -564,7 +580,7 @@ export const useInterviewPipeline = () => {
         { event: '*', schema: 'public', table: 'interview_invitations' },
         (payload) => {
           console.log('[Pipeline] interview_invitations changed:', payload);
-          fetchPipelineData();
+          debouncedFetch();
         }
       )
       .subscribe((status) => {
@@ -573,6 +589,7 @@ export const useInterviewPipeline = () => {
 
     return () => {
       console.log('[Pipeline] Removing real-time channel');
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [fetchPipelineData]);
