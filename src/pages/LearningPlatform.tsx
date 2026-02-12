@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Clock, Star, ExternalLink, ArrowLeft } from 'lucide-react';
+import { BookOpen, Clock, Star, ExternalLink, ArrowLeft, GraduationCap } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -13,8 +13,10 @@ interface Course {
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   rating: number;
   category: string;
-  url: string;
+  slug: string;
 }
+
+const SKILLORY_BASE = 'https://skillory.in';
 
 const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
   'Skill gap': [
@@ -26,7 +28,7 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Intermediate',
       rating: 4.8,
       category: 'Frontend Development',
-      url: '#',
+      slug: 'react-fundamentals',
     },
     {
       id: '2',
@@ -36,7 +38,7 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Beginner',
       rating: 4.7,
       category: 'Programming Languages',
-      url: '#',
+      slug: 'typescript-mastery',
     },
     {
       id: '3',
@@ -46,7 +48,7 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Intermediate',
       rating: 4.9,
       category: 'Programming Languages',
-      url: '#',
+      slug: 'modern-javascript',
     },
   ],
   'Failed test': [
@@ -58,7 +60,7 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Intermediate',
       rating: 4.6,
       category: 'Computer Science',
-      url: '#',
+      slug: 'problem-solving-algorithms',
     },
     {
       id: '5',
@@ -68,19 +70,19 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Advanced',
       rating: 4.8,
       category: 'Career Development',
-      url: '#',
+      slug: 'technical-interview-prep',
     },
   ],
   'Communication issues': [
     {
       id: '6',
-      title: 'Effective Communication for Developers',
+      title: 'Effective Communication for Professionals',
       description: 'Learn to communicate technical concepts clearly to both technical and non-technical audiences.',
       duration: '6 hours',
       level: 'Beginner',
       rating: 4.5,
       category: 'Soft Skills',
-      url: '#',
+      slug: 'effective-communication',
     },
     {
       id: '7',
@@ -90,7 +92,7 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Beginner',
       rating: 4.6,
       category: 'Soft Skills',
-      url: '#',
+      slug: 'presentation-skills',
     },
   ],
   'Experience mismatch': [
@@ -102,7 +104,7 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Intermediate',
       rating: 4.9,
       category: 'Web Development',
-      url: '#',
+      slug: 'fullstack-bootcamp',
     },
     {
       id: '9',
@@ -112,19 +114,19 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Intermediate',
       rating: 4.7,
       category: 'Web Development',
-      url: '#',
+      slug: 'project-based-learning',
     },
   ],
   default: [
     {
       id: '10',
-      title: 'Career Growth for Developers',
-      description: 'Strategic guidance on advancing your tech career, building portfolio, and networking.',
+      title: 'Career Growth for Professionals',
+      description: 'Strategic guidance on advancing your career, building portfolio, and networking.',
       duration: '8 hours',
       level: 'Beginner',
       rating: 4.7,
       category: 'Career Development',
-      url: '#',
+      slug: 'career-growth',
     },
     {
       id: '11',
@@ -134,17 +136,17 @@ const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
       level: 'Intermediate',
       rating: 4.8,
       category: 'Software Engineering',
-      url: '#',
+      slug: 'software-engineering-best-practices',
     },
     {
       id: '12',
-      title: 'Building a Developer Portfolio',
+      title: 'Building a Professional Portfolio',
       description: 'Create an impressive portfolio that showcases your skills and attracts employers.',
       duration: '4 hours',
       level: 'Beginner',
       rating: 4.6,
       category: 'Career Development',
-      url: '#',
+      slug: 'building-portfolio',
     },
   ],
 };
@@ -161,6 +163,8 @@ export default function LearningPlatform() {
     const recommendedCourses = COURSE_RECOMMENDATIONS[rejectionReason] || COURSE_RECOMMENDATIONS.default;
     setCourses(recommendedCourses);
   }, [searchParams]);
+
+  const getCourseUrl = (slug: string) => `${SKILLORY_BASE}/courses/${slug}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -181,18 +185,26 @@ export default function LearningPlatform() {
             Your Learning Journey Starts Here
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            We've curated personalized course recommendations to help you improve your skills and succeed in your next opportunity.
+            Personalized course recommendations powered by{' '}
+            <a href={SKILLORY_BASE} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">
+              Skillory.in
+            </a>{' '}
+            to help you improve your skills and succeed.
           </p>
         </div>
 
-        {/* Reason Badge */}
-        {reason && reason !== 'default' && (
-          <div className="mb-8 flex justify-center">
+        {/* Skillory Badge */}
+        <div className="mb-8 flex justify-center gap-2 flex-wrap">
+          <Badge className="bg-primary/10 text-primary px-4 py-2 text-sm flex items-center gap-1.5">
+            <GraduationCap className="w-4 h-4" />
+            All courses by Skillory.in
+          </Badge>
+          {reason && reason !== 'default' && (
             <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 px-4 py-2 text-sm">
               Recommended based on: {reason}
             </Badge>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Courses Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -231,15 +243,31 @@ export default function LearningPlatform() {
                   </Badge>
                 </div>
 
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <GraduationCap className="w-3 h-3" />
+                  <span>Provided by Skillory.in</span>
+                </div>
+
                 <Button className="w-full" asChild>
-                  <a href={course.url} target="_blank" rel="noopener noreferrer">
-                    Start Learning
+                  <a href={getCourseUrl(course.slug)} target="_blank" rel="noopener noreferrer">
+                    Start Learning on Skillory
                     <ExternalLink className="w-4 h-4 ml-2" />
                   </a>
                 </Button>
               </div>
             </Card>
           ))}
+        </div>
+
+        {/* Explore More on Skillory */}
+        <div className="mt-8 text-center">
+          <Button variant="outline" size="lg" asChild>
+            <a href={SKILLORY_BASE} target="_blank" rel="noopener noreferrer">
+              <GraduationCap className="w-5 h-5 mr-2" />
+              Explore All Courses on Skillory.in
+              <ExternalLink className="w-4 h-4 ml-2" />
+            </a>
+          </Button>
         </div>
 
         {/* Additional Resources */}
@@ -251,21 +279,27 @@ export default function LearningPlatform() {
               <p className="text-sm text-muted-foreground mb-3">
                 Get personalized guidance from industry experts.
               </p>
-              <Button variant="outline" size="sm">Learn More</Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href={`${SKILLORY_BASE}/coaching`} target="_blank" rel="noopener noreferrer">Learn More</a>
+              </Button>
             </div>
             <div>
               <h3 className="font-medium text-foreground mb-2">Mock Interviews</h3>
               <p className="text-sm text-muted-foreground mb-3">
                 Practice with real interview scenarios and feedback.
               </p>
-              <Button variant="outline" size="sm">Schedule Now</Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href={`${SKILLORY_BASE}/mock-interviews`} target="_blank" rel="noopener noreferrer">Schedule Now</a>
+              </Button>
             </div>
             <div>
               <h3 className="font-medium text-foreground mb-2">Community Support</h3>
               <p className="text-sm text-muted-foreground mb-3">
                 Join our community of learners and mentors.
               </p>
-              <Button variant="outline" size="sm">Join Community</Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href={`${SKILLORY_BASE}/community`} target="_blank" rel="noopener noreferrer">Join Community</a>
+              </Button>
             </div>
           </div>
         </Card>
