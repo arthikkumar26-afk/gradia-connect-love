@@ -32,6 +32,25 @@ Focus on:
 Make questions progressively harder from basic to advanced.
 This is the primary technical assessment round to evaluate the candidate's technical skills.`
   },
+  'Written Test': {
+    questionCount: 10,
+    questionType: 'mcq',
+    timePerQuestion: 90,
+    promptTemplate: `Generate 10 MCQ questions for a Written Test assessment for a {jobTitle} position.
+Skills required: {skills}
+Requirements: {requirements}
+
+This is an AI-powered Written Test. Generate questions based on the candidate's resume and profile data.
+Focus on:
+- Testing the candidate's claimed skills and expertise from their resume
+- Role-specific knowledge matching the job requirements
+- Practical scenario-based questions relevant to their experience level
+- Core domain concepts for the position
+- Problem-solving abilities in their area of expertise
+
+Questions should validate the candidate's resume claims and assess job readiness.
+Make questions progressively harder from basic to advanced.`
+  },
   'AI Phone Interview': {
     questionCount: 10,
     questionType: 'mcq',
@@ -521,6 +540,73 @@ serve(async (req) => {
 
     // FALLBACK: Generate questions via AI if no admin questions found
     if (!usingAdminQuestions || questions.length === 0) {
+      // Fetch candidate's resume analysis and profile data for resume-based question generation
+      let resumeContext = '';
+      try {
+        // Get resume analysis
+        const { data: resumeAnalysis } = await supabase
+          .from('resume_analyses')
+          .select('*')
+          .eq('user_id', candidate.id)
+          .order('analyzed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        // Get educational qualifications
+        const { data: educations } = await supabase
+          .from('educational_qualifications')
+          .select('*')
+          .eq('user_id', candidate.id)
+          .order('display_order', { ascending: true });
+
+        // Get candidate resume builder data
+        const { data: candidateResume } = await supabase
+          .from('candidate_resumes')
+          .select('*')
+          .eq('user_id', candidate.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        // Build resume context for AI
+        const resumeParts: string[] = [];
+        
+        if (resumeAnalysis) {
+          if (resumeAnalysis.skill_highlights?.length) resumeParts.push(`Key Skills: ${resumeAnalysis.skill_highlights.join(', ')}`);
+          if (resumeAnalysis.experience_summary) resumeParts.push(`Experience: ${resumeAnalysis.experience_summary}`);
+          if (resumeAnalysis.career_level) resumeParts.push(`Career Level: ${resumeAnalysis.career_level}`);
+          if (resumeAnalysis.strengths?.length) resumeParts.push(`Strengths: ${resumeAnalysis.strengths.join(', ')}`);
+        }
+
+        if (candidateResume) {
+          if (candidateResume.skills?.length) resumeParts.push(`Resume Skills: ${candidateResume.skills.join(', ')}`);
+          if (candidateResume.summary) resumeParts.push(`Summary: ${candidateResume.summary}`);
+          const experience = candidateResume.experience as any[];
+          if (experience?.length) {
+            const expSummary = experience.map((e: any) => `${e.title || e.designation || ''} at ${e.company || e.organization || ''}`).filter(Boolean).join('; ');
+            if (expSummary) resumeParts.push(`Work History: ${expSummary}`);
+          }
+        }
+
+        if (educations?.length) {
+          const eduSummary = educations.map((e: any) => `${e.education_level}${e.specialization ? ' in ' + e.specialization : ''}`).join(', ');
+          resumeParts.push(`Education: ${eduSummary}`);
+        }
+
+        // Profile-level data
+        if (candidate.primary_subject) resumeParts.push(`Primary Subject: ${candidate.primary_subject}`);
+        if (candidate.experience_level) resumeParts.push(`Experience Level: ${candidate.experience_level}`);
+        if (candidate.preferred_role) resumeParts.push(`Preferred Role: ${candidate.preferred_role}`);
+        if (candidate.highest_qualification) resumeParts.push(`Highest Qualification: ${candidate.highest_qualification}`);
+
+        if (resumeParts.length > 0) {
+          resumeContext = `\n\nCANDIDATE RESUME/PROFILE DATA:\n${resumeParts.join('\n')}`;
+          console.log('Resume context built for AI question generation');
+        }
+      } catch (resumeErr) {
+        console.error('Error fetching resume data (non-fatal):', resumeErr);
+      }
+
       // Build the prompt based on stage
       const prompt = stageConfig.promptTemplate
         .replace('{jobTitle}', job.job_title)
@@ -529,6 +615,9 @@ serve(async (req) => {
 
 The candidate applied for: ${job.job_title}
 Candidate name: ${candidate.full_name}
+${resumeContext}
+
+IMPORTANT: Generate questions that are tailored to this candidate's background and resume. Test their claimed skills and experience areas specifically.
 
 CRITICAL: Return ONLY a valid JSON array. Each question MUST have these exact fields:
 [
