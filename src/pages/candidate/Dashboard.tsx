@@ -1892,12 +1892,33 @@ const CandidateDashboard = () => {
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">OFFICE TYPE</td>
                                 <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.office_type || '-'}</td>
                               </tr>
-                              {/* Row 5: Segment and Category */}
+                              {/* Row 5: Industry Category */}
+                              <tr className="border-b border-border bg-accent/5">
+                                <td className="px-3 py-2 bg-accent/10 font-medium text-accent">INDUSTRY CATEGORY</td>
+                                <td className="px-3 py-2 text-accent font-semibold" colSpan={4}>{profile?.category || '-'}</td>
+                              </tr>
+                              {/* Row 5a: Segment/Designation and Primary Subject/Skill */}
                               <tr className="border-b border-border">
-                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">SEGMENT</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">
+                                  {profile?.category === 'IT Corporate' ? 'DESIGNATION' :
+                                   profile?.category === 'Legal' ? 'DESIGNATION' :
+                                   profile?.category === 'Doctor' ? 'QUALIFICATION' :
+                                   profile?.category === 'Civil Service' ? 'DESIGNATION' :
+                                   profile?.category === 'Real Estate & Infrastructure' ? 'DESIGNATION' :
+                                   profile?.category === 'Freelance / Independent Professionals' ? 'WORK TYPE' :
+                                   'SEGMENT'}
+                                </td>
                                 <td className="px-3 py-2 text-foreground">{profile?.segment || '-'}</td>
-                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CATEGORY</td>
-                                <td className="px-3 py-2 text-foreground" colSpan={2}>{(profile as any)?.category || '-'}</td>
+                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">
+                                  {profile?.category === 'IT Corporate' ? 'SKILLS / DOMAIN' :
+                                   profile?.category === 'Legal' ? 'SPECIALIZATION' :
+                                   profile?.category === 'Doctor' ? 'SPECIALIZATION' :
+                                   profile?.category === 'Civil Service' ? 'DEPARTMENT' :
+                                   profile?.category === 'Real Estate & Infrastructure' ? 'SPECIALIZATION' :
+                                   profile?.category === 'Freelance / Independent Professionals' ? 'DOMAIN' :
+                                   'PRIMARY SUBJECT'}
+                                </td>
+                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.primary_subject || '-'}</td>
                               </tr>
                               {/* Row 5b: Current Salary and Expected Salary */}
                               <tr className="border-b border-border">
@@ -1913,19 +1934,21 @@ const CandidateDashboard = () => {
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PROGRAM</td>
                                 <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.program || '-'}</td>
                               </tr>
-                              {/* Row 6: Classes Handled and Languages Known */}
+                              {/* Education-specific rows - only show for Education category */}
+                              {profile?.category === 'Education' && (
+                                <>
+                                  <tr className="border-b border-border">
+                                    <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CLASSES HANDLED</td>
+                                    <td className="px-3 py-2 text-foreground">{profile?.classes_handled || '-'}</td>
+                                    <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">BATCH</td>
+                                    <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.batch || '-'}</td>
+                                  </tr>
+                                </>
+                              )}
+                              {/* Languages Known */}
                               <tr className="border-b border-border">
-                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">CLASSES HANDLED</td>
-                                <td className="px-3 py-2 text-foreground">{profile?.classes_handled || '-'}</td>
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">LANGUAGES KNOWN</td>
-                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.languages?.length ? profile.languages.join(', ') : '-'}</td>
-                              </tr>
-                              {/* Row 7: Primary Subject and Batch */}
-                              <tr className="border-b border-border">
-                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">PRIMARY SUBJECT</td>
-                                <td className="px-3 py-2 text-foreground">{profile?.primary_subject || '-'}</td>
-                                <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">BATCH</td>
-                                <td className="px-3 py-2 text-foreground" colSpan={2}>{profile?.batch || '-'}</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={4}>{profile?.languages?.length ? profile.languages.join(', ') : '-'}</td>
                               </tr>
                               {/* Row 8: Preferred State 1 and District 1 */}
                               <tr className="border-b border-border">
