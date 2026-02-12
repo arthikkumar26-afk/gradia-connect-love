@@ -125,6 +125,20 @@ export const useInterviewPipeline = () => {
       setLoading(true);
       setError(null);
 
+      // Get current user to filter by employer
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Fetch employer's job IDs first
+      const { data: employerJobs, error: jobsFilterError } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('employer_id', user.id);
+
+      if (jobsFilterError) throw jobsFilterError;
+
+      const employerJobIds = (employerJobs || []).map(j => j.id);
+
       // Fetch interview stages
       const { data: stagesData, error: stagesError } = await supabase
         .from('interview_stages')
@@ -133,7 +147,20 @@ export const useInterviewPipeline = () => {
 
       if (stagesError) throw stagesError;
 
-      // Fetch interview candidates with related data
+      // If employer has no jobs, return empty pipeline
+      if (employerJobIds.length === 0) {
+        const dbStages = stagesData as DbInterviewStage[];
+        setStages(dbStages.map(stage => ({
+          id: stage.id,
+          title: stage.name,
+          stageOrder: stage.stage_order,
+          candidates: [],
+        })));
+        setLoading(false);
+        return;
+      }
+
+      // Fetch interview candidates filtered by employer's jobs
       const { data: candidatesData, error: candidatesError } = await supabase
         .from('interview_candidates')
         .select(`
@@ -154,7 +181,8 @@ export const useInterviewPipeline = () => {
             skills
           )
         `)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .in('job_id', employerJobIds);
 
       if (candidatesError) throw candidatesError;
 
