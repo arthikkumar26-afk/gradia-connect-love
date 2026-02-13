@@ -113,7 +113,7 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
       {/* Header */}
-      <div className="border-b-2 border-[#2563eb] pb-2 mb-3">
+      <div className="border-b-2 border-[#2563eb] pb-3 mb-3">
         <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#1e293b]`}>{data.fullName || "Your Name"}</h1>
         <p className="text-[#2563eb] font-medium">{data.experience[0]?.title || "Professional"}</p>
         <div className="flex flex-wrap gap-2 mt-1 text-[#64748b]">
@@ -125,7 +125,7 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
 
       {data.summary && (
         <div className="mb-3">
-          <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1`}>Summary</h3>
+          <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1.5`}>Summary</h3>
           <p className="text-[#475569]">{data.summary}</p>
         </div>
       )}
@@ -134,7 +134,7 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
         <div className="space-y-3">
           {data.experience.some(e => e.title || e.company) && (
             <div>
-              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1`}>Experience</h3>
+              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1.5`}>Experience</h3>
               <div className="space-y-2">
                 {data.experience.filter(e => e.title || e.company).map((exp, i) => (
                   <div key={i}>
@@ -154,7 +154,7 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
         <div className="space-y-3">
           {data.education.some(e => e.degree || e.school) && (
             <div>
-              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1`}>Education</h3>
+              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1.5`}>Education</h3>
               {data.education.filter(e => e.degree || e.school).map((edu, i) => (
                 <div key={i} className="mb-1">
                   <p className="font-bold text-[#1e293b]">{edu.degree}</p>
@@ -167,7 +167,7 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
 
           {data.skills.length > 0 && (
             <div>
-              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1`}>Skills</h3>
+              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1.5`}>Skills</h3>
               <div className="flex flex-wrap gap-0.5">
                 {data.skills.map((skill, i) => (
                   <span key={i} className="bg-[#eff6ff] text-[#2563eb] px-1 py-0.5 rounded">{skill}</span>
@@ -199,14 +199,14 @@ export function ModernAccentTemplate({ data, scale }: ResumeTemplateProps) {
       <div className="p-3 space-y-3">
         {data.summary && (
           <div>
-            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-0.5 mb-1`}>ABOUT ME</h3>
+            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-1 mb-2`}>ABOUT ME</h3>
             <p className="text-[#475569]">{data.summary}</p>
           </div>
         )}
 
         {data.experience.some(e => e.title || e.company) && (
           <div>
-            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-0.5 mb-1`}>EXPERIENCE</h3>
+            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-1 mb-2`}>EXPERIENCE</h3>
             <div className="space-y-2">
               {data.experience.filter(e => e.title || e.company).map((exp, i) => (
                 <div key={i}>
@@ -227,7 +227,7 @@ export function ModernAccentTemplate({ data, scale }: ResumeTemplateProps) {
         <div className="grid grid-cols-2 gap-3">
           {data.education.some(e => e.degree || e.school) && (
             <div>
-              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-0.5 mb-1`}>EDUCATION</h3>
+              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-1 mb-2`}>EDUCATION</h3>
               {data.education.filter(e => e.degree || e.school).map((edu, i) => (
                 <div key={i} className="mb-1">
                   <p className="font-bold">{edu.degree}</p>
@@ -239,7 +239,7 @@ export function ModernAccentTemplate({ data, scale }: ResumeTemplateProps) {
 
           {data.skills.length > 0 && (
             <div>
-              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-0.5 mb-1`}>SKILLS</h3>
+              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-1 mb-2`}>SKILLS</h3>
               <div className="flex flex-wrap gap-0.5">
                 {data.skills.map((skill, i) => (
                   <span key={i} className="bg-[#f0fdfa] text-[#0f766e] px-1 py-0.5 rounded border border-[#99f6e4]">{skill}</span>
@@ -395,14 +395,14 @@ export function CorporateTemplate({ data, scale }: ResumeTemplateProps) {
 
         {data.summary && (
           <div>
-            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f172a] uppercase border-b-2 border-[#ea580c] pb-0.5 mb-1 inline-block`}>About</h3>
+            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f172a] uppercase border-b-2 border-[#ea580c] pb-1 mb-2 inline-block`}>About</h3>
             <p className="text-[#475569]">{data.summary}</p>
           </div>
         )}
 
         {data.experience.some(e => e.title || e.company) && (
           <div>
-            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f172a] uppercase border-b-2 border-[#ea580c] pb-0.5 mb-1 inline-block`}>Experience</h3>
+            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f172a] uppercase border-b-2 border-[#ea580c] pb-1 mb-2 inline-block`}>Experience</h3>
             <div className="space-y-2">
               {data.experience.filter(e => e.title || e.company).map((exp, i) => (
                 <div key={i}>

@@ -364,8 +364,8 @@ export default function ResumeBuilderTab() {
       if (formData.summary) {
         addText('PROFESSIONAL SUMMARY', margin, 12, 'bold', [30, 64, 175]);
         doc.setDrawColor(30, 64, 175);
-        doc.line(margin, y - 1, margin + 50, y - 1);
-        y += 2;
+        doc.line(margin, y, margin + 50, y);
+        y += 4;
         addText(formData.summary, margin, 9, 'normal', [71, 85, 105]);
         y += 4;
       }
@@ -374,8 +374,8 @@ export default function ResumeBuilderTab() {
       if (formData.experience.some(e => e.title || e.company)) {
         addText('WORK EXPERIENCE', margin, 12, 'bold', [30, 64, 175]);
         doc.setDrawColor(30, 64, 175);
-        doc.line(margin, y - 1, margin + 50, y - 1);
-        y += 2;
+        doc.line(margin, y, margin + 50, y);
+        y += 4;
         formData.experience.filter(e => e.title || e.company).forEach(exp => {
           if (y > 270) { doc.addPage(); y = 20; }
           addText(exp.title, margin, 10, 'bold', [15, 23, 42]);
@@ -391,8 +391,8 @@ export default function ResumeBuilderTab() {
         if (y > 250) { doc.addPage(); y = 20; }
         addText('EDUCATION', margin, 12, 'bold', [30, 64, 175]);
         doc.setDrawColor(30, 64, 175);
-        doc.line(margin, y - 1, margin + 50, y - 1);
-        y += 2;
+        doc.line(margin, y, margin + 50, y);
+        y += 4;
         formData.education.filter(e => e.degree || e.school).forEach(edu => {
           addText(edu.degree, margin, 10, 'bold', [15, 23, 42]);
           addText(`${edu.school}${edu.year ? '  |  ' + edu.year : ''}`, margin, 9, 'normal', [100, 116, 139]);
@@ -406,8 +406,8 @@ export default function ResumeBuilderTab() {
         if (y > 260) { doc.addPage(); y = 20; }
         addText('SKILLS', margin, 12, 'bold', [30, 64, 175]);
         doc.setDrawColor(30, 64, 175);
-        doc.line(margin, y - 1, margin + 50, y - 1);
-        y += 2;
+        doc.line(margin, y, margin + 50, y);
+        y += 4;
         addText(formData.skills.join('  •  '), margin, 9, 'normal', [71, 85, 105]);
       }
 
