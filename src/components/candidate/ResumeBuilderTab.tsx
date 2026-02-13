@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp } from "lucide-react";
+import ATSScoreCard from "./ATSScoreCard";
 import { toast as sonnerToast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -550,6 +551,9 @@ export default function ResumeBuilderTab() {
           </Button>
         </div>
       )}
+
+      {/* ATS Score Card */}
+      <ATSScoreCard data={formData} />
 
       {/* Mock Test Insight Banner */}
       {mockTestData && (
