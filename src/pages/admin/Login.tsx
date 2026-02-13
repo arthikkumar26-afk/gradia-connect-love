@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, ShieldCheck, Zap } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useDevLogin } from "@/hooks/useDevLogin";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -18,7 +17,6 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const { handleDevLogin, isLoading: isDevLoading } = useDevLogin('admin');
 
   useEffect(() => {
     const checkAdminRole = async () => {
@@ -60,7 +58,6 @@ const AdminLogin = () => {
         return;
       }
 
-      // Check if user has admin role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -97,7 +94,6 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Back to Home Link */}
         <Link 
           to="/" 
           className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-8"
@@ -106,9 +102,7 @@ const AdminLogin = () => {
           Back to Home
         </Link>
 
-        {/* Login Card */}
         <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in">
-          {/* Logo */}
           <div className="flex justify-center mb-6">
             <img 
               src={gradiaLogo} 
@@ -117,7 +111,6 @@ const AdminLogin = () => {
             />
           </div>
 
-          {/* Admin Badge */}
           <div className="flex justify-center mb-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
               <ShieldCheck className="h-5 w-5" />
@@ -125,7 +118,6 @@ const AdminLogin = () => {
             </div>
           </div>
 
-          {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Admin Login
@@ -135,15 +127,13 @@ const AdminLogin = () => {
             </p>
           </div>
 
-          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email">Admin Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@gradia.com"
+                placeholder="admin@gradia.co.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -151,7 +141,6 @@ const AdminLogin = () => {
               />
             </div>
 
-            {/* Password Field */}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <PasswordInput
@@ -164,7 +153,6 @@ const AdminLogin = () => {
               />
             </div>
 
-            {/* Submit Button */}
             <Button 
               type="submit" 
               size="lg" 
@@ -173,31 +161,8 @@ const AdminLogin = () => {
             >
               {isLoading ? "Signing In..." : "Sign In as Admin"}
             </Button>
-
-            {/* Dev Test Login */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Dev Testing</span>
-              </div>
-            </div>
-
-            <Button 
-              type="button"
-              variant="outline"
-              size="lg" 
-              className="w-full border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:hover:bg-orange-900/20" 
-              disabled={isDevLoading}
-              onClick={handleDevLogin}
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              {isDevLoading ? "Logging in..." : "Dev Test Login (Admin)"}
-            </Button>
           </form>
 
-          {/* Security Notice */}
           <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs text-muted-foreground text-center">
               🔒 This is a secure admin portal. All login attempts are monitored and logged for security purposes.
@@ -205,7 +170,6 @@ const AdminLogin = () => {
           </div>
         </div>
 
-        {/* Additional Links */}
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>
             Not an admin?{" "}
