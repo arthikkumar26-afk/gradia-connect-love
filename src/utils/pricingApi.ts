@@ -2,7 +2,7 @@
 // For production: Replace localStorage with actual backend API calls
 
 export interface PricingPlan {
-  id: 'basic' | 'growth' | 'scale';
+  id: 'starter' | 'growth' | 'professional' | 'enterprise';
   name: string;
   subtitle?: string;
   monthlyPrice: number;
@@ -14,6 +14,7 @@ export interface PricingPlan {
   };
   popular?: boolean;
   cta: 'free' | 'subscribe' | 'contact';
+  badge?: string;
 }
 
 export interface DemoRequest {
@@ -41,64 +42,97 @@ export interface DemoRequest {
 // Pricing plans configuration
 export const pricingPlans: PricingPlan[] = [
   {
-    id: 'basic',
-    name: 'Basic',
-    subtitle: 'Starter',
+    id: 'starter',
+    name: 'Starter',
+    subtitle: 'For small teams getting started',
     monthlyPrice: 0,
     annualPrice: 0,
     limits: {
       jobPosts: 'Up to 3 active job posts',
-      seats: '1 seat (1 user)',
+      seats: '1 user seat',
     },
     features: [
       'Up to 3 active job posts',
       'Basic candidate tracker',
-      'Email support',
-      '1 seat (1 user)',
+      'Email notifications',
+      'Standard job templates',
+      'Email support (48h response)',
     ],
     cta: 'free',
   },
   {
     id: 'growth',
     name: 'Growth',
-    subtitle: 'Standard',
-    monthlyPrice: 7999,
-    annualPrice: 79990,
+    subtitle: 'Scale your hiring pipeline',
+    monthlyPrice: 9999,
+    annualPrice: 99990,
     popular: true,
     limits: {
-      jobPosts: 'Up to 15 active job posts',
-      seats: '5 seats',
+      jobPosts: 'Up to 25 active job posts',
+      seats: '5 user seats',
     },
     features: [
-      'Up to 15 active job posts',
-      'Screening tests',
-      'Interview scheduling',
-      '5 seats',
-      'Basic analytics',
-      'Email + chat support',
-      'CSV export',
+      'Up to 25 active job posts',
+      'AI Resume Screening & Scoring',
+      'AI-Powered Interview Scheduling',
+      'Screening test management',
+      'Mock Interview Pipeline (Basic)',
+      'Social Media Job Posting',
+      'Basic hiring analytics',
+      'Email + chat support (24h)',
+      'CSV / Excel exports',
     ],
     cta: 'subscribe',
   },
   {
-    id: 'scale',
-    name: 'Scale',
-    subtitle: 'Premium',
-    monthlyPrice: 19999,
-    annualPrice: 199990,
+    id: 'professional',
+    name: 'Professional',
+    subtitle: 'Full AI-powered recruitment',
+    monthlyPrice: 24999,
+    annualPrice: 249990,
+    limits: {
+      jobPosts: 'Up to 100 active job posts',
+      seats: '20 user seats',
+    },
+    features: [
+      'Up to 100 active job posts',
+      'AI Interview Agent (Voice + Text)',
+      'AI Candidate Evaluation & Ranking',
+      'Full Mock Interview Pipeline',
+      'Advanced SMM Marketing Suite',
+      'Offer letter automation',
+      'Advanced analytics & reports',
+      'Background verification tools',
+      'Custom email templates',
+      'Priority support (4h response)',
+      'API access',
+    ],
+    cta: 'subscribe',
+    badge: 'Best Value',
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    subtitle: 'Custom solutions at scale',
+    monthlyPrice: 49999,
+    annualPrice: 499990,
     limits: {
       jobPosts: 'Unlimited job posts',
       seats: 'Unlimited seats',
     },
     features: [
-      'Unlimited job posts',
-      'Full tracker & pipeline automation',
-      'Offer letter templates',
-      'Priority support',
-      'API access',
-      'Unlimited seats',
-      'Advanced analytics + exports',
-      'Custom onboarding',
+      'Unlimited job posts & seats',
+      'All Professional features',
+      'AI-Powered Viva Voce Assessment',
+      'Live Interview Monitoring',
+      'Multi-stage pipeline automation',
+      'HR Negotiation management',
+      'White-label email branding',
+      'Dedicated account manager',
+      'Custom onboarding & training',
+      'SLA guarantee (99.9% uptime)',
+      'Custom integrations & API',
+      'Advanced ROI & conversion reports',
     ],
     cta: 'contact',
   },
@@ -106,17 +140,28 @@ export const pricingPlans: PricingPlan[] = [
 
 // Feature comparison matrix
 export const featureComparison = [
-  { feature: 'Active job posts', basic: '3', growth: '15', scale: 'Unlimited' },
-  { feature: 'Candidate tracker', basic: 'Basic', growth: 'Advanced', scale: 'Full automation' },
-  { feature: 'Screening tests', basic: false, growth: true, scale: true },
-  { feature: 'Interview scheduling', basic: false, growth: true, scale: true },
-  { feature: 'Team seats', basic: '1', growth: '5', scale: 'Unlimited' },
-  { feature: 'Analytics', basic: false, growth: 'Basic', scale: 'Advanced' },
-  { feature: 'Support', basic: 'Email', growth: 'Email + Chat', scale: 'Priority' },
-  { feature: 'CSV export', basic: false, growth: true, scale: true },
-  { feature: 'Offer letter templates', basic: false, growth: false, scale: true },
-  { feature: 'API access', basic: false, growth: false, scale: true },
-  { feature: 'Custom onboarding', basic: false, growth: false, scale: true },
+  { feature: 'Active job posts', starter: '3', growth: '25', professional: '100', enterprise: 'Unlimited' },
+  { feature: 'Team seats', starter: '1', growth: '5', professional: '20', enterprise: 'Unlimited' },
+  { feature: 'Candidate tracker', starter: 'Basic', growth: 'Advanced', professional: 'AI-powered', enterprise: 'Full automation' },
+  { feature: 'AI Resume Screening', starter: false, growth: true, professional: true, enterprise: true },
+  { feature: 'AI Candidate Scoring', starter: false, growth: true, professional: true, enterprise: true },
+  { feature: 'AI Interview Agent', starter: false, growth: false, professional: true, enterprise: true },
+  { feature: 'AI Interview Evaluation', starter: false, growth: false, professional: true, enterprise: true },
+  { feature: 'Mock Interview Pipeline', starter: false, growth: 'Basic', professional: 'Full', enterprise: 'Full + Custom' },
+  { feature: 'Screening tests', starter: false, growth: true, professional: true, enterprise: true },
+  { feature: 'Interview scheduling', starter: false, growth: 'AI-assisted', professional: 'AI-automated', enterprise: 'AI-automated' },
+  { feature: 'Social Media Marketing', starter: false, growth: 'Basic posting', professional: 'Advanced suite', enterprise: 'White-label' },
+  { feature: 'Offer letter templates', starter: false, growth: false, professional: true, enterprise: true },
+  { feature: 'Viva Voce Assessment', starter: false, growth: false, professional: false, enterprise: true },
+  { feature: 'Live Interview Monitoring', starter: false, growth: false, professional: false, enterprise: true },
+  { feature: 'Background verification', starter: false, growth: false, professional: true, enterprise: true },
+  { feature: 'Custom email templates', starter: false, growth: false, professional: true, enterprise: true },
+  { feature: 'Analytics', starter: false, growth: 'Basic', professional: 'Advanced', enterprise: 'Custom + ROI' },
+  { feature: 'Support', starter: 'Email (48h)', growth: 'Email + Chat (24h)', professional: 'Priority (4h)', enterprise: 'Dedicated manager' },
+  { feature: 'CSV / Excel export', starter: false, growth: true, professional: true, enterprise: true },
+  { feature: 'API access', starter: false, growth: false, professional: true, enterprise: 'Custom' },
+  { feature: 'HR Negotiation tools', starter: false, growth: false, professional: false, enterprise: true },
+  { feature: 'Custom onboarding', starter: false, growth: false, professional: false, enterprise: true },
 ];
 
 // Mock subscription storage
@@ -155,7 +200,6 @@ export const submitDemoRequest = async (data: Omit<DemoRequest, 'id' | 'status' 
   requests.push(demoRequest);
   localStorage.setItem('demo_requests', JSON.stringify(requests));
   
-  // Mock confirmation email
   console.log('Mock email sent to:', data.businessEmail, 'Demo request confirmed:', demoRequest.id);
   
   return { success: true, demoRequest };
