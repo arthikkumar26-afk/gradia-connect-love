@@ -341,9 +341,10 @@ export const SubscriptionsContent = () => {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-3 px-4 font-semibold">Feature</th>
-                      <th className="text-center py-3 px-4 font-semibold">Basic</th>
+                      <th className="text-center py-3 px-4 font-semibold">Starter</th>
                       <th className="text-center py-3 px-4 font-semibold">Growth</th>
-                      <th className="text-center py-3 px-4 font-semibold">Scale</th>
+                      <th className="text-center py-3 px-4 font-semibold">Professional</th>
+                      <th className="text-center py-3 px-4 font-semibold">Enterprise</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -352,39 +353,19 @@ export const SubscriptionsContent = () => {
                         <td className="py-3 px-4 text-sm text-muted-foreground">
                           {item.feature}
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          {typeof item.basic === "boolean" ? (
-                            item.basic ? (
-                              <Check className="h-5 w-5 text-primary mx-auto" />
+                        {(['starter', 'growth', 'professional', 'enterprise'] as const).map((tier) => (
+                          <td key={tier} className="py-3 px-4 text-center">
+                            {typeof item[tier] === "boolean" ? (
+                              item[tier] ? (
+                                <Check className="h-5 w-5 text-primary mx-auto" />
+                              ) : (
+                                <X className="h-5 w-5 text-muted-foreground mx-auto" />
+                              )
                             ) : (
-                              <X className="h-5 w-5 text-muted-foreground mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-sm text-muted-foreground">{item.basic}</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          {typeof item.growth === "boolean" ? (
-                            item.growth ? (
-                              <Check className="h-5 w-5 text-primary mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-sm text-muted-foreground">{item.growth}</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          {typeof item.scale === "boolean" ? (
-                            item.scale ? (
-                              <Check className="h-5 w-5 text-primary mx-auto" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground mx-auto" />
-                            )
-                          ) : (
-                            <span className="text-sm text-muted-foreground">{item.scale}</span>
-                          )}
-                        </td>
+                              <span className="text-sm text-muted-foreground">{item[tier]}</span>
+                            )}
+                          </td>
+                        ))}
                       </tr>
                     ))}
                   </tbody>
