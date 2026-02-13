@@ -64,8 +64,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'growth',
     name: 'Growth',
     subtitle: 'Scale your hiring pipeline',
-    monthlyPrice: 9999,
-    annualPrice: 99990,
+    monthlyPrice: 4999,
+    annualPrice: 49990,
     popular: true,
     limits: {
       jobPosts: 'Up to 25 active job posts',
@@ -88,8 +88,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'professional',
     name: 'Professional',
     subtitle: 'Full AI-powered recruitment',
-    monthlyPrice: 24999,
-    annualPrice: 249990,
+    monthlyPrice: 14999,
+    annualPrice: 149990,
     limits: {
       jobPosts: 'Up to 100 active job posts',
       seats: '20 user seats',
@@ -114,8 +114,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'enterprise',
     name: 'Enterprise',
     subtitle: 'Custom solutions at scale',
-    monthlyPrice: 49999,
-    annualPrice: 499990,
+    monthlyPrice: 29000,
+    annualPrice: 290000,
     limits: {
       jobPosts: 'Unlimited job posts',
       seats: 'Unlimited seats',
