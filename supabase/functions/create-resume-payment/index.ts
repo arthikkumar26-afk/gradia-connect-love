@@ -33,7 +33,7 @@ serve(async (req) => {
     const orderData = {
       amount: 249 * 100, // ₹249 in paise
       currency: 'INR',
-      receipt: `resume_pdf_${candidate_id}_${Date.now()}`,
+      receipt: `res_${candidate_id.substring(0, 8)}_${Date.now()}`,
       notes: {
         type: 'resume_pdf_export',
         candidate_id,
