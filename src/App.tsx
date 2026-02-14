@@ -8,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 
 // Layout
 import Layout from "./components/layout/Layout";
+import ScrollToTop from "./components/layout/ScrollToTop";
 
 // Main Pages
 import Index from "./pages/Index";
@@ -312,6 +313,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <MainRoutes />
           </BrowserRouter>
         </TooltipProvider>
