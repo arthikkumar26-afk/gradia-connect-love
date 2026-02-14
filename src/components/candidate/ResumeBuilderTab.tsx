@@ -358,7 +358,7 @@ export default function ResumeBuilderTab() {
     setHasUnsavedChanges(true);
   };
 
-  const handleExport = async () => {
+  const generatePDF = async () => {
     try {
       const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF('p', 'mm', 'a4');
@@ -477,6 +477,73 @@ export default function ResumeBuilderTab() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Please log in", description: "You need to be logged in to export your resume.", variant: "destructive" });
+        return;
+      }
+
+      sonnerToast.loading("Initializing payment...", { id: "resume-payment" });
+
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-resume-payment", {
+        body: { candidate_id: user.id },
+      });
+
+      if (orderError || !orderData?.order_id) {
+        sonnerToast.dismiss("resume-payment");
+        toast({ title: "Payment Error", description: "Failed to initialize payment. Please try again.", variant: "destructive" });
+        return;
+      }
+
+      // Load Razorpay script if not loaded
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Razorpay"));
+          document.body.appendChild(script);
+        });
+      }
+
+      sonnerToast.dismiss("resume-payment");
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Gradia",
+        description: "Resume PDF Export - ₹249",
+        order_id: orderData.order_id,
+        handler: async (response: any) => {
+          if (response.razorpay_payment_id) {
+            sonnerToast.success("Payment successful! Generating PDF...");
+            await generatePDF();
+          }
+        },
+        prefill: {
+          email: formData.email || user.email,
+          contact: formData.phone || "",
+        },
+        theme: { color: "#008080" },
+        modal: {
+          ondismiss: () => {
+            sonnerToast.info("Payment cancelled");
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Payment error:", error);
+      sonnerToast.dismiss("resume-payment");
+      toast({ title: "Payment Failed", description: "Something went wrong. Please try again.", variant: "destructive" });
+    }
+  };
+
   const handleUploadResume = async () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -589,7 +656,7 @@ export default function ResumeBuilderTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            Export PDF
+            Export PDF - ₹249
           </Button>
         </div>
       </div>
