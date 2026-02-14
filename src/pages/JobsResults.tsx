@@ -56,6 +56,11 @@ const JobsResults = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [pendingApplyJobId, setPendingApplyJobId] = useState<string | null>(null);
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
+
   // Fetch jobs from database
   useEffect(() => {
     const fetchJobs = async () => {
