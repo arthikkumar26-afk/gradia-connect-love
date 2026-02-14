@@ -39,94 +39,109 @@ interface ResumeTemplateProps {
   scale?: boolean;
 }
 
-// ─── Template 1: Executive Dark Sidebar ─────────────────────────────
+// ─── Template 1: Professional Blue Header ───────────────────────────
 export function ExecutiveTemplate({ data, scale }: ResumeTemplateProps) {
+  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+    <div className="mb-1.5">
+      <div className={`bg-[#1e3a5f] text-white ${scale ? 'text-[6px] px-1 py-0.5' : 'text-[10px] px-2 py-1'} font-bold uppercase tracking-wider`}>
+        {children}
+      </div>
+    </div>
+  );
+
   return (
-    <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} flex min-h-[400px]`}>
-      {/* Sidebar */}
-      <div className="w-[35%] bg-[#1a2332] text-white p-3 space-y-3">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto rounded-full bg-[#2a3a4f] flex items-center justify-center mb-1">
-            <User className={`${scale ? 'h-3 w-3' : 'h-5 w-5'} text-[#5ba4e6]`} />
-          </div>
-          <h2 className={`${scale ? 'text-[8px]' : 'text-sm'} font-bold`}>{data.fullName || "Your Name"}</h2>
-        </div>
-        
-        <div className="space-y-1">
-          <h3 className={`${scale ? 'text-[6px]' : 'text-[10px]'} font-semibold text-[#5ba4e6] uppercase tracking-wider`}>Contact</h3>
-          {data.email && <p className="flex items-center gap-1 opacity-80"><Mail className="h-2 w-2 shrink-0" />{data.email}</p>}
-          {data.phone && <p className="flex items-center gap-1 opacity-80"><Phone className="h-2 w-2 shrink-0" />{data.phone}</p>}
-          {data.location && <p className="flex items-center gap-1 opacity-80"><MapPin className="h-2 w-2 shrink-0" />{data.location}</p>}
-        </div>
-
-        {data.skills.length > 0 && (
-          <div className="space-y-1">
-            <h3 className={`${scale ? 'text-[6px]' : 'text-[10px]'} font-semibold text-[#5ba4e6] uppercase tracking-wider`}>Skills</h3>
-            <div className="space-y-0.5">
-              {data.skills.map((skill, i) => (
-                <div key={i} className="flex items-center gap-1">
-                  <div className="h-1 w-1 rounded-full bg-[#5ba4e6]" />
-                  <span className="opacity-80">{skill}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {data.education.some(e => e.degree || e.school) && (
-          <div className="space-y-1">
-            <h3 className={`${scale ? 'text-[6px]' : 'text-[10px]'} font-semibold text-[#5ba4e6] uppercase tracking-wider`}>Education</h3>
-            {data.education.filter(e => e.degree || e.school).map((edu, i) => (
-              <div key={i} className="space-y-0.5">
-                <p className="font-semibold">{edu.degree}</p>
-                <p className="opacity-70">{edu.school}</p>
-                {edu.year && <p className="opacity-50">{edu.year}</p>}
-              </div>
-            ))}
-          </div>
+    <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
+      {/* Header - Name & Summary */}
+      <div className="mb-3">
+        <h1 className={`${scale ? 'text-[12px]' : 'text-xl'} font-bold text-[#1e3a5f]`}>{data.fullName || "Your Name"}</h1>
+        {data.summary && (
+          <p className="text-[#555] mt-1 leading-relaxed">{data.summary}</p>
         )}
       </div>
 
-      {/* Main Content */}
-      <div className="w-[65%] p-3 space-y-3">
-        {data.summary && (
-          <div>
-            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#1a2332] uppercase tracking-wider mb-1`}>Profile</h3>
-            <p className="text-[#555] leading-relaxed">{data.summary}</p>
-          </div>
-        )}
+      <div className="h-[1px] bg-[#1e3a5f] mb-3" />
 
-        {data.experience.some(e => e.title || e.company) && (
-          <div>
-            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#1a2332] uppercase tracking-wider mb-1`}>Work Experience</h3>
-            <div className="space-y-2">
-              {data.experience.filter(e => e.title || e.company).map((exp, i) => (
-                <div key={i} className="border-l-2 border-[#5ba4e6] pl-2">
-                  <p className="font-bold text-[#1a2332]">{exp.title}</p>
-                  <p className="text-[#5ba4e6]">{exp.company}</p>
-                  <p className="text-[#999]">{exp.duration}</p>
-                  {exp.description && <p className="text-[#555] mt-0.5">{exp.description}</p>}
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-[60%_40%] gap-3">
+        {/* Left Column */}
+        <div className="space-y-3">
+          {data.experience.some(e => e.title || e.company) && (
+            <div>
+              <SectionTitle>Work Experience</SectionTitle>
+              <div className="space-y-2">
+                {data.experience.filter(e => e.title || e.company).map((exp, i) => (
+                  <div key={i}>
+                    <p className="font-bold text-[#1e3a5f]">{exp.title}</p>
+                    <p className="text-[#555]">{exp.company}</p>
+                    <p className="text-[#999]">{exp.duration}</p>
+                    {exp.description && (
+                      <ul className="mt-0.5 text-[#555] list-disc list-inside">
+                        {exp.description.split('\n').filter(Boolean).map((line, j) => (
+                          <li key={j}>{line.replace(/^[-•]\s*/, '')}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.projects && data.projects.some(p => p.name || p.description) && (
+            <div>
+              <SectionTitle>Projects</SectionTitle>
+              <div className="space-y-2">
+                {data.projects.filter(p => p.name || p.description).map((proj, i) => (
+                  <div key={i}>
+                    <p className="font-bold text-[#1e3a5f]">{proj.name}</p>
+                    {proj.technologies && <p className="text-[#555]">{proj.technologies}</p>}
+                    {proj.duration && <p className="text-[#999]">{proj.duration}</p>}
+                    {proj.description && <p className="text-[#555] mt-0.5">{proj.description}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.education.some(e => e.degree || e.school) && (
+            <div>
+              <SectionTitle>Educational Background</SectionTitle>
+              {data.education.filter(e => e.degree || e.school).map((edu, i) => (
+                <div key={i} className="mb-1.5">
+                  <p className="font-bold text-[#1e3a5f]">{edu.degree}</p>
+                  <p className="text-[#555]">{edu.school}</p>
+                  {edu.year && <p className="text-[#999]">{edu.year}</p>}
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {data.projects && data.projects.some(p => p.name || p.description) && (
+        {/* Right Column */}
+        <div className="space-y-3">
           <div>
-            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#1a2332] uppercase tracking-wider mb-1`}>Projects</h3>
-            <div className="space-y-2">
-              {data.projects.filter(p => p.name || p.description).map((proj, i) => (
-                <div key={i} className="border-l-2 border-[#5ba4e6] pl-2">
-                  <p className="font-bold text-[#1a2332]">{proj.name}</p>
-                  {proj.technologies && <p className="text-[#5ba4e6]">{proj.technologies}</p>}
-                  {proj.duration && <p className="text-[#999]">{proj.duration}</p>}
-                  {proj.description && <p className="text-[#555] mt-0.5">{proj.description}</p>}
-                </div>
-              ))}
+            <SectionTitle>Contact</SectionTitle>
+            <div className="space-y-0.5 text-[#555]">
+              {data.location && <p className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5 shrink-0 text-[#1e3a5f]" />{data.location}</p>}
+              {data.phone && <p className="flex items-center gap-1"><Phone className="h-2.5 w-2.5 shrink-0 text-[#1e3a5f]" />{data.phone}</p>}
+              {data.email && <p className="flex items-center gap-1"><Mail className="h-2.5 w-2.5 shrink-0 text-[#1e3a5f]" />{data.email}</p>}
             </div>
           </div>
-        )}
+
+          {data.skills.length > 0 && (
+            <div>
+              <SectionTitle>Skills</SectionTitle>
+              <div className="space-y-0.5">
+                {data.skills.map((skill, i) => (
+                  <div key={i} className="flex items-center gap-1 text-[#555]">
+                    <div className="h-1 w-1 rounded-full bg-[#1e3a5f] shrink-0" />
+                    <span>{skill}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -811,7 +826,7 @@ export function ClassicSerifTemplate({ data, scale }: ResumeTemplateProps) {
 
 // ─── Template Map ───────────────────────────────────────────────────
 export const TEMPLATE_CONFIG = [
-  { id: "executive", name: "Executive", description: "Dark sidebar with accent", component: ExecutiveTemplate, preview: "bg-gradient-to-r from-[#1a2332] to-[#2a3a4f]" },
+  { id: "executive", name: "Executive", description: "Professional blue header", component: ExecutiveTemplate, preview: "bg-gradient-to-r from-[#1e3a5f] to-[#3b6cb0]" },
   { id: "professional", name: "Professional", description: "Clean & corporate", component: ProfessionalTemplate, preview: "bg-gradient-to-r from-[#2563eb] to-[#3b82f6]" },
   { id: "modern-accent", name: "Modern", description: "Teal accent design", component: ModernAccentTemplate, preview: "bg-gradient-to-r from-[#0f766e] to-[#14b8a6]" },
   { id: "bold-split", name: "Bold Split", description: "Purple gradient bar", component: BoldSplitTemplate, preview: "bg-gradient-to-r from-[#7c3aed] to-[#ec4899]" },
