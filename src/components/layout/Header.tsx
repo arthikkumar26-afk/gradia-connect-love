@@ -157,8 +157,8 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center">
           {/* Logo - Fixed width for balance */}
-          <Link to="/" className="flex items-center flex-shrink-0 w-48">
-            <img alt="Gradia - Your Next Step" className="h-[65px] w-auto object-contain" src="/lovable-uploads/ece65d52-e11a-4a4d-9e10-3e499e3fe3ab.png" />
+          <Link to="/" className="flex items-center flex-shrink-0 lg:w-48">
+            <img alt="Gradia - Your Next Step" className="h-[45px] lg:h-[65px] w-auto object-contain" src="/lovable-uploads/ece65d52-e11a-4a4d-9e10-3e499e3fe3ab.png" />
           </Link>
 
           {/* Desktop Navigation - Truly Centered */}
@@ -185,13 +185,15 @@ const Header = () => {
 
           {/* Right side - Theme toggle, Language, CTAs - Fixed width for balance */}
           <div className="flex items-center justify-end space-x-2 lg:space-x-4 flex-shrink-0">
-            {/* Theme Toggle */}
-            <Button variant="ghost" size="sm" onClick={toggleTheme}>
+            {/* Theme Toggle - hide on small mobile */}
+            <Button variant="ghost" size="sm" onClick={toggleTheme} className="hidden sm:flex">
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            {/* QR Code Button */}
-            <SignupQRButton variant="icon" />
+            {/* QR Code Button - hide on small mobile */}
+            <div className="hidden sm:flex">
+              <SignupQRButton variant="icon" />
+            </div>
 
             {/* Sign Up Button - show on all screens when not authenticated */}
             {!isAuthenticated && <div className="flex items-center">
@@ -297,266 +299,11 @@ const Header = () => {
                 </DropdownMenu>
               </div>}
 
-            {/* Mobile Menu Button */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="lg:hidden relative z-[100]" 
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMenuOpen(!isMenuOpen);
-              }}
-            >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
           </div>
         </div>
 
       </div>
 
-      {/* Mobile Menu - Outside container to avoid containment issues */}
-      {isMenuOpen && (
-        <div 
-          className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t border-border overflow-y-auto z-[9999]"
-          onClick={(e) => e.stopPropagation()}
-        >
-            <div className="flex flex-col space-y-4 pb-20 pt-4 container mx-auto px-4">
-              {/* Mobile Sign Up and Login Buttons - Show only when not authenticated */}
-              {!isAuthenticated && (
-                <div className="flex flex-col gap-2 px-3 pb-2 border-b border-border">
-                  <Button asChild variant="default" size="sm" className="w-full gap-2">
-                    <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                      <User className="h-4 w-4" />
-                      Sign Up
-                    </Link>
-                  </Button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button asChild variant="outline" size="sm" className="w-full">
-                      <Link to="/candidate/login" onClick={() => setIsMenuOpen(false)}>
-                        Candidate Login
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="sm" className="w-full">
-                      <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
-                        Employer Login
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              )}
-              
-              {/* Mobile Navigation */}
-              <div className="flex flex-col space-y-2">
-                <Link to="/" className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-muted rounded-md transition-colors" onClick={() => setIsMenuOpen(false)}>
-                  Home
-                </Link>
-                
-                {/* Mobile - Employers Section */}
-                {userRole !== 'candidate' && <div className="px-3 py-2">
-                    <div className="text-sm font-medium text-muted-foreground mb-2">
-                      Employers
-                    </div>
-                    {!isAuthenticated || userRole !== 'employer' ? <>
-                        {publicEmployerPages.map(page => <div key={page.path} className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors cursor-pointer" onClick={() => {
-                  setIsMenuOpen(false);
-                  if (page.protected) {
-                    handleProtectedNavigation(page.path);
-                  } else {
-                    navigate(page.path);
-                  }
-                }}>
-                            {page.name}
-                          </div>)}
-                      </> : <>
-                        {authenticatedEmployerPages.map(page => {
-                  const Icon = page.icon;
-                  return <Link key={page.path} to={page.path} className="flex items-center gap-2 px-2 py-1 text-sm text-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                              <Icon className="h-4 w-4" />
-                              {page.name}
-                            </Link>;
-                })}
-                        <div className="flex items-center gap-2 px-2 py-1 text-sm text-destructive hover:text-destructive/80 transition-colors cursor-pointer" onClick={() => {
-                  setIsMenuOpen(false);
-                  handleLogout();
-                }}>
-                          <LogOut className="h-4 w-4" />
-                          Logout
-                        </div>
-                      </>}
-                  </div>}
-                
-                {/* Mobile - Candidates Section */}
-                {userRole !== 'employer' && <div className="px-3 py-2">
-                    <div className="text-sm font-medium text-muted-foreground mb-2">
-                      Candidates
-                    </div>
-                    {candidateMenuItems.map(item => <Link key={item.path} to={item.path} className="block px-2 py-1 text-sm text-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        {item.name}
-                        {item.badge && <span className="text-xs text-muted-foreground ml-2">*</span>}
-                      </Link>)}
-                    {isAuthenticated && userRole === 'candidate' && <div className="flex items-center gap-2 px-2 py-1 text-sm text-destructive hover:text-destructive/80 transition-colors cursor-pointer" onClick={() => {
-                setIsMenuOpen(false);
-                handleLogout();
-              }}>
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </div>}
-                  </div>}
-
-                {/* Learning Section - Accordion style */}
-                <div className="px-3 py-2">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">
-                    Training
-                  </div>
-                  {learningCategories.map(category => <Collapsible key={category.name} className="mb-2">
-                      <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
-                        <span className="flex items-center gap-2">
-                          <span>{category.icon}</span>
-                          {category.name}
-                        </span>
-                        <ChevronDown className="h-3 w-3" />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pl-4 mt-1 space-y-1">
-                        {category.subcategories.map(sub => <Link key={sub.name} to={sub.path} className="block px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                            {sub.name} ({sub.count})
-                          </Link>)}
-                      </CollapsibleContent>
-                    </Collapsible>)}
-                  <Button asChild variant="default" size="sm" className="w-full mt-3">
-                    <Link to="/learning/all-categories" onClick={() => setIsMenuOpen(false)}>
-                      View All Categories
-                    </Link>
-                  </Button>
-                </div>
-
-                {/* Sponsors Section - Accordion style */}
-                <div className="px-3 py-2">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">
-                    Sponsors
-                  </div>
-                  
-                  {/* Sign In Button - Prominent placement */}
-                  <div className="mb-3">
-                    <Button asChild variant="default" size="sm" className="w-full">
-                      <Link to="/sponsor/login" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
-                        <LogOut className="h-3 w-3" />
-                        Sign In
-                      </Link>
-                    </Button>
-                  </div>
-
-                  {/* Sponsor Programs */}
-                  <Collapsible className="mb-2">
-                    <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
-                      <span className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        Sponsor Programs
-                      </span>
-                      <ChevronDown className="h-3 w-3" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pl-4 mt-1 space-y-1">
-                      <Link to="/sponsors/become-partner" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Handshake className="h-3 w-3" />
-                        Become a Partner
-                      </Link>
-                      <Link to="/sponsors/tiers" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Award className="h-3 w-3" />
-                        Sponsorship Tiers
-                      </Link>
-                      <Link to="/job-mela-calendar" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Calendar className="h-3 w-3" />
-                        Job Mela Calendar
-                      </Link>
-                      <Link to="/sponsors/collaboration" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Users className="h-3 w-3" />
-                        Collaboration Opportunities
-                      </Link>
-                      <Link to="/sponsors/submit-proposal" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Send className="h-3 w-3" />
-                        Submit Partnership Proposal
-                      </Link>
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Our Clients & Partners */}
-                  <Collapsible className="mb-2">
-                    <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
-                      <span className="flex items-center gap-2">
-                        <Handshake className="h-4 w-4" />
-                        Our Clients & Partners
-                      </span>
-                      <ChevronDown className="h-3 w-3" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pl-4 mt-1 space-y-1">
-                      <Link to="/featured-clients" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Star className="h-3 w-3" />
-                        Featured Clients
-                      </Link>
-                      <Link to="/success-stories" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Award className="h-3 w-3" />
-                        Success Stories
-                      </Link>
-                      <Link to="/sponsors/testimonials" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <MessageSquare className="h-3 w-3" />
-                        Partner Testimonials
-                      </Link>
-                    </CollapsibleContent>
-                  </Collapsible>
-
-                  {/* Resources for Sponsors */}
-                  <Collapsible className="mb-2">
-                    <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium text-foreground hover:text-accent transition-colors">
-                      <span className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Resources for Sponsors
-                      </span>
-                      <ChevronDown className="h-3 w-3" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pl-4 mt-1 space-y-1">
-                      <Link to="/sponsors/branding-guidelines" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Palette className="h-3 w-3" />
-                        Branding Guidelines
-                      </Link>
-                      <Link to="/sponsors/marketing-toolkit" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Package className="h-3 w-3" />
-                        Marketing Toolkit
-                      </Link>
-                      <Link to="/sponsors/event-deck" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <Calendar className="h-3 w-3" />
-                        Event Sponsorship Deck
-                      </Link>
-                      <Link to="/sponsors/support-portal" className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground hover:text-accent transition-colors" onClick={() => setIsMenuOpen(false)}>
-                        <HelpCircle className="h-3 w-3" />
-                        Sponsor Support Portal
-                      </Link>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </div>
-
-                <Link to="/about" className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-muted rounded-md transition-colors" onClick={() => setIsMenuOpen(false)}>
-                  About
-                </Link>
-                <Link to="/contact" className="px-3 py-2 text-sm font-medium text-foreground hover:text-accent hover:bg-muted rounded-md transition-colors" onClick={() => setIsMenuOpen(false)}>
-                  Contact
-                </Link>
-              </div>
-
-              {/* Mobile CTAs - Always visible */}
-              <div className="flex flex-col space-y-2 px-3">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/candidate/login" onClick={() => setIsMenuOpen(false)}>
-                    Apply Now
-                  </Link>
-                </Button>
-                <Button variant="default" size="sm" asChild>
-                  <Link to="/employer/login" onClick={() => setIsMenuOpen(false)}>
-                    Post Job
-                  </Link>
-                </Button>
-              </div>
-            </div>
-        </div>
-      )}
     </header>;
 };
 export default Header;
