@@ -605,7 +605,14 @@ export default function ResumeBuilderTab() {
             : data.skill_highlights && data.skill_highlights.length > 0
               ? [...new Set([...prev.skills, ...data.skill_highlights])]
               : prev.skills,
-          projects: prev.projects,
+          projects: data.projects && data.projects.length > 0
+            ? data.projects.map((proj: any) => ({
+                name: proj.name || "",
+                technologies: proj.technologies || "",
+                duration: proj.duration || "",
+                description: proj.description || "",
+              }))
+            : prev.projects,
         }));
 
         setHasUnsavedChanges(true);
