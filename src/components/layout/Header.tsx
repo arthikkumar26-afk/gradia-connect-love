@@ -184,7 +184,7 @@ const Header = () => {
           </nav>
 
           {/* Right side - Theme toggle, Language, CTAs - Fixed width for balance */}
-          <div className="flex items-center justify-end space-x-4 w-48">
+          <div className="flex items-center justify-end space-x-2 lg:space-x-4 flex-shrink-0">
             {/* Theme Toggle */}
             <Button variant="ghost" size="sm" onClick={toggleTheme}>
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -193,18 +193,18 @@ const Header = () => {
             {/* QR Code Button */}
             <SignupQRButton variant="icon" />
 
-            {/* Sign Up Button - Only show when not authenticated on desktop */}
-            {!isAuthenticated && <div className="hidden lg:flex items-center">
+            {/* Sign Up Button - show on all screens when not authenticated */}
+            {!isAuthenticated && <div className="flex items-center">
                 <Button variant="outline" size="sm" className="gap-2" asChild>
                   <Link to="/signup">
                     <User className="h-4 w-4" />
-                    Sign Up
+                    <span className="hidden sm:inline">Sign Up</span>
                   </Link>
                 </Button>
               </div>}
 
-            {/* Login Dropdown - Only show when not authenticated */}
-            {!isAuthenticated && <div className="hidden lg:flex items-center">
+            {/* Login Dropdown - show on all screens when not authenticated */}
+            {!isAuthenticated && <div className="flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="default" size="sm" className="gap-2">
@@ -262,8 +262,8 @@ const Header = () => {
                 </DropdownMenu>
               </div>}
 
-            {/* User Menu - Only show when authenticated */}
-            {isAuthenticated && <div className="hidden lg:flex items-center">
+            {/* User Menu - show on all screens when authenticated */}
+            {isAuthenticated && <div className="flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="default" size="sm" className="gap-2">
