@@ -123,6 +123,12 @@ import EventReport from "./pages/sponsor/EventReport";
 
 const queryClient = new QueryClient();
 
+// Helper component for external redirects
+const ExternalRedirect = ({ url }: { url: string }) => {
+  window.location.href = url;
+  return null;
+};
+
 // Main Routes Component with Layout
 const MainRoutes = () => (
   <Layout>
@@ -175,7 +181,8 @@ const MainRoutes = () => (
       <Route path="/candidate/salary-insights" element={<PlaceholderPage title="Salary Insights" />} />
       <Route path="/candidate/coaching" element={<CareerCoaching />} />
 
-      {/* Learning Platform Routes */}
+      {/* Learning Platform Routes - redirect to Skillory */}
+      <Route path="/learning" element={<ExternalRedirect url="https://skillory.in" />} />
       <Route path="/learning/tech" element={<TechLearning />} />
       <Route path="/learning/non-tech" element={<NonTechLearning />} />
       <Route path="/learning/education" element={<EducationLearning />} />
