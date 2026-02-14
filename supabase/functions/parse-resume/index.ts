@@ -230,7 +230,16 @@ PART 3 - EXTRACT WORK EXPERIENCE:
   - place: Location of job
   - salary_per_month: Monthly salary if mentioned (number)
 
-PART 4 - RESUME QUALITY ANALYSIS:
+PART 4 - EXTRACT PROJECTS:
+Extract ONLY information from the "Projects" section of the resume. Look for sections labeled "Projects", "Personal Projects", "Academic Projects", "Key Projects", or similar headings.
+- projects: Array of objects with fields:
+  - name: Project name/title
+  - technologies: Technologies/tools used (comma-separated string)
+  - duration: Duration or date range (e.g., "Jan 2024 - Mar 2024")
+  - description: Brief description of the project, candidate's role, and key achievements
+If no projects section is found, return an empty array for projects.
+
+PART 5 - RESUME QUALITY ANALYSIS:
 Evaluate the resume based on:
 1. Professional Experience - Quality and relevance of work history
 2. Education & Qualifications - Academic background and certifications
