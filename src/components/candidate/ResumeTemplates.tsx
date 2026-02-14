@@ -15,6 +15,13 @@ interface Education {
   year: string;
 }
 
+interface Project {
+  name: string;
+  technologies: string;
+  duration: string;
+  description: string;
+}
+
 interface ResumeData {
   fullName: string;
   email: string;
@@ -24,6 +31,7 @@ interface ResumeData {
   experience: Experience[];
   education: Education[];
   skills: string[];
+  projects?: Project[];
 }
 
 interface ResumeTemplateProps {
@@ -103,6 +111,22 @@ export function ExecutiveTemplate({ data, scale }: ResumeTemplateProps) {
             </div>
           </div>
         )}
+
+        {data.projects && data.projects.some(p => p.name || p.description) && (
+          <div>
+            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#1a2332] uppercase tracking-wider mb-1`}>Projects</h3>
+            <div className="space-y-2">
+              {data.projects.filter(p => p.name || p.description).map((proj, i) => (
+                <div key={i} className="border-l-2 border-[#5ba4e6] pl-2">
+                  <p className="font-bold text-[#1a2332]">{proj.name}</p>
+                  {proj.technologies && <p className="text-[#5ba4e6]">{proj.technologies}</p>}
+                  {proj.duration && <p className="text-[#999]">{proj.duration}</p>}
+                  {proj.description && <p className="text-[#555] mt-0.5">{proj.description}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -144,6 +168,21 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
                     </div>
                     <p className="text-[#2563eb]">{exp.company}</p>
                     {exp.description && <p className="text-[#64748b] mt-0.5">{exp.description}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.projects && data.projects.some(p => p.name || p.description) && (
+            <div>
+              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#2563eb] uppercase mb-1.5`}>Projects</h3>
+              <div className="space-y-2">
+                {data.projects.filter(p => p.name || p.description).map((proj, i) => (
+                  <div key={i}>
+                    <p className="font-bold text-[#1e293b]">{proj.name}</p>
+                    <p className="text-[#2563eb]">{proj.technologies} {proj.duration && <span className="text-[#94a3b8]">| {proj.duration}</span>}</p>
+                    {proj.description && <p className="text-[#64748b] mt-0.5">{proj.description}</p>}
                   </div>
                 ))}
               </div>
@@ -224,6 +263,21 @@ export function ModernAccentTemplate({ data, scale }: ResumeTemplateProps) {
           </div>
         )}
 
+        {data.projects && data.projects.some(p => p.name || p.description) && (
+          <div>
+            <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#0f766e] border-b border-[#0f766e] pb-1 mb-2`}>PROJECTS</h3>
+            <div className="space-y-2">
+              {data.projects.filter(p => p.name || p.description).map((proj, i) => (
+                <div key={i}>
+                  <p className="font-bold">{proj.name}</p>
+                  <p className="text-[#0f766e]">{proj.technologies} {proj.duration && <span className="text-[#94a3b8]">| {proj.duration}</span>}</p>
+                  {proj.description && <p className="text-[#64748b] mt-0.5">{proj.description}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3">
           {data.education.some(e => e.degree || e.school) && (
             <div>
@@ -287,6 +341,21 @@ export function BoldSplitTemplate({ data, scale }: ResumeTemplateProps) {
                     <p className="font-bold text-[#1e1b4b]">{exp.title}</p>
                     <p className="text-[#7c3aed]">{exp.company} <span className="text-[#9ca3af]">| {exp.duration}</span></p>
                     {exp.description && <p className="text-[#6b7280] mt-0.5">{exp.description}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {data.projects && data.projects.some(p => p.name || p.description) && (
+            <div className="mb-3">
+              <h3 className={`${scale ? 'text-[7px]' : 'text-xs'} font-bold text-[#7c3aed] uppercase tracking-widest mb-1`}>Projects</h3>
+              <div className="space-y-2">
+                {data.projects.filter(p => p.name || p.description).map((proj, i) => (
+                  <div key={i} className="border-l-2 border-[#c4b5fd] pl-2">
+                    <p className="font-bold text-[#1e1b4b]">{proj.name}</p>
+                    <p className="text-[#7c3aed]">{proj.technologies} <span className="text-[#9ca3af]">| {proj.duration}</span></p>
+                    {proj.description && <p className="text-[#6b7280] mt-0.5">{proj.description}</p>}
                   </div>
                 ))}
               </div>

@@ -13,6 +13,7 @@ interface ResumeData {
   experience: { title: string; company: string; duration: string; description: string }[];
   education: { degree: string; school: string; year: string }[];
   skills: string[];
+  projects?: { name: string; technologies: string; duration: string; description: string }[];
 }
 
 interface ATSCheck {
@@ -113,6 +114,12 @@ export function calculateATSScore(data: ResumeData): { score: number; checks: AT
       passed: data.skills.length >= 8,
       weight: 3,
       tip: "List 8+ skills to maximize ATS keyword hits across different job postings.",
+    },
+    {
+      label: "At least 1 project added",
+      passed: (data.projects || []).some(p => p.name.trim() && p.description.trim()),
+      weight: 6,
+      tip: "Add at least one project with name and description to showcase practical experience.",
     },
   ];
 
