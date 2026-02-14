@@ -175,7 +175,7 @@ const Hero = () => {
         <div className="max-w-4xl mx-auto">
           {/* Headline - Centered, above search */}
           <div className="animate-fade-in text-center mb-8">
-            <h1 className="text-lg md:text-xl font-semibold text-primary-foreground/90">
+            <h1 className="text-lg md:text-xl font-semibold text-white/90 dark:text-white/90">
               Connect with Your <span className="text-transparent bg-gradient-to-r from-accent to-secondary bg-clip-text">Dream Career</span>
             </h1>
           </div>
