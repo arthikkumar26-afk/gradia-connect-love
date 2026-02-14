@@ -26,6 +26,13 @@ interface Education {
   year: string;
 }
 
+interface Project {
+  name: string;
+  technologies: string;
+  duration: string;
+  description: string;
+}
+
 interface ResumeData {
   fullName: string;
   email: string;
@@ -35,6 +42,7 @@ interface ResumeData {
   experience: Experience[];
   education: Education[];
   skills: string[];
+  projects: Project[];
 }
 
 import { TEMPLATE_CONFIG, getTemplateComponent } from "./ResumeTemplates";
@@ -59,6 +67,7 @@ export default function ResumeBuilderTab() {
     experience: [{ title: "", company: "", duration: "", description: "" }],
     education: [{ degree: "", school: "", year: "" }],
     skills: [],
+    projects: [{ name: "", technologies: "", duration: "", description: "" }],
   });
 
   useEffect(() => {
@@ -91,6 +100,7 @@ export default function ResumeBuilderTab() {
           experience: expData || [{ title: "", company: "", duration: "", description: "" }],
           education: eduData || [{ degree: "", school: "", year: "" }],
           skills: savedResume.skills || [],
+          projects: (savedResume as any).projects || [{ name: "", technologies: "", duration: "", description: "" }],
         });
         setSelectedTemplate(savedResume.selected_template || "modern");
         return;
@@ -301,6 +311,29 @@ export default function ResumeBuilderTab() {
     setHasUnsavedChanges(true);
   };
 
+  const handleProjectChange = (index: number, field: keyof Project, value: string) => {
+    const updated = [...formData.projects];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData(prev => ({ ...prev, projects: updated }));
+    setHasUnsavedChanges(true);
+  };
+
+  const addProject = () => {
+    setFormData(prev => ({
+      ...prev,
+      projects: [...prev.projects, { name: "", technologies: "", duration: "", description: "" }]
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const removeProject = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      projects: prev.projects.filter((_, i) => i !== index)
+    }));
+    setHasUnsavedChanges(true);
+  };
+
   const addSkill = () => {
     if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
       setFormData(prev => ({
@@ -401,6 +434,24 @@ export default function ResumeBuilderTab() {
         y += 2;
       }
 
+      // Projects
+      if (formData.projects && formData.projects.some(p => p.name || p.description)) {
+        if (y > 250) { doc.addPage(); y = 20; }
+        addText('PROJECTS', margin, 12, 'bold', [30, 64, 175]);
+        doc.setDrawColor(30, 64, 175);
+        doc.line(margin, y, margin + 50, y);
+        y += 4;
+        formData.projects.filter(p => p.name || p.description).forEach(proj => {
+          if (y > 270) { doc.addPage(); y = 20; }
+          addText(proj.name, margin, 10, 'bold', [15, 23, 42]);
+          const meta = [proj.technologies, proj.duration].filter(Boolean).join('  |  ');
+          if (meta) addText(meta, margin, 9, 'normal', [100, 116, 139]);
+          if (proj.description) addText(proj.description, margin, 9, 'normal', [71, 85, 105]);
+          y += 2;
+        });
+        y += 2;
+      }
+
       // Skills
       if (formData.skills.length > 0) {
         if (y > 260) { doc.addPage(); y = 20; }
@@ -487,6 +538,7 @@ export default function ResumeBuilderTab() {
             : data.skill_highlights && data.skill_highlights.length > 0
               ? [...new Set([...prev.skills, ...data.skill_highlights])]
               : prev.skills,
+          projects: prev.projects,
         }));
 
         setHasUnsavedChanges(true);
@@ -761,6 +813,34 @@ export default function ResumeBuilderTab() {
                     </div>
                   </div>
                 ))}
+              </CardContent>
+            </Card>
+
+            {/* Projects */}
+            <Card>
+              <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Projects</CardTitle>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={addProject}>
+                  <Plus className="h-3 w-3 mr-1" /> Add Project
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-2 px-3 pb-3">
+                {formData.projects.map((proj, index) => (
+                  <div key={index} className="border rounded-md p-2 space-y-1.5 relative">
+                    <Button variant="ghost" size="sm" className="absolute top-1 right-1 h-5 w-5 p-0" onClick={() => removeProject(index)}>
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Input placeholder="Project Name" value={proj.name} onChange={(e) => handleProjectChange(index, 'name', e.target.value)} className="h-7 text-xs" />
+                      <Input placeholder="Technologies Used" value={proj.technologies} onChange={(e) => handleProjectChange(index, 'technologies', e.target.value)} className="h-7 text-xs" />
+                    </div>
+                    <Input placeholder="Duration (e.g., Jan 2024 - Mar 2024)" value={proj.duration} onChange={(e) => handleProjectChange(index, 'duration', e.target.value)} className="h-7 text-xs" />
+                    <Textarea placeholder="Project description, your role, key achievements..." value={proj.description} onChange={(e) => handleProjectChange(index, 'description', e.target.value)} className="min-h-[40px] text-xs" />
+                  </div>
+                ))}
+                {formData.projects.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No projects added yet. Click "Add Project" to get started.</p>
+                )}
               </CardContent>
             </Card>
 
