@@ -94,7 +94,7 @@ const JobCard = ({
 
   return (
     <>
-      <Card className={`group hover:shadow-medium transition-all duration-200 hover:-translate-y-1 h-full flex flex-col ${featured ? 'ring-2 ring-accent shadow-glow' : ''}`}>
+      <Card className={`group hover:shadow-medium transition-all duration-200 hover:-translate-y-1 h-full flex flex-col border border-border ${featured ? 'ring-1 ring-accent/40' : ''}`}>
         <CardHeader className="p-3 pb-2">
           <div className="flex items-start justify-between gap-1">
             <div className="flex-1 min-w-0">
