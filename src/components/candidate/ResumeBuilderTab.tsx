@@ -515,7 +515,7 @@ export default function ResumeBuilderTab() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "Gradia",
-        description: "Resume PDF Export - ₹249",
+        description: "Resume PDF Export - ₹10",
         order_id: orderData.order_id,
         handler: async (response: any) => {
           if (response.razorpay_payment_id) {
@@ -663,7 +663,7 @@ export default function ResumeBuilderTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            Export PDF - ₹249
+            Export PDF - ₹10
           </Button>
         </div>
       </div>
