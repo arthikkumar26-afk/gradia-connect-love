@@ -155,10 +155,10 @@ const Header = () => {
   }];
   return <header className="sticky top-0 z-[999] w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center">
-          {/* Logo - Fixed width for balance */}
-          <Link to="/" className="flex items-center flex-shrink-0 lg:w-48">
-            <img alt="Gradia - Your Next Step" className="h-[45px] lg:h-[65px] w-auto object-contain" src="/lovable-uploads/ece65d52-e11a-4a4d-9e10-3e499e3fe3ab.png" />
+        <div className="flex h-16 items-center justify-between w-full">
+          {/* Logo */}
+          <Link to="/" className="flex items-center flex-shrink-0">
+            <img alt="Gradia - Your Next Step" className="h-[40px] sm:h-[45px] lg:h-[65px] w-auto object-contain" src="/lovable-uploads/ece65d52-e11a-4a4d-9e10-3e499e3fe3ab.png" />
           </Link>
 
           {/* Desktop Navigation - Truly Centered */}
@@ -184,32 +184,29 @@ const Header = () => {
           </nav>
 
           {/* Right side - Theme toggle, Language, CTAs - Fixed width for balance */}
-          <div className="flex items-center justify-end space-x-2 lg:space-x-4 flex-shrink-0">
-            {/* Theme Toggle - hide on small mobile */}
-            <Button variant="ghost" size="sm" onClick={toggleTheme} className="hidden sm:flex">
+          <div className="flex items-center justify-end gap-1 sm:gap-2 lg:gap-4 flex-shrink-0 ml-auto">
+            {/* Theme Toggle - hide on mobile */}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden sm:flex h-8 w-8">
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            {/* QR Code Button - hide on small mobile */}
+            {/* QR Code Button - hide on mobile */}
             <div className="hidden sm:flex">
               <SignupQRButton variant="icon" />
             </div>
 
-            {/* Sign Up Button - show on all screens when not authenticated */}
-            {!isAuthenticated && <div className="flex items-center">
-                <Button variant="outline" size="sm" className="gap-2" asChild>
-                  <Link to="/signup">
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline">Sign Up</span>
-                  </Link>
-                </Button>
-              </div>}
+            {/* Sign Up Button */}
+            {!isAuthenticated && <Button variant="outline" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3" asChild>
+                <Link to="/signup">
+                  <User className="h-3.5 w-3.5" />
+                  Sign Up
+                </Link>
+              </Button>}
 
-            {/* Login Dropdown - show on all screens when not authenticated */}
-            {!isAuthenticated && <div className="flex items-center">
-                <DropdownMenu>
+            {/* Login Dropdown */}
+            {!isAuthenticated && <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="default" size="sm" className="gap-2">
+                    <Button variant="default" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3">
                       Login
                       <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -261,19 +258,17 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
-              </div>}
+                </DropdownMenu>}
 
             {/* User Menu - show on all screens when authenticated */}
-            {isAuthenticated && <div className="flex items-center">
-                <DropdownMenu>
+            {isAuthenticated && <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="default" size="sm" className="gap-2">
-                      <User className="h-4 w-4" />
-                      {userRole === 'admin' ? 'Admin' : 
+                    <Button variant="default" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3">
+                      <User className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">{userRole === 'admin' ? 'Admin' : 
                        userRole === 'owner' ? 'Owner' : 
                        userRole === 'employer' ? (companyName || profile?.company_name || profile?.full_name?.split(' ')[0] || 'Account') :
-                       profile?.full_name?.split(' ')[0] || 'Account'}
+                       profile?.full_name?.split(' ')[0] || 'Account'}</span>
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -296,8 +291,7 @@ const Header = () => {
                       Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
-              </div>}
+                </DropdownMenu>}
 
           </div>
         </div>
