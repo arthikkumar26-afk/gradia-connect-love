@@ -146,8 +146,8 @@ const BookSlot = () => {
       toast.error("Please select both date and time");
       return;
     }
-    if (!candidateId || !stageId) {
-      toast.error("Invalid booking link");
+    if (!candidateId) {
+      toast.error("Invalid booking link - missing candidate information");
       return;
     }
 
