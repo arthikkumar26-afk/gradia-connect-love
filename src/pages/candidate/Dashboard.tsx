@@ -3342,7 +3342,7 @@ const CandidateDashboard = () => {
                       <h3 className="font-semibold text-foreground mb-1">Explore Our Learning Platform</h3>
                       <p className="text-sm text-muted-foreground">Access curated courses tailored for education professionals</p>
                     </div>
-                    <Button variant="cta" onClick={() => navigate('/learning')}>
+                    <Button variant="cta" onClick={() => window.open('https://skillory.in', '_blank')}>
                       Explore Courses
                     </Button>
                   </div>
@@ -3361,8 +3361,8 @@ const CandidateDashboard = () => {
                 <GraduationCap className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                 <h2 className="text-xl font-semibold text-foreground mb-2">Learning Platform</h2>
                 <p className="text-muted-foreground mb-4">Enhance your skills with our courses</p>
-                <Button variant="outline" asChild>
-                  <Link to="/learning">Explore Courses</Link>
+                <Button variant="outline" onClick={() => window.open('https://skillory.in', '_blank')}>
+                  Explore Courses
                 </Button>
               </div>
             )}
