@@ -341,6 +341,7 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        response_format: { type: "json_object" },
         messages: [
           {
             role: "user",
@@ -410,11 +411,12 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
         improvements: ["Could not fully analyze - please ensure resume is clear and readable"],
         experience_summary: "Resume analysis completed",
         skill_highlights: [],
-        career_level: "Mid-Level"
+        career_level: "Mid-Level",
+        projects: []
       };
     }
 
-    console.log("Analysis completed for user:", userId, "Score:", analysisData.overall_score);
+    console.log("Analysis completed for user:", userId, "Score:", analysisData.overall_score, "Projects found:", analysisData.projects?.length || 0);
 
     return new Response(JSON.stringify(analysisData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
