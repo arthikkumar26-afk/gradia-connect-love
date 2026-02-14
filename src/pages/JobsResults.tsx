@@ -138,7 +138,7 @@ const JobsResults = () => {
           } else {
             // Store the job ID and redirect to login
             setPendingApplyJobId(jobId);
-            navigate(`/candidate-login?redirect=/jobs-results?job=${jobId}&apply=true`);
+            navigate(`/candidate/login?redirect=/jobs-results?job=${jobId}&apply=true`);
           }
         } else {
           setSelectedJob(job);
@@ -203,7 +203,7 @@ const JobsResults = () => {
       setShowApplicationModal(true);
     } else {
       // Redirect to candidate login with return URL
-      navigate(`/candidate-login?redirect=/jobs-results?job=${job.id}&apply=true`);
+      navigate(`/candidate/login?redirect=/jobs-results?job=${job.id}&apply=true`);
     }
   };
 
