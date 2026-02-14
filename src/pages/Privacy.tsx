@@ -141,9 +141,8 @@ const Privacy = () => {
                   <div className="text-muted-foreground space-y-4">
                     <p>If you have questions about this Privacy Policy or want to exercise your rights, contact us:</p>
                     <ul className="space-y-2">
-                      <li><strong>Email:</strong> privacy@gradia.com</li>
-                      <li><strong>Mail:</strong> Gradia Privacy Team, 123 Market St, San Francisco, CA 94105</li>
-                      <li><strong>Phone:</strong> +1 (555) 012-3456</li>
+                      <li><strong>Email:</strong> info@gradia.co.in</li>
+                      <li><strong>Mail:</strong> Gradia Privacy Team, Bangalore, Hyderabad, India</li>
                     </ul>
                   </div>
                 </div>

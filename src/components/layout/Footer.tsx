@@ -9,7 +9,7 @@ import {
   Instagram,
   Youtube,
   Mail,
-  Phone,
+  
   MapPin,
 } from "lucide-react";
 
@@ -222,19 +222,13 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4" />
-              <a href="mailto:hello@gradia.com" className="hover:text-accent transition-colors">
-                hello@gradia.com
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              <a href="tel:+1-555-0123" className="hover:text-accent transition-colors">
-                +1 (555) 012-3456
+              <a href="mailto:info@gradia.co.in" className="hover:text-accent transition-colors">
+                info@gradia.co.in
               </a>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              <span>San Francisco, CA</span>
+              <span>Bangalore, Hyderabad</span>
             </div>
           </div>
 

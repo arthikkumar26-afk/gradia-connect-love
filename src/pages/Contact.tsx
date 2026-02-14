@@ -21,21 +21,14 @@ const Contact = () => {
       icon: Mail,
       title: "Email Us",
       description: "Get in touch via email",
-      value: "hello@gradia.com",
-      action: "mailto:hello@gradia.com"
-    },
-    {
-      icon: Phone,
-      title: "Call Us",
-      description: "Speak with our team",
-      value: "+1 (555) 012-3456",
-      action: "tel:+1-555-012-3456"
+      value: "info@gradia.co.in",
+      action: "mailto:info@gradia.co.in"
     },
     {
       icon: MapPin,
       title: "Visit Us",
       description: "Our headquarters",
-      value: "123 Market St, San Francisco, CA 94105",
+      value: "Bangalore, Hyderabad",
       action: "#"
     },
     {
@@ -277,14 +270,13 @@ const Contact = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="text-center">
               <CardHeader>
-                <CardTitle>San Francisco HQ</CardTitle>
-                <CardDescription>Main Office</CardDescription>
+                <CardTitle>Bangalore & Hyderabad</CardTitle>
+                <CardDescription>Main Offices</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  123 Market Street<br />
-                  San Francisco, CA 94105<br />
-                  United States
+                  Bangalore, Hyderabad<br />
+                  India
                 </p>
               </CardContent>
             </Card>
