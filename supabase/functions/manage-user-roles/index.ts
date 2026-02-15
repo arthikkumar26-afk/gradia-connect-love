@@ -249,6 +249,95 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "delete-user") {
+      if (!targetUserId) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (targetUserId === user.id) {
+        return new Response(
+          JSON.stringify({ error: "Cannot delete your own account" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Delete profile (cascading will handle related data)
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .delete()
+        .eq("id", targetUserId);
+
+      if (profileError) {
+        console.error("Error deleting profile:", profileError);
+      }
+
+      // Delete from auth.users using admin API
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
+      if (authError) {
+        throw authError;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "User deleted successfully" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "block-user") {
+      if (!targetUserId) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (targetUserId === user.id) {
+        return new Response(
+          JSON.stringify({ error: "Cannot block your own account" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Ban user using admin API
+      const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        ban_duration: "876600h", // ~100 years
+      });
+
+      if (banError) {
+        throw banError;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "User blocked successfully" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "unblock-user") {
+      if (!targetUserId) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        ban_duration: "none",
+      });
+
+      if (unbanError) {
+        throw unbanError;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "User unblocked successfully" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Invalid action" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
