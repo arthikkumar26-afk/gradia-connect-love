@@ -201,8 +201,6 @@ const Users = () => {
         return <Badge className="bg-purple-500/10 text-purple-600 border-purple-200">Employer</Badge>;
       case 'candidate':
         return <Badge className="bg-blue-500/10 text-blue-600 border-blue-200">Candidate</Badge>;
-      case 'sponsor':
-        return <Badge className="bg-orange-500/10 text-orange-600 border-orange-200">Sponsor</Badge>;
       case 'admin':
         return <Badge className="bg-red-500/10 text-red-600 border-red-200">Admin</Badge>;
       default:
@@ -214,7 +212,7 @@ const Users = () => {
     total: users.length,
     candidates: users.filter(u => u.role === 'candidate').length,
     employers: users.filter(u => u.role === 'employer').length,
-    sponsors: users.filter(u => u.role === 'sponsor').length,
+    
   };
 
   return (
@@ -290,7 +288,7 @@ const Users = () => {
           {/* Page Content */}
           <main className="flex-1 p-4 lg:p-6 overflow-auto">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -330,19 +328,6 @@ const Users = () => {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="border-0 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-orange-500/10">
-                      <Briefcase className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{userStats.sponsors}</p>
-                      <p className="text-xs text-muted-foreground">Sponsors</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             <Card className="border-0 shadow-sm">
@@ -372,7 +357,7 @@ const Users = () => {
                       <SelectItem value="all">All Roles</SelectItem>
                       <SelectItem value="candidate">Candidates</SelectItem>
                       <SelectItem value="employer">Employers</SelectItem>
-                      <SelectItem value="sponsor">Sponsors</SelectItem>
+                      
                     </SelectContent>
                   </Select>
                 </div>
