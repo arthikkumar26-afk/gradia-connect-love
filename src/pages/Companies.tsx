@@ -151,10 +151,10 @@ const Companies = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-hero text-primary-foreground">
+      <section className="py-20 bg-gradient-hero">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Our Partner Companies</h1>
-          <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">Our Partner Companies</h1>
+          <p className="text-xl text-white/80 max-w-2xl mx-auto mb-8">
             Discover amazing companies across industries that are actively hiring talented professionals.
             Scan a QR code to view jobs and apply instantly!
           </p>
@@ -285,12 +285,12 @@ const Companies = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-hero text-primary-foreground">
+      <section className="py-20 bg-gradient-hero">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
             Ready to Join a Leading Company?
           </h2>
-          <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/80 mb-8 max-w-2xl mx-auto">
             Create your profile today and get connected with top employers actively hiring.
           </p>
           <Button variant="professional" size="xl" className="bg-background text-foreground hover:bg-background/90">
