@@ -31,6 +31,14 @@ const OwnerDashboard = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [liveCounts, setLiveCounts] = useState({
+    admins: 0,
+    subscriptions: 0,
+    totalUsers: 0,
+    totalJobs: 0,
+    totalApplications: 0,
+    totalEmployers: 0,
+  });
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -46,7 +54,7 @@ const OwnerDashboard = () => {
         .select('role')
         .eq('user_id', user.id)
         .eq('role', 'owner')
-        .single();
+        .maybeSingle();
 
       if (!roleData) {
         toast({
@@ -64,6 +72,29 @@ const OwnerDashboard = () => {
 
     checkAuthorization();
   }, [navigate, toast]);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    const fetchCounts = async () => {
+      const [adminsRes, subsRes, usersRes, jobsRes, appsRes, empRes] = await Promise.all([
+        supabase.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'admin'),
+        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('jobs').select('id', { count: 'exact', head: true }),
+        supabase.from('applications').select('id', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'employer'),
+      ]);
+      setLiveCounts({
+        admins: adminsRes.count || 0,
+        subscriptions: subsRes.count || 0,
+        totalUsers: usersRes.count || 0,
+        totalJobs: jobsRes.count || 0,
+        totalApplications: appsRes.count || 0,
+        totalEmployers: empRes.count || 0,
+      });
+    };
+    fetchCounts();
+  }, [isAuthorized]);
 
   const handleLogout = async () => {
     await logout();
@@ -88,18 +119,18 @@ const OwnerDashboard = () => {
 
   const stats = [
     { title: "Total Revenue", value: "₹24.5L", change: "+18%", icon: DollarSign, color: "text-green-600" },
-    { title: "Total Users", value: "15,890", change: "+25%", icon: Users, color: "text-blue-600" },
-    { title: "Active Subscriptions", value: "342", change: "+12%", icon: Building2, color: "text-purple-600" },
+    { title: "Total Users", value: liveCounts.totalUsers.toLocaleString(), change: "Live", icon: Users, color: "text-blue-600" },
+    { title: "Active Subscriptions", value: liveCounts.subscriptions.toLocaleString(), change: "Live", icon: Building2, color: "text-purple-600" },
     { title: "System Health", value: "99.9%", change: "Stable", icon: Globe, color: "text-orange-600" },
   ];
 
   const ownerActions = [
-    { title: "Admin Management", description: "Manage admin accounts", icon: Shield, path: "" },
-    { title: "Revenue Analytics", description: "Financial reports & insights", icon: BarChart3, path: "/owner/revenue-analytics" },
-    { title: "System Configuration", description: "Core system settings", icon: Settings, path: "/owner/system-configuration" },
-    { title: "Database Management", description: "Data & backups", icon: Database, path: "/owner/database-management" },
-    { title: "All Jobs Overview", description: "Platform-wide job listings", icon: Briefcase, path: "/owner/all-jobs" },
-    { title: "Growth Metrics", description: "Track platform growth", icon: TrendingUp, path: "/owner/growth-metrics" },
+    { title: "Admin Management", description: "Manage admin accounts", icon: Shield, path: "", liveValue: `${liveCounts.admins} admins` },
+    { title: "Revenue Analytics", description: "Financial reports & insights", icon: BarChart3, path: "/owner/revenue-analytics", liveValue: `${liveCounts.subscriptions} active subs` },
+    { title: "System Configuration", description: "Core system settings", icon: Settings, path: "/owner/system-configuration", liveValue: "" },
+    { title: "Database Management", description: "Data & backups", icon: Database, path: "/owner/database-management", liveValue: `${liveCounts.totalUsers.toLocaleString()} records` },
+    { title: "All Jobs Overview", description: "Platform-wide job listings", icon: Briefcase, path: "/owner/all-jobs", liveValue: `${liveCounts.totalJobs} jobs` },
+    { title: "Growth Metrics", description: "Track platform growth", icon: TrendingUp, path: "/owner/growth-metrics", liveValue: `${liveCounts.totalApplications} applications` },
   ];
 
   return (
@@ -125,15 +156,6 @@ const OwnerDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {/* Welcome Banner */}
-        <div className="mb-8 p-6 rounded-xl bg-gradient-to-r from-purple-600 to-purple-800 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <Crown className="h-8 w-8" />
-            <h2 className="text-2xl font-bold">Welcome, Owner</h2>
-          </div>
-          <p className="text-purple-100">You have full access to all platform features and settings.</p>
-        </div>
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -186,14 +208,21 @@ const OwnerDashboard = () => {
                   }}
                 >
                   <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                        <action.icon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                          <action.icon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{action.title}</CardTitle>
+                          <CardDescription>{action.description}</CardDescription>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-lg">{action.title}</CardTitle>
-                        <CardDescription>{action.description}</CardDescription>
-                      </div>
+                      {action.liveValue && (
+                        <span className="text-sm font-semibold text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                          {action.liveValue}
+                        </span>
+                      )}
                     </div>
                   </CardHeader>
                 </Card>
