@@ -36,7 +36,7 @@ const CandidateLogin = () => {
         toast({
           title: "Wrong Account Type",
           description: "Please use the employer login page for employer accounts.",
-          variant: "destructive",
+          variant: "destructive"
         });
         supabase.auth.signOut();
       }
@@ -46,35 +46,35 @@ const CandidateLogin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
 
       if (error) {
         toast({
           title: "Login Failed",
           description: error.message,
-          variant: "destructive",
+          variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
 
       // Check the user's role from profiles
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
+      const { data: profileData, error: profileError } = await supabase.
+      from("profiles").
+      select("role").
+      eq("id", data.user.id).
+      single();
 
       if (profileError || !profileData) {
         toast({
           title: "Profile Not Found",
           description: "Please complete your profile registration first.",
-          variant: "destructive",
+          variant: "destructive"
         });
         await supabase.auth.signOut();
         setIsLoading(false);
@@ -85,7 +85,7 @@ const CandidateLogin = () => {
         toast({
           title: "Access Denied",
           description: `This login is for candidates only. Your account is registered as ${profileData.role}. Please use the correct login page.`,
-          variant: "destructive",
+          variant: "destructive"
         });
         await supabase.auth.signOut();
         setIsLoading(false);
@@ -94,9 +94,9 @@ const CandidateLogin = () => {
 
       toast({
         title: "Login Successful",
-        description: "Welcome back!",
+        description: "Welcome back!"
       });
-      
+
       // Navigate to redirect URL or candidate dashboard
       if (redirectUrl) {
         navigate(redirectUrl, { replace: true });
@@ -107,7 +107,7 @@ const CandidateLogin = () => {
       toast({
         title: "Error",
         description: error.message || "An error occurred during login",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -118,10 +118,10 @@ const CandidateLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">
         {/* Back to Home Link */}
-        <Link 
-          to="/" 
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-4"
-        >
+        <Link
+          to="/"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-4">
+
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Home
         </Link>
@@ -130,11 +130,11 @@ const CandidateLogin = () => {
         <div className="bg-card rounded-lg shadow-large p-6 animate-scale-in">
           {/* Logo */}
           <div className="flex justify-center mb-4">
-            <img 
-              src={gradiaLogo} 
-              alt="Gradia - Your Next Step" 
-              className="h-14 w-auto object-contain"
-            />
+            <img
+
+              alt="Gradia - Your Next Step"
+              className="h-14 w-auto object-contain" src="/lovable-uploads/3f4ccc4d-bff0-48a4-82ae-962d55c7abac.png" />
+
           </div>
 
           {/* Title */}
@@ -159,8 +159,8 @@ const CandidateLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full"
-              />
+                className="w-full" />
+
             </div>
 
             {/* Password Field */}
@@ -169,8 +169,8 @@ const CandidateLogin = () => {
                 <Label htmlFor="password">Password</Label>
                 <Link
                   to="/candidate/forgot-password"
-                  className="text-sm text-accent hover:text-accent-hover transition-colors"
-                >
+                  className="text-sm text-accent hover:text-accent-hover transition-colors">
+
                   Forgot password?
                 </Link>
               </div>
@@ -180,8 +180,8 @@ const CandidateLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full"
-              />
+                className="w-full" />
+
             </div>
 
             {/* Remember Me */}
@@ -189,12 +189,12 @@ const CandidateLogin = () => {
               <Checkbox
                 id="remember"
                 checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-              />
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
+
               <Label
                 htmlFor="remember"
-                className="text-sm text-muted-foreground cursor-pointer"
-              >
+                className="text-sm text-muted-foreground cursor-pointer">
+
                 Remember me for 30 days
               </Label>
             </div>
@@ -238,8 +238,8 @@ const CandidateLogin = () => {
           </p>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default CandidateLogin;
