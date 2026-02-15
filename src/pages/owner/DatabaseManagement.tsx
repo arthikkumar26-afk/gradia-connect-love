@@ -139,8 +139,7 @@ const DatabaseManagement = () => {
     setFilterValue("all");
     setIsLoadingData(true);
     try {
-      const cols = tableConfig[tableName].columns.map(c => c.key).join(',');
-      const { data, error } = await supabase.from(tableName).select(cols).limit(200);
+      const { data, error } = await supabase.from(tableName).select('*').limit(200);
       if (!error && data) {
         setTableData(data as unknown as Record<string, unknown>[]);
       }
