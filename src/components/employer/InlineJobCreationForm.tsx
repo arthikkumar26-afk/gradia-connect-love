@@ -500,7 +500,9 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             )}
 
 
-            {/* Sector, Category, Function */}
+            {/* Education-specific fields: Sector, Category, Function, Board, Segment, etc. */}
+            {watchedInterviewType === 'education' && (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Sector</label>
@@ -1082,6 +1084,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 </>
               )}
             </div>
+            </>
+            )}
 
             {/* Job Title */}
             <FormField
@@ -1090,30 +1094,36 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Job Title *</FormLabel>
-                  <Select
-                    key={`job-title-${JSON.stringify(dynamicFieldValues)}`}
-                    value={field.value || undefined}
-                    onValueChange={field.onChange}
-                  >
+                  {watchedInterviewType === 'education' ? (
+                    <Select
+                      key={`job-title-${JSON.stringify(dynamicFieldValues)}`}
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={jobTitleOptions.length > 0 ? "Select job title" : "Select fields above to see job titles"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-popover z-[200]">
+                        {jobTitleOptions.length > 0 ? (
+                          jobTitleOptions.map((title) => (
+                            <SelectItem key={title} value={title}>
+                              {title}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">
+                            Please select Sector, Segment & Designation first
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  ) : (
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={jobTitleOptions.length > 0 ? "Select job title" : "Select fields above to see job titles"} />
-                      </SelectTrigger>
+                      <Input placeholder={activeConfig.jobTitlePlaceholder || "e.g., Senior Software Engineer"} {...field} />
                     </FormControl>
-                    <SelectContent className="bg-popover z-[200]">
-                      {jobTitleOptions.length > 0 ? (
-                        jobTitleOptions.map((title) => (
-                          <SelectItem key={title} value={title}>
-                            {title}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="px-3 py-2 text-sm text-muted-foreground">
-                          Please select Sector, Segment & Designation first
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
