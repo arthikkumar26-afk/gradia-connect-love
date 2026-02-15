@@ -428,8 +428,8 @@ const JobsResults = () => {
 
         {/* Job Details Side Panel */}
         {selectedJob && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={closeJobDetails}>
-            <Card className="w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-slide-up" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-6" onClick={closeJobDetails}>
+            <Card className="w-full max-w-3xl max-h-[75vh] overflow-hidden flex flex-col animate-slide-up" onClick={(e) => e.stopPropagation()}>
               {/* Header with Apply Now at top */}
               <CardHeader className="pb-4 border-b flex-shrink-0 bg-gradient-card">
                 <div className="flex items-start justify-between">
