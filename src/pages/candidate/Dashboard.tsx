@@ -1793,13 +1793,37 @@ const CandidateDashboard = () => {
                 {/* AI Resume Analysis Section */}
                 <Card className="mb-6 overflow-hidden border-border">
                   <CardHeader className="bg-gradient-to-r from-accent/10 via-primary/5 to-accent/10 pb-4">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-accent/20 rounded-lg">
-                        <Sparkles className="h-5 w-5 text-accent" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-accent/20 rounded-lg">
+                          <Sparkles className="h-5 w-5 text-accent" />
+                        </div>
+                        <CardTitle className="text-lg font-semibold text-foreground">
+                          AI Detected Profile Details
+                        </CardTitle>
                       </div>
-                      <CardTitle className="text-lg font-semibold text-foreground">
-                        AI Detected Profile Details
-                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={resumeInputRef}
+                          type="file"
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={handleResumeUpload}
+                          className="hidden"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => resumeInputRef.current?.click()}
+                          disabled={isUploadingResume}
+                        >
+                          {isUploadingResume ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4 mr-2" />
+                          )}
+                          {isUploadingResume ? 'Analyzing...' : (profile?.resume_url ? 'Update Resume' : 'Upload Resume')}
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-4">
@@ -2001,26 +2025,6 @@ const CandidateDashboard = () => {
 
                         {/* Action Buttons */}
                         <div className="mt-4 flex flex-wrap gap-2">
-                          <input
-                            ref={resumeInputRef}
-                            type="file"
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                            onChange={handleResumeUpload}
-                            className="hidden"
-                          />
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => resumeInputRef.current?.click()}
-                            disabled={isUploadingResume}
-                          >
-                            {isUploadingResume ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                              <Upload className="h-4 w-4 mr-2" />
-                            )}
-                            {isUploadingResume ? 'Analyzing...' : (profile?.resume_url ? 'Update Resume' : 'Upload Resume')}
-                          </Button>
                           <Button 
                             variant="outline" 
                             size="sm"
