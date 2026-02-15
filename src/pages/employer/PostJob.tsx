@@ -429,7 +429,7 @@ const PostJob = () => {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="standard">Standard (MCQ-based)</SelectItem>
-                            <SelectItem value="technical">Technical (Coding + MCQ)</SelectItem>
+                            <SelectItem value="it_corporate">IT Corporate (Coding + MCQ)</SelectItem>
                             <SelectItem value="education">Education (Includes Demo Video Round)</SelectItem>
                             <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
                             <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
@@ -438,7 +438,7 @@ const PostJob = () => {
                         </Select>
                         <p className="text-xs text-muted-foreground mt-1">
                           {field.value === 'education' && "📹 Includes Demo Video round"}
-                          {field.value === 'technical' && "💻 Includes coding assessments"}
+                          {field.value === 'it_corporate' && "💻 Includes coding assessments"}
                           {field.value === 'sales' && "📊 Includes presentation assessment"}
                           {field.value === 'management' && "📋 Includes case study analysis"}
                           {field.value === 'standard' && "📝 Standard MCQ-based interviews"}

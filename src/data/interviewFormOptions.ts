@@ -144,9 +144,9 @@ const educationConfig: InterviewTypeFormConfig = {
   ],
 };
 
-// ─── Technical (IT) ───
-const technicalConfig: InterviewTypeFormConfig = {
-  interviewType: 'technical',
+// ─── IT Corporate ───
+const itCorporateConfig: InterviewTypeFormConfig = {
+  interviewType: 'it_corporate',
   jobTitlePlaceholder: 'e.g., Senior Full Stack Developer',
   departmentLabel: 'Department',
   departmentPlaceholder: 'e.g., Engineering',
@@ -393,7 +393,7 @@ const standardConfig: InterviewTypeFormConfig = {
 // Map of interview type → config
 const configMap: Record<string, InterviewTypeFormConfig> = {
   education: educationConfig,
-  technical: technicalConfig,
+  it_corporate: itCorporateConfig,
   sales: salesConfig,
   management: managementConfig,
   standard: standardConfig,
