@@ -34,10 +34,10 @@ const ImpactNumbers = () => {
     <section ref={sectionRef} className="py-20 bg-gradient-hero">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
+         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Gradia in Numbers
           </h2>
-          <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
             Our impact speaks through the careers we've built and the partnerships we've forged
           </p>
         </div>
@@ -53,14 +53,14 @@ const ImpactNumbers = () => {
                 transition: `all 0.6s ease-out ${index * 0.1}s`
               }}
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm mb-4 group-hover:scale-110 transition-transform duration-300">
-                <stat.icon className="h-8 w-8 text-primary-foreground" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm mb-4 group-hover:scale-110 transition-transform duration-300">
+                <stat.icon className="h-8 w-8 text-white" />
               </div>
-              <div className="text-3xl md:text-4xl font-bold text-primary-foreground mb-2">
+              <div className="text-3xl md:text-4xl font-bold text-white mb-2">
                 <AnimatedNumber value={stat.value} isVisible={isVisible} />
                 {stat.suffix}
               </div>
-              <div className="text-sm text-primary-foreground/70 font-medium">
+              <div className="text-sm text-white/70 font-medium">
                 {stat.label}
               </div>
             </div>
