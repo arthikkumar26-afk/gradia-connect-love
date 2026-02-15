@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import ManualQuestionCreator, { ManualQuestion } from "@/components/admin/ManualQuestionCreator";
+import { Switch } from "@/components/ui/switch";
 import {
   Sidebar,
   SidebarContent,
@@ -85,6 +86,7 @@ export default function MockInterviewPipeline() {
   const [isParsing, setIsParsing] = useState(false);
   const [activeTab, setActiveTab] = useState("questions");
   const [createMode, setCreateMode] = useState<'pdf' | 'manual'>('pdf');
+  const [aiQuestionsEnabled, setAiQuestionsEnabled] = useState(false);
   const [manualQuestionsSets, setManualQuestionsSets] = useState<ManualQuestion[][]>([[], [], [], [], [], [], [], [], [], []]);
   const [activeManualSet, setActiveManualSet] = useState(0);
   const setLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -1172,7 +1174,25 @@ export default function MockInterviewPipeline() {
               </div>
             )}
 
-            {/* Creation Mode Tabs */}
+            {/* AI Questions Toggle */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-1">
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4 text-primary" />
+                  AI Questions
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  When enabled, AI will generate questions based on the candidate's resume and profile automatically
+                </p>
+              </div>
+              <Switch
+                checked={aiQuestionsEnabled}
+                onCheckedChange={setAiQuestionsEnabled}
+              />
+            </div>
+
+            {/* Creation Mode Tabs - hidden when AI Questions is enabled */}
+            {!aiQuestionsEnabled && (
             <Tabs value={createMode} onValueChange={(v) => setCreateMode(v as 'pdf' | 'manual')} className="w-full">
               <TabsList className="grid w-full grid-cols-2 max-w-md">
                 <TabsTrigger value="pdf" className="flex items-center gap-2">
@@ -1404,6 +1424,23 @@ export default function MockInterviewPipeline() {
                 </div>
               </TabsContent>
             </Tabs>
+            )}
+
+            {/* AI Questions Info when enabled */}
+            {aiQuestionsEnabled && (
+              <div className="p-6 border rounded-lg bg-primary/5 border-primary/20 space-y-3">
+                <div className="flex items-center gap-2 text-primary font-semibold">
+                  <CheckCircle2 className="h-5 w-5" />
+                  AI Questions Mode Active
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  AI will automatically generate 10 MCQ questions tailored to each candidate's resume, skills, and experience level for the selected industry ({newPaper.industryCategory || 'not selected'}), segment ({newPaper.segment || 'not selected'}), and designation ({newPaper.designation || 'not selected'}).
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  No manual question papers needed — questions are generated dynamically during the mock interview.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
