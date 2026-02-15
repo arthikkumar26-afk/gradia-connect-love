@@ -13,8 +13,11 @@ import {
   CheckCircle,
   Target,
   Shield,
-  Zap
+  Zap,
+  Play
 } from "lucide-react";
+import candidateDemo from "@/assets/candidate-demo.mp4";
+import employerDemo from "@/assets/employer-demo.mp4";
 
 const Index = () => {
   const features = [
@@ -134,7 +137,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {steps.map((step, index) => (
               <div key={index} className="text-center">
                 <div className="relative mb-6">
@@ -149,6 +152,55 @@ const Index = () => {
                 <p className="text-muted-foreground">{step.description}</p>
               </div>
             ))}
+          </div>
+
+          {/* Demo Videos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <Card className="overflow-hidden hover:shadow-medium transition-all duration-200">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Users className="h-5 w-5 text-accent" />
+                  <Badge variant="secondary">For Candidates</Badge>
+                </div>
+                <CardTitle className="text-xl">Candidate Journey</CardTitle>
+                <CardDescription>See how candidates create profiles, discover jobs, and land their dream roles.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <video
+                  className="w-full aspect-video object-cover"
+                  controls
+                  preload="metadata"
+                  poster=""
+                  playsInline
+                >
+                  <source src={candidateDemo} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden hover:shadow-medium transition-all duration-200">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Building2 className="h-5 w-5 text-accent" />
+                  <Badge variant="secondary">For Employers</Badge>
+                </div>
+                <CardTitle className="text-xl">Employer Dashboard</CardTitle>
+                <CardDescription>See how employers post jobs, manage pipelines, and hire top talent effortlessly.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <video
+                  className="w-full aspect-video object-cover"
+                  controls
+                  preload="metadata"
+                  poster=""
+                  playsInline
+                >
+                  <source src={employerDemo} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="text-center mt-12">
