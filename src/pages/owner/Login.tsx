@@ -92,42 +92,42 @@ const OwnerLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">
         <Link 
           to="/" 
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-8"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Home
         </Link>
 
-        <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in border-2 border-purple-200 dark:border-purple-800">
-          <div className="flex justify-center mb-6">
+        <div className="bg-card rounded-lg shadow-large p-6 animate-scale-in border-2 border-purple-200 dark:border-purple-800">
+          <div className="flex justify-center mb-3">
             <img 
               src={gradiaLogo} 
               alt="Gradia - Your Next Step" 
-              className="h-20 w-auto object-contain"
+              className="h-14 w-auto object-contain"
             />
           </div>
 
-          <div className="flex justify-center mb-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-              <Crown className="h-5 w-5" />
-              <span className="font-semibold">Owner Portal</span>
+          <div className="flex justify-center mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+              <Crown className="h-4 w-4" />
+              <span className="font-semibold text-sm">Owner Portal</span>
             </div>
           </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="text-center mb-5">
+            <h1 className="text-2xl font-bold text-foreground mb-1">
               Owner Login
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Sign in for full system access
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Owner Email</Label>
               <Input
@@ -163,14 +163,14 @@ const OwnerLogin = () => {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+          <div className="mt-4 p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
             <p className="text-xs text-muted-foreground text-center">
               👑 This is the highest-level access portal. All activities are logged and audited. Unauthorized access attempts will be reported.
             </p>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-4 text-center text-sm text-muted-foreground">
           <p>
             Looking for other portals?{" "}
             <Link to="/admin/login" className="text-accent hover:text-accent-hover transition-colors font-medium">
