@@ -107,6 +107,18 @@ const Users = () => {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [blockReason, setBlockReason] = useState<string>("");
+
+  const blockReasons = [
+    "Violation of Terms of Service",
+    "Suspicious or fraudulent activity",
+    "Inappropriate content or behavior",
+    "Multiple account violations",
+    "Spam or misuse of platform",
+    "Identity verification failure",
+    "Harassment or abuse reported",
+    "Other policy violation",
+  ];
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -211,21 +223,49 @@ const Users = () => {
   };
 
   const handleBlockUser = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !blockReason) return;
     setActionLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-user-roles', {
-        body: { action: 'block-user', targetUserId: selectedUser.id }
+        body: { action: 'block-user', targetUserId: selectedUser.id, blockReason }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast({ title: "User Blocked", description: `${selectedUser.full_name} has been blocked.` });
+
+      // Send notification email to the blocked user
+      try {
+        await supabase.functions.invoke('send-notification-email', {
+          body: {
+            to: selectedUser.email,
+            subject: 'Account Temporarily On Hold - Gradia',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #ea580c;">Account Temporarily On Hold</h2>
+                <p>Dear ${selectedUser.full_name},</p>
+                <p>We regret to inform you that your Gradia account has been temporarily placed on hold.</p>
+                <div style="background: #fff7ed; border-left: 4px solid #ea580c; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+                  <strong>Reason:</strong> ${blockReason}
+                </div>
+                <p>During this period, you will not be able to access your account or use any platform services.</p>
+                <p>If you believe this action was taken in error, or if you would like to discuss this further, please contact our support team at <a href="mailto:support@gradia.co.in">support@gradia.co.in</a>.</p>
+                <p>Thank you for your understanding.</p>
+                <p style="color: #6b7280; margin-top: 24px;">Best regards,<br/>Gradia Team</p>
+              </div>
+            `,
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send block notification email:', emailError);
+      }
+
+      toast({ title: "User Blocked", description: `${selectedUser.full_name} has been blocked and notified via email.` });
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Failed to block user", variant: "destructive" });
     } finally {
       setActionLoading(false);
       setBlockDialogOpen(false);
       setSelectedUser(null);
+      setBlockReason("");
     }
   };
 
@@ -562,19 +602,35 @@ const Users = () => {
       </AlertDialog>
 
       {/* Block Confirmation Dialog */}
-      <AlertDialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
-        <AlertDialogContent>
+      <AlertDialog open={blockDialogOpen} onOpenChange={(open) => { setBlockDialogOpen(open); if (!open) setBlockReason(""); }}>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Block User Profile</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to block <strong>{selectedUser?.full_name}</strong> ({selectedUser?.email})? They will not be able to log in until unblocked.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="py-2">
+            <label className="text-sm font-medium text-foreground mb-2 block">Select Reason for Blocking</label>
+            <Select value={blockReason} onValueChange={setBlockReason}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a reason..." />
+              </SelectTrigger>
+              <SelectContent>
+                {blockReasons.map((reason) => (
+                  <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!blockReason && blockDialogOpen && (
+              <p className="text-xs text-muted-foreground mt-1.5">A reason is required to block a user.</p>
+            )}
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBlockUser}
-              disabled={actionLoading}
+              disabled={actionLoading || !blockReason}
               className="bg-orange-600 text-white hover:bg-orange-700"
             >
               {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
