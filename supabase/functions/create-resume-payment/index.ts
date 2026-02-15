@@ -31,7 +31,7 @@ serve(async (req) => {
     }
 
     const orderData = {
-      amount: 10 * 100, // ₹10 in paise
+      amount: 249 * 100, // ₹249 in paise
       currency: 'INR',
       receipt: `res_${candidate_id.substring(0, 8)}_${Date.now()}`,
       notes: {
