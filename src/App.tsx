@@ -120,7 +120,6 @@ import SponsorSignup from "./pages/sponsor/SponsorSignup";
 import SponsorBenefits from "./pages/sponsor/SponsorBenefits";
 import SponsorLanding from "./pages/sponsor/SponsorLanding";
 import EventReport from "./pages/sponsor/EventReport";
-import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
 
@@ -302,9 +301,6 @@ const MainRoutes = () => (
       <Route path="/marketing-toolkit" element={<MarketingToolkit />} />
       <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
       <Route path="/sponsor-support-portal" element={<SupportPortal />} />
-
-      {/* Demo Page */}
-      <Route path="/demo" element={<Demo />} />
 
       {/* Interview & Booking pages - standalone */}
       <Route path="/interview" element={<Interview />} />
