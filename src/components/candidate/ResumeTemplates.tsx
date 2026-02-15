@@ -28,7 +28,6 @@ interface ResumeData {
   phone: string;
   location: string;
   summary: string;
-  profilePicture?: string;
   experience: Experience[];
   education: Education[];
   skills: string[];
@@ -53,20 +52,11 @@ export function ExecutiveTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
       {/* Header - Name & Summary */}
-      <div className="mb-3 flex items-start gap-3">
-        {data.profilePicture && (
-          <img 
-            src={data.profilePicture} 
-            alt={data.fullName} 
-            className={`${scale ? 'w-8 h-8' : 'w-16 h-16'} rounded-full object-cover border-2 border-[#1e3a5f] shrink-0`}
-          />
+      <div className="mb-3">
+        <h1 className={`${scale ? 'text-[12px]' : 'text-xl'} font-bold text-[#1e3a5f]`}>{data.fullName || "Your Name"}</h1>
+        {data.summary && (
+          <p className="text-[#555] mt-1 leading-relaxed">{data.summary}</p>
         )}
-        <div>
-          <h1 className={`${scale ? 'text-[12px]' : 'text-xl'} font-bold text-[#1e3a5f]`}>{data.fullName || "Your Name"}</h1>
-          {data.summary && (
-            <p className="text-[#555] mt-1 leading-relaxed">{data.summary}</p>
-          )}
-        </div>
       </div>
 
       <div className="h-[1px] bg-[#1e3a5f] mb-3" />
@@ -162,18 +152,13 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
       {/* Header */}
-      <div className="border-b-2 border-[#2563eb] pb-3 mb-3 flex items-start gap-3">
-        {data.profilePicture && (
-          <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-14 h-14'} rounded-full object-cover border-2 border-[#2563eb] shrink-0`} />
-        )}
-        <div>
+      <div className="border-b-2 border-[#2563eb] pb-3 mb-3">
         <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#1e293b]`}>{data.fullName || "Your Name"}</h1>
         <p className="text-[#2563eb] font-medium">{data.experience[0]?.title || "Professional"}</p>
         <div className="flex flex-wrap gap-2 mt-1 text-[#64748b]">
           {data.email && <span className="flex items-center gap-0.5"><Mail className="h-2 w-2" />{data.email}</span>}
           {data.phone && <span className="flex items-center gap-0.5"><Phone className="h-2 w-2" />{data.phone}</span>}
           {data.location && <span className="flex items-center gap-0.5"><MapPin className="h-2 w-2" />{data.location}</span>}
-        </div>
         </div>
       </div>
 
@@ -255,18 +240,13 @@ export function ModernAccentTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} min-h-[400px]`}>
       {/* Header with accent */}
-      <div className="bg-gradient-to-r from-[#0f766e] to-[#14b8a6] text-white p-3 flex items-start gap-3">
-        {data.profilePicture && (
-          <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-14 h-14'} rounded-full object-cover border-2 border-white/50 shrink-0`} />
-        )}
-        <div>
+      <div className="bg-gradient-to-r from-[#0f766e] to-[#14b8a6] text-white p-3">
         <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold`}>{data.fullName || "Your Name"}</h1>
         <p className="opacity-90">{data.experience[0]?.title || "Professional"}</p>
         <div className="flex flex-wrap gap-2 mt-1 opacity-80">
           {data.email && <span>{data.email}</span>}
           {data.phone && <span>• {data.phone}</span>}
           {data.location && <span>• {data.location}</span>}
-        </div>
         </div>
       </div>
 
@@ -350,18 +330,14 @@ export function BoldSplitTemplate({ data, scale }: ResumeTemplateProps) {
         {/* Left accent bar */}
         <div className="w-1 bg-gradient-to-b from-[#7c3aed] to-[#ec4899]" />
         <div className="flex-1 p-3">
-          <div className="mb-3 flex items-start gap-3">
-            {data.profilePicture && (
-              <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-14 h-14'} rounded-full object-cover border-2 border-[#7c3aed] shrink-0`} />
-            )}
-            <div>
+          {/* Name header */}
+          <div className="mb-3">
             <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-black text-[#1e1b4b]`}>{(data.fullName || "Your Name").toUpperCase()}</h1>
             <p className="text-[#7c3aed] font-semibold">{data.experience[0]?.title || "Professional"}</p>
             <div className="flex flex-wrap gap-2 mt-1 text-[#6b7280]">
               {data.email && <span>{data.email}</span>}
               {data.phone && <span>| {data.phone}</span>}
               {data.location && <span>| {data.location}</span>}
-            </div>
             </div>
           </div>
 
@@ -437,9 +413,6 @@ export function MinimalistTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
       <div className="text-center mb-3">
-        {data.profilePicture && (
-          <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-16 h-16'} rounded-full object-cover border-2 border-[#d1d5db] mx-auto mb-2`} />
-        )}
         <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-light tracking-[0.3em] text-[#111827] uppercase`}>{data.fullName || "Your Name"}</h1>
         <div className="w-12 h-px bg-[#d1d5db] mx-auto my-1.5" />
         <p className="text-[#6b7280] tracking-wider">{data.experience[0]?.title || "Professional"}</p>
@@ -499,14 +472,9 @@ export function CorporateTemplate({ data, scale }: ResumeTemplateProps) {
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} flex min-h-[400px]`}>
       {/* Right sidebar */}
       <div className="w-[65%] p-3 space-y-3">
-        <div className="flex items-start gap-3">
-          {data.profilePicture && (
-            <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-14 h-14'} rounded-full object-cover border-2 border-[#ea580c] shrink-0`} />
-          )}
-          <div>
+        <div>
           <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#0f172a]`}>{data.fullName || "Your Name"}</h1>
           <p className="text-[#ea580c] font-medium">{data.experience[0]?.title || "Professional"}</p>
-          </div>
         </div>
 
         {data.summary && (
@@ -572,13 +540,9 @@ export function TwoColumnTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} min-h-[400px]`}>
       <div className="bg-[#1e40af] text-white p-3 flex items-end gap-3">
-        {data.profilePicture ? (
-          <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-10 h-10'} rounded-full object-cover border-2 border-white/30 shrink-0`} />
-        ) : (
         <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
           <User className={`${scale ? 'h-3 w-3' : 'h-5 w-5'}`} />
         </div>
-        )}
         <div>
           <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold`}>{data.fullName || "Your Name"}</h1>
           <p className="opacity-80">{data.experience[0]?.title || "Professional"}</p>
@@ -654,13 +618,9 @@ export function WarmSidebarTemplate({ data, scale }: ResumeTemplateProps) {
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} flex min-h-[400px]`}>
       <div className="w-[35%] bg-[#fef3c7] p-3 space-y-3">
         <div className="text-center">
-          {data.profilePicture ? (
-            <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-10 h-10'} rounded-full object-cover border-2 border-[#d97706] mx-auto mb-1`} />
-          ) : (
           <div className="w-10 h-10 mx-auto rounded-full bg-[#d97706] flex items-center justify-center mb-1">
             <User className={`${scale ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
           </div>
-          )}
           <h2 className={`${scale ? 'text-[8px]' : 'text-sm'} font-bold text-[#78350f]`}>{data.fullName || "Your Name"}</h2>
           <p className="text-[#92400e]">{data.experience[0]?.title || "Professional"}</p>
         </div>
@@ -729,9 +689,6 @@ export function TechGridTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-[#fafafa] ${scale ? 'text-[6px]' : 'text-xs'} p-3 min-h-[400px]`}>
       <div className="flex items-center gap-3 mb-3 pb-2 border-b-2 border-[#18181b]">
-        {data.profilePicture && (
-          <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-12 h-12'} rounded object-cover border border-[#3f3f46] shrink-0`} />
-        )}
         <div>
           <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-black text-[#18181b] tracking-tight`}>{data.fullName || "Your Name"}</h1>
           <p className="text-[#a1a1aa] uppercase tracking-widest font-medium">{data.experience[0]?.title || "Professional"}</p>
@@ -809,9 +766,6 @@ export function ClassicSerifTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`} style={{ fontFamily: 'Georgia, serif' }}>
       <div className="text-center border-b-2 border-[#1f2937] pb-2 mb-3">
-        {data.profilePicture && (
-          <img src={data.profilePicture} alt={data.fullName} className={`${scale ? 'w-8 h-8' : 'w-14 h-14'} rounded-full object-cover border-2 border-[#1f2937] mx-auto mb-1`} />
-        )}
         <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#1f2937]`}>{data.fullName || "Your Name"}</h1>
         <div className="flex justify-center gap-2 mt-0.5 text-[#6b7280]">
           {data.email && <span>{data.email}</span>}

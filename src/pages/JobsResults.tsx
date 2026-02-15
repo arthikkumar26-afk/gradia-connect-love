@@ -428,8 +428,8 @@ const JobsResults = () => {
 
         {/* Job Details Side Panel */}
         {selectedJob && (
-          <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-6" onClick={closeJobDetails}>
-            <Card className="w-full max-w-3xl max-h-[75vh] overflow-hidden flex flex-col animate-slide-up" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4">
+            <Card className="w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col animate-slide-up">
               {/* Header with Apply Now at top */}
               <CardHeader className="pb-4 border-b flex-shrink-0 bg-gradient-card">
                 <div className="flex items-start justify-between">
@@ -457,7 +457,10 @@ const JobsResults = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={closeJobDetails}>
+                      <X className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="default" 
                       size="lg" 
@@ -469,9 +472,6 @@ const JobsResults = () => {
                     >
                       Apply Now
                       <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={closeJobDetails}>
-                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -590,6 +590,19 @@ const JobsResults = () => {
                   </>
                 )}
 
+                <Separator />
+
+                {/* Final Apply Section */}
+                <div className="text-center gradient-card p-6 rounded-lg border">
+                  <h3 className="font-semibold text-xl mb-2">Ready to Apply?</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Join {selectedJob.company} and take the next step in your career journey.
+                  </p>
+                  <Button variant="default" size="lg" className="shadow-glow">
+                    Apply for this Position
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

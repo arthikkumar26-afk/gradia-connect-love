@@ -82,8 +82,8 @@ const JobDetailsPopup = ({ job, open, onOpenChange }: JobDetailsPopupProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col overflow-hidden top-[50%] translate-y-[-50%]">
-        <DialogHeader className="space-y-3 flex-shrink-0">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader className="space-y-3">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
               <Building2 className="h-5 w-5 text-primary" />
@@ -95,10 +95,18 @@ const JobDetailsPopup = ({ job, open, onOpenChange }: JobDetailsPopupProps) => {
                 <span>{job.company}</span>
               </div>
             </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8" 
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-1">
+        <div className="space-y-4 mt-4">
           {/* Key Details */}
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             <div className="flex items-center gap-2">
@@ -160,10 +168,10 @@ const JobDetailsPopup = ({ job, open, onOpenChange }: JobDetailsPopupProps) => {
           )}
         </div>
 
-        <Separator className="my-4 flex-shrink-0" />
+        <Separator className="my-4" />
 
         {/* Actions */}
-        <div className="flex gap-3 justify-end flex-shrink-0">
+        <div className="flex gap-3 justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
