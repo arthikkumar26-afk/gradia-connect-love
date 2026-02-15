@@ -25,7 +25,10 @@ import {
   CreditCard,
   ClipboardList,
   UserCog,
-  MessageSquare
+  MessageSquare,
+  Trash2,
+  Ban,
+  MoreHorizontal
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +62,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatDistanceToNow, format } from "date-fns";
 
 interface User {
@@ -84,6 +103,10 @@ const Users = () => {
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -166,6 +189,45 @@ const Users = () => {
     
     return matchesSearch && matchesRole;
   });
+
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'delete-user', targetUserId: selectedUser.id }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "User Deleted", description: `${selectedUser.full_name} has been deleted.` });
+      setUsers(prev => prev.filter(u => u.id !== selectedUser.id));
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to delete user", variant: "destructive" });
+    } finally {
+      setActionLoading(false);
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!selectedUser) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'block-user', targetUserId: selectedUser.id }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "User Blocked", description: `${selectedUser.full_name} has been blocked.` });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to block user", variant: "destructive" });
+    } finally {
+      setActionLoading(false);
+      setBlockDialogOpen(false);
+      setSelectedUser(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -421,18 +483,43 @@ const Users = () => {
                               </div>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  toast({
-                                    title: "View User",
-                                    description: `Viewing ${user.full_name}'s profile.`,
-                                  });
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    toast({
+                                      title: "View User",
+                                      description: `Viewing ${user.full_name}'s profile.`,
+                                    });
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="sm" variant="ghost">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      className="text-orange-600"
+                                      onClick={() => { setSelectedUser(user); setBlockDialogOpen(true); }}
+                                    >
+                                      <Ban className="h-4 w-4 mr-2" />
+                                      Block Profile
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={() => { setSelectedUser(user); setDeleteDialogOpen(true); }}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete User
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -450,6 +537,52 @@ const Users = () => {
           </main>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete <strong>{selectedUser?.full_name}</strong> ({selectedUser?.email})? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={actionLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Block Confirmation Dialog */}
+      <AlertDialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block User Profile</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to block <strong>{selectedUser?.full_name}</strong> ({selectedUser?.email})? They will not be able to log in until unblocked.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBlockUser}
+              disabled={actionLoading}
+              className="bg-orange-600 text-white hover:bg-orange-700"
+            >
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+              Block
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 };
