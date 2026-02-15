@@ -1573,6 +1573,7 @@ export type Database = {
           resume_url: string | null
           role: string
           segment: string | null
+          status: string
           updated_at: string | null
           website: string | null
         }
@@ -1613,6 +1614,7 @@ export type Database = {
           resume_url?: string | null
           role: string
           segment?: string | null
+          status?: string
           updated_at?: string | null
           website?: string | null
         }
@@ -1653,6 +1655,7 @@ export type Database = {
           resume_url?: string | null
           role?: string
           segment?: string | null
+          status?: string
           updated_at?: string | null
           website?: string | null
         }
