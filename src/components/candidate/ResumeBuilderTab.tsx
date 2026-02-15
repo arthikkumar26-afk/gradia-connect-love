@@ -39,6 +39,7 @@ interface ResumeData {
   phone: string;
   location: string;
   summary: string;
+  profilePicture?: string;
   experience: Experience[];
   education: Education[];
   skills: string[];
@@ -128,6 +129,7 @@ export default function ResumeBuilderTab() {
           email: profile.email || "",
           phone: profile.mobile || "",
           location: profile.location || `${profile.current_district || ""}, ${profile.current_state || ""}`.replace(/^, |, $/g, ""),
+          profilePicture: profile.profile_picture || "",
         }));
       }
 
