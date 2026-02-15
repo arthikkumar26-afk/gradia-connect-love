@@ -92,42 +92,42 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">
         <Link 
           to="/" 
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-8"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Home
         </Link>
 
-        <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in">
-          <div className="flex justify-center mb-6">
+        <div className="bg-card rounded-lg shadow-large p-6 animate-scale-in">
+          <div className="flex justify-center mb-3">
             <img 
               src={gradiaLogo} 
               alt="Gradia - Your Next Step" 
-              className="h-20 w-auto object-contain"
+              className="h-14 w-auto object-contain"
             />
           </div>
 
-          <div className="flex justify-center mb-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
-              <ShieldCheck className="h-5 w-5" />
-              <span className="font-semibold">Admin Portal</span>
+          <div className="flex justify-center mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
+              <ShieldCheck className="h-4 w-4" />
+              <span className="font-semibold text-sm">Admin Portal</span>
             </div>
           </div>
 
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="text-center mb-5">
+            <h1 className="text-2xl font-bold text-foreground mb-1">
               Admin Login
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Sign in to access platform management
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Admin Email</Label>
               <Input
@@ -163,14 +163,14 @@ const AdminLogin = () => {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
+          <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs text-muted-foreground text-center">
               🔒 This is a secure admin portal. All login attempts are monitored and logged for security purposes.
             </p>
           </div>
         </div>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-4 text-center text-sm text-muted-foreground">
           <p>
             Not an admin?{" "}
             <Link to="/candidate/login" className="text-accent hover:text-accent-hover transition-colors font-medium">

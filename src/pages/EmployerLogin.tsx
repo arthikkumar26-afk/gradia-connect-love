@@ -107,40 +107,40 @@ const EmployerLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">
         {/* Back to Home Link */}
         <Link 
           to="/" 
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-8"
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Home
         </Link>
 
         {/* Login Card */}
-        <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in">
+        <div className="bg-card rounded-lg shadow-large p-6 animate-scale-in">
           {/* Logo */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-4">
             <img 
               src={gradiaLogo} 
               alt="Gradia - Your Next Step" 
-              className="h-15 w-auto object-contain"
+              className="h-14 w-auto object-contain"
             />
           </div>
 
           {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="text-center mb-5">
+            <h1 className="text-2xl font-bold text-foreground mb-1">
               Employers Login
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Sign in to access your employer dashboard
             </p>
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
@@ -198,7 +198,7 @@ const EmployerLogin = () => {
           </form>
 
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border"></div>
             </div>
@@ -211,7 +211,7 @@ const EmployerLogin = () => {
 
           {/* Sign Up Link */}
           <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-3">
               Don't have an employer account yet?
             </p>
             <Button variant="outline" size="lg" className="w-full" asChild>
@@ -221,7 +221,7 @@ const EmployerLogin = () => {
         </div>
 
         {/* Additional Links */}
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-4 text-center text-sm text-muted-foreground">
           <p>
             Looking for a job?{" "}
             <Link to="/candidate/login" className="text-accent hover:text-accent-hover transition-colors font-medium">
