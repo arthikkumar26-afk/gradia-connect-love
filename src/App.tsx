@@ -87,6 +87,11 @@ import SubscribedCandidates from "./pages/admin/SubscribedCandidates";
 import OwnerLogin from "./pages/owner/Login";
 import OwnerDashboard from "./pages/owner/Dashboard";
 import OwnerInitialSetup from "./pages/owner/InitialSetup";
+import OwnerRevenueAnalytics from "./pages/owner/RevenueAnalytics";
+import OwnerSystemConfiguration from "./pages/owner/SystemConfiguration";
+import OwnerDatabaseManagement from "./pages/owner/DatabaseManagement";
+import OwnerAllJobsOverview from "./pages/owner/AllJobsOverview";
+import OwnerGrowthMetrics from "./pages/owner/GrowthMetrics";
 import MockInterviewPipeline from "./pages/admin/MockInterviewPipeline";
 import AdminManagement from "./pages/admin/Management";
 import ManagementFeedback from "./pages/admin/ManagementFeedback";
@@ -230,6 +235,11 @@ const MainRoutes = () => (
       <Route path="/owner/login" element={<OwnerLogin />} />
       <Route path="/owner/dashboard" element={<OwnerDashboard />} />
       <Route path="/owner/setup" element={<OwnerInitialSetup />} />
+      <Route path="/owner/revenue-analytics" element={<OwnerRevenueAnalytics />} />
+      <Route path="/owner/system-configuration" element={<OwnerSystemConfiguration />} />
+      <Route path="/owner/database-management" element={<OwnerDatabaseManagement />} />
+      <Route path="/owner/all-jobs" element={<OwnerAllJobsOverview />} />
+      <Route path="/owner/growth-metrics" element={<OwnerGrowthMetrics />} />
       <Route path="/owner" element={<OwnerDashboard />} />
 
       {/* Support & Community Routes */}

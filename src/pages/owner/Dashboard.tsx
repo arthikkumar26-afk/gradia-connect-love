@@ -94,12 +94,12 @@ const OwnerDashboard = () => {
   ];
 
   const ownerActions = [
-    { title: "Admin Management", description: "Manage admin accounts", icon: Shield },
-    { title: "Revenue Analytics", description: "Financial reports & insights", icon: BarChart3 },
-    { title: "System Configuration", description: "Core system settings", icon: Settings },
-    { title: "Database Management", description: "Data & backups", icon: Database },
-    { title: "All Jobs Overview", description: "Platform-wide job listings", icon: Briefcase },
-    { title: "Growth Metrics", description: "Track platform growth", icon: TrendingUp },
+    { title: "Admin Management", description: "Manage admin accounts", icon: Shield, path: "" },
+    { title: "Revenue Analytics", description: "Financial reports & insights", icon: BarChart3, path: "/owner/revenue-analytics" },
+    { title: "System Configuration", description: "Core system settings", icon: Settings, path: "/owner/system-configuration" },
+    { title: "Database Management", description: "Data & backups", icon: Database, path: "/owner/database-management" },
+    { title: "All Jobs Overview", description: "Platform-wide job listings", icon: Briefcase, path: "/owner/all-jobs" },
+    { title: "Growth Metrics", description: "Track platform growth", icon: TrendingUp, path: "/owner/growth-metrics" },
   ];
 
   return (
@@ -177,7 +177,13 @@ const OwnerDashboard = () => {
                 <Card 
                   key={index} 
                   className="hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-700 transition-all cursor-pointer"
-                  onClick={() => action.title === "Admin Management" && setActiveTab("user-roles")}
+                  onClick={() => {
+                    if (action.path) {
+                      navigate(action.path);
+                    } else {
+                      setActiveTab("user-roles");
+                    }
+                  }}
                 >
                   <CardHeader>
                     <div className="flex items-center gap-3">
