@@ -1439,6 +1439,48 @@ export default function MockInterviewPipeline() {
                 <p className="text-xs text-muted-foreground">
                   No manual question papers needed — questions are generated dynamically during the mock interview.
                 </p>
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={async () => {
+                      if (!newPaper.industryCategory) { toast.error('Please select an industry category'); return; }
+                      if (!newPaper.segment) { toast.error('Please select a segment'); return; }
+                      if (!newPaper.designation) { toast.error('Please select a designation'); return; }
+                      setIsUploading(true);
+                      try {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
+                        const subjectInfo = newPaper.coreSubject ? ` - ${newPaper.coreSubject}` : '';
+                        const categoryInfo = newPaper.category ? ` - ${newPaper.category}` : '';
+                        const autoTitle = `[AI] ${newPaper.industryCategory} - ${newPaper.segment}${categoryInfo}${classInfo}${subjectInfo} - ${newPaper.designation}`;
+                        const { error } = await supabase.from('interview_question_papers').insert({
+                          title: autoTitle,
+                          description: 'AI-generated questions based on candidate resume',
+                          stage_type: newPaper.stage_type,
+                          pdf_url: 'ai-generated',
+                          created_by: user?.id,
+                          segment: newPaper.segment || null,
+                          category: newPaper.category || null,
+                          class_level: newPaper.classLevel || null,
+                          designation: newPaper.designation || null,
+                        });
+                        if (error) throw error;
+                        toast.success('AI Questions configuration saved!');
+                        resetForm();
+                        setAiQuestionsEnabled(false);
+                        loadPapers();
+                      } catch (error) {
+                        console.error('Error saving AI config:', error);
+                        toast.error('Failed to save AI questions configuration');
+                      } finally {
+                        setIsUploading(false);
+                      }
+                    }}
+                    disabled={isUploading || !newPaper.industryCategory || !newPaper.segment || !newPaper.designation}
+                  >
+                    {isUploading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Save AI Questions Config
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
