@@ -457,10 +457,7 @@ const JobsResults = () => {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={closeJobDetails}>
-                      <X className="h-4 w-4" />
-                    </Button>
+                  <div className="flex gap-2 items-center">
                     <Button 
                       variant="default" 
                       size="lg" 
@@ -472,6 +469,9 @@ const JobsResults = () => {
                     >
                       Apply Now
                       <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={closeJobDetails}>
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
