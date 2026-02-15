@@ -82,7 +82,7 @@ const JobDetailsPopup = ({ job, open, onOpenChange }: JobDetailsPopupProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col overflow-hidden top-[50%] translate-y-[-50%]">
         <DialogHeader className="space-y-3 flex-shrink-0">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-primary/10 rounded-lg">
