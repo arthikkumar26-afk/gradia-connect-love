@@ -1043,11 +1043,24 @@ const CandidateDashboard = () => {
 
   const fetchInterviewCount = async () => {
     if (!profile?.id) return;
+    // Get application job_ids to only count pipeline entries with matching applications
+    const { data: apps } = await supabase
+      .from('applications')
+      .select('job_id')
+      .eq('candidate_id', profile.id);
+    
+    if (!apps || apps.length === 0) {
+      setInterviewCount(0);
+      return;
+    }
+
+    const jobIds = apps.map(a => a.job_id);
     const { count } = await supabase
       .from('interview_candidates')
       .select('*', { count: 'exact', head: true })
       .eq('candidate_id', profile.id)
-      .eq('status', 'active');
+      .eq('status', 'active')
+      .in('job_id', jobIds);
     setInterviewCount(count || 0);
   };
 
