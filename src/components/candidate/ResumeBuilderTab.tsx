@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp, Camera, X } from "lucide-react";
 import ATSScoreCard from "./ATSScoreCard";
 import { toast as sonnerToast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +55,7 @@ export default function ResumeBuilderTab() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [mockTestData, setMockTestData] = useState<any>(null);
   const [newSkill, setNewSkill] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -352,6 +353,54 @@ export default function ResumeBuilderTab() {
       ...prev,
       skills: prev.skills.filter(s => s !== skill)
     }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      sonnerToast.error('Please upload an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      sonnerToast.error('Image must be less than 5MB');
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/resume-photo-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, profilePicture: urlData.publicUrl }));
+      setHasUnsavedChanges(true);
+      sonnerToast.success('Photo uploaded successfully');
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      sonnerToast.error('Failed to upload photo');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const removePhoto = () => {
+    setFormData(prev => ({ ...prev, profilePicture: undefined }));
     setHasUnsavedChanges(true);
   };
 
@@ -793,6 +842,53 @@ export default function ResumeBuilderTab() {
                 <CardTitle className="text-sm">Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 px-3 pb-3">
+                {/* Profile Photo Upload */}
+                <div className="flex items-center gap-3 pb-2 border-b border-border">
+                  {formData.profilePicture ? (
+                    <div className="relative">
+                      <img 
+                        src={formData.profilePicture} 
+                        alt="Profile" 
+                        className="w-16 h-16 rounded-full object-cover border-2 border-primary"
+                      />
+                      <button
+                        onClick={removePhoto}
+                        className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+                      <Camera className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-xs font-medium">Resume Photo</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={isUploadingPhoto}
+                        onClick={() => document.getElementById('resume-photo-input')?.click()}
+                      >
+                        {isUploadingPhoto ? (
+                          <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Uploading...</>
+                        ) : (
+                          <><Upload className="w-3 h-3 mr-1" /> {formData.profilePicture ? 'Change Photo' : 'Upload Photo'}</>
+                        )}
+                      </Button>
+                      <input
+                        id="resume-photo-input"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Full Name</Label>
