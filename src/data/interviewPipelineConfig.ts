@@ -171,7 +171,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
     ],
   },
   {
-    value: 'technical',
+    value: 'it_corporate',
     label: 'IT Corporate (Coding + MCQ)',
     pipelineTypes: [
       {
