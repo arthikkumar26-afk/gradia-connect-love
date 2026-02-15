@@ -886,20 +886,39 @@ const CandidateDashboard = () => {
 
       // Save work experience if extracted
       if (data.experience && Array.isArray(data.experience) && data.experience.length > 0) {
+        console.log('Saving work experience records:', data.experience.length);
+        
+        // Helper to normalize date strings from AI (YYYY-MM, YYYY-MM-DD, "Present", etc.) to valid date or null
+        const normalizeDate = (dateStr: string | null | undefined): string | null => {
+          if (!dateStr || dateStr.toLowerCase() === 'present' || dateStr.toLowerCase() === 'current' || dateStr.toLowerCase() === 'till date') {
+            return null;
+          }
+          // If already YYYY-MM-DD
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+          // If YYYY-MM, append -01
+          if (/^\d{4}-\d{2}$/.test(dateStr)) return `${dateStr}-01`;
+          // If just YYYY, append -01-01
+          if (/^\d{4}$/.test(dateStr)) return `${dateStr}-01-01`;
+          return null;
+        };
+
         for (let i = 0; i < data.experience.length; i++) {
           const exp = data.experience[i];
           if (exp.organization || exp.designation) {
-            await supabase.from('work_experience').insert({
+            const { error: expError } = await supabase.from('work_experience').insert({
               user_id: profile.id,
-              organization: exp.organization || null,
+              organization: exp.organization || 'Unknown Organization',
               designation: exp.designation || null,
               department: exp.department || null,
-              from_date: exp.from_date || null,
-              to_date: exp.to_date || null,
+              from_date: normalizeDate(exp.from_date),
+              to_date: normalizeDate(exp.to_date),
               place: exp.place || null,
               salary_per_month: exp.salary_per_month || null,
               display_order: i,
             });
+            if (expError) {
+              console.error('Error inserting experience record:', expError, exp);
+            }
           }
         }
         // Refresh experience records
