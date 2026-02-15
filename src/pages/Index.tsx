@@ -153,7 +153,7 @@ const Index = () => {
 
           <div className="text-center mt-12">
             <Button variant="cta" size="lg" asChild>
-              <Link to="/candidate/login">
+              <Link to="/signup">
                 Get Started Today
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Link>
