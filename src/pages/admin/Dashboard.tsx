@@ -55,8 +55,6 @@ interface AdminStats {
   totalJobs: number;
   placements: number;
   pendingJobs: number;
-  totalSponsors: number;
-  activeSponsors: number;
   totalApplications: number;
   recentUsers: Array<{
     id: string;
@@ -224,7 +222,7 @@ const AdminDashboard = () => {
 
   const pendingActions = [
     { title: "Pending Job Approvals", count: stats?.pendingJobs || 0, icon: Briefcase, status: "warning" },
-    { title: "Active Sponsors", count: stats?.activeSponsors || 0, icon: Building2, status: "success" },
+    
     { title: "Total Applications", count: stats?.totalApplications || 0, icon: FileText, status: "info" },
     { title: "Successful Placements", count: stats?.placements || 0, icon: CheckCircle2, status: "success" },
   ];
@@ -233,7 +231,7 @@ const AdminDashboard = () => {
     switch (role) {
       case 'candidate': return 'user';
       case 'employer': return 'company';
-      case 'sponsor': return 'sponsor';
+      
       default: return 'system';
     }
   };

@@ -93,33 +93,6 @@ import ManagementFeedback from "./pages/admin/ManagementFeedback";
 import LiveDemoView from "./pages/admin/LiveDemoView";
 import HRNegotiations from "./pages/admin/HRNegotiations";
 
-// Sponsor Pages
-import SponsorOverview from "./pages/sponsor/Overview";
-import Sponsorships from "./pages/sponsor/Sponsorships";
-import SponsorAnalytics from "./pages/sponsor/Analytics";
-import BrandingResources from "./pages/sponsor/Resources";
-import CandidateLeads from "./pages/sponsor/CandidateLeads";
-import MyStalls from "./pages/sponsor/MyStalls";
-import Messages from "./pages/sponsor/Messages";
-import Billing from "./pages/sponsor/Billing";
-import SponsorSettings from "./pages/sponsor/Settings";
-import BecomePartner from "./pages/sponsor/BecomePartner";
-import SponsorshipTiers from "./pages/sponsor/SponsorshipTiers";
-import CollaborationOpportunities from "./pages/sponsor/CollaborationOpportunities";
-import SubmitProposal from "./pages/sponsor/SubmitProposal";
-import FeaturedClients from "./pages/sponsor/FeaturedClients";
-import SuccessStories from "./pages/sponsor/SuccessStories";
-import PartnerTestimonials from "./pages/sponsor/PartnerTestimonials";
-import BrandingGuidelines from "./pages/sponsor/BrandingGuidelines";
-import MarketingToolkit from "./pages/sponsor/MarketingToolkit";
-import EventSponsorshipDeck from "./pages/sponsor/EventSponsorshipDeck";
-import SupportPortal from "./pages/sponsor/SupportPortal";
-import JobMelaCalendar from "./pages/sponsor/JobMelaCalendar";
-import SponsorLogin from "./pages/sponsor/SponsorLogin";
-import SponsorSignup from "./pages/sponsor/SponsorSignup";
-import SponsorBenefits from "./pages/sponsor/SponsorBenefits";
-import SponsorLanding from "./pages/sponsor/SponsorLanding";
-import EventReport from "./pages/sponsor/EventReport";
 
 const queryClient = new QueryClient();
 
@@ -269,38 +242,6 @@ const MainRoutes = () => (
       <Route path="/press" element={<PlaceholderPage title="Press & Media" />} />
       <Route path="/community-guidelines" element={<PlaceholderPage title="Community Guidelines" />} />
 
-      {/* Sponsor Portal Routes */}
-      <Route path="/sponsor/dashboard" element={<SponsorOverview />} />
-      <Route path="/sponsor/sponsorships" element={<Sponsorships />} />
-      <Route path="/sponsor/analytics" element={<SponsorAnalytics />} />
-      <Route path="/sponsor/resources" element={<BrandingResources />} />
-      <Route path="/sponsor/leads" element={<CandidateLeads />} />
-      <Route path="/sponsor/stalls" element={<MyStalls />} />
-      <Route path="/sponsor/event-report/:eventId" element={<EventReport />} />
-      <Route path="/sponsor/messages" element={<Messages />} />
-      <Route path="/sponsor/billing" element={<Billing />} />
-      <Route path="/sponsor/settings" element={<SponsorSettings />} />
-      
-      {/* Partnership & Sponsorship Pages */}
-      <Route path="/become-a-partner" element={<SponsorSignup />} />
-      <Route path="/sponsor/signup" element={<SponsorSignup />} />
-      <Route path="/sponsor/become-partner" element={<SponsorSignup />} />
-      <Route path="/sponsors/become-partner" element={<SponsorSignup />} />
-      <Route path="/sponsorship-tiers" element={<SponsorshipTiers />} />
-      <Route path="/job-mela-calendar" element={<JobMelaCalendar />} />
-      <Route path="/sponsor/login" element={<SponsorLogin />} />
-      <Route path="/sponsor/forgot-password" element={<ForgotPassword />} />
-      <Route path="/sponsor/benefits" element={<SponsorBenefits />} />
-      <Route path="/sponsors" element={<SponsorLanding />} />
-      <Route path="/collaboration-opportunities" element={<CollaborationOpportunities />} />
-      <Route path="/partnership-proposal" element={<SubmitProposal />} />
-      <Route path="/featured-clients" element={<FeaturedClients />} />
-      <Route path="/success-stories" element={<SuccessStories />} />
-      <Route path="/partner-testimonials" element={<PartnerTestimonials />} />
-      <Route path="/branding-guidelines" element={<BrandingGuidelines />} />
-      <Route path="/marketing-toolkit" element={<MarketingToolkit />} />
-      <Route path="/event-sponsorship-deck" element={<EventSponsorshipDeck />} />
-      <Route path="/sponsor-support-portal" element={<SupportPortal />} />
 
       {/* Interview & Booking pages - standalone */}
       <Route path="/interview" element={<Interview />} />

@@ -278,7 +278,7 @@ const Header = () => {
                         userRole === 'admin' ? '/admin/dashboard' : 
                         userRole === 'owner' ? '/owner/dashboard' : 
                         userRole === 'employer' ? '/employer/dashboard' : 
-                        userRole === 'sponsor' ? '/sponsor/dashboard' :
+                        
                         '/candidate/dashboard'
                       } className="flex items-center gap-3 py-2">
                         <LayoutDashboard className="h-4 w-4" />
