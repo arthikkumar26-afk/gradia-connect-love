@@ -101,6 +101,7 @@ export default function MockInterviewPipeline() {
     title: '',
     description: '',
     stage_type: 'all' as string,
+    industryCategory: '',
     segment: '',
     category: '',
     classLevel: '',
@@ -108,14 +109,107 @@ export default function MockInterviewPipeline() {
     designation: '',
   });
 
-  // Role-based options
-  const segmentOptions = ['Pre-Primary', 'Primary', 'High School', 'School'];
+  // Industry categories
+  const industryCategoryOptions = [
+    'Education',
+    'IT Corporate',
+    'Legal',
+    'Doctor',
+    'Civil Service',
+    'Real Estate & Infrastructure',
+    'Freelance / Independent Professionals',
+  ];
+
+  // Industry-specific segment options
+  const industrySegmentOptions: Record<string, string[]> = {
+    'Education': ['Pre-Primary', 'Primary', 'High School', 'School'],
+    'IT Corporate': ['Frontend', 'Backend', 'Full Stack', 'DevOps', 'Data Science', 'QA/Testing', 'Mobile'],
+    'Legal': ['Corporate Law', 'Criminal Law', 'Civil Law', 'IP Law', 'Compliance'],
+    'Doctor': ['General Medicine', 'Surgery', 'Pediatrics', 'Cardiology', 'Dermatology', 'Orthopedics'],
+    'Civil Service': ['Administrative', 'Police', 'Revenue', 'Education Services', 'Foreign Services'],
+    'Real Estate & Infrastructure': ['Sales', 'Property Management', 'Construction', 'Architecture', 'Interior Design'],
+    'Freelance / Independent Professionals': ['Design', 'Development', 'Content Writing', 'Marketing', 'Consulting'],
+  };
+
+  // Education-specific category options (existing)
+  const segmentOptions = industrySegmentOptions[newPaper.industryCategory] || [];
 
   const categoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
     'High School': ['Board', 'Compititive'],
     'School': ['CBSE', 'State Board'],
+  };
+
+  // Non-education industry category options
+  const industryCategoryMapping: Record<string, Record<string, string[]>> = {
+    'IT Corporate': {
+      'Frontend': ['React', 'Angular', 'Vue', 'UI/UX'],
+      'Backend': ['Node.js', 'Java', 'Python', '.NET', 'Go'],
+      'Full Stack': ['MERN', 'MEAN', 'Java Full Stack', 'Python Full Stack'],
+      'DevOps': ['AWS', 'Azure', 'GCP', 'CI/CD'],
+      'Data Science': ['ML/AI', 'Data Analytics', 'Big Data', 'NLP'],
+      'QA/Testing': ['Manual Testing', 'Automation', 'Performance', 'Security'],
+      'Mobile': ['Android', 'iOS', 'React Native', 'Flutter'],
+    },
+    'Legal': {
+      'Corporate Law': ['Mergers & Acquisitions', 'Securities', 'Banking'],
+      'Criminal Law': ['Prosecution', 'Defense', 'White Collar Crime'],
+      'Civil Law': ['Property', 'Family', 'Consumer'],
+      'IP Law': ['Patents', 'Trademarks', 'Copyright'],
+      'Compliance': ['Regulatory', 'Risk Management', 'Audit'],
+    },
+    'Doctor': {
+      'General Medicine': ['Internal Medicine', 'Family Medicine', 'Emergency'],
+      'Surgery': ['General Surgery', 'Neuro Surgery', 'Cardiac Surgery'],
+      'Pediatrics': ['Neonatology', 'General Pediatrics', 'Pediatric Surgery'],
+      'Cardiology': ['Interventional', 'Non-Interventional', 'Electrophysiology'],
+      'Dermatology': ['Clinical', 'Cosmetic', 'Surgical'],
+      'Orthopedics': ['Spine', 'Joint Replacement', 'Sports Medicine'],
+    },
+    'Civil Service': {
+      'Administrative': ['IAS', 'State Admin', 'District Admin'],
+      'Police': ['IPS', 'State Police', 'Intelligence'],
+      'Revenue': ['IRS', 'Tax Administration', 'Customs'],
+      'Education Services': ['IES', 'State Education', 'University Admin'],
+      'Foreign Services': ['IFS', 'Diplomatic', 'Trade Services'],
+    },
+    'Real Estate & Infrastructure': {
+      'Sales': ['Residential', 'Commercial', 'Land'],
+      'Property Management': ['Residential', 'Commercial', 'Mixed Use'],
+      'Construction': ['Civil', 'Structural', 'MEP'],
+      'Architecture': ['Residential', 'Commercial', 'Landscape'],
+      'Interior Design': ['Residential', 'Commercial', 'Hospitality'],
+    },
+    'Freelance / Independent Professionals': {
+      'Design': ['Graphic Design', 'Web Design', 'Brand Design'],
+      'Development': ['Web Development', 'App Development', 'Game Development'],
+      'Content Writing': ['Technical Writing', 'Creative Writing', 'SEO Writing'],
+      'Marketing': ['Digital Marketing', 'Social Media', 'Content Marketing'],
+      'Consulting': ['Business Consulting', 'IT Consulting', 'Management Consulting'],
+    },
+  };
+
+  // Industry-specific designation options
+  const industryDesignationOptions: Record<string, Record<string, string[]>> = {
+    'IT Corporate': {
+      _default: ['Junior Developer', 'Mid Developer', 'Senior Developer', 'Tech Lead', 'Architect', 'Engineering Manager'],
+    },
+    'Legal': {
+      _default: ['Legal Advisor', 'Legal Officer', 'Compliance Manager', 'Paralegal', 'Senior Counsel', 'Partner'],
+    },
+    'Doctor': {
+      _default: ['Junior Doctor', 'Senior Doctor', 'Specialist', 'Consultant', 'HOD', 'Medical Director'],
+    },
+    'Civil Service': {
+      _default: ['Probationer', 'Officer', 'Senior Officer', 'Commissioner', 'Secretary', 'Director'],
+    },
+    'Real Estate & Infrastructure': {
+      _default: ['Executive', 'Manager', 'Senior Manager', 'Director', 'VP', 'Partner'],
+    },
+    'Freelance / Independent Professionals': {
+      _default: ['Freelancer', 'Consultant', 'Contractor', 'Agency Owner'],
+    },
   };
 
   // Class options for High School > Board/Competitive
@@ -175,11 +269,13 @@ export default function MockInterviewPipeline() {
     }
   };
 
+  const isEducation = newPaper.industryCategory === 'Education';
+
   // Check if we need to show class level field (for Board or Compititive)
-  const showClassLevel = newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive');
+  const showClassLevel = isEducation && newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive');
   
   // Check if we need to show core subject field (for School segment)
-  const showCoreSubject = newPaper.segment === 'School';
+  const showCoreSubject = isEducation && newPaper.segment === 'School';
 
   const getCurrentClassLevels = () => {
     if (!showClassLevel) return [];
@@ -187,19 +283,27 @@ export default function MockInterviewPipeline() {
   };
 
   const getCurrentCategories = () => {
-    return newPaper.segment ? categoryOptions[newPaper.segment] || [] : [];
+    if (!newPaper.segment) return [];
+    if (isEducation) {
+      return categoryOptions[newPaper.segment] || [];
+    }
+    return industryCategoryMapping[newPaper.industryCategory]?.[newPaper.segment] || [];
   };
 
   const getCurrentDesignations = () => {
-    if (!newPaper.segment || !newPaper.category) return [];
+    if (!newPaper.segment) return [];
     
-    // For High School + Board or Compititive, use class-based designations
-    if (newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive')) {
-      if (!newPaper.classLevel) return [];
-      return classDesignationOptions[newPaper.classLevel] || [];
+    if (isEducation) {
+      if (!newPaper.category) return [];
+      if (newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive')) {
+        if (!newPaper.classLevel) return [];
+        return classDesignationOptions[newPaper.classLevel] || [];
+      }
+      return designationOptions[newPaper.segment]?.[newPaper.category] || [];
     }
     
-    return designationOptions[newPaper.segment]?.[newPaper.category] || [];
+    // Non-education: use industry designation options
+    return industryDesignationOptions[newPaper.industryCategory]?._default || [];
   };
 
   // Open preview modal for a paper
@@ -467,11 +571,15 @@ export default function MockInterviewPipeline() {
   };
 
   const savePaperWithQuestionsAndAnswers = async () => {
+    if (!newPaper.industryCategory) {
+      toast.error('Please select an industry category');
+      return;
+    }
     if (!newPaper.segment) {
       toast.error('Please select a segment');
       return;
     }
-    if (!newPaper.category) {
+    if (isEducation && !newPaper.category) {
       toast.error('Please select a category');
       return;
     }
@@ -517,7 +625,8 @@ export default function MockInterviewPipeline() {
         // Auto-generate title including class level and core subject if applicable
         const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
         const subjectInfo = newPaper.coreSubject ? ` - ${newPaper.coreSubject}` : '';
-        const autoTitleWithClass = `${newPaper.segment} - ${newPaper.category}${classInfo}${subjectInfo} - ${newPaper.designation} - Set ${set.setNumber}`;
+        const categoryInfo = newPaper.category ? ` - ${newPaper.category}` : '';
+        const autoTitleWithClass = `${newPaper.industryCategory} - ${newPaper.segment}${categoryInfo}${classInfo}${subjectInfo} - ${newPaper.designation} - Set ${set.setNumber}`;
 
         const { data: paperData, error: paperError } = await supabase
           .from('interview_question_papers')
@@ -621,7 +730,7 @@ export default function MockInterviewPipeline() {
   };
 
   const resetForm = () => {
-    setNewPaper({ title: '', description: '', stage_type: 'all', segment: '', category: '', classLevel: '', coreSubject: '', designation: '' });
+    setNewPaper({ title: '', description: '', stage_type: 'all', industryCategory: '', segment: '', category: '', classLevel: '', coreSubject: '', designation: '' });
     setQuestionPdfFiles([null, null, null, null, null]);
     setAnswerPdfFile(null);
     setSolutionPdfFile(null);
@@ -635,11 +744,15 @@ export default function MockInterviewPipeline() {
 
   // Save manual questions - all sets
   const saveManualQuestions = async () => {
+    if (!newPaper.industryCategory) {
+      toast.error('Please select an industry category');
+      return;
+    }
     if (!newPaper.segment) {
       toast.error('Please select a segment');
       return;
     }
-    if (!newPaper.category) {
+    if (isEducation && !newPaper.category) {
       toast.error('Please select a category');
       return;
     }
@@ -667,7 +780,8 @@ export default function MockInterviewPipeline() {
         // Auto-generate title including class level, core subject and set label
         const classInfo = newPaper.classLevel ? ` - ${newPaper.classLevel}` : '';
         const subjectInfo = newPaper.coreSubject ? ` - ${newPaper.coreSubject}` : '';
-        const autoTitle = `${newPaper.segment} - ${newPaper.category}${classInfo}${subjectInfo} - ${newPaper.designation} - Set ${set.setLabel}`;
+        const categoryInfo = newPaper.category ? ` - ${newPaper.category}` : '';
+        const autoTitle = `${newPaper.industryCategory} - ${newPaper.segment}${categoryInfo}${classInfo}${subjectInfo} - ${newPaper.designation} - Set ${set.setLabel}`;
 
         const { data: paperData, error: paperError } = await supabase
           .from('interview_question_papers')
@@ -939,97 +1053,124 @@ export default function MockInterviewPipeline() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Role Selection Fields */}
-            <div className={`grid grid-cols-1 gap-4 ${showClassLevel || showCoreSubject ? 'md:grid-cols-5' : 'md:grid-cols-3'}`}>
-              <div className="space-y-2">
-                <Label>Segment *</Label>
-                <Select 
-                  value={newPaper.segment} 
-                  onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', classLevel: '', coreSubject: '', designation: '' }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select segment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {segmentOptions.map(seg => (
-                      <SelectItem key={seg} value={seg}>{seg}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Category *</Label>
-                <Select 
-                  value={newPaper.category} 
-                  onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, classLevel: '', coreSubject: '', designation: '' }))}
-                  disabled={!newPaper.segment}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getCurrentCategories().map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {showClassLevel && (
-                <div className="space-y-2">
-                  <Label>Class *</Label>
-                  <Select 
-                    value={newPaper.classLevel} 
-                    onValueChange={(v) => setNewPaper(p => ({ ...p, classLevel: v, designation: '' }))}
-                    disabled={!newPaper.category}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getCurrentClassLevels().map(cls => (
-                        <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              {showCoreSubject && (
-                <div className="space-y-2">
-                  <Label>Core Subject *</Label>
-                  <Select 
-                    value={newPaper.coreSubject} 
-                    onValueChange={(v) => setNewPaper(p => ({ ...p, coreSubject: v }))}
-                    disabled={!newPaper.category}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select core subject" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {coreSubjectOptions.map(subj => (
-                        <SelectItem key={subj} value={subj}>{subj}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div className="space-y-2">
-                <Label>Designation *</Label>
-                <Select 
-                  value={newPaper.designation} 
-                  onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
-                  disabled={showClassLevel ? !newPaper.classLevel : !newPaper.category}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select designation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getCurrentDesignations().map(des => (
-                      <SelectItem key={des} value={des}>{des}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Industry Category */}
+            <div className="space-y-2">
+              <Label>Industry Category *</Label>
+              <Select 
+                value={newPaper.industryCategory} 
+                onValueChange={(v) => setNewPaper(p => ({ ...p, industryCategory: v, segment: '', category: '', classLevel: '', coreSubject: '', designation: '' }))}
+              >
+                <SelectTrigger className="max-w-md">
+                  <SelectValue placeholder="Select Industry Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {industryCategoryOptions.map(ic => (
+                    <SelectItem key={ic} value={ic}>{ic}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Role Selection Fields - shown after industry category is selected */}
+            {newPaper.industryCategory && (
+              <div className={`grid grid-cols-1 gap-4 ${showClassLevel || showCoreSubject ? 'md:grid-cols-5' : isEducation ? 'md:grid-cols-3' : 'md:grid-cols-3'}`}>
+                <div className="space-y-2">
+                  <Label>Segment *</Label>
+                  <Select 
+                    key={`segment-${newPaper.industryCategory}`}
+                    value={newPaper.segment || undefined} 
+                    onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', classLevel: '', coreSubject: '', designation: '' }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select segment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {segmentOptions.map(seg => (
+                        <SelectItem key={seg} value={seg}>{seg}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {(isEducation || getCurrentCategories().length > 0) && (
+                  <div className="space-y-2">
+                    <Label>{isEducation ? 'Category' : 'Specialization'} *</Label>
+                    <Select 
+                      key={`category-${newPaper.segment}`}
+                      value={newPaper.category || undefined} 
+                      onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, classLevel: '', coreSubject: '', designation: '' }))}
+                      disabled={!newPaper.segment}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={`Select ${isEducation ? 'category' : 'specialization'}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCurrentCategories().map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {showClassLevel && (
+                  <div className="space-y-2">
+                    <Label>Class *</Label>
+                    <Select 
+                      key={`class-${newPaper.category}`}
+                      value={newPaper.classLevel || undefined} 
+                      onValueChange={(v) => setNewPaper(p => ({ ...p, classLevel: v, designation: '' }))}
+                      disabled={!newPaper.category}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCurrentClassLevels().map(cls => (
+                          <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {showCoreSubject && (
+                  <div className="space-y-2">
+                    <Label>Core Subject *</Label>
+                    <Select 
+                      key={`subject-${newPaper.category}`}
+                      value={newPaper.coreSubject || undefined} 
+                      onValueChange={(v) => setNewPaper(p => ({ ...p, coreSubject: v }))}
+                      disabled={!newPaper.category}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select core subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {coreSubjectOptions.map(subj => (
+                          <SelectItem key={subj} value={subj}>{subj}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>Designation *</Label>
+                  <Select 
+                    key={`designation-${newPaper.segment}-${newPaper.category}-${newPaper.classLevel}`}
+                    value={newPaper.designation || undefined} 
+                    onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
+                    disabled={isEducation ? (showClassLevel ? !newPaper.classLevel : !newPaper.category) : !newPaper.segment}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select designation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getCurrentDesignations().map(des => (
+                        <SelectItem key={des} value={des}>{des}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             {/* Creation Mode Tabs */}
             <Tabs value={createMode} onValueChange={(v) => setCreateMode(v as 'pdf' | 'manual')} className="w-full">
