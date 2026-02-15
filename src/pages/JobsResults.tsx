@@ -590,19 +590,6 @@ const JobsResults = () => {
                   </>
                 )}
 
-                <Separator />
-
-                {/* Final Apply Section */}
-                <div className="text-center gradient-card p-6 rounded-lg border">
-                  <h3 className="font-semibold text-xl mb-2">Ready to Apply?</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Join {selectedJob.company} and take the next step in your career journey.
-                  </p>
-                  <Button variant="default" size="lg" className="shadow-glow">
-                    Apply for this Position
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>
