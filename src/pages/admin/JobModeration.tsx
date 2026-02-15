@@ -21,8 +21,19 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +81,7 @@ interface Job {
   employer?: {
     company_name: string | null;
     full_name: string;
+    email?: string;
   };
 }
 
@@ -85,6 +97,21 @@ const JobModeration = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [updatingJob, setUpdatingJob] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [deleteReason, setDeleteReason] = useState<string>("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const deleteReasons = [
+    "Violation of posting guidelines",
+    "Duplicate job posting",
+    "Inappropriate or misleading content",
+    "Expired or no longer valid",
+    "Spam or fraudulent listing",
+    "Incomplete job information",
+    "Reported by candidates",
+    "Other policy violation",
+  ];
 
   useEffect(() => {
     const checkAuthorization = async () => {
@@ -143,7 +170,7 @@ const JobModeration = () => {
       const employerIds = [...new Set((data || []).map(job => job.employer_id))];
       const { data: employers } = await supabase
         .from('profiles')
-        .select('id, company_name, full_name')
+        .select('id, company_name, full_name, email')
         .in('id', employerIds);
 
       const employerMap = new Map(employers?.map(e => [e.id, e]) || []);
@@ -255,6 +282,57 @@ const JobModeration = () => {
       title: "Logged Out",
       description: "You have been successfully logged out.",
     });
+  };
+
+  const handleDeleteJob = async () => {
+    if (!selectedJob || !deleteReason) return;
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', selectedJob.id);
+
+      if (error) throw error;
+
+      // Send notification email to employer
+      if (selectedJob.employer?.email) {
+        try {
+          await supabase.functions.invoke('send-notification-email', {
+            body: {
+              to: selectedJob.employer.email,
+              subject: 'Job Posting Removed - Gradia',
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h2 style="color: #dc2626;">Job Posting Removed</h2>
+                  <p>Dear ${selectedJob.employer.full_name || selectedJob.employer.company_name || 'Employer'},</p>
+                  <p>We would like to inform you that your job posting has been removed from the Gradia platform.</p>
+                  <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+                    <strong>Job Title:</strong> ${selectedJob.job_title}<br/>
+                    <strong>Reason:</strong> ${deleteReason}
+                  </div>
+                  <p>If you believe this action was taken in error or would like to discuss further, please contact our support team at <a href="mailto:support@gradia.co.in">support@gradia.co.in</a>.</p>
+                  <p style="color: #6b7280; margin-top: 24px;">Best regards,<br/>Gradia Team</p>
+                </div>
+              `,
+            }
+          });
+        } catch (emailError) {
+          console.error('Failed to send job deletion email:', emailError);
+        }
+      }
+
+      setJobs(prev => prev.filter(j => j.id !== selectedJob.id));
+      toast({ title: "Job Deleted", description: `"${selectedJob.job_title}" has been deleted and the employer has been notified.` });
+    } catch (error: any) {
+      console.error('Error deleting job:', error);
+      toast({ title: "Error", description: error.message || "Failed to delete job.", variant: "destructive" });
+    } finally {
+      setDeleteLoading(false);
+      setDeleteDialogOpen(false);
+      setSelectedJob(null);
+      setDeleteReason("");
+    }
   };
 
   const filteredJobs = jobs.filter(job => {
@@ -505,6 +583,15 @@ const JobModeration = () => {
                                     <XCircle className="h-4 w-4" />
                                   </Button>
                                 )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-destructive"
+                                  onClick={() => { setSelectedJob(job); setDeleteDialogOpen(true); }}
+                                  disabled={updatingJob === job.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -518,6 +605,45 @@ const JobModeration = () => {
           </main>
         </div>
       </div>
+
+      {/* Delete Job Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { setDeleteDialogOpen(open); if (!open) setDeleteReason(""); }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Job Posting</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>"{selectedJob?.job_title}"</strong> posted by <strong>{selectedJob?.employer?.company_name || selectedJob?.employer?.full_name || 'Unknown'}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <label className="text-sm font-medium text-foreground mb-2 block">Select Reason for Deletion</label>
+            <Select value={deleteReason} onValueChange={setDeleteReason}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a reason..." />
+              </SelectTrigger>
+              <SelectContent>
+                {deleteReasons.map((reason) => (
+                  <SelectItem key={reason} value={reason}>{reason}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!deleteReason && deleteDialogOpen && (
+              <p className="text-xs text-muted-foreground mt-1.5">A reason is required to delete a job.</p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteJob}
+              disabled={deleteLoading || !deleteReason}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarProvider>
   );
 };
