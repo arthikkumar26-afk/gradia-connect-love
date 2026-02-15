@@ -17,12 +17,13 @@ const tableConfig: Record<TableName, { icon: React.ElementType; color: string; f
   profiles: {
     icon: Users,
     color: "text-blue-500",
-    filterKey: "role",
-    filterOptions: ["candidate", "employer", "admin", "owner", "sponsor"],
+    filterKey: "status",
+    filterOptions: ["active", "banned", "deleted"],
     columns: [
       { key: "full_name", label: "Name" },
       { key: "email", label: "Email" },
       { key: "role", label: "Role" },
+      { key: "status", label: "Status" },
       { key: "mobile", label: "Mobile" },
       { key: "location", label: "Location" },
       { key: "created_at", label: "Created" },
