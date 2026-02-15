@@ -348,12 +348,36 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const validTypes = ['stage_change', 'comment_added', 'document_uploaded', 'offer_response', 'stage_invitation', 'hr_round_invitation'];
+    const validTypes = ['stage_change', 'comment_added', 'document_uploaded', 'offer_response', 'stage_invitation', 'hr_round_invitation', 'direct'];
     if (!validTypes.includes(rawData.type)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid notification type" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // If no type but has subject+html, treat as direct email (admin use case)
+      if (rawData.subject && rawData.html) {
+        rawData.type = 'direct';
+      } else {
+        return new Response(
+          JSON.stringify({ error: "Invalid notification type" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Handle direct email sending (for admin actions like blocking users, deleting jobs)
+    if (rawData.type === 'direct') {
+      console.log('Sending direct admin email to:', recipientEmail, 'for user:', userId);
+      
+      const emailResponse = await resend.emails.send({
+        from: "Gradia <noreply@gradia.co.in>",
+        to: [recipientEmail],
+        subject: sanitizeInput(rawData.subject, 200),
+        html: rawData.html,
+      });
+
+      console.log("Direct email sent successfully:", emailResponse);
+
+      return new Response(JSON.stringify(emailResponse), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     const notificationData: NotificationRequest = {
