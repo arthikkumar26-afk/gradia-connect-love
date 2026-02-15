@@ -44,6 +44,10 @@ import {
   Star,
   Download,
   Users,
+  Crown,
+  Check,
+  Zap,
+  Rocket,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -993,6 +997,7 @@ const CandidateDashboard = () => {
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "resume", label: "Resume Builder", icon: FileText },
     { id: "learning", label: "Learning", icon: BookOpen },
+    { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -1641,6 +1646,7 @@ const CandidateDashboard = () => {
       case "jobs": return "Suitable Jobs";
       case "resume": return "Resume Builder";
       case "learning": return "Learning";
+      case "upgrade": return "Upgrade Plans";
       case "settings": return "Settings";
       default: return `Welcome, ${profile?.full_name || 'User'}`;
     }
@@ -3387,6 +3393,125 @@ const CandidateDashboard = () => {
                 <Button variant="outline" onClick={() => window.open('https://skillory.in', '_blank')}>
                   Explore Courses
                 </Button>
+              </div>
+            )}
+
+            {/* Upgrade Plans */}
+            {activeMenu === "upgrade" && (
+              <div className="space-y-6">
+                <div className="text-center space-y-2">
+                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
+                    <Crown className="h-5 w-5" />
+                    <span className="font-semibold">Upgrade Your Experience</span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-foreground">Choose a Plan</h2>
+                  <p className="text-muted-foreground">Unlock premium features to boost your career</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {/* Free Plan */}
+                  <Card className="relative overflow-hidden border-border flex flex-col">
+                    <CardHeader className="text-center pb-2 pt-8">
+                      <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Zap className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-lg">Basic</CardTitle>
+                      <p className="text-xs text-muted-foreground">Get started for free</p>
+                      <div className="mt-3">
+                        <span className="text-2xl font-bold text-foreground">Free</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex-1 flex flex-col">
+                      <ul className="space-y-2 flex-1">
+                        {["Job search & apply", "Basic profile creation", "Email notifications", "1 resume template", "View job recommendations"].map((f, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs">
+                            <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                            <span className="text-muted-foreground">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button className="w-full" variant="outline" disabled>Current Plan</Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Pro Plan */}
+                  <Card className="relative overflow-hidden border-primary shadow-md ring-2 ring-primary/20 flex flex-col">
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
+                      POPULAR
+                    </div>
+                    <CardHeader className="text-center pb-2 pt-8">
+                      <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Star className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-lg">Pro</CardTitle>
+                      <p className="text-xs text-muted-foreground">Accelerate your job search</p>
+                      <div className="mt-3">
+                        <span className="text-2xl font-bold text-foreground">₹499</span>
+                        <span className="text-muted-foreground text-xs">/month</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex-1 flex flex-col">
+                      <ul className="space-y-2 flex-1">
+                        {[
+                          "Everything in Basic",
+                          "AI Resume Analysis & Scoring",
+                          "All premium resume templates",
+                          "Priority job recommendations",
+                          "Mock test access (5/month)",
+                          "Interview preparation tips",
+                          "Profile visibility boost",
+                        ].map((f, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs">
+                            <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                            <span className="text-muted-foreground">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button className="w-full" onClick={() => toast({ title: "Coming Soon!", description: "Pro plan will be available shortly" })}>
+                        Upgrade to Pro
+                      </Button>
+                      <p className="text-xs text-center text-muted-foreground">7-day free trial included</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Premium Plan */}
+                  <Card className="relative overflow-hidden border-border flex flex-col">
+                    <Badge variant="secondary" className="absolute top-2 right-2 text-xs">Best Value</Badge>
+                    <CardHeader className="text-center pb-2 pt-8">
+                      <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Rocket className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-lg">Premium</CardTitle>
+                      <p className="text-xs text-muted-foreground">Full career support</p>
+                      <div className="mt-3">
+                        <span className="text-2xl font-bold text-foreground">₹999</span>
+                        <span className="text-muted-foreground text-xs">/month</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 flex-1 flex flex-col">
+                      <ul className="space-y-2 flex-1">
+                        {[
+                          "Everything in Pro",
+                          "Unlimited mock tests",
+                          "AI Mock Interview Pipeline",
+                          "1-on-1 career coaching session",
+                          "Advanced analytics & insights",
+                          "Custom cover letter generation",
+                          "Direct recruiter messaging",
+                          "Priority support (4h response)",
+                        ].map((f, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs">
+                            <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                            <span className="text-muted-foreground">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button className="w-full" variant="outline" onClick={() => toast({ title: "Coming Soon!", description: "Premium plan will be available shortly" })}>
+                        Upgrade to Premium
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
 
