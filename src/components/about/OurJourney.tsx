@@ -48,27 +48,25 @@ const OurJourney = () => {
 
         <div className="max-w-4xl mx-auto">
           <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-border hidden md:block" />
+            {/* Timeline line - centered on the year badge column */}
+            <div className="absolute left-[60px] top-0 bottom-0 w-0.5 bg-border hidden md:block" />
             
             <div className="space-y-8">
               {milestones.map((milestone, index) => (
                 <div 
                   key={index} 
-                  className="relative flex gap-8 group"
+                  className="relative flex items-start group"
                 >
-                  {/* Timeline dot */}
-                  <div className="hidden md:flex absolute left-8 w-4 h-4 rounded-full bg-accent border-4 border-background shadow-md -translate-x-1/2 mt-1.5 group-hover:scale-125 transition-transform duration-300" />
-                  
-                  {/* Year badge */}
-                  <div className="w-20 shrink-0 text-right hidden md:block">
-                    <span className="inline-block px-3 py-1 rounded-full bg-accent/10 text-accent font-semibold text-sm">
+                  {/* Year badge - fixed width, centered */}
+                  <div className="w-[120px] shrink-0 hidden md:flex justify-center pt-5">
+                    <span className="relative z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 text-accent font-semibold text-sm">
+                      <span className="w-2 h-2 rounded-full bg-accent" />
                       {milestone.year}
                     </span>
                   </div>
                   
                   {/* Content card */}
-                  <div className="flex-1 pl-0 md:pl-8">
+                  <div className="flex-1">
                     <div className="p-6 rounded-xl border border-border/50 bg-card hover:border-accent/30 hover:shadow-medium transition-all duration-300">
                       <div className="flex items-center gap-3 mb-2 md:hidden">
                         <span className="px-3 py-1 rounded-full bg-accent/10 text-accent font-semibold text-sm">
