@@ -182,13 +182,13 @@ const Hero = () => {
 
           {/* Search Bar */}
           <div className="animate-slide-up max-w-2xl mx-auto mb-6">
-            <div className="bg-background/95 backdrop-blur rounded-xl p-6 shadow-large">
-              <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
+            <div className="bg-background/95 backdrop-blur rounded-xl p-3 md:p-6 shadow-large">
+              <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-2 md:gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     placeholder="Job title, company, or keywords..."
-                    className="pl-10 h-12 text-lg border border-input bg-background text-foreground"
+                    className="pl-10 h-9 md:h-12 text-sm md:text-lg border border-input bg-background text-foreground"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -196,19 +196,19 @@ const Hero = () => {
                 <div className="flex-1 relative">
                   <Input
                     placeholder="Location (remote, city, country)"
-                    className="h-12 text-lg border border-input bg-background text-foreground"
+                    className="h-9 md:h-12 text-sm md:text-lg border border-input bg-background text-foreground"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                   />
                 </div>
-                <Button type="submit" variant="hero" size="xl" className="h-12 px-8">
+                <Button type="submit" variant="hero" size="xl" className="h-9 md:h-12 px-6 md:px-8 text-sm md:text-base">
                   Search Jobs
-                  <ArrowRight className="h-5 w-5 ml-2" />
+                  <ArrowRight className="h-4 w-4 md:h-5 md:w-5 ml-2" />
                 </Button>
               </form>
               
               {/* Quick Filters */}
-              <div className="flex flex-wrap gap-2 mt-4 justify-center">
+              <div className="flex flex-wrap gap-2 mt-3 md:mt-4 justify-center">
                 {filterButtons.map((filter) => (
                   <Button
                     key={filter.id}
