@@ -685,19 +685,21 @@ const StageActionButtons = ({
           <XCircle className="h-3 w-3 mr-1" />
           Fail
         </Button>
-        <Button 
-          size="sm"
-          onClick={handleMoveToNextStep}
-          disabled={isMovingNext}
-          className="h-6 text-[10px] px-2"
-        >
-          {isMovingNext ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <ChevronRight className="h-3 w-3 mr-1" />
-          )}
-          Next
-        </Button>
+        {!isOfferStage && (
+          <Button 
+            size="sm"
+            onClick={handleMoveToNextStep}
+            disabled={isMovingNext}
+            className="h-6 text-[10px] px-2"
+          >
+            {isMovingNext ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <ChevronRight className="h-3 w-3 mr-1" />
+            )}
+            Next
+          </Button>
+        )}
       </div>
     );
   }
