@@ -1669,11 +1669,6 @@ const ClickableStagesList = ({
 
                 {/* HR Round - Schedule Meeting button is provided via StageActionButtons */}
 
-                {/* Final Review - Show all stages review summary */}
-                {step.title === 'Final Review' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <AllStagesReviewSummary interviewCandidateId={interviewCandidateId} />
-                )}
-
                 {step.status === "current" && (
                   <StageRecordingPlayer
                     interviewCandidateId={interviewCandidateId}
@@ -1708,6 +1703,11 @@ const ClickableStagesList = ({
                     onScheduleHRRound={handleScheduleHRRound}
                   />
                 </div>
+
+                {/* Final Review - Show all stages review summary below action buttons */}
+                {step.title === 'Final Review' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <AllStagesReviewSummary interviewCandidateId={interviewCandidateId} />
+                )}
               </div>
             </div>
             
