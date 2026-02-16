@@ -51,6 +51,8 @@ import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
+import { useMockTestLimits } from "@/hooks/useMockTestLimits";
+import { Crown, Lock, Zap } from "lucide-react";
 
 interface InterviewStage {
   name: string;
@@ -96,6 +98,7 @@ interface MockInterviewSession {
 export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const mockTestLimits = useMockTestLimits(user?.id);
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [currentSession, setCurrentSession] = useState<MockInterviewSession | null>(null);
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
@@ -1309,6 +1312,30 @@ export const MockInterviewTab = () => {
           <p className="text-muted-foreground mt-2">
             Practice your interview skills with AI-powered mock tests
           </p>
+          
+          {/* Usage Counter */}
+          {!mockTestLimits.isLoading && (
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <Badge variant={mockTestLimits.canStart ? "secondary" : "destructive"} className="gap-1 text-xs">
+                {mockTestLimits.plan === 'premium' ? (
+                  <>
+                    <Crown className="h-3 w-3" />
+                    Unlimited Tests
+                  </>
+                ) : (
+                  <>
+                    <Target className="h-3 w-3" />
+                    {mockTestLimits.usedTests}/{mockTestLimits.maxTests} tests used this month
+                  </>
+                )}
+              </Badge>
+              <Badge variant="outline" className="gap-1 text-xs capitalize">
+                <Zap className="h-3 w-3" />
+                {mockTestLimits.plan} Plan
+              </Badge>
+            </div>
+          )}
+
           <div className="mt-4">
             <Button 
               variant="outline" 
@@ -1322,6 +1349,46 @@ export const MockInterviewTab = () => {
             </Button>
           </div>
         </div>
+
+        {/* Limit Reached - Upgrade Prompt */}
+        {!mockTestLimits.isLoading && !mockTestLimits.canStart && (
+          <Card className="max-w-lg mx-auto border-destructive/50 bg-destructive/5">
+            <CardContent className="pt-6 text-center space-y-4">
+              <div className="h-14 w-14 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+                <Lock className="h-7 w-7 text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Monthly Limit Reached</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  You've used all {mockTestLimits.maxTests} mock tests for this month on the <span className="font-medium capitalize">{mockTestLimits.plan}</span> plan.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                {mockTestLimits.plan === 'basic' && (
+                  <>
+                    <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
+                      <Crown className="h-4 w-4" />
+                      Upgrade to Pro — 5 tests/month (₹499/mo)
+                    </Button>
+                    <Button variant="outline" className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
+                      <Zap className="h-4 w-4" />
+                      Go Premium — Unlimited tests (₹999/mo)
+                    </Button>
+                  </>
+                )}
+                {mockTestLimits.plan === 'pro' && (
+                  <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
+                    <Crown className="h-4 w-4" />
+                    Upgrade to Premium — Unlimited tests (₹999/mo)
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Limits reset at the start of each month
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Interview Type Selection */}
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -1473,16 +1540,18 @@ export const MockInterviewTab = () => {
               <div className="pt-4">
                 <Button 
                   onClick={startMockTest} 
-                  disabled={isStarting} 
+                  disabled={isStarting || !mockTestLimits.canStart} 
                   className="w-full gap-2" 
                   size="lg"
                 >
                   {isStarting ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : !mockTestLimits.canStart ? (
+                    <Lock className="h-5 w-5" />
                   ) : (
                     <Play className="h-5 w-5" />
                   )}
-                  Attend Mock Test
+                  {!mockTestLimits.canStart ? 'Limit Reached — Upgrade Plan' : 'Attend Mock Test'}
                 </Button>
               </div>
 
