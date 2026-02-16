@@ -13,6 +13,7 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getRolesForPipeline } from "@/data/interviewPipelineConfig";
 import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 
@@ -594,41 +595,47 @@ const CandidateSignup = () => {
                 <>
                   <div className="space-y-2">
                     <Label>Skills / Domain</Label>
-                    <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                    <Select value={primarySubject || undefined} onValueChange={(val) => {
+                      setPrimarySubject(val);
+                      setSegment("");
+                    }}>
                       <SelectTrigger className="h-10"><SelectValue placeholder="Select Skill" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Python">Python</SelectItem>
-                        <SelectItem value="Java">Java</SelectItem>
-                        <SelectItem value="JavaScript">JavaScript</SelectItem>
-                        <SelectItem value="React">React</SelectItem>
-                        <SelectItem value="Node.js">Node.js</SelectItem>
-                        <SelectItem value="Cyber Security">Cyber Security</SelectItem>
-                        <SelectItem value="Data Science">Data Science</SelectItem>
-                        <SelectItem value="Cloud Computing">Cloud Computing</SelectItem>
-                        <SelectItem value="DevOps">DevOps</SelectItem>
-                        <SelectItem value="AI / Machine Learning">AI / Machine Learning</SelectItem>
-                        <SelectItem value="Full Stack Development">Full Stack Development</SelectItem>
-                        <SelectItem value="Mobile Development">Mobile Development</SelectItem>
-                        <SelectItem value="Database Administration">Database Administration</SelectItem>
-                        <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                        <SelectItem value="Cybersecurity">Cybersecurity</SelectItem>
+                        <SelectItem value="Data & Artificial Intelligence">Data & Artificial Intelligence</SelectItem>
+                        <SelectItem value="Cloud & Infrastructure">Cloud & Infrastructure</SelectItem>
+                        <SelectItem value="Quality Assurance & Testing">Quality Assurance & Testing</SelectItem>
+                        <SelectItem value="Product & Project Management">Product & Project Management</SelectItem>
+                        <SelectItem value="UI/UX & Design">UI/UX & Design</SelectItem>
+                        <SelectItem value="Business & IT Consulting">Business & IT Consulting</SelectItem>
+                        <SelectItem value="IT Support & Operations">IT Support & Operations</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Designation</Label>
-                    <Select value={segment || undefined} onValueChange={setSegment}>
+                    <Select value={segment || undefined} onValueChange={setSegment} key={`desig-${primarySubject}`}>
                       <SelectTrigger className="h-10"><SelectValue placeholder="Select Designation" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Software Engineer">Software Engineer</SelectItem>
-                        <SelectItem value="Senior Software Engineer">Senior Software Engineer</SelectItem>
-                        <SelectItem value="Tech Lead">Tech Lead</SelectItem>
-                        <SelectItem value="Project Manager">Project Manager</SelectItem>
-                        <SelectItem value="Business Analyst">Business Analyst</SelectItem>
-                        <SelectItem value="QA Engineer">QA Engineer</SelectItem>
-                        <SelectItem value="System Administrator">System Administrator</SelectItem>
-                        <SelectItem value="Data Analyst">Data Analyst</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        {(() => {
+                          const pipelineMap: Record<string, string> = {
+                            'Software Engineer': 'software_engineer',
+                            'Cybersecurity': 'cybersecurity',
+                            'Data & Artificial Intelligence': 'data_ai',
+                            'Cloud & Infrastructure': 'cloud_infrastructure',
+                            'Quality Assurance & Testing': 'qa_testing',
+                            'Product & Project Management': 'product_project_management',
+                            'UI/UX & Design': 'ui_ux_design',
+                            'Business & IT Consulting': 'business_it_consulting',
+                            'IT Support & Operations': 'it_support_operations',
+                          };
+                          const pipelineKey = pipelineMap[primarySubject] || '';
+                          const roles = getRolesForPipeline('it_corporate', pipelineKey);
+                          return roles.map((role) => (
+                            <SelectItem key={role.value} value={role.label}>{role.label}</SelectItem>
+                          ));
+                        })()}
                       </SelectContent>
                     </Select>
                   </div>

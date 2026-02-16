@@ -125,7 +125,7 @@ export default function MockInterviewPipeline() {
   // Industry-specific segment options
   const industrySegmentOptions: Record<string, string[]> = {
     'Education': ['Pre-Primary', 'Primary', 'High School', 'School'],
-    'IT Corporate': ['Frontend', 'Backend', 'Full Stack', 'DevOps', 'Data Science', 'QA/Testing', 'Mobile'],
+    'IT Corporate': ['Software Engineer', 'Cybersecurity', 'Data & Artificial Intelligence', 'Cloud & Infrastructure', 'Quality Assurance & Testing', 'Product & Project Management', 'UI/UX & Design', 'Business & IT Consulting', 'IT Support & Operations'],
     'Legal': ['Corporate Law', 'Criminal Law', 'Civil Law', 'IP Law', 'Compliance'],
     'Doctor': ['General Medicine', 'Surgery', 'Pediatrics', 'Cardiology', 'Dermatology', 'Orthopedics'],
     'Civil Service': ['Administrative', 'Police', 'Revenue', 'Education Services', 'Foreign Services'],
@@ -146,13 +146,15 @@ export default function MockInterviewPipeline() {
   // Non-education industry category options
   const industryCategoryMapping: Record<string, Record<string, string[]>> = {
     'IT Corporate': {
-      'Frontend': ['React', 'Angular', 'Vue', 'UI/UX'],
-      'Backend': ['Node.js', 'Java', 'Python', '.NET', 'Go'],
-      'Full Stack': ['MERN', 'MEAN', 'Java Full Stack', 'Python Full Stack'],
-      'DevOps': ['AWS', 'Azure', 'GCP', 'CI/CD'],
-      'Data Science': ['ML/AI', 'Data Analytics', 'Big Data', 'NLP'],
-      'QA/Testing': ['Manual Testing', 'Automation', 'Performance', 'Security'],
-      'Mobile': ['Android', 'iOS', 'React Native', 'Flutter'],
+      'Software Engineer': ['Frontend', 'Backend', 'Full Stack', 'Mobile', 'Embedded Systems', 'API', 'Platform', 'DevOps'],
+      'Cybersecurity': ['Network Security', 'Application Security', 'Cloud Security', 'GRC', 'Incident Response', 'Penetration Testing'],
+      'Data & Artificial Intelligence': ['Data Analytics', 'Machine Learning', 'NLP', 'Computer Vision', 'Big Data', 'MLOps'],
+      'Cloud & Infrastructure': ['AWS', 'Azure', 'GCP', 'Linux', 'Windows', 'Networking'],
+      'Quality Assurance & Testing': ['Manual Testing', 'Automation', 'Performance', 'Security Testing', 'API Testing', 'Mobile Testing'],
+      'Product & Project Management': ['Product Management', 'Project Management', 'Agile/Scrum', 'Program Management'],
+      'UI/UX & Design': ['UI Design', 'UX Design', 'Product Design', 'UX Research', 'Design Systems'],
+      'Business & IT Consulting': ['Business Analysis', 'ERP', 'CRM', 'IT Consulting', 'Solution Architecture'],
+      'IT Support & Operations': ['Desktop Support', 'Technical Support', 'Application Support', 'IT Operations'],
     },
     'Legal': {
       'Corporate Law': ['Mergers & Acquisitions', 'Securities', 'Banking'],
@@ -195,7 +197,16 @@ export default function MockInterviewPipeline() {
   // Industry-specific designation options
   const industryDesignationOptions: Record<string, Record<string, string[]>> = {
     'IT Corporate': {
-      _default: ['Junior Developer', 'Mid Developer', 'Senior Developer', 'Tech Lead', 'Architect', 'Engineering Manager'],
+      'Software Engineer': ['Software Engineer', 'Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'Mobile App Developer', 'DevOps Engineer', 'Embedded Systems Engineer', 'API Developer', 'Platform Engineer', 'Site Reliability Engineer (SRE)'],
+      'Cybersecurity': ['Security Analyst', 'SOC Analyst (L1 / L2 / L3)', 'Ethical Hacker', 'Penetration Tester', 'VAPT Engineer', 'Application Security Engineer', 'Cloud Security Engineer', 'Network Security Engineer', 'GRC Analyst', 'Incident Response Analyst', 'Security Architect', 'Information Security Manager'],
+      'Data & Artificial Intelligence': ['Data Analyst', 'Business Intelligence Analyst', 'Data Scientist', 'Machine Learning Engineer', 'AI Engineer', 'NLP Engineer', 'Computer Vision Engineer', 'Data Engineer', 'Big Data Engineer', 'MLOps Engineer'],
+      'Cloud & Infrastructure': ['Cloud Engineer', 'AWS Engineer', 'Azure Engineer', 'Google Cloud Engineer', 'System Administrator', 'Linux Administrator', 'Windows Administrator', 'Network Engineer', 'Infrastructure Engineer', 'NOC Engineer'],
+      'Quality Assurance & Testing': ['QA Engineer', 'Software Tester', 'Manual Tester', 'Automation Tester', 'Selenium Automation Engineer', 'API Tester', 'Performance Tester', 'Mobile App Tester', 'Security Tester', 'QA Lead / Test Lead'],
+      'Product & Project Management': ['Product Manager', 'Associate Product Manager', 'Technical Product Manager', 'Project Manager', 'Delivery Manager', 'Scrum Master', 'Agile Coach', 'Program Manager', 'Release Manager'],
+      'UI/UX & Design': ['UI Designer', 'UX Designer', 'Product Designer', 'UX Researcher', 'Interaction Designer', 'Visual Designer', 'Design System Engineer'],
+      'Business & IT Consulting': ['Business Analyst', 'IT Business Analyst', 'Functional Consultant', 'ERP Consultant', 'CRM Consultant', 'IT Consultant', 'Solution Architect', 'Pre-Sales Consultant'],
+      'IT Support & Operations': ['IT Support Engineer', 'Desktop Support Engineer', 'Technical Support Engineer', 'Application Support Engineer', 'L1 Support Engineer', 'L2 Support Engineer', 'L3 Support Engineer', 'IT Operations Executive'],
+      _default: ['Software Engineer', 'Data Analyst', 'QA Engineer', 'Project Manager', 'Business Analyst'],
     },
     'Legal': {
       _default: ['Legal Advisor', 'Legal Officer', 'Compliance Manager', 'Paralegal', 'Senior Counsel', 'Partner'],
@@ -304,8 +315,9 @@ export default function MockInterviewPipeline() {
       return designationOptions[newPaper.segment]?.[newPaper.category] || [];
     }
     
-    // Non-education: use industry designation options
-    return industryDesignationOptions[newPaper.industryCategory]?._default || [];
+    // Non-education: use industry designation options with segment-specific lookup
+    const segmentDesignations = industryDesignationOptions[newPaper.industryCategory]?.[newPaper.segment];
+    return segmentDesignations || industryDesignationOptions[newPaper.industryCategory]?._default || [];
   };
 
   // Open preview modal for a paper
