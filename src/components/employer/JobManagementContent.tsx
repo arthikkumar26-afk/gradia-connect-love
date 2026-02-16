@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Filter, Eye, Pencil, Plus, Loader2, FilePlus2, ArrowRight, ArrowLeft, QrCode, Globe, Send } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +53,7 @@ export const JobManagementContent = () => {
   const [editingCell, setEditingCell] = useState<{ jobId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [industryCategory, setIndustryCategory] = useState<string>("");
+  const [selectedFilter, setSelectedFilter] = useState<string>("");
   const { toast } = useToast();
   const [, setSearchParams] = useSearchParams();
 
@@ -59,7 +61,8 @@ export const JobManagementContent = () => {
     setSearchParams({ tab: "interview-pipeline", candidateId, jobId });
   };
 
-  const isEducation = industryCategory === "Education" || industryCategory === "";
+  const activeCategory = selectedFilter || industryCategory;
+  const isEducation = activeCategory === "Education";
 
   useEffect(() => {
     fetchJobs();
@@ -315,10 +318,21 @@ export const JobManagementContent = () => {
                   className="pl-9"
                 />
               </div>
-              <Button variant="outline" className="gap-2 w-full sm:w-auto">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
+              <Select value={selectedFilter || "all"} onValueChange={(val) => setSelectedFilter(val === "all" ? "" : val)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Industries" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Industries</SelectItem>
+                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="IT Corporate">IT Corporate</SelectItem>
+                  <SelectItem value="Legal">Legal</SelectItem>
+                  <SelectItem value="Doctor">Doctor</SelectItem>
+                  <SelectItem value="Civil Service">Civil Service</SelectItem>
+                  <SelectItem value="Real Estate & Infrastructure">Real Estate</SelectItem>
+                  <SelectItem value="Freelance / Independent Professionals">Freelance</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
