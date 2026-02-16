@@ -14,7 +14,7 @@ import {
   BarChart3,
   Shield,
   Database,
-  DollarSign,
+  IndianRupee,
   Globe,
   Activity
 } from "lucide-react";
@@ -118,7 +118,7 @@ const OwnerDashboard = () => {
   }
 
   const stats = [
-    { title: "Total Revenue", value: "₹24.5L", change: "+18%", icon: DollarSign, color: "text-green-600" },
+    { title: "Total Revenue", value: "₹24.5L", change: "+18%", icon: IndianRupee, color: "text-green-600" },
     { title: "Total Users", value: liveCounts.totalUsers.toLocaleString(), change: "Live", icon: Users, color: "text-blue-600" },
     { title: "Active Subscriptions", value: liveCounts.subscriptions.toLocaleString(), change: "Live", icon: Building2, color: "text-purple-600" },
     { title: "System Health", value: "99.9%", change: "Stable", icon: Globe, color: "text-orange-600" },
