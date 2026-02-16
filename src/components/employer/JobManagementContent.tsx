@@ -325,11 +325,11 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="w-full text-xs">
+              <Table className="w-full text-[11px]">
                  <TableHeader>
-                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-2 [&_th]:px-1.5 [&_th]:h-9 [&_th]:text-secondary-foreground [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
-                    <TableHead className="font-semibold">Date & Time</TableHead>
-                    <TableHead className="font-semibold">Job ID</TableHead>
+                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-1.5 [&_th]:px-1 [&_th]:h-8 [&_th]:text-secondary-foreground [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
+                    <TableHead className="font-semibold">Date</TableHead>
+                    <TableHead className="font-semibold">ID</TableHead>
                     <TableHead className="font-semibold">Sector</TableHead>
                     <TableHead className="font-semibold">Category</TableHead>
                     <TableHead className="font-semibold">Function</TableHead>
@@ -337,18 +337,18 @@ export const JobManagementContent = () => {
                     {isEducation && <TableHead className="font-semibold">Segment</TableHead>}
                     {isEducation && <TableHead className="font-semibold">Program</TableHead>}
                     {isEducation && <TableHead className="font-semibold">Classes</TableHead>}
-                    <TableHead className="font-semibold">Department</TableHead>
-                    <TableHead className="font-semibold">Designation</TableHead>
+                    <TableHead className="font-semibold">Dept</TableHead>
+                    <TableHead className="font-semibold">Desig.</TableHead>
                     {isEducation && <TableHead className="font-semibold">Subjects</TableHead>}
-                    <TableHead className="font-semibold">Exp.</TableHead>
-                    <TableHead className="font-semibold max-w-[120px]">Skills</TableHead>
+                    <TableHead className="font-semibold">Exp</TableHead>
+                    <TableHead className="font-semibold">Skills</TableHead>
                     <TableHead className="font-semibold">Type</TableHead>
-                    <TableHead className="font-semibold">Location</TableHead>
+                    <TableHead className="font-semibold">Loc.</TableHead>
                     <TableHead className="font-semibold">Salary</TableHead>
-                    <TableHead className="font-semibold">Organisation</TableHead>
-                    <TableHead className="font-semibold text-center">QR Code</TableHead>
+                    <TableHead className="font-semibold">Org.</TableHead>
+                    <TableHead className="font-semibold text-center">QR</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold text-center">Actions</TableHead>
+                    <TableHead className="font-semibold text-center">Act.</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
