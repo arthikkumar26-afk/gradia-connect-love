@@ -67,7 +67,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           .from("candidate_subscriptions")
           .select("plan, status, ends_at")
           .eq("candidate_id", profile.id)
-          .eq("status", "active")
+          .in("status", ["active", "trial"])
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
