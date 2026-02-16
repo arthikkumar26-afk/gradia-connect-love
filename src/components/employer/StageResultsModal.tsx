@@ -239,18 +239,18 @@ export const StageResultsModal = ({
                 {/* Score Summary Card */}
                 <div className={`rounded-xl p-6 border-2 ${
                   isPassed 
-                    ? 'bg-green-50 border-green-200' 
-                    : 'bg-red-50 border-red-200'
+                    ? 'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800' 
+                    : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`h-16 w-16 rounded-full flex items-center justify-center ${
-                        isPassed ? 'bg-green-100' : 'bg-red-100'
+                        isPassed ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'
                       }`}>
-                        <Award className={`h-8 w-8 ${isPassed ? 'text-green-600' : 'text-red-600'}`} />
+                        <Award className={`h-8 w-8 ${isPassed ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
                       </div>
                       <div>
-                        <div className={`text-4xl font-bold ${isPassed ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`text-4xl font-bold ${isPassed ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {scorePercentage}%
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">Overall Score</p>
@@ -259,8 +259,8 @@ export const StageResultsModal = ({
                     <div className="text-right space-y-2">
                       <Badge className={`text-sm px-3 py-1 ${
                         isPassed 
-                          ? 'bg-green-100 text-green-700 border-green-300' 
-                          : 'bg-red-100 text-red-700 border-red-300'
+                          ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700' 
+                          : 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700'
                       }`}>
                         {isPassed ? 'Passed' : 'Below Threshold'}
                       </Badge>
@@ -303,7 +303,7 @@ export const StageResultsModal = ({
                     <div className="grid grid-cols-3 gap-3">
                       {skillMatchScore !== undefined && (
                         <div className="p-3 rounded-lg bg-muted/50 border text-center">
-                          <div className={`text-2xl font-bold ${skillMatchScore >= 70 ? 'text-green-600' : skillMatchScore >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                          <div className={`text-2xl font-bold ${skillMatchScore >= 70 ? 'text-green-600 dark:text-green-400' : skillMatchScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                             {skillMatchScore}%
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">Skills Match</p>
@@ -311,7 +311,7 @@ export const StageResultsModal = ({
                       )}
                       {experienceMatchScore !== undefined && (
                         <div className="p-3 rounded-lg bg-muted/50 border text-center">
-                          <div className={`text-2xl font-bold ${experienceMatchScore >= 70 ? 'text-green-600' : experienceMatchScore >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                          <div className={`text-2xl font-bold ${experienceMatchScore >= 70 ? 'text-green-600 dark:text-green-400' : experienceMatchScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                             {experienceMatchScore}%
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">Experience Match</p>
@@ -319,7 +319,7 @@ export const StageResultsModal = ({
                       )}
                       {locationMatchScore !== undefined && (
                         <div className="p-3 rounded-lg bg-muted/50 border text-center">
-                          <div className={`text-2xl font-bold ${locationMatchScore >= 70 ? 'text-green-600' : locationMatchScore >= 40 ? 'text-amber-600' : 'text-red-600'}`}>
+                          <div className={`text-2xl font-bold ${locationMatchScore >= 70 ? 'text-green-600 dark:text-green-400' : locationMatchScore >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                             {locationMatchScore}%
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">Location Match</p>
@@ -458,18 +458,18 @@ export const StageResultsModal = ({
                             key={idx} 
                             className={`p-4 rounded-lg border-2 ${
                               isCorrect 
-                                ? 'bg-green-50 border-green-200' 
-                                : 'bg-red-50 border-red-200'
+                                ? 'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-800' 
+                                : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800'
                             }`}
                           >
                             <div className="flex items-start gap-3">
                               <div className={`mt-0.5 p-1 rounded-full ${
-                                isCorrect ? 'bg-green-100' : 'bg-red-100'
+                                isCorrect ? 'bg-green-100 dark:bg-green-900/50' : 'bg-red-100 dark:bg-red-900/50'
                               }`}>
                                 {isCorrect ? (
-                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                                 ) : (
-                                  <XCircle className="h-5 w-5 text-red-600" />
+                                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                                 )}
                               </div>
                               <div className="flex-1">
@@ -479,13 +479,13 @@ export const StageResultsModal = ({
                                   </Badge>
                                   <Badge className={`text-xs ${
                                     isCorrect 
-                                      ? 'bg-green-100 text-green-700 border-green-300' 
-                                      : 'bg-red-100 text-red-700 border-red-300'
+                                      ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700' 
+                                      : 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700'
                                   }`}>
                                     {isCorrect ? 'Correct' : 'Incorrect'}
                                   </Badge>
                                 </div>
-                                <p className="font-medium text-foreground mb-3">
+                                <p className="font-medium text-foreground dark:text-foreground mb-3">
                                   {q.question}
                                 </p>
                                 
@@ -499,11 +499,11 @@ export const StageResultsModal = ({
                                       return (
                                         <div 
                                           key={optIdx}
-                                          className={`flex items-center gap-2 p-2 rounded-md text-sm ${
+                                          className={`flex items-center gap-2 p-2 rounded-md text-sm text-foreground ${
                                             isCorrectOption 
-                                              ? 'bg-green-100 border border-green-300' 
+                                              ? 'bg-green-100 border border-green-300 dark:bg-green-900/40 dark:border-green-700' 
                                               : isSelected && !isCorrectOption
-                                                ? 'bg-red-100 border border-red-300'
+                                                ? 'bg-red-100 border border-red-300 dark:bg-red-900/40 dark:border-red-700'
                                                 : 'bg-background border border-border'
                                           }`}
                                         >
@@ -512,10 +512,10 @@ export const StageResultsModal = ({
                                           </span>
                                           <span className="flex-1">{option}</span>
                                           {isCorrectOption && (
-                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                                           )}
                                           {isSelected && !isCorrectOption && (
-                                            <XCircle className="h-4 w-4 text-red-600" />
+                                            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                                           )}
                                         </div>
                                       );
@@ -527,7 +527,7 @@ export const StageResultsModal = ({
                                   <p className="text-sm text-muted-foreground mt-3">
                                     <span className="font-medium">Your answer:</span>{' '}
                                     {String.fromCharCode(65 + userAnswer)} |{' '}
-                                    <span className="font-medium text-green-600">Correct answer:</span>{' '}
+                                    <span className="font-medium text-green-600 dark:text-green-400">Correct answer:</span>{' '}
                                     {String.fromCharCode(65 + q.correctAnswer)}
                                   </p>
                                 )}
