@@ -508,6 +508,17 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'security_tester', label: 'Security Tester' },
     { value: 'qa_lead', label: 'QA Lead / Test Lead' },
   ],
+  'it_corporate.product_project_management': [
+    { value: 'product_manager', label: 'Product Manager' },
+    { value: 'associate_product_manager', label: 'Associate Product Manager' },
+    { value: 'technical_product_manager', label: 'Technical Product Manager' },
+    { value: 'project_manager', label: 'Project Manager' },
+    { value: 'delivery_manager', label: 'Delivery Manager' },
+    { value: 'scrum_master', label: 'Scrum Master' },
+    { value: 'agile_coach', label: 'Agile Coach' },
+    { value: 'program_manager', label: 'Program Manager' },
+    { value: 'release_manager', label: 'Release Manager' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
