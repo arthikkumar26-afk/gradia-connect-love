@@ -325,9 +325,9 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="w-full min-w-[1100px] text-xs">
+              <Table className="w-full text-xs">
                  <TableHeader>
-                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-2 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
+                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-2 [&_th]:px-1.5 [&_th]:h-9 [&_th]:text-secondary-foreground [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
                     <TableHead className="font-semibold">Date & Time</TableHead>
                     <TableHead className="font-semibold">Job ID</TableHead>
                     <TableHead className="font-semibold">Sector</TableHead>
