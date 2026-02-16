@@ -394,7 +394,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   };
 
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
+    <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden max-w-full">
       <div className="p-6 sm:p-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-primary/10 rounded-lg">
@@ -407,7 +407,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 overflow-hidden">
             {/* Interview Type & Pipeline Type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <FormField
@@ -616,7 +616,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             </div>
 
             {/* Board, Segment, Department, Designation, Subjects */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium leading-none">Board</label>
                 <Select
@@ -1203,7 +1203,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             </div>
 
             {/* State, City, Organisation & Experience */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <FormField
                 control={form.control}
                 name="location"
