@@ -994,6 +994,7 @@ const CandidateDashboard = () => {
     { id: "applications", label: "My Applications", icon: ClipboardList },
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "jobs", label: "Suitable Jobs", icon: Briefcase },
+    { id: "aijobapply", label: "AI Job Apply", icon: Rocket },
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "learning", label: "Learning", icon: BookOpen },
@@ -3190,6 +3191,24 @@ const CandidateDashboard = () => {
                     </Card>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* AI Job Apply */}
+            {activeMenu === "aijobapply" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">AI Job Apply</h2>
+                  <p className="text-sm text-muted-foreground">Let AI automatically apply to jobs that match your profile</p>
+                </div>
+                <Card className="p-12 text-center">
+                  <Rocket className="h-12 w-12 mx-auto mb-4 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">AI-Powered Job Applications</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Our AI will analyze your profile, match you with suitable jobs, and submit tailored applications on your behalf.
+                  </p>
+                  <Badge variant="secondary" className="mb-4">Coming Soon</Badge>
+                </Card>
               </div>
             )}
 
