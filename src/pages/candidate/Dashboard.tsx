@@ -990,12 +990,12 @@ const CandidateDashboard = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "resume", label: "Resume Builder", icon: FileText },
     { id: "applications", label: "My Applications", icon: ClipboardList },
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "jobs", label: "Suitable Jobs", icon: Briefcase },
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
-    { id: "resume", label: "Resume Builder", icon: FileText },
     { id: "learning", label: "Learning", icon: BookOpen },
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
