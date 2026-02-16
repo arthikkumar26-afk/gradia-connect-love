@@ -76,7 +76,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
         // Fetch candidate and job info
         const { data: icData } = await supabase
           .from('interview_candidates')
-          .select('candidate_id, job_id, candidate:profiles(full_name), job:jobs(job_title)')
+          .select('candidate_id, job_id, current_stage_id, candidate:profiles(full_name), job:jobs(job_title)')
           .eq('id', interviewCandidateId)
           .single();
         
@@ -116,6 +116,11 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           .select('reviewer_name, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, status')
           .eq('interview_candidate_id', interviewCandidateId);
 
+        // Determine the candidate's current stage order
+        const currentStageId = icData?.current_stage_id;
+        const currentStage = stages.find(s => s.id === currentStageId);
+        const currentStageOrder = currentStage?.stage_order ?? -1;
+
         // Build stage reviews
         const reviews: StageReview[] = stages
           .filter(s => s.name !== 'Offer Stage')
@@ -125,11 +130,16 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
               || stageEvents.find(e => e.status === 'in_progress')
               || stageEvents[0] || null;
 
+            // Determine if this stage was skipped:
+            // Stage is before current stage, has no event OR event is not completed/passed
+            const isCompleted = event?.status === 'completed' || event?.status === 'passed';
+            const isSkipped = !isCompleted && stage.stage_order < currentStageOrder;
+
             const review: StageReview = {
               stageName: stage.name,
               stageOrder: stage.stage_order,
               score: event?.ai_score || null,
-              status: event?.status || null,
+              status: isSkipped ? 'skipped' : (event?.status || null),
               completedAt: event?.completed_at || null,
               notes: event?.notes || null,
               aiFeedback: event?.ai_feedback || null,
@@ -232,15 +242,23 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
         // Stage header
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        const statusText = isCompleted ? '✓' : '○';
+        const statusText = isCompleted ? '✓' : review.status === 'skipped' ? '⊘' : '○';
         doc.text(`${statusText} ${review.stageName}`, 14, y);
         if (review.score !== null && review.score !== undefined) {
           doc.setFont('helvetica', 'normal');
           doc.text(`Score: ${review.score}%`, pageWidth - 20, y, { align: 'right' });
+        } else if (review.status === 'skipped') {
+          doc.setFont('helvetica', 'normal');
+          doc.text('Skipped', pageWidth - 20, y, { align: 'right' });
         }
         y += 6;
 
-        if (isCompleted) {
+        if (review.status === 'skipped') {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'italic');
+          doc.text('This stage was skipped', 20, y);
+          y += 5;
+        } else if (isCompleted) {
           doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
 
@@ -393,6 +411,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
         {stageReviews.map((review) => {
           const Icon = stageIcons[review.stageName] || FileText;
           const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
+          const isSkipped = review.status === 'skipped';
           const isExpanded = expandedStage === review.stageName;
           const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions;
 
@@ -401,7 +420,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
               key={review.stageName}
               className={cn(
                 "border rounded-lg overflow-hidden transition-all",
-                isCompleted ? "border-border" : "border-muted opacity-60"
+                isCompleted ? "border-border" : isSkipped ? "border-amber-300 dark:border-amber-700 opacity-80" : "border-muted opacity-60"
               )}
             >
               {/* Stage Header */}
@@ -414,9 +433,13 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
               >
                 <div className={cn(
                   "h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0",
-                  isCompleted ? "bg-green-100 text-green-600" : "bg-muted text-muted-foreground"
+                  isCompleted ? "bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400" 
+                    : isSkipped ? "bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400"
+                    : "bg-muted text-muted-foreground"
                 )}>
-                  {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+                  {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> 
+                    : isSkipped ? <XCircle className="h-3.5 w-3.5" />
+                    : <Icon className="h-3.5 w-3.5" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -433,7 +456,12 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                         {review.score}%
                       </Badge>
                     )}
-                    {!isCompleted && (
+                    {!isCompleted && isSkipped && (
+                      <Badge className="text-[10px] py-0 px-1.5 bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700">
+                        Skipped
+                      </Badge>
+                    )}
+                    {!isCompleted && !isSkipped && (
                       <Badge variant="outline" className="text-[10px] py-0 px-1.5">
                         Pending
                       </Badge>
