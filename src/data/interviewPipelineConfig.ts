@@ -496,6 +496,18 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'infrastructure_engineer', label: 'Infrastructure Engineer' },
     { value: 'noc_engineer', label: 'NOC Engineer' },
   ],
+  'it_corporate.qa_testing': [
+    { value: 'qa_engineer', label: 'QA Engineer' },
+    { value: 'software_tester', label: 'Software Tester' },
+    { value: 'manual_tester', label: 'Manual Tester' },
+    { value: 'automation_tester', label: 'Automation Tester' },
+    { value: 'selenium_automation_engineer', label: 'Selenium Automation Engineer' },
+    { value: 'api_tester', label: 'API Tester' },
+    { value: 'performance_tester', label: 'Performance Tester' },
+    { value: 'mobile_app_tester', label: 'Mobile App Tester' },
+    { value: 'security_tester', label: 'Security Tester' },
+    { value: 'qa_lead', label: 'QA Lead / Test Lead' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
