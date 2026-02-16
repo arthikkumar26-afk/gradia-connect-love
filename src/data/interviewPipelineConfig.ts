@@ -528,6 +528,16 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'visual_designer', label: 'Visual Designer' },
     { value: 'design_system_engineer', label: 'Design System Engineer' },
   ],
+  'it_corporate.business_it_consulting': [
+    { value: 'business_analyst', label: 'Business Analyst' },
+    { value: 'it_business_analyst', label: 'IT Business Analyst' },
+    { value: 'functional_consultant', label: 'Functional Consultant' },
+    { value: 'erp_consultant', label: 'ERP Consultant' },
+    { value: 'crm_consultant', label: 'CRM Consultant' },
+    { value: 'it_consultant', label: 'IT Consultant' },
+    { value: 'solution_architect', label: 'Solution Architect' },
+    { value: 'pre_sales_consultant', label: 'Pre-Sales Consultant' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
