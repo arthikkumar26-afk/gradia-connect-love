@@ -17,13 +17,15 @@ const SalesChatbot = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  const greetingSent = useRef(false);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      // Send initial greeting
+    if (isOpen && messages.length === 0 && !greetingSent.current) {
+      greetingSent.current = true;
       streamChat([]);
     }
   }, [isOpen]);
