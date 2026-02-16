@@ -477,7 +477,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
 
             {/* Role Selection */}
             {selectedPipelineType && (
-              <div className="space-y-2">
+              <div className="space-y-2 max-w-sm">
                 <label className="text-sm font-medium leading-none">
                   Role *
                 </label>
