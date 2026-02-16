@@ -519,6 +519,15 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'program_manager', label: 'Program Manager' },
     { value: 'release_manager', label: 'Release Manager' },
   ],
+  'it_corporate.ui_ux_design': [
+    { value: 'ui_designer', label: 'UI Designer' },
+    { value: 'ux_designer', label: 'UX Designer' },
+    { value: 'product_designer', label: 'Product Designer' },
+    { value: 'ux_researcher', label: 'UX Researcher' },
+    { value: 'interaction_designer', label: 'Interaction Designer' },
+    { value: 'visual_designer', label: 'Visual Designer' },
+    { value: 'design_system_engineer', label: 'Design System Engineer' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
