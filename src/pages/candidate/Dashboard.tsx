@@ -60,6 +60,7 @@ import FamilyModal from "@/components/candidate/FamilyModal";
 import AddressModal, { AddressData } from "@/components/candidate/AddressModal";
 import ResumeBuilderTab from "@/components/candidate/ResumeBuilderTab";
 import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
+import AIJobApplyTab from "@/components/candidate/AIJobApplyTab";
 import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 
 interface FamilyRecord {
@@ -3196,20 +3197,11 @@ const CandidateDashboard = () => {
 
             {/* AI Job Apply */}
             {activeMenu === "aijobapply" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">AI Job Apply</h2>
-                  <p className="text-sm text-muted-foreground">Let AI automatically apply to jobs that match your profile</p>
-                </div>
-                <Card className="p-12 text-center">
-                  <Rocket className="h-12 w-12 mx-auto mb-4 text-primary" />
-                  <h3 className="text-lg font-semibold text-foreground mb-2">AI-Powered Job Applications</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Our AI will analyze your profile, match you with suitable jobs, and submit tailored applications on your behalf.
-                  </p>
-                  <Badge variant="secondary" className="mb-4">Coming Soon</Badge>
-                </Card>
-              </div>
+              <AIJobApplyTab
+                profile={profile}
+                resumeAnalysis={resumeAnalysis}
+                onNavigateToResume={() => setActiveMenu("resume")}
+              />
             )}
 
             {/* Attend Mock Test - Standalone Section */}
