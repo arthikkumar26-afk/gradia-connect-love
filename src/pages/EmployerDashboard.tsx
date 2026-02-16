@@ -7,7 +7,7 @@ import {
   Users, 
   CheckSquare, 
   Settings, 
-  Sliders,
+  
   Clock,
   UserPlus,
   Calendar,
@@ -54,7 +54,7 @@ import { FeedbackMatrixContent } from "@/components/employer/FeedbackMatrixConte
 import { ConfirmationContent } from "@/components/employer/ConfirmationContent";
 import { OfferLetterContent } from "@/components/employer/OfferLetterContent";
 import { QPMContent } from "@/components/employer/QPMContent";
-import { ConfigurationContent } from "@/components/employer/ConfigurationContent";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -271,7 +271,7 @@ const EmployerDashboard = () => {
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
-    { id: "configuration", label: "Configuration", icon: Sliders, path: "/employer/configuration" },
+    
   ];
 
   const dashboardCards = [
@@ -523,7 +523,7 @@ const EmployerDashboard = () => {
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
-            {activeMenu === "configuration" && <ConfigurationContent />}
+            
           </div>
         </main>
       </div>
