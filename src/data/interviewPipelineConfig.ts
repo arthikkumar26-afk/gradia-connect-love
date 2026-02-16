@@ -458,6 +458,20 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'platform_engineer', label: 'Platform Engineer' },
     { value: 'sre', label: 'Site Reliability Engineer (SRE)' },
   ],
+  'it_corporate.cybersecurity': [
+    { value: 'security_analyst', label: 'Security Analyst' },
+    { value: 'soc_analyst', label: 'SOC Analyst (L1 / L2 / L3)' },
+    { value: 'ethical_hacker', label: 'Ethical Hacker' },
+    { value: 'penetration_tester', label: 'Penetration Tester' },
+    { value: 'vapt_engineer', label: 'VAPT Engineer' },
+    { value: 'application_security_engineer', label: 'Application Security Engineer' },
+    { value: 'cloud_security_engineer', label: 'Cloud Security Engineer' },
+    { value: 'network_security_engineer', label: 'Network Security Engineer' },
+    { value: 'grc_analyst', label: 'GRC Analyst' },
+    { value: 'incident_response_analyst', label: 'Incident Response Analyst' },
+    { value: 'security_architect', label: 'Security Architect' },
+    { value: 'information_security_manager', label: 'Information Security Manager' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
