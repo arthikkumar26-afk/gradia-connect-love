@@ -161,6 +161,67 @@ const CandidateDashboard = () => {
   const [mockInterviewStageResults, setMockInterviewStageResults] = useState<any[]>([]);
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
+  const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
+
+  // Fetch current candidate subscription
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!profile?.id) return;
+      const { data } = await supabase
+        .from("candidate_subscriptions")
+        .select("*")
+        .eq("candidate_id", profile.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setCandidateSubscription(data);
+    };
+    fetchSubscription();
+  }, [profile?.id]);
+
+  const hasUsedTrial = candidateSubscription?.plan === "pro" || candidateSubscription?.plan === "premium";
+  const isActiveSub = candidateSubscription?.status === "active" || candidateSubscription?.status === "trial";
+
+  const handleStartTrial = async () => {
+    if (!profile?.id) return;
+    setUpgradingPlan("pro-trial");
+    try {
+      // Check if user already used a trial
+      const { data: existingSubs } = await supabase
+        .from("candidate_subscriptions")
+        .select("id, status")
+        .eq("candidate_id", profile.id)
+        .eq("plan", "pro");
+
+      if (existingSubs && existingSubs.length > 0) {
+        toast({ title: "Trial already used", description: "You've already used your free trial. Please subscribe to continue.", variant: "destructive" });
+        setUpgradingPlan(null);
+        return;
+      }
+
+      const endsAt = new Date();
+      endsAt.setDate(endsAt.getDate() + 7);
+
+      const { error } = await supabase
+        .from("candidate_subscriptions")
+        .insert({
+          candidate_id: profile.id,
+          plan: "pro",
+          status: "trial",
+          started_at: new Date().toISOString(),
+          ends_at: endsAt.toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast({ title: "🎉 Pro Trial Activated!", description: "You have 7 days of free Pro access. After that, subscribe at ₹499/month." });
+      window.location.reload();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setUpgradingPlan(null);
+    }
+  };
 
   const handleCandidateUpgrade = async (plan: string, price: number) => {
     if (!profile?.id) return;
@@ -3574,10 +3635,25 @@ const CandidateDashboard = () => {
                           </li>
                         ))}
                       </ul>
-                      <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 499)}>
-                        {upgradingPlan === "pro" ? "Processing..." : "Upgrade to Pro"}
-                      </Button>
-                      <p className="text-xs text-center text-muted-foreground">7-day free trial included</p>
+                      {isActiveSub && candidateSubscription?.plan === "pro" ? (
+                        <Button className="w-full" variant="outline" disabled>
+                          {candidateSubscription.status === "trial" ? "Trial Active" : "Current Plan"}
+                        </Button>
+                      ) : !hasUsedTrial ? (
+                        <Button className="w-full" disabled={upgradingPlan === "pro-trial"} onClick={handleStartTrial}>
+                          {upgradingPlan === "pro-trial" ? "Activating..." : "Start 7-Day Free Trial"}
+                        </Button>
+                      ) : (
+                        <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 499)}>
+                          {upgradingPlan === "pro" ? "Processing..." : "Subscribe ₹499/mo"}
+                        </Button>
+                      )}
+                      {!hasUsedTrial && (
+                        <p className="text-xs text-center text-muted-foreground">7-day free trial · No payment required</p>
+                      )}
+                      {hasUsedTrial && candidateSubscription?.status !== "active" && candidateSubscription?.plan === "pro" && (
+                        <p className="text-xs text-center text-muted-foreground">Trial expired · Subscribe to continue</p>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -3614,9 +3690,13 @@ const CandidateDashboard = () => {
                           </li>
                         ))}
                       </ul>
-                      <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 999)}>
-                        {upgradingPlan === "premium" ? "Processing..." : "Upgrade to Premium"}
-                      </Button>
+                      {isActiveSub && candidateSubscription?.plan === "premium" ? (
+                        <Button className="w-full" variant="outline" disabled>Current Plan</Button>
+                      ) : (
+                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 999)}>
+                          {upgradingPlan === "premium" ? "Processing..." : "Subscribe ₹999/mo"}
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
