@@ -42,6 +42,7 @@ const PostJob = () => {
   const [isRefining, setIsRefining] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -254,6 +255,7 @@ const PostJob = () => {
         closing_date: values.closing_date || null,
         status: "active",
         interview_type: values.interview_type,
+        designation: selectedRole || null,
       };
 
       const { error } = await supabase.from("jobs").insert([jobData]);
@@ -419,6 +421,7 @@ const PostJob = () => {
                           onValueChange={(val) => {
                             field.onChange(val);
                             setSelectedPipelineType("");
+                            setSelectedRole("");
                           }}
                           defaultValue={field.value}
                         >
@@ -456,7 +459,10 @@ const PostJob = () => {
                       </label>
                       <Select
                         value={selectedPipelineType}
-                        onValueChange={setSelectedPipelineType}
+                        onValueChange={(val) => {
+                          setSelectedPipelineType(val);
+                          setSelectedRole("");
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select pipeline type" />
@@ -475,6 +481,35 @@ const PostJob = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Role Selection */}
+                {selectedPipelineType && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Role *
+                    </label>
+                    <Select
+                      value={selectedRole || undefined}
+                      onValueChange={setSelectedRole}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role / designation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="junior">Junior</SelectItem>
+                        <SelectItem value="mid">Mid-Level</SelectItem>
+                        <SelectItem value="senior">Senior</SelectItem>
+                        <SelectItem value="lead">Lead</SelectItem>
+                        <SelectItem value="manager">Manager</SelectItem>
+                        <SelectItem value="head">Head / Director</SelectItem>
+                        <SelectItem value="trainee">Trainee / Intern</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Select the seniority level for this position
+                    </p>
+                  </div>
+                )}
 
                 {/* Pipeline Stages Preview */}
                 {pipelineStages.length > 0 && (
