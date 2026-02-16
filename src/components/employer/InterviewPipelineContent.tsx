@@ -1695,12 +1695,12 @@ const ClickableStagesList = ({
                   />
                 </div>
 
-                {step.status === "current" && (
+                {(step.status === "current" || step.status === "completed") && (
                   <StageRecordingPlayer
                     interviewCandidateId={interviewCandidateId}
                     stageId={step.id}
                     stageName={step.title}
-                    showLinkForPending={true}
+                    showLinkForPending={step.status === "current"}
                   />
                 )}
 
