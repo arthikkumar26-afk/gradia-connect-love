@@ -268,44 +268,44 @@ const Contact = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center">
+            <Card className="text-center hover:shadow-medium transition-all duration-200">
               <CardHeader>
-                <CardTitle>Bangalore & Hyderabad</CardTitle>
-                <CardDescription>Main Offices</CardDescription>
+                <div className="mx-auto w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center mb-4">
+                  <Mail className="h-6 w-6 text-accent-foreground" />
+                </div>
+                <CardTitle className="text-lg">Email Us</CardTitle>
+                <CardDescription>Get in touch via email</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Bangalore, Hyderabad<br />
-                  India
-                </p>
+                <a href="mailto:info@gradia.co.in" className="font-medium text-accent hover:text-accent-hover transition-colors">
+                  info@gradia.co.in
+                </a>
               </CardContent>
             </Card>
 
-            <Card className="text-center">
+            <Card className="text-center hover:shadow-medium transition-all duration-200">
               <CardHeader>
-                <CardTitle>New York</CardTitle>
-                <CardDescription>East Coast Office</CardDescription>
+                <div className="mx-auto w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center mb-4">
+                  <MapPin className="h-6 w-6 text-accent-foreground" />
+                </div>
+                <CardTitle className="text-lg">Visit Us</CardTitle>
+                <CardDescription>Our headquarters</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  456 Broadway<br />
-                  New York, NY 10013<br />
-                  United States
-                </p>
+                <p className="font-medium text-foreground">Bangalore, Hyderabad</p>
               </CardContent>
             </Card>
 
-            <Card className="text-center">
+            <Card className="text-center hover:shadow-medium transition-all duration-200">
               <CardHeader>
-                <CardTitle>London</CardTitle>
-                <CardDescription>European Office</CardDescription>
+                <div className="mx-auto w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center mb-4">
+                  <Clock className="h-6 w-6 text-accent-foreground" />
+                </div>
+                <CardTitle className="text-lg">Office Hours</CardTitle>
+                <CardDescription>When we're available</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  789 Tech Square<br />
-                  London EC2A 4NE<br />
-                  United Kingdom
-                </p>
+                <p className="font-medium text-foreground">Mon-Fri: 9AM-6PM IST</p>
               </CardContent>
             </Card>
           </div>
