@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, DollarSign, FileText } from "lucide-react";
+import { Calendar, IndianRupee, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -132,7 +132,7 @@ export default function Sponsorships() {
                     <CardContent className="space-y-4">
                       <div className="grid gap-4 md:grid-cols-3">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <IndianRupee className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <p className="text-sm font-medium">
                               {sponsorship.currency} {sponsorship.amount.toLocaleString()}

@@ -25,7 +25,7 @@ import {
   Sparkles,
   MapPin,
   Clock,
-  DollarSign,
+  IndianRupee,
   Building2,
   ArrowRight,
   ArrowLeft,
@@ -570,7 +570,7 @@ export const JobApplicationFlow = ({
                   </div>
                   {job.salary && (
                     <div className="flex items-center gap-2 text-sm font-medium text-accent">
-                      <DollarSign className="h-4 w-4" />
+                      <IndianRupee className="h-4 w-4" />
                       <span>{job.salary}</span>
                     </div>
                   )}

@@ -20,7 +20,7 @@ import {
   MapPin,
   Briefcase,
   Clock,
-  DollarSign,
+  IndianRupee,
   Upload,
   Sparkles,
   FileText,
@@ -428,7 +428,7 @@ const CompanyJobs = () => {
                         )}
                         {job.salary_range && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <DollarSign className="h-4 w-4 flex-shrink-0" />
+                            <IndianRupee className="h-4 w-4 flex-shrink-0" />
                             <span>{job.salary_range}</span>
                           </div>
                         )}

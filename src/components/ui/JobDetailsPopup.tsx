@@ -12,7 +12,7 @@ import {
   MapPin, 
   Clock, 
   Building2, 
-  DollarSign,
+  IndianRupee,
   ArrowRight,
   X
 } from "lucide-react";
@@ -115,7 +115,7 @@ const JobDetailsPopup = ({ job, open, onOpenChange }: JobDetailsPopupProps) => {
             </div>
             {job.salary && (
               <div className="flex items-center gap-2 text-accent font-semibold">
-                <DollarSign className="h-4 w-4" />
+                <IndianRupee className="h-4 w-4" />
                 <span>{job.salary}</span>
               </div>
             )}

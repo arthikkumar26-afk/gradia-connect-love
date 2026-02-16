@@ -13,7 +13,7 @@ import {
   MapPin,
   Briefcase,
   Clock,
-  DollarSign,
+  IndianRupee,
   Upload,
   Sparkles,
   FileText,
@@ -316,7 +316,7 @@ const JobApply = () => {
             )}
             {job.salary_range && (
               <Badge variant="secondary" className="bg-white/20 text-primary-foreground border-0">
-                <DollarSign className="h-3 w-3 mr-1" /> {job.salary_range}
+                <IndianRupee className="h-3 w-3 mr-1" /> {job.salary_range}
               </Badge>
             )}
             {job.experience_required && (

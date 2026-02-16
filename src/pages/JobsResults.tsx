@@ -13,7 +13,7 @@ import {
   ArrowLeft, 
   MapPin, 
   Clock, 
-  DollarSign, 
+  IndianRupee, 
   Building2, 
   ArrowRight,
   Eye,
@@ -362,7 +362,7 @@ const JobsResults = () => {
                       </div>
                       {job.salary && (
                         <div className="flex items-center gap-1 text-sm font-semibold text-accent">
-                          <DollarSign className="h-4 w-4" />
+                          <IndianRupee className="h-4 w-4" />
                           {job.salary}
                         </div>
                       )}
@@ -452,7 +452,7 @@ const JobsResults = () => {
                     </div>
                     {selectedJob.salary && (
                       <div className="flex items-center gap-1 text-accent font-semibold text-lg">
-                        <DollarSign className="h-5 w-5" />
+                        <IndianRupee className="h-5 w-5" />
                         <span>{selectedJob.salary}</span>
                       </div>
                     )}

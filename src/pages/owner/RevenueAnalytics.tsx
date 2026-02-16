@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, DollarSign, TrendingUp, Users, Building2 } from "lucide-react";
+import { ArrowLeft, IndianRupee, TrendingUp, Users, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -55,7 +55,7 @@ const RevenueAnalytics = () => {
   if (!isAuthorized) return null;
 
   const cards = [
-    { title: "Total Subscriptions", value: stats.totalSubscriptions, icon: DollarSign, color: "text-green-500" },
+    { title: "Total Subscriptions", value: stats.totalSubscriptions, icon: IndianRupee, color: "text-green-500" },
     { title: "Active Subscriptions", value: stats.activeSubscriptions, icon: TrendingUp, color: "text-blue-500" },
     { title: "Total Employers", value: stats.totalEmployers, icon: Building2, color: "text-purple-500" },
     { title: "Total Candidates", value: stats.totalCandidates, icon: Users, color: "text-orange-500" },
