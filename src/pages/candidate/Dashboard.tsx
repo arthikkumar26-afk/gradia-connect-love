@@ -3201,6 +3201,7 @@ const CandidateDashboard = () => {
                 profile={profile}
                 resumeAnalysis={resumeAnalysis}
                 onNavigateToResume={() => setActiveMenu("resume")}
+                onNavigateToUpgrade={() => setActiveMenu("upgrade")}
               />
             )}
 
@@ -3482,6 +3483,7 @@ const CandidateDashboard = () => {
                           "All premium resume templates",
                           "Priority job recommendations",
                           "Mock test access (5/month)",
+                          "AI Job Apply (10 auto-applies/month)",
                           "Interview preparation tips",
                           "Profile visibility boost",
                         ].map((f, i) => (
@@ -3518,6 +3520,7 @@ const CandidateDashboard = () => {
                           "Everything in Pro",
                           "Unlimited mock tests",
                           "AI Mock Interview Pipeline",
+                          "Unlimited AI Job Apply",
                           "1-on-1 career coaching session",
                           "Advanced analytics & insights",
                           "Custom cover letter generation",

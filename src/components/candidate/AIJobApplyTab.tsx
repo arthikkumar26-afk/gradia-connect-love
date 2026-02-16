@@ -15,6 +15,10 @@ import {
   Briefcase,
   MapPin,
   FileText,
+  Crown,
+  Lock,
+  Star,
+  Check,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,9 +38,10 @@ interface AIJobApplyTabProps {
   profile: any;
   resumeAnalysis: any;
   onNavigateToResume: () => void;
+  onNavigateToUpgrade?: () => void;
 }
 
-export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToResume }: AIJobApplyTabProps) {
+export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToResume, onNavigateToUpgrade }: AIJobApplyTabProps) {
   const { toast } = useToast();
   const [step, setStep] = useState<"check" | "scanning" | "results" | "applying">("check");
   const [matchedJobs, setMatchedJobs] = useState<MatchedJob[]>([]);
@@ -45,9 +50,38 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const [appliedCount, setAppliedCount] = useState(0);
   const [totalToApply, setTotalToApply] = useState(0);
   const [existingApplicationJobIds, setExistingApplicationJobIds] = useState<Set<string>>(new Set());
+  const [candidatePlan, setCandidatePlan] = useState<string>("basic");
+  const [isPlanLoading, setIsPlanLoading] = useState(true);
 
   const hasResume = !!profile?.resume_url;
   const hasAnalysis = !!resumeAnalysis;
+  const hasAccess = candidatePlan === "pro" || candidatePlan === "premium";
+
+  // Fetch candidate subscription plan
+  useEffect(() => {
+    const fetchPlan = async () => {
+      if (!profile?.id) { setIsPlanLoading(false); return; }
+      setIsPlanLoading(true);
+      try {
+        const { data: sub } = await supabase
+          .from("candidate_subscriptions")
+          .select("plan, status, ends_at")
+          .eq("candidate_id", profile.id)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (sub && (!sub.ends_at || new Date(sub.ends_at) > new Date())) {
+          setCandidatePlan(sub.plan);
+        }
+      } catch (err) {
+        console.error("Error fetching plan:", err);
+      } finally {
+        setIsPlanLoading(false);
+      }
+    };
+    fetchPlan();
+  }, [profile?.id]);
 
   // Fetch existing applications to avoid duplicates
   useEffect(() => {
@@ -234,6 +268,55 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   };
 
   const getMatchPercent = (score: number) => Math.min(95, 50 + Math.round(score * 0.5));
+
+  // Step 0: Check subscription access
+  if (isPlanLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">AI Job Apply</h2>
+          <p className="text-sm text-muted-foreground">Let AI automatically apply to jobs that match your profile</p>
+        </div>
+        <Card className="p-8 text-center border-dashed border-2 border-primary/30">
+          <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Premium Feature</h3>
+          <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+            AI Job Apply is available on <strong>Pro</strong> and <strong>Premium</strong> plans. Upgrade to unlock automated job applications powered by AI.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+            <Card className="p-4 border-primary/20 bg-primary/5 text-left max-w-[220px]">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-sm text-foreground">Pro Plan</span>
+              </div>
+              <p className="text-lg font-bold text-foreground">₹499<span className="text-xs text-muted-foreground font-normal">/month</span></p>
+              <p className="text-xs text-muted-foreground mt-1">10 auto-applies/month</p>
+            </Card>
+            <Card className="p-4 border-primary/20 bg-primary/5 text-left max-w-[220px]">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-sm text-foreground">Premium Plan</span>
+              </div>
+              <p className="text-lg font-bold text-foreground">₹999<span className="text-xs text-muted-foreground font-normal">/month</span></p>
+              <p className="text-xs text-muted-foreground mt-1">Unlimited auto-applies</p>
+            </Card>
+          </div>
+          <Button onClick={onNavigateToUpgrade} className="gap-2">
+            <Crown className="h-4 w-4" />
+            Upgrade Now
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   // Step 1: Check resume
   if (!hasResume || !hasAnalysis) {
