@@ -77,6 +77,7 @@ import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
 import { DemoRoundOptions } from "./DemoRoundOptions";
 import { DemoFeedbackResults } from "./DemoFeedbackResults";
 import { AllStagesReviewSummary } from "./AllStagesReviewSummary";
+import OfferLetterModal from "./OfferLetterModal";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -199,7 +200,8 @@ const StageActionButtons = ({
   jobTitle,
   interviewCandidateId,
   onUpdateStep,
-  onScheduleHRRound
+  onScheduleHRRound,
+  onSendOfferLetter
 }: {
   step: InterviewStep;
   isFirstPending: boolean;
@@ -209,12 +211,14 @@ const StageActionButtons = ({
   interviewCandidateId: string;
   onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   onScheduleHRRound?: (step: InterviewStep) => void;
+  onSendOfferLetter?: () => void;
 }) => {
   const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [isMovingNext, setIsMovingNext] = useState(false);
   
   // Check if this is HR Round (manual meeting link only)
   const isHRRound = step.title === 'HR Round';
+  const isOfferStage = step.title === 'Offer Stage';
 
   const handleResendInvitation = async () => {
     setIsSendingInvite(true);
@@ -574,20 +578,32 @@ const StageActionButtons = ({
 
     return (
       <div className="flex gap-1 mt-2">
-        <Button 
-          size="sm" 
-          variant="ghost"
-          onClick={handleResendInvitation}
-          disabled={isSendingInvite}
-          className="h-6 text-[10px] px-2"
-        >
-          {isSendingInvite ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <Mail className="h-3 w-3 mr-1" />
-          )}
-          Resend
-        </Button>
+        {isOfferStage ? (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onSendOfferLetter?.()}
+            className="h-6 text-[10px] px-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+          >
+            <FileText className="h-3 w-3 mr-1" />
+            Send Offer Letter
+          </Button>
+        ) : (
+          <Button 
+            size="sm" 
+            variant="ghost"
+            onClick={handleResendInvitation}
+            disabled={isSendingInvite}
+            className="h-6 text-[10px] px-2"
+          >
+            {isSendingInvite ? (
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+            ) : (
+              <Mail className="h-3 w-3 mr-1" />
+            )}
+            Resend
+          </Button>
+        )}
         <Button 
           size="sm"
           onClick={getNextHandler()}
@@ -614,8 +630,18 @@ const StageActionButtons = ({
     
     return (
       <div className="flex flex-wrap gap-1 mt-2">
-        {/* HR Round - Manual meeting link scheduling */}
-        {isHRRound ? (
+        {/* Offer Stage - Send Offer Letter button */}
+        {isOfferStage ? (
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => onSendOfferLetter?.()}
+            className="h-6 text-[10px] px-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+          >
+            <FileText className="h-3 w-3 mr-1" />
+            Send Offer Letter
+          </Button>
+        ) : isHRRound ? (
           <Button 
             size="sm" 
             variant="outline"
@@ -942,6 +968,7 @@ const ClickableStagesList = ({
   const [selectedStageForResults, setSelectedStageForResults] = useState<InterviewStep | null>(null);
   const [hrScheduleModalOpen, setHrScheduleModalOpen] = useState(false);
   const [selectedHRStep, setSelectedHRStep] = useState<InterviewStep | null>(null);
+  const [offerLetterModalOpen, setOfferLetterModalOpen] = useState(false);
   const [slotBooking, setSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string; observer_email: string | null; demo_meet_link: string | null; demo_meet_type: string | null } | null>(null);
   const [isEditingSlot, setIsEditingSlot] = useState(false);
   const [editDate, setEditDate] = useState("");
@@ -1692,6 +1719,7 @@ const ClickableStagesList = ({
                     interviewCandidateId={interviewCandidateId}
                     onUpdateStep={onUpdateStep}
                     onScheduleHRRound={handleScheduleHRRound}
+                    onSendOfferLetter={() => setOfferLetterModalOpen(true)}
                   />
                 </div>
 
@@ -1761,6 +1789,19 @@ const ClickableStagesList = ({
           onSuccess={() => onUpdateStep(selectedHRStep.id, "current")}
         />
       )}
+
+      {/* Offer Letter Modal */}
+      <OfferLetterModal
+        isOpen={offerLetterModalOpen}
+        onClose={() => setOfferLetterModalOpen(false)}
+        placementId={interviewCandidateId}
+        candidateName={candidateName}
+        candidateEmail={candidateEmail}
+        onSuccess={() => {
+          setOfferLetterModalOpen(false);
+          toast.success('Offer letter sent successfully!');
+        }}
+      />
     </div>
   );
 };
