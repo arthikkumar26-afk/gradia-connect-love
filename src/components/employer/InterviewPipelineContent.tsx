@@ -1669,15 +1669,6 @@ const ClickableStagesList = ({
 
                 {/* HR Round - Schedule Meeting button is provided via StageActionButtons */}
 
-                {step.status === "current" && (
-                  <StageRecordingPlayer
-                    interviewCandidateId={interviewCandidateId}
-                    stageId={step.id}
-                    stageName={step.title}
-                    showLinkForPending={true}
-                  />
-                )}
-                
                 {/* Action buttons for all stages */}
                 <div className="flex flex-wrap items-center gap-2 mt-2">
                   {/* View Results button for completed stages */}
@@ -1703,6 +1694,15 @@ const ClickableStagesList = ({
                     onScheduleHRRound={handleScheduleHRRound}
                   />
                 </div>
+
+                {step.status === "current" && (
+                  <StageRecordingPlayer
+                    interviewCandidateId={interviewCandidateId}
+                    stageId={step.id}
+                    stageName={step.title}
+                    showLinkForPending={true}
+                  />
+                )}
 
                 {/* Final Review - Show all stages review summary below action buttons */}
                 {step.title === 'Final Review' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
