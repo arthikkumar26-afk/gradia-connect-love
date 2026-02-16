@@ -160,6 +160,87 @@ const CandidateDashboard = () => {
   const [mockInterviewSessions, setMockInterviewSessions] = useState<any[]>([]);
   const [mockInterviewStageResults, setMockInterviewStageResults] = useState<any[]>([]);
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
+  const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
+
+  const handleCandidateUpgrade = async (plan: string, price: number) => {
+    if (!profile?.id) return;
+    setUpgradingPlan(plan);
+    try {
+      toast({ title: "Initializing payment...", description: "Please wait" });
+
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
+        body: {
+          amount: price,
+          currency: "INR",
+          plan_id: plan,
+          plan_name: plan.charAt(0).toUpperCase() + plan.slice(1),
+          employer_id: profile.id,
+        },
+      });
+
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderData?.error || "Failed to create payment order");
+      }
+
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load Razorpay"));
+          document.body.appendChild(script);
+        });
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Gradia",
+        description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - Monthly`,
+        order_id: orderData.order_id,
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-candidate-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan,
+                amount: price,
+                candidate_id: profile.id,
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error(verifyData?.error || "Payment verification failed");
+            }
+
+            toast({ title: "Payment Successful!", description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan activated` });
+            window.location.reload();
+          } catch (err: any) {
+            toast({ title: "Payment Verification Failed", description: err.message, variant: "destructive" });
+          }
+        },
+        prefill: { email: profile.email || "" },
+        theme: { color: "#10b981" },
+        modal: {
+          ondismiss: () => {
+            setUpgradingPlan(null);
+            toast({ title: "Payment Cancelled", description: "You can try again anytime", variant: "destructive" });
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to process payment", variant: "destructive" });
+    } finally {
+      setUpgradingPlan(null);
+    }
+  };
+
 
   // Load resume analysis from database and migrate localStorage data if needed
   useEffect(() => {
@@ -3493,8 +3574,8 @@ const CandidateDashboard = () => {
                           </li>
                         ))}
                       </ul>
-                      <Button className="w-full" onClick={() => toast({ title: "Coming Soon!", description: "Pro plan will be available shortly" })}>
-                        Upgrade to Pro
+                      <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 499)}>
+                        {upgradingPlan === "pro" ? "Processing..." : "Upgrade to Pro"}
                       </Button>
                       <p className="text-xs text-center text-muted-foreground">7-day free trial included</p>
                     </CardContent>
@@ -3533,8 +3614,8 @@ const CandidateDashboard = () => {
                           </li>
                         ))}
                       </ul>
-                      <Button className="w-full" variant="outline" onClick={() => toast({ title: "Coming Soon!", description: "Premium plan will be available shortly" })}>
-                        Upgrade to Premium
+                      <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 999)}>
+                        {upgradingPlan === "premium" ? "Processing..." : "Upgrade to Premium"}
                       </Button>
                     </CardContent>
                   </Card>
