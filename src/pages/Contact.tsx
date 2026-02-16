@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,8 +15,10 @@ import {
   Building2,
   Send
 } from "lucide-react";
+import SalesChatbot from "@/components/SalesChatbot";
 
 const Contact = () => {
+  const [chatOpen, setChatOpen] = useState(false);
   const contactInfo = [
     {
       icon: Mail,
@@ -165,7 +168,7 @@ const Contact = () => {
                         <Mail className="h-4 w-4 mr-2" />
                         candidates@gradia.com
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => setChatOpen(true)}>
                         <MessageCircle className="h-4 w-4 mr-2" />
                         Live Chat
                       </Button>
@@ -280,6 +283,7 @@ const Contact = () => {
           </div>
         </div>
       </section>
+      <SalesChatbot externalOpen={chatOpen} onExternalClose={() => setChatOpen(false)} />
     </div>
   );
 };

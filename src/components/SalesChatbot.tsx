@@ -6,10 +6,20 @@ import { useNavigate } from "react-router-dom";
 
 type Message = { role: "user" | "assistant"; content: string };
 
+interface SalesChatbotProps {
+  externalOpen?: boolean;
+  onExternalClose?: () => void;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sales-chatbot`;
 
-const SalesChatbot = () => {
-  const [isOpen, setIsOpen] = useState(false);
+const SalesChatbot = ({ externalOpen, onExternalClose }: SalesChatbotProps = {}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setIsOpen = (val: boolean) => {
+    if (!val && onExternalClose) onExternalClose();
+    setInternalOpen(val);
+  };
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
