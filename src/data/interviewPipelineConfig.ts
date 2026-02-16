@@ -472,6 +472,18 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'security_architect', label: 'Security Architect' },
     { value: 'information_security_manager', label: 'Information Security Manager' },
   ],
+  'it_corporate.data_ai': [
+    { value: 'data_analyst', label: 'Data Analyst' },
+    { value: 'bi_analyst', label: 'Business Intelligence Analyst' },
+    { value: 'data_scientist', label: 'Data Scientist' },
+    { value: 'ml_engineer', label: 'Machine Learning Engineer' },
+    { value: 'ai_engineer', label: 'AI Engineer' },
+    { value: 'nlp_engineer', label: 'NLP Engineer' },
+    { value: 'cv_engineer', label: 'Computer Vision Engineer' },
+    { value: 'data_engineer', label: 'Data Engineer' },
+    { value: 'big_data_engineer', label: 'Big Data Engineer' },
+    { value: 'mlops_engineer', label: 'MLOps Engineer' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
