@@ -61,38 +61,7 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* Contact Information */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {contactInfo.map((info, index) => (
-              <Card key={index} className="text-center hover:shadow-medium transition-all duration-200">
-                <CardHeader>
-                  <div className="mx-auto w-12 h-12 bg-gradient-accent rounded-lg flex items-center justify-center mb-4">
-                    <info.icon className="h-6 w-6 text-accent-foreground" />
-                  </div>
-                  <CardTitle className="text-lg">{info.title}</CardTitle>
-                  <CardDescription>{info.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {info.action.startsWith('#') ? (
-                    <p className="font-medium text-foreground">{info.value}</p>
-                  ) : (
-                    <a 
-                      href={info.action}
-                      className="font-medium text-accent hover:text-accent-hover transition-colors"
-                      target={info.action.startsWith('mailto:') || info.action.startsWith('tel:') ? '_self' : '_blank'}
-                      rel="noopener noreferrer"
-                    >
-                      {info.value}
-                    </a>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* Contact Form & Support Options */}
       <section className="py-16 bg-subtle">
