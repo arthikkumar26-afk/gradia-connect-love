@@ -10,8 +10,10 @@ import {
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
+import { StageRecordingPlayer } from "./StageRecordingPlayer";
 
 interface StageReview {
+  stageId: string;
   stageName: string;
   stageOrder: number;
   score: number | null;
@@ -136,6 +138,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             const isSkipped = !isCompleted && stage.stage_order < currentStageOrder;
 
             const review: StageReview = {
+              stageId: stage.id,
               stageName: stage.name,
               stageOrder: stage.stage_order,
               score: event?.ai_score || null,
@@ -413,7 +416,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
           const isSkipped = review.status === 'skipped';
           const isExpanded = expandedStage === review.stageName;
-          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions;
+          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'HR Round'].includes(review.stageName);
 
           return (
             <div
@@ -575,6 +578,18 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                       {review.notes && (
                         <p className="text-xs text-muted-foreground">{review.notes}</p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Recording & Results for stages with recordings */}
+                  {['Written Test', 'Demo Round', 'HR Round'].includes(review.stageName) && (
+                    <div className="mt-2 pt-2 border-t">
+                      <StageRecordingPlayer
+                        interviewCandidateId={interviewCandidateId}
+                        stageId={review.stageId}
+                        stageName={review.stageName}
+                        showLinkForPending={false}
+                      />
                     </div>
                   )}
 
