@@ -46,6 +46,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [hasGeneratedReq, setHasGeneratedReq] = useState(false);
   const [isRefiningReq, setIsRefiningReq] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string>>({});
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -80,6 +81,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   useEffect(() => {
     setDynamicFieldValues({});
     setSelectedPipelineType("");
+    setSelectedRole("");
   }, [watchedInterviewType]);
 
   const handleDynamicFieldChange = (fieldName: string, value: string, additionalResets?: Record<string, string>) => {
@@ -375,7 +377,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         program: dynamicFieldValues["program"] || null,
         classes: dynamicFieldValues["hs_classes"] || dynamicFieldValues["classes"] || null,
         board: dynamicFieldValues["board"] || null,
-        designation: dynamicFieldValues["designation"] || null,
+        designation: selectedRole || dynamicFieldValues["designation"] || null,
         subjects: dynamicFieldValues["subjects"] || dynamicFieldValues["specialized_subjects"] || null,
       } as any]);
 
@@ -453,7 +455,10 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   <label className="text-sm font-medium leading-none">
                     Interview Pipeline Type *
                   </label>
-                  <Select value={selectedPipelineType} onValueChange={setSelectedPipelineType}>
+                  <Select value={selectedPipelineType} onValueChange={(val) => {
+                    setSelectedPipelineType(val);
+                    setSelectedRole("");
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select pipeline type" />
                     </SelectTrigger>
@@ -469,6 +474,35 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 </div>
               )}
             </div>
+
+            {/* Role Selection */}
+            {selectedPipelineType && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">
+                  Role *
+                </label>
+                <Select
+                  value={selectedRole || undefined}
+                  onValueChange={setSelectedRole}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role / designation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="junior">Junior</SelectItem>
+                    <SelectItem value="mid">Mid-Level</SelectItem>
+                    <SelectItem value="senior">Senior</SelectItem>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="head">Head / Director</SelectItem>
+                    <SelectItem value="trainee">Trainee / Intern</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Select the seniority level for this position
+                </p>
+              </div>
+            )}
 
             {/* Pipeline Stages Preview */}
             {pipelineStages.length > 0 && (
