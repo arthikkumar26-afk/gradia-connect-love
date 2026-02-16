@@ -325,6 +325,39 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_subscriptions: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          plan: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       educational_qualifications: {
         Row: {
           board_university: string | null

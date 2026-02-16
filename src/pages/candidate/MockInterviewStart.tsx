@@ -19,8 +19,12 @@ import {
   FileText,
   ListChecks,
   ArrowLeft,
-  Clock
+  Clock,
+  Crown,
+  Lock,
+  Zap
 } from "lucide-react";
+import { useMockTestLimits } from "@/hooks/useMockTestLimits";
 
 const stagesList = [
   { order: 1, name: "Interview Instructions", icon: Mail },
@@ -40,6 +44,7 @@ const MockInterviewStart = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const mockTestLimits = useMockTestLimits(user?.id);
 
   const isNewEmployee = type === "new-employee";
   const title = isNewEmployee ? "New Employee" : "Promotions";
@@ -190,29 +195,63 @@ const MockInterviewStart = () => {
               </div>
             </div>
 
-            {/* Start Button */}
-            <div className="pt-4">
-              <Button
-                onClick={startMockTest}
-                disabled={isStarting}
-                className="w-full gap-2"
-                size="lg"
-              >
-                {isStarting ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Play className="h-5 w-5" />
-                )}
-                Start Interview
-              </Button>
-            </div>
+            {/* Usage Counter */}
+            {!mockTestLimits.isLoading && (
+              <div className="flex items-center justify-center gap-3 pb-2">
+                <Badge variant={mockTestLimits.canStart ? "secondary" : "destructive"} className="gap-1 text-xs">
+                  {mockTestLimits.plan === 'premium' ? (
+                    <><Crown className="h-3 w-3" /> Unlimited</>
+                  ) : (
+                    <>{mockTestLimits.usedTests}/{mockTestLimits.maxTests} used this month</>
+                  )}
+                </Badge>
+                <Badge variant="outline" className="gap-1 text-xs capitalize">
+                  <Zap className="h-3 w-3" /> {mockTestLimits.plan}
+                </Badge>
+              </div>
+            )}
 
-            <div className="flex justify-center">
-              <Badge variant="secondary" className="text-xs gap-1">
-                <Clock className="h-3 w-3" />
-                Estimated time: 45-60 minutes
-              </Badge>
-            </div>
+            {/* Limit Reached Prompt */}
+            {!mockTestLimits.isLoading && !mockTestLimits.canStart ? (
+              <div className="space-y-3 text-center">
+                <div className="h-12 w-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+                  <Lock className="h-6 w-6 text-destructive" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Monthly limit reached. Upgrade to continue practicing.
+                </p>
+                <Button className="w-full gap-2" onClick={() => navigate('/candidate/dashboard')}>
+                  <Crown className="h-4 w-4" />
+                  Upgrade Plan
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Start Button */}
+                <div className="pt-4">
+                  <Button
+                    onClick={startMockTest}
+                    disabled={isStarting}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    {isStarting ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Play className="h-5 w-5" />
+                    )}
+                    Start Interview
+                  </Button>
+                </div>
+
+                <div className="flex justify-center">
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    <Clock className="h-3 w-3" />
+                    Estimated time: 45-60 minutes
+                  </Badge>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
