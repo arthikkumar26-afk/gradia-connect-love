@@ -484,6 +484,18 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'big_data_engineer', label: 'Big Data Engineer' },
     { value: 'mlops_engineer', label: 'MLOps Engineer' },
   ],
+  'it_corporate.cloud_infrastructure': [
+    { value: 'cloud_engineer', label: 'Cloud Engineer' },
+    { value: 'aws_engineer', label: 'AWS Engineer' },
+    { value: 'azure_engineer', label: 'Azure Engineer' },
+    { value: 'gcp_engineer', label: 'Google Cloud Engineer' },
+    { value: 'system_administrator', label: 'System Administrator' },
+    { value: 'linux_administrator', label: 'Linux Administrator' },
+    { value: 'windows_administrator', label: 'Windows Administrator' },
+    { value: 'network_engineer', label: 'Network Engineer' },
+    { value: 'infrastructure_engineer', label: 'Infrastructure Engineer' },
+    { value: 'noc_engineer', label: 'NOC Engineer' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
