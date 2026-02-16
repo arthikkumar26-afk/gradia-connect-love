@@ -443,6 +443,38 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
     ],
   },
 ];
+// Role options per pipeline type (keyed by "interviewType.pipelineType")
+export const pipelineRoleOptions: Record<string, { value: string; label: string }[]> = {
+  // IT Corporate
+  'it_corporate.software_engineer': [
+    { value: 'software_engineer', label: 'Software Engineer' },
+    { value: 'frontend_developer', label: 'Frontend Developer' },
+    { value: 'backend_developer', label: 'Backend Developer' },
+    { value: 'full_stack_developer', label: 'Full Stack Developer' },
+    { value: 'mobile_app_developer', label: 'Mobile App Developer' },
+    { value: 'devops_engineer', label: 'DevOps Engineer' },
+    { value: 'embedded_systems_engineer', label: 'Embedded Systems Engineer' },
+    { value: 'api_developer', label: 'API Developer' },
+    { value: 'platform_engineer', label: 'Platform Engineer' },
+    { value: 'sre', label: 'Site Reliability Engineer (SRE)' },
+  ],
+};
+
+// Default seniority-based roles used when no specific roles are defined
+export const defaultRoleOptions: { value: string; label: string }[] = [
+  { value: 'junior', label: 'Junior' },
+  { value: 'mid', label: 'Mid-Level' },
+  { value: 'senior', label: 'Senior' },
+  { value: 'lead', label: 'Lead' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'head', label: 'Head / Director' },
+  { value: 'trainee', label: 'Trainee / Intern' },
+];
+
+export const getRolesForPipeline = (interviewType: string, pipelineType: string): { value: string; label: string }[] => {
+  const key = `${interviewType}.${pipelineType}`;
+  return pipelineRoleOptions[key] || defaultRoleOptions;
+};
 
 export const getPipelineTypesForInterviewType = (interviewType: string): PipelineType[] => {
   const config = interviewPipelineConfig.find(c => c.value === interviewType);

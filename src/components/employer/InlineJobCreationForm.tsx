@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User } from "lucide-react";
-import { getPipelineTypesForInterviewType, getPipelineStages } from "@/data/interviewPipelineConfig";
+import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline } from "@/data/interviewPipelineConfig";
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 import { indiaLocationData } from "@/data/indiaLocations";
 
@@ -484,22 +484,19 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <Select
                   value={selectedRole || undefined}
                   onValueChange={setSelectedRole}
+                  key={`role-${watchedInterviewType}-${selectedPipelineType}`}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select role / designation" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="junior">Junior</SelectItem>
-                    <SelectItem value="mid">Mid-Level</SelectItem>
-                    <SelectItem value="senior">Senior</SelectItem>
-                    <SelectItem value="lead">Lead</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="head">Head / Director</SelectItem>
-                    <SelectItem value="trainee">Trainee / Intern</SelectItem>
+                    {getRolesForPipeline(watchedInterviewType, selectedPipelineType).map((role) => (
+                      <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Select the seniority level for this position
+                  Select the role for this position
                 </p>
               </div>
             )}
