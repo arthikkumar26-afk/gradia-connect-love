@@ -538,6 +538,16 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'solution_architect', label: 'Solution Architect' },
     { value: 'pre_sales_consultant', label: 'Pre-Sales Consultant' },
   ],
+  'it_corporate.it_support_operations': [
+    { value: 'it_support_engineer', label: 'IT Support Engineer' },
+    { value: 'desktop_support_engineer', label: 'Desktop Support Engineer' },
+    { value: 'technical_support_engineer', label: 'Technical Support Engineer' },
+    { value: 'application_support_engineer', label: 'Application Support Engineer' },
+    { value: 'l1_support_engineer', label: 'L1 Support Engineer' },
+    { value: 'l2_support_engineer', label: 'L2 Support Engineer' },
+    { value: 'l3_support_engineer', label: 'L3 Support Engineer' },
+    { value: 'it_operations_executive', label: 'IT Operations Executive' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
