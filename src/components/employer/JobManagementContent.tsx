@@ -347,9 +347,9 @@ export const JobManagementContent = () => {
           {/* Jobs Table */}
           <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden w-full">
             <div className="overflow-x-auto w-full">
-              <Table className="w-full text-[11px]">
+              <Table className="w-full text-[10px] table-fixed">
                  <TableHeader>
-                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-1.5 [&_th]:px-1 [&_th]:h-8 [&_th]:text-secondary-foreground [&_th]:text-[10px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
+                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-1 [&_th]:px-0.5 [&_th]:h-7 [&_th]:text-secondary-foreground [&_th]:text-[9px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap [&_th]:overflow-hidden [&_th]:text-ellipsis">
                     <TableHead className="font-semibold">Date</TableHead>
                     <TableHead className="font-semibold">ID</TableHead>
                     <TableHead className="font-semibold">Sector</TableHead>
@@ -396,7 +396,7 @@ export const JobManagementContent = () => {
                       return (
                         <TableRow 
                           key={job.id}
-                          className="hover:bg-accent/5 transition-colors [&_td]:px-2 [&_td]:py-2.5 cursor-pointer"
+                          className="hover:bg-accent/5 transition-colors [&_td]:px-0.5 [&_td]:py-1.5 [&_td]:max-w-[80px] [&_td]:overflow-hidden [&_td]:text-ellipsis cursor-pointer"
                           onClick={() => handleViewJob(job)}
                         >
                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{job.dateTime}</TableCell>
