@@ -21,6 +21,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { Download } from "lucide-react";
 
 interface UnsubscribedEmployer {
   id: string;
@@ -164,9 +166,29 @@ const UnsubscribedEmployers = () => {
                   <p className="text-sm text-muted-foreground">Employers without active subscriptions</p>
                 </div>
               </div>
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search employers..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+              <div className="flex items-center gap-2">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Search employers..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToExcel(
+                    filtered.map(e => ({
+                      Name: e.full_name,
+                      Email: e.email,
+                      Company: e.company_name || 'N/A',
+                      Phone: e.mobile || 'N/A',
+                      Joined: e.created_at ? format(new Date(e.created_at), 'MMM dd, yyyy') : 'N/A',
+                    })),
+                    'unsubscribed_employers'
+                  )}
+                  disabled={filtered.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Export
+                </Button>
               </div>
             </div>
           </header>

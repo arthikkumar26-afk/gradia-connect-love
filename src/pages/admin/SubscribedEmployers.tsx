@@ -71,6 +71,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { Download } from "lucide-react";
 
 interface Subscription {
   id: string;
@@ -382,6 +384,28 @@ const SubscribedEmployers = () => {
                   className="pl-10"
                 />
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportToExcel(
+                  filteredSubscriptions.map(s => ({
+                    Name: s.employer?.full_name || 'N/A',
+                    Email: s.employer?.email || 'N/A',
+                    Company: s.employer?.company_name || 'N/A',
+                    Plan: s.plan_name,
+                    Amount: `${s.currency} ${s.amount}`,
+                    Billing: s.billing_cycle,
+                    Status: s.status,
+                    Started: format(new Date(s.started_at), 'MMM dd, yyyy'),
+                    Expires: s.ends_at ? format(new Date(s.ends_at), 'MMM dd, yyyy') : 'N/A',
+                  })),
+                  'subscribed_employers'
+                )}
+                disabled={filteredSubscriptions.length === 0}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
             </div>
           </header>
 

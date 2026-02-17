@@ -81,6 +81,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatDistanceToNow, format } from "date-fns";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { Download } from "lucide-react";
 
 interface User {
   id: string;
@@ -476,6 +478,28 @@ const Users = () => {
                       title="Refresh users"
                     >
                       <RefreshCw className={`h-4 w-4 ${usersLoading ? 'animate-spin' : ''}`} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportToExcel(
+                        filteredUsers.map(u => ({
+                          Name: u.full_name,
+                          Email: u.email,
+                          Phone: u.mobile || 'N/A',
+                          Role: u.role,
+                          Location: u.location || 'N/A',
+                          Company: u.company_name || 'N/A',
+                          Experience: u.experience_level || 'N/A',
+                          Joined: u.created_at ? format(new Date(u.created_at), 'MMM dd, yyyy') : 'N/A',
+                        })),
+                        'users'
+                      )}
+                      disabled={filteredUsers.length === 0}
+                      title="Export to Excel"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Export
                     </Button>
                   </div>
                 </div>

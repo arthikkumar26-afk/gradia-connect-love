@@ -74,6 +74,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { Download } from "lucide-react";
 
 interface Job {
   id: string;
@@ -463,6 +465,28 @@ const JobModeration = () => {
               </SidebarTrigger>
               <h1 className="text-lg font-semibold">Job Moderation</h1>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToExcel(
+                filteredJobs.map(j => ({
+                  Title: j.job_title,
+                  Company: j.employer?.company_name || 'N/A',
+                  Employer: j.employer?.full_name || 'N/A',
+                  Location: j.location || 'N/A',
+                  Department: j.department || 'N/A',
+                  Status: j.status || 'N/A',
+                  Moderation: j.moderation_status || 'pending',
+                  Featured: j.is_featured ? 'Yes' : 'No',
+                  Posted: j.created_at ? formatDistanceToNow(new Date(j.created_at), { addSuffix: true }) : 'N/A',
+                })),
+                'job_moderation'
+              )}
+              disabled={filteredJobs.length === 0}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </Button>
           </header>
 
           {/* Page Content */}
