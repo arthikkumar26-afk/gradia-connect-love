@@ -58,9 +58,12 @@ const CouponManagement = () => {
   const [saving, setSaving] = useState(false);
 
   // Form state
+  const candidatePackages = ["Pro (₹499/mo)", "Premium (₹999/mo)"];
+  const employerPackages = ["Growth (₹4,999/mo)", "Professional (₹14,999/mo)", "Enterprise (₹29,000/mo)"];
+
   const [form, setForm] = useState({
     code: "",
-    description: "",
+    applicable_packages: [] as string[],
     discount_type: "percentage",
     discount_value: "",
     min_order_amount: "",
@@ -70,6 +73,21 @@ const CouponManagement = () => {
     max_uses_per_user: "1",
     valid_until: "",
   });
+
+  const getAvailablePackages = () => {
+    if (form.applicable_to === "candidate") return candidatePackages;
+    if (form.applicable_to === "employer") return employerPackages;
+    return [...candidatePackages, ...employerPackages];
+  };
+
+  const togglePackage = (pkg: string) => {
+    setForm(prev => ({
+      ...prev,
+      applicable_packages: prev.applicable_packages.includes(pkg)
+        ? prev.applicable_packages.filter(p => p !== pkg)
+        : [...prev.applicable_packages, pkg],
+    }));
+  };
 
   useEffect(() => {
     checkAuth();
@@ -144,7 +162,7 @@ const CouponManagement = () => {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("discount_coupons").insert({
         code: form.code.toUpperCase().trim(),
-        description: form.description || null,
+        description: form.applicable_packages.length > 0 ? form.applicable_packages.join(", ") : null,
         discount_type: form.discount_type,
         discount_value: parseFloat(form.discount_value),
         min_order_amount: form.min_order_amount ? parseFloat(form.min_order_amount) : 0,
@@ -158,7 +176,7 @@ const CouponManagement = () => {
       if (error) throw error;
       toast({ title: "Coupon Created!", description: `Code: ${form.code.toUpperCase()}` });
       setShowCreate(false);
-      setForm({ code: "", description: "", discount_type: "percentage", discount_value: "", min_order_amount: "", max_discount_amount: "", applicable_to: "both", max_total_uses: "", max_uses_per_user: "1", valid_until: "" });
+      setForm({ code: "", applicable_packages: [], discount_type: "percentage", discount_value: "", min_order_amount: "", max_discount_amount: "", applicable_to: "both", max_total_uses: "", max_uses_per_user: "1", valid_until: "" });
       fetchCoupons();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -222,8 +240,22 @@ const CouponManagement = () => {
                     </div>
                   </div>
                   <div>
-                    <Label>Description</Label>
-                    <Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Optional description" />
+                    <Label>Applicable Packages</Label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {getAvailablePackages().map(pkg => (
+                        <Badge
+                          key={pkg}
+                          variant={form.applicable_packages.includes(pkg) ? "default" : "outline"}
+                          className="cursor-pointer select-none"
+                          onClick={() => togglePackage(pkg)}
+                        >
+                          {pkg}
+                        </Badge>
+                      ))}
+                    </div>
+                    {form.applicable_packages.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">All packages if none selected</p>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
