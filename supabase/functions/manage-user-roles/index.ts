@@ -38,7 +38,8 @@ Deno.serve(async (req) => {
     // Create admin client for privileged operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, targetUserId, targetEmail, role } = await req.json();
+    const reqBody = await req.json();
+    const { action, targetUserId, targetEmail, role, password: userPassword, fullName } = reqBody;
 
     // Handle dev-seed-role action BEFORE owner check (for bootstrapping)
     if (action === "dev-seed-role") {
@@ -102,6 +103,46 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Only owners can manage user roles" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "create-user") {
+      if (!targetEmail || !role) {
+        return new Response(
+          JSON.stringify({ error: "targetEmail and role are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: targetEmail,
+        password: userPassword,
+        email_confirm: true,
+        user_metadata: { full_name: fullName || targetEmail, role },
+      });
+
+      if (createError) {
+        return new Response(
+          JSON.stringify({ error: createError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      await supabaseAdmin.from("profiles").upsert({
+        id: newUser.user.id,
+        email: targetEmail,
+        full_name: fullName || targetEmail,
+        role,
+      });
+
+      await supabaseAdmin.from("user_roles").upsert(
+        { user_id: newUser.user.id, role },
+        { onConflict: "user_id,role" }
+      );
+
+      return new Response(
+        JSON.stringify({ success: true, message: `User ${targetEmail} created with role ${role}`, userId: newUser.user.id }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
