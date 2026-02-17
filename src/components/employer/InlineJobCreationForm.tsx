@@ -1226,6 +1226,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="bg-popover z-[200] max-h-60">
+                        <SelectItem value="All">All</SelectItem>
                         {Object.keys(indiaLocationData).sort().map((state) => (
                           <SelectItem key={state} value={state}>{state}</SelectItem>
                         ))}
@@ -1241,21 +1242,36 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <Select
                   key={`city-${selectedState}`}
                   value={selectedCity || undefined}
-                  onValueChange={(val) => {
-                    setSelectedCity(val);
-                    form.setValue("location", `${val}, ${selectedState}`);
-                  }}
-                  disabled={!selectedState}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={selectedState ? "Select city" : "Select state first"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover z-[200] max-h-60">
-                    {selectedState && Object.keys(indiaLocationData[selectedState] || {}).sort().map((district) => (
-                      <SelectItem key={district} value={district}>{district}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    onValueChange={(val) => {
+                      setSelectedCity(val);
+                      if (selectedState === 'All') {
+                        // Find which state this district belongs to
+                        const parentState = Object.keys(indiaLocationData).find(s => 
+                          Object.keys(indiaLocationData[s] || {}).includes(val)
+                        );
+                        form.setValue("location", parentState ? `${val}, ${parentState}` : val);
+                      } else {
+                        form.setValue("location", `${val}, ${selectedState}`);
+                      }
+                    }}
+                    disabled={!selectedState}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={selectedState ? "Select city" : "Select state first"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-[200] max-h-60">
+                      {selectedState === 'All' 
+                        ? Object.keys(indiaLocationData).sort().flatMap((state) =>
+                            Object.keys(indiaLocationData[state] || {}).sort().map((district) => (
+                              <SelectItem key={`${state}-${district}`} value={district}>{district} ({state})</SelectItem>
+                            ))
+                          )
+                        : selectedState && Object.keys(indiaLocationData[selectedState] || {}).sort().map((district) => (
+                            <SelectItem key={district} value={district}>{district}</SelectItem>
+                          ))
+                      }
+                    </SelectContent>
+                  </Select>
               </div>
 
               <FormField
