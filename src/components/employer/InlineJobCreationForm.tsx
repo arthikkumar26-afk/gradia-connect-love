@@ -434,12 +434,14 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                         <SelectItem value="it_corporate">IT Corporate (Coding + MCQ)</SelectItem>
                         <SelectItem value="sales">Sales (Presentation + MCQ)</SelectItem>
                         <SelectItem value="management">Management (Case Study + MCQ)</SelectItem>
+                        <SelectItem value="non_it_corporate">Non-IT Corporate (Aptitude + Interview)</SelectItem>
                         <SelectItem value="legal">Legal (Instruction + Written + Management Meet)</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">
                       {field.value === 'education' && "📹 Includes Demo Video round for teaching positions"}
                       {field.value === 'it_corporate' && "💻 For IT companies — includes coding assessments"}
+                      {field.value === 'non_it_corporate' && "🏢 For non-tech corporate roles — aptitude & interview based"}
                       {field.value === 'sales' && "📊 Includes presentation & pitch assessment"}
                       {field.value === 'management' && "📋 Includes case study & leadership analysis"}
                       {field.value === 'standard' && "📝 Standard MCQ-based screening interviews"}
