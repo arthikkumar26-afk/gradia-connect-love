@@ -1785,7 +1785,7 @@ const CandidateDashboard = () => {
             }
           }
           
-          // Match by skills from resume analysis
+          // Match by skills from resume analysis against job skills array
           const jobSkills = (job as any).skills as string[] | null;
           if (jobSkills && jobSkills.length > 0 && resumeAnalysis?.skill_highlights) {
             const candidateSkills = resumeAnalysis.skill_highlights.map((s: string) => s.toLowerCase());
@@ -1793,8 +1793,44 @@ const CandidateDashboard = () => {
               candidateSkills.some((cs: string) => cs.includes(skill.toLowerCase()) || skill.toLowerCase().includes(cs))
             );
             if (matchedSkills.length > 0) {
-              score += Math.min(25, matchedSkills.length * 8);
+              score += Math.min(30, matchedSkills.length * 8);
               matchReasons.push('skills');
+            }
+          }
+          
+          // Also match candidate skills against job description/requirements text
+          if (resumeAnalysis?.skill_highlights && resumeAnalysis.skill_highlights.length > 0) {
+            const descLower = job.description?.toLowerCase() || '';
+            const reqLower = job.requirements?.toLowerCase() || '';
+            const combinedText = descLower + ' ' + reqLower;
+            if (combinedText.length > 0) {
+              const descMatchedSkills = resumeAnalysis.skill_highlights.filter((skill: string) =>
+                combinedText.includes(skill.toLowerCase())
+              );
+              if (descMatchedSkills.length > 0 && !matchReasons.includes('skills')) {
+                score += Math.min(20, descMatchedSkills.length * 5);
+                matchReasons.push('skills_desc');
+              }
+            }
+          }
+
+          // Match by languages
+          if (profile.languages && profile.languages.length > 0 && job.description) {
+            const descLower = job.description.toLowerCase();
+            const matchedLangs = profile.languages.filter((lang: string) => descLower.includes(lang.toLowerCase()));
+            if (matchedLangs.length > 0) {
+              score += Math.min(10, matchedLangs.length * 5);
+              matchReasons.push('languages');
+            }
+          }
+
+          // Match by highest qualification
+          if (profile.highest_qualification && job.requirements) {
+            const qualLower = profile.highest_qualification.toLowerCase();
+            const reqLower = job.requirements.toLowerCase();
+            if (reqLower.includes(qualLower)) {
+              score += 15;
+              matchReasons.push('qualification');
             }
           }
           
@@ -3029,7 +3065,31 @@ const CandidateDashboard = () => {
                               candidateSkills.some((cs: string) => cs.includes(skill.toLowerCase()) || skill.toLowerCase().includes(cs))
                             );
                             if (matchedSkills.length > 0) {
-                              matchReasons.push(`${matchedSkills.length} skills match: ${matchedSkills.slice(0, 2).join(', ')}${matchedSkills.length > 2 ? '...' : ''}`);
+                              matchReasons.push(`${matchedSkills.length} skills match: ${matchedSkills.slice(0, 3).join(', ')}${matchedSkills.length > 3 ? '...' : ''}`);
+                            }
+                          }
+
+                          // Check skills against job description
+                          if (resumeAnalysis?.skill_highlights && resumeAnalysis.skill_highlights.length > 0 && !matchReasons.some(r => r.includes('skills match'))) {
+                            const descLower = job.description?.toLowerCase() || '';
+                            const reqLower = (job as any).requirements?.toLowerCase() || '';
+                            const combinedText = descLower + ' ' + reqLower;
+                            if (combinedText.length > 0) {
+                              const descMatchedSkills = resumeAnalysis.skill_highlights.filter((skill: string) =>
+                                combinedText.includes(skill.toLowerCase())
+                              );
+                              if (descMatchedSkills.length > 0) {
+                                matchReasons.push(`Your skills match: ${descMatchedSkills.slice(0, 3).join(', ')}${descMatchedSkills.length > 3 ? '...' : ''}`);
+                              }
+                            }
+                          }
+
+                          // Check qualification match
+                          if (profile?.highest_qualification && (job as any).requirements) {
+                            const qualLower = profile.highest_qualification.toLowerCase();
+                            const reqLower = (job as any).requirements.toLowerCase();
+                            if (reqLower.includes(qualLower)) {
+                              matchReasons.push(`Matches your qualification: ${profile.highest_qualification}`);
                             }
                           }
                           
