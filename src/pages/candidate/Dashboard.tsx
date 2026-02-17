@@ -1189,10 +1189,10 @@ const CandidateDashboard = () => {
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "resume", label: "Resume Builder", icon: FileText },
-    { id: "applications", label: "My Applications", icon: ClipboardList },
-    { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "jobs", label: "Suitable Jobs", icon: Briefcase },
     { id: "aijobapply", label: "AI Job Apply", icon: Rocket },
+    { id: "applications", label: "My Applications", icon: ClipboardList },
+    { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "learning", label: "Learning", icon: BookOpen },
