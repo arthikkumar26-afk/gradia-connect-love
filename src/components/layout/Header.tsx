@@ -211,7 +211,7 @@ const Header = () => {
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-background z-50" align="end">
+                  <DropdownMenuContent className="w-56 bg-background z-[1100]" align="end">
                     <DropdownMenuItem asChild>
                       <Link to="/candidate/login" className="flex items-center gap-3 py-2">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900">
@@ -272,7 +272,7 @@ const Header = () => {
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-background z-50" align="end">
+                  <DropdownMenuContent className="w-56 bg-background z-[1100]" align="end">
                     <DropdownMenuItem asChild>
                       <Link to={
                         userRole === 'admin' ? '/admin/dashboard' : 
