@@ -59,6 +59,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
@@ -381,6 +383,24 @@ const TrendingJobsAdmin = () => {
               </SidebarTrigger>
               <h1 className="text-lg font-semibold">Trending Jobs Management</h1>
             </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportToExcel(
+                  trendingJobs.map(j => ({
+                    Title: j.job_title,
+                    'Search Count': j.search_count,
+                    Status: j.is_active ? 'Active' : 'Inactive',
+                    Order: j.display_order,
+                  })),
+                  'trending_jobs'
+                )}
+                disabled={trendingJobs.length === 0}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => handleOpenDialog()} className="gap-2">
@@ -434,6 +454,7 @@ const TrendingJobsAdmin = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </div>
           </header>
 
           {/* Page Content */}

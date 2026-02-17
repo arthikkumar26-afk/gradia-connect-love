@@ -72,6 +72,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { Download } from "lucide-react";
 
 interface CandidateSubscription {
   id: string;
@@ -357,10 +359,33 @@ const SubscribedCandidates = () => {
                   <p className="text-sm text-muted-foreground">Manage Pro & Premium candidate subscriptions</p>
                 </div>
               </div>
-              <Button size="sm" onClick={() => setActivateDialogOpen(true)}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Activate Plan
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => setActivateDialogOpen(true)}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Activate Plan
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToExcel(
+                    filteredSubscriptions.map(s => ({
+                      Name: s.candidate?.full_name || 'N/A',
+                      Email: s.candidate?.email || 'N/A',
+                      Phone: s.candidate?.mobile || 'N/A',
+                      Location: s.candidate?.location || 'N/A',
+                      Plan: s.plan,
+                      Status: s.status,
+                      Started: format(new Date(s.started_at), 'MMM dd, yyyy'),
+                      Expires: s.ends_at ? format(new Date(s.ends_at), 'MMM dd, yyyy') : 'N/A',
+                    })),
+                    'subscribed_candidates'
+                  )}
+                  disabled={filteredSubscriptions.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Export
+                </Button>
+              </div>
             </div>
           </header>
 

@@ -55,6 +55,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import { exportToExcel } from "@/utils/exportToExcel";
+import { Download } from "lucide-react";
 
 interface Company {
   id: string;
@@ -281,6 +283,26 @@ const Companies = () => {
               </SidebarTrigger>
               <h1 className="text-lg font-semibold">Companies</h1>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportToExcel(
+                filteredCompanies.map(c => ({
+                  Company: c.company_name || c.full_name,
+                  Contact: c.full_name,
+                  Email: c.email,
+                  Website: c.website || 'N/A',
+                  Location: c.location || 'N/A',
+                  Jobs: c.jobCount || 0,
+                  Joined: c.created_at ? format(new Date(c.created_at), 'MMM dd, yyyy') : 'N/A',
+                })),
+                'companies'
+              )}
+              disabled={filteredCompanies.length === 0}
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Export
+            </Button>
           </header>
 
           {/* Page Content */}
