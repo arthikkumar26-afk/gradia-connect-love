@@ -16,6 +16,7 @@ import {
   Menu,
   Search,
   Loader2,
+  RefreshCw,
   Mail,
   Phone,
   Calendar,
@@ -451,17 +452,28 @@ const Users = () => {
                       className="pl-9"
                     />
                   </div>
-                  <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-full sm:w-48">
-                      <SelectValue placeholder="Filter by role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Roles</SelectItem>
-                      <SelectItem value="candidate">Candidates</SelectItem>
-                      <SelectItem value="employer">Employers</SelectItem>
-                      
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                      <SelectTrigger className="w-full sm:w-48">
+                        <SelectValue placeholder="Filter by role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Roles</SelectItem>
+                        <SelectItem value="candidate">Candidates</SelectItem>
+                        <SelectItem value="employer">Employers</SelectItem>
+                        
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={fetchUsers}
+                      disabled={usersLoading}
+                      title="Refresh users"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${usersLoading ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Users Table */}
