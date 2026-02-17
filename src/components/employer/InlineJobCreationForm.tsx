@@ -1244,12 +1244,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   value={selectedCity || undefined}
                     onValueChange={(val) => {
                       setSelectedCity(val);
-                      if (selectedState === 'All') {
-                        // Find which state this district belongs to
-                        const parentState = Object.keys(indiaLocationData).find(s => 
-                          Object.keys(indiaLocationData[s] || {}).includes(val)
-                        );
-                        form.setValue("location", parentState ? `${val}, ${parentState}` : val);
+                      if (val === 'All') {
+                        form.setValue("location", selectedState === 'All' ? 'All India' : `All, ${selectedState}`);
+                      } else if (selectedState === 'All') {
+                        const [district, state] = val.split('__');
+                        form.setValue("location", `${district}, ${state}`);
                       } else {
                         form.setValue("location", `${val}, ${selectedState}`);
                       }
@@ -1260,10 +1259,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                       <SelectValue placeholder={selectedState ? "Select city" : "Select state first"} />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-[200] max-h-60">
+                      <SelectItem value="All">All</SelectItem>
                       {selectedState === 'All' 
                         ? Object.keys(indiaLocationData).sort().flatMap((state) =>
                             Object.keys(indiaLocationData[state] || {}).sort().map((district) => (
-                              <SelectItem key={`${state}-${district}`} value={district}>{district} ({state})</SelectItem>
+                              <SelectItem key={`${state}-${district}`} value={`${district}__${state}`}>{district} ({state})</SelectItem>
                             ))
                           )
                         : selectedState && Object.keys(indiaLocationData[selectedState] || {}).sort().map((district) => (
