@@ -98,6 +98,8 @@ import ManagementFeedback from "./pages/admin/ManagementFeedback";
 import LiveDemoView from "./pages/admin/LiveDemoView";
 import HRNegotiations from "./pages/admin/HRNegotiations";
 import CouponManagement from "./pages/admin/CouponManagement";
+import UnsubscribedEmployers from "./pages/admin/UnsubscribedEmployers";
+import UnsubscribedCandidates from "./pages/admin/UnsubscribedCandidates";
 
 
 const queryClient = new QueryClient();
@@ -219,6 +221,8 @@ const MainRoutes = () => (
       <Route path="/admin/users" element={<AdminUsers />} />
       <Route path="/admin/subscribed-employers" element={<SubscribedEmployers />} />
       <Route path="/admin/subscribed-candidates" element={<SubscribedCandidates />} />
+      <Route path="/admin/unsubscribed-employers" element={<UnsubscribedEmployers />} />
+      <Route path="/admin/unsubscribed-candidates" element={<UnsubscribedCandidates />} />
       <Route path="/admin/companies" element={<AdminCompanies />} />
       <Route path="/admin/reports" element={<AdminReports />} />
       <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />

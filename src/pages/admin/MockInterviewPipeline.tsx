@@ -21,7 +21,8 @@ import {
   ChevronDown, FolderOpen, Play, Clock, User, ChevronRight, PenLine,
   Home, Users, CreditCard, UserCheck, TrendingUp, Briefcase, Building2,
   ClipboardList, UserCog, MessageSquare, BarChart3, Settings, LogOut,
-  ShieldCheck, Menu
+  ShieldCheck, Menu,
+  UserX, Ticket
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -973,12 +974,15 @@ export default function MockInterviewPipeline() {
     { title: "Users", icon: Users, path: "/admin/users" },
     { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
     { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
+    { title: "Unsubscribed Employers", icon: UserX, path: "/admin/unsubscribed-employers" },
+    { title: "Unsubscribed Candidates", icon: UserX, path: "/admin/unsubscribed-candidates" },
     { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
     { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
     { title: "Companies", icon: Building2, path: "/admin/companies" },
     { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
     { title: "Management", icon: UserCog, path: "/admin/management" },
     { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
+    { title: "Coupons", icon: Ticket, path: "/admin/coupons" },
     { title: "Reports", icon: BarChart3, path: "/admin/reports" },
     { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
     { title: "Settings", icon: Settings, path: "/admin/settings" },

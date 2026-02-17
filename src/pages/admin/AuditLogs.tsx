@@ -27,7 +27,8 @@ import {
   ClipboardList,
   UserCog,
   MessageSquare,
-  Ticket
+  Ticket,
+  UserX
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -236,6 +237,8 @@ const AuditLogs = () => {
     { title: "Users", icon: Users, path: "/admin/users" },
     { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
     { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
+    { title: "Unsubscribed Employers", icon: UserX, path: "/admin/unsubscribed-employers" },
+    { title: "Unsubscribed Candidates", icon: UserX, path: "/admin/unsubscribed-candidates" },
     { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
     { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
     { title: "Companies", icon: Building2, path: "/admin/companies" },
