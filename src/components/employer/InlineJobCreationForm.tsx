@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline } from "@/data/interviewPipelineConfig";
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 import { indiaLocationData } from "@/data/indiaLocations";
@@ -50,6 +51,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string>>({});
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
+  const [isTemplate, setIsTemplate] = useState(false);
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -1347,19 +1349,40 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="closing_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Closing Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Closing Date</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Template</span>
+                    <Switch
+                      checked={isTemplate}
+                      onCheckedChange={(checked) => {
+                        setIsTemplate(checked);
+                        if (checked) {
+                          form.setValue("closing_date", "");
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                {!isTemplate && (
+                  <FormField
+                    control={form.control}
+                    name="closing_date"
+                    render={({ field }) => (
+                      <>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </>
+                    )}
+                  />
                 )}
-              />
+                {isTemplate && (
+                  <p className="text-xs text-muted-foreground mt-1">No closing date — vacancy stays open</p>
+                )}
+              </FormItem>
             </div>
 
             {/* Skills */}
