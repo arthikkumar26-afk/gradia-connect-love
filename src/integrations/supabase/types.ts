@@ -358,6 +358,110 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_usages: {
+        Row: {
+          coupon_id: string
+          discount_applied: number
+          final_amount: number
+          id: string
+          original_amount: number
+          plan_name: string | null
+          used_at: string
+          user_id: string
+          user_role: string
+        }
+        Insert: {
+          coupon_id: string
+          discount_applied: number
+          final_amount: number
+          id?: string
+          original_amount: number
+          plan_name?: string | null
+          used_at?: string
+          user_id: string
+          user_role: string
+        }
+        Update: {
+          coupon_id?: string
+          discount_applied?: number
+          final_amount?: number
+          id?: string
+          original_amount?: number
+          plan_name?: string | null
+          used_at?: string
+          user_id?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usages_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "discount_coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_coupons: {
+        Row: {
+          applicable_to: string
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_discount_amount: number | null
+          max_total_uses: number | null
+          max_uses_per_user: number | null
+          min_order_amount: number | null
+          total_used: number
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_to?: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          max_discount_amount?: number | null
+          max_total_uses?: number | null
+          max_uses_per_user?: number | null
+          min_order_amount?: number | null
+          total_used?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_to?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_discount_amount?: number | null
+          max_total_uses?: number | null
+          max_uses_per_user?: number | null
+          min_order_amount?: number | null
+          total_used?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       educational_qualifications: {
         Row: {
           board_university: string | null
@@ -2458,6 +2562,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_coupon_usage: {
+        Args: { coupon_id_input: string }
+        Returns: undefined
       }
       is_employer: { Args: { u_id: string }; Returns: boolean }
       is_employer_by_role: { Args: { _user_id: string }; Returns: boolean }

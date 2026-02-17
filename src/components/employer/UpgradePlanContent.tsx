@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { CouponInput } from "@/components/shared/CouponInput";
 
 const plans = [
   {
@@ -110,6 +111,8 @@ export const UpgradePlanContent = () => {
   const navigate = useNavigate();
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string } | null>(null);
+  const [selectedPlanForCoupon, setSelectedPlanForCoupon] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCurrentPlan = async () => {
@@ -143,13 +146,15 @@ export const UpgradePlanContent = () => {
     const selectedPlan = plans.find((p) => p.id === planId);
     if (!selectedPlan || !user?.id) return;
 
+    const payAmount = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.price;
+
     setLoading(planId);
     try {
       toast({ title: "Initializing payment...", description: "Please wait" });
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
         body: {
-          amount: selectedPlan.price,
+          amount: payAmount,
           currency: "INR",
           plan_id: planId,
           plan_name: selectedPlan.name,
@@ -195,6 +200,23 @@ export const UpgradePlanContent = () => {
 
             if (verifyError || !verifyData?.success) {
               throw new Error(verifyData?.error || "Payment verification failed");
+            }
+
+            // Record coupon usage if applied
+            if (appliedCoupon && selectedPlanForCoupon === planId) {
+              await supabase.from("coupon_usages").insert({
+                coupon_id: appliedCoupon.couponId,
+                user_id: user.id,
+                user_role: "employer",
+                plan_name: selectedPlan.name,
+                discount_applied: appliedCoupon.discount,
+                original_amount: selectedPlan.price,
+                final_amount: appliedCoupon.finalAmount,
+              });
+              // Increment total_used
+              await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: appliedCoupon.couponId });
+              setAppliedCoupon(null);
+              setSelectedPlanForCoupon(null);
             }
 
             toast({ title: "Payment Successful!", description: `${selectedPlan.name} plan activated` });
@@ -322,6 +344,27 @@ export const UpgradePlanContent = () => {
                     ? "Upgrade Now"
                     : "Switch Plan"}
                 </Button>
+
+                {/* Coupon Input for paid plans */}
+                {plan.cta === "subscribe" && !isCurrent && (
+                  <CouponInput
+                    originalAmount={plan.price}
+                    userRole="employer"
+                    onCouponApplied={(discount, finalAmount, couponId, couponCode) => {
+                      setAppliedCoupon({ discount, finalAmount, couponId, couponCode });
+                      setSelectedPlanForCoupon(plan.id);
+                    }}
+                    onCouponRemoved={() => {
+                      setAppliedCoupon(null);
+                      setSelectedPlanForCoupon(null);
+                    }}
+                  />
+                )}
+                {appliedCoupon && selectedPlanForCoupon === plan.id && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Pay ₹{appliedCoupon.finalAmount.toLocaleString()} instead of ₹{plan.price.toLocaleString()}
+                  </p>
+                )}
 
                 {plan.id === "growth" && !isCurrent && (
                   <p className="text-xs text-center text-muted-foreground">14-day free trial included</p>

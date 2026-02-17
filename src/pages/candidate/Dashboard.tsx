@@ -62,6 +62,7 @@ import ResumeBuilderTab from "@/components/candidate/ResumeBuilderTab";
 import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
 import AIJobApplyTab from "@/components/candidate/AIJobApplyTab";
 import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
+import { CouponInput } from "@/components/shared/CouponInput";
 
 interface FamilyRecord {
   id?: string;
@@ -162,6 +163,7 @@ const CandidateDashboard = () => {
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
   const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
+  const [candidateCoupon, setCandidateCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string; plan: string } | null>(null);
 
   // Fetch current candidate subscription
   useEffect(() => {
@@ -314,6 +316,21 @@ const CandidateDashboard = () => {
               });
 
             if (insertErr) throw insertErr;
+
+            // Record coupon usage if applied
+            if (candidateCoupon?.plan === plan) {
+              await supabase.from("coupon_usages").insert({
+                coupon_id: candidateCoupon.couponId,
+                user_id: profile.id,
+                user_role: "candidate",
+                plan_name: plan,
+                discount_applied: candidateCoupon.discount,
+                original_amount: price,
+                final_amount: candidateCoupon.finalAmount,
+              });
+              await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: candidateCoupon.couponId });
+              setCandidateCoupon(null);
+            }
 
             toast({ title: "🎉 Subscription Activated!", description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active.` });
             window.location.reload();
@@ -3686,6 +3703,18 @@ const CandidateDashboard = () => {
                           {upgradingPlan === "pro" ? "Processing..." : "Subscribe ₹499/mo"}
                         </Button>
                       )}
+                      {/* Coupon for Pro */}
+                      {!(isActiveSub && candidateSubscription?.plan === "pro") && (
+                        <CouponInput
+                          originalAmount={499}
+                          userRole="candidate"
+                          onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "pro" })}
+                          onCouponRemoved={() => setCandidateCoupon(null)}
+                        />
+                      )}
+                      {candidateCoupon?.plan === "pro" && (
+                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹499</p>
+                      )}
                       {!hasUsedTrial && (
                         <p className="text-xs text-center text-muted-foreground">Setup autopay · 7 days free · Cancel anytime</p>
                       )}
@@ -3734,6 +3763,18 @@ const CandidateDashboard = () => {
                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 999)}>
                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe ₹999/mo"}
                         </Button>
+                      )}
+                      {/* Coupon for Premium */}
+                      {!(isActiveSub && candidateSubscription?.plan === "premium") && (
+                        <CouponInput
+                          originalAmount={999}
+                          userRole="candidate"
+                          onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "premium" })}
+                          onCouponRemoved={() => setCandidateCoupon(null)}
+                        />
+                      )}
+                      {candidateCoupon?.plan === "premium" && (
+                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹999</p>
                       )}
                     </CardContent>
                   </Card>
