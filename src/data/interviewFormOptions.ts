@@ -390,10 +390,57 @@ const standardConfig: InterviewTypeFormConfig = {
   ],
 };
 
+// ─── Non-IT Corporate ───
+const nonItCorporateConfig: InterviewTypeFormConfig = {
+  interviewType: 'non_it_corporate',
+  jobTitlePlaceholder: 'e.g., HR Executive, Finance Analyst',
+  departmentLabel: 'Department',
+  departmentPlaceholder: 'e.g., Human Resources, Finance',
+  skillsPlaceholder: 'e.g., Communication, MS Excel, Tally, SAP',
+  salaryPlaceholder: 'e.g., ₹4-8 LPA',
+  experienceOptions: [
+    { value: 'Fresher', label: 'Fresher / Trainee' },
+    { value: '0-1 years', label: '0-1 years (Entry Level)' },
+    { value: '1-3 years', label: '1-3 years (Junior)' },
+    { value: '3-5 years', label: '3-5 years (Mid Level)' },
+    { value: '5-8 years', label: '5-8 years (Senior)' },
+    { value: '8-12 years', label: '8-12 years (Manager)' },
+    { value: '12+ years', label: '12+ years (Director / VP)' },
+  ],
+  jobTypeOptions: [
+    { value: 'Full-time', label: 'Full-time' },
+    { value: 'Part-time', label: 'Part-time' },
+    { value: 'Contract', label: 'Contract' },
+    { value: 'Internship', label: 'Internship' },
+    { value: 'Hybrid', label: 'Hybrid' },
+  ],
+  fields: [
+    {
+      name: 'functional_area',
+      label: 'Functional Area *',
+      type: 'select',
+      placeholder: 'Select functional area',
+      required: true,
+      helpText: 'Primary function for this role',
+      options: [
+        { value: 'HR', label: 'Human Resources' },
+        { value: 'Finance', label: 'Finance & Accounting' },
+        { value: 'Marketing', label: 'Marketing & Communications' },
+        { value: 'Operations', label: 'Operations & Logistics' },
+        { value: 'Customer Service', label: 'Customer Service' },
+        { value: 'Procurement', label: 'Procurement & Supply Chain' },
+        { value: 'Admin', label: 'Administration' },
+        { value: 'Legal', label: 'Legal & Compliance' },
+      ],
+    },
+  ],
+};
+
 // Map of interview type → config
 const configMap: Record<string, InterviewTypeFormConfig> = {
   education: educationConfig,
   it_corporate: itCorporateConfig,
+  non_it_corporate: nonItCorporateConfig,
   sales: salesConfig,
   management: managementConfig,
   standard: standardConfig,
