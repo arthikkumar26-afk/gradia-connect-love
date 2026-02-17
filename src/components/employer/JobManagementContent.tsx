@@ -32,6 +32,8 @@ interface Job {
   skills: string;
   type: string;
   location: string;
+  state?: string;
+  city?: string;
   salary: string;
   organisation: string;
   published: boolean;
@@ -100,6 +102,10 @@ export const JobManagementContent = () => {
         if (job.is_featured) displayChannels.push("Featured");
         if (displayChannels.length === 0) displayChannels.push("Draft");
 
+        const locationParts = (job.location || "").split(",").map(s => s.trim());
+        const cityPart = locationParts[0] || "";
+        const statePart = locationParts[1] || "";
+
         return {
           id: job.id,
           dateTime: job.created_at ? new Date(job.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date(job.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : "—",
@@ -118,6 +124,8 @@ export const JobManagementContent = () => {
           skills: job.skills?.join(", ") || "—",
           type: job.job_type || "Full-Time",
           location: job.location || "Remote",
+          state: statePart || "",
+          city: cityPart || "",
           salary: job.salary_range || "—",
           organisation: job.organisation || companyName,
           published: job.status === "active",
