@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp, Crown, Zap, Lock } from "lucide-react";
 import ATSScoreCard from "./ATSScoreCard";
 import { toast as sonnerToast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
@@ -58,7 +58,8 @@ export default function ResumeBuilderTab() {
   const [newSkill, setNewSkill] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState(false);
-  
+  const [userPlan, setUserPlan] = useState<"basic" | "pro" | "premium">("basic");
+
   const [formData, setFormData] = useState<ResumeData>({
     fullName: "",
     email: "",
@@ -89,6 +90,11 @@ export default function ResumeBuilderTab() {
         .in('plan', ['premium', 'pro'])
         .maybeSingle();
       setIsPremiumUser(!!activeSub);
+      if (activeSub) {
+        setUserPlan(activeSub.plan as "pro" | "premium");
+      } else {
+        setUserPlan("basic");
+      }
     } catch (err) {
       console.error('Error checking premium status:', err);
     }
@@ -709,6 +715,39 @@ export default function ResumeBuilderTab() {
 
       {/* ATS Score Card */}
       <ATSScoreCard data={formData} />
+
+      {/* Plan limit info */}
+      <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2">
+        <div className="flex items-center gap-2">
+          {userPlan === "premium" ? (
+            <Crown className="h-3.5 w-3.5 text-yellow-500" />
+          ) : userPlan === "pro" ? (
+            <Zap className="h-3.5 w-3.5 text-blue-500" />
+          ) : (
+            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
+          <span className="text-xs font-medium text-foreground">
+            ATS Resume Builder
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {userPlan === "premium" ? (
+            <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 text-[10px] px-2">
+              <Crown className="h-2.5 w-2.5 mr-1" />
+              Premium — Unlimited
+            </Badge>
+          ) : userPlan === "pro" ? (
+            <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-[10px] px-2">
+              <Zap className="h-2.5 w-2.5 mr-1" />
+              Pro — 5 Resumes
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-[10px] px-2 text-muted-foreground">
+              Basic — Upgrade to build more
+            </Badge>
+          )}
+        </div>
+      </div>
 
       {/* Mock Test Insight Banner */}
       {mockTestData && (
