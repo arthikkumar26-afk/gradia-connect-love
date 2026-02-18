@@ -36,6 +36,9 @@ interface Profile {
   primary_subject?: string;
   registration_number?: string;
   category?: string;
+  current_salary?: number;
+  expected_salary?: number;
+  available_from?: string;
 }
 
 interface AuthContextType {
