@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getAllStates, getDistrictsByState, getCitiesByDistrict } from "@/data/indiaLocations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,7 @@ const EditProfile = () => {
   const [languages, setLanguages] = useState("");
   const [currentState, setCurrentState] = useState("");
   const [currentDistrict, setCurrentDistrict] = useState("");
+  const [currentCity, setCurrentCity] = useState("");
   const [industryCategory, setIndustryCategory] = useState("");
   const [alternateNumber, setAlternateNumber] = useState("");
   const [highestQualification, setHighestQualification] = useState("");
@@ -104,6 +106,7 @@ const EditProfile = () => {
     setLanguages(profile.languages?.join(", ") || "");
     setCurrentState(profile.current_state || "");
     setCurrentDistrict(profile.current_district || "");
+    setCurrentCity(profile.location || "");
     setIndustryCategory(profile.category || "");
     setAlternateNumber(profile.alternate_number || "");
     setHighestQualification(profile.highest_qualification || "");
@@ -371,7 +374,7 @@ const EditProfile = () => {
       const updateData: Record<string, any> = {
         full_name: fullName,
         mobile,
-        location,
+        location: profile.role === 'candidate' ? (currentCity || location) : location,
         linkedin,
         website: profile.role === 'employer' ? companyWebsite : profile.website,
         profile_picture: profilePictureUrl,
@@ -388,6 +391,7 @@ const EditProfile = () => {
         updateData.languages = languages ? languages.split(',').map(l => l.trim()).filter(l => l) : null;
         updateData.current_state = currentState || null;
         updateData.current_district = currentDistrict || null;
+        updateData.location = currentCity || null;
         updateData.alternate_number = alternateNumber || null;
         updateData.highest_qualification = highestQualification || null;
         updateData.office_type = officeType || null;
@@ -558,21 +562,23 @@ const EditProfile = () => {
               />
             </div>
 
-            {/* Location */}
-            <div className="space-y-2">
-              <Label htmlFor="location" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                Location
-              </Label>
-              <Input
-                id="location"
-                type="text"
-                placeholder="City, Country"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="h-12"
-              />
-            </div>
+            {/* Location - only for employers; candidates use State/District/City dropdowns */}
+            {profile.role === 'employer' && (
+              <div className="space-y-2">
+                <Label htmlFor="location" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  Location
+                </Label>
+                <Input
+                  id="location"
+                  type="text"
+                  placeholder="City, Country"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="h-12"
+                />
+              </div>
+            )}
 
             {/* LinkedIn */}
             <div className="space-y-2">
@@ -637,60 +643,69 @@ const EditProfile = () => {
                   </div>
                 </div>
 
-                {/* Row 2: Current State, Current District */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Row 2: Current State, Current District, Current City */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="currentState">Current State *</Label>
-                    <Select value={currentState} onValueChange={setCurrentState}>
+                    <Select
+                      value={currentState}
+                      onValueChange={(val) => {
+                        setCurrentState(val);
+                        setCurrentDistrict("");
+                        setCurrentCity("");
+                      }}
+                    >
                       <SelectTrigger id="currentState" className="h-12">
                         <SelectValue placeholder="Select State" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Andhra Pradesh">Andhra Pradesh</SelectItem>
-                        <SelectItem value="Arunachal Pradesh">Arunachal Pradesh</SelectItem>
-                        <SelectItem value="Assam">Assam</SelectItem>
-                        <SelectItem value="Bihar">Bihar</SelectItem>
-                        <SelectItem value="Chhattisgarh">Chhattisgarh</SelectItem>
-                        <SelectItem value="Delhi">Delhi</SelectItem>
-                        <SelectItem value="Goa">Goa</SelectItem>
-                        <SelectItem value="Gujarat">Gujarat</SelectItem>
-                        <SelectItem value="Haryana">Haryana</SelectItem>
-                        <SelectItem value="Himachal Pradesh">Himachal Pradesh</SelectItem>
-                        <SelectItem value="Jharkhand">Jharkhand</SelectItem>
-                        <SelectItem value="Karnataka">Karnataka</SelectItem>
-                        <SelectItem value="Kerala">Kerala</SelectItem>
-                        <SelectItem value="Madhya Pradesh">Madhya Pradesh</SelectItem>
-                        <SelectItem value="Maharashtra">Maharashtra</SelectItem>
-                        <SelectItem value="Manipur">Manipur</SelectItem>
-                        <SelectItem value="Meghalaya">Meghalaya</SelectItem>
-                        <SelectItem value="Mizoram">Mizoram</SelectItem>
-                        <SelectItem value="Nagaland">Nagaland</SelectItem>
-                        <SelectItem value="Odisha">Odisha</SelectItem>
-                        <SelectItem value="Punjab">Punjab</SelectItem>
-                        <SelectItem value="Rajasthan">Rajasthan</SelectItem>
-                        <SelectItem value="Sikkim">Sikkim</SelectItem>
-                        <SelectItem value="Tamil Nadu">Tamil Nadu</SelectItem>
-                        <SelectItem value="Telangana">Telangana</SelectItem>
-                        <SelectItem value="Tripura">Tripura</SelectItem>
-                        <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
-                        <SelectItem value="Uttarakhand">Uttarakhand</SelectItem>
-                        <SelectItem value="West Bengal">West Bengal</SelectItem>
+                        {getAllStates().map((state) => (
+                          <SelectItem key={state} value={state}>{state}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="currentDistrict">Current District</Label>
-                    <Input
-                      id="currentDistrict"
-                      type="text"
-                      placeholder="Enter your district"
+                    <Select
                       value={currentDistrict}
-                      onChange={(e) => setCurrentDistrict(e.target.value)}
-                      className="h-12"
-                    />
+                      onValueChange={(val) => {
+                        setCurrentDistrict(val);
+                        setCurrentCity("");
+                      }}
+                      disabled={!currentState}
+                    >
+                      <SelectTrigger id="currentDistrict" className="h-12">
+                        <SelectValue placeholder={currentState ? "Select District" : "Select State first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getDistrictsByState(currentState).map((district) => (
+                          <SelectItem key={district} value={district}>{district}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="currentCity">Current City</Label>
+                    <Select
+                      value={currentCity}
+                      onValueChange={setCurrentCity}
+                      disabled={!currentDistrict}
+                    >
+                      <SelectTrigger id="currentCity" className="h-12">
+                        <SelectValue placeholder={currentDistrict ? "Select City" : "Select District first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCitiesByDistrict(currentState, currentDistrict).map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+
 
                 {/* Industry Category + Category-specific fields */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
