@@ -69,6 +69,39 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   useEffect(() => { if (resumeAnalysis) setLocalResumeAnalysis(resumeAnalysis); }, [resumeAnalysis]);
   useEffect(() => { if (profile) setLocalProfile(profile); }, [profile]);
 
+  // Also check candidate_resumes (Resume Builder saved data) — treat it as resume + analysis
+  useEffect(() => {
+    const fetchBuilderResume = async () => {
+      if (!profile?.id || resumeAnalysis) return;
+      try {
+        const { data: savedResume } = await supabase
+          .from("candidate_resumes")
+          .select("skills, full_name, summary")
+          .eq("user_id", profile.id)
+          .maybeSingle();
+
+        if (savedResume && (savedResume.skills?.length || savedResume.full_name)) {
+          // Build analysis-compatible object from builder skills
+          setLocalResumeAnalysis({
+            skill_highlights: savedResume.skills || [],
+            overall_score: 60,
+            strengths: savedResume.skills?.slice(0, 3) || [],
+            areas_for_improvement: [],
+            career_level: "",
+          });
+          // Mark as having a resume so the upload screen is skipped
+          setLocalProfile((prev: any) => ({
+            ...prev,
+            resume_url: prev?.resume_url || "builder_resume",
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching builder resume for AI Job Apply:", err);
+      }
+    };
+    fetchBuilderResume();
+  }, [profile?.id, resumeAnalysis]);
+
   // Fetch candidate subscription plan
   useEffect(() => {
     const fetchPlan = async () => {
