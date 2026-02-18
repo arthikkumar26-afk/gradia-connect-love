@@ -362,7 +362,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
               {isEditMode ? (
                 <Input id="state" value={state} onChange={(e) => setState(e.target.value)} />
               ) : (
-                <p className="text-sm">{job.state || "—"}</p>
+                <p className="text-sm">{job.state || job.location || "—"}</p>
               )}
             </div>
 
@@ -371,27 +371,20 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
               {isEditMode ? (
                 <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
               ) : (
-                <p className="text-sm">{job.city || "—"}</p>
+                <p className="text-sm">{job.city || job.location || "—"}</p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="board">Board</Label>
-              {isEditMode ? (
-                <Input id="board" value={board} onChange={(e) => setBoard(e.target.value)} />
-              ) : (
-                <p className="text-sm">{job.board || "—"}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="boardExperience">Experience</Label>
-              {isEditMode ? (
-                <Input id="boardExperience" value={boardExperience} onChange={(e) => setBoardExperience(e.target.value)} />
-              ) : (
-                <p className="text-sm">{job.boardExperience || "—"}</p>
-              )}
-            </div>
+            {(job.board && job.board !== "—") && (
+              <div className="space-y-2">
+                <Label htmlFor="board">Board</Label>
+                {isEditMode ? (
+                  <Input id="board" value={board} onChange={(e) => setBoard(e.target.value)} />
+                ) : (
+                  <p className="text-sm">{job.board}</p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="salary">Salary</Label>

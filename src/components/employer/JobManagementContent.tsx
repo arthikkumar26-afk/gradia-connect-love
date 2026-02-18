@@ -75,7 +75,7 @@ export const JobManagementContent = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [jobsResult, regResult] = await Promise.all([
+      const [jobsResult, regResult, profileResult] = await Promise.all([
         supabase
           .from("jobs")
           .select("*")
@@ -86,11 +86,17 @@ export const JobManagementContent = () => {
           .select("company_name, industry_category" as any)
           .eq("employer_id", user.id)
           .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("company_name")
+          .eq("id", user.id)
+          .maybeSingle(),
       ]);
 
       const { data, error } = jobsResult;
       const regData = regResult.data as any;
-      const companyName = regData?.company_name || "—";
+      const profileData = profileResult.data as any;
+      const companyName = regData?.company_name || profileData?.company_name || "";
       setIndustryCategory(regData?.industry_category || "");
 
       if (error) throw error;
@@ -127,7 +133,7 @@ export const JobManagementContent = () => {
           state: statePart || "",
           city: cityPart || "",
           salary: job.salary_range || "—",
-          organisation: job.organisation || companyName,
+          organisation: job.organisation || companyName || "",
           published: job.status === "active",
           display: displayChannels.join(", "),
           status: job.status === "active" ? "Open" : job.status === "closed" ? "Closed" : "Under Review",
