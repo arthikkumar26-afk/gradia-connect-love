@@ -57,6 +57,7 @@ export default function ResumeBuilderTab() {
   const [mockTestData, setMockTestData] = useState<any>(null);
   const [newSkill, setNewSkill] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
   
   const [formData, setFormData] = useState<ResumeData>({
     fullName: "",
@@ -73,7 +74,25 @@ export default function ResumeBuilderTab() {
   useEffect(() => {
     loadSavedResume();
     fetchMockTestResults();
+    checkPremiumStatus();
   }, []);
+
+  const checkPremiumStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: activeSub } = await supabase
+        .from('candidate_subscriptions')
+        .select('id, plan')
+        .eq('candidate_id', user.id)
+        .eq('status', 'active')
+        .in('plan', ['premium', 'pro'])
+        .maybeSingle();
+      setIsPremiumUser(!!activeSub);
+    } catch (err) {
+      console.error('Error checking premium status:', err);
+    }
+  };
 
   const loadSavedResume = async () => {
     try {
@@ -673,7 +692,7 @@ export default function ResumeBuilderTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            Export PDF - ₹249
+            {isPremiumUser ? "Export PDF (Free)" : "Export PDF - ₹249"}
           </Button>
         </div>
       </div>
