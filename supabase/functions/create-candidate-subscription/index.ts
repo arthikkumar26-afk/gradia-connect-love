@@ -44,15 +44,7 @@ serve(async (req) => {
       );
     }
 
-    // Check if user already used trial
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
-    const { data: existingSubs } = await supabase
-      .from('candidate_subscriptions')
-      .select('id')
-      .eq('candidate_id', candidate_id)
-      .eq('plan', plan);
-
-    const hasUsedTrial = existingSubs && existingSubs.length > 0;
 
     // Step 1: Create a Razorpay Plan
     const planData = {
@@ -85,7 +77,7 @@ serve(async (req) => {
 
     const rzpPlan = await planResponse.json();
 
-    // Step 2: Create a Razorpay Subscription with trial (if eligible)
+    // Step 2: Create a Razorpay Subscription (no trial)
     const subscriptionData: any = {
       plan_id: rzpPlan.id,
       total_count: 12,
@@ -96,13 +88,6 @@ serve(async (req) => {
         plan,
       },
     };
-
-    // Add 7-day trial only if user hasn't used one before
-    if (!hasUsedTrial && plan === 'pro') {
-      // start_at = 7 days from now (trial period)
-      const trialEnd = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
-      subscriptionData.start_at = trialEnd;
-    }
 
     const subResponse = await fetch('https://api.razorpay.com/v1/subscriptions', {
       method: 'POST',
@@ -128,7 +113,6 @@ serve(async (req) => {
       JSON.stringify({
         subscription_id: rzpSubscription.id,
         key_id: RAZORPAY_KEY_ID,
-        has_trial: !hasUsedTrial && plan === 'pro',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

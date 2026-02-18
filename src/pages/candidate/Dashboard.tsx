@@ -181,92 +181,10 @@ const CandidateDashboard = () => {
     fetchSubscription();
   }, [profile?.id]);
 
-  const hasUsedTrial = candidateSubscription?.plan === "pro" || candidateSubscription?.plan === "premium";
-  const isActiveSub = candidateSubscription?.status === "active" || candidateSubscription?.status === "trial";
+  const hasUsedTrial = false;
+  const isActiveSub = candidateSubscription?.status === "active";
 
-  const handleStartTrial = async () => {
-    if (!profile?.id) return;
-    setUpgradingPlan("pro-trial");
-    try {
-      toast({ title: "Setting up autopay...", description: "Please complete the mandate to start your free trial" });
-
-      const { data, error } = await supabase.functions.invoke("create-candidate-subscription", {
-        body: { plan: "pro", candidate_id: profile.id, candidate_email: profile.email },
-      });
-
-      if (error || !data?.subscription_id) {
-        throw new Error(data?.error || "Failed to create subscription");
-      }
-
-      if (!(window as any).Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://checkout.razorpay.com/v1/checkout.js";
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load Razorpay"));
-          document.body.appendChild(script);
-        });
-      }
-
-      const options = {
-        key: data.key_id,
-        subscription_id: data.subscription_id,
-        name: "Gradia",
-        description: data.has_trial ? "Pro Plan - 7 Day Free Trial + Autopay" : "Pro Plan - Monthly Subscription",
-        handler: async (response: any) => {
-          try {
-            // Autopay mandate set up successfully — now activate trial
-            const endsAt = new Date();
-            endsAt.setDate(endsAt.getDate() + (data.has_trial ? 7 : 30));
-
-            // Deactivate old subscriptions
-            await supabase
-              .from("candidate_subscriptions")
-              .update({ status: "inactive" })
-              .eq("candidate_id", profile.id)
-              .in("status", ["active", "trial"]);
-
-            const { error: insertErr } = await supabase
-              .from("candidate_subscriptions")
-              .insert({
-                candidate_id: profile.id,
-                plan: "pro",
-                status: data.has_trial ? "trial" : "active",
-                started_at: new Date().toISOString(),
-                ends_at: endsAt.toISOString(),
-              });
-
-            if (insertErr) throw insertErr;
-
-            toast({
-              title: data.has_trial ? "🎉 Pro Trial Activated!" : "🎉 Pro Plan Activated!",
-              description: data.has_trial
-                ? "Autopay set up. You have 7 days free, then ₹1499/mo will be charged automatically."
-                : "₹1499/mo subscription activated successfully.",
-            });
-            window.location.reload();
-          } catch (err: any) {
-            toast({ title: "Activation Failed", description: err.message, variant: "destructive" });
-          }
-        },
-        prefill: { email: profile.email || "" },
-        theme: { color: "#10b981" },
-        modal: {
-          ondismiss: () => {
-            setUpgradingPlan(null);
-            toast({ title: "Setup Cancelled", description: "Complete autopay setup to start your free trial", variant: "destructive" });
-          },
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setUpgradingPlan(null);
-    }
-  };
+  // Trial removed - direct subscription only
 
   const handleCandidateUpgrade = async (plan: string, price: number) => {
     if (!profile?.id) return;
@@ -3752,18 +3670,13 @@ const CandidateDashboard = () => {
                       </ul>
                       {isActiveSub && candidateSubscription?.plan === "pro" ? (
                         <Button className="w-full" variant="outline" disabled>
-                          {candidateSubscription.status === "trial" ? "Trial Active" : "Current Plan"}
-                        </Button>
-                      ) : !hasUsedTrial ? (
-                        <Button className="w-full" disabled={upgradingPlan === "pro-trial"} onClick={handleStartTrial}>
-                          {upgradingPlan === "pro-trial" ? "Setting up..." : "Start 7-Day Free Trial"}
+                          Current Plan
                         </Button>
                       ) : (
                         <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 1499)}>
                           {upgradingPlan === "pro" ? "Processing..." : "Subscribe ₹1499/mo"}
                         </Button>
                       )}
-                      {/* Coupon for Pro */}
                       {!(isActiveSub && candidateSubscription?.plan === "pro") && (
                         <CouponInput
                           originalAmount={1499}
@@ -3774,12 +3687,6 @@ const CandidateDashboard = () => {
                       )}
                       {candidateCoupon?.plan === "pro" && (
                         <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹1499</p>
-                      )}
-                      {!hasUsedTrial && (
-                        <p className="text-xs text-center text-muted-foreground">Setup autopay · 7 days free · Cancel anytime</p>
-                      )}
-                      {hasUsedTrial && candidateSubscription?.status !== "active" && candidateSubscription?.plan === "pro" && (
-                        <p className="text-xs text-center text-muted-foreground">Trial expired · Subscribe to continue</p>
                       )}
                     </CardContent>
                   </Card>
