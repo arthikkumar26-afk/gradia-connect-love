@@ -107,7 +107,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
       // Fetch active jobs
       const { data: allJobs, error } = await supabase
         .from("jobs")
-        .select("id, job_title, location, department, salary_range, employer_id, description, experience_required, skills, segment, designation, subjects, program, classes, board")
+        .select("id, job_title, location, department, salary_range, employer_id, description, experience_required, skills, segment, category, designation, subjects, program, classes, board")
         .eq("status", "active")
         .neq("employer_id", profile.id);
 
@@ -119,17 +119,65 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         return;
       }
 
-      // Score jobs using existing matching algorithm
+      // Determine candidate's industry category from segment/category
+      const candidateSegment = (profile.segment || "").toLowerCase();
+      const candidateCategory = (profile.category || "").toLowerCase();
+
+      // Map segment values to industry type buckets
+      const isEducationSegment = (seg: string) =>
+        ["education", "school", "college", "university", "teaching", "teacher"].some((k) => seg.includes(k));
+      const isITSegment = (seg: string) =>
+        ["it", "software", "tech", "corporate", "cyber", "data", "cloud", "dev", "engineer"].some((k) => seg.includes(k));
+      const isNonITSegment = (seg: string) =>
+        ["non_it", "non-it", "hr", "marketing", "sales", "finance", "legal", "operations", "management"].some((k) => seg.includes(k));
+
+      const candidateIsEducation = isEducationSegment(candidateSegment) || isEducationSegment(candidateCategory);
+      const candidateIsIT = isITSegment(candidateSegment) || isITSegment(candidateCategory);
+      const candidateIsNonIT = isNonITSegment(candidateSegment) || isNonITSegment(candidateCategory);
+
+      // Score jobs using matching algorithm with industry category as primary filter
       const scored: MatchedJob[] = allJobs.map((job) => {
         let score = 0;
         const matchReasons: string[] = [];
 
-        // Preferred role match
+        // ─── INDUSTRY CATEGORY FILTER (hard gate) ─────────────────────────
+        // Determine the job's industry category from its segment field
+        const jobSegment = (job.segment || "").toLowerCase();
+        const jobIsEducation = isEducationSegment(jobSegment) ||
+          ["teacher", "principal", "lecturer", "professor", "school", "tutor"].some((k) => job.job_title.toLowerCase().includes(k));
+        const jobIsIT = isITSegment(jobSegment) ||
+          ["software", "developer", "engineer", "data", "cloud", "cyber", "devops", "it ", "tech"].some((k) => job.job_title.toLowerCase().includes(k));
+
+        // If the candidate has a clearly identified segment, penalize cross-category matches heavily
+        if (candidateIsEducation && !jobIsEducation) {
+          score -= 60; // Education candidate should NOT see IT/non-IT jobs
+        }
+        if ((candidateIsIT || candidateIsNonIT) && jobIsEducation) {
+          score -= 60; // IT/Non-IT candidates should NOT see teaching jobs
+        }
+
+        // Segment exact match gives a strong bonus
+        if (candidateSegment && jobSegment && candidateSegment === jobSegment) {
+          score += 40;
+          matchReasons.push("Industry category match");
+        } else if (candidateIsIT && jobIsIT) {
+          score += 30;
+          matchReasons.push("IT industry match");
+        } else if (candidateIsEducation && jobIsEducation) {
+          score += 30;
+          matchReasons.push("Education sector match");
+        } else if (candidateIsNonIT && !jobIsEducation && !jobIsIT) {
+          score += 20;
+          matchReasons.push("Sector match");
+        }
+
+        // ─── PREFERRED ROLE / DESIGNATION MATCH ───────────────────────────
         if (profile.preferred_role && job.job_title) {
           const pr = profile.preferred_role.toLowerCase();
           const jt = job.job_title.toLowerCase();
           const desc = job.description?.toLowerCase() || "";
-          if (jt.includes(pr) || pr.includes(jt)) {
+          const des = (job.designation || "").toLowerCase();
+          if (jt.includes(pr) || pr.includes(jt) || des.includes(pr) || pr.includes(des)) {
             score += 30;
             matchReasons.push("Matches your preferred role");
           } else if (desc.includes(pr)) {
@@ -138,7 +186,37 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           }
         }
 
-        // Location match
+        // ─── SKILLS MATCH (from profile category/skills + resume) ─────────
+        const jobSkills = job.skills as string[] | null;
+        // Skills from resume analysis
+        const resumeSkills = (resumeAnalysis?.skill_highlights || []).map((s: string) => s.toLowerCase());
+        // Skills keywords from profile category (e.g. "Cybersecurity", "Full Stack Development")
+        const profileCategorySkills = candidateCategory ? [candidateCategory] : [];
+        const allCandidateSkills = [...resumeSkills, ...profileCategorySkills];
+
+        if (jobSkills && jobSkills.length > 0 && allCandidateSkills.length > 0) {
+          const matched = jobSkills.filter((skill: string) =>
+            allCandidateSkills.some((cs: string) => cs.includes(skill.toLowerCase()) || skill.toLowerCase().includes(cs))
+          );
+          if (matched.length > 0) {
+            score += Math.min(25, matched.length * 8);
+            matchReasons.push(`${matched.length} skill${matched.length > 1 ? "s" : ""} matched`);
+          }
+        }
+
+        // Category/domain keyword match in job description
+        if (candidateCategory) {
+          const catKeywords = candidateCategory.split(/[\s,/]+/).filter((k) => k.length > 3);
+          const desc = (job.description || "").toLowerCase();
+          const jt = job.job_title.toLowerCase();
+          const matchedKeywords = catKeywords.filter((kw) => desc.includes(kw) || jt.includes(kw));
+          if (matchedKeywords.length > 0) {
+            score += Math.min(20, matchedKeywords.length * 7);
+            matchReasons.push(`Domain match: ${matchedKeywords.slice(0, 2).join(", ")}`);
+          }
+        }
+
+        // ─── LOCATION MATCH ────────────────────────────────────────────────
         if (job.location) {
           const loc = job.location.toLowerCase();
           if (profile.preferred_district && loc.includes(profile.preferred_district.toLowerCase())) {
@@ -150,18 +228,19 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           }
         }
 
-        // Primary subject match
+        // ─── PRIMARY SUBJECT MATCH (education-specific) ───────────────────
         if (profile.primary_subject && job.job_title) {
           const subj = profile.primary_subject.toLowerCase();
           const jt = job.job_title.toLowerCase();
           const desc = job.description?.toLowerCase() || "";
-          if (jt.includes(subj) || desc.includes(subj)) {
+          const jobSubj = (job.subjects || "").toLowerCase();
+          if (jt.includes(subj) || jobSubj.includes(subj) || desc.includes(subj)) {
             score += 25;
             matchReasons.push("Subject expertise match");
           }
         }
 
-        // Experience level match
+        // ─── EXPERIENCE LEVEL MATCH ────────────────────────────────────────
         if (profile.experience_level && job.experience_required) {
           const exp = profile.experience_level.toLowerCase();
           const jexp = job.experience_required.toLowerCase();
@@ -173,19 +252,6 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           ) {
             score += 20;
             matchReasons.push("Experience level match");
-          }
-        }
-
-        // Skills match from resume analysis
-        const jobSkills = job.skills as string[] | null;
-        if (jobSkills && jobSkills.length > 0 && resumeAnalysis?.skill_highlights) {
-          const candidateSkills = resumeAnalysis.skill_highlights.map((s: string) => s.toLowerCase());
-          const matched = jobSkills.filter((skill: string) =>
-            candidateSkills.some((cs: string) => cs.includes(skill.toLowerCase()) || skill.toLowerCase().includes(cs))
-          );
-          if (matched.length > 0) {
-            score += Math.min(25, matched.length * 8);
-            matchReasons.push(`${matched.length} skill${matched.length > 1 ? "s" : ""} matched`);
           }
         }
 
@@ -204,7 +270,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         };
       });
 
-      // Filter and sort - only jobs with score > 20
+      // Filter and sort - only jobs with score > 20 (industry penalties will push cross-category jobs below threshold)
       const filtered = scored
         .filter((j) => j.matchScore > 20)
         .sort((a, b) => b.matchScore - a.matchScore)
