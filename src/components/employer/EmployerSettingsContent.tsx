@@ -32,7 +32,7 @@ interface RegistrationData {
 }
 
 export const EmployerSettingsContent = () => {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [formData, setFormData] = useState<RegistrationData>({
     company_name: "",
     company_email: "",
@@ -157,6 +157,19 @@ export const EmployerSettingsContent = () => {
         if (error) throw error;
         setHasRegistration(true);
       }
+
+      // Also update the profiles table so sidebar name reflects the change
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          company_name: formData.company_name.trim(),
+          full_name: formData.company_name.trim(),
+        })
+        .eq("id", user.id);
+      if (profileError) console.error("Error updating profile name:", profileError);
+
+      // Refresh auth context so sidebar updates immediately
+      await refreshProfile();
 
       toast.success(hasRegistration ? "Profile updated successfully!" : "Company profile created successfully!");
     } catch (err: any) {
