@@ -75,22 +75,39 @@ export default function ResumeBuilderTab() {
   useEffect(() => {
     loadSavedResume();
     fetchMockTestResults();
-    checkPremiumStatus();
+    // Listen for auth state to ensure user is ready before checking subscription
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        checkPremiumStatus();
+      }
+    });
+    checkPremiumStatus(); // also try immediately in case already logged in
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkPremiumStatus = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: activeSub } = await supabase
+      const { data: activeSub, error } = await supabase
         .from('candidate_subscriptions')
-        .select('id, plan')
+        .select('id, plan, status, ends_at')
         .eq('candidate_id', user.id)
         .eq('status', 'active')
         .in('plan', ['premium', 'pro'])
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
-      setIsPremiumUser(!!activeSub);
-      if (activeSub) {
+      
+      console.log('Subscription check:', activeSub, error);
+
+      // Validate ends_at — treat null ends_at as still active
+      const isValid = activeSub && (
+        !activeSub.ends_at || new Date(activeSub.ends_at) > new Date()
+      );
+
+      setIsPremiumUser(!!isValid);
+      if (isValid) {
         setUserPlan(activeSub.plan as "pro" | "premium");
       } else {
         setUserPlan("basic");
