@@ -59,6 +59,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { UpgradePlanContent } from "@/components/employer/UpgradePlanContent";
+import { EmployerSettingsContent } from "@/components/employer/EmployerSettingsContent";
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -523,6 +524,7 @@ const EmployerDashboard = () => {
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
+            {activeMenu === "settings" && <EmployerSettingsContent />}
             
           </div>
         </main>
