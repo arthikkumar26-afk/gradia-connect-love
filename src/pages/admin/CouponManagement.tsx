@@ -58,7 +58,7 @@ const CouponManagement = () => {
   const [saving, setSaving] = useState(false);
 
   // Form state
-  const candidatePackages = ["Pro (₹999/mo)", "Premium (₹1499/mo)"];
+  const candidatePackages = ["Pro (₹1499/mo)", "Premium (₹1999/mo)"];
   const employerPackages = ["Growth (₹4,999/mo)", "Professional (₹14,999/mo)", "Enterprise (₹29,000/mo)"];
 
   const [form, setForm] = useState({

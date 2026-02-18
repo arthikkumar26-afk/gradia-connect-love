@@ -34,7 +34,7 @@ serve(async (req) => {
     }
 
     const auth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
-    const prices: Record<string, number> = { pro: 999, premium: 1499 };
+    const prices: Record<string, number> = { pro: 1499, premium: 1999 };
     const amount = prices[plan];
 
     if (!amount) {
