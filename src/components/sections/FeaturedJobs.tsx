@@ -46,7 +46,6 @@ const FeaturedJobs = () => {
             employer_id
           `)
           .eq('is_featured', true)
-          .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(6);
 
