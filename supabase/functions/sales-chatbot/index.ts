@@ -21,8 +21,8 @@ FLOW:
 
 CANDIDATE PLANS:
 - **Basic (Free)**: 1 mock test, job search & apply, basic profile creation. Great for getting started!
-- **Pro (₹499/month)**: AI Resume Analysis, 5 mock tests/month, profile visibility boost. Best for active job seekers!
-- **Premium (₹999/month)**: Unlimited mock tests, AI Mock Interview pipeline, 1-on-1 career coaching. For serious career growth!
+- **Pro (₹999/month)**: AI Resume Analysis, 5 mock tests/month, profile visibility boost. Best for active job seekers!
+- **Premium (₹1499/month)**: Unlimited mock tests, AI Mock Interview pipeline, 1-on-1 career coaching. For serious career growth!
 
 EMPLOYER PLANS:
 - **Starter (Free)**: 3 active jobs, basic candidate tracking. Perfect for trying us out!

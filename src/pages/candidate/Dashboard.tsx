@@ -241,8 +241,8 @@ const CandidateDashboard = () => {
             toast({
               title: data.has_trial ? "🎉 Pro Trial Activated!" : "🎉 Pro Plan Activated!",
               description: data.has_trial
-                ? "Autopay set up. You have 7 days free, then ₹499/mo will be charged automatically."
-                : "₹499/mo subscription activated successfully.",
+                ? "Autopay set up. You have 7 days free, then ₹999/mo will be charged automatically."
+                : "₹999/mo subscription activated successfully.",
             });
             window.location.reload();
           } catch (err: any) {
@@ -3728,7 +3728,7 @@ const CandidateDashboard = () => {
                       <CardTitle className="text-lg">Pro</CardTitle>
                       <p className="text-xs text-muted-foreground">Accelerate your job search</p>
                       <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹499</span>
+                        <span className="text-2xl font-bold text-foreground">₹999</span>
                         <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
@@ -3759,21 +3759,21 @@ const CandidateDashboard = () => {
                           {upgradingPlan === "pro-trial" ? "Setting up..." : "Start 7-Day Free Trial"}
                         </Button>
                       ) : (
-                        <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 499)}>
-                          {upgradingPlan === "pro" ? "Processing..." : "Subscribe ₹499/mo"}
+                        <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 999)}>
+                          {upgradingPlan === "pro" ? "Processing..." : "Subscribe ₹999/mo"}
                         </Button>
                       )}
                       {/* Coupon for Pro */}
                       {!(isActiveSub && candidateSubscription?.plan === "pro") && (
                         <CouponInput
-                          originalAmount={499}
+                          originalAmount={999}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "pro" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "pro" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹499</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹999</p>
                       )}
                       {!hasUsedTrial && (
                         <p className="text-xs text-center text-muted-foreground">Setup autopay · 7 days free · Cancel anytime</p>
@@ -3794,7 +3794,7 @@ const CandidateDashboard = () => {
                       <CardTitle className="text-lg">Premium</CardTitle>
                       <p className="text-xs text-muted-foreground">Full career support</p>
                       <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹999</span>
+                        <span className="text-2xl font-bold text-foreground">₹1499</span>
                         <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
@@ -3820,21 +3820,21 @@ const CandidateDashboard = () => {
                       {isActiveSub && candidateSubscription?.plan === "premium" ? (
                         <Button className="w-full" variant="outline" disabled>Current Plan</Button>
                       ) : (
-                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 999)}>
-                          {upgradingPlan === "premium" ? "Processing..." : "Subscribe ₹999/mo"}
+                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 1499)}>
+                          {upgradingPlan === "premium" ? "Processing..." : "Subscribe ₹1499/mo"}
                         </Button>
                       )}
                       {/* Coupon for Premium */}
                       {!(isActiveSub && candidateSubscription?.plan === "premium") && (
                         <CouponInput
-                          originalAmount={999}
+                          originalAmount={1499}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "premium" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "premium" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹999</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹1499</p>
                       )}
                     </CardContent>
                   </Card>
