@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, MapPin, Gift, Save, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Building2, MapPin, Gift, Save, Loader2, CheckCircle, Info } from "lucide-react";
 import { toast } from "sonner";
 import { getAllStates, getDistrictsByState } from "@/data/indiaLocations";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,30 +60,50 @@ export const EmployerSettingsContent = () => {
     if (!user?.id) { setIsLoading(false); return; }
 
     try {
-      const { data, error } = await supabase
-        .from("employer_registrations")
-        .select("*")
-        .eq("employer_id", user.id)
-        .maybeSingle();
+      // Fetch both registration and profile in parallel
+      const [regResult, profileResult] = await Promise.all([
+        supabase
+          .from("employer_registrations")
+          .select("*")
+          .eq("employer_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("company_name, company_description, website, mobile, email")
+          .eq("id", user.id)
+          .maybeSingle(),
+      ]);
 
-      if (error) throw error;
+      if (regResult.error) throw regResult.error;
 
-      if (data) {
+      if (regResult.data) {
         setHasRegistration(true);
-        setRegistrationId(data.id);
+        setRegistrationId(regResult.data.id);
         setFormData({
-          company_name: data.company_name || "",
-          company_email: data.company_email || "",
-          company_phone: data.company_phone || "",
-          company_website: data.company_website || "",
-          company_description: data.company_description || "",
-          industry_category: (data as any).industry_category || "",
-          state: data.state || "",
-          district: data.district || "",
-          town_city: data.town_city || "",
-          pin_code: data.pin_code || "",
-          benefits: data.benefits || "",
+          company_name: regResult.data.company_name || "",
+          company_email: regResult.data.company_email || "",
+          company_phone: regResult.data.company_phone || "",
+          company_website: regResult.data.company_website || "",
+          company_description: regResult.data.company_description || "",
+          industry_category: (regResult.data as any).industry_category || "",
+          state: regResult.data.state || "",
+          district: regResult.data.district || "",
+          town_city: regResult.data.town_city || "",
+          pin_code: regResult.data.pin_code || "",
+          benefits: regResult.data.benefits || "",
         });
+      } else if (profileResult.data) {
+        // Pre-fill from profile data so employer can complete registration from Settings
+        const profile = profileResult.data;
+        setHasRegistration(false);
+        setFormData(prev => ({
+          ...prev,
+          company_name: profile.company_name || "",
+          company_description: profile.company_description || "",
+          company_website: profile.website || "",
+          company_phone: profile.mobile || "",
+          company_email: profile.email || "",
+        }));
       }
     } catch (err) {
       console.error("Error fetching registration:", err);
@@ -138,7 +158,7 @@ export const EmployerSettingsContent = () => {
         setHasRegistration(true);
       }
 
-      toast.success("Profile updated successfully!");
+      toast.success(hasRegistration ? "Profile updated successfully!" : "Company profile created successfully!");
     } catch (err: any) {
       console.error("Error saving:", err);
       toast.error(err.message || "Failed to save changes");
@@ -159,27 +179,17 @@ export const EmployerSettingsContent = () => {
     );
   }
 
-  if (!hasRegistration) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4 text-center">
-        <AlertCircle className="h-12 w-12 text-muted-foreground" />
-        <div>
-          <h3 className="text-lg font-semibold">No Registration Found</h3>
-          <p className="text-muted-foreground mt-1">
-            Please complete your company registration first from the Registration tab.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Show the form even if no registration yet — let them create one from Settings
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-primary">
-          <CheckCircle className="h-5 w-5" />
-          <span className="text-sm font-medium">Registered Profile</span>
+        <div className={`flex items-center gap-2 ${hasRegistration ? "text-primary" : "text-amber-500"}`}>
+          {hasRegistration ? <CheckCircle className="h-5 w-5" /> : <Info className="h-5 w-5" />}
+          <span className="text-sm font-medium">
+            {hasRegistration ? "Registered Profile" : "Complete your company profile"}
+          </span>
         </div>
         <Button onClick={handleSave} disabled={isSubmitting} className="gap-2">
           {isSubmitting ? (
