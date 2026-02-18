@@ -75,7 +75,6 @@ import CandidateProfilePage from "./pages/employer/CandidateProfile";
 // Admin & Owner Pages
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
-import TrendingJobsAdmin from "./pages/admin/TrendingJobs";
 import JobModeration from "./pages/admin/JobModeration";
 import AdminUsers from "./pages/admin/Users";
 import AdminCompanies from "./pages/admin/Companies";
@@ -216,7 +215,7 @@ const MainRoutes = () => (
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/trending-jobs" element={<TrendingJobsAdmin />} />
+      
       <Route path="/admin/jobs" element={<JobModeration />} />
       <Route path="/admin/users" element={<AdminUsers />} />
       <Route path="/admin/subscribed-employers" element={<SubscribedEmployers />} />

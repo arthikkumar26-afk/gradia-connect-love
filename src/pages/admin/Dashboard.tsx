@@ -213,7 +213,6 @@ const AdminDashboard = () => {
     { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
     { title: "Unsubscribed Employers", icon: UserX, path: "/admin/unsubscribed-employers" },
     { title: "Unsubscribed Candidates", icon: UserX, path: "/admin/unsubscribed-candidates" },
-    { title: "Trending Jobs", icon: TrendingUp, path: "/admin/trending-jobs" },
     { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
     { title: "Companies", icon: Building2, path: "/admin/companies" },
     { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
