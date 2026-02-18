@@ -656,10 +656,6 @@ export default function ResumeBuilderTab() {
             )}
             {isUploading ? "Analyzing..." : "Upload Resume"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSyncFromMockTest} disabled={isLoading || !mockTestData}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Sync Mock Test
-          </Button>
           <Button 
             size="sm" 
             onClick={saveResume} 
