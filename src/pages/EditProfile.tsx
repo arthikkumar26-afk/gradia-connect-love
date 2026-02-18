@@ -73,6 +73,9 @@ const EditProfile = () => {
   const [classesHandled, setClassesHandled] = useState("");
   const [batch, setBatch] = useState("");
   const [primarySubject, setPrimarySubject] = useState("");
+  const [currentSalary, setCurrentSalary] = useState("");
+  const [expectedSalary, setExpectedSalary] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("");
   
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null);
@@ -120,6 +123,9 @@ const EditProfile = () => {
     setClassesHandled(profile.classes_handled || "");
     setBatch(profile.batch || "");
     setPrimarySubject(profile.primary_subject || "");
+    setCurrentSalary(profile.current_salary?.toString() || "");
+    setExpectedSalary(profile.expected_salary?.toString() || "");
+    setAvailableFrom(profile.available_from || "");
   }, [user, profile, navigate]);
 
   const handleProfilePictureChange = (file: File) => {
@@ -405,6 +411,9 @@ const EditProfile = () => {
         updateData.batch = batch || null;
         updateData.primary_subject = primarySubject || null;
         updateData.category = industryCategory || null;
+        updateData.current_salary = currentSalary ? parseFloat(currentSalary) : null;
+        updateData.expected_salary = expectedSalary ? parseFloat(expectedSalary) : null;
+        updateData.available_from = availableFrom || null;
       }
 
       const { error } = await supabase
@@ -1441,6 +1450,46 @@ const EditProfile = () => {
                       <SelectItem value="5+">5+ years</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Current Salary, Expected Salary, Available From */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentSalary">Current Salary (₹/month)</Label>
+                    <Input
+                      id="currentSalary"
+                      type="number"
+                      placeholder="e.g. 30000"
+                      value={currentSalary}
+                      onChange={(e) => setCurrentSalary(e.target.value)}
+                      className="h-12"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="expectedSalary">Expected Salary (₹/month)</Label>
+                    <Input
+                      id="expectedSalary"
+                      type="number"
+                      placeholder="e.g. 40000"
+                      value={expectedSalary}
+                      onChange={(e) => setExpectedSalary(e.target.value)}
+                      className="h-12"
+                      min="0"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="availableFrom">Available From</Label>
+                    <Input
+                      id="availableFrom"
+                      type="date"
+                      value={availableFrom}
+                      onChange={(e) => setAvailableFrom(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
                 </div>
 
                 {/* Resume Upload */}
