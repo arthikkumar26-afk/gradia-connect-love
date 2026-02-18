@@ -485,6 +485,20 @@ export default function ResumeBuilderTab() {
         return;
       }
 
+      // Check if user has an active premium subscription — skip payment if so
+      const { data: activeSub } = await supabase
+        .from('candidate_subscriptions')
+        .select('id, plan')
+        .eq('candidate_id', user.id)
+        .eq('status', 'active')
+        .in('plan', ['premium', 'pro'])
+        .maybeSingle();
+
+      if (activeSub) {
+        await generatePDF();
+        return;
+      }
+
       sonnerToast.loading("Initializing payment...", { id: "resume-payment" });
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke("create-resume-payment", {
