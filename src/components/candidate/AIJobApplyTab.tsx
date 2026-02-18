@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   Lock,
   Star,
   Check,
+  FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,10 +40,12 @@ interface AIJobApplyTabProps {
   resumeAnalysis: any;
   onNavigateToResume: () => void;
   onNavigateToUpgrade?: () => void;
+  onResumeUploaded?: (analysis: any, resumeUrl: string) => void;
 }
 
-export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToResume, onNavigateToUpgrade }: AIJobApplyTabProps) {
+export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToResume, onNavigateToUpgrade, onResumeUploaded }: AIJobApplyTabProps) {
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<"check" | "scanning" | "results" | "applying">("check");
   const [matchedJobs, setMatchedJobs] = useState<MatchedJob[]>([]);
   const [isScanning, setIsScanning] = useState(false);
@@ -52,10 +55,19 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const [existingApplicationJobIds, setExistingApplicationJobIds] = useState<Set<string>>(new Set());
   const [candidatePlan, setCandidatePlan] = useState<string>("basic");
   const [isPlanLoading, setIsPlanLoading] = useState(true);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const [localResumeAnalysis, setLocalResumeAnalysis] = useState<any>(resumeAnalysis);
+  const [localProfile, setLocalProfile] = useState<any>(profile);
 
-  const hasResume = !!profile?.resume_url;
-  const hasAnalysis = !!resumeAnalysis;
+  const hasResume = !!(localProfile?.resume_url || profile?.resume_url);
+  const hasAnalysis = !!(localResumeAnalysis || resumeAnalysis);
+  const effectiveAnalysis = localResumeAnalysis || resumeAnalysis;
+  const effectiveProfile = localProfile || profile;
   const hasAccess = candidatePlan === "pro" || candidatePlan === "premium";
+
+  // Sync external props into local state when they update
+  useEffect(() => { if (resumeAnalysis) setLocalResumeAnalysis(resumeAnalysis); }, [resumeAnalysis]);
+  useEffect(() => { if (profile) setLocalProfile(profile); }, [profile]);
 
   // Fetch candidate subscription plan
   useEffect(() => {
@@ -98,8 +110,76 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     fetchExisting();
   }, [profile?.id]);
 
+  // Inline resume upload + AI parse
+  const handleInlineResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !profile?.id) return;
+
+    const allowed = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png"];
+    if (!allowed.includes(file.type)) {
+      toast({ title: "Invalid file", description: "Please upload a PDF, Word document, or image.", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingResume(true);
+    toast({ title: "Analyzing resume...", description: "AI is reading your resume to find matching jobs." });
+
+    try {
+      // 1. Upload file to storage
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${profile.id}/resume.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from("resumes")
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from("resumes").getPublicUrl(filePath);
+
+      // 2. Parse resume with AI
+      const { data: { session } } = await supabase.auth.getSession();
+      const formData = new FormData();
+      formData.append("file", file);
+      const parseRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        { method: "POST", headers: { Authorization: `Bearer ${session?.access_token}` }, body: formData }
+      );
+      const parsed = parseRes.ok ? await parseRes.json() : null;
+
+      // 3. Analyze resume
+      let analysisData = null;
+      if (parsed) {
+        const analyzeRes = await supabase.functions.invoke("analyze-resume", {
+          body: { resumeData: parsed, candidateId: profile.id },
+        });
+        analysisData = analyzeRes.data;
+      }
+
+      // 4. Update profile resume_url
+      await supabase.from("profiles").update({ resume_url: publicUrl }).eq("id", profile.id);
+
+      // 5. Update local state so jobs scan immediately
+      const newAnalysis = analysisData || { skill_highlights: parsed?.skill_highlights || [], overall_score: 0 };
+      setLocalResumeAnalysis(newAnalysis);
+      setLocalProfile((prev: any) => ({ ...prev, resume_url: publicUrl }));
+      if (onResumeUploaded) onResumeUploaded(newAnalysis, publicUrl);
+
+      toast({ title: "Resume uploaded!", description: "Now scanning for matching jobs..." });
+
+      // 6. Auto-trigger scan
+      setTimeout(() => scanAndMatchJobs(), 300);
+    } catch (err: any) {
+      console.error("Resume upload error:", err);
+      toast({ title: "Upload failed", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setIsUploadingResume(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const scanAndMatchJobs = async () => {
-    if (!profile?.id) return;
+    const activeProfile = localProfile || profile;
+    const activeAnalysis = localResumeAnalysis || resumeAnalysis;
+    if (!activeProfile?.id) return;
     setIsScanning(true);
     setStep("scanning");
 
@@ -109,7 +189,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         .from("jobs")
         .select("id, job_title, location, department, salary_range, employer_id, description, experience_required, skills, segment, category, designation, subjects, program, classes, board")
         .eq("status", "active")
-        .neq("employer_id", profile.id);
+        .neq("employer_id", activeProfile.id);
 
       if (error) throw error;
       if (!allJobs || allJobs.length === 0) {
@@ -120,8 +200,8 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
       }
 
       // Determine candidate's industry category from segment/category
-      const candidateSegment = (profile.segment || "").toLowerCase();
-      const candidateCategory = (profile.category || "").toLowerCase();
+      const candidateSegment = (activeProfile.segment || "").toLowerCase();
+      const candidateCategory = (activeProfile.category || "").toLowerCase();
 
       // Map segment values to industry type buckets
       const isEducationSegment = (seg: string) =>
@@ -141,20 +221,14 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         const matchReasons: string[] = [];
 
         // ─── INDUSTRY CATEGORY FILTER (hard gate) ─────────────────────────
-        // Determine the job's industry category from its segment field
         const jobSegment = (job.segment || "").toLowerCase();
         const jobIsEducation = isEducationSegment(jobSegment) ||
           ["teacher", "principal", "lecturer", "professor", "school", "tutor"].some((k) => job.job_title.toLowerCase().includes(k));
         const jobIsIT = isITSegment(jobSegment) ||
           ["software", "developer", "engineer", "data", "cloud", "cyber", "devops", "it ", "tech"].some((k) => job.job_title.toLowerCase().includes(k));
 
-        // If the candidate has a clearly identified segment, penalize cross-category matches heavily
-        if (candidateIsEducation && !jobIsEducation) {
-          score -= 60; // Education candidate should NOT see IT/non-IT jobs
-        }
-        if ((candidateIsIT || candidateIsNonIT) && jobIsEducation) {
-          score -= 60; // IT/Non-IT candidates should NOT see teaching jobs
-        }
+        if (candidateIsEducation && !jobIsEducation) score -= 60;
+        if ((candidateIsIT || candidateIsNonIT) && jobIsEducation) score -= 60;
 
         // Segment exact match gives a strong bonus
         if (candidateSegment && jobSegment && candidateSegment === jobSegment) {
@@ -172,8 +246,8 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         }
 
         // ─── PREFERRED ROLE / DESIGNATION MATCH ───────────────────────────
-        if (profile.preferred_role && job.job_title) {
-          const pr = profile.preferred_role.toLowerCase();
+        if (activeProfile.preferred_role && job.job_title) {
+          const pr = activeProfile.preferred_role.toLowerCase();
           const jt = job.job_title.toLowerCase();
           const desc = job.description?.toLowerCase() || "";
           const des = (job.designation || "").toLowerCase();
@@ -186,11 +260,9 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           }
         }
 
-        // ─── SKILLS MATCH (from profile category/skills + resume) ─────────
+        // ─── SKILLS MATCH ─────────────────────────────────────────────────
         const jobSkills = job.skills as string[] | null;
-        // Skills from resume analysis
-        const resumeSkills = (resumeAnalysis?.skill_highlights || []).map((s: string) => s.toLowerCase());
-        // Skills keywords from profile category (e.g. "Cybersecurity", "Full Stack Development")
+        const resumeSkills = (activeAnalysis?.skill_highlights || []).map((s: string) => s.toLowerCase());
         const profileCategorySkills = candidateCategory ? [candidateCategory] : [];
         const allCandidateSkills = [...resumeSkills, ...profileCategorySkills];
 
@@ -219,18 +291,18 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         // ─── LOCATION MATCH ────────────────────────────────────────────────
         if (job.location) {
           const loc = job.location.toLowerCase();
-          if (profile.preferred_district && loc.includes(profile.preferred_district.toLowerCase())) {
+          if (activeProfile.preferred_district && loc.includes(activeProfile.preferred_district.toLowerCase())) {
             score += 20;
             matchReasons.push("Preferred location match");
-          } else if (profile.preferred_state && loc.includes(profile.preferred_state.toLowerCase())) {
+          } else if (activeProfile.preferred_state && loc.includes(activeProfile.preferred_state.toLowerCase())) {
             score += 15;
             matchReasons.push("Same state");
           }
         }
 
         // ─── PRIMARY SUBJECT MATCH (education-specific) ───────────────────
-        if (profile.primary_subject && job.job_title) {
-          const subj = profile.primary_subject.toLowerCase();
+        if (activeProfile.primary_subject && job.job_title) {
+          const subj = activeProfile.primary_subject.toLowerCase();
           const jt = job.job_title.toLowerCase();
           const desc = job.description?.toLowerCase() || "";
           const jobSubj = (job.subjects || "").toLowerCase();
@@ -241,8 +313,8 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         }
 
         // ─── EXPERIENCE LEVEL MATCH ────────────────────────────────────────
-        if (profile.experience_level && job.experience_required) {
-          const exp = profile.experience_level.toLowerCase();
+        if (activeProfile.experience_level && job.experience_required) {
+          const exp = activeProfile.experience_level.toLowerCase();
           const jexp = job.experience_required.toLowerCase();
           if (
             (exp.includes("fresher") && (jexp.includes("fresher") || jexp.includes("0-1") || jexp.includes("entry"))) ||
@@ -270,7 +342,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         };
       });
 
-      // Filter and sort - only jobs with score > 20 (industry penalties will push cross-category jobs below threshold)
+      // Filter and sort
       const filtered = scored
         .filter((j) => j.matchScore > 20)
         .sort((a, b) => b.matchScore - a.matchScore)
@@ -286,6 +358,8 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
       setIsScanning(false);
     }
   };
+
+
 
   const autoApplyAll = async () => {
     const jobsToApply = matchedJobs.filter((j) => j.applyStatus === "pending");
@@ -384,7 +458,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     );
   }
 
-  // Step 1: Check resume
+  // Step 1: Upload resume inline (no redirect)
   if (!hasResume || !hasAnalysis) {
     return (
       <div className="space-y-6">
@@ -392,16 +466,42 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           <h2 className="text-lg font-semibold text-foreground">AI Job Apply</h2>
           <p className="text-sm text-muted-foreground">Let AI automatically apply to jobs that match your profile</p>
         </div>
-        <Card className="p-8 text-center border-dashed border-2">
-          <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">Resume Required</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Please upload your resume first. Our AI will scan it, analyze your skills and experience, then find and apply to matching jobs automatically.
-          </p>
-          <Button onClick={onNavigateToResume} className="gap-2">
-            <Upload className="h-4 w-4" />
-            Go to Resume Builder
-          </Button>
+        <Card className="p-8 text-center border-dashed border-2 border-primary/30">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            onChange={handleInlineResumeUpload}
+            className="hidden"
+          />
+          {isUploadingResume ? (
+            <>
+              <Loader2 className="h-12 w-12 mx-auto mb-4 text-primary animate-spin" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Analyzing your resume...</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                AI is reading your resume to detect your skills and find matching jobs.
+              </p>
+            </>
+          ) : (
+            <>
+              <FileUp className="h-12 w-12 mx-auto mb-4 text-primary/60" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Upload Your Resume</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Upload your resume and our AI will instantly detect your skills, experience and find the best matching jobs for you.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => fileInputRef.current?.click()} className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Upload Resume
+                </Button>
+                <Button variant="outline" onClick={onNavigateToResume} className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Build Resume First
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">Supports PDF, Word (.doc/.docx), and image files</p>
+            </>
+          )}
         </Card>
       </div>
     );
