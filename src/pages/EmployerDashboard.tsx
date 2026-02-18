@@ -263,8 +263,6 @@ const EmployerDashboard = () => {
     { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
     { id: "talent-pool", label: "Candidate Data", icon: Users, path: "/employer/talent-pool" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
-    { id: "mock-interview-pipeline", label: "Mock Interview Pipeline", icon: ClipboardList, path: "/employer/mock-interview-pipeline" },
-    
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "feedback-matrix", label: "Feedback Matrix", icon: Grid3X3, path: "/employer/feedback-matrix" },
     { id: "confirmation", label: "Confirmation", icon: UserCheck, path: "/employer/confirmation" },
