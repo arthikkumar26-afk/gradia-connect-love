@@ -3222,9 +3222,20 @@ const CandidateDashboard = () => {
                     <h2 className="text-lg font-semibold text-foreground">Suitable Jobs</h2>
                     <p className="text-sm text-muted-foreground">Jobs matching your profile preferences</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/jobs-results')}>
-                    View All Jobs
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={fetchJobs}
+                      disabled={isLoading}
+                      title="Refresh jobs"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/jobs-results')}>
+                      View All Jobs
+                    </Button>
+                  </div>
                 </div>
 
                 {isLoading ? (
