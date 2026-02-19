@@ -1491,6 +1491,9 @@ export const MockInterviewTab = () => {
     ? !!selectedMockRole
     : !!selectedMockSegment && !!selectedMockCategory && !!selectedMockDesignation;
 
+  // For education flow, no interview type needed anymore
+  const educationRoleReady = !isITCorporate && isMockRoleSelected;
+
   // No session - Show start screen with interview type selection
   if (!currentSession) {
     return (
@@ -1706,71 +1709,11 @@ export const MockInterviewTab = () => {
           </div>
         ) : (
           <>
-        {/* ── Education / Default: Interview Type + Role Selection ── */}
+        {/* ── Education / Default: Role Selection directly ── */}
             <div className="max-w-2xl mx-auto space-y-5">
 
-              {/* Interview Type Selection */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* New Employee Card */}
-                <button
-                  onClick={() => setSelectedInterviewType('new_employee')}
-                  className={`text-left p-4 rounded-xl border-2 transition-all ${
-                    selectedInterviewType === 'new_employee'
-                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                      : 'border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40'
-                  }`}
-                >
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-3 ${
-                    selectedInterviewType === 'new_employee' ? 'bg-primary' : 'bg-primary/10'
-                  }`}>
-                    <UserPlus className={`h-6 w-6 ${selectedInterviewType === 'new_employee' ? 'text-primary-foreground' : 'text-primary'}`} />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">New Employee</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">For new candidates joining</p>
-                  <ul className="mt-2 space-y-1">
-                    {['Basic technical assessment', 'Teaching demonstration', 'HR document verification'].map(f => (
-                      <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />{f}
-                      </li>
-                    ))}
-                  </ul>
-                  {selectedInterviewType === 'new_employee' && (
-                    <Badge className="mt-3 text-xs bg-primary">Selected ✓</Badge>
-                  )}
-                </button>
-
-                {/* Promotions Card */}
-                <button
-                  onClick={() => setSelectedInterviewType('promotions')}
-                  className={`text-left p-4 rounded-xl border-2 transition-all ${
-                    selectedInterviewType === 'promotions'
-                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                      : 'border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40'
-                  }`}
-                >
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-3 ${
-                    selectedInterviewType === 'promotions' ? 'bg-primary' : 'bg-amber-100 dark:bg-amber-900/30'
-                  }`}>
-                    <Award className={`h-6 w-6 ${selectedInterviewType === 'promotions' ? 'text-primary-foreground' : 'text-amber-600 dark:text-amber-400'}`} />
-                  </div>
-                  <p className="font-semibold text-sm text-foreground">Promotions</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">For existing employees seeking promotion</p>
-                  <ul className="mt-2 space-y-1">
-                    {['Advanced technical assessment', 'Leadership demonstration', 'Performance review'].map(f => (
-                      <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <CheckCircle2 className="h-3 w-3 text-amber-500 shrink-0" />{f}
-                      </li>
-                    ))}
-                  </ul>
-                  {selectedInterviewType === 'promotions' && (
-                    <Badge className="mt-3 text-xs bg-primary">Selected ✓</Badge>
-                  )}
-                </button>
-              </div>
-
-              {/* Role / Designation Selector — shown once interview type is picked */}
-              {selectedInterviewType && (
-                <Card className="border-primary/20">
+              {/* Role / Designation Selector — shown directly */}
+              <Card className="border-primary/20">
                   <CardContent className="pt-5 space-y-4">
                     <p className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <UserPlus className="h-4 w-4 text-primary" />
@@ -1872,7 +1815,6 @@ export const MockInterviewTab = () => {
                     )}
                   </CardContent>
                 </Card>
-              )}
 
               {/* Interview Stages Preview — always visible */}
               <Card>
@@ -1904,7 +1846,7 @@ export const MockInterviewTab = () => {
               <div className="space-y-2">
                 <Button
                   onClick={startMockTest}
-                  disabled={isStarting || !mockTestLimits.canStart || !selectedInterviewType || !isMockRoleSelected}
+                  disabled={isStarting || !mockTestLimits.canStart || !isMockRoleSelected}
                   className="w-full gap-2"
                   size="lg"
                 >
@@ -1917,11 +1859,9 @@ export const MockInterviewTab = () => {
                   )}
                   {!mockTestLimits.canStart
                     ? 'Limit Reached — Upgrade Plan'
-                    : !selectedInterviewType
-                      ? 'Select Interview Type to Continue'
-                      : !isMockRoleSelected
-                        ? 'Select Your Role to Continue'
-                        : `Attend Mock Test — ${selectedInterviewType === 'new_employee' ? 'New Employee' : 'Promotions'}`}
+                    : !isMockRoleSelected
+                      ? 'Select Your Role to Continue'
+                      : 'Attend Mock Test'}
                 </Button>
                 <div className="flex justify-center">
                   <Badge variant="secondary" className="text-xs gap-1">
