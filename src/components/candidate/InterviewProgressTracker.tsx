@@ -49,8 +49,8 @@ export const InterviewProgressTracker = ({
   const getStageStatus = (stageOrder: number) => {
     const result = stageResults.find((r) => r.stage_order === stageOrder);
     if (result?.completed_at) return "completed";
-    if (stageOrder === currentStageOrder) return "current";
     if (stageOrder < currentStageOrder) return "completed";
+    if (stageOrder === currentStageOrder) return "current";
     return "locked";
   };
 
