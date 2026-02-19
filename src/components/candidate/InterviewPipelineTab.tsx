@@ -370,6 +370,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     if (status !== 'completed' && status !== 'passed') return null;
 
     switch (stage.name) {
+      case 'Interview Guidelines': {
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-green-500" />
+              <span className="text-sm font-medium text-green-600">Interview guidelines email sent successfully!</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Please check your inbox for the interview instructions and guidelines before proceeding.
+            </p>
+          </div>
+        );
+      }
       case 'CV/Resume':
       case 'Resume Screening': {
         // Get analysis from multiple sources: event ai_feedback > interview ai_analysis
@@ -792,6 +805,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                   }`} />
                 )}
 
+                {/* Email-only current stage: show "Email Sent" banner above */}
+                {status === 'current' && (stage.name === 'Interview Guidelines' || stage.name === 'CV/Resume' || stage.name === 'Resume Screening') && (
+                  <div className="mb-1 flex items-center gap-2 text-xs text-green-600 bg-green-500/10 border border-green-500/20 rounded-md px-3 py-1.5">
+                    <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Email sent — awaiting system to advance to the next stage</span>
+                  </div>
+                )}
+
                 <div className={`relative rounded-lg border-2 transition-all ${getStatusColor(status)} ${
                   hasReviewData ? 'cursor-pointer hover:shadow-md' : ''
                 }`}
@@ -834,6 +855,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         {status === 'completed' && event?.completed_at 
                           ? `Completed ${formatDate(event.completed_at)} · Click to view results`
                           : status === 'completed' ? 'Completed · Click to view results'
+                          : status === 'current' && (stage.name === 'Interview Guidelines' || stage.name === 'CV/Resume' || stage.name === 'Resume Screening')
+                          ? '📧 Email sent successfully'
                           : status === 'current' ? 'In Progress'
                           : status === 'scheduled' && event?.scheduled_at 
                           ? `Scheduled for ${formatDate(event.scheduled_at)}`
