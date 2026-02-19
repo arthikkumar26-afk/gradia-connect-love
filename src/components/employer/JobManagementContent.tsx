@@ -65,6 +65,23 @@ export const JobManagementContent = () => {
 
   const activeCategory = selectedFilter || industryCategory;
   const isEducation = activeCategory === "Education";
+  const isIT = activeCategory === "IT Corporate" || activeCategory === "it_corporate";
+  const isNonIT = activeCategory === "Non-IT Corporate" || activeCategory === "non_it_corporate";
+  const isLegal = activeCategory === "Legal";
+  const isDoctor = activeCategory === "Doctor";
+  const isCivil = activeCategory === "Civil Service";
+
+  // Industry-specific extra columns config
+  // Education: Board, Segment, Program, Classes, Subjects
+  // IT Corporate: Dept, Skills, Type (already common)
+  // Non-IT Corporate: Dept, Type (already common)
+  // Legal / Doctor / Civil: just common columns
+  const showEducationCols = isEducation;
+  const showITCols = isIT;
+  const showNonITCols = isNonIT;
+  const colSpanBase = 16; // common columns count
+  const extraCols = showEducationCols ? 5 : 0;
+  const totalColSpan = colSpanBase + extraCols;
 
   useEffect(() => {
     fetchJobs();
@@ -333,13 +350,14 @@ export const JobManagementContent = () => {
                 />
               </div>
               <Select value={selectedFilter || "all"} onValueChange={(val) => setSelectedFilter(val === "all" ? "" : val)}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[190px] border-input bg-background">
                   <SelectValue placeholder="All Industries" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Industries</SelectItem>
                   <SelectItem value="Education">Education</SelectItem>
                   <SelectItem value="IT Corporate">IT Corporate</SelectItem>
+                  <SelectItem value="Non-IT Corporate">Non-IT Corporate</SelectItem>
                   <SelectItem value="Legal">Legal</SelectItem>
                   <SelectItem value="Doctor">Doctor</SelectItem>
                   <SelectItem value="Civil Service">Civil Service</SelectItem>
@@ -355,41 +373,52 @@ export const JobManagementContent = () => {
             <div className="overflow-x-auto w-full">
               <Table className="w-full text-[10px] table-fixed">
                  <TableHeader>
-                  <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-1 [&_th]:px-0.5 [&_th]:h-7 [&_th]:text-secondary-foreground [&_th]:text-[9px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap [&_th]:overflow-hidden [&_th]:text-ellipsis">
-                    <TableHead className="font-semibold">Date</TableHead>
-                    <TableHead className="font-semibold">ID</TableHead>
-                    <TableHead className="font-semibold">Sector</TableHead>
-                    <TableHead className="font-semibold">Category</TableHead>
-                    <TableHead className="font-semibold">Function</TableHead>
-                    {isEducation && <TableHead className="font-semibold">Board</TableHead>}
-                    {isEducation && <TableHead className="font-semibold">Segment</TableHead>}
-                    {isEducation && <TableHead className="font-semibold">Program</TableHead>}
-                    {isEducation && <TableHead className="font-semibold">Classes</TableHead>}
-                    <TableHead className="font-semibold">Dept</TableHead>
-                    <TableHead className="font-semibold">Desig.</TableHead>
-                    {isEducation && <TableHead className="font-semibold">Subjects</TableHead>}
-                    <TableHead className="font-semibold">Exp</TableHead>
-                    <TableHead className="font-semibold">Skills</TableHead>
-                    <TableHead className="font-semibold">Type</TableHead>
-                    <TableHead className="font-semibold">Loc.</TableHead>
-                    <TableHead className="font-semibold">Salary</TableHead>
-                    <TableHead className="font-semibold">Org.</TableHead>
-                    <TableHead className="font-semibold text-center">QR</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold text-center">Act.</TableHead>
-                  </TableRow>
+                   <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-1 [&_th]:px-0.5 [&_th]:h-7 [&_th]:text-secondary-foreground [&_th]:text-[9px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap [&_th]:overflow-hidden [&_th]:text-ellipsis">
+                     <TableHead className="font-semibold">Date</TableHead>
+                     <TableHead className="font-semibold">ID</TableHead>
+                     {/* Education columns */}
+                     {showEducationCols && <TableHead className="font-semibold">Sector</TableHead>}
+                     {showEducationCols && <TableHead className="font-semibold">Category</TableHead>}
+                     {showEducationCols && <TableHead className="font-semibold">Function</TableHead>}
+                     {showEducationCols && <TableHead className="font-semibold">Board</TableHead>}
+                     {showEducationCols && <TableHead className="font-semibold">Segment</TableHead>}
+                     {showEducationCols && <TableHead className="font-semibold">Program</TableHead>}
+                     {showEducationCols && <TableHead className="font-semibold">Classes</TableHead>}
+                     {showEducationCols && <TableHead className="font-semibold">Dept</TableHead>}
+                     <TableHead className="font-semibold">Desig.</TableHead>
+                     {showEducationCols && <TableHead className="font-semibold">Subjects</TableHead>}
+                     {/* IT Corporate columns */}
+                     {showITCols && <TableHead className="font-semibold">Dept</TableHead>}
+                     {showITCols && <TableHead className="font-semibold">Function</TableHead>}
+                     {showITCols && <TableHead className="font-semibold">Segment</TableHead>}
+                     {/* Non-IT Corporate columns */}
+                     {showNonITCols && <TableHead className="font-semibold">Dept</TableHead>}
+                     {showNonITCols && <TableHead className="font-semibold">Function</TableHead>}
+                     {/* Legal / Doctor / Civil specific */}
+                     {(isLegal || isDoctor || isCivil) && <TableHead className="font-semibold">Dept</TableHead>}
+                     {(isLegal || isDoctor || isCivil) && <TableHead className="font-semibold">Category</TableHead>}
+                     <TableHead className="font-semibold">Exp</TableHead>
+                     <TableHead className="font-semibold">Skills</TableHead>
+                     <TableHead className="font-semibold">Type</TableHead>
+                     <TableHead className="font-semibold">Loc.</TableHead>
+                     <TableHead className="font-semibold">Salary</TableHead>
+                     <TableHead className="font-semibold">Org.</TableHead>
+                     <TableHead className="font-semibold text-center">QR</TableHead>
+                     <TableHead className="font-semibold">Status</TableHead>
+                     <TableHead className="font-semibold text-center">Act.</TableHead>
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                          <TableCell colSpan={isEducation ? 21 : 16} className="text-center py-8">
+                      <TableCell colSpan={totalColSpan} className="text-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                         <p className="text-sm text-muted-foreground mt-2">Loading positions...</p>
                       </TableCell>
                     </TableRow>
                   ) : filteredJobs.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={isEducation ? 21 : 16} className="text-center py-8">
+                      <TableCell colSpan={totalColSpan} className="text-center py-8">
                         <p className="text-muted-foreground">No positions found</p>
                         <Button variant="link" asChild className="mt-2">
                           <Link to="/employer/post-job">Create your first position</Link>
@@ -409,44 +438,91 @@ export const JobManagementContent = () => {
                           <TableCell>
                             <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{job.id.slice(0, 8)}</code>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "sectorDivision", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "category", "w-24")}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "functionType", "w-24")}
-                          </TableCell>
-                          {isEducation && (
+                          {/* Education-specific cells */}
+                          {showEducationCols && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "sectorDivision", "w-24")}
+                            </TableCell>
+                          )}
+                          {showEducationCols && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "category", "w-24")}
+                            </TableCell>
+                          )}
+                          {showEducationCols && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "functionType", "w-24")}
+                            </TableCell>
+                          )}
+                          {showEducationCols && (
                             <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                               {renderEditableCell(job, "board", "w-24")}
                             </TableCell>
                           )}
-                          {isEducation && (
+                          {showEducationCols && (
                             <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                               {renderEditableCell(job, "segment", "w-24")}
                             </TableCell>
                           )}
-                          {isEducation && (
+                          {showEducationCols && (
                             <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                               {renderEditableCell(job, "program", "w-24")}
                             </TableCell>
                           )}
-                          {isEducation && (
+                          {showEducationCols && (
                             <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                               {renderEditableCell(job, "classes", "w-24")}
                             </TableCell>
                           )}
-                          <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {renderEditableCell(job, "department", "w-24")}
-                          </TableCell>
+                          {showEducationCols && (
+                            <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "department", "w-24")}
+                            </TableCell>
+                          )}
                           <TableCell className="font-medium whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {renderEditableCell(job, "designation", "w-28")}
                           </TableCell>
-                          {isEducation && (
+                          {showEducationCols && (
                             <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
                               {renderEditableCell(job, "subjects", "w-24")}
+                            </TableCell>
+                          )}
+                          {/* IT Corporate cells */}
+                          {showITCols && (
+                            <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "department", "w-24")}
+                            </TableCell>
+                          )}
+                          {showITCols && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "functionType", "w-24")}
+                            </TableCell>
+                          )}
+                          {showITCols && (
+                            <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "segment", "w-24")}
+                            </TableCell>
+                          )}
+                          {/* Non-IT Corporate cells */}
+                          {showNonITCols && (
+                            <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "department", "w-24")}
+                            </TableCell>
+                          )}
+                          {showNonITCols && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "functionType", "w-24")}
+                            </TableCell>
+                          )}
+                          {/* Legal / Doctor / Civil cells */}
+                          {(isLegal || isDoctor || isCivil) && (
+                            <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "department", "w-24")}
+                            </TableCell>
+                          )}
+                          {(isLegal || isDoctor || isCivil) && (
+                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
+                              {renderEditableCell(job, "category", "w-24")}
                             </TableCell>
                           )}
                           <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
