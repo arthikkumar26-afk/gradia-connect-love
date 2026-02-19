@@ -486,9 +486,9 @@ export const QPMContent = () => {
           </Card>
         ) : (
           <div className="overflow-x-auto border rounded-lg">
-             <Table className="min-w-[1200px] text-xs">
+            <Table className="min-w-[1200px] text-xs">
               <TableHeader>
-                <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-3 [&_th]:px-2 [&_th]:h-11 [&_th]:text-secondary-foreground [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap">
+                <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-1 [&_th]:px-0.5 [&_th]:h-7 [&_th]:text-secondary-foreground [&_th]:text-[9px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap [&_th]:overflow-hidden [&_th]:text-ellipsis">
                   <TableHead className="font-semibold">Date & Time</TableHead>
                   <TableHead className="font-semibold">Job ID</TableHead>
                   <TableHead className="font-semibold">Sector</TableHead>
@@ -510,7 +510,7 @@ export const QPMContent = () => {
                     ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) + " " + new Date(job.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
                     : "—";
                   return (
-                    <TableRow key={job.id} className={`cursor-pointer hover:bg-muted/50 [&_td]:px-2 [&_td]:py-2.5 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`} onClick={() => handleSelectJob(job)}>
+                    <TableRow key={job.id} className={`cursor-pointer hover:bg-accent/5 transition-colors [&_td]:px-0.5 [&_td]:py-1.5 [&_td]:max-w-[120px] [&_td]:overflow-hidden [&_td]:text-ellipsis ${index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}`} onClick={() => handleSelectJob(job)}>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{dateStr}</TableCell>
                       <TableCell>
                         <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{job.id.slice(0, 8)}</code>
@@ -519,19 +519,19 @@ export const QPMContent = () => {
                       <TableCell className="text-xs capitalize">{job.category?.replace(/_/g, " ") || "—"}</TableCell>
                       <TableCell className="text-xs">{job.segment || "—"}</TableCell>
                       <TableCell className="text-xs">{job.department || "—"}</TableCell>
-                      <TableCell className="text-xs font-medium">{job.designation || job.job_title || "—"}</TableCell>
+                      <TableCell className="text-xs font-medium whitespace-nowrap">{job.designation || job.job_title || "—"}</TableCell>
                       <TableCell className="text-xs">{job.subjects || "—"}</TableCell>
-                      <TableCell className="text-xs">{job.experience_required || "—"}</TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{job.experience_required || "—"}</TableCell>
                       <TableCell className="text-xs">{job.organisation || "—"}</TableCell>
-                      <TableCell className="text-xs">{job.salary_range || "—"}</TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{job.salary_range || "—"}</TableCell>
                       <TableCell className="text-xs">
                         <Badge variant={job.status === "active" ? "default" : "secondary"} className="text-[10px]">
                           {job.status || "Draft"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); handleSelectJob(job); }}>
-                          <BookOpen className="h-3 w-3 mr-1" /> Manage Papers
+                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                        <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => handleSelectJob(job)}>
+                          <BookOpen className="h-3 w-3 mr-1" /> Manage
                         </Button>
                       </TableCell>
                     </TableRow>
