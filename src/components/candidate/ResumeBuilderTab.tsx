@@ -122,6 +122,15 @@ export default function ResumeBuilderTab() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Always fetch the latest email from profiles (source of truth)
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('email, mobile, full_name, location, current_district, current_state')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      const latestEmail = profileData?.email || user.email || "";
+
       // First try to load saved resume from database
       const { data: savedResume } = await supabase
         .from('candidate_resumes')
@@ -134,10 +143,10 @@ export default function ResumeBuilderTab() {
         const eduData = savedResume.education as unknown as Education[] | null;
         
         setFormData({
-          fullName: savedResume.full_name || "",
-          email: savedResume.email || "",
-          phone: savedResume.phone || "",
-          location: savedResume.location || "",
+          fullName: savedResume.full_name || profileData?.full_name || "",
+          email: latestEmail, // Always use latest email from profile
+          phone: savedResume.phone || profileData?.mobile || "",
+          location: savedResume.location || profileData?.location || `${profileData?.current_district || ""}, ${profileData?.current_state || ""}`.replace(/^, |, $/g, "") || "",
           summary: savedResume.summary || "",
           experience: expData || [{ title: "", company: "", duration: "", description: "" }],
           education: eduData || [{ degree: "", school: "", year: "" }],
