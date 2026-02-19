@@ -2048,7 +2048,7 @@ const CandidateDashboard = () => {
   }
 
   return (
-    <div className="bg-subtle flex min-h-[calc(100vh-64px)]">
+    <div className="bg-subtle flex h-[calc(100vh-64px)] overflow-hidden">
       {/* Sidebar */}
       <aside 
         className={`${
@@ -2099,7 +2099,7 @@ const CandidateDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-0"}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 overflow-hidden ${sidebarOpen ? "ml-64" : "ml-0"}`}>
         {/* Top Header */}
         <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
