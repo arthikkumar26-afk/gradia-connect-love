@@ -232,20 +232,31 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         return;
       }
 
-      // Determine candidate's industry category from segment/category
+      // Determine candidate's industry category from segment/category/preferred_role
       const candidateSegment = (activeProfile.segment || "").toLowerCase();
       const candidateCategory = (activeProfile.category || "").toLowerCase();
+      const candidatePreferredRole = (activeProfile.preferred_role || "").toLowerCase();
 
       // Map segment values to industry type buckets
       const isEducationSegment = (seg: string) =>
         ["education", "school", "college", "university", "teaching", "teacher"].some((k) => seg.includes(k));
       const isITSegment = (seg: string) =>
-        ["it", "software", "tech", "corporate", "cyber", "data", "cloud", "dev", "engineer"].some((k) => seg.includes(k));
+        ["it_corporate", "it corporate", "software", "tech", "cyber", "data", "cloud", "dev", "engineer"].some((k) => seg.includes(k));
       const isNonITSegment = (seg: string) =>
         ["non_it", "non-it", "hr", "marketing", "sales", "finance", "legal", "operations", "management"].some((k) => seg.includes(k));
 
-      const candidateIsEducation = isEducationSegment(candidateSegment) || isEducationSegment(candidateCategory);
-      const candidateIsIT = isITSegment(candidateSegment) || isITSegment(candidateCategory);
+      // IT detection also uses preferred_role since category/segment are often null
+      const itRoleKeywords = ["developer", "engineer", "programmer", "devops", "frontend", "backend",
+        "full stack", "data scientist", "data analyst", "cloud", "cybersecurity", "software",
+        "react", "python", "java", "node", "angular", "mobile", "android", "ios", "machine learning", "ai engineer"];
+      const educationRoleKeywords = ["teacher", "lecturer", "professor", "principal", "tutor",
+        "educator", "faculty", "instructor", "headmaster", "headmistress"];
+
+      const roleIsIT = itRoleKeywords.some((k) => candidatePreferredRole.includes(k));
+      const roleIsEducation = educationRoleKeywords.some((k) => candidatePreferredRole.includes(k));
+
+      const candidateIsEducation = isEducationSegment(candidateSegment) || isEducationSegment(candidateCategory) || roleIsEducation;
+      const candidateIsIT = isITSegment(candidateSegment) || isITSegment(candidateCategory) || roleIsIT;
       const candidateIsNonIT = isNonITSegment(candidateSegment) || isNonITSegment(candidateCategory);
 
       // Score jobs using matching algorithm with industry category as primary filter
@@ -260,8 +271,22 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         const jobIsIT = isITSegment(jobSegment) ||
           ["software", "developer", "engineer", "data", "cloud", "cyber", "devops", "it ", "tech"].some((k) => job.job_title.toLowerCase().includes(k));
 
-        if (candidateIsEducation && !jobIsEducation) score -= 60;
-        if ((candidateIsIT || candidateIsNonIT) && jobIsEducation) score -= 60;
+        // Hard cross-sector filter: if candidate is IT, skip education-only jobs entirely
+        if (candidateIsIT && !candidateIsEducation && jobIsEducation && !jobIsIT) {
+          return {
+            id: job.id, job_title: job.job_title, location: job.location,
+            department: job.department, salary_range: job.salary_range, employer_id: job.employer_id,
+            matchScore: -999, matchReasons: [], applyStatus: "pending" as const,
+          };
+        }
+        // Hard cross-sector filter: if candidate is Education, skip IT-only jobs
+        if (candidateIsEducation && !candidateIsIT && jobIsIT && !jobIsEducation) {
+          return {
+            id: job.id, job_title: job.job_title, location: job.location,
+            department: job.department, salary_range: job.salary_range, employer_id: job.employer_id,
+            matchScore: -999, matchReasons: [], applyStatus: "pending" as const,
+          };
+        }
 
         // Segment exact match gives a strong bonus
         if (candidateSegment && jobSegment && candidateSegment === jobSegment) {

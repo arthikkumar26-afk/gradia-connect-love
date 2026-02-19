@@ -1613,9 +1613,92 @@ const CandidateDashboard = () => {
       if (error) throw error;
       
       const allJobs = data || [];
-      
+
+      // ── Sector detection ──────────────────────────────────────────────────
+      // Determine candidate sector from profile category / segment / preferred_role
+      const profileCategory = (profile?.category || '').toLowerCase();
+      const profileSegment  = (profile?.segment  || '').toLowerCase();
+      const profileRole     = (profile?.preferred_role || '').toLowerCase();
+
+      const isITCandidate =
+        profileCategory.includes('it_corporate') ||
+        profileCategory.includes('it corporate') ||
+        profileCategory.includes('software') ||
+        profileSegment.includes('software') ||
+        profileSegment.includes('it') ||
+        profileRole.includes('developer') ||
+        profileRole.includes('engineer') ||
+        profileRole.includes('software') ||
+        profileRole.includes('programmer') ||
+        profileRole.includes('devops') ||
+        profileRole.includes('data scientist') ||
+        profileRole.includes('data analyst') ||
+        profileRole.includes('full stack') ||
+        profileRole.includes('frontend') ||
+        profileRole.includes('backend');
+
+      const isEducationCandidate =
+        profileCategory.includes('education') ||
+        profileCategory.includes('teacher') ||
+        profileSegment.includes('education') ||
+        profileRole.includes('teacher') ||
+        profileRole.includes('lecturer') ||
+        profileRole.includes('professor') ||
+        profileRole.includes('principal') ||
+        profileRole.includes('tutor');
+
+      // Helper: detect if a job belongs to the Education sector
+      const isEducationJob = (job: any): boolean => {
+        const jobTitle = (job.job_title || '').toLowerCase();
+        const jobDept  = (job.department || '').toLowerCase();
+        const jobCat   = (job.category || '').toLowerCase();
+        const jobSeg   = (job.segment || '').toLowerCase();
+        const jobDesc  = (job.description || '').toLowerCase();
+
+        const educationKeywords = [
+          'teacher', 'lecturer', 'professor', 'principal', 'tutor', 'educator',
+          'academic', 'faculty', 'instructor', 'school', 'college', 'education',
+          'teaching', 'classroom', 'curriculum', 'board', 'classes', 'subject',
+        ];
+        return educationKeywords.some(kw =>
+          jobTitle.includes(kw) || jobDept.includes(kw) || jobCat.includes(kw) || jobSeg.includes(kw)
+        );
+      };
+
+      // Helper: detect if a job belongs to the IT / Software sector
+      const isITJob = (job: any): boolean => {
+        const jobTitle = (job.job_title || '').toLowerCase();
+        const jobDept  = (job.department || '').toLowerCase();
+        const jobCat   = (job.category || '').toLowerCase();
+        const jobSeg   = (job.segment || '').toLowerCase();
+
+        const itKeywords = [
+          'software', 'developer', 'engineer', 'programmer', 'devops', 'frontend',
+          'backend', 'full stack', 'data scientist', 'data analyst', 'cloud', 'it ',
+          'tech', 'coding', 'react', 'node', 'python', 'java', 'cyber', 'network',
+        ];
+        return itKeywords.some(kw =>
+          jobTitle.includes(kw) || jobDept.includes(kw) || jobCat.includes(kw) || jobSeg.includes(kw)
+        );
+      };
+
+      // ── Hard cross-sector filter ───────────────────────────────────────────
+      // If the candidate is clearly an IT professional, exclude education-only jobs.
+      // If the candidate is clearly an educator, exclude IT-only jobs.
+      const sectorFilteredJobs = allJobs.filter((job: any) => {
+        if (isITCandidate && !isEducationCandidate) {
+          // Remove jobs that are education-sector AND NOT IT-sector
+          if (isEducationJob(job) && !isITJob(job)) return false;
+        }
+        if (isEducationCandidate && !isITCandidate) {
+          // Remove jobs that are IT-sector AND NOT education-sector
+          if (isITJob(job) && !isEducationJob(job)) return false;
+        }
+        return true;
+      });
+
       // Score and rank jobs based on candidate's profile
-      const scoredJobs = allJobs.map((job) => {
+      const scoredJobs = sectorFilteredJobs.map((job) => {
         let score = 0;
         const matchReasons: string[] = [];
         
