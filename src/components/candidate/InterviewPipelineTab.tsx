@@ -113,7 +113,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [isLoading, setIsLoading] = useState(true);
   const [slotBookings, setSlotBookings] = useState<SlotBooking[]>([]);
   const [selectedInterview, setSelectedInterview] = useState<string | null>(null);
-  // expandedStage no longer needed - all results shown inline
+  const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [responses, setResponses] = useState<InterviewResponse[]>([]);
   const [reviews, setReviews] = useState<ManagementReview[]>([]);
 
@@ -781,6 +781,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
             const hasReviewData = status === 'completed' || status === 'passed';
+            const isExpanded = expandedStageId === stage.id;
             
             return (
               <div key={stage.id} className="relative">
@@ -791,8 +792,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                   }`} />
                 )}
 
-                <div
-                  className={`relative rounded-lg border-2 transition-all ${getStatusColor(status)}`}
+                <div className={`relative rounded-lg border-2 transition-all ${getStatusColor(status)} ${
+                  hasReviewData ? 'cursor-pointer hover:shadow-md' : ''
+                }`}
+                  onClick={() => {
+                    if (hasReviewData) {
+                      setExpandedStageId(isExpanded ? null : stage.id);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-3 p-3">
                     {/* Stage icon */}
@@ -825,8 +832,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {status === 'completed' && event?.completed_at 
-                          ? `Completed ${formatDate(event.completed_at)}`
-                          : status === 'completed' ? 'Completed'
+                          ? `Completed ${formatDate(event.completed_at)} · Click to view results`
+                          : status === 'completed' ? 'Completed · Click to view results'
                           : status === 'current' ? 'In Progress'
                           : status === 'scheduled' && event?.scheduled_at 
                           ? `Scheduled for ${formatDate(event.scheduled_at)}`
@@ -838,9 +845,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                     {/* Status badge + expand arrow */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {status === 'current' && (
-                        <Badge className="bg-primary text-primary-foreground text-xs">Current</Badge>
+                        <Badge className="bg-primary text-primary-foreground text-xs animate-pulse">Current</Badge>
                       )}
-                      
+
                       {/* Show slot booking for Demo/HR Slot Booking stages */}
                       {stage.name === 'Demo Slot Booking' && (() => {
                         const demoBooking = slotBookings.find(b => 
@@ -926,12 +933,22 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         return null;
                       })()}
 
+                      {/* Expand/collapse arrow for completed stages */}
+                      {hasReviewData && (
+                        <div className="text-muted-foreground">
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Always show review content for completed stages */}
-                  {hasReviewData && (
-                    <div className="px-3 pb-3 pt-1 ml-[52px] border-t border-border/50">
+                  {/* Results panel - shown only when expanded */}
+                  {hasReviewData && isExpanded && (
+                    <div className="px-3 pb-3 pt-2 ml-[52px] border-t border-border/50">
                       {getStageReviewContent(stage, event)}
                     </div>
                   )}
