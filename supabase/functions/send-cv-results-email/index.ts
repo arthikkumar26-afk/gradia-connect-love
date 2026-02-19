@@ -319,7 +319,33 @@ serve(async (req) => {
     const emailResult = await emailResponse.json();
     console.log('CV results email sent:', emailResult);
 
-    // Advance current_stage_id to Written Test Slot Booking (stage 2) after CV results email
+    // Mark the CV/Resume stage as completed in interview_events
+    const { data: cvStage } = await supabase
+      .from('interview_stages')
+      .select('id')
+      .eq('name', 'CV/Resume')
+      .single();
+
+    if (cvStage) {
+      // Upsert so we don't create duplicates if called twice
+      await supabase
+        .from('interview_events')
+        .upsert({
+          interview_candidate_id: interviewCandidateId,
+          stage_id: cvStage.id,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          notes: 'CV/Resume ATS analysis email sent to candidate',
+          ai_score: overallScore || null,
+          ai_feedback: aiAnalysis && Object.keys(aiAnalysis).length > 0 ? aiAnalysis : null,
+        }, {
+          onConflict: 'interview_candidate_id,stage_id',
+          ignoreDuplicates: false,
+        });
+      console.log('Marked CV/Resume stage as completed in interview_events');
+    }
+
+    // Advance current_stage_id to Written Test Slot Booking after CV results email
     const { data: writtenTestSlotStage } = await supabase
       .from('interview_stages')
       .select('id')
