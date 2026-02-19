@@ -119,6 +119,44 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   useEffect(() => {
     fetchData();
+
+    // Realtime: listen for current_stage_id / status changes on interview_candidates
+    const candidateChannel = supabase
+      .channel(`pipeline-candidate-${candidateId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'interview_candidates',
+          filter: `candidate_id=eq.${candidateId}`,
+        },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Realtime: listen for new / updated interview_events
+    const eventsChannel = supabase
+      .channel(`pipeline-events-${candidateId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'interview_events',
+        },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(candidateChannel);
+      supabase.removeChannel(eventsChannel);
+    };
   }, [candidateId]);
 
   const fetchData = async () => {
