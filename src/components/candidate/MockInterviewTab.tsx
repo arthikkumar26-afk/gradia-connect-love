@@ -110,9 +110,11 @@ export const MockInterviewTab = () => {
   const [showSlotBooking, setShowSlotBooking] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
-  const [selectedInterviewType, setSelectedInterviewType] = useState<'new_employee' | 'promotions' | null>(null);
-  // Mock role chooser state
+  // Mock role chooser state — 3-step: Interview Type → Pipeline Type → Role
+  const [selectedMockInterviewType, setSelectedMockInterviewType] = useState('');
+  const [selectedMockPipelineType, setSelectedMockPipelineType] = useState('');
   const [selectedMockRole, setSelectedMockRole] = useState('');
+  // keep legacy states for slot booking form compatibility
   const [selectedMockSegment, setSelectedMockSegment] = useState('');
   const [selectedMockCategory, setSelectedMockCategory] = useState('');
   const [selectedMockDesignation, setSelectedMockDesignation] = useState('');
@@ -1407,7 +1409,95 @@ export const MockInterviewTab = () => {
   const industryCategory = getIndustryCategory();
   const isITCorporate = industryCategory === 'it_corporate';
 
-  // IT role options for mock test role chooser
+  // ── 3-Step Mock Role Chooser Data ──
+
+  // Step 1: Interview Type options
+  const mockInterviewTypeOptions = [
+    { value: 'IT Corporate (Coding + MCQ)', label: 'IT Corporate (Coding + MCQ)', icon: '💻', hint: 'For IT companies — includes coding assessments' },
+    { value: 'Education', label: 'Education', icon: '🎓', hint: 'For schools & educational institutions' },
+    { value: 'Non-IT Corporate', label: 'Non-IT Corporate', icon: '🏢', hint: 'For non-technical corporate roles' },
+  ];
+
+  // Step 2: Pipeline Type based on Interview Type
+  const mockPipelineTypeMap: Record<string, { value: string; label: string }[]> = {
+    'IT Corporate (Coding + MCQ)': [
+      { value: 'Software Engineer', label: 'Software Engineer' },
+      { value: 'DevOps / Cloud Engineer', label: 'DevOps / Cloud Engineer' },
+      { value: 'Data Analyst / ML Engineer', label: 'Data Analyst / ML Engineer' },
+    ],
+    'Education': [
+      { value: 'Teacher', label: 'Teacher' },
+      { value: 'Admin / Principal', label: 'Admin / Principal' },
+      { value: 'Support Staff', label: 'Support Staff' },
+    ],
+    'Non-IT Corporate': [
+      { value: 'Sales', label: 'Sales' },
+      { value: 'HR / Operations', label: 'HR / Operations' },
+      { value: 'Finance / Accounts', label: 'Finance / Accounts' },
+      { value: 'Management', label: 'Management' },
+    ],
+  };
+
+  // Step 3: Role based on Pipeline Type
+  const mockRoleMap: Record<string, { value: string; label: string }[]> = {
+    'Software Engineer': [
+      { value: 'Full Stack Developer', label: 'Full Stack Developer' },
+      { value: 'Frontend Developer', label: 'Frontend Developer' },
+      { value: 'Backend Developer', label: 'Backend Developer' },
+      { value: 'General Software Engineer', label: 'General Software Engineer' },
+    ],
+    'DevOps / Cloud Engineer': [
+      { value: 'DevOps Engineer', label: 'DevOps Engineer' },
+      { value: 'Cloud Engineer (AWS)', label: 'Cloud Engineer (AWS)' },
+      { value: 'Cloud Engineer (Azure)', label: 'Cloud Engineer (Azure)' },
+      { value: 'Site Reliability Engineer', label: 'Site Reliability Engineer' },
+    ],
+    'Data Analyst / ML Engineer': [
+      { value: 'Data Analyst', label: 'Data Analyst' },
+      { value: 'ML Engineer', label: 'ML Engineer' },
+      { value: 'Data Scientist', label: 'Data Scientist' },
+      { value: 'Business Analyst', label: 'Business Analyst' },
+    ],
+    'Teacher': [
+      { value: 'PRT (Primary Teacher)', label: 'PRT (Primary Teacher)' },
+      { value: 'TGT (Trained Graduate Teacher)', label: 'TGT (Trained Graduate Teacher)' },
+      { value: 'PGT (Post Graduate Teacher)', label: 'PGT (Post Graduate Teacher)' },
+      { value: 'Subject Teacher', label: 'Subject Teacher' },
+    ],
+    'Admin / Principal': [
+      { value: 'Vice Principal', label: 'Vice Principal' },
+      { value: 'Principal', label: 'Principal' },
+      { value: 'Academic Coordinator', label: 'Academic Coordinator' },
+    ],
+    'Support Staff': [
+      { value: 'Lab Assistant', label: 'Lab Assistant' },
+      { value: 'Librarian', label: 'Librarian' },
+      { value: 'Counselor', label: 'Counselor' },
+      { value: 'Sports Coach / PET', label: 'Sports Coach / PET' },
+    ],
+    'Sales': [
+      { value: 'Sales Executive', label: 'Sales Executive' },
+      { value: 'Business Development Manager', label: 'Business Development Manager' },
+      { value: 'Regional Sales Manager', label: 'Regional Sales Manager' },
+    ],
+    'HR / Operations': [
+      { value: 'HR Executive', label: 'HR Executive' },
+      { value: 'Operations Manager', label: 'Operations Manager' },
+      { value: 'Recruitment Specialist', label: 'Recruitment Specialist' },
+    ],
+    'Finance / Accounts': [
+      { value: 'Accountant', label: 'Accountant' },
+      { value: 'Finance Analyst', label: 'Finance Analyst' },
+      { value: 'CA / CPA', label: 'CA / CPA' },
+    ],
+    'Management': [
+      { value: 'Project Manager', label: 'Project Manager' },
+      { value: 'Product Manager', label: 'Product Manager' },
+      { value: 'General Manager', label: 'General Manager' },
+    ],
+  };
+
+  // IT role options kept for pipeline stage derivation
   const itRoleOptions = [
     { value: 'full_stack', label: 'Full Stack Developer', desc: 'Frontend + Backend + System Design' },
     { value: 'frontend', label: 'Frontend Developer', desc: 'React / Angular / Vue + UI challenges' },
@@ -1424,7 +1514,6 @@ export const MockInterviewTab = () => {
       devops: 'devops', data: 'data', general: '',
     };
     const skillOverride = roleMap[roleVal] || '';
-    // Temporarily override for computation
     const origSubject = profile?.primary_subject;
     const origSegment = profile?.segment;
     if (profile) {
@@ -1443,7 +1532,7 @@ export const MockInterviewTab = () => {
     ? (selectedMockRole ? getITPipelineStagesForRole(selectedMockRole) : getITPipelineStages())
     : null;
 
-  // Education category helpers for mock role chooser
+  // Education category helpers (kept for slot booking form)
   const mockCategoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
@@ -1454,7 +1543,6 @@ export const MockInterviewTab = () => {
     'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
   };
   const mockDesignationOptions: Record<string, string[]> = {
-    'MOTHER TEACHER': ['MOTHER TEACHER'],
     'Pre-Primary_Teaching': ['MOTHER TEACHER'],
     'Pre-Primary_Helping/Supporting': ['ASSO.TEACHER', 'CARE TAKER'],
     'Pre-Primary_Admin': ['VICE PRINCIPAL'],
@@ -1472,10 +1560,8 @@ export const MockInterviewTab = () => {
 
   const getMockDesignations = () => {
     if (!selectedMockSegment || !selectedMockCategory) return [];
-    // For High School with class level
     if (selectedMockSegment === 'High School' && (selectedMockCategory === 'Board' || selectedMockCategory === 'Compititive')) {
       if (selectedMockDesignation && mockClassLevelOptions[selectedMockCategory]?.includes(selectedMockDesignation)) {
-        // selectedMockDesignation is actually classLevel here, need another state - simplify by reusing
         return mockDesignationOptions[selectedMockDesignation] || mockDesignationOptions[`High School_${selectedMockCategory}`] || [];
       }
       return mockDesignationOptions[`High School_${selectedMockCategory}`] || [];
@@ -1486,13 +1572,8 @@ export const MockInterviewTab = () => {
   const showMockClassLevel = selectedMockSegment === 'High School' &&
     (selectedMockCategory === 'Board' || selectedMockCategory === 'Compititive');
 
-  // Check if role selection is complete enough to enable "Attend Mock Test"
-  const isMockRoleSelected = isITCorporate
-    ? !!selectedMockRole
-    : !!selectedMockSegment && !!selectedMockCategory && !!selectedMockDesignation;
-
-  // For education flow, no interview type needed anymore
-  const educationRoleReady = !isITCorporate && isMockRoleSelected;
+  // Check if all 3 steps are selected
+  const isMockRoleSelected = !!selectedMockInterviewType && !!selectedMockPipelineType && !!selectedMockRole;
 
   // No session - Show start screen with interview type selection
   if (!currentSession) {
@@ -1609,84 +1690,131 @@ export const MockInterviewTab = () => {
           </Card>
         )}
 
-        {/* ── IT Corporate: Show skill-based pipeline directly ── */}
-        {isITCorporate && itPipelineStages ? (
-          <div className="max-w-2xl mx-auto space-y-4">
-            {/* Pipeline Header Card */}
-            <Card className="border-primary/30 bg-primary/5">
-              <CardContent className="py-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Code className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {profile?.preferred_role || 'Software Engineer'} Mock Interview Pipeline
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Tailored for{' '}
-                      <span className="text-primary font-medium">
-                        {profile?.primary_subject || profile?.segment || 'your domain'}
-                      </span>
-                      {' '}— 8 stages · ~60 min
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+        {/* ── Unified 3-Step Role Selector ── */}
+        <div className="max-w-2xl mx-auto space-y-5">
 
-            {/* IT Pipeline Stages */}
-            <Card>
-              <CardContent className="py-4 space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Your Interview Stages</p>
-                {itPipelineStages.map((stage, idx) => (
-                  <div key={stage.order} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                    {/* Connector */}
-                    <div className="relative flex flex-col items-center">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-                        <stage.icon className="h-4 w-4 text-primary" />
-                      </div>
+          {/* Role Selection Card */}
+          <Card className="border-primary/20">
+            <CardContent className="pt-5 space-y-5">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-primary" />
+                Select Your Interview Details
+              </p>
+
+              {/* Interview Type */}
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Interview Type <span className="text-destructive">*</span></Label>
+                <Select
+                  value={selectedMockInterviewType}
+                  onValueChange={(v) => {
+                    setSelectedMockInterviewType(v);
+                    setSelectedMockPipelineType('');
+                    setSelectedMockRole('');
+                  }}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select interview type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockInterviewTypeOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.icon} {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedMockInterviewType && (
+                  <p className="text-xs text-primary">
+                    {mockInterviewTypeOptions.find(o => o.value === selectedMockInterviewType)?.hint}
+                  </p>
+                )}
+              </div>
+
+              {/* Interview Pipeline Type */}
+              {selectedMockInterviewType && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Interview Pipeline Type <span className="text-destructive">*</span></Label>
+                  <Select
+                    value={selectedMockPipelineType}
+                    onValueChange={(v) => {
+                      setSelectedMockPipelineType(v);
+                      setSelectedMockRole('');
+                    }}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select pipeline type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(mockPipelineTypeMap[selectedMockInterviewType] || []).map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!selectedMockPipelineType && (
+                    <p className="text-xs text-muted-foreground">Choose the role type to see the interview stages</p>
+                  )}
+                </div>
+              )}
+
+              {/* Role */}
+              {selectedMockPipelineType && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Role <span className="text-destructive">*</span></Label>
+                  <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select the role for this position" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(mockRoleMap[selectedMockPipelineType] || []).map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!selectedMockRole && (
+                    <p className="text-xs text-muted-foreground">Select the role for this position</p>
+                  )}
+                </div>
+              )}
+
+              {/* Selection Summary */}
+              {isMockRoleSelected && (
+                <div className="flex flex-wrap gap-1.5 pt-1 border-t">
+                  <Badge variant="secondary" className="text-xs">{selectedMockInterviewType}</Badge>
+                  <Badge variant="secondary" className="text-xs">{selectedMockPipelineType}</Badge>
+                  <Badge className="text-xs">{selectedMockRole}</Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Interview Stages Preview */}
+          <Card>
+            <CardContent className="py-4 space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Interview Stages</p>
+              <div className="grid gap-1.5">
+                {[
+                  { order: 1, name: "Interview Instructions", icon: Mail },
+                  { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
+                  { order: 3, name: "Technical Assessment", icon: Code },
+                  { order: 4, name: "Demo Slot Booking", icon: Calendar },
+                  { order: 5, name: "Demo Round", icon: Monitor },
+                  { order: 6, name: "Demo Feedback", icon: BarChart3 },
+                  { order: 7, name: "Final Review (HR)", icon: FileText },
+                  { order: 8, name: "All Reviews", icon: ListChecks },
+                ].map((stage) => (
+                  <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <stage.icon className="h-3.5 w-3.5 text-primary" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {stage.order}. {stage.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{stage.desc}</p>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      Stage {stage.order}
-                    </Badge>
+                    <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* ── IT Role Chooser ── */}
-            <Card className="border-primary/20">
-              <CardContent className="py-4 space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Choose Your Role / Domain
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {itRoleOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setSelectedMockRole(opt.value)}
-                      className={`text-left p-3 rounded-lg border transition-all ${
-                        selectedMockRole === opt.value
-                          ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
-                          : 'border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50'
-                      }`}
-                    >
-                      <p className="text-sm font-semibold text-foreground">{opt.label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Start Button (IT) */}
+          {/* Start Button */}
+          <div className="space-y-2">
             <Button
               onClick={startMockTest}
               disabled={isStarting || !mockTestLimits.canStart || !isMockRoleSelected}
@@ -1703,176 +1831,17 @@ export const MockInterviewTab = () => {
               {!mockTestLimits.canStart
                 ? 'Limit Reached — Upgrade Plan'
                 : !isMockRoleSelected
-                  ? 'Select a Role to Continue'
-                  : `Start Mock Interview — ${itRoleOptions.find(o => o.value === selectedMockRole)?.label}`}
+                  ? 'Select All Fields to Continue'
+                  : `Attend Mock Test — ${selectedMockRole}`}
             </Button>
-          </div>
-        ) : (
-          <>
-        {/* ── Education / Default: Role Selection directly ── */}
-            <div className="max-w-2xl mx-auto space-y-5">
-
-              {/* Role / Designation Selector — shown directly */}
-              <Card className="border-primary/20">
-                  <CardContent className="pt-5 space-y-4">
-                    <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <UserPlus className="h-4 w-4 text-primary" />
-                      Select Your Role
-                    </p>
-
-                    {/* Segment */}
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Segment</Label>
-                      <Select
-                        value={selectedMockSegment}
-                        onValueChange={(v) => {
-                          setSelectedMockSegment(v);
-                          setSelectedMockCategory('');
-                          setSelectedMockClassLevel('');
-                          setSelectedMockDesignation('');
-                        }}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Select segment" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {['Pre-Primary', 'Primary', 'High School'].map(s => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Category */}
-                    {selectedMockSegment && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Category</Label>
-                        <Select
-                          value={selectedMockCategory}
-                          onValueChange={(v) => {
-                            setSelectedMockCategory(v);
-                            setSelectedMockClassLevel('');
-                            setSelectedMockDesignation('');
-                          }}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(mockCategoryOptions[selectedMockSegment] || []).map(c => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Class Level (only for High School Board/Competitive) */}
-                    {showMockClassLevel && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Class Level</Label>
-                        <Select
-                          value={selectedMockClassLevel}
-                          onValueChange={(v) => { setSelectedMockClassLevel(v); setSelectedMockDesignation(''); }}
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select class level" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(mockClassLevelOptions[selectedMockCategory] || []).map(cl => (
-                              <SelectItem key={cl} value={cl}>{cl}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Designation */}
-                    {selectedMockCategory && (!showMockClassLevel || selectedMockClassLevel) && getMockDesignations().length > 0 && (
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Designation / Role</Label>
-                        <Select value={selectedMockDesignation} onValueChange={setSelectedMockDesignation}>
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select designation" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getMockDesignations().map(d => (
-                              <SelectItem key={d} value={d}>{d}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Selection Summary */}
-                    {isMockRoleSelected && (
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        <Badge variant="secondary" className="text-xs">{selectedMockSegment}</Badge>
-                        <Badge variant="secondary" className="text-xs">{selectedMockCategory}</Badge>
-                        {selectedMockClassLevel && <Badge variant="secondary" className="text-xs">{selectedMockClassLevel}</Badge>}
-                        <Badge className="text-xs bg-primary/90">{selectedMockDesignation}</Badge>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-              {/* Interview Stages Preview — always visible */}
-              <Card>
-                <CardContent className="py-4 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Interview Stages</p>
-                  <div className="grid gap-1.5">
-                    {[
-                      { order: 1, name: "Interview Instructions", icon: Mail },
-                      { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
-                      { order: 3, name: "Technical Assessment", icon: Code },
-                      { order: 4, name: "Demo Slot Booking", icon: Calendar },
-                      { order: 5, name: "Demo Round", icon: Monitor },
-                      { order: 6, name: "Demo Feedback", icon: BarChart3 },
-                      { order: 7, name: "Final Review (HR)", icon: FileText },
-                      { order: 8, name: "All Reviews", icon: ListChecks },
-                    ].map((stage) => (
-                      <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <stage.icon className="h-3.5 w-3.5 text-primary" />
-                        </div>
-                        <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Attend Mock Test Button */}
-              <div className="space-y-2">
-                <Button
-                  onClick={startMockTest}
-                  disabled={isStarting || !mockTestLimits.canStart || !isMockRoleSelected}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  {isStarting ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : !mockTestLimits.canStart ? (
-                    <Lock className="h-5 w-5" />
-                  ) : (
-                    <Play className="h-5 w-5" />
-                  )}
-                  {!mockTestLimits.canStart
-                    ? 'Limit Reached — Upgrade Plan'
-                    : !isMockRoleSelected
-                      ? 'Select Your Role to Continue'
-                      : 'Attend Mock Test'}
-                </Button>
-                <div className="flex justify-center">
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Clock className="h-3 w-3" />
-                    Estimated time: 45-60 minutes
-                  </Badge>
-                </div>
-              </div>
+            <div className="flex justify-center">
+              <Badge variant="secondary" className="text-xs gap-1">
+                <Clock className="h-3 w-3" />
+                Estimated time: 45-60 minutes
+              </Badge>
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -1900,75 +1869,60 @@ export const MockInterviewTab = () => {
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
 
-          {/* Role Chooser inline — beside refresh */}
-          {isITCorporate ? (
-            <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
-              <SelectTrigger className="h-10 w-auto min-w-[180px] text-xs gap-1">
-                <Code className="h-3.5 w-3.5 text-primary shrink-0" />
-                <SelectValue placeholder="Choose Role / Domain" />
+          {/* 3 inline selectors beside refresh */}
+          <Select
+            value={selectedMockInterviewType}
+            onValueChange={(v) => {
+              setSelectedMockInterviewType(v);
+              setSelectedMockPipelineType('');
+              setSelectedMockRole('');
+            }}
+          >
+            <SelectTrigger className="h-10 w-auto min-w-[200px] text-xs">
+              <SelectValue placeholder="Interview Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {mockInterviewTypeOptions.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.icon} {opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {selectedMockInterviewType && (
+            <Select
+              value={selectedMockPipelineType}
+              onValueChange={(v) => {
+                setSelectedMockPipelineType(v);
+                setSelectedMockRole('');
+              }}
+            >
+              <SelectTrigger className="h-10 w-auto min-w-[180px] text-xs">
+                <SelectValue placeholder="Pipeline Type" />
               </SelectTrigger>
               <SelectContent>
-                {itRoleOptions.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    <span className="font-medium">{opt.label}</span>
-                  </SelectItem>
+                {(mockPipelineTypeMap[selectedMockInterviewType] || []).map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          ) : (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Select value={selectedMockSegment} onValueChange={(v) => { setSelectedMockSegment(v); setSelectedMockCategory(''); setSelectedMockClassLevel(''); setSelectedMockDesignation(''); }}>
-                <SelectTrigger className="h-10 w-auto min-w-[130px] text-xs">
-                  <SelectValue placeholder="Segment" />
-                </SelectTrigger>
-                <SelectContent>
-                  {['Pre-Primary', 'Primary', 'High School'].map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedMockSegment && (
-                <Select value={selectedMockCategory} onValueChange={(v) => { setSelectedMockCategory(v); setSelectedMockClassLevel(''); setSelectedMockDesignation(''); }}>
-                  <SelectTrigger className="h-10 w-auto min-w-[130px] text-xs">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(mockCategoryOptions[selectedMockSegment] || []).map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {showMockClassLevel && (
-                <Select value={selectedMockClassLevel} onValueChange={(v) => { setSelectedMockClassLevel(v); setSelectedMockDesignation(''); }}>
-                  <SelectTrigger className="h-10 w-auto min-w-[130px] text-xs">
-                    <SelectValue placeholder="Class Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(mockClassLevelOptions[selectedMockCategory] || []).map(cl => (
-                      <SelectItem key={cl} value={cl}>{cl}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {selectedMockCategory && (!showMockClassLevel || selectedMockClassLevel) && getMockDesignations().length > 0 && (
-                <Select value={selectedMockDesignation} onValueChange={setSelectedMockDesignation}>
-                  <SelectTrigger className="h-10 w-auto min-w-[150px] text-xs">
-                    <SelectValue placeholder="Designation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getMockDesignations().map(d => (
-                      <SelectItem key={d} value={d}>{d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+          )}
+
+          {selectedMockPipelineType && (
+            <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
+              <SelectTrigger className="h-10 w-auto min-w-[200px] text-xs">
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent>
+                {(mockRoleMap[selectedMockPipelineType] || []).map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
           <Button onClick={startNewSession} disabled={isStarting || !isMockRoleSelected} variant="default" className="gap-2">
             {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            {!isMockRoleSelected ? 'Select Role First' : 'Start Mock Interview'}
+            {!isMockRoleSelected ? 'Select All Fields' : 'Start Mock Interview'}
           </Button>
         </div>
       </div>
