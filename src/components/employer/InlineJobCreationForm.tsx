@@ -463,7 +463,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                     setSelectedPipelineType(val);
                     setSelectedRole("");
                   }}>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-input bg-background">
                       <SelectValue placeholder="Select pipeline type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -490,7 +490,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   onValueChange={setSelectedRole}
                   key={`role-${watchedInterviewType}-${selectedPipelineType}`}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-input bg-background">
                     <SelectValue placeholder="Select role / designation" />
                   </SelectTrigger>
                   <SelectContent>
