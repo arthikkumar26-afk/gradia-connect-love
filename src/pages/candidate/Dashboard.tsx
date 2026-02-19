@@ -112,7 +112,7 @@ interface Job {
 
 const CandidateDashboard = () => {
   const navigate = useNavigate();
-  const { profile, isAuthenticated, logout, isLoading: authLoading, refreshProfile } = useAuth();
+  const { user, profile, isAuthenticated, logout, isLoading: authLoading, refreshProfile } = useAuth();
   const { toast } = useToast();
   const { exportProfileToPdf } = useProfilePdfExport();
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -2288,7 +2288,7 @@ const CandidateDashboard = () => {
                               {/* Row 11: Email */}
                               <tr>
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">e-Mail</td>
-                                <td className="px-3 py-2 text-foreground" colSpan={4}>{profile?.email || '-'}</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={4}>{user?.email || profile?.email || '-'}</td>
                               </tr>
                             </tbody>
                           </table>
