@@ -1787,8 +1787,8 @@ export const MockInterviewTab = () => {
                 ? selectedPipelineStages.map(s => ({
                     name: s.name,
                     order: s.order,
-                    description: s.description,
-                    stageType: s.isAutomated ? 'assessment' : 'demo',
+                    description: (s as any).description || '',
+                    stageType: (s as any).isAutomated ? 'assessment' : 'demo',
                   }))
                 : stages
             }
@@ -1798,9 +1798,20 @@ export const MockInterviewTab = () => {
         </CardContent>
       </Card>
 
-      {/* Stage Cards */}
+      {/* Stage Cards — driven by selected pipeline if chosen, else fallback to DB stages */}
       <div className="grid gap-4">
-        {stages.map((stage) => {
+        {(selectedPipelineStages.length > 0
+          ? selectedPipelineStages.map(s => ({
+              name: s.name,
+              order: s.order,
+              description: (s as any).description || '',
+              questionCount: 0,
+              timePerQuestion: 0,
+              passingScore: 0,
+              stageType: ((s as any).isAutomated ? 'assessment' : 'demo') as InterviewStage['stageType'],
+            }))
+          : stages
+        ).map((stage) => {
           const status = getStageStatus(stage.order);
           const Icon = getStageIcon(stage.order);
           const result = stageResults.find(r => r.stage_order === stage.order);
