@@ -428,7 +428,7 @@ const JobsResults = () => {
 
         {/* Job Details Side Panel */}
         {selectedJob && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50 z-[1100] flex items-end md:items-center justify-center p-4">
             <Card className="w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col animate-slide-up">
               {/* Header with Apply Now at top */}
               <CardHeader className="pb-4 border-b flex-shrink-0 bg-gradient-card">
