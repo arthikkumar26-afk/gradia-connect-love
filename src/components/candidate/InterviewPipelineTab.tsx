@@ -29,6 +29,7 @@ import {
   Award,
   ThumbsUp,
   TrendingUp,
+  Eye,
 } from "lucide-react";
 
 interface InterviewStage {
@@ -783,13 +784,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Live Indicator + Progress Bar */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">Interview Progress</span>
-            <span className="text-sm text-muted-foreground">
-              Stage {getCurrentStageOrder(currentInterview.current_stage_id)} of {stages.length}
-            </span>
+            <span className="text-sm font-medium text-foreground">Interview Stages</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                Stage {getCurrentStageOrder(currentInterview.current_stage_id)} of {stages.length}
+              </span>
+              <Badge variant="outline" className="text-xs border-green-500/50 text-green-600 bg-green-500/10 gap-1">
+                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                Live
+              </Badge>
+            </div>
           </div>
           <Progress 
             value={(getCurrentStageOrder(currentInterview.current_stage_id) / stages.length) * 100} 
@@ -850,37 +857,51 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">{stage.name}</p>
-                        {status === 'completed' && event?.ai_score && (
-                          <Badge variant="secondary" className="text-xs">
-                            {event.ai_score}%
-                          </Badge>
-                        )}
-                        {status === 'completed' && !event?.ai_score && currentInterview.ai_score && stage.name === 'CV/Resume' && (
-                          <Badge variant="secondary" className="text-xs">
-                            {currentInterview.ai_score}%
-                          </Badge>
+                        {hasReviewData && (
+                          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {status === 'completed' && event?.completed_at 
-                          ? `Completed ${formatDate(event.completed_at)} · Click to view results`
-                          : status === 'completed' ? 'Completed · Click to view results'
-                          : status === 'current' && (stage.name === 'Interview Guidelines' || stage.name === 'CV/Resume' || stage.name === 'Resume Screening')
-                          ? '📧 Email sent successfully'
-                          : status === 'current' ? 'In Progress'
-                          : status === 'scheduled' && event?.scheduled_at 
-                          ? `Scheduled for ${formatDate(event.scheduled_at)}`
-                          : 'Upcoming'
-                        }
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-muted-foreground">
+                          {status === 'completed' && event?.completed_at 
+                            ? formatDate(event.completed_at)
+                            : status === 'completed' ? 'Completed'
+                            : status === 'current' && (stage.name === 'Interview Guidelines' || stage.name === 'CV/Resume' || stage.name === 'Resume Screening')
+                            ? 'Email sent to candidate'
+                            : status === 'current' ? 'Currently active'
+                            : status === 'scheduled' && event?.scheduled_at 
+                            ? `Scheduled for ${formatDate(event.scheduled_at)}`
+                            : 'Upcoming'
+                          }
+                        </p>
+                        {/* Score + threshold inline */}
+                        {status === 'completed' && (() => {
+                          const score = event?.ai_score || (stage.name === 'CV/Resume' ? currentInterview.ai_score : null);
+                          if (score == null) return null;
+                          return (
+                            <>
+                              <span className="text-xs font-medium text-foreground">Score: {score}%</span>
+                              <Badge className={`text-[10px] px-1.5 py-0 ${
+                                score >= 70 ? 'bg-green-500/10 text-green-600 border-green-500/30' : 
+                                score >= 40 ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' : 
+                                'bg-red-500/10 text-red-600 border-red-500/30'
+                              }`} variant="outline">
+                                {score >= 70 ? 'Above Threshold' : score >= 40 ? 'Moderate' : 'Below Threshold'}
+                              </Badge>
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
 
                     {/* Status badge + expand arrow */}
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {status === 'current' && (
-                        <Badge className="bg-primary text-primary-foreground text-xs animate-pulse">Current</Badge>
+                      {status === 'completed' && (
+                        <Badge className="bg-green-500/10 text-green-600 border-green-500/30 text-xs" variant="outline">Done</Badge>
                       )}
-
+                      {status === 'current' && (
+                        <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs animate-pulse" variant="outline">In Progress</Badge>
+                      )}
                       {/* Show slot booking for Demo/HR Slot Booking stages */}
                       {stage.name === 'Demo Slot Booking' && (() => {
                         const demoBooking = slotBookings.find(b => 
@@ -966,15 +987,22 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         return null;
                       })()}
 
-                      {/* Expand/collapse arrow for completed stages */}
+                      {/* View Results button for completed stages */}
                       {hasReviewData && (
-                        <div className="text-muted-foreground">
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedStageId(isExpanded ? null : stage.id);
+                          }}
+                          className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors ${
+                            isExpanded 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'bg-muted text-foreground hover:bg-muted/80'
+                          }`}
+                        >
+                          <Eye className="h-3 w-3" />
+                          {isExpanded ? 'Hide' : 'View Results'}
+                        </button>
                       )}
                     </div>
                   </div>
