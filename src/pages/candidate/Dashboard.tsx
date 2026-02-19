@@ -48,7 +48,11 @@ import {
   Check,
   Zap,
   Rocket,
+  Mail,
+  Lock,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { JobApplicationModal } from "@/components/candidate/JobApplicationModal";
@@ -109,6 +113,114 @@ interface Job {
   posted_date: string;
   employer_id: string;
 }
+
+// Account Settings Section Component
+const AccountSettingsSection = ({ user }: { user: any }) => {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const { toast } = useToast();
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Error", description: "New passwords do not match.", variant: "destructive" });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ title: "Error", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Success", description: "Password updated successfully." });
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to update password.", variant: "destructive" });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Account Settings</h2>
+        <p className="text-muted-foreground mt-1">Manage your login credentials</p>
+      </div>
+
+      {/* Login Email */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Mail className="h-4 w-4 text-primary" />
+            Login Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-sm text-muted-foreground">Your account email address</Label>
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-md border">
+              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-foreground font-medium">{user?.email || "—"}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              This is your login email. To change it, please contact support.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Change Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Lock className="h-4 w-4 text-primary" />
+            Change Password
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            <Button type="submit" disabled={isChangingPassword} className="w-full sm:w-auto">
+              {isChangingPassword ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating...</>
+              ) : (
+                "Update Password"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const CandidateDashboard = () => {
   const navigate = useNavigate();
@@ -3859,16 +3971,9 @@ const CandidateDashboard = () => {
               </div>
             )}
 
-            {/* Settings Placeholder */}
+            {/* Settings - Account Settings */}
             {activeMenu === "settings" && (
-              <div className="text-center py-12">
-                <Settings className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <h2 className="text-xl font-semibold text-foreground mb-2">Settings</h2>
-                <p className="text-muted-foreground mb-4">Manage your account preferences</p>
-                <Button variant="outline" onClick={() => navigate("/profile/edit")}>
-                  Edit Profile
-                </Button>
-              </div>
+              <AccountSettingsSection user={user} />
             )}
           </div>
         </main>
