@@ -73,7 +73,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
 
   const watchedInterviewType = form.watch("interview_type");
   const pipelineTypes = getPipelineTypesForInterviewType(watchedInterviewType);
-  const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType) : [];
+  const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType, selectedRole) : [];
 
   // Get dynamic form config based on interview type
   const formConfig = getFormConfigForInterviewType(watchedInterviewType);
