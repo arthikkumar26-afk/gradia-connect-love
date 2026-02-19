@@ -319,6 +319,21 @@ serve(async (req) => {
     const emailResult = await emailResponse.json();
     console.log('CV results email sent:', emailResult);
 
+    // Advance current_stage_id to Written Test Slot Booking (stage 2) after CV results email
+    const { data: writtenTestSlotStage } = await supabase
+      .from('interview_stages')
+      .select('id')
+      .eq('name', 'Written Test Slot Booking')
+      .single();
+
+    if (writtenTestSlotStage) {
+      await supabase
+        .from('interview_candidates')
+        .update({ current_stage_id: writtenTestSlotStage.id })
+        .eq('id', interviewCandidateId);
+      console.log('Advanced current_stage_id to Written Test Slot Booking');
+    }
+
     return new Response(JSON.stringify({ success: true, emailResult }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

@@ -685,6 +685,12 @@ serve(async (req) => {
       .eq('name', 'Interview Guidelines')
       .single();
 
+    const { data: resumeStage } = await supabase
+      .from('interview_stages')
+      .select('id')
+      .eq('name', 'CV/Resume')
+      .single();
+
     if (instructionStage) {
       await supabase
         .from('interview_events')
@@ -695,6 +701,14 @@ serve(async (req) => {
           completed_at: new Date().toISOString(),
           notes: 'Instruction email sent to candidate',
         });
+
+      // Advance current_stage_id to CV/Resume (stage 1) now that instruction email is sent
+      if (resumeStage) {
+        await supabase
+          .from('interview_candidates')
+          .update({ current_stage_id: resumeStage.id })
+          .eq('id', interviewCandidateId);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, emailResult }), {

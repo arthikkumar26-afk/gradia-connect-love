@@ -256,12 +256,14 @@ Provide your analysis using the suggest_analysis function.`;
     const writtenTestSlotBookingStage = stages?.find(s => s.stage_order === 2);
 
     // Create/update interview candidate record with AI analysis
+    // Initially set current_stage_id to Interview Guidelines (stage 0) so it shows
+    // immediately in candidate pipeline. Will advance after emails are sent.
     const { data: interviewCandidate, error: candidateError } = await supabase
       .from('interview_candidates')
       .upsert({
         job_id: jobId,
         candidate_id: actualCandidateId,
-        current_stage_id: writtenTestSlotBookingStage?.id || resumeScreeningStage?.id,
+        current_stage_id: interviewGuidelinesStage?.id || resumeScreeningStage?.id,
         ai_score: enrichedAnalysis.overall_score,
         ai_analysis: enrichedAnalysis,
         resume_url: resumeUrl,
