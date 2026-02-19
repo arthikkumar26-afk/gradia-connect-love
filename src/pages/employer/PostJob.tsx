@@ -63,7 +63,7 @@ const PostJob = () => {
 
   const watchedInterviewType = form.watch("interview_type");
   const pipelineTypes = getPipelineTypesForInterviewType(watchedInterviewType);
-  const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType) : [];
+  const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType, selectedRole) : [];
 
 
   const handleRefineWithAI = async () => {
