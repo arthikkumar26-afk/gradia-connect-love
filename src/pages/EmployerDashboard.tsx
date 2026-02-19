@@ -469,34 +469,28 @@ const EmployerDashboard = () => {
                   <div className="lg:col-span-2 bg-card rounded-xl border border-border p-4 shadow-soft">
                     <h3 className="text-base font-semibold text-foreground mb-3">Quick Actions</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                        <Link to="/employer/jobs">
-                          <Briefcase className="h-4 w-4 mr-2" />
-                          <div className="text-left">
-                            <div className="text-sm font-medium">Manage Jobs</div>
-                            <div className="text-xs text-muted-foreground">View postings</div>
-                          </div>
-                        </Link>
+                      <Button variant="outline" className="justify-start h-auto py-3" onClick={() => setActiveMenu("jobs")}>
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Manage Jobs</div>
+                          <div className="text-xs text-muted-foreground">View postings</div>
+                        </div>
                       </Button>
                       
-                      <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                        <Link to="/employer/talent-pool">
-                          <Users className="h-4 w-4 mr-2" />
-                          <div className="text-left">
-                            <div className="text-sm font-medium">Browse Talent</div>
-                            <div className="text-xs text-muted-foreground">Find candidates</div>
-                          </div>
-                        </Link>
+                      <Button variant="outline" className="justify-start h-auto py-3" onClick={() => { setActiveMenu("talent-pool"); setNewApplications(0); }}>
+                        <Users className="h-4 w-4 mr-2" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Browse Talent</div>
+                          <div className="text-xs text-muted-foreground">Find candidates</div>
+                        </div>
                       </Button>
                       
-                      <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                        <Link to="/employer/approvals">
-                          <CheckSquare className="h-4 w-4 mr-2" />
-                          <div className="text-left">
-                            <div className="text-sm font-medium">Review Approvals</div>
-                            <div className="text-xs text-muted-foreground">Pending actions</div>
-                          </div>
-                        </Link>
+                      <Button variant="outline" className="justify-start h-auto py-3" onClick={() => setActiveMenu("approvals")}>
+                        <CheckSquare className="h-4 w-4 mr-2" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Review Approvals</div>
+                          <div className="text-xs text-muted-foreground">Pending actions</div>
+                        </div>
                       </Button>
                     </div>
                   </div>
@@ -521,6 +515,7 @@ const EmployerDashboard = () => {
             {activeMenu === "feedback-matrix" && <FeedbackMatrixContent />}
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
+            {activeMenu === "approvals" && <ConfirmationContent />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
             
