@@ -1064,6 +1064,7 @@ const CandidateDashboard = () => {
       const profileUpdate: any = {};
       
       if (data.full_name) profileUpdate.full_name = data.full_name;
+      if (data.email) profileUpdate.email = data.email;
       if (data.mobile) profileUpdate.mobile = data.mobile;
       if (data.date_of_birth) profileUpdate.date_of_birth = data.date_of_birth;
       if (data.gender) profileUpdate.gender = data.gender;
@@ -2400,7 +2401,7 @@ const CandidateDashboard = () => {
                               {/* Row 11: Email */}
                               <tr>
                                 <td className="px-3 py-2 bg-muted/30 font-medium text-muted-foreground">e-Mail</td>
-                                <td className="px-3 py-2 text-foreground" colSpan={4}>{user?.email || profile?.email || '-'}</td>
+                                <td className="px-3 py-2 text-foreground" colSpan={4}>{profile?.email || '-'}</td>
                               </tr>
                             </tbody>
                           </table>
