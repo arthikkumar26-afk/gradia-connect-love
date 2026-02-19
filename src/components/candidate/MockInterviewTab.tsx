@@ -1706,96 +1706,72 @@ export const MockInterviewTab = () => {
           </div>
         ) : (
           <>
-            {/* ── Education / Default: Interview Type Selection ── */}
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {/* New Employee Card */}
-              <Card
-                className={`cursor-pointer transition-all hover:shadow-lg ${
-                  selectedInterviewType === 'new_employee'
-                    ? 'border-2 border-primary ring-2 ring-primary/20'
-                    : 'border hover:border-primary/50'
-                }`}
-                onClick={() => navigate('/candidate/mock-interview-start/new-employee')}
-              >
-                <CardHeader className="text-center pb-4">
-                  <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                    selectedInterviewType === 'new_employee' ? 'bg-primary text-primary-foreground' : 'bg-primary/10'
+        {/* ── Education / Default: Interview Type + Role Selection ── */}
+            <div className="max-w-2xl mx-auto space-y-5">
+
+              {/* Interview Type Selection */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* New Employee Card */}
+                <button
+                  onClick={() => setSelectedInterviewType('new_employee')}
+                  className={`text-left p-4 rounded-xl border-2 transition-all ${
+                    selectedInterviewType === 'new_employee'
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                      : 'border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40'
+                  }`}
+                >
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-3 ${
+                    selectedInterviewType === 'new_employee' ? 'bg-primary' : 'bg-primary/10'
                   }`}>
-                    <UserPlus className={`h-8 w-8 ${selectedInterviewType === 'new_employee' ? 'text-primary-foreground' : 'text-primary'}`} />
+                    <UserPlus className={`h-6 w-6 ${selectedInterviewType === 'new_employee' ? 'text-primary-foreground' : 'text-primary'}`} />
                   </div>
-                  <CardTitle className="text-lg">New Employee</CardTitle>
-                  <CardDescription>For new candidates joining the organization</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
-                    <ul className="text-sm space-y-1 text-muted-foreground">
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />Basic technical assessment</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />Teaching demonstration</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />HR document verification</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />Entry-level evaluation</li>
-                    </ul>
-                  </div>
+                  <p className="font-semibold text-sm text-foreground">New Employee</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">For new candidates joining</p>
+                  <ul className="mt-2 space-y-1">
+                    {['Basic technical assessment', 'Teaching demonstration', 'HR document verification'].map(f => (
+                      <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />{f}
+                      </li>
+                    ))}
+                  </ul>
                   {selectedInterviewType === 'new_employee' && (
-                    <Badge className="w-full justify-center bg-primary">Selected</Badge>
+                    <Badge className="mt-3 text-xs bg-primary">Selected ✓</Badge>
                   )}
-                </CardContent>
-              </Card>
+                </button>
 
-              {/* Promotions Card */}
-              <Card
-                className={`cursor-pointer transition-all hover:shadow-lg ${
-                  selectedInterviewType === 'promotions'
-                    ? 'border-2 border-primary ring-2 ring-primary/20'
-                    : 'border hover:border-primary/50'
-                }`}
-                onClick={() => navigate('/candidate/mock-interview-start/promotions')}
-              >
-                <CardHeader className="text-center pb-4">
-                  <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                    selectedInterviewType === 'promotions' ? 'bg-primary text-primary-foreground' : 'bg-amber-100 dark:bg-amber-900/30'
+                {/* Promotions Card */}
+                <button
+                  onClick={() => setSelectedInterviewType('promotions')}
+                  className={`text-left p-4 rounded-xl border-2 transition-all ${
+                    selectedInterviewType === 'promotions'
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                      : 'border-border bg-muted/20 hover:border-primary/40 hover:bg-muted/40'
+                  }`}
+                >
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-3 ${
+                    selectedInterviewType === 'promotions' ? 'bg-primary' : 'bg-amber-100 dark:bg-amber-900/30'
                   }`}>
-                    <Award className={`h-8 w-8 ${selectedInterviewType === 'promotions' ? 'text-primary-foreground' : 'text-amber-600 dark:text-amber-400'}`} />
+                    <Award className={`h-6 w-6 ${selectedInterviewType === 'promotions' ? 'text-primary-foreground' : 'text-amber-600 dark:text-amber-400'}`} />
                   </div>
-                  <CardTitle className="text-lg">Promotions</CardTitle>
-                  <CardDescription>For existing employees seeking promotion</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
-                    <ul className="text-sm space-y-1 text-muted-foreground">
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Advanced technical assessment</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Leadership demonstration</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Performance review</li>
-                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Senior-level evaluation</li>
-                    </ul>
-                  </div>
+                  <p className="font-semibold text-sm text-foreground">Promotions</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">For existing employees seeking promotion</p>
+                  <ul className="mt-2 space-y-1">
+                    {['Advanced technical assessment', 'Leadership demonstration', 'Performance review'].map(f => (
+                      <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <CheckCircle2 className="h-3 w-3 text-amber-500 shrink-0" />{f}
+                      </li>
+                    ))}
+                  </ul>
                   {selectedInterviewType === 'promotions' && (
-                    <Badge className="w-full justify-center bg-primary">Selected</Badge>
+                    <Badge className="mt-3 text-xs bg-primary">Selected ✓</Badge>
                   )}
-                </CardContent>
-              </Card>
-            </div>
+                </button>
+              </div>
 
-            {/* Interview Stages Preview - Show when type is selected */}
-            {selectedInterviewType && (
-              <Card className="max-w-2xl mx-auto">
-                <CardHeader className="text-center pb-4">
-                  <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                    {selectedInterviewType === 'new_employee' ? (
-                      <UserPlus className="h-6 w-6 text-primary" />
-                    ) : (
-                      <Award className="h-6 w-6 text-primary" />
-                    )}
-                  </div>
-                  <CardTitle className="text-lg">
-                    {selectedInterviewType === 'new_employee' ? 'New Employee' : 'Promotions'} Interview
-                  </CardTitle>
-                  <CardDescription>Complete a comprehensive 8-stage interview simulation</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  {/* ── Role / Designation Selector ── */}
-                  <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+              {/* Role / Designation Selector — shown once interview type is picked */}
+              {selectedInterviewType && (
+                <Card className="border-primary/20">
+                  <CardContent className="pt-5 space-y-4">
                     <p className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <UserPlus className="h-4 w-4 text-primary" />
                       Select Your Role
@@ -1894,65 +1870,67 @@ export const MockInterviewTab = () => {
                         <Badge className="text-xs bg-primary/90">{selectedMockDesignation}</Badge>
                       </div>
                     )}
-                  </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                  {/* Interview Stages Preview */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-muted-foreground">Interview Stages:</h4>
-                    <div className="grid gap-1.5">
-                      {[
-                        { order: 1, name: "Interview Instructions", icon: Mail },
-                        { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
-                        { order: 3, name: "Technical Assessment", icon: Code },
-                        { order: 4, name: "Demo Slot Booking", icon: Calendar },
-                        { order: 5, name: "Demo Round", icon: Monitor },
-                        { order: 6, name: "Demo Feedback", icon: BarChart3 },
-                        { order: 7, name: "Final Review (HR)", icon: FileText },
-                        { order: 8, name: "All Reviews", icon: ListChecks },
-                      ].map((stage) => (
-                        <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-                          <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <stage.icon className="h-3.5 w-3.5 text-primary" />
-                          </div>
-                          <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
+              {/* Interview Stages Preview — always visible */}
+              <Card>
+                <CardContent className="py-4 space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Interview Stages</p>
+                  <div className="grid gap-1.5">
+                    {[
+                      { order: 1, name: "Interview Instructions", icon: Mail },
+                      { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
+                      { order: 3, name: "Technical Assessment", icon: Code },
+                      { order: 4, name: "Demo Slot Booking", icon: Calendar },
+                      { order: 5, name: "Demo Round", icon: Monitor },
+                      { order: 6, name: "Demo Feedback", icon: BarChart3 },
+                      { order: 7, name: "Final Review (HR)", icon: FileText },
+                      { order: 8, name: "All Reviews", icon: ListChecks },
+                    ].map((stage) => (
+                      <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <stage.icon className="h-3.5 w-3.5 text-primary" />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-2 space-y-2">
-                    <Button
-                      onClick={startMockTest}
-                      disabled={isStarting || !mockTestLimits.canStart || !isMockRoleSelected}
-                      className="w-full gap-2"
-                      size="lg"
-                    >
-                      {isStarting ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : !mockTestLimits.canStart ? (
-                        <Lock className="h-5 w-5" />
-                      ) : (
-                        <Play className="h-5 w-5" />
-                      )}
-                      {!mockTestLimits.canStart
-                        ? 'Limit Reached — Upgrade Plan'
-                        : !isMockRoleSelected
-                          ? 'Select Your Role to Continue'
-                          : 'Attend Mock Test'}
-                    </Button>
-                    <div className="flex justify-center">
-                      <Badge variant="secondary" className="text-xs">Estimated time: 45-60 minutes</Badge>
-                    </div>
+                        <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
-            )}
 
-            {!selectedInterviewType && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Please select an interview type above to continue</p>
+              {/* Attend Mock Test Button */}
+              <div className="space-y-2">
+                <Button
+                  onClick={startMockTest}
+                  disabled={isStarting || !mockTestLimits.canStart || !selectedInterviewType || !isMockRoleSelected}
+                  className="w-full gap-2"
+                  size="lg"
+                >
+                  {isStarting ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : !mockTestLimits.canStart ? (
+                    <Lock className="h-5 w-5" />
+                  ) : (
+                    <Play className="h-5 w-5" />
+                  )}
+                  {!mockTestLimits.canStart
+                    ? 'Limit Reached — Upgrade Plan'
+                    : !selectedInterviewType
+                      ? 'Select Interview Type to Continue'
+                      : !isMockRoleSelected
+                        ? 'Select Your Role to Continue'
+                        : `Attend Mock Test — ${selectedInterviewType === 'new_employee' ? 'New Employee' : 'Promotions'}`}
+                </Button>
+                <div className="flex justify-center">
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    <Clock className="h-3 w-3" />
+                    Estimated time: 45-60 minutes
+                  </Badge>
+                </div>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>
