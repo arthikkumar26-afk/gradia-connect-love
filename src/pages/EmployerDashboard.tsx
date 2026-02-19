@@ -1,6 +1,18 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import gradiaLogo from "@/assets/gradia-logo.png";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -75,6 +87,8 @@ const EmployerDashboard = () => {
     isLoading: true
   });
   const { user, profile, isAuthenticated, logout } = useAuth();
+  const [candidateStatusData, setCandidateStatusData] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [applicationsPerJob, setApplicationsPerJob] = useState<{ name: string; applications: number }[]>([]);
 
   // Role-based access control
   useEffect(() => {
@@ -175,6 +189,72 @@ const EmployerDashboard = () => {
     };
 
     fetchDashboardStats();
+  }, [user?.id]);
+
+  // Fetch analytics data for charts
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!user?.id) return;
+
+      const { data: myJobs } = await supabase
+        .from('jobs')
+        .select('id, job_title')
+        .eq('employer_id', user.id);
+
+      if (!myJobs || myJobs.length === 0) return;
+      const jobIds = myJobs.map(j => j.id);
+
+      // Fetch candidate status distribution
+      const { data: candidates } = await supabase
+        .from('interview_candidates')
+        .select('status')
+        .in('job_id', jobIds);
+
+      if (candidates) {
+        const statusCounts: Record<string, number> = {};
+        candidates.forEach(c => {
+          const s = c.status || 'applied';
+          statusCounts[s] = (statusCounts[s] || 0) + 1;
+        });
+        const STATUS_COLORS: Record<string, string> = {
+          applied: 'hsl(var(--primary))',
+          screening: 'hsl(var(--accent))',
+          pending: 'hsl(var(--warning))',
+          shortlisted: 'hsl(142 71% 45%)',
+          rejected: 'hsl(var(--destructive))',
+          hired: 'hsl(var(--success))',
+          interview: 'hsl(262 83% 58%)',
+        };
+        const pieData = Object.entries(statusCounts).map(([name, value]) => ({
+          name: name.charAt(0).toUpperCase() + name.slice(1),
+          value,
+          color: STATUS_COLORS[name] || 'hsl(var(--muted-foreground))',
+        }));
+        setCandidateStatusData(pieData);
+      }
+
+      // Fetch applications per job (top 6)
+      const { data: appCounts } = await supabase
+        .from('interview_candidates')
+        .select('job_id')
+        .in('job_id', jobIds);
+
+      if (appCounts) {
+        const jobCountMap: Record<string, number> = {};
+        appCounts.forEach(c => {
+          jobCountMap[c.job_id] = (jobCountMap[c.job_id] || 0) + 1;
+        });
+        const barData = myJobs
+          .map(j => ({
+            name: j.job_title.length > 14 ? j.job_title.slice(0, 14) + '…' : j.job_title,
+            applications: jobCountMap[j.id] || 0,
+          }))
+          .sort((a, b) => b.applications - a.applications)
+          .slice(0, 6);
+        setApplicationsPerJob(barData);
+      }
+    };
+    fetchAnalytics();
   }, [user?.id]);
 
   // Real-time subscription for new applications
@@ -494,6 +574,121 @@ const EmployerDashboard = () => {
                       </Button>
                     </div>
                   </div>
+                </div>
+
+                {/* Analytics Charts Section */}
+                <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Candidate Status Pie Chart */}
+                  <Card className="border-border shadow-soft">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-semibold text-foreground">Candidate Status Breakdown</CardTitle>
+                      <p className="text-xs text-muted-foreground">Distribution across all your job postings</p>
+                    </CardHeader>
+                    <CardContent>
+                      {candidateStatusData.length === 0 ? (
+                        <div className="h-48 flex flex-col items-center justify-center gap-2">
+                          <div className="h-16 w-16 rounded-full border-4 border-dashed border-border flex items-center justify-center">
+                            <Users className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">No candidate data yet</p>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-4">
+                          <ResponsiveContainer width="55%" height={180}>
+                            <PieChart>
+                              <Pie
+                                data={candidateStatusData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={45}
+                                outerRadius={75}
+                                paddingAngle={3}
+                                dataKey="value"
+                              >
+                                {candidateStatusData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{
+                                  background: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px',
+                                  fontSize: '12px',
+                                  color: 'hsl(var(--foreground))',
+                                }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="flex-1 space-y-1.5">
+                            {candidateStatusData.map((item, i) => (
+                              <div key={i} className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className="h-2 w-2 rounded-full shrink-0"
+                                    style={{ background: item.color }}
+                                  />
+                                  <span className="text-muted-foreground">{item.name}</span>
+                                </div>
+                                <span className="font-medium text-foreground">{item.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Applications Per Job Bar Chart */}
+                  <Card className="border-border shadow-soft">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-semibold text-foreground">Applications per Job</CardTitle>
+                      <p className="text-xs text-muted-foreground">Total applicants per active posting</p>
+                    </CardHeader>
+                    <CardContent>
+                      {applicationsPerJob.length === 0 ? (
+                        <div className="h-48 flex flex-col items-center justify-center gap-2">
+                          <div className="h-16 w-16 rounded-full border-4 border-dashed border-border flex items-center justify-center">
+                            <Briefcase className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">No job postings yet</p>
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={180}>
+                          <BarChart data={applicationsPerJob} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                            <XAxis
+                              dataKey="name"
+                              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                              axisLine={false}
+                              tickLine={false}
+                            />
+                            <YAxis
+                              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                              axisLine={false}
+                              tickLine={false}
+                              allowDecimals={false}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                background: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                color: 'hsl(var(--foreground))',
+                              }}
+                              cursor={{ fill: 'hsl(var(--muted))' }}
+                            />
+                            <Bar
+                              dataKey="applications"
+                              fill="hsl(var(--primary))"
+                              radius={[4, 4, 0, 0]}
+                              maxBarSize={40}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </>
             )}
