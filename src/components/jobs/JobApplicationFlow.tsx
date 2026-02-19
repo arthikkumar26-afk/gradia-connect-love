@@ -201,12 +201,12 @@ export const JobApplicationFlow = ({
         .eq('id', user.id)
         .single();
 
-      // Step 4: Check if this is a real job from DB or sample job
-      const { data: dbJob } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('id', job.id)
-        .single();
+        // Step 4: Check if this is a real job from DB or sample job
+        const { data: dbJob } = await supabase
+          .from('jobs')
+          .select('*, employer:profiles!jobs_employer_id_fkey(company_name, full_name)')
+          .eq('id', job.id)
+          .single();
 
       if (dbJob) {
         // Real job from database - call the analyze-resume edge function
@@ -271,12 +271,13 @@ export const JobApplicationFlow = ({
           
           console.log('Sending application email to:', candidateEmail, 'for job:', dbJob.job_title);
           
+          const orgName = dbJob.organisation || (dbJob.employer as any)?.company_name || 'Gradia';
           const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-application-email', {
             body: {
               email: candidateEmail,
               candidateName: candidateName,
               jobTitle: dbJob.job_title,
-              companyName: 'Gradia',
+              companyName: orgName,
               aiScore: analysisResult?.analysis?.overall_score || null,
             },
           });
