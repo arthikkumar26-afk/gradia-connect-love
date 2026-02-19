@@ -11,7 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import {
   Briefcase,
   MapPin,
@@ -28,6 +39,7 @@ import {
   Tag,
   FileText,
   Layers,
+  Trash2,
 } from "lucide-react";
 
 interface Application {
@@ -74,6 +86,9 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Application | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchApplications();
@@ -82,7 +97,7 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
   const fetchApplications = async () => {
     try {
       const { data: appsData, error: appsError } = await supabase
-        .from('applications')
+        .from("applications")
         .select(`
           id,
           job_id,
@@ -108,15 +123,15 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
             )
           )
         `)
-        .eq('candidate_id', candidateId)
-        .order('applied_date', { ascending: false });
+        .eq("candidate_id", candidateId)
+        .order("applied_date", { ascending: false });
 
       if (appsError) throw appsError;
 
       const applicationsWithInterview = await Promise.all(
         (appsData || []).map(async (app) => {
           const { data: icData } = await supabase
-            .from('interview_candidates')
+            .from("interview_candidates")
             .select(`
               id,
               ai_score,
@@ -126,38 +141,58 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                 stage_order
               )
             `)
-            .eq('job_id', app.job_id)
-            .eq('candidate_id', candidateId)
+            .eq("job_id", app.job_id)
+            .eq("candidate_id", candidateId)
             .single();
 
           return {
             ...app,
-            interview_candidate: icData
+            interview_candidate: icData,
           };
         })
       );
 
       setApplications(applicationsWithInterview as Application[]);
     } catch (error) {
-      console.error('Error fetching applications:', error);
+      console.error("Error fetching applications:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleDeleteApplication = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .eq("id", deleteTarget.id);
+      if (error) throw error;
+      setApplications((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+      toast({ title: "Application removed", description: "The application has been removed." });
+      setDeleteTarget(null);
+      setSelectedApp(null);
+    } catch {
+      toast({ title: "Error", description: "Failed to remove application.", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3" />Pending</Badge>;
-      case 'in_review':
-        return <Badge className="gap-1 bg-blue-500 text-white"><AlertCircle className="h-3 w-3" />In Review</Badge>;
-      case 'shortlisted':
-        return <Badge className="gap-1 bg-green-500 text-white"><CheckCircle2 className="h-3 w-3" />Shortlisted</Badge>;
-      case 'interview':
+      case "in_review":
+        return <Badge className="gap-1 bg-primary/80 text-primary-foreground"><AlertCircle className="h-3 w-3" />In Review</Badge>;
+      case "shortlisted":
+        return <Badge className="gap-1 bg-success text-success-foreground"><CheckCircle2 className="h-3 w-3" />Shortlisted</Badge>;
+      case "interview":
         return <Badge className="gap-1 bg-primary text-primary-foreground"><Star className="h-3 w-3" />Interview</Badge>;
-      case 'offered':
-        return <Badge className="gap-1 bg-green-600 text-white"><CheckCircle2 className="h-3 w-3" />Offered</Badge>;
-      case 'rejected':
+      case "offered":
+        return <Badge className="gap-1 bg-success text-success-foreground"><CheckCircle2 className="h-3 w-3" />Offered</Badge>;
+      case "rejected":
         return <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />Not Selected</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -203,7 +238,7 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
         <p className="text-muted-foreground mb-4">
           Start exploring jobs and submit your first application
         </p>
-        <Button variant="cta" onClick={() => window.location.href = '/jobs-results'}>
+        <Button variant="cta" onClick={() => window.location.href = "/jobs-results"}>
           Browse Jobs
         </Button>
       </Card>
@@ -225,7 +260,7 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                 {app.job?.employer?.profile_picture ? (
                   <img
                     src={app.job.employer.profile_picture}
-                    alt={app.job.employer.company_name || ''}
+                    alt={app.job.employer.company_name || ""}
                     className="h-full w-full rounded-lg object-cover"
                   />
                 ) : (
@@ -238,10 +273,10 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
                     <h3 className="font-semibold text-foreground truncate">
-                      {app.job?.job_title || 'Unknown Position'}
+                      {app.job?.job_title || "Unknown Position"}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {app.job?.employer?.company_name || 'Unknown Company'}
+                      {app.job?.employer?.company_name || "Unknown Company"}
                     </p>
                   </div>
                   {getStatusBadge(app.status)}
@@ -279,7 +314,7 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                         )}
                       </div>
                       <span className="text-xs text-primary font-medium">
-                        {app.interview_candidate.current_stage?.name || 'CV/Resume'}
+                        {app.interview_candidate.current_stage?.name || "CV/Resume"}
                       </span>
                     </div>
                     <Progress
@@ -287,7 +322,9 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                       className="h-2"
                     />
                     <div className="flex justify-between mt-1">
-                      <span className="text-xs text-muted-foreground">Stage {app.interview_candidate.current_stage?.stage_order || 1} of 6</span>
+                      <span className="text-xs text-muted-foreground">
+                        Stage {app.interview_candidate.current_stage?.stage_order || 1} of 6
+                      </span>
                     </div>
                   </div>
                 )}
@@ -296,11 +333,20 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <FileText className="h-3 w-3" /> Click card to view full job details
                   </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-destructive hover:text-destructive ml-auto"
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(app); }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remove
+                  </Button>
                   {app.interview_candidate && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-1 text-primary ml-auto"
+                      className="gap-1 text-primary"
                       onClick={(e) => { e.stopPropagation(); onViewPipeline(app.id); }}
                     >
                       View Pipeline
@@ -325,7 +371,7 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                     {selectedApp.job?.employer?.profile_picture ? (
                       <img
                         src={selectedApp.job.employer.profile_picture}
-                        alt={selectedApp.job.employer.company_name || ''}
+                        alt={selectedApp.job.employer.company_name || ""}
                         className="h-full w-full rounded-lg object-cover"
                       />
                     ) : (
@@ -334,10 +380,10 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                   </div>
                   <div className="flex-1">
                     <DialogTitle className="text-xl font-semibold text-left">
-                      {selectedApp.job?.job_title || 'Unknown Position'}
+                      {selectedApp.job?.job_title || "Unknown Position"}
                     </DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {selectedApp.job?.employer?.company_name || 'Unknown Company'}
+                      {selectedApp.job?.employer?.company_name || "Unknown Company"}
                     </p>
                   </div>
                   <div className="flex-shrink-0">{getStatusBadge(selectedApp.status)}</div>
@@ -345,7 +391,6 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
               </DialogHeader>
 
               <div className="space-y-5 mt-2">
-                {/* Key Info Grid */}
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {selectedApp.job?.location && (
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -380,7 +425,9 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                   {selectedApp.job?.interview_type && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Tag className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="capitalize">{selectedApp.job.interview_type.replace(/_/g, ' ')} Interview</span>
+                      <span className="capitalize">
+                        {selectedApp.job.interview_type.replace(/_/g, " ")} Interview
+                      </span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-muted-foreground">
@@ -391,7 +438,6 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
 
                 <Separator />
 
-                {/* Interview Progress */}
                 {selectedApp.interview_candidate && (
                   <>
                     <div className="bg-muted/50 rounded-lg p-4">
@@ -404,12 +450,14 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                             </Badge>
                           )}
                           <span className="text-xs text-primary font-medium">
-                            {selectedApp.interview_candidate.current_stage?.name || 'CV/Resume'}
+                            {selectedApp.interview_candidate.current_stage?.name || "CV/Resume"}
                           </span>
                         </div>
                       </div>
                       <Progress
-                        value={getStageProgress(selectedApp.interview_candidate.current_stage?.stage_order || 1)}
+                        value={getStageProgress(
+                          selectedApp.interview_candidate.current_stage?.stage_order || 1
+                        )}
                         className="h-2"
                       />
                       <p className="text-xs text-muted-foreground mt-2">
@@ -420,7 +468,6 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                   </>
                 )}
 
-                {/* Description */}
                 {selectedApp.job?.description && (
                   <div>
                     <h4 className="font-semibold text-foreground mb-2">Job Description</h4>
@@ -430,7 +477,6 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                   </div>
                 )}
 
-                {/* Requirements */}
                 {selectedApp.job?.requirements && (
                   <div>
                     <h4 className="font-semibold text-foreground mb-2">Requirements</h4>
@@ -440,7 +486,6 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                   </div>
                 )}
 
-                {/* Skills */}
                 {selectedApp.job?.skills && selectedApp.job.skills.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-foreground mb-2">Required Skills</h4>
@@ -454,7 +499,6 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                   </div>
                 )}
 
-                {/* Cover Letter */}
                 {selectedApp.cover_letter && (
                   <div>
                     <h4 className="font-semibold text-foreground mb-2">Your Cover Letter</h4>
@@ -468,25 +512,65 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
 
                 <Separator />
 
-                <div className="flex gap-3 justify-end">
-                  <Button variant="outline" onClick={() => setSelectedApp(null)}>
-                    Close
+                <div className="flex gap-3 justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-destructive hover:text-destructive"
+                    onClick={() => setDeleteTarget(selectedApp)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remove Application
                   </Button>
-                  {selectedApp.interview_candidate && (
-                    <Button
-                      onClick={() => { setSelectedApp(null); onViewPipeline(selectedApp.id); }}
-                      className="gap-2"
-                    >
-                      View Full Pipeline
-                      <ChevronRight className="h-4 w-4" />
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setSelectedApp(null)}>
+                      Close
                     </Button>
-                  )}
+                    {selectedApp.interview_candidate && (
+                      <Button
+                        onClick={() => {
+                          setSelectedApp(null);
+                          onViewPipeline(selectedApp.id);
+                        }}
+                        className="gap-2"
+                      >
+                        View Full Pipeline
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Application</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove your application for &quot;{deleteTarget?.job?.job_title}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteApplication}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
