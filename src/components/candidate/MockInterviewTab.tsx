@@ -1782,7 +1782,16 @@ export const MockInterviewTab = () => {
       <Card className="bg-muted/30">
         <CardContent className="py-6">
           <InterviewProgressTracker
-            stages={stages}
+            stages={
+              selectedPipelineStages.length > 0
+                ? selectedPipelineStages.map(s => ({
+                    name: s.name,
+                    order: s.order,
+                    description: s.description,
+                    stageType: s.isAutomated ? 'assessment' : 'demo',
+                  }))
+                : stages
+            }
             currentStageOrder={currentSession.current_stage_order}
             stageResults={stageResults}
           />
