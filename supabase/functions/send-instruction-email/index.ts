@@ -6,6 +6,473 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Mirror of interviewPipelineConfig from src/data/interviewPipelineConfig.ts
+// (edge functions are Deno — cannot import TS client files directly)
+interface PipelineStage {
+  order: number;
+  name: string;
+  description: string;
+  isAutomated: boolean;
+}
+
+const commonStages: Record<string, PipelineStage> = {
+  resumeScreening: { order: 1, name: 'CV/Resume', description: 'AI-powered resume analysis & scoring', isAutomated: true },
+  writtenTestSlotBooking: { order: 2, name: 'Written Test Slot Booking', description: 'Candidate books Written Test slot', isAutomated: true },
+  technicalAssessment: { order: 3, name: 'Written Test', description: '10 MCQ questions (90 sec each)', isAutomated: true },
+  demoSlotBooking: { order: 4, name: 'Demo Slot Booking', description: 'Candidate books demo slot', isAutomated: true },
+  demoRound: { order: 5, name: 'Demo Round', description: 'Live teaching/presentation demo', isAutomated: false },
+  demoFeedback: { order: 6, name: 'Demo Feedback', description: 'Management review & feedback', isAutomated: false },
+  hrRoundSlotBooking: { order: 7, name: 'HR Round Slot Booking', description: 'Candidate books HR round slot', isAutomated: true },
+  hrRound: { order: 8, name: 'HR Round', description: 'HR interview & negotiation', isAutomated: false },
+  finalReview: { order: 9, name: 'Final Review', description: 'Final evaluation & decision', isAutomated: true },
+  offerStage: { order: 10, name: 'Offer Stage', description: 'Offer letter generation & sending', isAutomated: true },
+};
+
+const pipelineConfig: Record<string, Record<string, PipelineStage[]>> = {
+  education: {
+    principal: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Leadership Assessment', description: 'Leadership & management aptitude test', isAutomated: true },
+      { order: 3, name: 'Case Study', description: 'School management case study analysis', isAutomated: false },
+      commonStages.demoRound,
+      commonStages.demoFeedback,
+      { order: 6, name: 'Board Interview', description: 'Interview with school board/trustees', isAutomated: false },
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    vice_principal: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Academic Assessment', description: 'Academic planning & curriculum test', isAutomated: true },
+      commonStages.demoSlotBooking,
+      commonStages.demoRound,
+      commonStages.demoFeedback,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    teacher: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.demoSlotBooking,
+      commonStages.demoRound,
+      commonStages.demoFeedback,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    lab_assistant: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Practical Assessment', description: 'Lab skills & safety test', isAutomated: true },
+      commonStages.demoSlotBooking,
+      commonStages.demoRound,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    librarian: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Knowledge Assessment', description: 'Library science & management test', isAutomated: true },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    counselor: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Psychometric Assessment', description: 'Counseling aptitude & scenario test', isAutomated: true },
+      { order: 3, name: 'Role Play Round', description: 'Simulated counseling scenario', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+  },
+  standard: {
+    general: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    executive: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Aptitude Test', description: 'Logical & analytical reasoning', isAutomated: true },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    associate: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.offerStage,
+    ],
+  },
+  it_corporate: {
+    software_engineer: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Technical Coding Challenge', description: 'Online coding test (2 problems)', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      { order: 4, name: 'Technical MCQ Test', description: 'Role-specific MCQ test — 10 questions', isAutomated: true },
+      { order: 5, name: 'Technical Interview', description: 'Role-specific technical discussion & system design', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    cybersecurity: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Security Assessment', description: 'Cybersecurity knowledge & threat analysis test', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    data_ai: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'SQL & Analytics Test', description: 'SQL queries, data analysis & ML concepts', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    cloud_infrastructure: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Infrastructure Test', description: 'Cloud & CI/CD assessment', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    qa_testing: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'QA Assessment', description: 'Testing methodologies & automation skills test', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    product_project_management: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Case Study', description: 'Product/project management case study', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    ui_ux_design: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Design Challenge', description: 'UI/UX design task & portfolio review', isAutomated: false },
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    business_it_consulting: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Strategy Presentation', description: 'IT consulting strategy & business analysis', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    it_support_operations: [
+      commonStages.resumeScreening,
+      { order: 2, name: 'Technical Support Test', description: 'IT support & troubleshooting assessment', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+  },
+  sales: {
+    sales_executive: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Sales Pitch', description: 'Product presentation & pitch', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    business_development: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Strategy Presentation', description: 'Market strategy & growth plan', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    account_manager: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Client Scenario', description: 'Client management simulation', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+  },
+  management: {
+    project_manager: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Case Study', description: 'Project management case study', isAutomated: false },
+      { order: 5, name: 'Leadership Assessment', description: 'Leadership & team management', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    operations_manager: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Operations Case Study', description: 'Process optimization scenario', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    team_lead: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Team Scenario', description: 'Team conflict & management scenario', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+  },
+  legal: {
+    legal_advisor: [
+      { order: 1, name: 'Instruction Mail', description: 'Send instruction email with guidelines & requirements', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      { order: 3, name: 'Written Test', description: 'Legal knowledge & case law assessment', isAutomated: true },
+      { order: 4, name: 'Management Meet', description: 'Live meeting with management', isAutomated: false },
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    legal_officer: [
+      { order: 1, name: 'Instruction Mail', description: 'Send instruction email with guidelines & requirements', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      { order: 3, name: 'Written Test', description: 'Legal compliance & regulatory assessment', isAutomated: true },
+      { order: 4, name: 'Management Meet', description: 'Live meeting with management', isAutomated: false },
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    compliance_manager: [
+      { order: 1, name: 'Instruction Mail', description: 'Send instruction email with guidelines & requirements', isAutomated: true },
+      commonStages.writtenTestSlotBooking,
+      { order: 3, name: 'Written Test', description: 'Compliance framework & risk assessment', isAutomated: true },
+      { order: 4, name: 'Management Meet', description: 'Live meeting with management', isAutomated: false },
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+  },
+  non_it_corporate: {
+    hr_executive: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Group Discussion', description: 'Group discussion & communication assessment', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    finance_accounting: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      { order: 3, name: 'Aptitude & Accounting Test', description: 'Numerical aptitude & accounting knowledge', isAutomated: true },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    marketing_communications: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Campaign Presentation', description: 'Marketing strategy & campaign pitch', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    operations_logistics: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Operations Case Study', description: 'Supply chain & logistics scenario analysis', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    customer_service: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Role Play', description: 'Customer interaction & problem resolution simulation', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    procurement_supply: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    sales: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Sales Pitch', description: 'Product/service presentation & negotiation skills', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+    marketing: [
+      commonStages.resumeScreening,
+      commonStages.writtenTestSlotBooking,
+      commonStages.technicalAssessment,
+      { order: 4, name: 'Marketing Strategy Presentation', description: 'Brand strategy & campaign planning assessment', isAutomated: false },
+      commonStages.hrRoundSlotBooking,
+      commonStages.hrRound,
+      commonStages.finalReview,
+      commonStages.offerStage,
+    ],
+  },
+};
+
+// Emoji map for stages
+const stageEmoji: Record<string, string> = {
+  'CV/Resume': '📄',
+  'Written Test Slot Booking': '📅',
+  'Written Test': '💻',
+  'Demo Slot Booking': '📅',
+  'Demo Round': '🎥',
+  'Demo Feedback': '📝',
+  'HR Round Slot Booking': '📅',
+  'HR Round': '👥',
+  'Final Review': '🎯',
+  'Offer Stage': '🎁',
+  'Leadership Assessment': '🏆',
+  'Case Study': '📊',
+  'Board Interview': '🏛️',
+  'Academic Assessment': '📚',
+  'Practical Assessment': '🔬',
+  'Knowledge Assessment': '📖',
+  'Psychometric Assessment': '🧠',
+  'Role Play Round': '🎭',
+  'Aptitude Test': '🧩',
+  'Technical Coding Challenge': '⌨️',
+  'Technical MCQ Test': '📋',
+  'Technical Interview': '💬',
+  'Security Assessment': '🔐',
+  'SQL & Analytics Test': '📈',
+  'Infrastructure Test': '☁️',
+  'QA Assessment': '✅',
+  'Design Challenge': '🎨',
+  'Strategy Presentation': '📊',
+  'Technical Support Test': '🛠️',
+  'Sales Pitch': '📢',
+  'Client Scenario': '🤝',
+  'Operations Case Study': '⚙️',
+  'Team Scenario': '👫',
+  'Instruction Mail': '📋',
+  'Management Meet': '🤝',
+  'Group Discussion': '💬',
+  'Aptitude & Accounting Test': '🔢',
+  'Campaign Presentation': '📣',
+  'Role Play': '🎭',
+  'Marketing Strategy Presentation': '📣',
+  'Viva': '🎥',
+};
+
+function getStagesForJob(interviewType: string, functionType: string): PipelineStage[] {
+  const typeConfig = pipelineConfig[interviewType];
+  if (!typeConfig) return getDefaultStages();
+  const stages = typeConfig[functionType];
+  if (!stages || stages.length === 0) return getDefaultStages();
+  return stages;
+}
+
+function getDefaultStages(): PipelineStage[] {
+  return [
+    commonStages.resumeScreening,
+    commonStages.writtenTestSlotBooking,
+    commonStages.technicalAssessment,
+    commonStages.hrRoundSlotBooking,
+    commonStages.hrRound,
+    commonStages.finalReview,
+    commonStages.offerStage,
+  ];
+}
+
+function buildStagesHtml(stages: PipelineStage[]): string {
+  // Step 1 is always "Interview Guidelines (You are here)"
+  const rows = [
+    `<tr>
+      <td style="padding: 6px 0; font-size: 13px; color: #374151; border-bottom: 1px solid #dbeafe;">
+        <strong>Step 1:</strong> 📋 Interview Guidelines <span style="color: #1d4ed8; font-style: italic;">(You are here)</span>
+      </td>
+    </tr>`
+  ];
+
+  stages.forEach((stage, idx) => {
+    const emoji = stageEmoji[stage.name] || '📌';
+    rows.push(`<tr>
+      <td style="padding: 6px 0; font-size: 13px; color: #374151; ${idx < stages.length - 1 ? 'border-bottom: 1px solid #dbeafe;' : ''}">
+        <strong>Step ${idx + 2}:</strong> ${emoji} ${stage.name} — <span style="color: #6b7280;">${stage.description}</span>
+      </td>
+    </tr>`);
+  });
+
+  return rows.join('');
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -46,6 +513,12 @@ serve(async (req) => {
     const companyName = employer?.company_name || 'Gradia';
     const baseUrl = "https://gradia-link-shine.lovable.app";
     const signupUrl = `${baseUrl}/candidate/signup`;
+
+    // Determine pipeline stages dynamically
+    const interviewType = job?.interview_type || '';
+    const functionType = job?.function_type || '';
+    const stages = getStagesForJob(interviewType, functionType);
+    const stagesHtml = buildStagesHtml(stages);
 
     // Send instruction email
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -108,42 +581,13 @@ serve(async (req) => {
           </tr>
         </table>
 
-        <!-- Interview Process Overview -->
+        <!-- Interview Process Overview — Dynamic based on job pipeline -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eff6ff; border-radius: 8px; margin: 24px 0; border: 1px solid #2563eb;">
           <tr>
             <td style="padding: 20px;">
               <p style="margin: 0 0 12px; font-size: 12px; font-weight: 600; color: #1d4ed8; text-transform: uppercase; letter-spacing: 0.5px;">Your Interview Journey</p>
               <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 1:</strong> 📋 Interview Guidelines (You are here)
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 2:</strong> 📄 CV/Resume — AI-powered resume analysis
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 3:</strong> 💻 Written Test — MCQ-based test
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 4:</strong> 👥 HR Round — Behavioral interview
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 5:</strong> 🎥 Viva — Video interview
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 6px 0; font-size: 13px; color: #374151;">
-                    <strong>Step 6:</strong> 🎯 Final Review & Offer
-                  </td>
-                </tr>
+                ${stagesHtml}
               </table>
             </td>
           </tr>
@@ -242,7 +686,6 @@ serve(async (req) => {
       .single();
 
     if (instructionStage) {
-      // Create an event for the instruction round
       await supabase
         .from('interview_events')
         .insert({
