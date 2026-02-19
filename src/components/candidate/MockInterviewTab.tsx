@@ -110,12 +110,14 @@ export const MockInterviewTab = () => {
   const [showSlotBooking, setShowSlotBooking] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
-  // Mock role chooser state — 3-step: Interview Type → Pipeline Type → Role
+  // Mock role chooser state — Industry Category → Segment → Specialization → Designation
+  const [selectedMockIndustry, setSelectedMockIndustry] = useState('');
+  const [selectedMockSegment, setSelectedMockSegment] = useState('');
+  const [selectedMockSpecialization, setSelectedMockSpecialization] = useState('');
+  const [selectedMockRole, setSelectedMockRole] = useState('');
+  // keep for legacy compatibility
   const [selectedMockInterviewType, setSelectedMockInterviewType] = useState('');
   const [selectedMockPipelineType, setSelectedMockPipelineType] = useState('');
-  const [selectedMockRole, setSelectedMockRole] = useState('');
-  // keep legacy states for slot booking form compatibility
-  const [selectedMockSegment, setSelectedMockSegment] = useState('');
   const [selectedMockCategory, setSelectedMockCategory] = useState('');
   const [selectedMockDesignation, setSelectedMockDesignation] = useState('');
   const [selectedMockClassLevel, setSelectedMockClassLevel] = useState('');
@@ -1409,92 +1411,142 @@ export const MockInterviewTab = () => {
   const industryCategory = getIndustryCategory();
   const isITCorporate = industryCategory === 'it_corporate';
 
-  // ── 3-Step Mock Role Chooser Data ──
+  // ── Industry Category → Segment → Specialization → Designation ──
 
-  // Step 1: Interview Type options
-  const mockInterviewTypeOptions = [
-    { value: 'IT Corporate (Coding + MCQ)', label: 'IT Corporate (Coding + MCQ)', icon: '💻', hint: 'For IT companies — includes coding assessments' },
-    { value: 'Education', label: 'Education', icon: '🎓', hint: 'For schools & educational institutions' },
-    { value: 'Non-IT Corporate', label: 'Non-IT Corporate', icon: '🏢', hint: 'For non-technical corporate roles' },
+  const mockIndustryOptions = [
+    { value: 'IT Corporate', label: 'IT Corporate' },
+    { value: 'Education', label: 'Education' },
+    { value: 'Non-IT Corporate', label: 'Non-IT Corporate' },
+    { value: 'Legal', label: 'Legal' },
+    { value: 'Healthcare / Doctor', label: 'Healthcare / Doctor' },
+    { value: 'Civil / Government', label: 'Civil / Government' },
   ];
 
-  // Step 2: Pipeline Type based on Interview Type
-  const mockPipelineTypeMap: Record<string, { value: string; label: string }[]> = {
-    'IT Corporate (Coding + MCQ)': [
-      { value: 'Software Engineer', label: 'Software Engineer' },
-      { value: 'DevOps / Cloud Engineer', label: 'DevOps / Cloud Engineer' },
-      { value: 'Data Analyst / ML Engineer', label: 'Data Analyst / ML Engineer' },
-    ],
-    'Education': [
-      { value: 'Teacher', label: 'Teacher' },
-      { value: 'Admin / Principal', label: 'Admin / Principal' },
-      { value: 'Support Staff', label: 'Support Staff' },
-    ],
-    'Non-IT Corporate': [
-      { value: 'Sales', label: 'Sales' },
-      { value: 'HR / Operations', label: 'HR / Operations' },
-      { value: 'Finance / Accounts', label: 'Finance / Accounts' },
-      { value: 'Management', label: 'Management' },
-    ],
+  const mockSegmentMap: Record<string, string[]> = {
+    'IT Corporate': ['Software Engineer', 'DevOps / Cloud Engineer', 'Data Analyst / ML Engineer', 'QA / Testing', 'Product Management'],
+    'Education': ['Pre-Primary', 'Primary', 'High School', 'Higher Education', 'Admin / Management'],
+    'Non-IT Corporate': ['Sales', 'HR / Operations', 'Finance / Accounts', 'Marketing', 'Management'],
+    'Legal': ['Corporate Law', 'Criminal Law', 'Civil Law', 'Intellectual Property'],
+    'Healthcare / Doctor': ['General Medicine', 'Surgery', 'Pediatrics', 'Dentistry', 'Nursing'],
+    'Civil / Government': ['Engineering', 'Administrative Services', 'Police / Defence', 'Revenue / Finance'],
   };
 
-  // Step 3: Role based on Pipeline Type
-  const mockRoleMap: Record<string, { value: string; label: string }[]> = {
-    'Software Engineer': [
-      { value: 'Full Stack Developer', label: 'Full Stack Developer' },
-      { value: 'Frontend Developer', label: 'Frontend Developer' },
-      { value: 'Backend Developer', label: 'Backend Developer' },
-      { value: 'General Software Engineer', label: 'General Software Engineer' },
-    ],
-    'DevOps / Cloud Engineer': [
-      { value: 'DevOps Engineer', label: 'DevOps Engineer' },
-      { value: 'Cloud Engineer (AWS)', label: 'Cloud Engineer (AWS)' },
-      { value: 'Cloud Engineer (Azure)', label: 'Cloud Engineer (Azure)' },
-      { value: 'Site Reliability Engineer', label: 'Site Reliability Engineer' },
-    ],
-    'Data Analyst / ML Engineer': [
-      { value: 'Data Analyst', label: 'Data Analyst' },
-      { value: 'ML Engineer', label: 'ML Engineer' },
-      { value: 'Data Scientist', label: 'Data Scientist' },
-      { value: 'Business Analyst', label: 'Business Analyst' },
-    ],
-    'Teacher': [
-      { value: 'PRT (Primary Teacher)', label: 'PRT (Primary Teacher)' },
-      { value: 'TGT (Trained Graduate Teacher)', label: 'TGT (Trained Graduate Teacher)' },
-      { value: 'PGT (Post Graduate Teacher)', label: 'PGT (Post Graduate Teacher)' },
-      { value: 'Subject Teacher', label: 'Subject Teacher' },
-    ],
-    'Admin / Principal': [
-      { value: 'Vice Principal', label: 'Vice Principal' },
-      { value: 'Principal', label: 'Principal' },
-      { value: 'Academic Coordinator', label: 'Academic Coordinator' },
-    ],
-    'Support Staff': [
-      { value: 'Lab Assistant', label: 'Lab Assistant' },
-      { value: 'Librarian', label: 'Librarian' },
-      { value: 'Counselor', label: 'Counselor' },
-      { value: 'Sports Coach / PET', label: 'Sports Coach / PET' },
-    ],
-    'Sales': [
-      { value: 'Sales Executive', label: 'Sales Executive' },
-      { value: 'Business Development Manager', label: 'Business Development Manager' },
-      { value: 'Regional Sales Manager', label: 'Regional Sales Manager' },
-    ],
-    'HR / Operations': [
-      { value: 'HR Executive', label: 'HR Executive' },
-      { value: 'Operations Manager', label: 'Operations Manager' },
-      { value: 'Recruitment Specialist', label: 'Recruitment Specialist' },
-    ],
-    'Finance / Accounts': [
-      { value: 'Accountant', label: 'Accountant' },
-      { value: 'Finance Analyst', label: 'Finance Analyst' },
-      { value: 'CA / CPA', label: 'CA / CPA' },
-    ],
-    'Management': [
-      { value: 'Project Manager', label: 'Project Manager' },
-      { value: 'Product Manager', label: 'Product Manager' },
-      { value: 'General Manager', label: 'General Manager' },
-    ],
+  const mockSpecializationMap: Record<string, string[]> = {
+    'Software Engineer': ['Full Stack', 'Frontend', 'Backend', 'Mobile (Android/iOS)', 'General'],
+    'DevOps / Cloud Engineer': ['AWS', 'Azure', 'GCP', 'CI/CD & Infrastructure', 'Site Reliability'],
+    'Data Analyst / ML Engineer': ['Data Analytics', 'Machine Learning', 'Data Science', 'Business Intelligence'],
+    'QA / Testing': ['Manual Testing', 'Automation Testing', 'Performance Testing'],
+    'Product Management': ['Product Manager', 'Business Analyst', 'Scrum Master'],
+    'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
+    'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
+    'High School': ['Board', 'Competitive'],
+    'Higher Education': ['Lecturer', 'Professor', 'Research'],
+    'Admin / Management': ['Principal', 'Vice Principal', 'Coordinator'],
+    'Sales': ['Inside Sales', 'Field Sales', 'Business Development'],
+    'HR / Operations': ['Recruitment', 'HR Generalist', 'Operations'],
+    'Finance / Accounts': ['Accounting', 'Financial Analysis', 'Taxation'],
+    'Marketing': ['Digital Marketing', 'Brand Management', 'Content Marketing'],
+    'Management': ['Project Management', 'General Management', 'Strategy'],
+    'Corporate Law': ['Contract Law', 'Mergers & Acquisitions', 'Compliance'],
+    'Criminal Law': ['Defense', 'Prosecution'],
+    'Civil Law': ['Property Law', 'Family Law'],
+    'Intellectual Property': ['Patents', 'Trademarks', 'Copyrights'],
+    'General Medicine': ['MBBS', 'MD', 'General Practitioner'],
+    'Surgery': ['General Surgery', 'Orthopedics', 'Neurosurgery'],
+    'Pediatrics': ['Pediatrician', 'Neonatologist'],
+    'Dentistry': ['General Dentistry', 'Orthodontics'],
+    'Nursing': ['Staff Nurse', 'Senior Nurse', 'Head Nurse'],
+    'Engineering': ['Civil Engineering', 'Electrical Engineering', 'Mechanical Engineering'],
+    'Administrative Services': ['IAS', 'State Civil Services', 'Administrative Officer'],
+    'Police / Defence': ['Police Officer', 'Army', 'Navy', 'Air Force'],
+    'Revenue / Finance': ['Revenue Inspector', 'Accounts Officer', 'Auditor'],
+  };
+
+  const mockDesignationBySpecMap: Record<string, string[]> = {
+    'Full Stack': ['Full Stack Developer', 'MERN Stack Developer', 'MEAN Stack Developer'],
+    'Frontend': ['Frontend Developer', 'React Developer', 'Angular Developer', 'Vue Developer'],
+    'Backend': ['Backend Developer', 'Java Developer', 'Python Developer', 'Node.js Developer'],
+    'Mobile (Android/iOS)': ['Android Developer', 'iOS Developer', 'Flutter Developer'],
+    'General': ['Software Engineer', 'Junior Developer', 'Senior Developer'],
+    'AWS': ['Cloud Engineer (AWS)', 'AWS Solutions Architect', 'AWS DevOps'],
+    'Azure': ['Cloud Engineer (Azure)', 'Azure Solutions Architect'],
+    'GCP': ['Cloud Engineer (GCP)', 'GCP Solutions Architect'],
+    'CI/CD & Infrastructure': ['DevOps Engineer', 'Infrastructure Engineer'],
+    'Site Reliability': ['Site Reliability Engineer', 'Platform Engineer'],
+    'Data Analytics': ['Data Analyst', 'Business Analyst'],
+    'Machine Learning': ['ML Engineer', 'AI Engineer'],
+    'Data Science': ['Data Scientist', 'Research Analyst'],
+    'Business Intelligence': ['BI Developer', 'BI Analyst'],
+    'Manual Testing': ['QA Tester', 'Test Engineer'],
+    'Automation Testing': ['Automation Engineer', 'SDET'],
+    'Performance Testing': ['Performance Engineer', 'Load Tester'],
+    'Product Manager': ['Product Manager', 'Associate Product Manager'],
+    'Business Analyst': ['Business Analyst', 'Systems Analyst'],
+    'Scrum Master': ['Scrum Master', 'Agile Coach'],
+    'Teaching': ['MOTHER TEACHER', 'PRT', 'TGT'],
+    'Helping/Supporting': ['ASSO.TEACHER', 'CARE TAKER'],
+    'Admin': ['VICE PRINCIPAL'],
+    'CLASS-1&2': ['PRT', 'TGT', 'SUBJECT TEACHER'],
+    'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA'],
+    'Board': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD'],
+    'Competitive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD'],
+    'Lecturer': ['Lecturer', 'Assistant Professor'],
+    'Professor': ['Associate Professor', 'Professor'],
+    'Research': ['Research Scholar', 'Research Associate'],
+    'Principal': ['Principal'],
+    'Vice Principal': ['Vice Principal'],
+    'Coordinator': ['Academic Coordinator', 'Activity Coordinator'],
+    'Inside Sales': ['Sales Executive', 'Inside Sales Representative'],
+    'Field Sales': ['Sales Executive', 'Regional Sales Manager'],
+    'Business Development': ['BDE', 'BDM', 'Business Development Manager'],
+    'Recruitment': ['HR Executive', 'Talent Acquisition Specialist', 'Recruiter'],
+    'HR Generalist': ['HR Generalist', 'HR Manager'],
+    'Operations': ['Operations Executive', 'Operations Manager'],
+    'Accounting': ['Accountant', 'Senior Accountant'],
+    'Financial Analysis': ['Finance Analyst', 'Financial Analyst'],
+    'Taxation': ['Tax Analyst', 'CA', 'Tax Consultant'],
+    'Digital Marketing': ['Digital Marketing Executive', 'SEO Specialist', 'Social Media Manager'],
+    'Brand Management': ['Brand Manager', 'Brand Executive'],
+    'Content Marketing': ['Content Writer', 'Content Strategist'],
+    'Project Management': ['Project Manager', 'Program Manager'],
+    'General Management': ['General Manager', 'Operations Head'],
+    'Strategy': ['Strategy Analyst', 'Strategy Consultant'],
+    'Contract Law': ['Corporate Lawyer', 'Contract Specialist'],
+    'Mergers & Acquisitions': ['M&A Associate', 'M&A Lawyer'],
+    'Compliance': ['Compliance Officer', 'Legal Compliance Manager'],
+    'Defense': ['Defense Lawyer', 'Public Defender'],
+    'Prosecution': ['Prosecutor', 'Public Prosecutor'],
+    'Property Law': ['Property Lawyer', 'Real Estate Lawyer'],
+    'Family Law': ['Family Lawyer', 'Divorce Lawyer'],
+    'Patents': ['Patent Attorney', 'Patent Analyst'],
+    'Trademarks': ['Trademark Attorney', 'IP Specialist'],
+    'Copyrights': ['Copyright Attorney', 'IP Consultant'],
+    'MBBS': ['General Practitioner', 'Medical Officer'],
+    'MD': ['Physician', 'Specialist Doctor'],
+    'General Practitioner': ['GP', 'Family Physician'],
+    'General Surgery': ['General Surgeon', 'Surgical Resident'],
+    'Orthopedics': ['Orthopedic Surgeon', 'Orthopedic Specialist'],
+    'Neurosurgery': ['Neurosurgeon', 'Neuro Specialist'],
+    'Pediatrician': ['Pediatrician', 'Child Specialist'],
+    'Neonatologist': ['Neonatologist', 'NICU Specialist'],
+    'General Dentistry': ['Dentist', 'Dental Surgeon'],
+    'Orthodontics': ['Orthodontist', 'Dental Specialist'],
+    'Staff Nurse': ['Staff Nurse', 'Registered Nurse'],
+    'Senior Nurse': ['Senior Nurse', 'Charge Nurse'],
+    'Head Nurse': ['Head Nurse', 'Nursing Supervisor'],
+    'Civil Engineering': ['Civil Engineer', 'Site Engineer', 'Project Engineer'],
+    'Electrical Engineering': ['Electrical Engineer', 'Power Systems Engineer'],
+    'Mechanical Engineering': ['Mechanical Engineer', 'Design Engineer'],
+    'IAS': ['IAS Officer', 'Deputy Collector'],
+    'State Civil Services': ['State Civil Services Officer', 'Deputy Tahsildar'],
+    'Administrative Officer': ['Administrative Officer', 'Section Officer'],
+    'Police Officer': ['Sub-Inspector', 'Inspector', 'Deputy Superintendent'],
+    'Army': ['Lieutenant', 'Captain', 'Major'],
+    'Navy': ['Lieutenant', 'Commander'],
+    'Air Force': ['Flying Officer', 'Flight Lieutenant'],
+    'Revenue Inspector': ['Revenue Inspector', 'Village Administrative Officer'],
+    'Accounts Officer': ['Accounts Officer', 'Junior Accounts Officer'],
+    'Auditor': ['Auditor', 'Senior Auditor'],
   };
 
   // IT role options kept for pipeline stage derivation
@@ -1572,8 +1624,8 @@ export const MockInterviewTab = () => {
   const showMockClassLevel = selectedMockSegment === 'High School' &&
     (selectedMockCategory === 'Board' || selectedMockCategory === 'Compititive');
 
-  // Check if all 3 steps are selected
-  const isMockRoleSelected = !!selectedMockInterviewType && !!selectedMockPipelineType && !!selectedMockRole;
+  // Check if all 4 fields are selected
+  const isMockRoleSelected = !!selectedMockIndustry && !!selectedMockSegment && !!selectedMockSpecialization && !!selectedMockRole;
 
   // No session - Show start screen with interview type selection
   if (!currentSession) {
@@ -1690,7 +1742,7 @@ export const MockInterviewTab = () => {
           </Card>
         )}
 
-        {/* ── Unified 3-Step Role Selector ── */}
+        {/* ── Role Selector: Industry → Segment → Specialization → Designation ── */}
         <div className="max-w-2xl mx-auto space-y-5">
 
           {/* Role Selection Card */}
@@ -1701,86 +1753,99 @@ export const MockInterviewTab = () => {
                 Select Your Interview Details
               </p>
 
-              {/* Interview Type */}
+              {/* Industry Category */}
               <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Interview Type <span className="text-destructive">*</span></Label>
+                <Label className="text-sm font-medium">Industry Category <span className="text-destructive">*</span></Label>
                 <Select
-                  value={selectedMockInterviewType}
+                  value={selectedMockIndustry}
                   onValueChange={(v) => {
-                    setSelectedMockInterviewType(v);
-                    setSelectedMockPipelineType('');
+                    setSelectedMockIndustry(v);
+                    setSelectedMockSegment('');
+                    setSelectedMockSpecialization('');
                     setSelectedMockRole('');
                   }}
                 >
                   <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select interview type" />
+                    <SelectValue placeholder="Select industry category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockInterviewTypeOptions.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.icon} {opt.label}
-                      </SelectItem>
+                    {mockIndustryOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {selectedMockInterviewType && (
-                  <p className="text-xs text-primary">
-                    {mockInterviewTypeOptions.find(o => o.value === selectedMockInterviewType)?.hint}
-                  </p>
-                )}
               </div>
 
-              {/* Interview Pipeline Type */}
-              {selectedMockInterviewType && (
+              {/* Segment */}
+              {selectedMockIndustry && (
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Interview Pipeline Type <span className="text-destructive">*</span></Label>
+                  <Label className="text-sm font-medium">Segment <span className="text-destructive">*</span></Label>
                   <Select
-                    value={selectedMockPipelineType}
+                    value={selectedMockSegment}
                     onValueChange={(v) => {
-                      setSelectedMockPipelineType(v);
+                      setSelectedMockSegment(v);
+                      setSelectedMockSpecialization('');
                       setSelectedMockRole('');
                     }}
                   >
                     <SelectTrigger className="h-10">
-                      <SelectValue placeholder="Select pipeline type" />
+                      <SelectValue placeholder="Select segment" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(mockPipelineTypeMap[selectedMockInterviewType] || []).map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      {(mockSegmentMap[selectedMockIndustry] || []).map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {!selectedMockPipelineType && (
-                    <p className="text-xs text-muted-foreground">Choose the role type to see the interview stages</p>
-                  )}
                 </div>
               )}
 
-              {/* Role */}
-              {selectedMockPipelineType && (
+              {/* Specialization */}
+              {selectedMockSegment && (
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Role <span className="text-destructive">*</span></Label>
-                  <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
+                  <Label className="text-sm font-medium">Specialization <span className="text-destructive">*</span></Label>
+                  <Select
+                    value={selectedMockSpecialization}
+                    onValueChange={(v) => {
+                      setSelectedMockSpecialization(v);
+                      setSelectedMockRole('');
+                    }}
+                  >
                     <SelectTrigger className="h-10">
-                      <SelectValue placeholder="Select the role for this position" />
+                      <SelectValue placeholder="Select specialization" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(mockRoleMap[selectedMockPipelineType] || []).map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      {(mockSpecializationMap[selectedMockSegment] || []).map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {!selectedMockRole && (
-                    <p className="text-xs text-muted-foreground">Select the role for this position</p>
-                  )}
+                </div>
+              )}
+
+              {/* Designation */}
+              {selectedMockSpecialization && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Designation <span className="text-destructive">*</span></Label>
+                  <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select designation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(mockDesignationBySpecMap[selectedMockSpecialization] || []).map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
               {/* Selection Summary */}
               {isMockRoleSelected && (
                 <div className="flex flex-wrap gap-1.5 pt-1 border-t">
-                  <Badge variant="secondary" className="text-xs">{selectedMockInterviewType}</Badge>
-                  <Badge variant="secondary" className="text-xs">{selectedMockPipelineType}</Badge>
+                  <Badge variant="secondary" className="text-xs">{selectedMockIndustry}</Badge>
+                  <Badge variant="secondary" className="text-xs">{selectedMockSegment}</Badge>
+                  <Badge variant="secondary" className="text-xs">{selectedMockSpecialization}</Badge>
                   <Badge className="text-xs">{selectedMockRole}</Badge>
                 </div>
               )}
@@ -1869,52 +1934,73 @@ export const MockInterviewTab = () => {
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
 
-          {/* 3 inline selectors beside refresh */}
+          {/* 4 inline selectors beside refresh: Industry → Segment → Specialization → Designation */}
           <Select
-            value={selectedMockInterviewType}
+            value={selectedMockIndustry}
             onValueChange={(v) => {
-              setSelectedMockInterviewType(v);
-              setSelectedMockPipelineType('');
+              setSelectedMockIndustry(v);
+              setSelectedMockSegment('');
+              setSelectedMockSpecialization('');
               setSelectedMockRole('');
             }}
           >
-            <SelectTrigger className="h-10 w-auto min-w-[200px] text-xs">
-              <SelectValue placeholder="Interview Type" />
+            <SelectTrigger className="h-10 w-auto min-w-[180px] text-xs">
+              <SelectValue placeholder="Industry Category" />
             </SelectTrigger>
             <SelectContent>
-              {mockInterviewTypeOptions.map(opt => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.icon} {opt.label}</SelectItem>
+              {mockIndustryOptions.map(opt => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          {selectedMockInterviewType && (
+          {selectedMockIndustry && (
             <Select
-              value={selectedMockPipelineType}
+              value={selectedMockSegment}
               onValueChange={(v) => {
-                setSelectedMockPipelineType(v);
+                setSelectedMockSegment(v);
+                setSelectedMockSpecialization('');
                 setSelectedMockRole('');
               }}
             >
-              <SelectTrigger className="h-10 w-auto min-w-[180px] text-xs">
-                <SelectValue placeholder="Pipeline Type" />
+              <SelectTrigger className="h-10 w-auto min-w-[160px] text-xs">
+                <SelectValue placeholder="Segment" />
               </SelectTrigger>
               <SelectContent>
-                {(mockPipelineTypeMap[selectedMockInterviewType] || []).map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                {(mockSegmentMap[selectedMockIndustry] || []).map(opt => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
 
-          {selectedMockPipelineType && (
-            <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
-              <SelectTrigger className="h-10 w-auto min-w-[200px] text-xs">
-                <SelectValue placeholder="Role" />
+          {selectedMockSegment && (
+            <Select
+              value={selectedMockSpecialization}
+              onValueChange={(v) => {
+                setSelectedMockSpecialization(v);
+                setSelectedMockRole('');
+              }}
+            >
+              <SelectTrigger className="h-10 w-auto min-w-[160px] text-xs">
+                <SelectValue placeholder="Specialization" />
               </SelectTrigger>
               <SelectContent>
-                {(mockRoleMap[selectedMockPipelineType] || []).map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                {(mockSpecializationMap[selectedMockSegment] || []).map(opt => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {selectedMockSpecialization && (
+            <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
+              <SelectTrigger className="h-10 w-auto min-w-[180px] text-xs">
+                <SelectValue placeholder="Designation" />
+              </SelectTrigger>
+              <SelectContent>
+                {(mockDesignationBySpecMap[selectedMockSpecialization] || []).map(opt => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
