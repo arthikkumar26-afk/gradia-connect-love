@@ -1895,17 +1895,80 @@ export const MockInterviewTab = () => {
                 : 'Complete each stage to advance to the next round.'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button onClick={() => loadData()} disabled={isLoading} variant="outline" size="icon" className="h-10 w-10">
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button onClick={loadDemoResults} disabled={isStarting} variant="outline" className="gap-2 text-xs">
-            {isStarting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ListChecks className="h-3 w-3" />}
-            Load Demo Results
-          </Button>
-          <Button onClick={startNewSession} disabled={isStarting} variant="default" className="gap-2">
+
+          {/* Role Chooser inline — beside refresh */}
+          {isITCorporate ? (
+            <Select value={selectedMockRole} onValueChange={setSelectedMockRole}>
+              <SelectTrigger className="h-10 w-auto min-w-[180px] text-xs gap-1">
+                <Code className="h-3.5 w-3.5 text-primary shrink-0" />
+                <SelectValue placeholder="Choose Role / Domain" />
+              </SelectTrigger>
+              <SelectContent>
+                {itRoleOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <span className="font-medium">{opt.label}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Select value={selectedMockSegment} onValueChange={(v) => { setSelectedMockSegment(v); setSelectedMockCategory(''); setSelectedMockClassLevel(''); setSelectedMockDesignation(''); }}>
+                <SelectTrigger className="h-10 w-auto min-w-[130px] text-xs">
+                  <SelectValue placeholder="Segment" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['Pre-Primary', 'Primary', 'High School'].map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedMockSegment && (
+                <Select value={selectedMockCategory} onValueChange={(v) => { setSelectedMockCategory(v); setSelectedMockClassLevel(''); setSelectedMockDesignation(''); }}>
+                  <SelectTrigger className="h-10 w-auto min-w-[130px] text-xs">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(mockCategoryOptions[selectedMockSegment] || []).map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {showMockClassLevel && (
+                <Select value={selectedMockClassLevel} onValueChange={(v) => { setSelectedMockClassLevel(v); setSelectedMockDesignation(''); }}>
+                  <SelectTrigger className="h-10 w-auto min-w-[130px] text-xs">
+                    <SelectValue placeholder="Class Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(mockClassLevelOptions[selectedMockCategory] || []).map(cl => (
+                      <SelectItem key={cl} value={cl}>{cl}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {selectedMockCategory && (!showMockClassLevel || selectedMockClassLevel) && getMockDesignations().length > 0 && (
+                <Select value={selectedMockDesignation} onValueChange={setSelectedMockDesignation}>
+                  <SelectTrigger className="h-10 w-auto min-w-[150px] text-xs">
+                    <SelectValue placeholder="Designation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getMockDesignations().map(d => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+
+          <Button onClick={startNewSession} disabled={isStarting || !isMockRoleSelected} variant="default" className="gap-2">
             {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            Start Mock Interview
+            {!isMockRoleSelected ? 'Select Role First' : 'Start Mock Interview'}
           </Button>
         </div>
       </div>
