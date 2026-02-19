@@ -1648,17 +1648,25 @@ const CandidateDashboard = () => {
         profileRole.includes('tutor');
 
       // Helper: detect if a job belongs to the Education sector
+      // PRIMARY: use interview_type field set during job posting (most reliable)
+      // FALLBACK: keyword detection for jobs without interview_type
       const isEducationJob = (job: any): boolean => {
+        const interviewType = (job.interview_type || '').toLowerCase();
+        // If interview_type is explicitly set to education — definitive match
+        if (interviewType === 'education') return true;
+        // If interview_type is explicitly set to a non-education type — definitive non-match
+        if (['it_corporate', 'non_it_corporate', 'legal', 'sales', 'management'].includes(interviewType)) return false;
+
+        // Fallback: keyword detection only when interview_type is null/standard/empty
         const jobTitle = (job.job_title || '').toLowerCase();
         const jobDept  = (job.department || '').toLowerCase();
         const jobCat   = (job.category || '').toLowerCase();
         const jobSeg   = (job.segment || '').toLowerCase();
-        const jobDesc  = (job.description || '').toLowerCase();
 
         const educationKeywords = [
           'teacher', 'lecturer', 'professor', 'principal', 'tutor', 'educator',
           'academic', 'faculty', 'instructor', 'school', 'college', 'education',
-          'teaching', 'classroom', 'curriculum', 'board', 'classes', 'subject',
+          'teaching', 'classroom', 'curriculum',
         ];
         return educationKeywords.some(kw =>
           jobTitle.includes(kw) || jobDept.includes(kw) || jobCat.includes(kw) || jobSeg.includes(kw)
@@ -1667,6 +1675,13 @@ const CandidateDashboard = () => {
 
       // Helper: detect if a job belongs to the IT / Software sector
       const isITJob = (job: any): boolean => {
+        const interviewType = (job.interview_type || '').toLowerCase();
+        // If interview_type is explicitly set to it_corporate — definitive match
+        if (interviewType === 'it_corporate') return true;
+        // If interview_type is explicitly set to a non-IT type — definitive non-match
+        if (['education', 'non_it_corporate', 'legal', 'sales', 'management'].includes(interviewType)) return false;
+
+        // Fallback: keyword detection only when interview_type is null/standard/empty
         const jobTitle = (job.job_title || '').toLowerCase();
         const jobDept  = (job.department || '').toLowerCase();
         const jobCat   = (job.category || '').toLowerCase();
@@ -1674,8 +1689,8 @@ const CandidateDashboard = () => {
 
         const itKeywords = [
           'software', 'developer', 'engineer', 'programmer', 'devops', 'frontend',
-          'backend', 'full stack', 'data scientist', 'data analyst', 'cloud', 'it ',
-          'tech', 'coding', 'react', 'node', 'python', 'java', 'cyber', 'network',
+          'backend', 'full stack', 'data scientist', 'data analyst', 'cloud',
+          'coding', 'react', 'node', 'python', 'java', 'cyber', 'network',
         ];
         return itKeywords.some(kw =>
           jobTitle.includes(kw) || jobDept.includes(kw) || jobCat.includes(kw) || jobSeg.includes(kw)
@@ -1696,6 +1711,7 @@ const CandidateDashboard = () => {
         }
         return true;
       });
+
 
       // Score and rank jobs based on candidate's profile
       const scoredJobs = sectorFilteredJobs.map((job) => {
