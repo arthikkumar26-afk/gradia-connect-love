@@ -45,6 +45,7 @@ const EditProfile = () => {
   const [detectedLogo, setDetectedLogo] = useState<{ file: File; preview: string } | null>(null);
   const [showLogoConfirmation, setShowLogoConfirmation] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [location, setLocation] = useState("");
   const [linkedin, setLinkedin] = useState("");
@@ -93,6 +94,7 @@ const EditProfile = () => {
 
     // Load existing profile data
     setFullName(profile.full_name || "");
+    setEmail(profile.email || "");
     setMobile(profile.mobile || "");
     setLocation(profile.location || "");
     setLinkedin(profile.linkedin || "");
@@ -216,6 +218,7 @@ const EditProfile = () => {
           
           // Auto-fill form fields from parsed data
           if (data.full_name) setFullName(data.full_name);
+          if (data.email) setEmail(data.email);
           if (data.mobile) setMobile(data.mobile);
           if (data.date_of_birth) setDateOfBirth(data.date_of_birth);
           if (data.gender) setGender(data.gender);
@@ -379,6 +382,7 @@ const EditProfile = () => {
       // Update profile
       const updateData: Record<string, any> = {
         full_name: fullName,
+        email: email || profile.email,
         mobile,
         location: profile.role === 'candidate' ? (currentCity || location) : location,
         linkedin,
@@ -538,7 +542,7 @@ const EditProfile = () => {
               />
             </div>
 
-            {/* Email (Read-only) */}
+            {/* Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
@@ -547,12 +551,13 @@ const EditProfile = () => {
               <Input
                 id="email"
                 type="email"
-                value={profile.email}
-                disabled
-                className="h-12 bg-muted"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12"
+                placeholder="your@email.com"
               />
               <p className="text-xs text-muted-foreground">
-                Email cannot be changed
+                AI will auto-detect email from resume upload
               </p>
             </div>
 
