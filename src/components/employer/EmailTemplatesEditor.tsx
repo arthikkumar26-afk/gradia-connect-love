@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mail, Save, RefreshCw, Eye, Palette } from "lucide-react";
+import { Mail, Save, RefreshCw, Eye, Palette, ChevronRight, Info } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { interviewPipelineConfig } from "@/data/interviewPipelineConfig";
 
 interface EmailTemplate {
   id?: string;
@@ -31,121 +32,246 @@ interface EmailTemplate {
   is_active: boolean;
 }
 
-const STAGES = [
-  { name: "Resume Screening", icon: "📄" },
-  { name: "AI Phone Interview", icon: "📞" },
-  { name: "Technical Assessment", icon: "💻" },
-  { name: "HR Round", icon: "👥" },
-  { name: "Final Review", icon: "🎯" },
-  { name: "Offer Stage", icon: "🎁" },
-];
+interface Job {
+  id: string;
+  job_title: string;
+  interview_type: string | null;
+  function_type: string | null;
+}
 
-const DEFAULT_TEMPLATES: Record<string, Partial<EmailTemplate>> = {
-  "Resume Screening": {
-    subject: "📄 Resume Screening Complete - {{jobTitle}} at {{companyName}}",
-    header_text: "Resume Review Complete!",
-    body_text: "Your resume has been reviewed for the {{jobTitle}} position. Our AI system has analyzed your qualifications and experience.",
-    footer_text: "Best regards,\nThe {{companyName}} Hiring Team",
-    primary_color: "#10b981",
-  },
-  "AI Phone Interview": {
-    subject: "📞 Phone Interview Complete - {{jobTitle}} at {{companyName}}",
-    header_text: "Phone Interview Completed!",
-    body_text: "Thank you for completing the AI phone screening for {{jobTitle}}. We've assessed your communication skills and role understanding.",
-    footer_text: "Best regards,\nThe {{companyName}} Hiring Team",
-    primary_color: "#3b82f6",
-  },
-  "Technical Assessment": {
-    subject: "💻 Technical Assessment Complete - {{jobTitle}} at {{companyName}}",
-    header_text: "Technical Assessment Done!",
-    body_text: "Your technical assessment for {{jobTitle}} has been evaluated. We've reviewed your technical competencies and problem-solving abilities.",
-    footer_text: "Best regards,\nThe {{companyName}} Hiring Team",
-    primary_color: "#8b5cf6",
-  },
-  "HR Round": {
-    subject: "👥 HR Round Complete - {{jobTitle}} at {{companyName}}",
-    header_text: "HR Interview Complete!",
-    body_text: "Thank you for the HR interview for {{jobTitle}}. We've evaluated your cultural fit and communication skills.",
-    footer_text: "Best regards,\nThe {{companyName}} Hiring Team",
-    primary_color: "#f59e0b",
-  },
-  "Final Review": {
-    subject: "🎯 Final Review Complete - {{jobTitle}} at {{companyName}}",
-    header_text: "Final Review Done!",
-    body_text: "Your candidacy for {{jobTitle}} has completed the final review stage. All evaluations have been consolidated.",
-    footer_text: "Best regards,\nThe {{companyName}} Hiring Team",
-    primary_color: "#ec4899",
-  },
-  "Offer Stage": {
-    subject: "🎁 Offer Stage - {{jobTitle}} at {{companyName}}",
-    header_text: "Congratulations!",
-    body_text: "We're excited to move forward with your application for {{jobTitle}}. You've successfully completed all interview stages!",
-    footer_text: "Welcome to the team!\nThe {{companyName}} Hiring Team",
-    primary_color: "#10b981",
-  },
+// Stage icon mapping
+const STAGE_ICONS: Record<string, string> = {
+  "CV/Resume": "📄",
+  "Resume Screening": "📄",
+  "Written Test Slot Booking": "📅",
+  "Demo Slot Booking": "📅",
+  "HR Round Slot Booking": "📅",
+  "Written Test": "✍️",
+  "Technical Assessment": "💻",
+  "Technical Coding Challenge": "💻",
+  "Technical MCQ Test": "📝",
+  "Technical Interview": "🖥️",
+  "Demo Round": "🎥",
+  "Demo Feedback": "💬",
+  "HR Round": "👥",
+  "Final Review": "🎯",
+  "Offer Stage": "🎁",
+  "Instruction Mail": "📧",
+  "Leadership Assessment": "👑",
+  "Academic Assessment": "🎓",
+  "Case Study": "📋",
+  "Board Interview": "🏢",
+  "Aptitude Test": "🧠",
+  "Sales Pitch": "📊",
+  "Group Discussion": "🗣️",
+  "Management Meet": "🤝",
+  "Psychometric Assessment": "🧩",
+  "Role Play Round": "🎭",
+  "Practical Assessment": "🔬",
+  "Knowledge Assessment": "📚",
+  "Security Assessment": "🔒",
+  "SQL & Analytics Test": "📊",
+  "Infrastructure Test": "☁️",
+  "QA Assessment": "✅",
+  "Design Challenge": "🎨",
+  "Strategy Presentation": "📈",
+  "Technical Support Test": "🛠️",
+  "Operations Case Study": "⚙️",
+  "Team Scenario": "👫",
+};
+
+// Smart default templates for common stage patterns
+const buildDefaultTemplate = (stageName: string, companyName = "{{companyName}}", jobTitle = "{{jobTitle}}") => {
+  const slotStages = ["Slot Booking"];
+  const isSlotStage = slotStages.some(s => stageName.includes(s));
+
+  if (stageName === "CV/Resume" || stageName === "Resume Screening") {
+    return {
+      subject: `📄 Application Received - ${jobTitle} at ${companyName}`,
+      header_text: "Application Under Review",
+      body_text: `Thank you for applying for the {{jobTitle}} position at {{companyName}}. Your resume has been received and is currently under AI-powered review. We will notify you of the result shortly.`,
+      footer_text: `Best regards,\nThe {{companyName}} Hiring Team`,
+      primary_color: "#10b981",
+    };
+  }
+  if (isSlotStage) {
+    const roundName = stageName.replace(" Slot Booking", "");
+    return {
+      subject: `📅 Book Your ${roundName} Slot - {{jobTitle}} at {{companyName}}`,
+      header_text: `Book Your ${roundName} Appointment`,
+      body_text: `Congratulations! You've cleared the previous stage. Please book your preferred slot for the {{jobTitle}} ${roundName} at {{companyName}}. Click the link below to choose a date and time convenient for you.`,
+      footer_text: `Best of luck!\nThe {{companyName}} Hiring Team`,
+      primary_color: "#3b82f6",
+    };
+  }
+  if (stageName === "Demo Round") {
+    return {
+      subject: `🎥 Demo Round Scheduled - {{jobTitle}} at {{companyName}}`,
+      header_text: "Your Demo Round is Confirmed!",
+      body_text: `Your Demo Round for the {{jobTitle}} position at {{companyName}} has been scheduled. This is a live teaching/presentation session. Please be prepared with your topic and ensure a stable internet connection.`,
+      footer_text: `All the best!\nThe {{companyName}} Hiring Team`,
+      primary_color: "#8b5cf6",
+    };
+  }
+  if (stageName === "Demo Feedback") {
+    return {
+      subject: `💬 Demo Round Feedback - {{jobTitle}} at {{companyName}}`,
+      header_text: "Demo Round Evaluation Complete",
+      body_text: `Your Demo Round for {{jobTitle}} at {{companyName}} has been evaluated by our management team. Please find your feedback and score below. We will update you on next steps soon.`,
+      footer_text: `Thank you,\nThe {{companyName}} Hiring Team`,
+      primary_color: "#f59e0b",
+    };
+  }
+  if (stageName === "HR Round") {
+    return {
+      subject: `👥 HR Round Scheduled - {{jobTitle}} at {{companyName}}`,
+      header_text: "HR Interview Confirmed!",
+      body_text: `Great news! You have been scheduled for the HR Round for the {{jobTitle}} position at {{companyName}}. This interview will cover your cultural fit, expectations, and overall suitability for the role.`,
+      footer_text: `Looking forward to speaking with you!\nThe {{companyName}} HR Team`,
+      primary_color: "#f59e0b",
+    };
+  }
+  if (stageName === "Final Review") {
+    return {
+      subject: `🎯 Final Review Update - {{jobTitle}} at {{companyName}}`,
+      header_text: "Final Review in Progress",
+      body_text: `You have successfully completed all interview stages for {{jobTitle}} at {{companyName}}. Our team is currently conducting the final review of all candidates. We will inform you of the outcome very soon.`,
+      footer_text: `Thank you for your patience,\nThe {{companyName}} Hiring Team`,
+      primary_color: "#ec4899",
+    };
+  }
+  if (stageName === "Offer Stage") {
+    return {
+      subject: `🎁 Offer Letter - {{jobTitle}} at {{companyName}}`,
+      header_text: "Congratulations! You Got the Job!",
+      body_text: `We are thrilled to extend an offer for the {{jobTitle}} position at {{companyName}}. Please find your offer letter attached. Kindly review and respond at your earliest convenience. Welcome to the team!`,
+      footer_text: `We can't wait to have you on board!\nThe {{companyName}} Hiring Team`,
+      primary_color: "#10b981",
+    };
+  }
+  if (stageName === "Instruction Mail") {
+    return {
+      subject: `📧 Important: Interview Instructions - {{jobTitle}} at {{companyName}}`,
+      header_text: "Interview Process Instructions",
+      body_text: `Thank you for your application for {{jobTitle}} at {{companyName}}. Please carefully read all the enclosed instructions for your upcoming interview process. Following these guidelines will ensure a smooth experience.`,
+      footer_text: `Good luck!\nThe {{companyName}} Hiring Team`,
+      primary_color: "#6366f1",
+    };
+  }
+  // Generic fallback for any stage
+  return {
+    subject: `📋 ${stageName} Update - {{jobTitle}} at {{companyName}}`,
+    header_text: `${stageName} Stage`,
+    body_text: `We have an update regarding your {{jobTitle}} application at {{companyName}} for the ${stageName} stage. Please review the details below and follow any instructions provided.`,
+    footer_text: `Best regards,\nThe {{companyName}} Hiring Team`,
+    primary_color: "#6366f1",
+  };
 };
 
 export function EmailTemplatesEditor() {
   const [templates, setTemplates] = useState<Record<string, EmailTemplate>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeStage, setActiveStage] = useState(STAGES[0].name);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState<string>("");
+  const [pipelineStages, setPipelineStages] = useState<{ name: string; icon: string; description: string }[]>([]);
+  const [activeStage, setActiveStage] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
 
   useEffect(() => {
-    fetchTemplates();
+    initEditor();
   }, []);
 
-  const fetchTemplates = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const initEditor = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setUserId(user.id);
 
-      const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
-        .eq("employer_id", user.id);
+    // Fetch employer jobs
+    const { data: jobData } = await supabase
+      .from("jobs")
+      .select("id, job_title, interview_type, function_type")
+      .eq("employer_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
 
-      if (error) throw error;
-
-      const templateMap: Record<string, EmailTemplate> = {};
-      
-      // Initialize with defaults
-      STAGES.forEach(stage => {
-        const existing = data?.find(t => t.stage_name === stage.name);
-        if (existing) {
-          templateMap[stage.name] = existing as EmailTemplate;
-        } else {
-          templateMap[stage.name] = {
-            employer_id: user.id,
-            stage_name: stage.name,
-            template_type: "stage_transition",
-            subject: DEFAULT_TEMPLATES[stage.name]?.subject || "",
-            header_text: DEFAULT_TEMPLATES[stage.name]?.header_text || "",
-            body_text: DEFAULT_TEMPLATES[stage.name]?.body_text || "",
-            footer_text: DEFAULT_TEMPLATES[stage.name]?.footer_text || "",
-            primary_color: DEFAULT_TEMPLATES[stage.name]?.primary_color || "#10b981",
-            is_active: true,
-          };
-        }
-      });
-
-      setTemplates(templateMap);
-    } catch (error) {
-      console.error("Error fetching templates:", error);
-      toast.error("Failed to load email templates");
-    } finally {
+    if (jobData && jobData.length > 0) {
+      setJobs(jobData as Job[]);
+      const firstJob = jobData[0] as Job;
+      setSelectedJobId(firstJob.id);
+      loadPipelineForJob(firstJob, user.id);
+    } else {
       setLoading(false);
     }
+  };
+
+  const loadPipelineForJob = async (job: Job, uid: string) => {
+    setLoading(true);
+    const stages = getStagesForJob(job);
+    setPipelineStages(stages);
+
+    if (stages.length > 0) {
+      setActiveStage(stages[0].name);
+    }
+
+    // Fetch saved templates
+    const { data } = await supabase
+      .from("email_templates")
+      .select("*")
+      .eq("employer_id", uid);
+
+    const templateMap: Record<string, EmailTemplate> = {};
+    stages.forEach(stage => {
+      const existing = data?.find(t => t.stage_name === stage.name);
+      if (existing) {
+        templateMap[stage.name] = existing as EmailTemplate;
+      } else {
+        const defaults = buildDefaultTemplate(stage.name);
+        templateMap[stage.name] = {
+          employer_id: uid,
+          stage_name: stage.name,
+          template_type: "stage_transition",
+          subject: defaults.subject,
+          header_text: defaults.header_text,
+          body_text: defaults.body_text,
+          footer_text: defaults.footer_text,
+          primary_color: defaults.primary_color,
+          is_active: true,
+        };
+      }
+    });
+
+    setTemplates(templateMap);
+    setLoading(false);
+  };
+
+  const getStagesForJob = (job: Job) => {
+    const interviewType = job.interview_type || "standard";
+    const functionType = job.function_type || "general";
+
+    const typeConfig = interviewPipelineConfig.find(c => c.value === interviewType);
+    const pipelineType = typeConfig?.pipelineTypes.find(p => p.value === functionType)
+      || typeConfig?.pipelineTypes[0];
+
+    const stages = pipelineType?.stages || [];
+    return stages.map(s => ({
+      name: s.name,
+      icon: STAGE_ICONS[s.name] || "📋",
+      description: s.description,
+    }));
+  };
+
+  const handleJobChange = (jobId: string) => {
+    setSelectedJobId(jobId);
+    const job = jobs.find(j => j.id === jobId);
+    if (job) loadPipelineForJob(job, userId);
   };
 
   const updateTemplate = (stageName: string, field: keyof EmailTemplate, value: any) => {
     setTemplates(prev => ({
       ...prev,
-      [stageName]: {
-        ...prev[stageName],
-        [field]: value,
-      },
+      [stageName]: { ...prev[stageName], [field]: value },
     }));
   };
 
@@ -153,11 +279,9 @@ export function EmailTemplatesEditor() {
     setSaving(true);
     try {
       const template = templates[stageName];
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!userId) throw new Error("Not authenticated");
 
       if (template.id) {
-        // Update existing
         const { error } = await supabase
           .from("email_templates")
           .update({
@@ -169,14 +293,12 @@ export function EmailTemplatesEditor() {
             is_active: template.is_active,
           })
           .eq("id", template.id);
-
         if (error) throw error;
       } else {
-        // Insert new
         const { data, error } = await supabase
           .from("email_templates")
           .insert({
-            employer_id: user.id,
+            employer_id: userId,
             stage_name: template.stage_name,
             template_type: template.template_type,
             subject: template.subject,
@@ -188,15 +310,12 @@ export function EmailTemplatesEditor() {
           })
           .select()
           .single();
-
         if (error) throw error;
-        
         setTemplates(prev => ({
           ...prev,
           [stageName]: { ...prev[stageName], id: data.id },
         }));
       }
-
       toast.success(`Template for "${stageName}" saved!`);
     } catch (error) {
       console.error("Error saving template:", error);
@@ -207,242 +326,275 @@ export function EmailTemplatesEditor() {
   };
 
   const resetToDefault = (stageName: string) => {
-    const defaultTemplate = DEFAULT_TEMPLATES[stageName];
-    if (defaultTemplate) {
-      setTemplates(prev => ({
-        ...prev,
-        [stageName]: {
-          ...prev[stageName],
-          ...defaultTemplate,
-        },
-      }));
-      toast.info("Reset to default template");
-    }
+    const defaults = buildDefaultTemplate(stageName);
+    setTemplates(prev => ({ ...prev, [stageName]: { ...prev[stageName], ...defaults } }));
+    toast.info("Reset to default template");
   };
 
-  const renderPreview = (template: EmailTemplate) => {
-    const sampleData = {
-      candidateName: "John Doe",
-      jobTitle: "Senior Software Engineer",
-      companyName: "Your Company",
-      score: 85,
-      feedback: "Excellent performance! Strong technical skills demonstrated.",
-      nextStage: "Technical Assessment",
-    };
-
-    return (
-      <div className="bg-white rounded-lg overflow-hidden shadow-lg max-w-lg mx-auto">
-        <div 
-          className="p-8 text-center text-white"
-          style={{ background: `linear-gradient(135deg, ${template.primary_color} 0%, ${template.primary_color}dd 100%)` }}
-        >
-          <h1 className="text-2xl font-bold m-0">✅ {template.header_text}</h1>
-        </div>
-        <div className="p-6">
-          <p>Dear {sampleData.candidateName},</p>
-          <p className="my-4">
-            {template.body_text
-              .replace(/\{\{jobTitle\}\}/g, sampleData.jobTitle)
-              .replace(/\{\{companyName\}\}/g, sampleData.companyName)}
-          </p>
-          <div 
-            className="p-4 rounded-lg text-center my-4"
-            style={{ 
-              borderLeft: `4px solid ${template.primary_color}`,
-              backgroundColor: `${template.primary_color}10`
-            }}
-          >
-            <h3 className="font-bold" style={{ color: template.primary_color }}>Your Score</h3>
-            <span className="text-2xl font-bold">{sampleData.score}%</span>
-          </div>
-          <div className="p-4 rounded-lg my-4 border-l-4 border-blue-500 bg-blue-50">
-            <h3 className="font-bold text-blue-700">💬 Feedback</h3>
-            <p className="m-0">{sampleData.feedback}</p>
-          </div>
-        </div>
-        <div className="p-4 text-center text-muted-foreground text-sm bg-muted">
-          <p className="whitespace-pre-line m-0">
-            {template.footer_text.replace(/\{\{companyName\}\}/g, sampleData.companyName)}
-          </p>
+  const renderPreview = (template: EmailTemplate) => (
+    <div className="rounded-lg overflow-hidden shadow-lg max-w-lg mx-auto text-sm border border-border">
+      <div className="p-8 text-center" style={{ background: `linear-gradient(135deg, ${template.primary_color} 0%, ${template.primary_color}cc 100%)` }}>
+        <h1 className="text-xl font-bold m-0" style={{ color: "#ffffff" }}>{template.header_text}</h1>
+      </div>
+      <div className="p-6 bg-background">
+        <p className="mb-4 text-foreground">Dear <strong>John Doe</strong>,</p>
+        <p className="mb-4 text-muted-foreground">
+          {template.body_text
+            .replace(/\{\{jobTitle\}\}/g, "Senior Teacher")
+            .replace(/\{\{companyName\}\}/g, "ABC School")}
+        </p>
+        <div className="p-4 rounded-lg my-4" style={{ borderLeft: `4px solid ${template.primary_color}`, backgroundColor: `${template.primary_color}18` }}>
+          <p className="m-0 font-semibold" style={{ color: template.primary_color }}>📊 Score: 87%</p>
+          <p className="m-0 mt-1 text-muted-foreground">Excellent performance! Keep it up.</p>
         </div>
       </div>
-    );
-  };
+      <div className="p-4 text-center text-muted-foreground text-xs bg-muted border-t border-border">
+        <p className="whitespace-pre-line m-0">
+          {template.footer_text.replace(/\{\{companyName\}\}/g, "ABC School")}
+        </p>
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-          <p className="mt-2 text-muted-foreground">Loading templates...</p>
+          <p className="mt-2 text-muted-foreground">Loading pipeline stages...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <p className="font-semibold text-foreground">No Active Jobs Found</p>
+          <p className="text-sm text-muted-foreground mt-1">Post a job to configure email templates for its interview pipeline.</p>
         </CardContent>
       </Card>
     );
   }
 
   const currentTemplate = templates[activeStage];
+  const selectedJob = jobs.find(j => j.id === selectedJobId);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="h-5 w-5" />
-          Email Templates
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Customize the email notifications sent to candidates at each interview stage.
-          Use {"{{candidateName}}"}, {"{{jobTitle}}"}, {"{{companyName}}"} as placeholders.
-        </p>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeStage} onValueChange={setActiveStage}>
-          <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
-            {STAGES.map(stage => (
-              <TabsTrigger 
-                key={stage.name} 
-                value={stage.name}
-                className="text-xs sm:text-sm"
-              >
-                <span className="mr-1">{stage.icon}</span>
-                <span className="hidden sm:inline">{stage.name}</span>
-                <span className="sm:hidden">{stage.name.split(" ")[0]}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
+    <div className="space-y-4">
+      {/* Header */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email Templates
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Customize emails sent to candidates at each pipeline stage.
+            Use <code className="bg-muted px-1 rounded">{"{{candidateName}}"}</code>,{" "}
+            <code className="bg-muted px-1 rounded">{"{{jobTitle}}"}</code>,{" "}
+            <code className="bg-muted px-1 rounded">{"{{companyName}}"}</code> as placeholders.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <Label className="shrink-0 font-medium">Job / Pipeline:</Label>
+            <Select value={selectedJobId} onValueChange={handleJobChange}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Select a job" />
+              </SelectTrigger>
+              <SelectContent>
+                {jobs.map(job => (
+                  <SelectItem key={job.id} value={job.id}>
+                    {job.job_title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedJob && (
+              <Badge variant="secondary" className="text-xs">
+                {interviewPipelineConfig.find(c => c.value === selectedJob.interview_type)?.label || selectedJob.interview_type || "Standard"} — {pipelineStages.length} stages
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-          {STAGES.map(stage => (
-            <TabsContent key={stage.name} value={stage.name} className="space-y-4">
-              {currentTemplate && activeStage === stage.name && (
-                <>
-                  <div className="flex items-center justify-between">
+      {/* Pipeline Stage Sidebar + Editor */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        {/* Stages List */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Pipeline Stages</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2">
+            <div className="space-y-1">
+              {pipelineStages.map((stage, idx) => {
+                const isActive = activeStage === stage.name;
+                const isSaved = !!templates[stage.name]?.id;
+                return (
+                  <button
+                    key={stage.name}
+                    onClick={() => setActiveStage(stage.name)}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-all text-sm ${
+                      isActive
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <span className="text-base">{stage.icon}</span>
+                    <span className="flex-1 truncate">{stage.name}</span>
+                    {isSaved && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" title="Saved" />}
+                    {isActive && <ChevronRight className="h-3 w-3 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Template Editor */}
+        <Card className="lg:col-span-3">
+          {currentTemplate ? (
+            <>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{pipelineStages.find(s => s.name === activeStage)?.icon}</span>
+                    <div>
+                      <CardTitle className="text-base">{activeStage}</CardTitle>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {pipelineStages.find(s => s.name === activeStage)?.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={currentTemplate.is_active}
-                        onCheckedChange={(checked) => updateTemplate(stage.name, "is_active", checked)}
+                        onCheckedChange={(v) => updateTemplate(activeStage, "is_active", v)}
                       />
-                      <Label>Template Active</Label>
-                      {currentTemplate.is_active ? (
-                        <Badge variant="default" className="bg-green-500">Active</Badge>
-                      ) : (
-                        <Badge variant="secondary">Inactive</Badge>
-                      )}
+                      <span className="text-sm text-muted-foreground">Active</span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => resetToDefault(stage.name)}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        Reset
-                      </Button>
-                      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4 mr-1" />
-                            Preview
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Email Preview - {stage.name}</DialogTitle>
-                          </DialogHeader>
-                          {renderPreview(currentTemplate)}
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="subject">Email Subject</Label>
-                      <Input
-                        id="subject"
-                        value={currentTemplate.subject}
-                        onChange={(e) => updateTemplate(stage.name, "subject", e.target.value)}
-                        placeholder="Email subject line..."
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="header">Header Text</Label>
-                        <Input
-                          id="header"
-                          value={currentTemplate.header_text}
-                          onChange={(e) => updateTemplate(stage.name, "header_text", e.target.value)}
-                          placeholder="Header displayed in the email..."
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="color" className="flex items-center gap-2">
-                          <Palette className="h-4 w-4" />
-                          Primary Color
-                        </Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="color"
-                            type="color"
-                            value={currentTemplate.primary_color}
-                            onChange={(e) => updateTemplate(stage.name, "primary_color", e.target.value)}
-                            className="w-16 h-10 p-1 cursor-pointer"
-                          />
-                          <Input
-                            value={currentTemplate.primary_color}
-                            onChange={(e) => updateTemplate(stage.name, "primary_color", e.target.value)}
-                            placeholder="#10b981"
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="body">Body Text</Label>
-                      <Textarea
-                        id="body"
-                        value={currentTemplate.body_text}
-                        onChange={(e) => updateTemplate(stage.name, "body_text", e.target.value)}
-                        placeholder="Main email content..."
-                        rows={4}
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="footer">Footer Text</Label>
-                      <Textarea
-                        id="footer"
-                        value={currentTemplate.footer_text}
-                        onChange={(e) => updateTemplate(stage.name, "footer_text", e.target.value)}
-                        placeholder="Email footer/signature..."
-                        rows={2}
-                      />
-                    </div>
-
-                    <Button 
-                      onClick={() => saveTemplate(stage.name)} 
-                      disabled={saving}
-                      className="w-full"
-                    >
-                      {saving ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Template
-                        </>
-                      )}
+                    <Button variant="outline" size="sm" onClick={() => resetToDefault(activeStage)}>
+                      <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                      Reset
                     </Button>
+                    <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-3.5 w-3.5 mr-1" />
+                          Preview
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Email Preview — {activeStage}</DialogTitle>
+                        </DialogHeader>
+                        {renderPreview(currentTemplate)}
+                      </DialogContent>
+                    </Dialog>
                   </div>
-                </>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </CardContent>
-    </Card>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* Subject */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="subject">Email Subject</Label>
+                  <Input
+                    id="subject"
+                    value={currentTemplate.subject}
+                    onChange={(e) => updateTemplate(activeStage, "subject", e.target.value)}
+                    placeholder="Email subject line..."
+                  />
+                </div>
+
+                {/* Header + Color */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="header">Header Text</Label>
+                    <Input
+                      id="header"
+                      value={currentTemplate.header_text}
+                      onChange={(e) => updateTemplate(activeStage, "header_text", e.target.value)}
+                      placeholder="Header shown in the email banner..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="color" className="flex items-center gap-1.5">
+                      <Palette className="h-3.5 w-3.5" />
+                      Brand Color
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="color"
+                        type="color"
+                        value={currentTemplate.primary_color}
+                        onChange={(e) => updateTemplate(activeStage, "primary_color", e.target.value)}
+                        className="w-12 h-9 p-1 cursor-pointer"
+                      />
+                      <Input
+                        value={currentTemplate.primary_color}
+                        onChange={(e) => updateTemplate(activeStage, "primary_color", e.target.value)}
+                        placeholder="#10b981"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="body">Email Body</Label>
+                  <Textarea
+                    id="body"
+                    value={currentTemplate.body_text}
+                    onChange={(e) => updateTemplate(activeStage, "body_text", e.target.value)}
+                    placeholder="Main email content sent to the candidate..."
+                    rows={5}
+                  />
+                </div>
+
+                {/* Footer */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="footer">Footer / Signature</Label>
+                  <Textarea
+                    id="footer"
+                    value={currentTemplate.footer_text}
+                    onChange={(e) => updateTemplate(activeStage, "footer_text", e.target.value)}
+                    placeholder="Footer or sign-off text..."
+                    rows={2}
+                  />
+                </div>
+
+                {/* Info box */}
+                <div className="flex items-start gap-2 p-3 bg-muted rounded-lg text-xs text-muted-foreground">
+                  <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    This template will be used when a candidate reaches the <strong>{activeStage}</strong> stage.
+                    Placeholders like <code>{"{{candidateName}}"}</code> are replaced automatically when the email is sent.
+                  </span>
+                </div>
+
+                <Button onClick={() => saveTemplate(activeStage)} disabled={saving} className="w-full">
+                  {saving ? (
+                    <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Saving...</>
+                  ) : (
+                    <><Save className="h-4 w-4 mr-2" />Save Template</>
+                  )}
+                </Button>
+              </CardContent>
+            </>
+          ) : (
+            <CardContent className="p-8 text-center text-muted-foreground">
+              Select a stage from the left to edit its email template.
+            </CardContent>
+          )}
+        </Card>
+      </div>
+    </div>
   );
 }
