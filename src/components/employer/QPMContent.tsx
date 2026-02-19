@@ -485,8 +485,9 @@ export const QPMContent = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="overflow-x-auto border rounded-lg">
-            <Table className="min-w-[1200px] text-xs">
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden w-full">
+            <div className="overflow-x-auto w-full">
+            <Table className="w-full text-[10px] table-fixed">
               <TableHeader>
                 <TableRow className="bg-secondary hover:bg-secondary border-b [&_th]:py-1 [&_th]:px-0.5 [&_th]:h-7 [&_th]:text-secondary-foreground [&_th]:text-[9px] [&_th]:uppercase [&_th]:tracking-wide [&_th]:whitespace-nowrap [&_th]:overflow-hidden [&_th]:text-ellipsis">
                   <TableHead className="font-semibold">Date & Time</TableHead>
@@ -539,6 +540,7 @@ export const QPMContent = () => {
                 })}
               </TableBody>
             </Table>
+            </div>
           </div>
         )}
       </div>
