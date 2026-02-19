@@ -10,12 +10,9 @@ const corsHeaders = {
  * Post-Application Pipeline
  * 
  * This function handles the timed email sequence after a job application:
- * 1. Send Instruction email immediately
- * 2. Wait 10 seconds → Send CV/Resume ATS results email (with analysis data passed directly)
- * 3. Wait 10 seconds → Send Written Test Slot Booking email
- */
-/**
- * Background email processing function
+ * 1. Send Instruction email immediately (marks Interview Guidelines as completed)
+ * 2. Wait 5 seconds → Send CV/Resume ATS results email (marks CV/Resume as completed)
+ * 3. Wait 5 seconds → Send Written Test Slot Booking email
  */
 async function processEmailPipeline(interviewCandidateId: string, analysisData: any) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -38,9 +35,9 @@ async function processEmailPipeline(interviewCandidateId: string, analysisData: 
     console.error('Failed to send instruction email:', err);
   }
 
-  // Step 2: Wait 10 seconds, then send CV/Resume ATS results email
-  console.log('Waiting 10 seconds before CV results email...');
-  await new Promise(resolve => setTimeout(resolve, 10000));
+  // Step 2: Wait 5 seconds, then send CV/Resume ATS results email
+  console.log('Waiting 5 seconds before CV results email...');
+  await new Promise(resolve => setTimeout(resolve, 5000));
 
   console.log('Step 2: Sending CV/Resume ATS results email...');
   try {
@@ -61,9 +58,9 @@ async function processEmailPipeline(interviewCandidateId: string, analysisData: 
     console.error('Failed to send CV results email:', err);
   }
 
-  // Step 3: Wait 10 seconds, then send Written Test Slot Booking email
-  console.log('Waiting 10 seconds before Written Test slot booking email...');
-  await new Promise(resolve => setTimeout(resolve, 10000));
+  // Step 3: Wait 5 seconds, then send Written Test Slot Booking email
+  console.log('Waiting 5 seconds before Written Test slot booking email...');
+  await new Promise(resolve => setTimeout(resolve, 5000));
 
   console.log('Step 3: Sending Written Test slot booking email...');
   try {
