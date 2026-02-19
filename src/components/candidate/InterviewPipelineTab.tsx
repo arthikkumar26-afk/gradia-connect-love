@@ -302,16 +302,26 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     // Check for completed or passed events first
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
-    
-    const event = events.find(e => e.stage_id === stageId);
-    if (event) return event.status;
-    
+
     const stage = stages.find(s => s.id === stageId);
     const currentStage = stages.find(s => s.id === currentStageId);
-    
+
+    // If current_stage_id has advanced past this stage, it's completed regardless of event status
+    // This handles cases where a 'scheduled' event exists but the test was actually completed
     if (stage && currentStage && stage.stage_order < currentStage.stage_order) {
       return 'completed';
     }
+
+    // Check for any event for this stage
+    const event = events.find(e => e.stage_id === stageId);
+    if (event) {
+      // If stage_order matches current, treat as current (in-progress)
+      if (stage && currentStage && stage.stage_order === currentStage.stage_order) {
+        return 'current';
+      }
+      return event.status;
+    }
+
     if (stage && currentStage && stage.stage_order === currentStage.stage_order) {
       return 'current';
     }
