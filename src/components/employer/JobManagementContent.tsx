@@ -387,10 +387,8 @@ export const JobManagementContent = () => {
                      {showEducationCols && <TableHead className="font-semibold">Dept</TableHead>}
                      <TableHead className="font-semibold">Desig.</TableHead>
                      {showEducationCols && <TableHead className="font-semibold">Subjects</TableHead>}
-                     {/* IT Corporate columns */}
+                      {/* IT Corporate columns */}
                      {showITCols && <TableHead className="font-semibold">Dept</TableHead>}
-                     {showITCols && <TableHead className="font-semibold">Function</TableHead>}
-                     {showITCols && <TableHead className="font-semibold">Segment</TableHead>}
                      {/* Non-IT Corporate columns */}
                      {showNonITCols && <TableHead className="font-semibold">Dept</TableHead>}
                      {showNonITCols && <TableHead className="font-semibold">Function</TableHead>}
@@ -491,16 +489,6 @@ export const JobManagementContent = () => {
                           {showITCols && (
                             <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                               {renderEditableCell(job, "department", "w-24")}
-                            </TableCell>
-                          )}
-                          {showITCols && (
-                            <TableCell className="whitespace-nowrap capitalize" onClick={(e) => e.stopPropagation()}>
-                              {renderEditableCell(job, "functionType", "w-24")}
-                            </TableCell>
-                          )}
-                          {showITCols && (
-                            <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                              {renderEditableCell(job, "segment", "w-24")}
                             </TableCell>
                           )}
                           {/* Non-IT Corporate cells */}
