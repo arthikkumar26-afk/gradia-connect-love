@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,10 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft } from "lucide-react";
 
 const BookSlot = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const candidateId = searchParams.get("candidateId");
   const stageId = searchParams.get("stageId");
   const stageName = searchParams.get("stageName") || "Technical Assessment";
@@ -288,6 +289,17 @@ const BookSlot = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 p-4">
         <Card className="max-w-md w-full">
+          <div className="p-4 pb-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => navigate("/candidate/dashboard?tab=pipeline")}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Interview Pipeline
+            </Button>
+          </div>
           <CardContent className="pt-6 text-center space-y-4">
             <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
@@ -342,6 +354,17 @@ const BookSlot = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <Card className="max-w-lg w-full shadow-xl">
+        <div className="p-3 pb-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            onClick={() => navigate("/candidate/dashboard?tab=pipeline")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Interview Pipeline
+          </Button>
+        </div>
         <CardHeader className="text-center pb-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
           <CardTitle className="text-xl flex items-center justify-center gap-2">
             <Calendar className="h-5 w-5" />
