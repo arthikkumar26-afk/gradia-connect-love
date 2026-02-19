@@ -133,8 +133,10 @@ serve(async (req) => {
       .eq("candidate_id", userId)
       .maybeSingle();
 
+    let interviewCandidateId: string | null = existingIC?.id || null;
+
     if (!existingIC) {
-      const { error: icError } = await supabase.from("interview_candidates").insert({
+      const { data: newIC, error: icError } = await supabase.from("interview_candidates").insert({
         job_id: jobId,
         candidate_id: userId,
         resume_url: resumeUrl,
@@ -142,10 +144,49 @@ serve(async (req) => {
         ai_analysis: aiAnalysis || null,
         status: "active",
         current_stage_id: firstStage?.id || null,
-      });
+      }).select('id').single();
 
       if (icError) {
         console.error("Interview candidate insert error:", icError);
+      } else {
+        interviewCandidateId = newIC?.id || null;
+      }
+    }
+
+    // Trigger analyze-resume to create events and start pipeline automation
+    if (interviewCandidateId) {
+      console.log('Triggering analyze-resume for pipeline automation...');
+      try {
+        const { data: jobDetails } = await supabase
+          .from("jobs")
+          .select("job_title, description, requirements, skills, experience_required, location")
+          .eq("id", jobId)
+          .single();
+
+        const { data: candidateProfile } = await supabase
+          .from("profiles")
+          .select("full_name, email, experience_level, preferred_role, location, mobile")
+          .eq("id", userId)
+          .single();
+
+        const analyzeResponse = await fetch(`${supabaseUrl}/functions/v1/analyze-resume`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            candidateId: userId,
+            jobId,
+            resumeUrl,
+            candidateProfile: candidateProfile || { full_name: candidateName, email: candidateEmail },
+            jobDetails: jobDetails || {},
+          }),
+        });
+        const analyzeResult = await analyzeResponse.json();
+        console.log('Analyze-resume pipeline result:', analyzeResult);
+      } catch (pipelineErr) {
+        console.error('Failed to trigger pipeline:', pipelineErr);
       }
     }
 
