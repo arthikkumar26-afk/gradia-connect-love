@@ -45,7 +45,8 @@ import {
   Video,
   BookOpen,
   ExternalLink,
-  Star
+  Star,
+  Building2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
@@ -1299,6 +1300,108 @@ export const MockInterviewTab = () => {
     );
   }
 
+  // Derive industry category from profile
+  const getIndustryCategory = () => {
+    if (!profile) return 'education';
+    const cat = (profile.category || '').toLowerCase();
+    const role = (profile.preferred_role || '').toLowerCase();
+    const seg = (profile.segment || '').toLowerCase();
+    if (cat.includes('it_corporate') || cat.includes('it corporate') || role.includes('software') || role.includes('developer') || role.includes('engineer') || seg.includes('it')) return 'it_corporate';
+    if (cat.includes('non_it') || cat.includes('non-it') || cat.includes('non it corporate')) return 'non_it_corporate';
+    if (cat.includes('legal') || role.includes('lawyer') || role.includes('legal')) return 'legal';
+    if (cat.includes('doctor') || role.includes('doctor') || role.includes('physician')) return 'doctor';
+    return 'education'; // default
+  };
+
+  // Get IT-specific pipeline stages based on skills/domain
+  const getITPipelineStages = () => {
+    const role = (profile?.preferred_role || '').toLowerCase();
+    const skills = (profile?.primary_subject || profile?.segment || '').toLowerCase();
+
+    // Full Stack / MERN / Frontend / Backend domains
+    const isFrontend = skills.includes('frontend') || skills.includes('react') || skills.includes('angular') || skills.includes('vue');
+    const isBackend = skills.includes('backend') || skills.includes('java') || skills.includes('python') || skills.includes('node');
+    const isFullStack = skills.includes('full stack') || skills.includes('fullstack') || skills.includes('mern') || skills.includes('mean');
+    const isDevOps = skills.includes('devops') || skills.includes('aws') || skills.includes('cloud') || skills.includes('azure');
+    const isData = skills.includes('data') || skills.includes('machine learning') || skills.includes('ai') || skills.includes('ml');
+
+    if (isDevOps) {
+      return [
+        { order: 1, name: 'Interview Instructions', icon: Mail, desc: 'Receive guidelines & instructions via email' },
+        { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Cloud, DevOps tools & infrastructure MCQs' },
+        { order: 3, name: 'Scripting / IaC Challenge', icon: Code, desc: 'Bash, Terraform, or Ansible scenario tasks' },
+        { order: 4, name: 'System Design (Infrastructure)', icon: Monitor, desc: 'Design scalable cloud architecture' },
+        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for live technical demo' },
+        { order: 6, name: 'Live Technical Demo', icon: Video, desc: 'Demonstrate CI/CD pipeline setup' },
+        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation & culture discussion' },
+        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+      ];
+    }
+    if (isData) {
+      return [
+        { order: 1, name: 'Interview Instructions', icon: Mail, desc: 'Receive guidelines & instructions via email' },
+        { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Statistics, ML algorithms & data concepts' },
+        { order: 3, name: 'Coding / Analysis Challenge', icon: Code, desc: 'Python/SQL data analysis tasks' },
+        { order: 4, name: 'Case Study Presentation', icon: Monitor, desc: 'Present a data-driven business case' },
+        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for portfolio presentation' },
+        { order: 6, name: 'Portfolio Demo', icon: Video, desc: 'Walk through real projects & notebooks' },
+        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation & team culture fit' },
+        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+      ];
+    }
+    if (isFullStack) {
+      return [
+        { order: 1, name: 'Interview Instructions', icon: Mail, desc: 'Receive guidelines & instructions via email' },
+        { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Full stack concepts, frameworks & DB MCQs' },
+        { order: 3, name: 'Coding Challenge', icon: Code, desc: 'Build a mini feature (frontend + backend)' },
+        { order: 4, name: 'System Design Round', icon: Monitor, desc: 'Design a scalable web application' },
+        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for live project demo' },
+        { order: 6, name: 'Live Project Demo', icon: Video, desc: 'Demonstrate your project end-to-end' },
+        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+      ];
+    }
+    if (isFrontend) {
+      return [
+        { order: 1, name: 'Interview Instructions', icon: Mail, desc: 'Receive guidelines & instructions via email' },
+        { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'JavaScript, CSS, React/Angular/Vue MCQs' },
+        { order: 3, name: 'UI Coding Challenge', icon: Code, desc: 'Build a responsive UI component' },
+        { order: 4, name: 'Code Review Round', icon: Monitor, desc: 'Review and improve given code snippets' },
+        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for portfolio review' },
+        { order: 6, name: 'Portfolio Demo', icon: Video, desc: 'Walk through your projects & code' },
+        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+      ];
+    }
+    if (isBackend) {
+      return [
+        { order: 1, name: 'Interview Instructions', icon: Mail, desc: 'Receive guidelines & instructions via email' },
+        { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Backend concepts, APIs, DB & system design MCQs' },
+        { order: 3, name: 'Coding Challenge', icon: Code, desc: 'DSA problem solving & API design task' },
+        { order: 4, name: 'System Design Round', icon: Monitor, desc: 'Design a distributed backend system' },
+        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for technical discussion' },
+        { order: 6, name: 'Technical Discussion', icon: Video, desc: 'Deep-dive into architecture & past projects' },
+        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+      ];
+    }
+    // Generic IT / Software Engineer
+    return [
+      { order: 1, name: 'Interview Instructions', icon: Mail, desc: 'Receive guidelines & instructions via email' },
+      { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Core CS concepts, algorithms & domain MCQs' },
+      { order: 3, name: 'Coding Challenge', icon: Code, desc: 'Solve DSA & domain-specific coding problems' },
+      { order: 4, name: 'System Design Round', icon: Monitor, desc: 'Design a real-world scalable system' },
+      { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for live technical interview' },
+      { order: 6, name: 'Live Technical Interview', icon: Video, desc: 'Pair programming & technical discussion' },
+      { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+      { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+    ];
+  };
+
+  const industryCategory = getIndustryCategory();
+  const isITCorporate = industryCategory === 'it_corporate';
+  const itPipelineStages = isITCorporate ? getITPipelineStages() : null;
+
   // No session - Show start screen with interview type selection
   if (!currentSession) {
     return (
@@ -1312,6 +1415,30 @@ export const MockInterviewTab = () => {
           <p className="text-muted-foreground mt-2">
             Practice your interview skills with AI-powered mock tests
           </p>
+
+          {/* Profile-based pipeline info */}
+          {profile && (
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              {profile.category && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <Building2 className="h-3 w-3" />
+                  {profile.category.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                </Badge>
+              )}
+              {profile.preferred_role && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <UserPlus className="h-3 w-3" />
+                  {profile.preferred_role}
+                </Badge>
+              )}
+              {(profile.primary_subject || profile.segment) && (
+                <Badge variant="outline" className="gap-1 text-xs text-primary border-primary/40">
+                  <Code className="h-3 w-3" />
+                  {profile.primary_subject || profile.segment}
+                </Badge>
+              )}
+            </div>
+          )}
           
           {/* Usage Counter */}
           {!mockTestLimits.isLoading && (
@@ -1390,187 +1517,261 @@ export const MockInterviewTab = () => {
           </Card>
         )}
 
-        {/* Interview Type Selection */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* New Employee Card */}
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              selectedInterviewType === 'new_employee' 
-                ? 'border-2 border-primary ring-2 ring-primary/20' 
-                : 'border hover:border-primary/50'
-            }`}
-            onClick={() => navigate('/candidate/mock-interview-start/new-employee')}
-          >
-            <CardHeader className="text-center pb-4">
-              <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                selectedInterviewType === 'new_employee' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-primary/10'
-              }`}>
-                <UserPlus className={`h-8 w-8 ${selectedInterviewType === 'new_employee' ? 'text-primary-foreground' : 'text-primary'}`} />
-              </div>
-              <CardTitle className="text-lg">New Employee</CardTitle>
-              <CardDescription>
-                For new candidates joining the organization
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Basic technical assessment
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Teaching demonstration
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    HR document verification
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    Entry-level evaluation
-                  </li>
-                </ul>
-              </div>
-              {selectedInterviewType === 'new_employee' && (
-                <Badge className="w-full justify-center bg-primary">Selected</Badge>
-              )}
-            </CardContent>
-          </Card>
+        {/* ── IT Corporate: Show skill-based pipeline directly ── */}
+        {isITCorporate && itPipelineStages ? (
+          <div className="max-w-2xl mx-auto space-y-4">
+            {/* Pipeline Header Card */}
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="py-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Code className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {profile?.preferred_role || 'Software Engineer'} Mock Interview Pipeline
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Tailored for{' '}
+                      <span className="text-primary font-medium">
+                        {profile?.primary_subject || profile?.segment || 'your domain'}
+                      </span>
+                      {' '}— 8 stages · ~60 min
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Promotions Card */}
-          <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              selectedInterviewType === 'promotions' 
-                ? 'border-2 border-primary ring-2 ring-primary/20' 
-                : 'border hover:border-primary/50'
-            }`}
-            onClick={() => navigate('/candidate/mock-interview-start/promotions')}
-          >
-            <CardHeader className="text-center pb-4">
-              <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                selectedInterviewType === 'promotions' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-amber-100 dark:bg-amber-900/30'
-              }`}>
-                <Award className={`h-8 w-8 ${selectedInterviewType === 'promotions' ? 'text-primary-foreground' : 'text-amber-600 dark:text-amber-400'}`} />
-              </div>
-              <CardTitle className="text-lg">Promotions</CardTitle>
-              <CardDescription>
-                For existing employees seeking promotion
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
-                    Advanced technical assessment
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
-                    Leadership demonstration
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
-                    Performance review
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-amber-500" />
-                    Senior-level evaluation
-                  </li>
-                </ul>
-              </div>
-              {selectedInterviewType === 'promotions' && (
-                <Badge className="w-full justify-center bg-primary">Selected</Badge>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Interview Stages Preview - Show when type is selected */}
-        {selectedInterviewType && (
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader className="text-center pb-4">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                {selectedInterviewType === 'new_employee' ? (
-                  <UserPlus className="h-6 w-6 text-primary" />
-                ) : (
-                  <Award className="h-6 w-6 text-primary" />
-                )}
-              </div>
-              <CardTitle className="text-lg">
-                {selectedInterviewType === 'new_employee' ? 'New Employee' : 'Promotions'} Interview
-              </CardTitle>
-              <CardDescription>
-                Complete a comprehensive 8-stage interview simulation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* 8 Stages Preview */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-sm text-muted-foreground">Interview Stages:</h4>
-                <div className="grid gap-2">
-                  {[
-                    { order: 1, name: "Interview Instructions", icon: Mail },
-                    { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
-                    { order: 3, name: "Technical Assessment", icon: Code },
-                    { order: 4, name: "Demo Slot Booking", icon: Calendar },
-                    { order: 5, name: "Demo Round", icon: Monitor },
-                    { order: 6, name: "Demo Feedback", icon: BarChart3 },
-                    { order: 7, name: "Final Review (HR)", icon: FileText },
-                    { order: 8, name: "All Reviews", icon: ListChecks },
-                  ].map((stage) => (
-                    <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+            {/* IT Pipeline Stages */}
+            <Card>
+              <CardContent className="py-4 space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Your Interview Stages</p>
+                {itPipelineStages.map((stage, idx) => (
+                  <div key={stage.order} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
+                    {/* Connector */}
+                    <div className="relative flex flex-col items-center">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                         <stage.icon className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {stage.order}. {stage.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{stage.desc}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      Stage {stage.order}
+                    </Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-              {/* Action Button */}
-              <div className="pt-4">
-                <Button 
-                  onClick={startMockTest} 
-                  disabled={isStarting || !mockTestLimits.canStart} 
-                  className="w-full gap-2" 
-                  size="lg"
-                >
-                  {isStarting ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : !mockTestLimits.canStart ? (
-                    <Lock className="h-5 w-5" />
-                  ) : (
-                    <Play className="h-5 w-5" />
-                  )}
-                  {!mockTestLimits.canStart ? 'Limit Reached — Upgrade Plan' : 'Attend Mock Test'}
-                </Button>
-              </div>
+            {/* Interview Type Selection for IT */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  selectedInterviewType === 'new_employee'
+                    ? 'border-2 border-primary ring-2 ring-primary/20'
+                    : 'border hover:border-primary/50'
+                }`}
+                onClick={() => navigate('/candidate/mock-interview-start/new-employee')}
+              >
+                <CardContent className="py-4 text-center space-y-2">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                  </div>
+                  <p className="font-semibold text-sm">New Employee</p>
+                  <p className="text-xs text-muted-foreground">First job or joining a new org</p>
+                </CardContent>
+              </Card>
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  selectedInterviewType === 'promotions'
+                    ? 'border-2 border-primary ring-2 ring-primary/20'
+                    : 'border hover:border-primary/50'
+                }`}
+                onClick={() => navigate('/candidate/mock-interview-start/promotions')}
+              >
+                <CardContent className="py-4 text-center space-y-2">
+                  <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto">
+                    <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <p className="font-semibold text-sm">Promotion</p>
+                  <p className="text-xs text-muted-foreground">Seeking a senior role</p>
+                </CardContent>
+              </Card>
+            </div>
 
-              <div className="flex justify-center">
-                <Badge variant="secondary" className="text-xs">
-                  Estimated time: 45-60 minutes
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            {/* Start Button */}
+            {selectedInterviewType && (
+              <Button
+                onClick={startMockTest}
+                disabled={isStarting || !mockTestLimits.canStart}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {isStarting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : !mockTestLimits.canStart ? (
+                  <Lock className="h-5 w-5" />
+                ) : (
+                  <Play className="h-5 w-5" />
+                )}
+                {!mockTestLimits.canStart ? 'Limit Reached — Upgrade Plan' : `Start ${selectedInterviewType === 'new_employee' ? 'New Employee' : 'Promotion'} Mock Interview`}
+              </Button>
+            )}
 
-        {/* Prompt to select if nothing selected */}
-        {!selectedInterviewType && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">
-              Please select an interview type above to continue
-            </p>
+            {!selectedInterviewType && (
+              <p className="text-center text-sm text-muted-foreground pt-2">
+                Select interview type above to start
+              </p>
+            )}
           </div>
+        ) : (
+          <>
+            {/* ── Education / Default: Interview Type Selection ── */}
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {/* New Employee Card */}
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-lg ${
+                  selectedInterviewType === 'new_employee'
+                    ? 'border-2 border-primary ring-2 ring-primary/20'
+                    : 'border hover:border-primary/50'
+                }`}
+                onClick={() => navigate('/candidate/mock-interview-start/new-employee')}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                    selectedInterviewType === 'new_employee' ? 'bg-primary text-primary-foreground' : 'bg-primary/10'
+                  }`}>
+                    <UserPlus className={`h-8 w-8 ${selectedInterviewType === 'new_employee' ? 'text-primary-foreground' : 'text-primary'}`} />
+                  </div>
+                  <CardTitle className="text-lg">New Employee</CardTitle>
+                  <CardDescription>For new candidates joining the organization</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
+                    <ul className="text-sm space-y-1 text-muted-foreground">
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />Basic technical assessment</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />Teaching demonstration</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />HR document verification</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-green-500" />Entry-level evaluation</li>
+                    </ul>
+                  </div>
+                  {selectedInterviewType === 'new_employee' && (
+                    <Badge className="w-full justify-center bg-primary">Selected</Badge>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Promotions Card */}
+              <Card
+                className={`cursor-pointer transition-all hover:shadow-lg ${
+                  selectedInterviewType === 'promotions'
+                    ? 'border-2 border-primary ring-2 ring-primary/20'
+                    : 'border hover:border-primary/50'
+                }`}
+                onClick={() => navigate('/candidate/mock-interview-start/promotions')}
+              >
+                <CardHeader className="text-center pb-4">
+                  <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                    selectedInterviewType === 'promotions' ? 'bg-primary text-primary-foreground' : 'bg-amber-100 dark:bg-amber-900/30'
+                  }`}>
+                    <Award className={`h-8 w-8 ${selectedInterviewType === 'promotions' ? 'text-primary-foreground' : 'text-amber-600 dark:text-amber-400'}`} />
+                  </div>
+                  <CardTitle className="text-lg">Promotions</CardTitle>
+                  <CardDescription>For existing employees seeking promotion</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm text-muted-foreground">Interview Focus:</h4>
+                    <ul className="text-sm space-y-1 text-muted-foreground">
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Advanced technical assessment</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Leadership demonstration</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Performance review</li>
+                      <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-amber-500" />Senior-level evaluation</li>
+                    </ul>
+                  </div>
+                  {selectedInterviewType === 'promotions' && (
+                    <Badge className="w-full justify-center bg-primary">Selected</Badge>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Interview Stages Preview - Show when type is selected */}
+            {selectedInterviewType && (
+              <Card className="max-w-2xl mx-auto">
+                <CardHeader className="text-center pb-4">
+                  <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                    {selectedInterviewType === 'new_employee' ? (
+                      <UserPlus className="h-6 w-6 text-primary" />
+                    ) : (
+                      <Award className="h-6 w-6 text-primary" />
+                    )}
+                  </div>
+                  <CardTitle className="text-lg">
+                    {selectedInterviewType === 'new_employee' ? 'New Employee' : 'Promotions'} Interview
+                  </CardTitle>
+                  <CardDescription>Complete a comprehensive 8-stage interview simulation</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm text-muted-foreground">Interview Stages:</h4>
+                    <div className="grid gap-2">
+                      {[
+                        { order: 1, name: "Interview Instructions", icon: Mail },
+                        { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
+                        { order: 3, name: "Technical Assessment", icon: Code },
+                        { order: 4, name: "Demo Slot Booking", icon: Calendar },
+                        { order: 5, name: "Demo Round", icon: Monitor },
+                        { order: 6, name: "Demo Feedback", icon: BarChart3 },
+                        { order: 7, name: "Final Review (HR)", icon: FileText },
+                        { order: 8, name: "All Reviews", icon: ListChecks },
+                      ].map((stage) => (
+                        <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <stage.icon className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-sm font-medium">{stage.order}. {stage.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="pt-4">
+                    <Button
+                      onClick={startMockTest}
+                      disabled={isStarting || !mockTestLimits.canStart}
+                      className="w-full gap-2"
+                      size="lg"
+                    >
+                      {isStarting ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : !mockTestLimits.canStart ? (
+                        <Lock className="h-5 w-5" />
+                      ) : (
+                        <Play className="h-5 w-5" />
+                      )}
+                      {!mockTestLimits.canStart ? 'Limit Reached — Upgrade Plan' : 'Attend Mock Test'}
+                    </Button>
+                  </div>
+                  <div className="flex justify-center">
+                    <Badge variant="secondary" className="text-xs">Estimated time: 45-60 minutes</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!selectedInterviewType && (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Please select an interview type above to continue</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
