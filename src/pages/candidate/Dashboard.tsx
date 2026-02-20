@@ -1227,7 +1227,7 @@ const CandidateDashboard = () => {
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
-    { id: "learning", label: "Learning", icon: BookOpen },
+    
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
   ];
@@ -2024,7 +2024,7 @@ const CandidateDashboard = () => {
       case "pipeline": return "Interview Pipeline";
       case "jobs": return "Suitable Jobs";
       case "resume": return "Resume Builder";
-      case "learning": return "Learning";
+      
       case "upgrade": return "Upgrade Plans";
       case "settings": return "Settings";
       default: return `Welcome, ${profile?.full_name || 'User'}`;
@@ -3808,17 +3808,8 @@ const CandidateDashboard = () => {
               <ResumeBuilderTab />
             )}
 
-            {/* Learning Placeholder */}
-            {activeMenu === "learning" && (
-              <div className="text-center py-12">
-                <GraduationCap className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <h2 className="text-xl font-semibold text-foreground mb-2">Learning Platform</h2>
-                <p className="text-muted-foreground mb-4">Enhance your skills with our courses</p>
-                <Button variant="outline" onClick={() => window.open('https://skillory.in', '_blank')}>
-                  Explore Courses
-                </Button>
-              </div>
-            )}
+
+
 
             {/* Upgrade Plans */}
             {activeMenu === "upgrade" && (
