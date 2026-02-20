@@ -134,39 +134,115 @@ export const MockInterviewTab = () => {
     subject: ''
   });
   
-  // Role-based options matching admin MockInterviewPipeline
-  const segmentOptions = ['Pre-Primary', 'Primary', 'High School'];
+  // Industry-specific segment options (matching admin MockInterviewPipeline)
+  const industrySegmentOptions: Record<string, string[]> = {
+    'Education': ['Pre-Primary', 'Primary', 'High School', 'School'],
+    'IT Corporate': ['Software Engineer', 'Cybersecurity', 'Data & Artificial Intelligence', 'Cloud & Infrastructure', 'Quality Assurance & Testing', 'Product & Project Management', 'UI/UX & Design', 'Business & IT Consulting', 'IT Support & Operations'],
+    'Legal': ['Corporate Law', 'Criminal Law', 'Civil Law', 'IP Law', 'Compliance'],
+    'Doctor': ['General Medicine', 'Surgery', 'Pediatrics', 'Cardiology', 'Dermatology', 'Orthopedics'],
+    'Civil Service': ['Administrative', 'Police', 'Revenue', 'Education Services', 'Foreign Services'],
+    'Real Estate & Infrastructure': ['Sales', 'Property Management', 'Construction', 'Architecture', 'Interior Design'],
+    'Freelance / Independent Professionals': ['Design', 'Development', 'Content Writing', 'Marketing', 'Consulting'],
+  };
 
-  const categoryOptions: Record<string, string[]> = {
+  // Map internal industry category to display key
+  const getIndustryDisplayKey = (): string => {
+    if (!profile) return 'Education';
+    const cat = (profile.category || '').toLowerCase();
+    const role = (profile.preferred_role || '').toLowerCase();
+    const seg = (profile.segment || '').toLowerCase();
+    if (cat.includes('it_corporate') || cat.includes('it corporate') || role.includes('software') || role.includes('developer') || role.includes('engineer') || seg.includes('it')) return 'IT Corporate';
+    if (cat.includes('non_it') || cat.includes('non-it') || cat.includes('non it corporate')) return 'IT Corporate';
+    if (cat.includes('legal') || role.includes('lawyer') || role.includes('legal')) return 'Legal';
+    if (cat.includes('doctor') || role.includes('doctor') || role.includes('physician')) return 'Doctor';
+    if (cat.includes('civil') || role.includes('civil service')) return 'Civil Service';
+    if (cat.includes('real estate') || role.includes('real estate')) return 'Real Estate & Infrastructure';
+    if (cat.includes('freelance') || role.includes('freelance')) return 'Freelance / Independent Professionals';
+    return 'Education';
+  };
+
+  const currentIndustryKey = getIndustryDisplayKey();
+  const segmentOptions = industrySegmentOptions[currentIndustryKey] || [];
+
+  // Education-specific category options
+  const educationCategoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
     'High School': ['Board', 'Compititive'],
   };
 
-  // Class options for High School > Board/Competitive
-  const classLevelOptions: Record<string, string[]> = {
-    'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
-    'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
+  // Non-education industry category options
+  const industryCategoryMapping: Record<string, Record<string, string[]>> = {
+    'IT Corporate': {
+      'Software Engineer': ['Frontend', 'Backend', 'Full Stack', 'Mobile', 'Embedded Systems', 'API', 'Platform', 'DevOps'],
+      'Cybersecurity': ['Network Security', 'Application Security', 'Cloud Security', 'GRC', 'Incident Response', 'Penetration Testing'],
+      'Data & Artificial Intelligence': ['Data Analytics', 'Machine Learning', 'NLP', 'Computer Vision', 'Big Data', 'MLOps'],
+      'Cloud & Infrastructure': ['AWS', 'Azure', 'GCP', 'Linux', 'Windows', 'Networking'],
+      'Quality Assurance & Testing': ['Manual Testing', 'Automation', 'Performance', 'Security Testing', 'API Testing', 'Mobile Testing'],
+      'Product & Project Management': ['Product Management', 'Project Management', 'Agile/Scrum', 'Program Management'],
+      'UI/UX & Design': ['UI Design', 'UX Design', 'Product Design', 'UX Research', 'Design Systems'],
+      'Business & IT Consulting': ['Business Analysis', 'ERP', 'CRM', 'IT Consulting', 'Solution Architecture'],
+      'IT Support & Operations': ['Desktop Support', 'Technical Support', 'Application Support', 'IT Operations'],
+    },
+    'Legal': {
+      'Corporate Law': ['Mergers & Acquisitions', 'Securities', 'Banking'],
+      'Criminal Law': ['Prosecution', 'Defense', 'White Collar Crime'],
+      'Civil Law': ['Property', 'Family', 'Consumer'],
+      'IP Law': ['Patents', 'Trademarks', 'Copyright'],
+      'Compliance': ['Regulatory', 'Risk Management', 'Audit'],
+    },
+    'Doctor': {
+      'General Medicine': ['Internal Medicine', 'Family Medicine', 'Emergency'],
+      'Surgery': ['General Surgery', 'Neuro Surgery', 'Cardiac Surgery'],
+      'Pediatrics': ['Neonatology', 'General Pediatrics', 'Pediatric Surgery'],
+      'Cardiology': ['Interventional', 'Non-Interventional', 'Electrophysiology'],
+      'Dermatology': ['Clinical', 'Cosmetic', 'Surgical'],
+      'Orthopedics': ['Spine', 'Joint Replacement', 'Sports Medicine'],
+    },
+    'Civil Service': {
+      'Administrative': ['IAS', 'State Admin', 'District Admin'],
+      'Police': ['IPS', 'State Police', 'Intelligence'],
+      'Revenue': ['IRS', 'Tax Administration', 'Customs'],
+      'Education Services': ['IES', 'State Education', 'University Admin'],
+      'Foreign Services': ['IFS', 'Diplomatic', 'Trade Services'],
+    },
+    'Real Estate & Infrastructure': {
+      'Sales': ['Residential', 'Commercial', 'Land'],
+      'Property Management': ['Residential', 'Commercial', 'Mixed Use'],
+      'Construction': ['Civil', 'Structural', 'MEP'],
+      'Architecture': ['Residential', 'Commercial', 'Landscape'],
+      'Interior Design': ['Residential', 'Commercial', 'Hospitality'],
+    },
+    'Freelance / Independent Professionals': {
+      'Design': ['Graphic Design', 'Web Design', 'Brand Design'],
+      'Development': ['Web Development', 'App Development', 'Game Development'],
+      'Content Writing': ['Technical Writing', 'Creative Writing', 'SEO Writing'],
+      'Marketing': ['Digital Marketing', 'Social Media', 'Content Marketing'],
+      'Consulting': ['Business Consulting', 'IT Consulting', 'Management Consulting'],
+    },
   };
 
-  // Subject designations based on class level
-  const classDesignationOptions: Record<string, string[]> = {
-    'CLASS-6,7&8': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology'],
-    'CLASS-9&10': [
-      'Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 
-      'Biology', 'Botany', 'Zoology', 'Social', 'Mental Ability', 'Counsellor', 
-      'Academic Dean', 'Computers', 'Physical Education', 'Principal', 
-      'Soft Skills Trainer', 'French'
-    ],
-    'CLASSES-6,7&8': [
-      'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 
-      'Mental Ability', 'Counsellor'
-    ],
-    'CLASSES-9&10': [
-      'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 
-      'Mental Ability', 'Counsellor', 'Academic Dean'
-    ],
+  // Industry-specific designation options
+  const industryDesignationOptions: Record<string, Record<string, string[]>> = {
+    'IT Corporate': {
+      'Software Engineer': ['Software Engineer', 'Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'Mobile App Developer', 'DevOps Engineer'],
+      'Cybersecurity': ['Security Analyst', 'Ethical Hacker', 'Penetration Tester', 'Cloud Security Engineer', 'GRC Analyst'],
+      'Data & Artificial Intelligence': ['Data Analyst', 'Data Scientist', 'ML Engineer', 'AI Engineer', 'Data Engineer'],
+      'Cloud & Infrastructure': ['Cloud Engineer', 'AWS Engineer', 'Azure Engineer', 'System Administrator', 'Network Engineer'],
+      'Quality Assurance & Testing': ['QA Engineer', 'Manual Tester', 'Automation Tester', 'Performance Tester', 'QA Lead'],
+      'Product & Project Management': ['Product Manager', 'Project Manager', 'Scrum Master', 'Program Manager'],
+      'UI/UX & Design': ['UI Designer', 'UX Designer', 'Product Designer', 'UX Researcher'],
+      'Business & IT Consulting': ['Business Analyst', 'ERP Consultant', 'IT Consultant', 'Solution Architect'],
+      'IT Support & Operations': ['IT Support Engineer', 'Desktop Support Engineer', 'Technical Support Engineer'],
+    },
+    'Legal': { _default: ['Legal Advisor', 'Legal Officer', 'Compliance Manager', 'Paralegal', 'Senior Counsel'] },
+    'Doctor': { _default: ['Junior Doctor', 'Senior Doctor', 'Specialist', 'Consultant', 'HOD'] },
+    'Civil Service': { _default: ['Probationer', 'Officer', 'Senior Officer', 'Commissioner', 'Secretary'] },
+    'Real Estate & Infrastructure': { _default: ['Executive', 'Manager', 'Senior Manager', 'Director', 'VP'] },
+    'Freelance / Independent Professionals': { _default: ['Freelancer', 'Consultant', 'Contractor', 'Agency Owner'] },
   };
+
+  const categoryOptions: Record<string, string[]> = educationCategoryOptions;
 
   const designationOptions: Record<string, Record<string, string[]>> = {
     'Pre-Primary': {
@@ -186,12 +262,33 @@ export const MockInterviewTab = () => {
     }
   };
 
+  // Class level options for Education > High School
+  const classLevelOptions: Record<string, string[]> = {
+    'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
+    'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
+  };
+
+  const classDesignationOptions: Record<string, string[]> = {
+    'CLASS-6,7&8': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology'],
+    'CLASS-9&10': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 'Social', 'Mental Ability', 'Counsellor', 'Academic Dean', 'Computers', 'Physical Education', 'Principal', 'Soft Skills Trainer', 'French'],
+    'CLASSES-6,7&8': ['Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 'Mental Ability', 'Counsellor'],
+    'CLASSES-9&10': ['Maths', 'Physics', 'Chemistry', 'Biology', 'Botany', 'Zoology', 'Mental Ability', 'Counsellor', 'Academic Dean'],
+  };
+
+  const isEducationIndustry = currentIndustryKey === 'Education';
+
   // Check if we need to show class level field (for Board or Compititive)
-  const showClassLevel = slotBookingForm.segment === 'High School' && 
+  const showClassLevel = isEducationIndustry && slotBookingForm.segment === 'High School' && 
     (slotBookingForm.category === 'Board' || slotBookingForm.category === 'Compititive');
 
   const getCurrentCategories = () => {
-    return slotBookingForm.segment ? categoryOptions[slotBookingForm.segment] || [] : [];
+    if (!slotBookingForm.segment) return [];
+    // For education, use education-specific category options
+    if (isEducationIndustry) {
+      return educationCategoryOptions[slotBookingForm.segment] || [];
+    }
+    // For non-education industries, use industry category mapping
+    return industryCategoryMapping[currentIndustryKey]?.[slotBookingForm.segment] || [];
   };
 
   const getCurrentClassLevels = () => {
@@ -200,20 +297,26 @@ export const MockInterviewTab = () => {
   };
 
   const getCurrentDesignations = () => {
-    // For High School Board, designations come from classLevel
-    if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Board') {
-      return classDesignationOptions[slotBookingForm.classLevel] || [];
-    }
-    // For High School Compititive, designations come from classLevel first, then category
-    if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Compititive') {
-      if (slotBookingForm.classLevel) {
+    // Education-specific logic
+    if (isEducationIndustry) {
+      if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Board') {
         return classDesignationOptions[slotBookingForm.classLevel] || [];
       }
-      return designationOptions['High School']?.['Compititive'] || [];
+      if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Compititive') {
+        if (slotBookingForm.classLevel) {
+          return classDesignationOptions[slotBookingForm.classLevel] || [];
+        }
+        return designationOptions['High School']?.['Compititive'] || [];
+      }
+      if (slotBookingForm.segment && slotBookingForm.category) {
+        return designationOptions[slotBookingForm.segment]?.[slotBookingForm.category] || [];
+      }
+      return [];
     }
-    // For other segments, use category-based designations
-    if (slotBookingForm.segment && slotBookingForm.category) {
-      return designationOptions[slotBookingForm.segment]?.[slotBookingForm.category] || [];
+    // Non-education: use industry designation options
+    const indDesignations = industryDesignationOptions[currentIndustryKey];
+    if (indDesignations) {
+      return indDesignations[slotBookingForm.segment] || indDesignations['_default'] || [];
     }
     return [];
   };
