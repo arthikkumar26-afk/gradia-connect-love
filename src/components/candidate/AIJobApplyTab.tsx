@@ -220,7 +220,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
       // Fetch active jobs
       const { data: allJobs, error } = await supabase
         .from("jobs")
-        .select("id, job_title, location, department, salary_range, employer_id, description, experience_required, skills, segment, category, designation, subjects, program, classes, board")
+        .select("id, job_title, location, department, salary_range, employer_id, description, experience_required, skills, segment, category, designation, subjects, program, classes, board, interview_type")
         .eq("status", "active")
         .neq("employer_id", activeProfile.id);
 
@@ -266,9 +266,10 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
 
         // ─── INDUSTRY CATEGORY FILTER (hard gate) ─────────────────────────
         const jobSegment = (job.segment || "").toLowerCase();
-        const jobIsEducation = isEducationSegment(jobSegment) ||
-          ["teacher", "principal", "lecturer", "professor", "school", "tutor"].some((k) => job.job_title.toLowerCase().includes(k));
-        const jobIsIT = isITSegment(jobSegment) ||
+        const jobInterviewType = ((job as any).interview_type || "").toLowerCase();
+        const jobIsEducation = isEducationSegment(jobSegment) || jobInterviewType === "education" ||
+          ["teacher", "principal", "princepal", "lecturer", "professor", "school", "tutor"].some((k) => job.job_title.toLowerCase().includes(k));
+        const jobIsIT = isITSegment(jobSegment) || jobInterviewType === "it_corporate" ||
           ["software", "developer", "engineer", "data", "cloud", "cyber", "devops", "it ", "tech"].some((k) => job.job_title.toLowerCase().includes(k));
 
         // Hard cross-sector filter: if candidate is IT, skip education-only jobs entirely
