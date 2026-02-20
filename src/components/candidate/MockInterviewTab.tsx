@@ -47,6 +47,7 @@ import {
   ExternalLink,
   Star,
   Building2,
+  RotateCcw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
@@ -1843,8 +1844,46 @@ export const MockInterviewTab = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button onClick={() => loadData()} disabled={isLoading} variant="outline" size="icon" className="h-10 w-10">
+          <Button onClick={() => loadData()} disabled={isLoading} variant="outline" size="icon" className="h-10 w-10" title="Refresh">
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 text-destructive hover:bg-destructive/10"
+            title="Reset Interview"
+            disabled={isLoading}
+            onClick={async () => {
+              if (!currentSession) return;
+              const confirmed = window.confirm("Are you sure you want to reset? This will clear all progress and start the interview from the beginning.");
+              if (!confirmed) return;
+              try {
+                setIsLoading(true);
+                // Delete stage results
+                await supabase.from("mock_interview_stage_results").delete().eq("session_id", currentSession.id);
+                // Reset session to initial state
+                await supabase.from("mock_interview_sessions").update({
+                  current_stage_order: 1,
+                  stages_completed: [],
+                  overall_score: 0,
+                  overall_feedback: null,
+                  status: "in_progress",
+                  completed_at: null,
+                  started_at: new Date().toISOString(),
+                }).eq("id", currentSession.id);
+                setStageResults([]);
+                setCurrentSession({ ...currentSession, current_stage_order: 1, overall_score: 0, overall_feedback: '', status: "in_progress", completed_at: undefined });
+                toast.success("Interview reset! Starting from the beginning.");
+                await loadData();
+              } catch (err) {
+                console.error("Reset error:", err);
+                toast.error("Failed to reset interview.");
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+          >
+            <RotateCcw className="h-4 w-4" />
           </Button>
 
           {/* 3 inline selectors beside refresh: Interview Type → Pipeline Type → Role (matches vacancy creation) */}
