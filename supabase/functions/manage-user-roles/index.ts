@@ -91,17 +91,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // For all other actions, require owner privileges
-    const { data: ownerRole } = await supabaseAdmin
+    // For all other actions, require owner or admin privileges
+    const { data: privilegedRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "owner")
-      .single();
+      .in("role", ["owner", "admin"]);
 
-    if (!ownerRole) {
+    const isOwnerOrAdmin = privilegedRoles && privilegedRoles.length > 0;
+
+    if (!isOwnerOrAdmin) {
       return new Response(
-        JSON.stringify({ error: "Only owners can manage user roles" }),
+        JSON.stringify({ error: "Only owners and admins can manage user roles" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
