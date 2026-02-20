@@ -1863,7 +1863,7 @@ export const MockInterviewTab = () => {
                 await supabase.from("mock_interview_stage_results").delete().eq("session_id", currentSession.id);
                 // Reset session to initial state
                 await supabase.from("mock_interview_sessions").update({
-                  current_stage_order: 1,
+                  current_stage_order: 0,
                   stages_completed: [],
                   overall_score: 0,
                   overall_feedback: null,
@@ -1872,7 +1872,7 @@ export const MockInterviewTab = () => {
                   started_at: new Date().toISOString(),
                 }).eq("id", currentSession.id);
                 setStageResults([]);
-                setCurrentSession({ ...currentSession, current_stage_order: 1, overall_score: 0, overall_feedback: '', status: "in_progress", completed_at: undefined });
+                setCurrentSession({ ...currentSession, current_stage_order: 0, overall_score: 0, overall_feedback: '', status: "in_progress", completed_at: undefined });
                 toast.success("Interview reset! Starting from the beginning.");
                 await loadData();
               } catch (err) {
