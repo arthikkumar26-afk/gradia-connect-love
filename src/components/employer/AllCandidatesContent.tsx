@@ -390,6 +390,7 @@ function CandidateDetailDialog({
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-2">Personal Details</h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              <DetailItem label="Email" value={candidate.email} />
               <DetailItem label="Phone" value={candidate.mobile} />
               <DetailItem label="Alternate Phone" value={candidate.alternate_number} />
               <DetailItem label="Gender" value={candidate.gender} />
