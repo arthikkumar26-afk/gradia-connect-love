@@ -306,20 +306,28 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Delete profile (cascading will handle related data)
+      // Delete user roles first
+      const { error: rolesError } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", targetUserId);
+      if (rolesError) {
+        console.error("Error deleting user roles:", rolesError);
+      }
+
+      // Delete profile
       const { error: profileError } = await supabaseAdmin
         .from("profiles")
         .delete()
         .eq("id", targetUserId);
-
       if (profileError) {
         console.error("Error deleting profile:", profileError);
       }
 
-      // Delete from auth.users using admin API
+      // Delete from auth.users using admin API (may not exist)
       const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
       if (authError) {
-        throw authError;
+        console.error("Error deleting auth user (may already be deleted):", authError);
       }
 
       return new Response(
