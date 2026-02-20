@@ -102,18 +102,22 @@ export function AllCandidatesContent() {
     }
   };
 
-  const filtered = candidates.filter((c) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      c.full_name?.toLowerCase().includes(q) ||
-      c.email?.toLowerCase().includes(q) ||
-      c.preferred_role?.toLowerCase().includes(q) ||
-      c.location?.toLowerCase().includes(q) ||
-      c.category?.toLowerCase().includes(q) ||
-      c.segment?.toLowerCase().includes(q)
+  const filtered = candidates
+    .filter((c) => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        c.full_name?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.preferred_role?.toLowerCase().includes(q) ||
+        c.location?.toLowerCase().includes(q) ||
+        c.category?.toLowerCase().includes(q) ||
+        c.segment?.toLowerCase().includes(q)
+      );
+    })
+    .filter((c, index, self) =>
+      index === self.findIndex((other) => other.email.toLowerCase() === c.email.toLowerCase())
     );
-  });
 
   const getInitials = (name: string) =>
     name
