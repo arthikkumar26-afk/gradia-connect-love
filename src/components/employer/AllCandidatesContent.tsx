@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface CandidateProfile {
   id: string;
@@ -384,17 +384,11 @@ function CandidateDetailDialog({
 
         <Separator />
 
-        {/* Tabbed details */}
-        <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
-            <TabsTrigger value="personal" className="text-xs">Personal</TabsTrigger>
-            <TabsTrigger value="education" className="text-xs">Education</TabsTrigger>
-            <TabsTrigger value="address" className="text-xs">Address</TabsTrigger>
-            <TabsTrigger value="family" className="text-xs">Family</TabsTrigger>
-          </TabsList>
-
-          {/* Personal Tab */}
-          <TabsContent value="personal" className="mt-3">
+        {/* All Details */}
+        <div className="space-y-4">
+          {/* Personal Details */}
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-2">Personal Details</h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
               <DetailItem label="Email" value={candidate.email} />
               <DetailItem label="Phone" value={candidate.mobile} />
@@ -435,114 +429,90 @@ function CandidateDetailDialog({
                 value={candidate.created_at ? new Date(candidate.created_at).toLocaleDateString("en-IN") : null}
               />
             </div>
-          </TabsContent>
+          </div>
 
-          {/* Education Tab */}
-          <TabsContent value="education" className="mt-3">
-            {loading ? (
+          {/* Education */}
+          {loading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : education.length > 0 && (
+            <div>
+              <Separator className="mb-3" />
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
+                <GraduationCap className="h-4 w-4 text-primary" /> Education
+              </h4>
               <div className="space-y-2">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            ) : education.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No education details available</p>
-            ) : (
-              <div className="space-y-3">
                 {education.map((edu) => (
                   <Card key={edu.id} className="border-border">
                     <CardContent className="p-3">
-                      <div className="flex items-start gap-2">
-                        <GraduationCap className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">{edu.education_level}</p>
-                          {edu.specialization && <p className="text-xs text-muted-foreground">{edu.specialization}</p>}
-                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 text-xs">
-                            {edu.school_college_name && (
-                              <div><span className="text-muted-foreground">Institution:</span> <span className="text-foreground">{edu.school_college_name}</span></div>
-                            )}
-                            {edu.board_university && (
-                              <div><span className="text-muted-foreground">Board/Uni:</span> <span className="text-foreground">{edu.board_university}</span></div>
-                            )}
-                            {edu.year_of_passing && (
-                              <div><span className="text-muted-foreground">Year:</span> <span className="text-foreground">{edu.year_of_passing}</span></div>
-                            )}
-                            {edu.percentage_marks != null && (
-                              <div><span className="text-muted-foreground">Marks:</span> <span className="text-foreground">{edu.percentage_marks}%</span></div>
-                            )}
-                          </div>
-                        </div>
+                      <p className="text-sm font-semibold text-foreground">{edu.education_level}</p>
+                      {edu.specialization && <p className="text-xs text-muted-foreground">{edu.specialization}</p>}
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 text-xs">
+                        {edu.school_college_name && <div><span className="text-muted-foreground">Institution:</span> <span className="text-foreground">{edu.school_college_name}</span></div>}
+                        {edu.board_university && <div><span className="text-muted-foreground">Board/Uni:</span> <span className="text-foreground">{edu.board_university}</span></div>}
+                        {edu.year_of_passing && <div><span className="text-muted-foreground">Year:</span> <span className="text-foreground">{edu.year_of_passing}</span></div>}
+                        {edu.percentage_marks != null && <div><span className="text-muted-foreground">Marks:</span> <span className="text-foreground">{edu.percentage_marks}%</span></div>}
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            )}
-          </TabsContent>
+            </div>
+          )}
 
-          {/* Address Tab */}
-          <TabsContent value="address" className="mt-3">
-            {loading ? (
-              <Skeleton className="h-24 w-full" />
-            ) : !addresses ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No address details available</p>
-            ) : (
-              <div className="space-y-4">
-                <div>
+          {/* Address */}
+          {loading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : addresses && (
+            <div>
+              <Separator className="mb-3" />
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
+                <Home className="h-4 w-4 text-primary" /> Present Address
+              </h4>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm pl-5">
+                <DetailItem label="Door/Flat No" value={addresses.present_door_flat_no} />
+                <DetailItem label="Street" value={addresses.present_street} />
+                <DetailItem label="Village/Area" value={addresses.present_village_area} />
+                <DetailItem label="Mandal" value={addresses.present_mandal} />
+                <DetailItem label="District" value={addresses.present_district} />
+                <DetailItem label="State" value={addresses.present_state} />
+                <DetailItem label="Pin Code" value={addresses.present_pin_code} />
+              </div>
+              {!addresses.same_as_present && (
+                <div className="mt-3">
                   <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
-                    <Home className="h-4 w-4 text-primary" /> Present Address
+                    <Home className="h-4 w-4 text-primary" /> Permanent Address
                   </h4>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm pl-5">
-                    <DetailItem label="Door/Flat No" value={addresses.present_door_flat_no} />
-                    <DetailItem label="Street" value={addresses.present_street} />
-                    <DetailItem label="Village/Area" value={addresses.present_village_area} />
-                    <DetailItem label="Mandal" value={addresses.present_mandal} />
-                    <DetailItem label="District" value={addresses.present_district} />
-                    <DetailItem label="State" value={addresses.present_state} />
-                    <DetailItem label="Pin Code" value={addresses.present_pin_code} />
+                    <DetailItem label="Door/Flat No" value={addresses.permanent_door_flat_no} />
+                    <DetailItem label="Street" value={addresses.permanent_street} />
+                    <DetailItem label="Village/Area" value={addresses.permanent_village_area} />
+                    <DetailItem label="Mandal" value={addresses.permanent_mandal} />
+                    <DetailItem label="District" value={addresses.permanent_district} />
+                    <DetailItem label="State" value={addresses.permanent_state} />
+                    <DetailItem label="Pin Code" value={addresses.permanent_pin_code} />
                   </div>
                 </div>
-                {!addresses.same_as_present && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
-                        <Home className="h-4 w-4 text-primary" /> Permanent Address
-                      </h4>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm pl-5">
-                        <DetailItem label="Door/Flat No" value={addresses.permanent_door_flat_no} />
-                        <DetailItem label="Street" value={addresses.permanent_street} />
-                        <DetailItem label="Village/Area" value={addresses.permanent_village_area} />
-                        <DetailItem label="Mandal" value={addresses.permanent_mandal} />
-                        <DetailItem label="District" value={addresses.permanent_district} />
-                        <DetailItem label="State" value={addresses.permanent_state} />
-                        <DetailItem label="Pin Code" value={addresses.permanent_pin_code} />
-                      </div>
-                    </div>
-                  </>
-                )}
-                {addresses.same_as_present && (
-                  <p className="text-xs text-muted-foreground italic pl-5">Permanent address same as present</p>
-                )}
-              </div>
-            )}
-          </TabsContent>
+              )}
+              {addresses.same_as_present && (
+                <p className="text-xs text-muted-foreground italic pl-5 mt-1">Permanent address same as present</p>
+              )}
+            </div>
+          )}
 
-          {/* Family Tab */}
-          <TabsContent value="family" className="mt-3">
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ) : family.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No family details available</p>
-            ) : (
+          {/* Family */}
+          {loading ? (
+            <Skeleton className="h-12 w-full" />
+          ) : family.length > 0 && (
+            <div>
+              <Separator className="mb-3" />
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-1.5 mb-2">
+                <UserCheck className="h-4 w-4 text-primary" /> Family Details
+              </h4>
               <div className="space-y-2">
                 {family.map((member) => (
                   <Card key={member.id} className="border-border">
                     <CardContent className="p-3">
                       <div className="flex items-center gap-2">
-                        <UserCheck className="h-4 w-4 text-primary shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="text-sm font-semibold text-foreground">{member.name_as_per_aadhar || "—"}</p>
@@ -559,9 +529,9 @@ function CandidateDetailDialog({
                   </Card>
                 ))}
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
