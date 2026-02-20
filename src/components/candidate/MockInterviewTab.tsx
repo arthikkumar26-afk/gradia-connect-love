@@ -538,7 +538,7 @@ export const MockInterviewTab = () => {
 
     setIsStarting(true);
     try {
-      // Create new session
+      // Create new session starting at stage 1 (Interview Instructions)
       const { data: session, error } = await supabase
         .from('mock_interview_sessions')
         .insert({
@@ -552,34 +552,9 @@ export const MockInterviewTab = () => {
 
       if (error) throw error;
 
-      // Send interview instructions email
-      const instructionsEmailSent = await sendInterviewInstructionsEmail(session.id);
-      
-      if (instructionsEmailSent) {
-        // Complete stage 1 and move to stage 2 (Technical Assessment Slot Booking)
-        await completeInstructionsStage(session.id);
-        
-        // Reload session data
-        const { data: updatedSession } = await supabase
-          .from('mock_interview_sessions')
-          .select('*')
-          .eq('id', session.id)
-          .single();
-        
-        const { data: resultsData } = await supabase
-          .from('mock_interview_stage_results')
-          .select('*')
-          .eq('session_id', session.id)
-          .order('stage_order', { ascending: true });
-
-        setCurrentSession(updatedSession);
-        setStageResults(resultsData as StageResult[] || []);
-        toast.success("Instructions sent! Book your Technical Assessment slot.");
-      } else {
-        setCurrentSession(session);
-        setStageResults([]);
-        toast.warning("Mock test started, but email sending failed. Please check your email settings.");
-      }
+      setCurrentSession(session);
+      setStageResults([]);
+      toast.success("Mock interview started! Begin with Interview Instructions.");
 
     } catch (error) {
       console.error('Error starting session:', error);
@@ -597,7 +572,7 @@ export const MockInterviewTab = () => {
 
     setIsStarting(true);
     try {
-      // Create new session (reset)
+      // Create new session starting at stage 1
       const { data: session, error } = await supabase
         .from('mock_interview_sessions')
         .insert({
@@ -611,37 +586,9 @@ export const MockInterviewTab = () => {
 
       if (error) throw error;
 
-      // Send interview instructions email
-      const instructionsEmailSent = await sendInterviewInstructionsEmail(session.id);
-      
-      if (instructionsEmailSent) {
-        // Complete stage 1 and move to stage 2
-        await completeInstructionsStage(session.id);
-        
-        // Automatically send Technical Assessment email
-        await sendTechnicalAssessmentEmail(session.id);
-        
-        // Reload session data
-        const { data: updatedSession } = await supabase
-          .from('mock_interview_sessions')
-          .select('*')
-          .eq('id', session.id)
-          .single();
-        
-        const { data: resultsData } = await supabase
-          .from('mock_interview_stage_results')
-          .select('*')
-          .eq('session_id', session.id)
-          .order('stage_order', { ascending: true });
-
-        setCurrentSession(updatedSession);
-        setStageResults(resultsData as StageResult[] || []);
-        toast.success("New interview started! Emails sent.");
-      } else {
-        setCurrentSession(session);
-        setStageResults([]);
-        toast.warning("New session started, but email sending failed.");
-      }
+      setCurrentSession(session);
+      setStageResults([]);
+      toast.success("New interview started! Begin with Interview Instructions.");
 
     } catch (error) {
       console.error('Error starting new session:', error);
@@ -1863,7 +1810,7 @@ export const MockInterviewTab = () => {
                 await supabase.from("mock_interview_stage_results").delete().eq("session_id", currentSession.id);
                 // Reset session to initial state
                 await supabase.from("mock_interview_sessions").update({
-                  current_stage_order: 0,
+                  current_stage_order: 1,
                   stages_completed: [],
                   overall_score: 0,
                   overall_feedback: null,
@@ -1872,7 +1819,7 @@ export const MockInterviewTab = () => {
                   started_at: new Date().toISOString(),
                 }).eq("id", currentSession.id);
                 setStageResults([]);
-                setCurrentSession({ ...currentSession, current_stage_order: 0, overall_score: 0, overall_feedback: '', status: "in_progress", completed_at: undefined });
+                setCurrentSession({ ...currentSession, current_stage_order: 1, overall_score: 0, overall_feedback: '', status: "in_progress", completed_at: undefined });
                 toast.success("Interview reset! Starting from the beginning.");
                 await loadData();
               } catch (err) {
@@ -2037,7 +1984,39 @@ export const MockInterviewTab = () => {
 
                   {/* Action */}
                   <div className="flex-shrink-0 flex items-center gap-2">
-                    {/* For stage 1 (Interview Instructions), don't show View Results - just show email sent indicator */}
+                    {/* For stage 1 (Interview Instructions) current - show Send & Proceed button */}
+                    {status === 'current' && stage.order === 1 && currentSession && (
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        disabled={isStarting}
+                        onClick={async () => {
+                          setIsStarting(true);
+                          try {
+                            // Send instructions email
+                            const sent = await sendInterviewInstructionsEmail(currentSession.id);
+                            if (sent) {
+                              // Complete stage 1 and move to stage 2
+                              await completeInstructionsStage(currentSession.id);
+                              await loadData();
+                              toast.success("Instructions sent! Proceed to next stage.");
+                            } else {
+                              toast.error("Failed to send instructions email.");
+                            }
+                          } catch (err) {
+                            console.error("Error completing instructions stage:", err);
+                            toast.error("Failed to complete stage.");
+                          } finally {
+                            setIsStarting(false);
+                          }
+                        }}
+                        className="gap-1"
+                      >
+                        {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                        {isStarting ? 'Sending...' : 'Send Instructions & Proceed'}
+                      </Button>
+                    )}
+                    {/* For stage 1 (Interview Instructions) completed - show email sent indicator */}
                     {status === 'completed' && stage.order === 1 && (
                       <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                         <Mail className="h-3 w-3 mr-1" />
