@@ -2274,7 +2274,9 @@ export const MockInterviewTab = () => {
                             </div>
                             )}
 
-                            {/* Segment, Category, Designation Row - matching admin algorithm */}
+                            {/* Segment, Category, Designation Row - only for Education */}
+                            {isEducationIndustry && (
+                            <>
                             <div className="grid grid-cols-3 gap-3">
                               <div className="space-y-1">
                                 <Label className="text-xs font-medium">Segment *</Label>
@@ -2362,6 +2364,8 @@ export const MockInterviewTab = () => {
                                 </Select>
                               </div>
                             )}
+                            </>
+                            )}
                           </div>
                         </ScrollArea>
 
@@ -2388,9 +2392,11 @@ export const MockInterviewTab = () => {
                             onClick={bookSlot}
                             disabled={
                               !slotBookingForm.date || !slotBookingForm.time || 
-                              (isEducationIndustry && (!slotBookingForm.state || !slotBookingForm.district)) ||
-                              !slotBookingForm.segment || !slotBookingForm.category ||
-                              !slotBookingForm.designation || (showClassLevel && !slotBookingForm.classLevel) ||
+                              (isEducationIndustry && (
+                                !slotBookingForm.state || !slotBookingForm.district ||
+                                !slotBookingForm.segment || !slotBookingForm.category ||
+                                !slotBookingForm.designation || (showClassLevel && !slotBookingForm.classLevel)
+                              )) ||
                               isBookingSlot
                             }
                             size="sm"
