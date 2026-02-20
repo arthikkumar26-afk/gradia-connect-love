@@ -72,6 +72,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { UpgradePlanContent } from "@/components/employer/UpgradePlanContent";
 import { EmployerSettingsContent } from "@/components/employer/EmployerSettingsContent";
+import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent";
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -348,6 +349,7 @@ const EmployerDashboard = () => {
     { id: "confirmation", label: "Confirmation", icon: UserCheck, path: "/employer/confirmation" },
     { id: "offer-letter", label: "Offer Letter", icon: FileText, path: "/employer/offer-letter" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
+    { id: "all-candidates", label: "Candidates", icon: ClipboardList, path: "/employer/candidates" },
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
     
@@ -711,6 +713,7 @@ const EmployerDashboard = () => {
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
             {activeMenu === "approvals" && <ConfirmationContent />}
+            {activeMenu === "all-candidates" && <AllCandidatesContent />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
             
