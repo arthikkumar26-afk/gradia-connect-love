@@ -2210,7 +2210,8 @@ export const MockInterviewTab = () => {
                               </div>
                             </div>
 
-                            {/* Location Row */}
+                            {/* Location Row - Only for Education */}
+                            {isEducationIndustry && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                                 <MapPin className="h-3.5 w-3.5" />
@@ -2271,6 +2272,7 @@ export const MockInterviewTab = () => {
                                 </div>
                               </div>
                             </div>
+                            )}
 
                             {/* Segment, Category, Designation Row - matching admin algorithm */}
                             <div className="grid grid-cols-3 gap-3">
@@ -2385,8 +2387,9 @@ export const MockInterviewTab = () => {
                           <Button 
                             onClick={bookSlot}
                             disabled={
-                              !slotBookingForm.date || !slotBookingForm.time || !slotBookingForm.state || 
-                              !slotBookingForm.district || !slotBookingForm.segment || !slotBookingForm.category ||
+                              !slotBookingForm.date || !slotBookingForm.time || 
+                              (isEducationIndustry && (!slotBookingForm.state || !slotBookingForm.district)) ||
+                              !slotBookingForm.segment || !slotBookingForm.category ||
                               !slotBookingForm.designation || (showClassLevel && !slotBookingForm.classLevel) ||
                               isBookingSlot
                             }
