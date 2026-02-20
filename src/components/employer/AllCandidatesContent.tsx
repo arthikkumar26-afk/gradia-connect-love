@@ -116,7 +116,10 @@ export function AllCandidatesContent() {
       );
     })
     .filter((c, index, self) =>
-      index === self.findIndex((other) => other.email.toLowerCase() === c.email.toLowerCase())
+      index === self.findIndex((other) =>
+        other.email.toLowerCase() === c.email.toLowerCase() ||
+        (c.mobile && other.mobile && other.mobile === c.mobile)
+      )
     );
 
   const getInitials = (name: string) =>
