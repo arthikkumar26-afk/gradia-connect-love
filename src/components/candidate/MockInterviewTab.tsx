@@ -1509,27 +1509,6 @@ export const MockInterviewTab = () => {
 
   // Helper: detect slot booking stages by name (not hardcoded order)
   const isSlotBookingStage = (stageName: string) => stageName.toLowerCase().includes('slot booking');
-  // Get the current pipeline's display stages
-  const getDisplayStages = () => {
-    if (selectedPipelineStages.length > 0) {
-      return selectedPipelineStages.map(s => ({
-        name: s.name,
-        order: s.order,
-        description: (s as any).description || '',
-      }));
-    }
-    if (isITCorporate) return getITPipelineStages();
-    return stages.map(s => ({ name: s.name, order: s.order, description: '' }));
-  };
-  const displayStagesList = getDisplayStages();
-  // Find slot booking stage orders dynamically
-  const slotBookingStageOrders = displayStagesList
-    .filter(s => isSlotBookingStage(s.name))
-    .map(s => s.order);
-  const isSlotBookingOrder = (order: number) => slotBookingStageOrders.includes(order);
-  // First slot booking = technical assessment slot, others = demo slot
-  const firstSlotBookingOrder = slotBookingStageOrders[0] ?? -1;
-  const isFirstSlotBooking = (order: number) => order === firstSlotBookingOrder;
 
   // ── Interview Type → Pipeline Type → Role (matches vacancy creation) ──
 
@@ -1551,6 +1530,28 @@ export const MockInterviewTab = () => {
         ?.pipelineTypes.find(pt => pt.value === selectedMockPipelineType)
         ?.stages || [])
     : [];
+
+  // Get the current pipeline's display stages
+  const getDisplayStages = () => {
+    if (selectedPipelineStages.length > 0) {
+      return selectedPipelineStages.map(s => ({
+        name: s.name,
+        order: s.order,
+        description: (s as any).description || '',
+      }));
+    }
+    if (isITCorporate) return getITPipelineStages();
+    return stages.map(s => ({ name: s.name, order: s.order, description: '' }));
+  };
+  const displayStagesList = getDisplayStages();
+  // Find slot booking stage orders dynamically
+  const slotBookingStageOrders = displayStagesList
+    .filter(s => isSlotBookingStage(s.name))
+    .map(s => s.order);
+  const isSlotBookingOrder = (order: number) => slotBookingStageOrders.includes(order);
+  // First slot booking = technical assessment slot, others = demo slot
+  const firstSlotBookingOrder = slotBookingStageOrders[0] ?? -1;
+  const isFirstSlotBooking = (order: number) => order === firstSlotBookingOrder;
 
   // Check if all 3 fields are selected
   const isMockRoleSelected = !!selectedMockInterviewType && !!selectedMockPipelineType && !!selectedMockRole;
