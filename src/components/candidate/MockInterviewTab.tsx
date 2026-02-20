@@ -708,10 +708,10 @@ export const MockInterviewTab = () => {
 
   const bookSlot = async () => {
     const currentStage = currentSession?.current_stage_order;
-    const isStage2 = currentStage === 2;
+    const isFirstSlotBookingStage = currentStage !== undefined && isFirstSlotBooking(currentStage);
     
     // For Stage 2, use slotBookingForm; for Stage 4, use selectedSlot
-    if (isStage2) {
+    if (isFirstSlotBookingStage) {
       if (!slotBookingForm.date || !slotBookingForm.time || !currentSession) {
         toast.error("Please fill all required fields");
         return;
@@ -729,7 +729,7 @@ export const MockInterviewTab = () => {
       let slotTime: Date;
       let slotLabel: string;
       
-      if (isStage2) {
+      if (isFirstSlotBookingStage) {
         // For Stage 2, use the form date and time
         slotTime = new Date(`${slotBookingForm.date}T${slotBookingForm.time}`);
         slotLabel = `${new Date(slotBookingForm.date).toLocaleDateString('en-IN', { 
@@ -807,9 +807,9 @@ export const MockInterviewTab = () => {
         }
       }
 
-      const isForTechnicalAssessment = currentStage === 2;
+      const isForTechnicalAssessment = isFirstSlotBookingStage;
       const stageName = isForTechnicalAssessment ? 'Technical Assessment Slot Booking' : 'Demo Slot Booking';
-      const nextStageOrder = isForTechnicalAssessment ? 3 : 5;
+      const nextStageOrder = (currentStage ?? 0) + 1;
       const nextStageName = isForTechnicalAssessment ? 'Technical Assessment' : 'Demo Round';
       const nextStageDescription = isForTechnicalAssessment 
         ? 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.'
@@ -1039,8 +1039,7 @@ export const MockInterviewTab = () => {
       const scoredResults = stageResults.filter(r => 
         r.ai_score !== undefined && 
         r.stage_order !== 1 && // Interview Instructions
-        r.stage_order !== 2 && // Technical Assessment Slot Booking
-        r.stage_order !== 4    // Demo Slot Booking
+        !isSlotBookingOrder(r.stage_order) // Slot Booking stages
       );
       const overallScore = scoredResults.length > 0 
         ? scoredResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scoredResults.length 
@@ -1262,9 +1261,9 @@ export const MockInterviewTab = () => {
   const generateCourseSuggestions = () => {
     const improvements = stageResults.flatMap(r => r.improvements || []);
     const overallScore = stageResults.length > 0 
-      ? stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4)
+      ? stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrder(r.stage_order))
           .reduce((sum, r) => sum + (r.ai_score || 0), 0) / 
-        stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && r.stage_order !== 2 && r.stage_order !== 4).length 
+        stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrder(r.stage_order)).length 
       : 0;
 
     const courses: any[] = [];
@@ -1507,6 +1506,30 @@ export const MockInterviewTab = () => {
 
   const industryCategory = getIndustryCategory();
   const isITCorporate = industryCategory === 'it_corporate';
+
+  // Helper: detect slot booking stages by name (not hardcoded order)
+  const isSlotBookingStage = (stageName: string) => stageName.toLowerCase().includes('slot booking');
+  // Get the current pipeline's display stages
+  const getDisplayStages = () => {
+    if (selectedPipelineStages.length > 0) {
+      return selectedPipelineStages.map(s => ({
+        name: s.name,
+        order: s.order,
+        description: (s as any).description || '',
+      }));
+    }
+    if (isITCorporate) return getITPipelineStages();
+    return stages.map(s => ({ name: s.name, order: s.order, description: '' }));
+  };
+  const displayStagesList = getDisplayStages();
+  // Find slot booking stage orders dynamically
+  const slotBookingStageOrders = displayStagesList
+    .filter(s => isSlotBookingStage(s.name))
+    .map(s => s.order);
+  const isSlotBookingOrder = (order: number) => slotBookingStageOrders.includes(order);
+  // First slot booking = technical assessment slot, others = demo slot
+  const firstSlotBookingOrder = slotBookingStageOrders[0] ?? -1;
+  const isFirstSlotBooking = (order: number) => order === firstSlotBookingOrder;
 
   // ── Interview Type → Pipeline Type → Role (matches vacancy creation) ──
 
@@ -1950,13 +1973,13 @@ export const MockInterviewTab = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{stage.name}</h3>
                       {/* Only show score for stages other than Interview Instructions (1) and Slot Booking stages (2, 4) */}
-                      {result?.ai_score !== undefined && stage.order !== 1 && stage.order !== 2 && stage.order !== 4 && (
+                      {result?.ai_score !== undefined && stage.order !== 1 && !isSlotBookingOrder(stage.order) && (
                         <Badge variant="default" className="bg-green-500">
                           {result.ai_score.toFixed(0)}%
                         </Badge>
                       )}
                       {/* Show "Slot Booked" badge for completed slot booking stages */}
-                      {status === 'completed' && (stage.order === 2 || stage.order === 4) && (
+                      {status === 'completed' && isSlotBookingOrder(stage.order) && (
                         <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Slot Booked
@@ -1982,7 +2005,7 @@ export const MockInterviewTab = () => {
                       </Badge>
                     )}
                     {/* For Technical Assessment Slot Booking (stage 2) in progress, show Book Slot button */}
-                    {status === 'current' && stage.order === 2 && (
+                    {status === 'current' && isFirstSlotBooking(stage.order) && (
                       <Button 
                         variant="default" 
                         size="sm"
@@ -2001,7 +2024,7 @@ export const MockInterviewTab = () => {
                       </Badge>
                     )}
                     {/* For Demo Slot Booking (stage 4) in progress, show Book Slot button */}
-                    {status === 'current' && stage.order === 4 && (
+                    {status === 'current' && isSlotBookingOrder(stage.order) && !isFirstSlotBooking(stage.order) && (
                       <Button 
                         variant="default" 
                         size="sm"
@@ -2062,7 +2085,7 @@ export const MockInterviewTab = () => {
                 {isExpanded && hasResults && result && (
                   <div className="mt-4 pt-4 border-t space-y-4">
                     {/* For Slot Booking stages (2 and 4), show simplified confirmation */}
-                    {(stage.order === 2 || stage.order === 4) ? (
+                    {isSlotBookingOrder(stage.order) ? (
                       <div className="p-4 rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-500/30">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
@@ -2070,7 +2093,7 @@ export const MockInterviewTab = () => {
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-green-700 dark:text-green-400">
-                              {stage.order === 2 ? 'Technical Assessment Slot Booked' : 'Demo Interview Slot Booked'}
+                              {isFirstSlotBooking(stage.order) ? 'Technical Assessment Slot Booked' : 'Demo Interview Slot Booked'}
                             </p>
                             <p className="text-sm text-muted-foreground mt-0.5">
                               {result.ai_feedback || 'Your slot has been confirmed. Check your email for details.'}
@@ -2169,9 +2192,9 @@ export const MockInterviewTab = () => {
                 )}
 
                 {/* Slot Booking Stage (2 or 4) - Show compact calendar/time picker inline */}
-                {isExpanded && status === 'current' && (stage.order === 2 || stage.order === 4) && !hasResults && (
+                {isExpanded && status === 'current' && isSlotBookingOrder(stage.order) && !hasResults && (
                   <div className="mt-4 pt-4 border-t space-y-4">
-                    {stage.order === 2 ? (
+                    {isFirstSlotBooking(stage.order) ? (
                       <>
                         {/* Stage 2: Technical Assessment Slot Booking with additional fields */}
                         <ScrollArea className="max-h-[500px]">
@@ -3125,10 +3148,10 @@ export const MockInterviewTab = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
-              {currentSession?.current_stage_order === 2 ? 'Book Technical Assessment Slot' : 'Book Demo Interview Slot'}
+              {currentSession?.current_stage_order !== undefined && isFirstSlotBooking(currentSession.current_stage_order) ? 'Book Technical Assessment Slot' : 'Book Demo Interview Slot'}
             </DialogTitle>
             <DialogDescription>
-              {currentSession?.current_stage_order === 2 
+              {currentSession?.current_stage_order !== undefined && isFirstSlotBooking(currentSession.current_stage_order)
                 ? 'Select a convenient time slot for your Technical Assessment.'
                 : 'Select a convenient time slot for your demo teaching session.'}
             </DialogDescription>
