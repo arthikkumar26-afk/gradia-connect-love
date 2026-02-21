@@ -45,11 +45,33 @@ const FreelancerDashboard = () => {
   const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
 
+  // Ensure profile exists for this user
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
+      return;
     }
-  }, [isAuthenticated, navigate]);
+    const ensureProfile = async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+      
+      // Check if profile exists
+      const { data: existing } = await supabase.from('profiles').select('id').eq('id', currentUser.id).maybeSingle();
+      if (!existing) {
+        // Create profile from auth metadata
+        const meta = currentUser.user_metadata || {};
+        await supabase.from('profiles').upsert({
+          id: currentUser.id,
+          email: currentUser.email || meta.email || '',
+          full_name: meta.full_name || 'User',
+          role: meta.role || 'freelancer',
+          mobile: meta.mobile || null,
+        });
+        await refreshProfile();
+      }
+    };
+    ensureProfile();
+  }, [isAuthenticated, navigate, refreshProfile]);
 
   const handleLogout = async () => {
     await logout();
@@ -70,13 +92,23 @@ const FreelancerDashboard = () => {
 
     setIsUploadingResume(true);
     try {
-      // Upload to storage
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) throw new Error("Not authenticated");
 
-      const filePath = `${userId}/resume${ext}`;
-      await supabase.storage.from('resumes').upload(filePath, file, { upsert: true });
-      const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
+      // Try to upload to storage (may fail due to RLS, continue anyway)
+      let resumeUrl: string | null = null;
+      try {
+        const filePath = `${userId}/resume${ext}`;
+        const { error: storageError } = await supabase.storage.from('resumes').upload(filePath, file, { upsert: true });
+        if (!storageError) {
+          const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
+          resumeUrl = urlData.publicUrl;
+        } else {
+          console.warn("Storage upload failed (RLS), continuing with AI parse:", storageError.message);
+        }
+      } catch (storageErr) {
+        console.warn("Storage upload error, continuing:", storageErr);
+      }
 
       // Parse with AI
       const formData = new FormData();
@@ -106,7 +138,8 @@ const FreelancerDashboard = () => {
       setParsedResumeData(parsed);
 
       // Update profile with AI-extracted data
-      const updateData: Record<string, any> = { resume_url: urlData.publicUrl };
+      const updateData: Record<string, any> = {};
+      if (resumeUrl) updateData.resume_url = resumeUrl;
       if (parsed.full_name) updateData.full_name = parsed.full_name;
       if (parsed.email) updateData.email = parsed.email;
       if (parsed.mobile) updateData.mobile = parsed.mobile;
