@@ -213,6 +213,18 @@ const EmployerSignup = () => {
         if (profileError) {
           console.error("Profile creation error:", profileError);
         }
+
+        // Send welcome email (fire and forget)
+        supabase.functions.invoke('send-welcome-email', {
+          body: {
+            email: email,
+            fullName: contactPerson,
+            role: 'employer',
+          }
+        }).then(res => {
+          if (res.error) console.error("Welcome email error:", res.error);
+          else console.log("Welcome email sent successfully");
+        }).catch(err => console.error("Welcome email failed:", err));
       }
 
       toast({
