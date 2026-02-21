@@ -860,28 +860,6 @@ const SignupPortal = () => {
               </CardContent>
             </Card>
 
-            {/* Individual Option */}
-            <Card 
-              className="bg-slate-800/50 border-slate-700 hover:border-purple-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10"
-              onClick={() => navigate("/individual/signup")}
-            >
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
-                  <UserPlus className="h-8 w-8 text-purple-400" />
-                </div>
-                <h2 className="text-xl font-bold text-white mb-2">Individual</h2>
-                <p className="text-slate-400 text-sm mb-4">
-                  Explore services, courses & find mentors
-                </p>
-                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
-                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Services</span>
-                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Courses</span>
-                </div>
-                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" size="sm">
-                  Continue <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Stats Section */}

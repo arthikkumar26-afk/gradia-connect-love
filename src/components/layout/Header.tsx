@@ -245,17 +245,6 @@ const Header = () => {
                         </div>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/individual/signup" className="flex items-center gap-3 py-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
-                          <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                          <div className="font-medium">Individual</div>
-                          <div className="text-xs text-muted-foreground">Services & courses</div>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link to="/admin/login" className="flex items-center gap-3 py-2">
@@ -291,7 +280,6 @@ const Header = () => {
                        userRole === 'owner' ? 'Owner' : 
                        userRole === 'employer' ? (companyName || profile?.company_name || profile?.full_name?.split(' ')[0] || 'Account') :
                        userRole === 'freelancer' ? 'Freelancer' :
-                       userRole === 'individual' ? 'Individual' :
                        profile?.full_name?.split(' ')[0] || 'Account'}</span>
                       <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -303,7 +291,6 @@ const Header = () => {
                         userRole === 'owner' ? '/owner/dashboard' : 
                         userRole === 'employer' ? '/employer/dashboard' : 
                         userRole === 'freelancer' ? '/freelancer/dashboard' :
-                        userRole === 'individual' ? '/individual/dashboard' :
                         '/candidate/dashboard'
                       } className="flex items-center gap-3 py-2">
                         <LayoutDashboard className="h-4 w-4" />
