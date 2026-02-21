@@ -902,44 +902,23 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       {status === 'current' && (
                         <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs animate-pulse" variant="outline">In Progress</Badge>
                       )}
-                      {/* Show slot booking for Demo/HR Slot Booking stages */}
-                      {stage.name === 'Demo Slot Booking' && (() => {
-                        const demoBooking = slotBookings.find(b => 
-                          b.booking_type === 'demo_round' || b.booking_type === 'Demo Round'
-                        );
-                        if (demoBooking) {
-                          return (
-                            <Badge variant="secondary" className="text-xs">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(demoBooking.booking_date)} • {demoBooking.booking_time}
-                            </Badge>
-                          );
-                        }
-                        if (status === 'current') {
-                          return (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageName=Demo Round&type=demo_round`);
-                              }}
-                              className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
-                            >
-                              Book Slot
-                            </button>
-                          );
-                        }
-                        return null;
-                      })()}
+                      {/* Show slot booking for all Slot Booking stages */}
 
-                      {stage.name === 'Written Test Slot Booking' && (() => {
-                        const wtBooking = slotBookings.find(b => 
-                          b.booking_type === 'written_test' || b.booking_type === 'Written Test'
+                      {stage.name.toLowerCase().includes('slot booking') && (() => {
+                        const isWritten = stage.name.toLowerCase().includes('written');
+                        const isDemo = stage.name.toLowerCase().includes('demo');
+                        const isHr = stage.name.toLowerCase().includes('hr');
+                        const bookingType = isDemo ? 'demo_round' : isHr ? 'hr_round' : isWritten ? 'written_test' : 'technical_assessment';
+                        const stageLabel = isDemo ? 'Demo Round' : isHr ? 'HR Round' : isWritten ? 'Written Test' : stage.name;
+                        
+                        const booking = slotBookings.find(b => 
+                          b.booking_type === bookingType || b.booking_type === stageLabel
                         );
-                        if (wtBooking) {
+                        if (booking) {
                           return (
                             <Badge variant="secondary" className="text-xs">
                               <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(wtBooking.booking_date)} • {wtBooking.booking_time}
+                              {formatDate(booking.booking_date)} • {booking.booking_time}
                             </Badge>
                           );
                         }
@@ -948,38 +927,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageName=Written Test&type=written_test`);
+                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageId=${stage.id}&stageName=${encodeURIComponent(stageLabel)}&type=${bookingType}`);
                               }}
-                              className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
+                              className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
                             >
-                              Book Slot
-                            </button>
-                          );
-                        }
-                        return null;
-                      })()}
-
-                      {stage.name === 'HR Round Slot Booking' && (() => {
-                        const hrBooking = slotBookings.find(b => 
-                          b.booking_type === 'hr_round' || b.booking_type === 'HR Round'
-                        );
-                        if (hrBooking) {
-                          return (
-                            <Badge variant="secondary" className="text-xs">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(hrBooking.booking_date)} • {hrBooking.booking_time}
-                            </Badge>
-                          );
-                        }
-                        if (status === 'current') {
-                          return (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageName=HR Round&type=hr_round`);
-                              }}
-                              className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
-                            >
+                              <Calendar className="h-3 w-3" />
                               Book Slot
                             </button>
                           );
