@@ -3788,6 +3788,89 @@ const CandidateDashboard = () => {
                   </div>
                 </Card>
 
+                {/* Top Freelancer Mentors */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-foreground">Top Freelancer Mentors</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">Learn directly from experienced freelancer mentors who excel in their fields</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { name: "Rajesh Kumar", expertise: "Full Stack Development", rating: 4.9, students: 1250, avatar: "RK", color: "bg-blue-500" },
+                      { name: "Priya Sharma", expertise: "Data Science & AI", rating: 4.8, students: 980, avatar: "PS", color: "bg-purple-500" },
+                      { name: "Amit Patel", expertise: "UI/UX Design", rating: 4.9, students: 1120, avatar: "AP", color: "bg-pink-500" },
+                      { name: "Sneha Reddy", expertise: "Digital Marketing", rating: 4.7, students: 870, avatar: "SR", color: "bg-amber-500" },
+                      { name: "Vikram Singh", expertise: "Cloud & DevOps", rating: 4.8, students: 760, avatar: "VS", color: "bg-emerald-500" },
+                      { name: "Anita Desai", expertise: "Business Analytics", rating: 4.9, students: 1050, avatar: "AD", color: "bg-indigo-500" },
+                    ].map((mentor) => (
+                      <div key={mentor.name} className="p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50 cursor-pointer">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={`h-10 w-10 rounded-full ${mentor.color} text-white flex items-center justify-center text-sm font-bold`}>
+                            {mentor.avatar}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-foreground text-sm">{mentor.name}</h4>
+                            <p className="text-xs text-muted-foreground">{mentor.expertise}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="flex items-center gap-1 text-amber-500">
+                            <Star className="h-3 w-3 fill-current" />
+                            {mentor.rating}
+                          </span>
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {mentor.students.toLocaleString()} students
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Top Institutions */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Award className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-foreground">Top Institutions</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">Trusted institutions offering quality education and certifications</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { name: "IIT Madras Online", courses: 45, speciality: "Technology & Engineering", rating: 4.9, url: "https://onlinedegree.iitm.ac.in" },
+                      { name: "BITS Pilani (WILP)", courses: 32, speciality: "Work Integrated Programs", rating: 4.8, url: "https://www.bits-pilani.ac.in/wilp" },
+                      { name: "IIIT Hyderabad", courses: 28, speciality: "AI & Machine Learning", rating: 4.8, url: "https://www.iiit.ac.in" },
+                      { name: "NPTEL / Swayam", courses: 500, speciality: "Free Govt. Certifications", rating: 4.7, url: "https://nptel.ac.in" },
+                      { name: "Great Learning", courses: 120, speciality: "Data Science & Business", rating: 4.6, url: "https://www.greatlearning.in" },
+                      { name: "Simplilearn", courses: 85, speciality: "Professional Certifications", rating: 4.5, url: "https://www.simplilearn.com" },
+                    ].map((inst) => (
+                      <a
+                        key={inst.name}
+                        href={inst.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50 group"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{inst.name}</h4>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">{inst.speciality}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="flex items-center gap-1 text-amber-500">
+                            <Star className="h-3 w-3 fill-current" />
+                            {inst.rating}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {inst.courses}+ courses
+                          </Badge>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </Card>
+
                 {/* Internal Learning Platform */}
                 <Card className="p-6 bg-gradient-to-r from-primary/5 to-accent/5">
                   <div className="flex items-center justify-between">
