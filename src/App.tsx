@@ -44,6 +44,8 @@ import RequestDemo from "./pages/employer/RequestDemo";
 import DemoRequestsAdmin from "./pages/employer/DemoRequestsAdmin";
 import EmployerSignup from "./pages/employer/Signup";
 import CandidateSignup from "./pages/candidate/Signup";
+import FreelancerSignup from "./pages/freelancer/Signup";
+import IndividualSignup from "./pages/individual/Signup";
 import LearningPlatform from "./pages/LearningPlatform";
 import ResumeBuilder from "./pages/candidate/ResumeBuilder";
 import InterviewPrep from "./pages/candidate/InterviewPrep";
@@ -71,6 +73,8 @@ import JobApply from "./pages/JobApply";
 import Interview from "./pages/Interview";
 import BookSlot from "./pages/BookSlot";
 import CandidateProfilePage from "./pages/employer/CandidateProfile";
+import FreelancerDashboard from "./pages/freelancer/Dashboard";
+import IndividualDashboard from "./pages/individual/Dashboard";
 
 // Admin & Owner Pages
 import AdminLogin from "./pages/admin/Login";
@@ -191,6 +195,14 @@ const MainRoutes = () => (
       <Route path="/employer/pricing" element={<Pricing />} />
       <Route path="/employer/demo" element={<RequestDemo />} />
       <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
+
+      {/* Freelancer Routes */}
+      <Route path="/freelancer/signup" element={<FreelancerSignup />} />
+      <Route path="/freelancer/dashboard" element={<FreelancerDashboard />} />
+
+      {/* Individual Routes */}
+      <Route path="/individual/signup" element={<IndividualSignup />} />
+      <Route path="/individual/dashboard" element={<IndividualDashboard />} />
 
       {/* Public Company Jobs (QR Code destination) */}
       <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
