@@ -914,29 +914,29 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         const booking = slotBookings.find(b => 
                           b.booking_type === bookingType || b.booking_type === stageLabel
                         );
-                        if (booking) {
-                          return (
-                            <Badge variant="secondary" className="text-xs">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(booking.booking_date)} • {booking.booking_time}
-                            </Badge>
-                          );
-                        }
-                        if (status === 'current') {
-                          return (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageId=${stage.id}&stageName=${encodeURIComponent(stageLabel)}&type=${bookingType}`);
-                              }}
-                              className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
-                            >
-                              <Calendar className="h-3 w-3" />
-                              Book Slot
-                            </button>
-                          );
-                        }
-                        return null;
+                        
+                        return (
+                          <>
+                            {booking && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {formatDate(booking.booking_date)} • {booking.booking_time}
+                              </Badge>
+                            )}
+                            {status === 'current' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/book-slot?candidateId=${currentInterview.id}&stageId=${stage.id}&stageName=${encodeURIComponent(stageLabel)}&type=${bookingType}`);
+                                }}
+                                className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
+                              >
+                                <Calendar className="h-3 w-3" />
+                                {booking ? 'Rebook Slot' : 'Book Slot'}
+                              </button>
+                            )}
+                          </>
+                        );
                       })()}
 
                       {/* View Results button for completed stages */}
