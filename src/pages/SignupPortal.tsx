@@ -787,28 +787,26 @@ const SignupPortal = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Candidate Option */}
             <Card 
               className="bg-slate-800/50 border-slate-700 hover:border-blue-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10"
               onClick={() => navigate("/candidate/signup")}
             >
-              <CardContent className="p-8 text-center">
-                <div className="w-20 h-20 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-6">
-                  <User className="h-10 w-10 text-blue-400" />
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                  <User className="h-8 w-8 text-blue-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3">I'm a Candidate</h2>
-                <p className="text-slate-400 mb-6">
-                  Looking for job opportunities, career growth, and connecting with employers
+                <h2 className="text-xl font-bold text-white mb-2">Candidate</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Find jobs, build resume & prep for interviews
                 </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">Browse Jobs</span>
-                  <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">Resume Builder</span>
-                  <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">Interview Prep</span>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                  <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs">Browse Jobs</span>
+                  <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full text-xs">Resume</span>
                 </div>
-                <Button className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white" size="lg">
-                  Continue as Candidate
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" size="sm">
+                  Continue <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </CardContent>
             </Card>
@@ -821,22 +819,66 @@ const SignupPortal = () => {
                 setActiveSection("become-employer");
               }}
             >
-              <CardContent className="p-8 text-center">
-                <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-                  <Briefcase className="h-10 w-10 text-green-400" />
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Briefcase className="h-8 w-8 text-green-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3">I'm an Employer</h2>
-                <p className="text-slate-400 mb-6">
-                  Looking to hire talent, post jobs, and find the perfect candidates
+                <h2 className="text-xl font-bold text-white mb-2">Employer</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Post jobs, hire talent & manage recruitment
                 </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Post Jobs</span>
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">AI Matching</span>
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Analytics</span>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                  <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full text-xs">Post Jobs</span>
+                  <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full text-xs">AI Match</span>
                 </div>
-                <Button className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white" size="lg">
-                  Continue as Employer
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                <Button className="w-full bg-green-600 hover:bg-green-700 text-white" size="sm">
+                  Continue <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Freelancer Option */}
+            <Card 
+              className="bg-slate-800/50 border-slate-700 hover:border-orange-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-orange-500/10"
+              onClick={() => navigate("/freelancer/signup")}
+            >
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Award className="h-8 w-8 text-orange-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white mb-2">Freelancer</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Find projects & mentor students
+                </p>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                  <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">Projects</span>
+                  <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">Mentorship</span>
+                </div>
+                <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white" size="sm">
+                  Continue <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Individual Option */}
+            <Card 
+              className="bg-slate-800/50 border-slate-700 hover:border-purple-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10"
+              onClick={() => navigate("/individual/signup")}
+            >
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                  <UserPlus className="h-8 w-8 text-purple-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white mb-2">Individual</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Explore services, courses & find mentors
+                </p>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Services</span>
+                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Courses</span>
+                </div>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" size="sm">
+                  Continue <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </CardContent>
             </Card>
