@@ -11,7 +11,7 @@ const corsHeaders = {
 
 // Input validation
 const MAX_NAME_LENGTH = 200;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_REGEX = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
 
 function isValidEmail(email: string): boolean {
   return typeof email === 'string' && EMAIL_REGEX.test(email) && email.length <= 320;
@@ -19,7 +19,6 @@ function isValidEmail(email: string): boolean {
 
 function sanitizeInput(input: unknown, maxLength: number): string {
   if (typeof input !== 'string') return '';
-  // Remove any HTML tags to prevent injection
   return input.replace(/<[^>]*>/g, '').trim().slice(0, maxLength);
 }
 
@@ -86,10 +85,10 @@ const getCandidateEmailTemplate = (name: string, registrationNumber?: string) =>
       </ol>
       
       <div style="text-align: center;">
-        <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://gradia.lovable.app'}/candidate/dashboard" class="button">Go to Dashboard</a>
+        <a href="https://gradia-link-shine.lovable.app/candidate/dashboard" class="button">Go to Dashboard</a>
       </div>
       
-      <p style="margin-top: 30px;">Need help getting started? Check out our <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://gradia.lovable.app'}/candidate/interview-prep" style="color: #667eea;">resources</a> or reach out to our support team.</p>
+      <p style="margin-top: 30px;">Need help getting started? Check out our <a href="https://gradia-link-shine.lovable.app/candidate/interview-prep" style="color: #667eea;">resources</a> or reach out to our support team.</p>
       
       <p style="margin-top: 20px;">Best of luck in your job search!</p>
       <p><strong>The Gradia Team</strong></p>
@@ -148,7 +147,7 @@ const getEmployerEmailTemplate = (name: string) => `
       </ol>
       
       <div style="text-align: center;">
-        <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://gradia.lovable.app'}/employer/dashboard" class="button">Go to Dashboard</a>
+        <a href="https://gradia-link-shine.lovable.app/employer/dashboard" class="button">Go to Dashboard</a>
       </div>
       
       <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 30px 0; border-left: 4px solid #667eea;">
@@ -156,7 +155,7 @@ const getEmployerEmailTemplate = (name: string) => `
         <p style="margin: 10px 0 0 0;">Companies with complete profiles receive 3x more quality applications. Take a few minutes to showcase your company culture and values!</p>
       </div>
       
-      <p>Need assistance? Our team is here to help you every step of the way. Check out our <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://gradia.lovable.app'}/employer/pricing" style="color: #667eea;">pricing plans</a> or <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://gradia.lovable.app'}/employer/demo" style="color: #667eea;">request a demo</a>.</p>
+      <p>Need assistance? Our team is here to help you every step of the way.</p>
       
       <p style="margin-top: 20px;">Happy hiring!</p>
       <p><strong>The Gradia Team</strong></p>
@@ -226,10 +225,10 @@ const getSponsorEmailTemplate = (name: string, companyName?: string) => `
       </div>
       
       <div style="text-align: center;">
-        <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://gradia.lovable.app'}/sponsor/dashboard" class="button">View Your Dashboard</a>
+        <a href="https://gradia-link-shine.lovable.app/sponsor/dashboard" class="button">View Your Dashboard</a>
       </div>
       
-      <p style="margin-top: 30px;">We'll be in touch soon with next steps. In the meantime, explore our <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://gradia.lovable.app'}/sponsor/sponsorship-tiers" style="color: #f59e0b;">sponsorship tiers</a> to see what best fits your goals.</p>
+      <p style="margin-top: 30px;">We'll be in touch soon with next steps. In the meantime, explore our <a href="https://gradia-link-shine.lovable.app/sponsor/sponsorship-tiers" style="color: #f59e0b;">sponsorship tiers</a> to see what best fits your goals.</p>
       
       <p style="margin-top: 20px;">Thank you for your interest in partnering with us!</p>
       <p><strong>The Gradia Partnership Team</strong></p>
@@ -244,13 +243,12 @@ const getSponsorEmailTemplate = (name: string, companyName?: string) => `
 `;
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Authentication check
+    // Authentication check - support both user tokens and service role
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -265,19 +263,17 @@ const handler = async (req: Request): Promise<Response> => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
-      console.error("Auth error:", claimsError);
+    if (userError || !user) {
+      console.error("Auth error:", userError);
       return new Response(
         JSON.stringify({ error: "Unauthorized - Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claimsData.claims.sub;
-    console.log("Authenticated user for welcome email:", userId);
+    console.log("Authenticated user for welcome email:", user.id);
 
     const rawData = await req.json();
     
@@ -330,7 +326,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: emailTemplate,
     });
 
-    console.log(`Welcome email sent successfully to ${email} (${role}) by user:`, userId);
+    console.log(`Welcome email sent successfully to ${email} (${role})`, emailResponse);
 
     return new Response(
       JSON.stringify({ 

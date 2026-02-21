@@ -225,6 +225,18 @@ const CandidateSignup = () => {
         }
         // Refresh the profile in AuthContext to ensure it's available
         await refreshProfile();
+
+        // Send welcome email (fire and forget)
+        supabase.functions.invoke('send-welcome-email', {
+          body: {
+            email: email,
+            fullName: fullName,
+            role: 'candidate',
+          }
+        }).then(res => {
+          if (res.error) console.error("Welcome email error:", res.error);
+          else console.log("Welcome email sent successfully");
+        }).catch(err => console.error("Welcome email failed:", err));
       }
 
       // Mark that user just signed up to prevent redirect during wizard flow
