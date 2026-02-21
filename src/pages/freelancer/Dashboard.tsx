@@ -42,6 +42,7 @@ const FreelancerDashboard = () => {
   const [activeMenu, setActiveMenu] = useState(() => searchParams.get("tab") || "dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -99,6 +100,10 @@ const FreelancerDashboard = () => {
       }
 
       const parsed = await response.json();
+      console.log("Parsed resume data:", parsed);
+
+      // Store full parsed data for display
+      setParsedResumeData(parsed);
 
       // Update profile with AI-extracted data
       const updateData: Record<string, any> = { resume_url: urlData.publicUrl };
@@ -257,6 +262,64 @@ const FreelancerDashboard = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Skills Section */}
+                {(parsedResumeData?.skills?.length > 0 || parsedResumeData?.skill_highlights?.length > 0) && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Skills</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {(parsedResumeData.skills || parsedResumeData.skill_highlights || []).map((skill: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-xs px-3 py-1">{skill}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Experience Section */}
+                {parsedResumeData?.experience?.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Experience</h4>
+                    <div className="space-y-3">
+                      {parsedResumeData.experience.map((exp: any, i: number) => (
+                        <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-semibold text-foreground">{exp.designation || exp.role || "—"}</p>
+                              <p className="text-sm text-muted-foreground">{exp.organization || exp.company || "—"}</p>
+                            </div>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              {exp.from_date || "—"} → {exp.to_date || "Present"}
+                            </span>
+                          </div>
+                          {exp.place && <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><MapPin className="h-3 w-3" />{exp.place}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Education Section */}
+                {parsedResumeData?.education?.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Education</h4>
+                    <div className="space-y-3">
+                      {parsedResumeData.education.map((edu: any, i: number) => (
+                        <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-semibold text-foreground">{edu.education_level} {edu.specialization ? `- ${edu.specialization}` : ""}</p>
+                              <p className="text-sm text-muted-foreground">{edu.school_college_name || "—"}</p>
+                            </div>
+                            <div className="text-right">
+                              {edu.year_of_passing && <span className="text-xs text-muted-foreground">{edu.year_of_passing}</span>}
+                              {edu.percentage_marks && <p className="text-xs font-medium text-accent">{edu.percentage_marks}%</p>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
