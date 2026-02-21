@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
-  Briefcase, Search, Users, GraduationCap, Star, 
+  LayoutDashboard, Briefcase, Search, Users, GraduationCap, Star, 
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
-  MessageSquare, Calendar, TrendingUp, User
+  MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
+  FileText, Settings, Sparkles
 } from "lucide-react";
 
 const sampleProjects = [
@@ -23,9 +25,22 @@ const sampleMentorships = [
   { id: 3, student: "Amit Kumar", topic: "React & Node.js", sessions: 20, nextSession: "Completed", status: "completed" },
 ];
 
+const menuItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "projects", label: "Find Projects", icon: Search },
+  { id: "mentorship", label: "Mentorship", icon: GraduationCap },
+  { id: "proposals", label: "My Proposals", icon: MessageSquare },
+  { id: "earnings", label: "Earnings", icon: TrendingUp },
+  { id: "profile", label: "Profile", icon: User },
+];
+
 const FreelancerDashboard = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, profile, logout } = useAuth();
+  const { toast } = useToast();
+  const [activeMenu, setActiveMenu] = useState(() => searchParams.get("tab") || "dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -33,84 +48,184 @@ const FreelancerDashboard = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            Welcome back, {profile?.full_name?.split(" ")[0] || "Freelancer"}! 👋
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Find projects, mentor students, and grow your freelance career.
-          </p>
-        </div>
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+    toast({ title: "Logged out", description: "You have been logged out successfully." });
+  };
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Briefcase className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">5</p>
-              <p className="text-xs text-muted-foreground">Active Projects</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <GraduationCap className="h-8 w-8 text-accent mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">3</p>
-              <p className="text-xs text-muted-foreground">Students Mentoring</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <TrendingUp className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">₹2.4L</p>
-              <p className="text-xs text-muted-foreground">Total Earnings</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">4.8</p>
-              <p className="text-xs text-muted-foreground">Avg Rating</p>
-            </CardContent>
-          </Card>
-        </div>
+  const getPageTitle = () => {
+    switch (activeMenu) {
+      case "dashboard": return `Welcome, ${profile?.full_name || "Freelancer"}`;
+      case "projects": return "Find Projects";
+      case "mentorship": return "Mentorship";
+      case "proposals": return "My Proposals";
+      case "earnings": return "Earnings";
+      case "profile": return "Profile";
+      default: return "Dashboard";
+    }
+  };
 
-        {/* Main Tabs */}
-        <Tabs defaultValue="projects" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 max-w-lg">
-            <TabsTrigger value="projects">Projects</TabsTrigger>
-            <TabsTrigger value="mentorship">Mentorship</TabsTrigger>
-            <TabsTrigger value="proposals">My Proposals</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
+  const renderContent = () => {
+    switch (activeMenu) {
+      case "dashboard":
+        return (
+          <div className="space-y-6 p-6 overflow-y-auto">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Briefcase className="h-8 w-8 text-accent mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-foreground">5</p>
+                  <p className="text-xs text-muted-foreground">Active Projects</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <GraduationCap className="h-8 w-8 text-accent mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-foreground">3</p>
+                  <p className="text-xs text-muted-foreground">Students Mentoring</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <TrendingUp className="h-8 w-8 text-accent mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-foreground">₹2.4L</p>
+                  <p className="text-xs text-muted-foreground">Total Earnings</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Star className="h-8 w-8 text-accent mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-foreground">4.8</p>
+                  <p className="text-xs text-muted-foreground">Avg Rating</p>
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Find Projects Tab */}
-          <TabsContent value="projects" className="space-y-4">
+            {/* Profile Details */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-accent" />
+                  <CardTitle className="text-lg">Profile Details</CardTitle>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")}>
+                  <User className="h-4 w-4 mr-2" /> Edit Profile
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start gap-6">
+                  <div className="flex flex-col items-center gap-2">
+                    {profile?.profile_picture ? (
+                      <img src={profile.profile_picture} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-border" />
+                    ) : (
+                      <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                        <User className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <tbody>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30 w-40">NAME</td>
+                            <td className="px-4 py-3 text-foreground font-semibold">{profile?.full_name || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30 w-40">EMAIL</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.email || "—"}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">MOBILE</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.mobile || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">LOCATION</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.location || profile?.current_state || "—"}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">QUALIFICATION</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.highest_qualification || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">EXPERIENCE</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.experience_level || "—"}</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">SEGMENT</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.segment || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">ROLE</td>
+                            <td className="px-4 py-3 text-foreground capitalize">{profile?.role || "Freelancer"}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Recent Projects</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {sampleProjects.slice(0, 2).map((project) => (
+                    <div key={project.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+                      <div>
+                        <p className="font-medium text-foreground text-sm">{project.title}</p>
+                        <p className="text-xs text-muted-foreground">{project.budget} · {project.duration}</p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">{project.proposals} proposals</Badge>
+                    </div>
+                  ))}
+                  <Button variant="ghost" size="sm" className="w-full" onClick={() => setActiveMenu("projects")}>
+                    View All Projects <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Active Mentorships</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {sampleMentorships.filter(m => m.status === "active").map((m) => (
+                    <div key={m.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground text-sm">{m.student}</p>
+                          <p className="text-xs text-muted-foreground">{m.topic}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{m.nextSession}</span>
+                    </div>
+                  ))}
+                  <Button variant="ghost" size="sm" className="w-full" onClick={() => setActiveMenu("mentorship")}>
+                    View All <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        );
+
+      case "projects":
+        return (
+          <div className="space-y-4 p-6 overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-foreground">Available Projects</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Search className="h-4 w-4 mr-1" /> Filter
-                </Button>
-              </div>
+              <Button variant="outline" size="sm"><Search className="h-4 w-4 mr-1" /> Filter</Button>
             </div>
-            
             {sampleProjects.map((project) => (
-              <Card key={project.id} className="hover:border-primary/50 transition-colors cursor-pointer">
+              <Card key={project.id} className="hover:border-accent/50 transition-colors cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-semibold text-foreground text-lg">{project.title}</h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="h-3.5 w-3.5" /> {project.budget}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" /> {project.duration}
-                        </span>
+                        <span className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {project.budget}</span>
+                        <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {project.duration}</span>
                         <span>{project.posted}</span>
                       </div>
                     </div>
@@ -121,23 +236,20 @@ const FreelancerDashboard = () => {
                       <Badge key={skill} variant="outline" className="text-xs">{skill}</Badge>
                     ))}
                   </div>
-                  <Button size="sm" className="gap-1">
-                    Submit Proposal <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
+                  <Button size="sm" className="gap-1">Submit Proposal <ArrowRight className="h-3.5 w-3.5" /></Button>
                 </CardContent>
               </Card>
             ))}
-          </TabsContent>
+          </div>
+        );
 
-          {/* Mentorship Tab */}
-          <TabsContent value="mentorship" className="space-y-4">
+      case "mentorship":
+        return (
+          <div className="space-y-4 p-6 overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-foreground">My Mentorship</h2>
-              <Button size="sm" className="gap-1">
-                <Users className="h-4 w-4" /> Find Students
-              </Button>
+              <Button size="sm" className="gap-1"><Users className="h-4 w-4" /> Find Students</Button>
             </div>
-
             {sampleMentorships.map((m) => (
               <Card key={m.id}>
                 <CardContent className="p-6 flex items-center justify-between">
@@ -149,37 +261,48 @@ const FreelancerDashboard = () => {
                       <h3 className="font-semibold text-foreground">{m.student}</h3>
                       <p className="text-sm text-muted-foreground">{m.topic}</p>
                       <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="h-3 w-3" /> {m.sessions} sessions
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" /> {m.nextSession}
-                        </span>
+                        <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {m.sessions} sessions</span>
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {m.nextSession}</span>
                       </div>
                     </div>
                   </div>
-                  <Badge variant={m.status === "active" ? "default" : "secondary"}>
-                    {m.status}
-                  </Badge>
+                  <Badge variant={m.status === "active" ? "default" : "secondary"}>{m.status}</Badge>
                 </CardContent>
               </Card>
             ))}
-          </TabsContent>
+          </div>
+        );
 
-          {/* Proposals Tab */}
-          <TabsContent value="proposals">
+      case "proposals":
+        return (
+          <div className="p-6">
             <Card>
               <CardContent className="p-12 text-center">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">No Active Proposals</h3>
                 <p className="text-muted-foreground mb-4">Browse projects and submit proposals to get started.</p>
-                <Button>Browse Projects</Button>
+                <Button onClick={() => setActiveMenu("projects")}>Browse Projects</Button>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
+        );
 
-          {/* Profile Tab */}
-          <TabsContent value="profile">
+      case "earnings":
+        return (
+          <div className="p-6">
+            <Card>
+              <CardContent className="p-12 text-center">
+                <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Earnings Dashboard</h3>
+                <p className="text-muted-foreground mb-4">Your earnings and payment history will appear here.</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "profile":
+        return (
+          <div className="p-6">
             <Card>
               <CardHeader>
                 <CardTitle>Freelancer Profile</CardTitle>
@@ -203,13 +326,96 @@ const FreelancerDashboard = () => {
                     <p className="font-medium text-foreground">{profile?.location || "—"}</p>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => navigate("/profile/edit")}>
-                  Edit Profile
-                </Button>
+                <Button variant="outline" onClick={() => navigate("/profile/edit")}>Edit Profile</Button>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="bg-subtle flex h-[calc(100vh-64px)] overflow-hidden">
+      {/* Sidebar */}
+      <aside
+        className={`${
+          sidebarOpen ? "w-64" : "w-0"
+        } bg-card border-r border-border transition-all duration-300 overflow-hidden flex flex-col fixed top-[64px] left-0 h-[calc(100vh-64px)] z-40`}
+      >
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeMenu === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveMenu(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  isActive
+                    ? "bg-accent/10 text-accent font-medium border-l-4 border-accent -ml-1 pl-5"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-5 w-5 flex-shrink-0" />
+                <span className="text-sm whitespace-nowrap">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-border">
+          <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 overflow-hidden ${sidebarOpen ? "ml-64" : "ml-0"}`}>
+        {/* Top Header */}
+        <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+            {/* Profile Badge */}
+            <div className="flex items-center gap-3 mr-4">
+              {profile?.profile_picture ? (
+                <img
+                  src={profile.profile_picture}
+                  alt={profile.full_name || "Profile"}
+                  className="h-10 w-10 rounded-full object-cover border-2 border-border"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-semibold text-foreground">{profile?.full_name || "User"}</p>
+                <p className="text-xs text-muted-foreground">Freelancer</p>
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">{getPageTitle()}</h1>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
