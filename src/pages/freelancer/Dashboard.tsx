@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Briefcase, Search, Users, GraduationCap, Star, 
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
-  FileText, Settings, Sparkles
+  FileText, Settings, Sparkles, Upload, Loader2
 } from "lucide-react";
 
 const sampleProjects = [
@@ -37,10 +37,12 @@ const menuItems = [
 const FreelancerDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, profile, logout } = useAuth();
+  const { isAuthenticated, profile, logout, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [activeMenu, setActiveMenu] = useState(() => searchParams.get("tab") || "dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -52,6 +54,82 @@ const FreelancerDashboard = () => {
     await logout();
     navigate("/");
     toast({ title: "Logged out", description: "You have been logged out successfully." });
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
+    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!allowedTypes.includes(ext)) {
+      toast({ title: "Invalid File", description: "Please upload PDF, Word, or image files only.", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingResume(true);
+    try {
+      // Upload to storage
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) throw new Error("Not authenticated");
+
+      const filePath = `${userId}/resume${ext}`;
+      await supabase.storage.from('resumes').upload(filePath, file, { upsert: true });
+      const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
+
+      // Parse with AI
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to parse resume");
+      }
+
+      const parsed = await response.json();
+
+      // Update profile with AI-extracted data
+      const updateData: Record<string, any> = { resume_url: urlData.publicUrl };
+      if (parsed.full_name) updateData.full_name = parsed.full_name;
+      if (parsed.email) updateData.email = parsed.email;
+      if (parsed.mobile) updateData.mobile = parsed.mobile;
+      if (parsed.location) updateData.location = parsed.location;
+      if (parsed.current_state) updateData.current_state = parsed.current_state;
+      if (parsed.current_district) updateData.current_district = parsed.current_district;
+      if (parsed.highest_qualification) updateData.highest_qualification = parsed.highest_qualification;
+      if (parsed.experience_level) updateData.experience_level = parsed.experience_level;
+      if (parsed.preferred_role) updateData.preferred_role = parsed.preferred_role;
+      if (parsed.linkedin) updateData.linkedin = parsed.linkedin;
+      if (parsed.languages) updateData.languages = parsed.languages;
+      if (parsed.gender) updateData.gender = parsed.gender;
+      if (parsed.segment) updateData.segment = parsed.segment;
+
+      const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', userId);
+      if (updateError) throw updateError;
+
+      // Refresh profile to show updated data
+      await refreshProfile();
+
+      toast({ title: "Resume Parsed!", description: "AI has detected and filled your profile details." });
+    } catch (error: any) {
+      console.error("Resume upload error:", error);
+      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsUploadingResume(false);
+      if (resumeInputRef.current) resumeInputRef.current.value = '';
+    }
   };
 
   const getPageTitle = () => {
@@ -108,11 +186,32 @@ const FreelancerDashboard = () => {
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-accent" />
-                  <CardTitle className="text-lg">Profile Details</CardTitle>
+                  <CardTitle className="text-lg">AI Detected Profile Details</CardTitle>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")}>
-                  <User className="h-4 w-4 mr-2" /> Edit Profile
-                </Button>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={resumeInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={handleResumeUpload}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => resumeInputRef.current?.click()}
+                    disabled={isUploadingResume}
+                  >
+                    {isUploadingResume ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Parsing...</>
+                    ) : (
+                      <><Upload className="h-4 w-4 mr-2" /> Update Resume</>
+                    )}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")}>
+                    <User className="h-4 w-4 mr-2" /> Edit Profile
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex items-start gap-6">
