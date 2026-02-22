@@ -239,12 +239,12 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/freelancer/signup" className="flex items-center gap-3 py-2">
+                      <Link to="/freelancer/login" className="flex items-center gap-3 py-2">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900">
                           <Award className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         </div>
                         <div>
-                          <div className="font-medium">Freelancer</div>
+                          <div className="font-medium">Freelancer Login</div>
                           <div className="text-xs text-muted-foreground">Projects & mentorship</div>
                         </div>
                       </Link>
