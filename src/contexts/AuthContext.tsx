@@ -6,7 +6,7 @@ interface Profile {
   id: string;
   full_name: string;
   email: string;
-  role: "employer" | "candidate" | "sponsor" | "admin" | "owner";
+  role: "employer" | "candidate" | "sponsor" | "admin" | "owner" | "freelancer";
   mobile?: string;
   location?: string;
   linkedin?: string;

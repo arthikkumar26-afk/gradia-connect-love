@@ -194,7 +194,7 @@ const EditProfile = () => {
       setResume(file);
       
       // Auto-parse resume with AI
-      if (profile?.role === 'candidate') {
+      if (profile?.role === 'candidate' || profile?.role === 'freelancer') {
         setIsParsingResume(true);
         try {
           const formData = new FormData();
@@ -364,7 +364,7 @@ const EditProfile = () => {
       }
 
       // Upload new resume if changed (only for candidates)
-      if (resume && profile.role === 'candidate') {
+      if (resume && (profile.role === 'candidate' || profile.role === 'freelancer')) {
         const fileExt = resume.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
@@ -384,18 +384,18 @@ const EditProfile = () => {
         full_name: fullName,
         email: email || profile.email,
         mobile,
-        location: profile.role === 'candidate' ? (currentCity || location) : location,
+        location: (profile.role === 'candidate' || profile.role === 'freelancer') ? (currentCity || location) : location,
         linkedin,
         website: profile.role === 'employer' ? companyWebsite : profile.website,
         profile_picture: profilePictureUrl,
         resume_url: resumeUrl,
-        experience_level: profile.role === 'candidate' ? experienceLevel : profile.experience_level,
+        experience_level: (profile.role === 'candidate' || profile.role === 'freelancer') ? experienceLevel : profile.experience_level,
         company_name: profile.role === 'employer' ? companyName : profile.company_name,
         company_description: profile.role === 'employer' ? companyDescription : profile.company_description,
       };
 
       // Add candidate-specific fields
-      if (profile.role === 'candidate') {
+      if (profile.role === 'candidate' || profile.role === 'freelancer') {
         updateData.date_of_birth = dateOfBirth || null;
         updateData.gender = gender || null;
         updateData.languages = languages ? languages.split(',').map(l => l.trim()).filter(l => l) : null;
@@ -434,7 +434,11 @@ const EditProfile = () => {
         description: "Your profile has been updated",
       });
 
-      navigate(profile.role === "employer" ? "/employer/dashboard" : "/candidate/dashboard");
+      const dashboardMap: Record<string, string> = {
+        employer: "/employer/dashboard",
+        freelancer: "/freelancer/dashboard",
+      };
+      navigate(dashboardMap[profile.role] || "/candidate/dashboard");
     } catch (error: any) {
       toast({
         title: "Error",

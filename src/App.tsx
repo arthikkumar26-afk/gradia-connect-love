@@ -201,6 +201,7 @@ const MainRoutes = () => (
       <Route path="/freelancer/signup" element={<FreelancerSignup />} />
       <Route path="/freelancer/login" element={<FreelancerLogin />} />
       <Route path="/freelancer/dashboard" element={<FreelancerDashboard />} />
+      <Route path="/freelancer/edit-profile" element={<EditProfile />} />
 
 
       {/* Public Company Jobs (QR Code destination) */}

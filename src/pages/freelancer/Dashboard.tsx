@@ -246,7 +246,7 @@ const FreelancerDashboard = () => {
                       <><Upload className="h-4 w-4 mr-2" /> Update Resume</>
                     )}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")}>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/freelancer/edit-profile")}>
                     <User className="h-4 w-4 mr-2" /> Edit Profile
                   </Button>
                 </div>
