@@ -45,6 +45,7 @@ import DemoRequestsAdmin from "./pages/employer/DemoRequestsAdmin";
 import EmployerSignup from "./pages/employer/Signup";
 import CandidateSignup from "./pages/candidate/Signup";
 import FreelancerSignup from "./pages/freelancer/Signup";
+import FreelancerLogin from "./pages/freelancer/Login";
 
 import LearningPlatform from "./pages/LearningPlatform";
 import ResumeBuilder from "./pages/candidate/ResumeBuilder";
@@ -198,6 +199,7 @@ const MainRoutes = () => (
 
       {/* Freelancer Routes */}
       <Route path="/freelancer/signup" element={<FreelancerSignup />} />
+      <Route path="/freelancer/login" element={<FreelancerLogin />} />
       <Route path="/freelancer/dashboard" element={<FreelancerDashboard />} />
 
 
