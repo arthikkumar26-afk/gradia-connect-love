@@ -153,6 +153,13 @@ const FreelancerDashboard = () => {
       if (parsed.languages) updateData.languages = parsed.languages;
       if (parsed.gender) updateData.gender = parsed.gender;
       if (parsed.segment) updateData.segment = parsed.segment;
+      if (parsed.date_of_birth) updateData.date_of_birth = parsed.date_of_birth;
+      if (parsed.alternate_number) updateData.alternate_number = parsed.alternate_number;
+      if (parsed.primary_subject) updateData.primary_subject = parsed.primary_subject;
+      if (parsed.program) updateData.program = parsed.program;
+      if (parsed.batch) updateData.batch = parsed.batch;
+      if (parsed.classes_handled) updateData.classes_handled = parsed.classes_handled;
+      if (parsed.office_type) updateData.office_type = parsed.office_type;
 
       const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', userId);
       if (updateError) throw updateError;
@@ -284,11 +291,41 @@ const FreelancerDashboard = () => {
                             <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">EXPERIENCE</td>
                             <td className="px-4 py-3 text-foreground">{profile?.experience_level || "—"}</td>
                           </tr>
-                          <tr>
+                          <tr className="border-b border-border">
                             <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">SEGMENT</td>
                             <td className="px-4 py-3 text-foreground">{profile?.segment || "—"}</td>
                             <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">ROLE</td>
                             <td className="px-4 py-3 text-foreground capitalize">{profile?.role || "Freelancer"}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">GENDER</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.gender || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">DATE OF BIRTH</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.date_of_birth || "—"}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">LINKEDIN</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.linkedin || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">LANGUAGES</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.languages?.join(", ") || "—"}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">PREFERRED ROLE</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.preferred_role || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">PRIMARY SUBJECT</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.primary_subject || "—"}</td>
+                          </tr>
+                          <tr className="border-b border-border">
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">CURRENT SALARY</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.current_salary ? `₹${profile.current_salary.toLocaleString()}` : "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">EXPECTED SALARY</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.expected_salary ? `₹${profile.expected_salary.toLocaleString()}` : "—"}</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">AVAILABLE FROM</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.available_from || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30">ALT. NUMBER</td>
+                            <td className="px-4 py-3 text-foreground">{profile?.alternate_number || "—"}</td>
                           </tr>
                         </tbody>
                       </table>
