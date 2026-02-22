@@ -200,10 +200,14 @@ const EditProfile = () => {
           const formData = new FormData();
           formData.append('file', file);
           
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData?.session?.access_token;
+          
           const response = await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
             {
               method: 'POST',
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
               body: formData,
             }
           );
