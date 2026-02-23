@@ -1227,6 +1227,7 @@ const CandidateDashboard = () => {
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
+    { id: "mentors", label: "Mentors", icon: Users },
     
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
@@ -3883,6 +3884,142 @@ const CandidateDashboard = () => {
                     </Button>
                   </div>
                 </Card>
+              </div>
+            )}
+
+            {/* My Mentors */}
+            {activeMenu === "mentors" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">My Mentors</h2>
+                  <p className="text-sm text-muted-foreground">View your enrolled mentors, homework assignments and submitted documents</p>
+                </div>
+
+                {/* Enrolled Mentors */}
+                {[
+                  {
+                    id: 1, name: "Rajesh Kumar", expertise: "Full Stack Development", avatar: "RK", color: "bg-blue-500",
+                    rating: 4.9, sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active" as const,
+                    homework: [
+                      { title: "Build a REST API with Node.js", dueDate: "2026-02-25", status: "pending" as const },
+                      { title: "React CRUD Application", dueDate: "2026-02-20", status: "submitted" as const },
+                      { title: "Database Schema Design", dueDate: "2026-02-15", status: "reviewed" as const, score: 85 },
+                    ],
+                    submissions: [
+                      { name: "React_CRUD_Assignment.pdf", date: "2026-02-20", status: "reviewed" as const, score: 85 },
+                      { name: "DB_Schema_Design.docx", date: "2026-02-15", status: "reviewed" as const, score: 78 },
+                      { name: "NodeJS_API_Project.zip", date: "2026-02-24", status: "pending" as const, score: null },
+                    ],
+                  },
+                  {
+                    id: 2, name: "Priya Sharma", expertise: "Data Science & AI", avatar: "PS", color: "bg-purple-500",
+                    rating: 4.8, sessions: 8, nextSession: "Wed, 6 PM", status: "active" as const,
+                    homework: [
+                      { title: "Pandas Data Analysis Project", dueDate: "2026-02-26", status: "pending" as const },
+                      { title: "SQL Query Exercises", dueDate: "2026-02-18", status: "reviewed" as const, score: 80 },
+                    ],
+                    submissions: [
+                      { name: "Pandas_Data_Analysis.ipynb", date: "2026-02-18", status: "reviewed" as const, score: 80 },
+                    ],
+                  },
+                ].map((mentor) => (
+                  <Card key={mentor.id} className="overflow-hidden">
+                    {/* Mentor Header */}
+                    <div className="p-5 border-b border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`h-11 w-11 rounded-full ${mentor.color} text-white flex items-center justify-center text-sm font-bold`}>
+                            {mentor.avatar}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">{mentor.name}</h3>
+                            <p className="text-xs text-muted-foreground">{mentor.expertise}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1 text-xs text-amber-500">
+                            <Star className="h-3 w-3 fill-current" /> {mentor.rating}
+                          </span>
+                          <Badge variant={mentor.status === "active" ? "default" : "secondary"} className="text-xs capitalize">
+                            {mentor.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Video className="h-3 w-3" /> {mentor.sessions} sessions</span>
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Next: {mentor.nextSession}</span>
+                      </div>
+                    </div>
+
+                    {/* Homework Assignments */}
+                    <div className="p-5 border-b border-border">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <ClipboardList className="h-4 w-4 text-primary" /> Homework Assignments
+                      </h4>
+                      <div className="space-y-2">
+                        {mentor.homework.map((hw, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 rounded-md bg-muted/30 border border-border">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{hw.title}</p>
+                              <p className="text-xs text-muted-foreground">Due: {hw.dueDate}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {hw.status === "reviewed" && (
+                                <Badge className="text-xs gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
+                                  <CheckCircle className="h-3 w-3" /> {(hw as any).score}%
+                                </Badge>
+                              )}
+                              {hw.status === "submitted" && (
+                                <Badge variant="secondary" className="text-xs">Submitted</Badge>
+                              )}
+                              {hw.status === "pending" && (
+                                <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Pending</Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Uploaded Documents */}
+                    <div className="p-5">
+                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-accent" /> Uploaded Documents
+                      </h4>
+                      {mentor.submissions.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {mentor.submissions.map((sub, idx) => (
+                            <div key={idx} className="flex items-center gap-3 p-3 rounded-md bg-muted/30 border border-border">
+                              <FileText className="h-4 w-4 text-accent flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">{sub.name}</p>
+                                <p className="text-xs text-muted-foreground">{sub.date}</p>
+                              </div>
+                              {sub.status === "reviewed" ? (
+                                <Badge className="text-xs gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
+                                  <CheckCircle className="h-3 w-3" /> {sub.score}%
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">Pending Review</Badge>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 flex-shrink-0"
+                                onClick={() => toast({ title: "Downloading...", description: sub.name })}
+                                title={`Download ${sub.name}`}
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
               </div>
             )}
 
