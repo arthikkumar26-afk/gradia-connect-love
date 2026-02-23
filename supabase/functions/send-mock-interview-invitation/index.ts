@@ -61,28 +61,30 @@ const handler = async (req: Request): Promise<Response> => {
     let buttonText = 'Continue →';
     let stageSpecificInfo = '';
 
-    switch (stageOrder) {
-      case 1: // Interview Instructions - no button, just instructions
+    // Detect stage type from stageName (case-insensitive) for pipeline-agnostic emails
+    const stageNameLower = (stageName || '').toLowerCase();
+    const isInstructionStage = stageNameLower.includes('instruction') || stageNameLower.includes('guideline');
+    const isSlotBookingStage = stageNameLower.includes('slot booking') || stageNameLower.includes('slot book');
+    const isDemoStage = stageNameLower.includes('demo') && !stageNameLower.includes('feedback');
+    const isFeedbackStage = stageNameLower.includes('feedback') || stageNameLower.includes('result');
+    const isHRStage = stageNameLower.includes('hr') || stageNameLower.includes('document');
+    const isReviewStage = stageNameLower.includes('review') || stageNameLower.includes('summary') || stageNameLower.includes('all review');
+    const isCodingStage = stageNameLower.includes('coding');
+    const isMCQStage = stageNameLower.includes('mcq') || stageNameLower.includes('technical assessment') || stageNameLower.includes('written test');
+
+    if (isInstructionStage || stageOrder === 1) {
         stageEmoji = '📋';
-        stageTitle = 'Interview Process Instructions';
+        stageTitle = stageName || 'Interview Process Instructions';
         buttonText = ''; // No button for instructions
         interviewLink = ''; // No link needed
+        buttonText = '';
+        interviewLink = '';
         stageSpecificInfo = `
           <div class="info-box">
             <h3>📋 Welcome to the Interview Process!</h3>
             <p>This email contains important instructions for your upcoming interview stages.</p>
-            <ul>
-              <li><strong>Stage 1:</strong> Review these instructions (current)</li>
-              <li><strong>Stage 2:</strong> Technical Assessment Slot Booking</li>
-              <li><strong>Stage 3:</strong> Technical Assessment - Domain knowledge questions</li>
-              <li><strong>Stage 4:</strong> Demo Slot Booking - Schedule your demo session</li>
-              <li><strong>Stage 5:</strong> Demo Round - Live teaching demonstration</li>
-              <li><strong>Stage 6:</strong> Demo Feedback - Review your performance metrics</li>
-              <li><strong>Stage 7:</strong> Final Review (HR) - Submit required documents</li>
-              <li><strong>Stage 8:</strong> All Reviews - View comprehensive assessment</li>
-            </ul>
+            <p>${stageDescription || ''}</p>
           </div>
-          
           <p><strong>Important Guidelines:</strong></p>
           <ul>
             <li>Ensure you have a stable internet connection</li>
@@ -90,51 +92,64 @@ const handler = async (req: Request): Promise<Response> => {
             <li>Have your camera and microphone ready</li>
             <li>Keep your documents handy for the HR round</li>
           </ul>
-          
-          <p><strong>Next Step:</strong> You will receive another email shortly for the Technical Assessment Slot Booking stage.</p>
+          <p><strong>Next Step:</strong> You will receive another email shortly for the next stage.</p>
         `;
-        break;
-        
-      case 2: // Technical Assessment Slot Booking
+    } else if (isSlotBookingStage) {
         stageEmoji = '📅';
-        stageTitle = 'Technical Assessment Slot Booking';
+        stageTitle = stageName;
         buttonText = 'Book Your Slot →';
         interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
         stageSpecificInfo = `
           <div class="info-box">
-            <h3>📅 Book Your Technical Assessment Slot:</h3>
+            <h3>📅 ${stageName}:</h3>
             <ul>
-              <li><strong>Format:</strong> Technical Assessment Interview</li>
-              <li><strong>Duration:</strong> 20-25 minutes</li>
+              <li><strong>Format:</strong> ${stageDescription || 'Schedule your interview slot'}</li>
               <li><strong>Choose:</strong> Select a time slot that works best for you</li>
             </ul>
           </div>
-          
           <p><strong>Before booking:</strong></p>
           <ul>
             <li>Check your availability for the next few days</li>
-            <li>Ensure you'll have a quiet space for the assessment</li>
-            <li>Prepare your technical knowledge in advance</li>
+            <li>Ensure you'll have a quiet space</li>
+            <li>Prepare in advance</li>
           </ul>
         `;
-        break;
-        
-      case 3: // Technical Assessment
+    } else if (isCodingStage) {
+        stageEmoji = '💻';
+        stageTitle = stageName;
+        buttonText = 'Start Coding Test →';
+        interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
+        stageSpecificInfo = `
+          <div class="info-box">
+            <h3>💻 ${stageName}:</h3>
+            <ul>
+              <li><strong>Stage:</strong> ${stageName} (Stage ${stageOrder} of ${TOTAL_STAGES})</li>
+              <li><strong>Description:</strong> ${stageDescription || 'Write code & submit solution'}</li>
+              <li><strong>Recording:</strong> Your responses may be recorded</li>
+            </ul>
+          </div>
+          <p><strong>Tips for success:</strong></p>
+          <ul>
+            <li>Find a quiet place with good internet connection</li>
+            <li>Read each problem carefully before coding</li>
+            <li>Test your solution before submitting</li>
+            <li>Stay calm and focus on correctness</li>
+          </ul>
+        `;
+    } else if (isMCQStage) {
         stageEmoji = '📝';
-        stageTitle = 'Technical Assessment';
+        stageTitle = stageName;
         buttonText = 'Start Assessment →';
         interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
         stageSpecificInfo = `
           <div class="info-box">
-            <h3>📝 Technical Assessment Details:</h3>
+            <h3>📝 ${stageName}:</h3>
             <ul>
               <li><strong>Stage:</strong> ${stageName} (Stage ${stageOrder} of ${TOTAL_STAGES})</li>
-              <li><strong>Format:</strong> 8 Questions</li>
-              <li><strong>Time:</strong> 150 seconds per question</li>
+              <li><strong>Description:</strong> ${stageDescription || 'Answer technical questions'}</li>
               <li><strong>Recording:</strong> Your responses will be video recorded</li>
             </ul>
           </div>
-          
           <p><strong>Tips for success:</strong></p>
           <ul>
             <li>Find a quiet place with good internet connection</li>
@@ -143,67 +158,34 @@ const handler = async (req: Request): Promise<Response> => {
             <li>Stay calm and confident!</li>
           </ul>
         `;
-        break;
-        
-      case 4: // Demo Slot Booking
-        stageEmoji = '📅';
-        stageTitle = 'Demo Interview Slot Booking';
-        buttonText = 'Book Your Slot →';
-        interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
-        stageSpecificInfo = `
-          <div class="info-box">
-            <h3>📅 Book Your Demo Session:</h3>
-            <ul>
-              <li><strong>Format:</strong> Live Teaching Demonstration</li>
-              <li><strong>Duration:</strong> 10-15 minutes</li>
-              <li><strong>Choose:</strong> Select a time slot that works best for you</li>
-            </ul>
-          </div>
-          
-          <p><strong>Before booking:</strong></p>
-          <ul>
-            <li>Check your availability for the next few days</li>
-            <li>Ensure you'll have a quiet space for the demo</li>
-            <li>Prepare your teaching topic in advance</li>
-          </ul>
-        `;
-        break;
-        
-      case 5: // Demo Round
+    } else if (isDemoStage) {
         stageEmoji = '🎬';
-        stageTitle = 'Demo Teaching Session';
-        buttonText = 'Start Demo Teaching →';
+        stageTitle = stageName;
+        buttonText = 'Start Demo →';
         interviewLink = `${baseUrl}/candidate/demo-round?session=${sessionId}&stage=${stageOrder}`;
         stageSpecificInfo = `
           <div class="info-box">
-            <h3>🎬 Demo Teaching Details:</h3>
+            <h3>🎬 ${stageName}:</h3>
             <ul>
-              <li><strong>Format:</strong> AI-Monitored Teaching Demonstration</li>
-              <li><strong>Duration:</strong> 10-15 minutes teaching session</li>
+              <li><strong>Format:</strong> AI-Monitored Demonstration</li>
+              <li><strong>Duration:</strong> 10-15 minutes</li>
               ${bookedSlot ? `<li><strong>Scheduled:</strong> ${bookedSlot}</li>` : ''}
-              <li><strong>Recording:</strong> Your entire demo will be recorded for review</li>
-              <li><strong>AI Evaluation:</strong> Our AI will analyze your teaching style, clarity, and engagement</li>
+              <li><strong>Description:</strong> ${stageDescription || ''}</li>
             </ul>
           </div>
-          
-          <p><strong>Tips for your demo teaching:</strong></p>
+          <p><strong>Tips for success:</strong></p>
           <ul>
-            <li>Choose a topic you're comfortable teaching</li>
             <li>Speak clearly and maintain eye contact with the camera</li>
-            <li>Use examples and engage as if students are present</li>
-            <li>Structure your lesson with introduction, main content, and summary</li>
             <li>Ensure good lighting and a clean background</li>
+            <li>Structure your presentation clearly</li>
           </ul>
         `;
-        break;
-        
-      case 6: // Demo Feedback Summary
+    } else if (isFeedbackStage) {
         stageEmoji = '📊';
-        stageTitle = 'Demo Round Feedback Summary';
+        stageTitle = stageName;
         buttonText = 'View Dashboard →';
         interviewLink = `${baseUrl}/candidate/dashboard`;
-        
-        // Build detailed feedback content if feedbackData is provided
+
         if (feedbackData) {
           const scoreColor = feedbackData.score >= 80 ? '#22c55e' : feedbackData.score >= 65 ? '#f59e0b' : '#ef4444';
           const criteriaLabels: Record<string, string> = {
@@ -213,194 +195,99 @@ const handler = async (req: Request): Promise<Response> => {
             timeManagement: 'Time Management',
             overallPotential: 'Overall Potential'
           };
-          
           let criteriaHtml = '';
           if (feedbackData.questionScores) {
             criteriaHtml = Object.entries(feedbackData.questionScores).map(([key, value]) => {
               const scoreClr = value.score >= 80 ? '#22c55e' : value.score >= 65 ? '#f59e0b' : '#ef4444';
-              return `
-                <tr>
-                  <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${criteriaLabels[key] || key}</td>
-                  <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; color: ${scoreClr}; font-weight: bold;">${value.score}%</td>
-                </tr>
-              `;
+              return `<tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;">${criteriaLabels[key] || key}</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;text-align:center;color:${scoreClr};font-weight:bold;">${value.score}%</td></tr>`;
             }).join('');
           }
-          
           let strengthsHtml = '';
-          if (feedbackData.strengths && feedbackData.strengths.length > 0) {
-            strengthsHtml = `
-              <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                <h4 style="color: #16a34a; margin: 0 0 12px 0;">✓ Strengths</h4>
-                <ul style="margin: 0; padding-left: 20px; color: #166534;">
-                  ${feedbackData.strengths.map(s => `<li style="margin-bottom: 8px;">${s}</li>`).join('')}
-                </ul>
-              </div>
-            `;
+          if (feedbackData.strengths?.length) {
+            strengthsHtml = `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin:16px 0;"><h4 style="color:#16a34a;margin:0 0 12px 0;">✓ Strengths</h4><ul style="margin:0;padding-left:20px;color:#166534;">${feedbackData.strengths.map(s => `<li style="margin-bottom:8px;">${s}</li>`).join('')}</ul></div>`;
           }
-          
           let improvementsHtml = '';
-          if (feedbackData.improvements && feedbackData.improvements.length > 0) {
-            improvementsHtml = `
-              <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                <h4 style="color: #d97706; margin: 0 0 12px 0;">⚡ Areas for Improvement</h4>
-                <ul style="margin: 0; padding-left: 20px; color: #92400e;">
-                  ${feedbackData.improvements.map(i => `<li style="margin-bottom: 8px;">${i}</li>`).join('')}
-                </ul>
-              </div>
-            `;
+          if (feedbackData.improvements?.length) {
+            improvementsHtml = `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:16px;margin:16px 0;"><h4 style="color:#d97706;margin:0 0 12px 0;">⚡ Areas for Improvement</h4><ul style="margin:0;padding-left:20px;color:#92400e;">${feedbackData.improvements.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join('')}</ul></div>`;
           }
-          
           stageSpecificInfo = `
-            <div style="background: linear-gradient(135deg, ${scoreColor}20, ${scoreColor}10); border: 2px solid ${scoreColor}; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
-              <h2 style="margin: 0; font-size: 14px; color: #6b7280;">Demo Round Score</h2>
-              <div style="font-size: 48px; font-weight: bold; color: ${scoreColor}; margin: 8px 0;">${feedbackData.score}%</div>
-              <span style="background: ${feedbackData.passed ? '#22c55e' : '#ef4444'}; color: white; padding: 4px 12px; border-radius: 16px; font-size: 12px;">
-                ${feedbackData.passed ? '✓ PASSED' : '✗ BELOW THRESHOLD'}
-              </span>
+            <div style="background:linear-gradient(135deg,${scoreColor}20,${scoreColor}10);border:2px solid ${scoreColor};border-radius:12px;padding:20px;text-align:center;margin:20px 0;">
+              <h2 style="margin:0;font-size:14px;color:#6b7280;">Score</h2>
+              <div style="font-size:48px;font-weight:bold;color:${scoreColor};margin:8px 0;">${feedbackData.score}%</div>
+              <span style="background:${feedbackData.passed ? '#22c55e' : '#ef4444'};color:white;padding:4px 12px;border-radius:16px;font-size:12px;">${feedbackData.passed ? '✓ PASSED' : '✗ BELOW THRESHOLD'}</span>
             </div>
-            
-            ${criteriaHtml ? `
-              <div style="margin: 20px 0;">
-                <h3 style="color: #374151; margin-bottom: 12px;">📋 Criteria Breakdown</h3>
-                <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
-                  <thead>
-                    <tr style="background: #f3f4f6;">
-                      <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;">Criteria</th>
-                      <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e5e7eb;">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${criteriaHtml}
-                  </tbody>
-                </table>
-              </div>
-            ` : ''}
-            
-            ${strengthsHtml}
-            ${improvementsHtml}
-            
-            ${feedbackData.feedback ? `
-              <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                <h4 style="color: #475569; margin: 0 0 8px 0;">💡 AI Evaluation Summary</h4>
-                <p style="color: #64748b; margin: 0; line-height: 1.6;">${feedbackData.feedback}</p>
-              </div>
-            ` : ''}
+            ${criteriaHtml ? `<div style="margin:20px 0;"><h3 style="color:#374151;margin-bottom:12px;">📋 Criteria Breakdown</h3><table style="width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;"><thead><tr style="background:#f3f4f6;"><th style="padding:12px;text-align:left;border-bottom:2px solid #e5e7eb;">Criteria</th><th style="padding:12px;text-align:center;border-bottom:2px solid #e5e7eb;">Score</th></tr></thead><tbody>${criteriaHtml}</tbody></table></div>` : ''}
+            ${strengthsHtml}${improvementsHtml}
+            ${feedbackData.feedback ? `<div style="background:#f8fafc;border-radius:8px;padding:16px;margin:16px 0;"><h4 style="color:#475569;margin:0 0 8px 0;">💡 AI Evaluation Summary</h4><p style="color:#64748b;margin:0;line-height:1.6;">${feedbackData.feedback}</p></div>` : ''}
           `;
         } else {
           stageSpecificInfo = `
             <div class="info-box">
-              <h3>📊 Your Demo Feedback is Ready:</h3>
+              <h3>📊 ${stageName}:</h3>
               <ul>
-                <li><strong>AI Evaluation:</strong> Comprehensive analysis of your teaching</li>
-                <li><strong>Metrics:</strong> Clarity, engagement, content quality scores</li>
+                <li><strong>Description:</strong> ${stageDescription || 'View your performance feedback'}</li>
+                <li><strong>Metrics:</strong> Detailed scores and analysis</li>
                 <li><strong>Feedback:</strong> Personalized improvement suggestions</li>
               </ul>
             </div>
-            
-            <p><strong>What you'll see:</strong></p>
-            <ul>
-              <li>Overall performance score</li>
-              <li>Strengths identified during your demo</li>
-              <li>Areas for improvement</li>
-              <li>Detailed teaching metrics</li>
-            </ul>
           `;
         }
-        break;
-        
-      case 7: // Final Review (HR) / HR Documents Submitted
+    } else if (isHRStage) {
         stageEmoji = '📄';
         buttonText = 'View Dashboard →';
         interviewLink = `${baseUrl}/candidate/dashboard`;
         
-        // If documents were uploaded, show confirmation
-        if (documentsUploaded && documentsUploaded.length > 0) {
+        if (documentsUploaded?.length) {
           stageTitle = 'HR Documents Submitted Successfully';
-          const docLabels: Record<string, string> = {
-            idProof: 'ID Proof',
-            educationCertificate: 'Education Certificate',
-            addressProof: 'Address Proof',
-            experienceLetter: 'Experience Letter'
-          };
-          
+          const docLabels: Record<string, string> = { idProof: 'ID Proof', educationCertificate: 'Education Certificate', addressProof: 'Address Proof', experienceLetter: 'Experience Letter' };
           stageSpecificInfo = `
-            <div style="background: linear-gradient(135deg, #22c55e20, #22c55e10); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
-              <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
-              <h2 style="margin: 0; color: #16a34a;">Documents Submitted!</h2>
-              <p style="color: #166534; margin-top: 8px;">Your HR documents have been received and are under review.</p>
+            <div style="background:linear-gradient(135deg,#22c55e20,#22c55e10);border:2px solid #22c55e;border-radius:12px;padding:20px;text-align:center;margin:20px 0;">
+              <div style="font-size:48px;margin-bottom:12px;">✅</div>
+              <h2 style="margin:0;color:#16a34a;">Documents Submitted!</h2>
+              <p style="color:#166534;margin-top:8px;">Your HR documents have been received and are under review.</p>
             </div>
-            
-            <div style="background: white; border-radius: 8px; padding: 16px; margin: 16px 0; border: 1px solid #e5e7eb;">
-              <h4 style="color: #374151; margin: 0 0 12px 0;">📋 Documents Received:</h4>
-              <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
-                ${documentsUploaded.map(doc => `<li style="margin-bottom: 8px;">✓ ${docLabels[doc] || doc}</li>`).join('')}
-              </ul>
+            <div style="background:white;border-radius:8px;padding:16px;margin:16px 0;border:1px solid #e5e7eb;">
+              <h4 style="color:#374151;margin:0 0 12px 0;">📋 Documents Received:</h4>
+              <ul style="margin:0;padding-left:20px;color:#4b5563;">${documentsUploaded.map(doc => `<li style="margin-bottom:8px;">✓ ${docLabels[doc] || doc}</li>`).join('')}</ul>
             </div>
-            
-            <p><strong>What's Next:</strong></p>
-            <ul>
-              <li>Your documents will be verified by our HR team</li>
-              <li>Proceed to the Final Review stage to see your complete assessment</li>
-              <li>You'll receive your final interview summary shortly</li>
-            </ul>
           `;
         } else {
-          stageTitle = 'Final Review - HR Documents';
+          stageTitle = stageName;
           stageSpecificInfo = `
             <div class="info-box">
-              <h3>📄 HR Round - Document Submission:</h3>
+              <h3>📄 ${stageName}:</h3>
               <ul>
-                <li><strong>Stage:</strong> HR Documents (Stage ${stageOrder} of ${TOTAL_STAGES})</li>
-                <li><strong>Required:</strong> Upload your identity and education documents</li>
+                <li><strong>Stage:</strong> ${stageName} (Stage ${stageOrder} of ${TOTAL_STAGES})</li>
+                <li><strong>Description:</strong> ${stageDescription || 'Submit required documents'}</li>
               </ul>
             </div>
-            
             <p><strong>Documents to prepare:</strong></p>
             <ul>
-              <li><strong>ID Proof</strong> (Required) - Aadhar, PAN, Passport, or Voter ID</li>
-              <li><strong>Education Certificate</strong> (Required) - Highest degree certificate or marksheet</li>
-              <li><strong>Address Proof</strong> (Optional) - Utility bill, bank statement, or rental agreement</li>
-              <li><strong>Experience Letter</strong> (Optional) - Previous employment letter if applicable</li>
+              <li><strong>ID Proof</strong> (Required)</li>
+              <li><strong>Education Certificate</strong> (Required)</li>
+              <li><strong>Address Proof</strong> (Optional)</li>
+              <li><strong>Experience Letter</strong> (Optional)</li>
             </ul>
-            
-            <p><em>Accepted formats: PDF, JPG, PNG (max 5MB each)</em></p>
           `;
         }
-        break;
-        
-      case 8: // All Reviews
+    } else if (isReviewStage) {
         stageEmoji = '✅';
-        stageTitle = 'Complete Interview Summary';
+        stageTitle = stageName;
         buttonText = 'View All Reviews →';
         interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
         stageSpecificInfo = `
           <div class="info-box">
-            <h3>✅ Your Interview Journey is Complete!</h3>
-            <p>Congratulations on completing all interview stages!</p>
-            <ul>
-              <li><strong>View:</strong> Complete summary of all stages</li>
-              <li><strong>Scores:</strong> Performance across all rounds</li>
-              <li><strong>Feedback:</strong> Comprehensive assessment</li>
-            </ul>
+            <h3>✅ ${stageName}:</h3>
+            <p>${stageDescription || 'View your comprehensive assessment across all stages.'}</p>
           </div>
-          
-          <p><strong>What's included:</strong></p>
-          <ul>
-            <li>Technical Assessment results</li>
-            <li>Demo Round evaluation</li>
-            <li>HR Round feedback</li>
-            <li>Overall recommendation</li>
-          </ul>
         `;
-        break;
-        
-      default:
+    } else {
+        // Generic fallback for any unrecognized stage
         interviewLink = `${baseUrl}/candidate/mock-interview/${sessionId}/${stageOrder}`;
         stageSpecificInfo = `
           <div class="info-box">
-            <h3>📋 Interview Stage:</h3>
-            <p>${stageDescription}</p>
+            <h3>${stageEmoji} ${stageName}:</h3>
+            <p>${stageDescription || ''}</p>
           </div>
         `;
     }
