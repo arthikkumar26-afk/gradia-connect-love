@@ -336,7 +336,9 @@ const MockInterview = () => {
           action: 'generate_questions',
           sessionId,
           stageOrder: parseInt(stageOrder || '1'),
-          candidateProfile: profile
+          candidateProfile: profile,
+          stageType: stage?.stageType || 'assessment',
+          stageName: stage?.name || `Stage ${stageOrder}`
         }
       });
 
