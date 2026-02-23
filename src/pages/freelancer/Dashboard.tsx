@@ -12,8 +12,10 @@ import {
   LayoutDashboard, Briefcase, Search, Users, GraduationCap, Star, 
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
-  FileText, Settings, Sparkles, Upload, Loader2
+  FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
+  ClipboardList, Send, Radio
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 const sampleProjects = [
   { id: 1, title: "React Dashboard Development", budget: "₹50,000 - ₹80,000", duration: "2-3 months", skills: ["React", "TypeScript", "Tailwind"], posted: "2 days ago", proposals: 12 },
@@ -22,9 +24,9 @@ const sampleProjects = [
 ];
 
 const sampleMentorships = [
-  { id: 1, student: "Rahul Sharma", topic: "Full Stack Development", sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active", email: "rahul@example.com", mobile: "+91 9876543210", location: "Hyderabad, Telangana", qualification: "B.Tech CSE", experience: "1 year", mockTestScore: 78, assignmentScore: 85, skillsToLearn: ["React", "Node.js", "MongoDB", "Docker"], gender: "Male", dob: "1999-05-15" },
-  { id: 2, student: "Priya Patel", topic: "Data Science Basics", sessions: 8, nextSession: "Wed, 6 PM", status: "active", email: "priya@example.com", mobile: "+91 9123456789", location: "Bangalore, Karnataka", qualification: "M.Sc Statistics", experience: "Fresher", mockTestScore: 65, assignmentScore: 72, skillsToLearn: ["Python", "Pandas", "Machine Learning", "SQL"], gender: "Female", dob: "2000-08-22" },
-  { id: 3, student: "Amit Kumar", topic: "React & Node.js", sessions: 20, nextSession: "Completed", status: "completed", email: "amit@example.com", mobile: "+91 9988776655", location: "Delhi", qualification: "BCA", experience: "2 years", mockTestScore: 92, assignmentScore: 88, skillsToLearn: ["TypeScript", "AWS", "GraphQL"], gender: "Male", dob: "1998-01-10" },
+  { id: 1, student: "Rahul Sharma", topic: "Full Stack Development", sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active", email: "rahul@example.com", mobile: "+91 9876543210", location: "Hyderabad, Telangana", qualification: "B.Tech CSE", experience: "1 year", mockTestScore: 78, assignmentScore: 85, skillsToLearn: ["React", "Node.js", "MongoDB", "Docker"], gender: "Male", dob: "1999-05-15", liveTraining: "in-progress" as const, homeworkGiven: 3, homeworkCompleted: 2 },
+  { id: 2, student: "Priya Patel", topic: "Data Science Basics", sessions: 8, nextSession: "Wed, 6 PM", status: "active", email: "priya@example.com", mobile: "+91 9123456789", location: "Bangalore, Karnataka", qualification: "M.Sc Statistics", experience: "Fresher", mockTestScore: 65, assignmentScore: 72, skillsToLearn: ["Python", "Pandas", "Machine Learning", "SQL"], gender: "Female", dob: "2000-08-22", liveTraining: "scheduled" as const, homeworkGiven: 5, homeworkCompleted: 4 },
+  { id: 3, student: "Amit Kumar", topic: "React & Node.js", sessions: 20, nextSession: "Completed", status: "completed", email: "amit@example.com", mobile: "+91 9988776655", location: "Delhi", qualification: "BCA", experience: "2 years", mockTestScore: 92, assignmentScore: 88, skillsToLearn: ["TypeScript", "AWS", "GraphQL"], gender: "Male", dob: "1998-01-10", liveTraining: "completed" as const, homeworkGiven: 8, homeworkCompleted: 8 },
 ];
 
 const menuItems = [
@@ -563,21 +565,43 @@ const FreelancerDashboard = () => {
               <Card><CardContent className="p-8 text-center text-muted-foreground">No mentorships match your filters.</CardContent></Card>
             ) : filteredMentorships.map((m) => (
                <Card key={m.id} className="hover:border-accent/50 transition-colors cursor-pointer" onClick={() => setSelectedCandidate(m)}>
-                <CardContent className="p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                      <User className="h-6 w-6 text-accent" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{m.student}</h3>
-                      <p className="text-sm text-muted-foreground">{m.topic}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {m.sessions} sessions</span>
-                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {m.nextSession}</span>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                        <User className="h-6 w-6 text-accent" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{m.student}</h3>
+                        <p className="text-sm text-muted-foreground">{m.topic}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {m.sessions} sessions</span>
+                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {m.nextSession}</span>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge variant={m.status === "active" ? "default" : "secondary"}>{m.status}</Badge>
+                      <Badge variant="outline" className={`text-xs gap-1 ${
+                        m.liveTraining === "in-progress" ? "border-green-500 text-green-600" :
+                        m.liveTraining === "scheduled" ? "border-blue-500 text-blue-600" :
+                        "border-muted-foreground text-muted-foreground"
+                      }`}>
+                        {m.liveTraining === "in-progress" && <><Radio className="h-3 w-3 animate-pulse" /> Live Training</>}
+                        {m.liveTraining === "scheduled" && <><Video className="h-3 w-3" /> Training Scheduled</>}
+                        {m.liveTraining === "completed" && <><CheckCircle2 className="h-3 w-3" /> Training Done</>}
+                      </Badge>
+                    </div>
                   </div>
-                  <Badge variant={m.status === "active" ? "default" : "secondary"}>{m.status}</Badge>
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <ClipboardList className="h-3.5 w-3.5" />
+                      Homework: {m.homeworkCompleted}/{m.homeworkGiven} completed
+                    </div>
+                    <Button size="sm" variant="outline" className="ml-auto gap-1 text-xs h-7" onClick={(e) => { e.stopPropagation(); setSelectedCandidate(m); }}>
+                      <Send className="h-3 w-3" /> Give Homework
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -662,6 +686,20 @@ const FreelancerDashboard = () => {
                       </div>
                     </div>
 
+                    {/* Live Training Status */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><Video className="h-4 w-4" /> Live Training Status</h4>
+                      <div className={`p-3 rounded-lg border flex items-center gap-3 ${
+                        selectedCandidate.liveTraining === "in-progress" ? "border-green-500/50 bg-green-50 dark:bg-green-900/10" :
+                        selectedCandidate.liveTraining === "scheduled" ? "border-blue-500/50 bg-blue-50 dark:bg-blue-900/10" :
+                        "border-border bg-muted/30"
+                      }`}>
+                        {selectedCandidate.liveTraining === "in-progress" && <><Radio className="h-5 w-5 text-green-600 animate-pulse" /><div><p className="font-medium text-green-700 dark:text-green-400">Live Training In Progress</p><p className="text-xs text-muted-foreground">Currently attending session</p></div></>}
+                        {selectedCandidate.liveTraining === "scheduled" && <><Video className="h-5 w-5 text-blue-600" /><div><p className="font-medium text-blue-700 dark:text-blue-400">Training Scheduled</p><p className="text-xs text-muted-foreground">Next session: {selectedCandidate.nextSession}</p></div></>}
+                        {selectedCandidate.liveTraining === "completed" && <><CheckCircle2 className="h-5 w-5 text-muted-foreground" /><div><p className="font-medium text-foreground">Training Completed</p><p className="text-xs text-muted-foreground">All sessions finished</p></div></>}
+                      </div>
+                    </div>
+
                     {/* Mentorship Info */}
                     <div>
                       <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Mentorship Info</h4>
@@ -677,6 +715,32 @@ const FreelancerDashboard = () => {
                         <div className="p-3 rounded-lg bg-muted/30 border border-border text-center">
                           <Badge variant={selectedCandidate.status === "active" ? "default" : "secondary"}>{selectedCandidate.status}</Badge>
                           <p className="text-xs text-muted-foreground mt-1">Status</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Homework Section */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><ClipboardList className="h-4 w-4" /> Homework</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border border-border">
+                          <div className="flex-1">
+                            <p className="text-sm text-foreground font-medium">Completed: {selectedCandidate.homeworkCompleted} / {selectedCandidate.homeworkGiven}</p>
+                            <Progress value={(selectedCandidate.homeworkCompleted / selectedCandidate.homeworkGiven) * 100} className="h-2 mt-1" />
+                          </div>
+                          <Badge variant={selectedCandidate.homeworkCompleted === selectedCandidate.homeworkGiven ? "default" : "secondary"}>
+                            {selectedCandidate.homeworkCompleted === selectedCandidate.homeworkGiven ? "All Done" : "Pending"}
+                          </Badge>
+                        </div>
+                        <div className="border border-border rounded-lg p-3 space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Assign New Homework</p>
+                          <Textarea placeholder="Enter homework title & description..." className="text-sm min-h-[60px]" />
+                          <div className="flex items-center gap-2">
+                            <input type="date" className="h-8 rounded-md border border-input bg-background px-2 text-xs" />
+                            <Button size="sm" className="ml-auto gap-1 h-8 text-xs" onClick={() => toast({ title: "Homework Assigned!", description: `New homework sent to ${selectedCandidate.student}.` })}>
+                              <Send className="h-3 w-3" /> Assign
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
