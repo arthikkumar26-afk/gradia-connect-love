@@ -22,7 +22,7 @@ interface MockInterviewStage {
   questionCount: number;
   timePerQuestion: number;
   passingScore: number;
-  stageType: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review';
+  stageType: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review' | 'coding';
   requiresSlotBooking?: boolean;
   autoProgressAfterCompletion?: boolean;
 }
@@ -127,9 +127,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { action, sessionId, stageOrder, candidateProfile, answers, recordingUrl, bookedSlot } = await req.json();
+    const { action, sessionId, stageOrder, candidateProfile, answers, recordingUrl, bookedSlot, stageType: clientStageType, stageName: clientStageName } = await req.json();
 
-    console.log('Mock interview action:', { action, sessionId, stageOrder, hasRecording: !!recordingUrl });
+    console.log('Mock interview action:', { action, sessionId, stageOrder, hasRecording: !!recordingUrl, clientStageType, clientStageName });
 
     if (action === 'get_stages') {
       return new Response(JSON.stringify({ stages: INTERVIEW_STAGES }), {
@@ -275,13 +275,28 @@ serve(async (req) => {
     }
 
     if (action === 'generate_questions') {
-      const stage = INTERVIEW_STAGES.find(s => s.order === stageOrder);
+      let stage = INTERVIEW_STAGES.find(s => s.order === stageOrder);
+      
+      // If client provides stage info (e.g. coding test from pipeline config), use it
+      const effectiveStageType = clientStageType || stage?.stageType;
+      const effectiveStageName = clientStageName || stage?.name || `Stage ${stageOrder}`;
+      
       if (!stage) {
-        throw new Error('Invalid stage order');
+        // Create a virtual stage from client data for non-default pipelines
+        stage = {
+          name: effectiveStageName,
+          order: stageOrder,
+          description: '',
+          questionCount: effectiveStageType === 'coding' ? 1 : 8,
+          timePerQuestion: effectiveStageType === 'coding' ? 1800 : 150,
+          passingScore: 65,
+          stageType: effectiveStageType || 'assessment',
+          autoProgressAfterCompletion: false
+        };
       }
 
-      // Only generate questions for assessment and HR stages
-      if (stage.stageType !== 'assessment' && stage.stageType !== 'hr_documents') {
+      // Generate questions for assessment, hr_documents, and coding stages
+      if (effectiveStageType !== 'assessment' && effectiveStageType !== 'hr_documents' && effectiveStageType !== 'coding') {
         return new Response(JSON.stringify({ 
           questions: [], 
           stage,
@@ -615,15 +630,18 @@ Requirements:
 6. Make questions specific to the candidate's experience level and background
 
 For "${stage.name}" stage, focus on:
-${stage.order === 2 ? `- Deep knowledge of ${profile?.primary_subject || 'the subject'} concepts
-- Problem-solving in ${profile?.primary_subject || 'academic'} contexts
-- Teaching methodologies for ${profile?.primary_subject || 'the subject'}
-- Real classroom scenarios and student engagement
-- Subject-specific curriculum and exam patterns` : ''}
-${stage.order === 4 ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
-${stage.order === 6 ? '- HR questions, document verification, future plans, final assessment' : ''}
+${stage.stageType === 'coding' ? `- Programming and coding problems relevant to ${profile?.preferred_role || profile?.primary_subject || 'software development'}
+- Algorithm design, data structures, and problem solving
+- Code optimization and best practices
+- Practical coding scenarios and debugging
+- Generate coding challenges with clear input/output expectations` : ''}
+${stage.order === 2 || stage.stageType === 'assessment' ? `- Deep knowledge of ${profile?.primary_subject || profile?.preferred_role || 'the subject'} concepts
+- Problem-solving in ${profile?.primary_subject || 'technical'} contexts
+- Real-world scenarios and practical application` : ''}
+${stage.order === 4 || stage.stageType === 'demo' ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
+${stage.order === 6 || stage.stageType === 'hr_documents' ? '- HR questions, document verification, future plans, final assessment' : ''}
 
-Generate exactly ${stage.questionCount} questions that test the candidate's expertise in ${profile?.primary_subject || 'their field'}.`;
+Generate exactly ${stage.questionCount} questions that test the candidate's expertise in ${profile?.primary_subject || profile?.preferred_role || 'their field'}.`;
 }
 
 function buildEvaluationPrompt(stage: MockInterviewStage, questions: any[], answers: any[], profile: any): string {
