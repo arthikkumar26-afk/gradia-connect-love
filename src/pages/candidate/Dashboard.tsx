@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useMentorship } from "@/hooks/useMentorship";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -243,6 +244,7 @@ const CandidateDashboard = () => {
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [selectedMentorProfile, setSelectedMentorProfile] = useState<any>(null);
   const [selectedEnrolledMentor, setSelectedEnrolledMentor] = useState<any>(null);
+  const { enrollments: dbCandidateMentorships, loading: candidateMentorshipLoading, uploadDocument: candidateUploadDoc, updateHomeworkStatus } = useMentorship("candidate");
   
   // Education state
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
@@ -4006,21 +4008,41 @@ const CandidateDashboard = () => {
                 </div>
 
                 {/* Enrolled Mentors */}
-                {[
+                {(dbCandidateMentorships.length > 0 ? dbCandidateMentorships.map((e, idx) => {
+                  const name = e.mentor_profile?.full_name || "Mentor";
+                  const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+                  const colors = ["bg-blue-500", "bg-purple-500", "bg-emerald-500", "bg-orange-500"];
+                  return {
+                    id: e.id, name, expertise: e.topic, avatar: initials, color: colors[idx % colors.length],
+                    rating: 4.8, sessions: e.sessions_completed, nextSession: e.next_session || "TBD", status: e.status,
+                    bio: "", email: e.mentor_profile?.email || "", phone: e.mentor_profile?.mobile || "",
+                    location: e.mentor_profile?.location || "", experience: e.mentor_profile?.experience_level || "",
+                    qualification: e.mentor_profile?.highest_qualification || "", skills: [] as string[], workExperience: [] as any[],
+                    courses: (e.courses || []).map(c => ({
+                      title: c.title, progress: c.total_modules > 0 ? Math.round((c.completed_modules / c.total_modules) * 100) : 0,
+                      totalModules: c.total_modules, completedModules: c.completed_modules, status: c.status,
+                    })),
+                    homework: (e.homework || []).map(h => ({
+                      title: h.title, dueDate: h.due_date, status: h.status, score: h.score,
+                    })),
+                    submissions: (e.documents || []).map(d => ({
+                      name: d.file_name, date: d.created_at.split("T")[0], status: d.review_status as any, score: d.score, url: d.file_url,
+                    })),
+                    enrollmentId: e.id,
+                  };
+                }) : [
                   {
-                    id: 1, name: "Rajesh Kumar", expertise: "Full Stack Development", avatar: "RK", color: "bg-blue-500",
-                    rating: 4.9, sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active" as const,
-                    bio: "Senior Full Stack Developer with 10+ years experience in building scalable web applications. Specializes in React, Node.js, and cloud architecture.",
+                    id: "1", name: "Rajesh Kumar", expertise: "Full Stack Development", avatar: "RK", color: "bg-blue-500",
+                    rating: 4.9, sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active",
+                    bio: "Senior Full Stack Developer with 10+ years experience in building scalable web applications.",
                     email: "rajesh.kumar@mentor.com", phone: "+91 9876543210", location: "Hyderabad",
                     experience: "10 years", qualification: "M.Tech, Computer Science - IIT Bombay",
-                    skills: ["React", "Node.js", "TypeScript", "MongoDB", "AWS", "Docker", "GraphQL", "PostgreSQL"],
+                    skills: ["React", "Node.js", "TypeScript", "MongoDB", "AWS", "Docker"],
                     workExperience: [
-                      { company: "Tech Solutions Inc.", role: "Senior Developer", duration: "2020 - Present", description: "Leading a team of 8 developers building enterprise SaaS products." },
-                      { company: "Innovate Labs", role: "Full Stack Developer", duration: "2016 - 2020", description: "Built and maintained microservices architecture serving 1M+ users." },
+                      { company: "Tech Solutions Inc.", role: "Senior Developer", duration: "2020 - Present", description: "Leading a team of 8 developers." },
                     ],
                     courses: [
-                      { title: "Full Stack Web Development", progress: 65, totalModules: 20, completedModules: 13, status: "in_progress" as const },
-                      { title: "Advanced React Patterns", progress: 100, totalModules: 12, completedModules: 12, status: "completed" as const },
+                      { title: "Full Stack Web Development", progress: 65, totalModules: 20, completedModules: 13, status: "in_progress" },
                     ],
                     homework: [
                       { title: "Build a REST API with Node.js", dueDate: "2026-02-25", status: "pending" as const },
@@ -4030,22 +4052,21 @@ const CandidateDashboard = () => {
                     submissions: [
                       { name: "React_CRUD_Assignment.pdf", date: "2026-02-20", status: "reviewed" as const, score: 85 },
                       { name: "DB_Schema_Design.docx", date: "2026-02-15", status: "reviewed" as const, score: 78 },
-                      { name: "NodeJS_API_Project.zip", date: "2026-02-24", status: "pending" as const, score: null },
                     ],
+                    enrollmentId: "",
                   },
                   {
-                    id: 2, name: "Priya Sharma", expertise: "Data Science & AI", avatar: "PS", color: "bg-purple-500",
-                    rating: 4.8, sessions: 8, nextSession: "Wed, 6 PM", status: "active" as const,
-                    bio: "Data Scientist with expertise in machine learning, deep learning, and statistical analysis. Passionate about making AI accessible to everyone.",
+                    id: "2", name: "Priya Sharma", expertise: "Data Science & AI", avatar: "PS", color: "bg-purple-500",
+                    rating: 4.8, sessions: 8, nextSession: "Wed, 6 PM", status: "active",
+                    bio: "Data Scientist with expertise in ML and statistical analysis.",
                     email: "priya.sharma@mentor.com", phone: "+91 9123456789", location: "Bangalore",
                     experience: "7 years", qualification: "M.Sc Data Science - IISc Bangalore",
-                    skills: ["Python", "TensorFlow", "Pandas", "SQL", "Tableau", "NLP", "Scikit-learn"],
+                    skills: ["Python", "TensorFlow", "Pandas", "SQL"],
                     workExperience: [
-                      { company: "AI Research Labs", role: "Lead Data Scientist", duration: "2021 - Present", description: "Leading ML research and production model deployment." },
-                      { company: "DataMinds Corp", role: "Data Analyst", duration: "2019 - 2021", description: "Built predictive models for e-commerce personalization." },
+                      { company: "AI Research Labs", role: "Lead Data Scientist", duration: "2021 - Present", description: "Leading ML research." },
                     ],
                     courses: [
-                      { title: "Data Science with Python", progress: 40, totalModules: 15, completedModules: 6, status: "in_progress" as const },
+                      { title: "Data Science with Python", progress: 40, totalModules: 15, completedModules: 6, status: "in_progress" },
                     ],
                     homework: [
                       { title: "Pandas Data Analysis Project", dueDate: "2026-02-26", status: "pending" as const },
@@ -4054,8 +4075,9 @@ const CandidateDashboard = () => {
                     submissions: [
                       { name: "Pandas_Data_Analysis.ipynb", date: "2026-02-18", status: "reviewed" as const, score: 80 },
                     ],
+                    enrollmentId: "",
                   },
-                ].map((mentor) => (
+                ]).map((mentor) => (
                   <Card key={mentor.id} className="overflow-hidden">
                     {/* Mentor Header - Clickable */}
                     <div className="p-5 border-b border-border cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setSelectedEnrolledMentor(mentor)}>
@@ -4136,9 +4158,22 @@ const CandidateDashboard = () => {
 
                     {/* Uploaded Documents */}
                     <div className="p-5">
-                      <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-accent" /> Uploaded Documents
-                      </h4>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-accent" /> Uploaded Documents
+                        </h4>
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-input bg-background text-xs text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors">
+                          <Upload className="h-3.5 w-3.5" /> Upload File
+                          <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" className="hidden" onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file && (mentor as any).enrollmentId) {
+                              await candidateUploadDoc((mentor as any).enrollmentId, null, file);
+                            } else if (file) {
+                              toast({ title: "Document Uploaded", description: file.name });
+                            }
+                          }} />
+                        </label>
+                      </div>
                       {mentor.submissions.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
                       ) : (
@@ -4161,7 +4196,7 @@ const CandidateDashboard = () => {
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 w-7 p-0 flex-shrink-0"
-                                onClick={() => toast({ title: "Downloading...", description: sub.name })}
+                                onClick={() => { if ((sub as any).url) { window.open((sub as any).url, '_blank'); } else { toast({ title: "Downloading...", description: sub.name }); } }}
                                 title={`Download ${sub.name}`}
                               >
                                 <Download className="h-3.5 w-3.5" />
@@ -4331,7 +4366,7 @@ const CandidateDashboard = () => {
                                   ) : (
                                     <Badge variant="secondary" className="text-xs">Pending</Badge>
                                   )}
-                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toast({ title: "Downloading...", description: sub.name })}>
+                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { if ((sub as any).url) { window.open((sub as any).url, '_blank'); } else { toast({ title: "Downloading...", description: sub.name }); } }}>
                                     <Download className="h-3.5 w-3.5" />
                                   </Button>
                                 </div>

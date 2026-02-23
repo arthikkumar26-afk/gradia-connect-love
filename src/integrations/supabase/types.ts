@@ -1430,6 +1430,193 @@ export type Database = {
         }
         Relationships: []
       }
+      mentorship_courses: {
+        Row: {
+          completed_modules: number
+          created_at: string
+          enrollment_id: string
+          id: string
+          status: string
+          title: string
+          total_modules: number
+          updated_at: string
+        }
+        Insert: {
+          completed_modules?: number
+          created_at?: string
+          enrollment_id: string
+          id?: string
+          status?: string
+          title: string
+          total_modules?: number
+          updated_at?: string
+        }
+        Update: {
+          completed_modules?: number
+          created_at?: string
+          enrollment_id?: string
+          id?: string
+          status?: string
+          title?: string
+          total_modules?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorship_courses_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "mentorship_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentorship_documents: {
+        Row: {
+          created_at: string
+          enrollment_id: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          homework_id: string | null
+          id: string
+          review_status: string
+          score: number | null
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          enrollment_id: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          homework_id?: string | null
+          id?: string
+          review_status?: string
+          score?: number | null
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          enrollment_id?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          homework_id?: string | null
+          id?: string
+          review_status?: string
+          score?: number | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorship_documents_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "mentorship_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentorship_documents_homework_id_fkey"
+            columns: ["homework_id"]
+            isOneToOne: false
+            referencedRelation: "mentorship_homework"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentorship_enrollments: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          mentor_id: string
+          next_session: string | null
+          sessions_completed: number
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          mentor_id: string
+          next_session?: string | null
+          sessions_completed?: number
+          status?: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          mentor_id?: string
+          next_session?: string | null
+          sessions_completed?: number
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mentorship_homework: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          enrollment_id: string
+          feedback: string | null
+          id: string
+          mentor_id: string
+          score: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          enrollment_id: string
+          feedback?: string | null
+          id?: string
+          mentor_id: string
+          score?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          enrollment_id?: string
+          feedback?: string | null
+          id?: string
+          mentor_id?: string
+          score?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorship_homework_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "mentorship_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mock_interview_sessions: {
         Row: {
           candidate_id: string

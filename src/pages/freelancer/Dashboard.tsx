@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useMentorship } from "@/hooks/useMentorship";
 import { 
   LayoutDashboard, Briefcase, Search, Users, GraduationCap, Star, 
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
@@ -59,6 +60,15 @@ const FreelancerDashboard = () => {
   const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
 
+  // Mentorship from DB
+  const { enrollments: dbMentorships, loading: mentorshipLoading, assignHomework, uploadDocument, reviewDocument } = useMentorship("mentor");
+
+  // Homework form state
+  const [hwTitle, setHwTitle] = useState("");
+  const [hwDesc, setHwDesc] = useState("");
+  const [hwDueDate, setHwDueDate] = useState("");
+  const [hwFile, setHwFile] = useState<File | null>(null);
+
   // Project filters
   const [projectSkillFilter, setProjectSkillFilter] = useState<string>("all");
   const [projectBudgetFilter, setProjectBudgetFilter] = useState<string>("all");
@@ -69,7 +79,7 @@ const FreelancerDashboard = () => {
   const [mentorshipSearchQuery, setMentorshipSearchQuery] = useState("");
 
   // Mentorship candidate detail modal
-  const [selectedCandidate, setSelectedCandidate] = useState<typeof sampleMentorships[0] | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
 
   const allProjectSkills = Array.from(new Set(sampleProjects.flatMap(p => p.skills)));
 
@@ -81,7 +91,46 @@ const FreelancerDashboard = () => {
     return true;
   });
 
-  const filteredMentorships = sampleMentorships.filter(m => {
+  // Merge DB mentorships with sample data as fallback
+  const allMentorships = dbMentorships.length > 0 ? dbMentorships.map(e => ({
+    id: e.id,
+    student: e.candidate_profile?.full_name || "Unknown",
+    topic: e.topic,
+    sessions: e.sessions_completed,
+    nextSession: e.next_session || "TBD",
+    status: e.status,
+    email: e.candidate_profile?.email || "",
+    mobile: e.candidate_profile?.mobile || "",
+    location: e.candidate_profile?.location || "",
+    qualification: e.candidate_profile?.highest_qualification || "",
+    experience: e.candidate_profile?.experience_level || "",
+    gender: e.candidate_profile?.gender || "",
+    dob: e.candidate_profile?.date_of_birth || "",
+    mockTestScore: 0,
+    assignmentScore: e.homework?.filter(h => h.score).reduce((a, h) => a + (h.score || 0), 0) / Math.max(e.homework?.filter(h => h.score).length || 1, 1) || 0,
+    skillsToLearn: [] as string[],
+    liveTraining: "scheduled" as const,
+    homeworkGiven: e.homework?.length || 0,
+    homeworkCompleted: e.homework?.filter(h => h.status === "reviewed").length || 0,
+    submissions: (e.documents || []).map(d => ({
+      name: d.file_name,
+      date: d.created_at.split("T")[0],
+      status: d.review_status as "reviewed" | "pending",
+      score: d.score,
+      url: d.file_url,
+    })),
+    homework: (e.homework || []).map(h => ({
+      id: h.id,
+      title: h.title,
+      dueDate: h.due_date,
+      status: h.status,
+      score: h.score,
+    })),
+    enrollmentId: e.id,
+    candidateId: e.candidate_id,
+  })) : sampleMentorships.map(m => ({ ...m, enrollmentId: "", candidateId: "", homework: m.submissions.map((s, i) => ({ id: String(i), title: s.name, dueDate: s.date, status: s.status, score: s.score })) }));
+
+  const filteredMentorships = allMentorships.filter(m => {
     if (mentorshipStatusFilter !== "all" && m.status !== mentorshipStatusFilter) return false;
     if (mentorshipSearchQuery && !m.student.toLowerCase().includes(mentorshipSearchQuery.toLowerCase()) && !m.topic.toLowerCase().includes(mentorshipSearchQuery.toLowerCase())) return false;
     return true;
@@ -758,7 +807,13 @@ const FreelancerDashboard = () => {
                                     size="sm"
                                     variant="ghost"
                                     className="h-7 w-7 p-0 flex-shrink-0"
-                                    onClick={() => toast({ title: "Downloading...", description: sub.name })}
+                                    onClick={() => {
+                                      if ((sub as any).url) {
+                                        window.open((sub as any).url, '_blank');
+                                      } else {
+                                        toast({ title: "Downloading...", description: sub.name });
+                                      }
+                                    }}
                                     title={`Download ${sub.name}`}
                                   >
                                     <Download className="h-3.5 w-3.5" />
@@ -777,19 +832,28 @@ const FreelancerDashboard = () => {
                         )}
                         <div className="border border-border rounded-lg p-3 space-y-2">
                           <p className="text-xs font-medium text-muted-foreground">Assign New Homework</p>
-                          <Textarea placeholder="Enter homework title & description..." className="text-sm min-h-[60px]" />
+                          <Textarea placeholder="Enter homework title..." className="text-sm min-h-[40px]" value={hwTitle} onChange={(e) => setHwTitle(e.target.value)} />
+                          <Textarea placeholder="Description (optional)..." className="text-sm min-h-[40px]" value={hwDesc} onChange={(e) => setHwDesc(e.target.value)} />
                           <div className="flex items-center gap-2 flex-wrap">
-                            <input type="date" className="h-8 rounded-md border border-input bg-background px-2 text-xs" />
+                            <input type="date" className="h-8 rounded-md border border-input bg-background px-2 text-xs" value={hwDueDate} onChange={(e) => setHwDueDate(e.target.value)} />
                             <label className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-input bg-background text-xs text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors">
                               <Upload className="h-3.5 w-3.5" />
-                              <span id="hw-file-name">Attach Document</span>
+                              <span>{hwFile ? (hwFile.name.length > 20 ? hwFile.name.slice(0, 17) + '...' : hwFile.name) : "Attach Document"}</span>
                               <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" className="hidden" onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                const label = document.getElementById('hw-file-name');
-                                if (file && label) label.textContent = file.name.length > 20 ? file.name.slice(0, 17) + '...' : file.name;
+                                if (file) setHwFile(file);
                               }} />
                             </label>
-                            <Button size="sm" className="ml-auto gap-1 h-8 text-xs" onClick={() => toast({ title: "Homework Assigned!", description: `New homework sent to ${selectedCandidate.student}.` })}>
+                            <Button size="sm" className="ml-auto gap-1 h-8 text-xs" onClick={async () => {
+                              if (!hwTitle.trim()) { toast({ title: "Enter a title", variant: "destructive" }); return; }
+                              if (selectedCandidate?.enrollmentId) {
+                                await assignHomework(selectedCandidate.enrollmentId, selectedCandidate.candidateId, hwTitle, hwDesc, hwDueDate);
+                                if (hwFile) await uploadDocument(selectedCandidate.enrollmentId, null, hwFile);
+                              } else {
+                                toast({ title: "Homework Assigned!", description: `"${hwTitle}" sent to ${selectedCandidate?.student}.` });
+                              }
+                              setHwTitle(""); setHwDesc(""); setHwDueDate(""); setHwFile(null);
+                            }}>
                               <Send className="h-3 w-3" /> Assign
                             </Button>
                           </div>
