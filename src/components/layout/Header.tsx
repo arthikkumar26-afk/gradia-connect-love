@@ -175,7 +175,7 @@ const Header = () => {
               Employer
             </Link>
 
-            <Link to="/freelancer/signup" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+            <Link to="/freelancer/login" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
               Freelancer
             </Link>
 
