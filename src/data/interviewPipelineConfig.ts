@@ -179,10 +179,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         label: 'Software Engineer',
         stages: [
           commonStages.resumeScreening,
-          { order: 2, name: 'Technical Coding Challenge', description: 'Online coding test (2 problems) based on selected role', isAutomated: true },
           commonStages.writtenTestSlotBooking,
-          { order: 4, name: 'Technical MCQ Test', description: 'Role-specific MCQ test — 10 questions (90 sec each)', isAutomated: true },
-          { order: 5, name: 'Technical Interview', description: 'Role-specific technical discussion & system design', isAutomated: false },
+          { order: 3, name: 'Technical MCQ Test', description: 'Role-specific MCQ test — 10 questions (90 sec each)', isAutomated: true },
+          { order: 4, name: 'Technical Interview', description: 'Role-specific technical discussion & system design', isAutomated: false },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
