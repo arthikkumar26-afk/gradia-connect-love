@@ -56,7 +56,7 @@ interface InterviewStage {
   questionCount: number;
   timePerQuestion: number;
   passingScore: number;
-  stageType?: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review';
+  stageType?: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review' | 'coding';
   requiresSlotBooking?: boolean;
   autoProgressAfterCompletion?: boolean;
 }
@@ -229,6 +229,8 @@ const MockInterview = () => {
             timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('demo') ? 600 : 90,
             passingScore: 65,
             stageType: s.name.toLowerCase().includes('slot booking') ? 'slot_booking' as const
+              : s.name.toLowerCase().includes('coding test') && !s.name.toLowerCase().includes('slot') ? 'coding' as const
+              : s.name.toLowerCase().includes('coding result') ? 'feedback' as const
               : s.name.toLowerCase().includes('demo') ? 'demo' as const
               : s.name.toLowerCase().includes('feedback') ? 'feedback' as const
               : s.name.toLowerCase().includes('hr') ? 'hr_documents' as const
@@ -1263,7 +1265,65 @@ const MockInterview = () => {
       );
     }
 
-    // Default: Assessment stages (Technical Assessment, HR Round, Demo Round)
+    // Coding Test stage
+    if (stage.stageType === 'coding' || stage?.name?.toLowerCase().includes('coding test')) {
+      return (
+        <div className="min-h-screen bg-background p-4 md:p-8">
+          <div className="max-w-3xl mx-auto">
+            <ProgressTrackerSection />
+            <Card className="w-full">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Brain className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl">{stage?.name || 'Coding Test'}</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  {stage?.description || 'Write code & submit your solution for AI evaluation'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    Before you begin:
+                  </h4>
+                  <ul className="text-sm text-muted-foreground space-y-2">
+                    <li className="flex items-center gap-2">
+                      <Camera className="h-4 w-4" />
+                      Camera access will be required for proctoring
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Mic className="h-4 w-4" />
+                      Microphone access will be required
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Timer className="h-4 w-4" />
+                      {stage?.questionCount || 1} coding problem(s), {Math.round((stage?.timePerQuestion || 1800) / 60)} minutes total
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Video className="h-4 w-4" />
+                      Your entire session will be recorded
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Button onClick={startInterview} className="w-full gap-2" size="lg">
+                    <Play className="h-5 w-5" />
+                    Start Coding Test
+                  </Button>
+                  <Button variant="outline" onClick={goToDashboard} className="w-full">
+                    Return to Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      );
+    }
+
+    // Default: Assessment stages (Technical Assessment, HR Round, etc.)
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-3xl mx-auto">
