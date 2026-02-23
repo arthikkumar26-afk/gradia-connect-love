@@ -1678,11 +1678,13 @@ export type Database = {
           created_at: string
           current_stage_order: number
           id: string
+          interview_type: string | null
           live_stream_started_at: string | null
           live_view_active: boolean | null
           live_view_token: string | null
           overall_feedback: string | null
           overall_score: number | null
+          pipeline_type: string | null
           recording_url: string | null
           stages_completed: Json | null
           started_at: string | null
@@ -1695,11 +1697,13 @@ export type Database = {
           created_at?: string
           current_stage_order?: number
           id?: string
+          interview_type?: string | null
           live_stream_started_at?: string | null
           live_view_active?: boolean | null
           live_view_token?: string | null
           overall_feedback?: string | null
           overall_score?: number | null
+          pipeline_type?: string | null
           recording_url?: string | null
           stages_completed?: Json | null
           started_at?: string | null
@@ -1712,11 +1716,13 @@ export type Database = {
           created_at?: string
           current_stage_order?: number
           id?: string
+          interview_type?: string | null
           live_stream_started_at?: string | null
           live_view_active?: boolean | null
           live_view_token?: string | null
           overall_feedback?: string | null
           overall_score?: number | null
+          pipeline_type?: string | null
           recording_url?: string | null
           stages_completed?: Json | null
           started_at?: string | null
