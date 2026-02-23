@@ -64,7 +64,7 @@ interface InterviewStage {
   questionCount: number;
   timePerQuestion: number;
   passingScore: number;
-  stageType?: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review';
+  stageType?: 'email_info' | 'assessment' | 'slot_booking' | 'demo' | 'feedback' | 'hr_documents' | 'review' | 'coding';
 }
 
 interface StageResult {
@@ -379,15 +379,16 @@ export const MockInterviewTab = () => {
   }, [user]);
 
   // Refresh data when tab becomes visible (user comes back from interview page)
+  const loadingRef = React.useRef(false);
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && user) {
+      if (document.visibilityState === 'visible' && user && !loadingRef.current) {
         loadData();
       }
     };
 
     const handleFocus = () => {
-      if (user) {
+      if (user && !loadingRef.current) {
         loadData();
       }
     };
@@ -403,15 +404,8 @@ export const MockInterviewTab = () => {
 
   const loadData = async () => {
     try {
+      loadingRef.current = true;
       setIsLoading(true);
-
-      // Get stages
-      const { data: stagesData } = await supabase.functions.invoke('process-mock-interview-stage', {
-        body: { action: 'get_stages' }
-      });
-      if (stagesData?.stages) {
-        setStages(stagesData.stages);
-      }
 
       // Get profile
       const { data: profileData } = await supabase
@@ -429,6 +423,48 @@ export const MockInterviewTab = () => {
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      // Resolve stages from local pipeline config if session has pipeline info
+      let resolvedStages: InterviewStage[] = [];
+      const sessInterviewType = recentSession?.interview_type || localStorage.getItem('mock_interview_type') || '';
+      const sessPipelineType = recentSession?.pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
+
+      if (sessInterviewType && sessPipelineType) {
+        const configStages = interviewPipelineConfig
+          .find(t => t.value === sessInterviewType)
+          ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
+          ?.stages || [];
+        if (configStages.length > 0) {
+          resolvedStages = configStages.map((s, idx) => ({
+            name: s.name,
+            order: idx + 1,
+            description: s.description || '',
+            questionCount: s.name.toLowerCase().includes('coding') ? 1 : s.name.toLowerCase().includes('technical interview') ? 20 : s.name.toLowerCase().includes('mcq') || s.name.toLowerCase().includes('written') || s.name.toLowerCase().includes('assessment') ? 10 : 1,
+            timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('technical interview') ? 120 : s.name.toLowerCase().includes('demo') ? 600 : 90,
+            passingScore: 65,
+            stageType: s.name.toLowerCase().includes('slot booking') ? 'slot_booking' as const
+              : s.name.toLowerCase().includes('coding test') && !s.name.toLowerCase().includes('slot') ? 'coding' as const
+              : s.name.toLowerCase().includes('demo') ? 'demo' as const
+              : s.name.toLowerCase().includes('feedback') ? 'feedback' as const
+              : s.name.toLowerCase().includes('hr') ? 'hr_documents' as const
+              : s.name.toLowerCase().includes('review') || s.name.toLowerCase().includes('offer') ? 'review' as const
+              : s.name.toLowerCase().includes('instruction') || s.name.toLowerCase().includes('cv') || s.name.toLowerCase().includes('resume') ? 'email_info' as const
+              : 'assessment' as const,
+          }));
+        }
+      }
+
+      // Fallback to edge function if no local config found
+      if (resolvedStages.length === 0) {
+        const { data: stagesData } = await supabase.functions.invoke('process-mock-interview-stage', {
+          body: { action: 'get_stages' }
+        });
+        if (stagesData?.stages) {
+          resolvedStages = stagesData.stages;
+        }
+      }
+
+      setStages(resolvedStages);
 
       if (recentSession) {
         setCurrentSession(recentSession);
@@ -470,6 +506,7 @@ export const MockInterviewTab = () => {
       toast.error("Failed to load data");
     } finally {
       setIsLoading(false);
+      loadingRef.current = false;
     }
   };
 
