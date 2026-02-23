@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, XCircle, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, AlertCircle, TrendingUp, RefreshCw } from "lucide-react";
 
 interface ResumeData {
   fullName: string;
@@ -131,7 +132,17 @@ export function calculateATSScore(data: ResumeData): { score: number; checks: AT
 }
 
 export default function ATSScoreCard({ data }: { data: ResumeData }) {
-  const { score, checks } = useMemo(() => calculateATSScore(data), [data]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { score, checks } = useMemo(() => calculateATSScore(data), [data, refreshKey]);
+
+  const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setRefreshKey(k => k + 1);
+      setIsRefreshing(false);
+    }, 400);
+  }, []);
 
   const failedChecks = checks.filter(c => !c.passed);
   const passedChecks = checks.filter(c => c.passed);
@@ -158,6 +169,16 @@ export default function ATSScoreCard({ data }: { data: ResumeData }) {
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
             <span className="text-sm font-semibold">ATS Score</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh ATS Score"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            </Button>
           </div>
           <div className="flex items-center gap-2">
             <span className={`text-2xl font-bold ${scoreColor}`}>{score}%</span>
