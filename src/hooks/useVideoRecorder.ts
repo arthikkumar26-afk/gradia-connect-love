@@ -89,7 +89,7 @@ export const useVideoRecorder = (options?: UseVideoRecorderOptions) => {
     } catch (err) {
       console.error('Error starting recording:', err);
       setError('Failed to access camera/microphone. Please grant permissions.');
-      toast.error('Failed to access camera/microphone');
+      // Don't show toast - let the caller handle the error display
     }
   }, []);
 
