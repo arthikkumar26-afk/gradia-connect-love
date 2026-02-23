@@ -290,13 +290,14 @@ serve(async (req) => {
       const effectiveStageName = clientStageName || stage?.name || `Stage ${stageOrder}`;
       
       if (!stage) {
+        const isTechnicalInterview = effectiveStageName.toLowerCase().includes('technical interview');
         // Create a virtual stage from client data for non-default pipelines
         stage = {
           name: effectiveStageName,
           order: stageOrder,
           description: '',
-          questionCount: effectiveStageType === 'coding' ? 1 : 8,
-          timePerQuestion: effectiveStageType === 'coding' ? 1800 : 150,
+          questionCount: isTechnicalInterview ? 20 : effectiveStageType === 'coding' ? 1 : 8,
+          timePerQuestion: isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 150,
           passingScore: 65,
           stageType: effectiveStageType || 'assessment',
           autoProgressAfterCompletion: false
@@ -668,6 +669,40 @@ Example format for a coding problem:
   const subjectFocus = profile?.primary_subject 
     ? `Focus questions specifically on ${profile.primary_subject} topics.`
     : 'Focus on general teaching aptitude and pedagogical skills.';
+
+  const isTechnicalInterview = stage.name.toLowerCase().includes('technical interview');
+
+  if (isTechnicalInterview) {
+    const role = profile?.preferred_role || profile?.primary_subject || 'software development';
+    const skills = profile?.skills?.join(', ') || 'JavaScript, Python, Data Structures';
+    return `Generate exactly ${stage.questionCount} DIFFICULT technical interview questions for a ${role} position.
+
+${profileInfo}
+
+IMPORTANT: These must be HARD-LEVEL questions that test deep understanding. 
+Focus on: ${role}
+Candidate's known skills: ${skills}
+
+Question categories to cover (distribute across all ${stage.questionCount} questions):
+- Data Structures & Algorithms (complex problems, time/space complexity analysis)
+- System Design (scalability, distributed systems, database design)
+- Advanced Language Concepts (closures, memory management, concurrency, generics)
+- Design Patterns & Architecture (SOLID principles, microservices, event-driven)
+- Problem Solving & Optimization (real-world scenarios, trade-offs)
+- Security & Performance (authentication, caching, load balancing)
+- Database Design (indexing, normalization, query optimization)
+- DevOps & Infrastructure (CI/CD, containerization, monitoring)
+
+Requirements:
+1. ALL questions must be DIFFICULT - no easy or basic questions
+2. Each question should require deep technical knowledge to answer well
+3. Include scenario-based and problem-solving questions
+4. For multiple choice questions, provide 4 options with plausible distractors
+5. Include expected key points for text answers
+6. Mix question types: multiple_choice and text/scenario
+
+Generate exactly ${stage.questionCount} questions.`;
+  }
 
   return `Generate ${stage.questionCount} interview questions for the "${stage.name}" stage.
 

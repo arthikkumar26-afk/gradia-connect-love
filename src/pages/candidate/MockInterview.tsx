@@ -234,8 +234,8 @@ const MockInterview = () => {
             name: s.name,
             order: s.order,
             description: s.description || '',
-            questionCount: s.name.toLowerCase().includes('coding') ? 1 : s.name.toLowerCase().includes('mcq') || s.name.toLowerCase().includes('written') || s.name.toLowerCase().includes('assessment') ? 10 : 1,
-            timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('demo') ? 600 : 90,
+            questionCount: s.name.toLowerCase().includes('coding') ? 1 : s.name.toLowerCase().includes('technical interview') ? 20 : s.name.toLowerCase().includes('mcq') || s.name.toLowerCase().includes('written') || s.name.toLowerCase().includes('assessment') ? 10 : 1,
+            timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('technical interview') ? 120 : s.name.toLowerCase().includes('demo') ? 600 : 90,
             passingScore: 65,
             stageType: s.name.toLowerCase().includes('slot booking') ? 'slot_booking' as const
               : s.name.toLowerCase().includes('coding test') && !s.name.toLowerCase().includes('slot') ? 'coding' as const
