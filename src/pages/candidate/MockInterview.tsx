@@ -309,8 +309,22 @@ const MockInterview = () => {
   };
 
   const startInterview = async () => {
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
+    // For coding tests, camera/mic is optional - don't block on permission failure
+    const isCodingStage = stage?.stageType === 'coding' || stage?.name?.toLowerCase().includes('coding test');
+    if (!isCodingStage) {
+      const hasPermissions = await requestPermissions();
+      if (!hasPermissions) return;
+    } else {
+      // Try to get permissions but don't block if denied
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        setPermissionsGranted(true);
+      } catch {
+        console.log('[MockInterview] Camera/mic not available for coding test - proceeding without');
+        setPermissionsGranted(false);
+      }
+    }
 
     setIsGenerating(true);
     try {
@@ -330,10 +344,12 @@ const MockInterview = () => {
         setTimeLeft(data.timePerQuestion || 120);
         setIsStarted(true);
         
-        // Auto-start recording
-        setTimeout(() => {
-          startRecording();
-        }, 500);
+        // Auto-start recording only if permissions were granted
+        if (permissionsGranted) {
+          setTimeout(() => {
+            startRecording();
+          }, 500);
+        }
       }
     } catch (error) {
       console.error('Error generating questions:', error);
