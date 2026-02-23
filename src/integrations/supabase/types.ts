@@ -612,6 +612,60 @@ export type Database = {
         }
         Relationships: []
       }
+      external_jobs: {
+        Row: {
+          apply_url: string
+          company_logo_url: string | null
+          company_name: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          experience_required: string | null
+          id: string
+          is_active: boolean
+          job_title: string
+          job_type: string | null
+          location: string | null
+          salary_range: string | null
+          skills: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          apply_url: string
+          company_logo_url?: string | null
+          company_name: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          experience_required?: string | null
+          id?: string
+          is_active?: boolean
+          job_title: string
+          job_type?: string | null
+          location?: string | null
+          salary_range?: string | null
+          skills?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          apply_url?: string
+          company_logo_url?: string | null
+          company_name?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          experience_required?: string | null
+          id?: string
+          is_active?: boolean
+          job_title?: string
+          job_type?: string | null
+          location?: string | null
+          salary_range?: string | null
+          skills?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       family_details: {
         Row: {
           age: number | null
