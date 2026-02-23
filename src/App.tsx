@@ -104,6 +104,7 @@ import HRNegotiations from "./pages/admin/HRNegotiations";
 import CouponManagement from "./pages/admin/CouponManagement";
 import UnsubscribedEmployers from "./pages/admin/UnsubscribedEmployers";
 import UnsubscribedCandidates from "./pages/admin/UnsubscribedCandidates";
+import ExternalJobs from "./pages/admin/ExternalJobs";
 
 
 const queryClient = new QueryClient();
@@ -245,6 +246,7 @@ const MainRoutes = () => (
       <Route path="/admin/live-demo" element={<LiveDemoView />} />
       <Route path="/admin/hr-negotiations" element={<HRNegotiations />} />
       <Route path="/admin/coupons" element={<CouponManagement />} />
+      <Route path="/admin/external-jobs" element={<ExternalJobs />} />
       <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
       <Route path="/admin" element={<AdminDashboard />} />
 

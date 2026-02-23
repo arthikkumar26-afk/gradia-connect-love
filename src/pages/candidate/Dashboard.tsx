@@ -69,6 +69,7 @@ import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
 import AIJobApplyTab from "@/components/candidate/AIJobApplyTab";
 import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 import { CouponInput } from "@/components/shared/CouponInput";
+import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 
 interface FamilyRecord {
   id?: string;
@@ -1233,6 +1234,7 @@ const CandidateDashboard = () => {
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "mentors", label: "Mentors", icon: Users },
+    { id: "externaljobs", label: "External Job Listings", icon: ExternalLink },
     
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
@@ -4397,6 +4399,10 @@ const CandidateDashboard = () => {
 
 
 
+            {/* External Job Listings */}
+            {activeMenu === "externaljobs" && (
+              <ExternalJobListings />
+            )}
 
             {/* Upgrade Plans */}
             {activeMenu === "upgrade" && (
