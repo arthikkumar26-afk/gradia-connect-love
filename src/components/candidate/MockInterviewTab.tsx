@@ -1208,10 +1208,16 @@ export const MockInterviewTab = () => {
   // Generate course suggestions based on mock test performance
   const generateCourseSuggestions = () => {
     const improvements = stageResults.flatMap(r => r.improvements || []);
+    // Use inline slot-booking check to avoid TDZ with isSlotBookingOrder (defined later)
+    const isSlotBookingStageName = (name: string) => name.toLowerCase().includes('slot booking');
+    const slotBookingOrders = displayStagesList
+      .filter(s => isSlotBookingStageName(s.name))
+      .map(s => s.order);
+    const isSlotBookingOrd = (order: number) => slotBookingOrders.includes(order);
     const overallScore = stageResults.length > 0 
-      ? stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrder(r.stage_order))
+      ? stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrd(r.stage_order))
           .reduce((sum, r) => sum + (r.ai_score || 0), 0) / 
-        stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrder(r.stage_order)).length 
+        stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrd(r.stage_order)).length 
       : 0;
 
     const courses: any[] = [];
