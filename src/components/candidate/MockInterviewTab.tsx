@@ -432,6 +432,14 @@ export const MockInterviewTab = () => {
 
       if (recentSession) {
         setCurrentSession(recentSession);
+
+        // Restore pipeline selections from session if available
+        if (recentSession.interview_type && !selectedMockInterviewType) {
+          setSelectedMockInterviewType(recentSession.interview_type);
+        }
+        if (recentSession.pipeline_type && !selectedMockPipelineType) {
+          setSelectedMockPipelineType(recentSession.pipeline_type);
+        }
         
         // Get stage results for this session
         const { data: resultsData } = await supabase
@@ -583,15 +591,17 @@ export const MockInterviewTab = () => {
 
     setIsStarting(true);
     try {
-      // Create new session starting at stage 1
+      // Create new session starting at stage 1, saving pipeline selection
       const { data: session, error } = await supabase
         .from('mock_interview_sessions')
         .insert({
           candidate_id: user.id,
           status: 'in_progress',
           current_stage_order: 1,
-          started_at: new Date().toISOString()
-        })
+          started_at: new Date().toISOString(),
+          interview_type: selectedMockInterviewType || null,
+          pipeline_type: selectedMockPipelineType || null,
+        } as any)
         .select()
         .single();
 
