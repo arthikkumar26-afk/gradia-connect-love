@@ -429,8 +429,10 @@ const MockInterview = () => {
       setEvaluation(data.evaluation);
       setShowResult(true);
 
-      // Only send email if shouldSendEmail is true (not for slot booking stages)
-      if (!data.isComplete && data.nextStage && data.shouldSendEmail) {
+      // Only send email if shouldSendEmail is true (not for slot booking, feedback, or results stages)
+      const nextStageName = (data.nextStage?.name || '').toLowerCase();
+      const isResultsOrFeedbackStage = nextStageName.includes('results') || nextStageName.includes('feedback');
+      if (!data.isComplete && data.nextStage && data.shouldSendEmail && !isResultsOrFeedbackStage) {
         console.log('Sending next stage invitation:', data.nextStage);
         
         try {
@@ -457,6 +459,9 @@ const MockInterview = () => {
           console.error('Email sending error:', emailErr);
           toast.error("Failed to send next stage email");
         }
+      } else if (isResultsOrFeedbackStage) {
+        const passedText = data.evaluation.passed ? '🎉 You passed!' : '📝 Stage completed.';
+        toast.success(`${passedText} View your results below.`);
       } else if (data.requiresSlotBooking) {
         toast.success("📝 Stage completed! Please book your demo interview slot.");
       } else if (data.isComplete) {
