@@ -202,6 +202,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
           commonStages.technicalAssessment,
           commonStages.codingTestSlotBooking,
           commonStages.codingTest,
+          { order: 7, name: 'Technical Interview', description: 'Role-specific technical discussion & system design', isAutomated: false },
           commonStages.finalReview,
           commonStages.offerStage,
         ],
