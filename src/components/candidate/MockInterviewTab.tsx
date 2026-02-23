@@ -365,6 +365,9 @@ export const MockInterviewTab = () => {
     preferredCallTime: ''
   });
 
+  // Resend mail state
+  const [resendingStage, setResendingStage] = useState<number | null>(null);
+
   // Course suggestions state
   const [courseSuggestions, setCourseSuggestions] = useState<any[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
@@ -2033,6 +2036,48 @@ export const MockInterviewTab = () => {
                       </Button>
                     )}
                     {/* For completed stages with results, show expand/collapse button */}
+                    {/* Resend Mail button for completed stages */}
+                    {status === 'completed' && currentSession && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={resendingStage === stage.order}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!profile?.email || !currentSession) return;
+                          setResendingStage(stage.order);
+                          try {
+                            const appUrl = window.location.origin;
+                            const { error } = await supabase.functions.invoke('send-mock-interview-invitation', {
+                              body: {
+                                candidateEmail: profile.email,
+                                candidateName: profile.full_name,
+                                sessionId: currentSession.id,
+                                stageOrder: stage.order,
+                                stageName: stage.name,
+                                stageDescription: stage.description || `${stage.name} stage completed.`,
+                                appUrl,
+                              },
+                            });
+                            if (error) throw error;
+                            toast.success(`Email resent for ${stage.name}`);
+                          } catch (err) {
+                            console.error('Resend mail error:', err);
+                            toast.error('Failed to resend email');
+                          } finally {
+                            setResendingStage(null);
+                          }
+                        }}
+                        className="gap-1 text-xs"
+                      >
+                        {resendingStage === stage.order ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Mail className="h-3 w-3" />
+                        )}
+                        Resend Mail
+                      </Button>
+                    )}
                     {hasResults && (
                       <Button 
                         variant="outline" 
