@@ -481,6 +481,54 @@ const MockInterview = () => {
     navigate('/candidate/dashboard');
   };
 
+  const retryStage = async () => {
+    try {
+      setIsLoading(true);
+      const currentStageOrder = parseInt(stageOrder || '1');
+      
+      // Delete the existing result for this stage
+      const { error: deleteError } = await supabase
+        .from('mock_interview_stage_results')
+        .delete()
+        .eq('session_id', sessionId)
+        .eq('stage_order', currentStageOrder);
+
+      if (deleteError) throw deleteError;
+
+      // Reset the session's current_stage_order back to this stage
+      const { error: updateError } = await supabase
+        .from('mock_interview_sessions')
+        .update({ 
+          current_stage_order: currentStageOrder,
+          status: 'in_progress'
+        })
+        .eq('id', sessionId);
+
+      if (updateError) throw updateError;
+
+      // Reset local state
+      setShowResult(false);
+      setEvaluation(null);
+      setQuestions([]);
+      setAnswers([]);
+      setCurrentAnswer("");
+      setCurrentQuestionIndex(0);
+      setIsStarted(false);
+      setStageRecordingUrl(null);
+      setRecordingDuration(0);
+      resetRecording();
+
+      toast.success("Stage reset! You can start again.");
+      // Reload data
+      await loadData();
+    } catch (error) {
+      console.error('Error retrying stage:', error);
+      toast.error("Failed to retry stage. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -509,7 +557,13 @@ const MockInterview = () => {
             onRetry={goToDashboard}
             isLastStage={stage.order >= stages.length}
           />
-          <div className="mt-6 text-center">
+          <div className="mt-6 flex items-center justify-center gap-4">
+            {!evaluation.passed && (
+              <Button onClick={retryStage} variant="default" className="gap-2">
+                <Play className="h-4 w-4" />
+                Retry Stage
+              </Button>
+            )}
             <Button onClick={goToDashboard} variant="outline">
               Return to Dashboard
             </Button>
