@@ -4108,6 +4108,26 @@ const CandidateDashboard = () => {
                               {hw.status === "pending" && (
                                 <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Pending</Badge>
                               )}
+                              {hw.status !== "pending" && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                  onClick={() => toast({ title: "Opening Assignment", description: hw.title })}
+                                  title="View Assignment"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0"
+                                onClick={() => toast({ title: "Downloading...", description: hw.title })}
+                                title={`Download ${hw.title}`}
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           </div>
                         ))}
