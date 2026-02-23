@@ -735,8 +735,17 @@ const FreelancerDashboard = () => {
                         <div className="border border-border rounded-lg p-3 space-y-2">
                           <p className="text-xs font-medium text-muted-foreground">Assign New Homework</p>
                           <Textarea placeholder="Enter homework title & description..." className="text-sm min-h-[60px]" />
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <input type="date" className="h-8 rounded-md border border-input bg-background px-2 text-xs" />
+                            <label className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-input bg-background text-xs text-muted-foreground cursor-pointer hover:bg-muted/50 transition-colors">
+                              <Upload className="h-3.5 w-3.5" />
+                              <span id="hw-file-name">Attach Document</span>
+                              <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" className="hidden" onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                const label = document.getElementById('hw-file-name');
+                                if (file && label) label.textContent = file.name.length > 20 ? file.name.slice(0, 17) + '...' : file.name;
+                              }} />
+                            </label>
                             <Button size="sm" className="ml-auto gap-1 h-8 text-xs" onClick={() => toast({ title: "Homework Assigned!", description: `New homework sent to ${selectedCandidate.student}.` })}>
                               <Send className="h-3 w-3" /> Assign
                             </Button>
