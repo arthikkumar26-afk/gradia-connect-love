@@ -1143,15 +1143,22 @@ export const MockInterviewTab = () => {
   };
 
   const getStageIcon = (stageOrder: number) => {
+    // Use displayStagesList name to pick icons dynamically instead of hardcoded order
+    const stageName = (displayStagesList.find(s => s.order === stageOrder)?.name || '').toLowerCase();
+    if (stageName.includes('instruction') || stageName.includes('guideline')) return Mail;
+    if (stageName.includes('slot booking')) return Calendar;
+    if (stageName.includes('coding') || stageName.includes('mcq') || stageName.includes('technical') || stageName.includes('written') || stageName.includes('assessment') || stageName.includes('challenge')) return Code;
+    if (stageName.includes('demo') && !stageName.includes('feedback')) return Monitor;
+    if (stageName.includes('feedback') || stageName.includes('result')) return BarChart3;
+    if (stageName.includes('hr') || stageName.includes('document') || stageName.includes('review')) return FileText;
+    if (stageName.includes('interview') || stageName.includes('discussion') || stageName.includes('live')) return Video;
+    if (stageName.includes('final') || stageName.includes('offer') || stageName.includes('all review')) return ListChecks;
+    if (stageName.includes('negotiation')) return MessageSquare;
+    // Fallback by order
     switch (stageOrder) {
       case 1: return Mail;
-      case 2: return Calendar; // Technical Assessment Slot Booking
-      case 3: return Code;     // Technical Assessment
-      case 4: return Calendar; // Demo Slot Booking
-      case 5: return Monitor;  // Demo Round
-      case 6: return BarChart3; // Demo Feedback
-      case 7: return MessageSquare;  // HR Negotiation
-      case 8: return ListChecks; // All Reviews
+      case 2: return Calendar;
+      case 3: return Code;
       default: return Brain;
     }
   };
@@ -1437,6 +1444,7 @@ export const MockInterviewTab = () => {
 
   // Get the current pipeline's display stages
   const getDisplayStages = () => {
+    // Priority 1: Use stages from the selected pipeline dropdown (most accurate)
     if (selectedPipelineStages.length > 0) {
       return selectedPipelineStages.map(s => ({
         name: s.name,
@@ -1444,7 +1452,34 @@ export const MockInterviewTab = () => {
         description: (s as any).description || '',
       }));
     }
+    // Priority 2: If user selected an interview type via dropdown (even without pipeline type),
+    // try to derive from the selected interview type config
+    if (selectedMockInterviewType && selectedMockPipelineType) {
+      const configStages = interviewPipelineConfig
+        .find(t => t.value === selectedMockInterviewType)
+        ?.pipelineTypes.find(pt => pt.value === selectedMockPipelineType)
+        ?.stages || [];
+      if (configStages.length > 0) {
+        return configStages.map(s => ({
+          name: s.name,
+          order: s.order,
+          description: (s as any).description || '',
+        }));
+      }
+    }
+    // Priority 3: Derive from profile category
     if (isITCorporate) return getITPipelineStages();
+    // Priority 4: Use mock interview type from localStorage to check if it's non-education
+    if (selectedMockInterviewType && selectedMockInterviewType !== 'education') {
+      const configType = interviewPipelineConfig.find(t => t.value === selectedMockInterviewType);
+      if (configType?.pipelineTypes?.[0]?.stages) {
+        return configType.pipelineTypes[0].stages.map(s => ({
+          name: s.name,
+          order: s.order,
+          description: (s as any).description || '',
+        }));
+      }
+    }
     return stages.map(s => ({ name: s.name, order: s.order, description: '' }));
   };
   const displayStagesList = getDisplayStages();
