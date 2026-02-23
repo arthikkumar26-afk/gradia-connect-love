@@ -12,8 +12,8 @@ import {
   LayoutDashboard, Briefcase, Search, Users, GraduationCap, Star, 
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
-  FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
-  ClipboardList, Send, Radio
+   FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
+   ClipboardList, Send, Radio, Download
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -754,6 +754,15 @@ const FreelancerDashboard = () => {
                                     <p className="text-sm font-medium text-foreground truncate">{sub.name}</p>
                                     <p className="text-xs text-muted-foreground">{sub.date}</p>
                                   </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-7 w-7 p-0 flex-shrink-0"
+                                    onClick={() => toast({ title: "Downloading...", description: sub.name })}
+                                    title={`Download ${sub.name}`}
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </Button>
                                   {sub.status === "reviewed" ? (
                                     <Badge variant="default" className="text-xs gap-1">
                                       <CheckCircle2 className="h-3 w-3" /> {sub.score}%
