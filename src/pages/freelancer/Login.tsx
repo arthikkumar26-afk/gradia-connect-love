@@ -55,11 +55,6 @@ const FreelancerLogin = () => {
           </div>
 
           <div className="text-center mb-2">
-            <div className="flex justify-center mb-3">
-              <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                <Award className="h-6 w-6 text-orange-500" />
-              </div>
-            </div>
             <h1 className="text-2xl font-bold text-foreground mb-1">Freelancer Login</h1>
             <p className="text-sm text-muted-foreground">Access your projects & mentorship</p>
           </div>
