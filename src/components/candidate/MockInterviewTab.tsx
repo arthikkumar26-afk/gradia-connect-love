@@ -704,23 +704,22 @@ export const MockInterviewTab = () => {
         console.error('Error saving booking:', bookingError);
       }
 
-      const isForTechnicalAssessment = isFirstSlotBookingStage;
-      const stageName = isForTechnicalAssessment ? 'Technical Assessment Slot Booking' : 'Demo Slot Booking';
+      // Use actual stage name from displayStagesList for accurate labeling
+      const currentStageName = displayStagesList.find(s => s.order === currentStage)?.name || 'Slot Booking';
       const nextStageOrder = currentStage + 1;
-      const nextStageName = isForTechnicalAssessment ? 'Technical Assessment' : 'Demo Round';
-      const nextStageDescription = isForTechnicalAssessment 
-        ? 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.'
-        : 'Conduct your live teaching demonstration. Your session will be recorded and evaluated by AI.';
+      const nextStageInfo = displayStagesList.find(s => s.order === nextStageOrder);
+      const nextStageName = nextStageInfo?.name || 'Next Stage';
+      const nextStageDescription = (nextStageInfo as any)?.desc || (nextStageInfo as any)?.description || 'Proceed to the next stage of your interview.';
 
       // Create stage result for slot booking
       await supabase
         .from('mock_interview_stage_results')
         .insert({
           session_id: currentSession.id,
-          stage_name: stageName,
+          stage_name: currentStageName,
           stage_order: currentStage,
           ai_score: 100,
-          ai_feedback: `${isForTechnicalAssessment ? 'Technical Assessment' : 'Demo'} slot booked: ${slotLabel}`,
+          ai_feedback: `${currentStageName} booked: ${slotLabel}`,
           passed: true,
           completed_at: new Date().toISOString()
         });
@@ -745,8 +744,8 @@ export const MockInterviewTab = () => {
         }
       });
 
-      // Send notification to management about demo slot booking
-      if (!isForTechnicalAssessment) {
+      // Send notification to management about slot booking
+      if (!isFirstSlotBookingStage) {
         console.log('[MockInterviewTab] Sending demo slot booking notification to management');
         await supabase.functions.invoke('send-management-notification', {
           body: {
@@ -2066,7 +2065,7 @@ export const MockInterviewTab = () => {
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-green-700 dark:text-green-400">
-                              {isFirstSlotBooking(stage.order) ? 'Technical Assessment Slot Booked' : 'Demo Interview Slot Booked'}
+                              {stage.name} — Slot Booked
                             </p>
                             <p className="text-sm text-muted-foreground mt-0.5">
                               {result.ai_feedback || 'Your slot has been confirmed. Check your email for details.'}
