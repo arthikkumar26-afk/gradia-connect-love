@@ -45,6 +45,31 @@ const FreelancerDashboard = () => {
   const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
 
+  // Project filters
+  const [projectSkillFilter, setProjectSkillFilter] = useState<string>("all");
+  const [projectBudgetFilter, setProjectBudgetFilter] = useState<string>("all");
+  const [projectSearchQuery, setProjectSearchQuery] = useState("");
+
+  // Mentorship filters
+  const [mentorshipStatusFilter, setMentorshipStatusFilter] = useState<string>("all");
+  const [mentorshipSearchQuery, setMentorshipSearchQuery] = useState("");
+
+  const allProjectSkills = Array.from(new Set(sampleProjects.flatMap(p => p.skills)));
+
+  const filteredProjects = sampleProjects.filter(p => {
+    if (projectSkillFilter !== "all" && !p.skills.includes(projectSkillFilter)) return false;
+    if (projectBudgetFilter === "under50k" && !p.budget.includes("20,000") && !p.budget.includes("30,000")) return false;
+    if (projectBudgetFilter === "50k+" && !p.budget.includes("50,000") && !p.budget.includes("80,000")) return false;
+    if (projectSearchQuery && !p.title.toLowerCase().includes(projectSearchQuery.toLowerCase())) return false;
+    return true;
+  });
+
+  const filteredMentorships = sampleMentorships.filter(m => {
+    if (mentorshipStatusFilter !== "all" && m.status !== mentorshipStatusFilter) return false;
+    if (mentorshipSearchQuery && !m.student.toLowerCase().includes(mentorshipSearchQuery.toLowerCase()) && !m.topic.toLowerCase().includes(mentorshipSearchQuery.toLowerCase())) return false;
+    return true;
+  });
+
   // Ensure profile exists for this user
   useEffect(() => {
     if (!isAuthenticated) {
@@ -445,11 +470,38 @@ const FreelancerDashboard = () => {
       case "projects":
         return (
           <div className="space-y-4 p-6 overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground">Available Projects</h2>
-              <Button variant="outline" size="sm"><Search className="h-4 w-4 mr-1" /> Filter</Button>
+            <h2 className="text-xl font-semibold text-foreground">Available Projects</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Search projects..."
+                  value={projectSearchQuery}
+                  onChange={(e) => setProjectSearchQuery(e.target.value)}
+                />
+              </div>
+              <select
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={projectSkillFilter}
+                onChange={(e) => setProjectSkillFilter(e.target.value)}
+              >
+                <option value="all">All Skills</option>
+                {allProjectSkills.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={projectBudgetFilter}
+                onChange={(e) => setProjectBudgetFilter(e.target.value)}
+              >
+                <option value="all">All Budgets</option>
+                <option value="under50k">Under ₹50K</option>
+                <option value="50k+">₹50K+</option>
+              </select>
             </div>
-            {sampleProjects.map((project) => (
+            {filteredProjects.length === 0 ? (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">No projects match your filters.</CardContent></Card>
+            ) : filteredProjects.map((project) => (
               <Card key={project.id} className="hover:border-accent/50 transition-colors cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-3">
@@ -482,7 +534,29 @@ const FreelancerDashboard = () => {
               <h2 className="text-xl font-semibold text-foreground">My Mentorship</h2>
               <Button size="sm" className="gap-1"><Users className="h-4 w-4" /> Find Students</Button>
             </div>
-            {sampleMentorships.map((m) => (
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Search by student or topic..."
+                  value={mentorshipSearchQuery}
+                  onChange={(e) => setMentorshipSearchQuery(e.target.value)}
+                />
+              </div>
+              <select
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={mentorshipStatusFilter}
+                onChange={(e) => setMentorshipStatusFilter(e.target.value)}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            {filteredMentorships.length === 0 ? (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">No mentorships match your filters.</CardContent></Card>
+            ) : filteredMentorships.map((m) => (
               <Card key={m.id}>
                 <CardContent className="p-6 flex items-center justify-between">
                   <div className="flex items-center gap-4">
