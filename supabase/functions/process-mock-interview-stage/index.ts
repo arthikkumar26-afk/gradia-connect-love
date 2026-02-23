@@ -587,7 +587,7 @@ serve(async (req) => {
 
       // Return next stage info - but for Technical Assessment (stage 2), don't auto-send email
       const nextStage = !isLastStage ? INTERVIEW_STAGES[stageOrder] : null;
-      const shouldSendEmail = shouldAutoProgress && nextStage?.stageType !== 'slot_booking';
+      const shouldSendEmail = shouldAutoProgress && nextStage?.stageType !== 'slot_booking' && nextStage?.stageType !== 'feedback' && nextStage?.stageType !== 'review';
 
       return new Response(JSON.stringify({
         evaluation,
