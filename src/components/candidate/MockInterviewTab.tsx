@@ -1495,9 +1495,9 @@ export const MockInterviewTab = () => {
   const getDisplayStages = () => {
     // Priority 1: Use stages from the selected pipeline dropdown (most accurate)
     if (selectedPipelineStages.length > 0) {
-      return selectedPipelineStages.map(s => ({
+      return selectedPipelineStages.map((s, idx) => ({
         name: s.name,
-        order: s.order,
+        order: idx + 1,
         description: (s as any).description || '',
       }));
     }
@@ -1509,9 +1509,9 @@ export const MockInterviewTab = () => {
         ?.pipelineTypes.find(pt => pt.value === selectedMockPipelineType)
         ?.stages || [];
       if (configStages.length > 0) {
-        return configStages.map(s => ({
+        return configStages.map((s, idx) => ({
           name: s.name,
-          order: s.order,
+          order: idx + 1,
           description: (s as any).description || '',
         }));
       }
@@ -1522,14 +1522,14 @@ export const MockInterviewTab = () => {
     if (selectedMockInterviewType && selectedMockInterviewType !== 'education') {
       const configType = interviewPipelineConfig.find(t => t.value === selectedMockInterviewType);
       if (configType?.pipelineTypes?.[0]?.stages) {
-        return configType.pipelineTypes[0].stages.map(s => ({
+        return configType.pipelineTypes[0].stages.map((s, idx) => ({
           name: s.name,
-          order: s.order,
+          order: idx + 1,
           description: (s as any).description || '',
         }));
       }
     }
-    return stages.map(s => ({ name: s.name, order: s.order, description: '' }));
+    return stages.map((s, idx) => ({ name: s.name, order: idx + 1, description: '' }));
   };
   const displayStagesList = getDisplayStages();
   // Find slot booking stage orders dynamically
