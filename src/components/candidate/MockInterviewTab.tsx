@@ -564,8 +564,10 @@ export const MockInterviewTab = () => {
           candidate_id: user.id,
           status: 'in_progress',
           current_stage_order: 1,
-          started_at: new Date().toISOString()
-        })
+          started_at: new Date().toISOString(),
+          interview_type: selectedMockInterviewType || null,
+          pipeline_type: selectedMockPipelineType || null,
+        } as any)
         .select()
         .single();
 
@@ -1897,12 +1899,12 @@ export const MockInterviewTab = () => {
         <CardContent className="py-6">
           <InterviewProgressTracker
             stages={
-              selectedPipelineStages.length > 0
-                ? selectedPipelineStages.map(s => ({
+              displayStagesList.length > 0
+                ? displayStagesList.map(s => ({
                     name: s.name,
                     order: s.order,
-                    description: (s as any).description || '',
-                    stageType: (s as any).isAutomated ? 'assessment' : 'demo',
+                    description: s.description || '',
+                    stageType: 'assessment' as const,
                   }))
                 : stages
             }
@@ -1912,17 +1914,17 @@ export const MockInterviewTab = () => {
         </CardContent>
       </Card>
 
-      {/* Stage Cards — driven by selected pipeline if chosen, else fallback to DB stages */}
+      {/* Stage Cards — driven by displayStagesList (resolved from pipeline config) */}
       <div className="grid gap-4">
-        {(selectedPipelineStages.length > 0
-          ? selectedPipelineStages.map(s => ({
+        {(displayStagesList.length > 0
+          ? displayStagesList.map(s => ({
               name: s.name,
               order: s.order,
-              description: (s as any).description || '',
+              description: s.description || '',
               questionCount: 0,
               timePerQuestion: 0,
               passingScore: 0,
-              stageType: ((s as any).isAutomated ? 'assessment' : 'demo') as InterviewStage['stageType'],
+              stageType: 'assessment' as InterviewStage['stageType'],
             }))
           : stages
         ).map((stage) => {

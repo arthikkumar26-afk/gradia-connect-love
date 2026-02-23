@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { interviewPipelineConfig } from "@/data/interviewPipelineConfig";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -189,25 +190,13 @@ const MockInterview = () => {
     try {
       setIsLoading(true);
 
-      // Get stages
+      // Get default stages from edge function (education fallback)
       const { data: stagesData } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: { action: 'get_stages' }
       });
-      if (stagesData?.stages) {
-        setStages(stagesData.stages);
-        const currentStage = stagesData.stages.find((s: InterviewStage) => s.order === parseInt(stageOrder || '1'));
-        setStage(currentStage);
-      }
+      let resolvedStages: InterviewStage[] = stagesData?.stages || [];
 
-      // Get profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .maybeSingle();
-      setProfile(profileData);
-
-      // Verify session exists
+      // Try to get session first to resolve pipeline-specific stages
       const { data: fetchedSessionData, error: sessionError } = await supabase
         .from('mock_interview_sessions')
         .select('*')
@@ -221,6 +210,48 @@ const MockInterview = () => {
       }
 
       setSessionData(fetchedSessionData);
+
+      // Override stages from pipeline config if session has interview_type & pipeline_type
+      const sessInterviewType = (fetchedSessionData as any).interview_type || localStorage.getItem('mock_interview_type') || '';
+      const sessPipelineType = (fetchedSessionData as any).pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
+
+      if (sessInterviewType && sessPipelineType) {
+        const configStages = interviewPipelineConfig
+          .find(t => t.value === sessInterviewType)
+          ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
+          ?.stages || [];
+        if (configStages.length > 0) {
+          resolvedStages = configStages.map(s => ({
+            name: s.name,
+            order: s.order,
+            description: s.description || '',
+            questionCount: s.name.toLowerCase().includes('coding') ? 1 : s.name.toLowerCase().includes('mcq') || s.name.toLowerCase().includes('written') || s.name.toLowerCase().includes('assessment') ? 10 : 1,
+            timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('demo') ? 600 : 90,
+            passingScore: 65,
+            stageType: s.name.toLowerCase().includes('slot booking') ? 'slot_booking' as const
+              : s.name.toLowerCase().includes('demo') ? 'demo' as const
+              : s.name.toLowerCase().includes('feedback') ? 'feedback' as const
+              : s.name.toLowerCase().includes('hr') ? 'hr_documents' as const
+              : s.name.toLowerCase().includes('review') || s.name.toLowerCase().includes('offer') ? 'review' as const
+              : s.name.toLowerCase().includes('instruction') || s.name.toLowerCase().includes('cv') || s.name.toLowerCase().includes('resume') ? 'email_info' as const
+              : 'assessment' as const,
+          }));
+        }
+      }
+
+      setStages(resolvedStages);
+      const currentStage = resolvedStages.find((s: InterviewStage) => s.order === parseInt(stageOrder || '1'));
+      setStage(currentStage || null);
+
+      // Get profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .maybeSingle();
+      setProfile(profileData);
+
+      // Session already fetched above
 
       // Get all stage results for this session
       const { data: allResults } = await supabase
