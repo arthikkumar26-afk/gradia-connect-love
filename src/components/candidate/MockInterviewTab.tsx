@@ -113,9 +113,17 @@ export const MockInterviewTab = () => {
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
   // Mock role chooser state — Interview Type → Pipeline Type → Role (matches vacancy creation)
-  const [selectedMockInterviewType, setSelectedMockInterviewType] = useState('');
-  const [selectedMockPipelineType, setSelectedMockPipelineType] = useState('');
-  const [selectedMockRole, setSelectedMockRole] = useState('');
+  // Persist selections in localStorage so they survive navigation / re-renders
+  const [selectedMockInterviewType, setSelectedMockInterviewType] = useState(() => localStorage.getItem('mock_interview_type') || '');
+  const [selectedMockPipelineType, setSelectedMockPipelineType] = useState(() => localStorage.getItem('mock_pipeline_type') || '');
+  const [selectedMockRole, setSelectedMockRole] = useState(() => localStorage.getItem('mock_role') || '');
+
+  // Sync selections to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('mock_interview_type', selectedMockInterviewType);
+    localStorage.setItem('mock_pipeline_type', selectedMockPipelineType);
+    localStorage.setItem('mock_role', selectedMockRole);
+  }, [selectedMockInterviewType, selectedMockPipelineType, selectedMockRole]);
   
   // Slot booking form state for Stage 2
   const [slotBookingForm, setSlotBookingForm] = useState({
