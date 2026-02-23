@@ -242,6 +242,7 @@ const CandidateDashboard = () => {
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [selectedMentorProfile, setSelectedMentorProfile] = useState<any>(null);
+  const [selectedEnrolledMentor, setSelectedEnrolledMentor] = useState<any>(null);
   
   // Education state
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
@@ -4009,6 +4010,18 @@ const CandidateDashboard = () => {
                   {
                     id: 1, name: "Rajesh Kumar", expertise: "Full Stack Development", avatar: "RK", color: "bg-blue-500",
                     rating: 4.9, sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active" as const,
+                    bio: "Senior Full Stack Developer with 10+ years experience in building scalable web applications. Specializes in React, Node.js, and cloud architecture.",
+                    email: "rajesh.kumar@mentor.com", phone: "+91 9876543210", location: "Hyderabad",
+                    experience: "10 years", qualification: "M.Tech, Computer Science - IIT Bombay",
+                    skills: ["React", "Node.js", "TypeScript", "MongoDB", "AWS", "Docker", "GraphQL", "PostgreSQL"],
+                    workExperience: [
+                      { company: "Tech Solutions Inc.", role: "Senior Developer", duration: "2020 - Present", description: "Leading a team of 8 developers building enterprise SaaS products." },
+                      { company: "Innovate Labs", role: "Full Stack Developer", duration: "2016 - 2020", description: "Built and maintained microservices architecture serving 1M+ users." },
+                    ],
+                    courses: [
+                      { title: "Full Stack Web Development", progress: 65, totalModules: 20, completedModules: 13, status: "in_progress" as const },
+                      { title: "Advanced React Patterns", progress: 100, totalModules: 12, completedModules: 12, status: "completed" as const },
+                    ],
                     homework: [
                       { title: "Build a REST API with Node.js", dueDate: "2026-02-25", status: "pending" as const },
                       { title: "React CRUD Application", dueDate: "2026-02-20", status: "submitted" as const },
@@ -4023,6 +4036,17 @@ const CandidateDashboard = () => {
                   {
                     id: 2, name: "Priya Sharma", expertise: "Data Science & AI", avatar: "PS", color: "bg-purple-500",
                     rating: 4.8, sessions: 8, nextSession: "Wed, 6 PM", status: "active" as const,
+                    bio: "Data Scientist with expertise in machine learning, deep learning, and statistical analysis. Passionate about making AI accessible to everyone.",
+                    email: "priya.sharma@mentor.com", phone: "+91 9123456789", location: "Bangalore",
+                    experience: "7 years", qualification: "M.Sc Data Science - IISc Bangalore",
+                    skills: ["Python", "TensorFlow", "Pandas", "SQL", "Tableau", "NLP", "Scikit-learn"],
+                    workExperience: [
+                      { company: "AI Research Labs", role: "Lead Data Scientist", duration: "2021 - Present", description: "Leading ML research and production model deployment." },
+                      { company: "DataMinds Corp", role: "Data Analyst", duration: "2019 - 2021", description: "Built predictive models for e-commerce personalization." },
+                    ],
+                    courses: [
+                      { title: "Data Science with Python", progress: 40, totalModules: 15, completedModules: 6, status: "in_progress" as const },
+                    ],
                     homework: [
                       { title: "Pandas Data Analysis Project", dueDate: "2026-02-26", status: "pending" as const },
                       { title: "SQL Query Exercises", dueDate: "2026-02-18", status: "reviewed" as const, score: 80 },
@@ -4033,15 +4057,15 @@ const CandidateDashboard = () => {
                   },
                 ].map((mentor) => (
                   <Card key={mentor.id} className="overflow-hidden">
-                    {/* Mentor Header */}
-                    <div className="p-5 border-b border-border">
+                    {/* Mentor Header - Clickable */}
+                    <div className="p-5 border-b border-border cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setSelectedEnrolledMentor(mentor)}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`h-11 w-11 rounded-full ${mentor.color} text-white flex items-center justify-center text-sm font-bold`}>
                             {mentor.avatar}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-foreground">{mentor.name}</h3>
+                            <h3 className="font-semibold text-foreground hover:text-primary transition-colors">{mentor.name}</h3>
                             <p className="text-xs text-muted-foreground">{mentor.expertise}</p>
                           </div>
                         </div>
@@ -4129,10 +4153,189 @@ const CandidateDashboard = () => {
                     </div>
                   </Card>
                 ))}
+
+                {/* Enrolled Mentor Profile Dialog */}
+                <Dialog open={!!selectedEnrolledMentor} onOpenChange={(open) => !open && setSelectedEnrolledMentor(null)}>
+                  <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                    {selectedEnrolledMentor && (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-3">
+                            <div className={`h-12 w-12 rounded-full ${selectedEnrolledMentor.color} text-white flex items-center justify-center text-base font-bold`}>
+                              {selectedEnrolledMentor.avatar}
+                            </div>
+                            <div>
+                              <span className="block">{selectedEnrolledMentor.name}</span>
+                              <span className="block text-sm font-normal text-muted-foreground">{selectedEnrolledMentor.expertise}</span>
+                            </div>
+                          </DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-5 mt-2">
+                          {/* Bio */}
+                          <p className="text-sm text-muted-foreground">{selectedEnrolledMentor.bio}</p>
+
+                          {/* Stats */}
+                          <div className="grid grid-cols-4 gap-3">
+                            <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                              <p className="text-lg font-bold text-foreground">{selectedEnrolledMentor.rating}</p>
+                              <p className="text-xs text-muted-foreground">Rating</p>
+                            </div>
+                            <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                              <p className="text-lg font-bold text-foreground">{selectedEnrolledMentor.sessions}</p>
+                              <p className="text-xs text-muted-foreground">Sessions</p>
+                            </div>
+                            <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                              <p className="text-lg font-bold text-foreground">{selectedEnrolledMentor.experience}</p>
+                              <p className="text-xs text-muted-foreground">Experience</p>
+                            </div>
+                            <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                              <Badge variant={selectedEnrolledMentor.status === "active" ? "default" : "secondary"} className="text-xs capitalize">
+                                {selectedEnrolledMentor.status}
+                              </Badge>
+                              <p className="text-xs text-muted-foreground mt-1">Status</p>
+                            </div>
+                          </div>
+
+                          {/* Personal Details */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><User className="h-4 w-4 text-primary" /> Personal Details</h4>
+                            <table className="w-full text-sm border border-border rounded-lg overflow-hidden">
+                              <tbody>
+                                <tr className="border-b border-border">
+                                  <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30 w-36">Email</td>
+                                  <td className="px-4 py-2.5 text-foreground">{selectedEnrolledMentor.email}</td>
+                                </tr>
+                                <tr className="border-b border-border">
+                                  <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Phone</td>
+                                  <td className="px-4 py-2.5 text-foreground">{selectedEnrolledMentor.phone}</td>
+                                </tr>
+                                <tr className="border-b border-border">
+                                  <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Location</td>
+                                  <td className="px-4 py-2.5 text-foreground">{selectedEnrolledMentor.location}</td>
+                                </tr>
+                                <tr className="border-b border-border">
+                                  <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Qualification</td>
+                                  <td className="px-4 py-2.5 text-foreground">{selectedEnrolledMentor.qualification}</td>
+                                </tr>
+                                <tr>
+                                  <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Next Session</td>
+                                  <td className="px-4 py-2.5 text-foreground">{selectedEnrolledMentor.nextSession}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Skills */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Skills</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {selectedEnrolledMentor.skills?.map((skill: string) => (
+                                <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Work Experience */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><Briefcase className="h-4 w-4 text-primary" /> Work Experience</h4>
+                            <div className="space-y-3">
+                              {selectedEnrolledMentor.workExperience?.map((exp: any, idx: number) => (
+                                <div key={idx} className="p-3 rounded-lg bg-muted/30 border border-border">
+                                  <p className="font-medium text-sm text-foreground">{exp.role}</p>
+                                  <p className="text-xs text-primary">{exp.company} · {exp.duration}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">{exp.description}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Course Status */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" /> Course Status</h4>
+                            <div className="space-y-3">
+                              {selectedEnrolledMentor.courses?.map((course: any, idx: number) => (
+                                <div key={idx} className="p-3 rounded-lg bg-muted/30 border border-border">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <p className="font-medium text-sm text-foreground">{course.title}</p>
+                                    <Badge variant={course.status === "completed" ? "default" : "secondary"} className="text-xs capitalize">
+                                      {course.status === "in_progress" ? "In Progress" : "Completed"}
+                                    </Badge>
+                                  </div>
+                                  <Progress value={course.progress} className="h-2 mb-1" />
+                                  <p className="text-xs text-muted-foreground">{course.completedModules}/{course.totalModules} modules · {course.progress}% complete</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Homework Assignments */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><ClipboardList className="h-4 w-4 text-primary" /> Homework Assignments</h4>
+                            <div className="space-y-2">
+                              {selectedEnrolledMentor.homework?.map((hw: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between p-3 rounded-md bg-muted/30 border border-border">
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground">{hw.title}</p>
+                                    <p className="text-xs text-muted-foreground">Due: {hw.dueDate}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {hw.status === "reviewed" && (
+                                      <Badge className="text-xs gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
+                                        <CheckCircle className="h-3 w-3" /> {hw.score}%
+                                      </Badge>
+                                    )}
+                                    {hw.status === "submitted" && <Badge variant="secondary" className="text-xs">Submitted</Badge>}
+                                    {hw.status === "pending" && <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">Pending</Badge>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Uploaded Documents */}
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><Upload className="h-4 w-4 text-accent" /> Uploaded Documents</h4>
+                            <div className="space-y-2">
+                              {selectedEnrolledMentor.submissions?.map((sub: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-3 p-3 rounded-md bg-muted/30 border border-border">
+                                  <FileText className="h-4 w-4 text-accent flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground truncate">{sub.name}</p>
+                                    <p className="text-xs text-muted-foreground">{sub.date}</p>
+                                  </div>
+                                  {sub.status === "reviewed" ? (
+                                    <Badge className="text-xs gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-0">
+                                      <CheckCircle className="h-3 w-3" /> {sub.score}%
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-xs">Pending</Badge>
+                                  )}
+                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => toast({ title: "Downloading...", description: sub.name })}>
+                                    <Download className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-3 pt-2">
+                            <Button className="flex-1 gap-2" onClick={() => toast({ title: "Message Sent", description: `Contacting ${selectedEnrolledMentor.name}...` })}>
+                              <Mail className="h-4 w-4" /> Contact Mentor
+                            </Button>
+                            <Button variant="outline" className="flex-1 gap-2" onClick={() => toast({ title: "Session Scheduled", description: `Next: ${selectedEnrolledMentor.nextSession}` })}>
+                              <Calendar className="h-4 w-4" /> Schedule Session
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </div>
             )}
 
-            {/* Resume Builder */}
             {activeMenu === "resume" && (
               <ResumeBuilderTab />
             )}
