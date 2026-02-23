@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -240,6 +241,7 @@ const CandidateDashboard = () => {
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const [selectedMentorProfile, setSelectedMentorProfile] = useState<any>(null);
   
   // Education state
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
@@ -3798,14 +3800,14 @@ const CandidateDashboard = () => {
                   <p className="text-sm text-muted-foreground mb-4">Learn directly from experienced freelancer mentors who excel in their fields</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[
-                      { name: "Rajesh Kumar", expertise: "Full Stack Development", rating: 4.9, students: 1250, avatar: "RK", color: "bg-blue-500" },
-                      { name: "Priya Sharma", expertise: "Data Science & AI", rating: 4.8, students: 980, avatar: "PS", color: "bg-purple-500" },
-                      { name: "Amit Patel", expertise: "UI/UX Design", rating: 4.9, students: 1120, avatar: "AP", color: "bg-pink-500" },
-                      { name: "Sneha Reddy", expertise: "Digital Marketing", rating: 4.7, students: 870, avatar: "SR", color: "bg-amber-500" },
-                      { name: "Vikram Singh", expertise: "Cloud & DevOps", rating: 4.8, students: 760, avatar: "VS", color: "bg-emerald-500" },
-                      { name: "Anita Desai", expertise: "Business Analytics", rating: 4.9, students: 1050, avatar: "AD", color: "bg-indigo-500" },
+                      { name: "Rajesh Kumar", expertise: "Full Stack Development", rating: 4.9, students: 1250, avatar: "RK", color: "bg-blue-500", email: "rajesh.kumar@mentor.com", phone: "+91 9876543210", location: "Hyderabad, Telangana", experience: "8 years", qualification: "B.Tech CSE, IIT Delhi", bio: "Senior Full Stack Developer with expertise in React, Node.js, and cloud technologies. Passionate about mentoring the next generation of developers.", skills: ["React", "Node.js", "TypeScript", "AWS", "MongoDB", "Docker"], courses: ["Advanced React Patterns", "Node.js Microservices", "System Design"], totalSessions: 450, completionRate: 96 },
+                      { name: "Priya Sharma", expertise: "Data Science & AI", rating: 4.8, students: 980, avatar: "PS", color: "bg-purple-500", email: "priya.sharma@mentor.com", phone: "+91 9123456789", location: "Bangalore, Karnataka", experience: "6 years", qualification: "M.Tech AI, IISc Bangalore", bio: "Data Scientist specializing in machine learning, deep learning, and NLP. Former lead at a top AI startup.", skills: ["Python", "TensorFlow", "PyTorch", "SQL", "Pandas", "Scikit-learn"], courses: ["ML Fundamentals", "Deep Learning with PyTorch", "NLP Masterclass"], totalSessions: 320, completionRate: 94 },
+                      { name: "Amit Patel", expertise: "UI/UX Design", rating: 4.9, students: 1120, avatar: "AP", color: "bg-pink-500", email: "amit.patel@mentor.com", phone: "+91 9988776655", location: "Mumbai, Maharashtra", experience: "10 years", qualification: "B.Des, NID Ahmedabad", bio: "Award-winning UI/UX designer with experience at leading design agencies. Expert in user research and design systems.", skills: ["Figma", "Adobe XD", "Sketch", "Prototyping", "User Research", "Design Systems"], courses: ["UI Design Bootcamp", "UX Research Methods", "Design Systems"], totalSessions: 520, completionRate: 98 },
+                      { name: "Sneha Reddy", expertise: "Digital Marketing", rating: 4.7, students: 870, avatar: "SR", color: "bg-amber-500", email: "sneha.reddy@mentor.com", phone: "+91 9876501234", location: "Chennai, Tamil Nadu", experience: "7 years", qualification: "MBA Marketing, XLRI", bio: "Digital marketing strategist helping brands grow online through SEO, SEM, and social media campaigns.", skills: ["SEO", "Google Ads", "Social Media", "Content Marketing", "Analytics", "Email Marketing"], courses: ["SEO Mastery", "Google Ads Certification Prep", "Social Media Strategy"], totalSessions: 280, completionRate: 92 },
+                      { name: "Vikram Singh", expertise: "Cloud & DevOps", rating: 4.8, students: 760, avatar: "VS", color: "bg-emerald-500", email: "vikram.singh@mentor.com", phone: "+91 9112233445", location: "Pune, Maharashtra", experience: "9 years", qualification: "B.Tech IT, BITS Pilani", bio: "DevOps engineer and AWS certified solutions architect with deep expertise in CI/CD, Kubernetes, and infrastructure as code.", skills: ["AWS", "Kubernetes", "Docker", "Terraform", "Jenkins", "Linux"], courses: ["AWS Solutions Architect", "Kubernetes Deep Dive", "CI/CD Pipelines"], totalSessions: 390, completionRate: 95 },
+                      { name: "Anita Desai", expertise: "Business Analytics", rating: 4.9, students: 1050, avatar: "AD", color: "bg-indigo-500", email: "anita.desai@mentor.com", phone: "+91 9556677889", location: "Delhi NCR", experience: "8 years", qualification: "MBA Analytics, ISB", bio: "Business analytics leader helping professionals master data-driven decision making using modern tools and frameworks.", skills: ["Power BI", "Tableau", "SQL", "Excel", "R", "Statistics"], courses: ["Power BI Masterclass", "Business Analytics with R", "Data Storytelling"], totalSessions: 410, completionRate: 97 },
                     ].map((mentor) => (
-                      <div key={mentor.name} className="p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50 cursor-pointer">
+                      <div key={mentor.name} className="p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50 cursor-pointer" onClick={() => setSelectedMentorProfile(mentor)}>
                         <div className="flex items-center gap-3 mb-3">
                           <div className={`h-10 w-10 rounded-full ${mentor.color} text-white flex items-center justify-center text-sm font-bold`}>
                             {mentor.avatar}
@@ -3828,6 +3830,113 @@ const CandidateDashboard = () => {
                       </div>
                     ))}
                   </div>
+
+                  {/* Mentor Profile Detail Modal */}
+                  <Dialog open={!!selectedMentorProfile} onOpenChange={(open) => !open && setSelectedMentorProfile(null)}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                      {selectedMentorProfile && (
+                        <>
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-3">
+                              <div className={`h-12 w-12 rounded-full ${selectedMentorProfile.color} text-white flex items-center justify-center text-base font-bold`}>
+                                {selectedMentorProfile.avatar}
+                              </div>
+                              <div>
+                                <span className="block">{selectedMentorProfile.name}</span>
+                                <span className="block text-sm font-normal text-muted-foreground">{selectedMentorProfile.expertise}</span>
+                              </div>
+                            </DialogTitle>
+                          </DialogHeader>
+
+                          <div className="space-y-5 mt-2">
+                            {/* Bio */}
+                            <p className="text-sm text-muted-foreground">{selectedMentorProfile.bio}</p>
+
+                            {/* Stats Row */}
+                            <div className="grid grid-cols-4 gap-3">
+                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.rating}</p>
+                                <p className="text-xs text-muted-foreground">Rating</p>
+                              </div>
+                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.students.toLocaleString()}</p>
+                                <p className="text-xs text-muted-foreground">Students</p>
+                              </div>
+                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.totalSessions}</p>
+                                <p className="text-xs text-muted-foreground">Sessions</p>
+                              </div>
+                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
+                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.completionRate}%</p>
+                                <p className="text-xs text-muted-foreground">Completion</p>
+                              </div>
+                            </div>
+
+                            {/* Personal Details */}
+                            <div className="border border-border rounded-lg overflow-hidden">
+                              <table className="w-full text-sm">
+                                <tbody>
+                                  <tr className="border-b border-border">
+                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30 w-36">Email</td>
+                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.email}</td>
+                                  </tr>
+                                  <tr className="border-b border-border">
+                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Phone</td>
+                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.phone}</td>
+                                  </tr>
+                                  <tr className="border-b border-border">
+                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Location</td>
+                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.location}</td>
+                                  </tr>
+                                  <tr className="border-b border-border">
+                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Experience</td>
+                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.experience}</td>
+                                  </tr>
+                                  <tr>
+                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Qualification</td>
+                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.qualification}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+
+                            {/* Skills */}
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Skills & Expertise</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedMentorProfile.skills.map((skill: string) => (
+                                  <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Courses Offered */}
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Courses Offered</h4>
+                              <div className="space-y-2">
+                                {selectedMentorProfile.courses.map((course: string) => (
+                                  <div key={course} className="flex items-center gap-2 p-2.5 rounded-md bg-muted/30 border border-border">
+                                    <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                                    <span className="text-sm text-foreground">{course}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-2">
+                              <Button className="flex-1" onClick={() => { setSelectedMentorProfile(null); setActiveMenu("mentors"); }}>
+                                <GraduationCap className="h-4 w-4 mr-2" /> Enroll Now
+                              </Button>
+                              <Button variant="outline" onClick={() => toast({ title: "Message Sent", description: `Your inquiry has been sent to ${selectedMentorProfile.name}` })}>
+                                <Mail className="h-4 w-4 mr-2" /> Contact
+                              </Button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </Card>
 
                 {/* Top Institutions */}
