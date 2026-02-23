@@ -24,9 +24,19 @@ const sampleProjects = [
 ];
 
 const sampleMentorships = [
-  { id: 1, student: "Rahul Sharma", topic: "Full Stack Development", sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active", email: "rahul@example.com", mobile: "+91 9876543210", location: "Hyderabad, Telangana", qualification: "B.Tech CSE", experience: "1 year", mockTestScore: 78, assignmentScore: 85, skillsToLearn: ["React", "Node.js", "MongoDB", "Docker"], gender: "Male", dob: "1999-05-15", liveTraining: "in-progress" as const, homeworkGiven: 3, homeworkCompleted: 2 },
-  { id: 2, student: "Priya Patel", topic: "Data Science Basics", sessions: 8, nextSession: "Wed, 6 PM", status: "active", email: "priya@example.com", mobile: "+91 9123456789", location: "Bangalore, Karnataka", qualification: "M.Sc Statistics", experience: "Fresher", mockTestScore: 65, assignmentScore: 72, skillsToLearn: ["Python", "Pandas", "Machine Learning", "SQL"], gender: "Female", dob: "2000-08-22", liveTraining: "scheduled" as const, homeworkGiven: 5, homeworkCompleted: 4 },
-  { id: 3, student: "Amit Kumar", topic: "React & Node.js", sessions: 20, nextSession: "Completed", status: "completed", email: "amit@example.com", mobile: "+91 9988776655", location: "Delhi", qualification: "BCA", experience: "2 years", mockTestScore: 92, assignmentScore: 88, skillsToLearn: ["TypeScript", "AWS", "GraphQL"], gender: "Male", dob: "1998-01-10", liveTraining: "completed" as const, homeworkGiven: 8, homeworkCompleted: 8 },
+  { id: 1, student: "Rahul Sharma", topic: "Full Stack Development", sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active", email: "rahul@example.com", mobile: "+91 9876543210", location: "Hyderabad, Telangana", qualification: "B.Tech CSE", experience: "1 year", mockTestScore: 78, assignmentScore: 85, skillsToLearn: ["React", "Node.js", "MongoDB", "Docker"], gender: "Male", dob: "1999-05-15", liveTraining: "in-progress" as const, homeworkGiven: 3, homeworkCompleted: 2, submissions: [
+    { name: "React_CRUD_Assignment.pdf", date: "2026-02-18", status: "reviewed" as const, score: 85 },
+    { name: "NodeJS_API_Project.zip", date: "2026-02-20", status: "reviewed" as const, score: 78 },
+    { name: "MongoDB_Schema_Design.docx", date: "2026-02-22", status: "pending" as const, score: null },
+  ]},
+  { id: 2, student: "Priya Patel", topic: "Data Science Basics", sessions: 8, nextSession: "Wed, 6 PM", status: "active", email: "priya@example.com", mobile: "+91 9123456789", location: "Bangalore, Karnataka", qualification: "M.Sc Statistics", experience: "Fresher", mockTestScore: 65, assignmentScore: 72, skillsToLearn: ["Python", "Pandas", "Machine Learning", "SQL"], gender: "Female", dob: "2000-08-22", liveTraining: "scheduled" as const, homeworkGiven: 5, homeworkCompleted: 4, submissions: [
+    { name: "Pandas_Data_Analysis.ipynb", date: "2026-02-15", status: "reviewed" as const, score: 72 },
+    { name: "SQL_Queries_Exercise.pdf", date: "2026-02-19", status: "reviewed" as const, score: 80 },
+  ]},
+  { id: 3, student: "Amit Kumar", topic: "React & Node.js", sessions: 20, nextSession: "Completed", status: "completed", email: "amit@example.com", mobile: "+91 9988776655", location: "Delhi", qualification: "BCA", experience: "2 years", mockTestScore: 92, assignmentScore: 88, skillsToLearn: ["TypeScript", "AWS", "GraphQL"], gender: "Male", dob: "1998-01-10", liveTraining: "completed" as const, homeworkGiven: 8, homeworkCompleted: 8, submissions: [
+    { name: "Final_Project_Report.pdf", date: "2026-02-10", status: "reviewed" as const, score: 92 },
+    { name: "GraphQL_API_Demo.zip", date: "2026-02-12", status: "reviewed" as const, score: 88 },
+  ]},
 ];
 
 const menuItems = [
@@ -732,6 +742,30 @@ const FreelancerDashboard = () => {
                             {selectedCandidate.homeworkCompleted === selectedCandidate.homeworkGiven ? "All Done" : "Pending"}
                           </Badge>
                         </div>
+                        {/* Candidate Uploaded Documents */}
+                        {selectedCandidate.submissions.length > 0 && (
+                          <div className="border border-border rounded-lg p-3 space-y-2">
+                            <p className="text-xs font-medium text-muted-foreground">Candidate Uploaded Documents</p>
+                            <div className="space-y-2">
+                              {selectedCandidate.submissions.map((sub, idx) => (
+                                <div key={idx} className="flex items-center gap-3 p-2 rounded-md bg-background border border-border">
+                                  <FileText className="h-4 w-4 text-accent flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground truncate">{sub.name}</p>
+                                    <p className="text-xs text-muted-foreground">{sub.date}</p>
+                                  </div>
+                                  {sub.status === "reviewed" ? (
+                                    <Badge variant="default" className="text-xs gap-1">
+                                      <CheckCircle2 className="h-3 w-3" /> {sub.score}%
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-xs">Pending Review</Badge>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         <div className="border border-border rounded-lg p-3 space-y-2">
                           <p className="text-xs font-medium text-muted-foreground">Assign New Homework</p>
                           <Textarea placeholder="Enter homework title & description..." className="text-sm min-h-[60px]" />
