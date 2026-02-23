@@ -1208,16 +1208,15 @@ export const MockInterviewTab = () => {
   // Generate course suggestions based on mock test performance
   const generateCourseSuggestions = () => {
     const improvements = stageResults.flatMap(r => r.improvements || []);
-    // Use inline slot-booking check to avoid TDZ with isSlotBookingOrder (defined later)
-    const isSlotBookingStageName = (name: string) => name.toLowerCase().includes('slot booking');
-    const slotBookingOrders = displayStagesList
-      .filter(s => isSlotBookingStageName(s.name))
-      .map(s => s.order);
-    const isSlotBookingOrd = (order: number) => slotBookingOrders.includes(order);
-    const overallScore = stageResults.length > 0 
-      ? stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrd(r.stage_order))
-          .reduce((sum, r) => sum + (r.ai_score || 0), 0) / 
-        stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingOrd(r.stage_order)).length 
+    // Skip stage_order 1 (instructions) and any stage whose name includes 'slot booking'
+    // We cannot reference displayStagesList here (declared later), so we check stageResults names directly
+    const isSlotBookingResult = (r: any) => {
+      const stageName = (r.stage_name || '').toLowerCase();
+      return stageName.includes('slot booking');
+    };
+    const scorableResults = stageResults.filter(r => r.ai_score !== undefined && r.stage_order !== 1 && !isSlotBookingResult(r));
+    const overallScore = scorableResults.length > 0 
+      ? scorableResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scorableResults.length
       : 0;
 
     const courses: any[] = [];
