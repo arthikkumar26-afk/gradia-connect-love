@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,9 +22,9 @@ const sampleProjects = [
 ];
 
 const sampleMentorships = [
-  { id: 1, student: "Rahul Sharma", topic: "Full Stack Development", sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active" },
-  { id: 2, student: "Priya Patel", topic: "Data Science Basics", sessions: 8, nextSession: "Wed, 6 PM", status: "active" },
-  { id: 3, student: "Amit Kumar", topic: "React & Node.js", sessions: 20, nextSession: "Completed", status: "completed" },
+  { id: 1, student: "Rahul Sharma", topic: "Full Stack Development", sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active", email: "rahul@example.com", mobile: "+91 9876543210", location: "Hyderabad, Telangana", qualification: "B.Tech CSE", experience: "1 year", mockTestScore: 78, assignmentScore: 85, skillsToLearn: ["React", "Node.js", "MongoDB", "Docker"], gender: "Male", dob: "1999-05-15" },
+  { id: 2, student: "Priya Patel", topic: "Data Science Basics", sessions: 8, nextSession: "Wed, 6 PM", status: "active", email: "priya@example.com", mobile: "+91 9123456789", location: "Bangalore, Karnataka", qualification: "M.Sc Statistics", experience: "Fresher", mockTestScore: 65, assignmentScore: 72, skillsToLearn: ["Python", "Pandas", "Machine Learning", "SQL"], gender: "Female", dob: "2000-08-22" },
+  { id: 3, student: "Amit Kumar", topic: "React & Node.js", sessions: 20, nextSession: "Completed", status: "completed", email: "amit@example.com", mobile: "+91 9988776655", location: "Delhi", qualification: "BCA", experience: "2 years", mockTestScore: 92, assignmentScore: 88, skillsToLearn: ["TypeScript", "AWS", "GraphQL"], gender: "Male", dob: "1998-01-10" },
 ];
 
 const menuItems = [
@@ -53,6 +55,9 @@ const FreelancerDashboard = () => {
   // Mentorship filters
   const [mentorshipStatusFilter, setMentorshipStatusFilter] = useState<string>("all");
   const [mentorshipSearchQuery, setMentorshipSearchQuery] = useState("");
+
+  // Mentorship candidate detail modal
+  const [selectedCandidate, setSelectedCandidate] = useState<typeof sampleMentorships[0] | null>(null);
 
   const allProjectSkills = Array.from(new Set(sampleProjects.flatMap(p => p.skills)));
 
@@ -557,7 +562,7 @@ const FreelancerDashboard = () => {
             {filteredMentorships.length === 0 ? (
               <Card><CardContent className="p-8 text-center text-muted-foreground">No mentorships match your filters.</CardContent></Card>
             ) : filteredMentorships.map((m) => (
-              <Card key={m.id}>
+               <Card key={m.id} className="hover:border-accent/50 transition-colors cursor-pointer" onClick={() => setSelectedCandidate(m)}>
                 <CardContent className="p-6 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
@@ -576,6 +581,109 @@ const FreelancerDashboard = () => {
                 </CardContent>
               </Card>
             ))}
+
+            {/* Candidate Detail Modal */}
+            <Dialog open={!!selectedCandidate} onOpenChange={(open) => !open && setSelectedCandidate(null)}>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                      <User className="h-5 w-5 text-accent" />
+                    </div>
+                    {selectedCandidate?.student} — Full Profile
+                  </DialogTitle>
+                </DialogHeader>
+                {selectedCandidate && (
+                  <div className="space-y-5">
+                    {/* Personal Details */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><User className="h-4 w-4" /> Personal Details</h4>
+                      <div className="border border-border rounded-lg overflow-hidden text-sm">
+                        <table className="w-full">
+                          <tbody>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30 w-36">Name</td>
+                              <td className="px-3 py-2 text-foreground font-medium">{selectedCandidate.student}</td>
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30 w-36">Gender</td>
+                              <td className="px-3 py-2 text-foreground">{selectedCandidate.gender}</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Email</td>
+                              <td className="px-3 py-2 text-foreground">{selectedCandidate.email}</td>
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Mobile</td>
+                              <td className="px-3 py-2 text-foreground">{selectedCandidate.mobile}</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Location</td>
+                              <td className="px-3 py-2 text-foreground">{selectedCandidate.location}</td>
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">DOB</td>
+                              <td className="px-3 py-2 text-foreground">{selectedCandidate.dob}</td>
+                            </tr>
+                            <tr>
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Qualification</td>
+                              <td className="px-3 py-2 text-foreground">{selectedCandidate.qualification}</td>
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Experience</td>
+                              <td className="px-3 py-2 text-foreground">{selectedCandidate.experience}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Scores Section */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground mb-1">Mock Test Score</p>
+                          <p className={`text-2xl font-bold ${selectedCandidate.mockTestScore >= 70 ? 'text-green-600' : selectedCandidate.mockTestScore >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                            {selectedCandidate.mockTestScore}%
+                          </p>
+                          <Progress value={selectedCandidate.mockTestScore} className="h-2 mt-2" />
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground mb-1">Assignment Score</p>
+                          <p className={`text-2xl font-bold ${selectedCandidate.assignmentScore >= 70 ? 'text-green-600' : selectedCandidate.assignmentScore >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                            {selectedCandidate.assignmentScore}%
+                          </p>
+                          <Progress value={selectedCandidate.assignmentScore} className="h-2 mt-2" />
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Skills Interested to Learn */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><Sparkles className="h-4 w-4" /> Skills Interested to Learn</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedCandidate.skillsToLearn.map((skill) => (
+                          <Badge key={skill} variant="outline">{skill}</Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Mentorship Info */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Mentorship Info</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border text-center">
+                          <p className="text-lg font-bold text-foreground">{selectedCandidate.sessions}</p>
+                          <p className="text-xs text-muted-foreground">Sessions</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border text-center">
+                          <p className="text-sm font-medium text-foreground">{selectedCandidate.topic}</p>
+                          <p className="text-xs text-muted-foreground">Topic</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border text-center">
+                          <Badge variant={selectedCandidate.status === "active" ? "default" : "secondary"}>{selectedCandidate.status}</Badge>
+                          <p className="text-xs text-muted-foreground mt-1">Status</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         );
 
