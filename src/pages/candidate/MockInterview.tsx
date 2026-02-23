@@ -230,9 +230,9 @@ const MockInterview = () => {
           ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
           ?.stages || [];
         if (configStages.length > 0) {
-          resolvedStages = configStages.map(s => ({
+          resolvedStages = configStages.map((s, idx) => ({
             name: s.name,
-            order: s.order,
+            order: idx + 1,
             description: s.description || '',
             questionCount: s.name.toLowerCase().includes('coding') ? 1 : s.name.toLowerCase().includes('technical interview') ? 20 : s.name.toLowerCase().includes('mcq') || s.name.toLowerCase().includes('written') || s.name.toLowerCase().includes('assessment') ? 10 : 1,
             timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('technical interview') ? 120 : s.name.toLowerCase().includes('demo') ? 600 : 90,
