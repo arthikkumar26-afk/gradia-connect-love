@@ -663,109 +663,50 @@ export const MockInterviewTab = () => {
   };
 
   const bookSlot = async () => {
-    const currentStage = currentSession?.current_stage_order;
-    const isFirstSlotBookingStage = currentStage !== undefined && isFirstSlotBooking(currentStage);
-    
-    // For Stage 2, use slotBookingForm; for Stage 4, use selectedSlot
-    if (isFirstSlotBookingStage) {
-      if (!slotBookingForm.date || !slotBookingForm.time || !currentSession) {
-        toast.error("Please fill all required fields");
-        return;
-      }
-    } else {
-      if (!selectedSlot || !currentSession) {
-        toast.error("Please select a time slot");
-        return;
-      }
+    if (!selectedSlot || !currentSession) {
+      toast.error("Please select a time slot");
+      return;
     }
 
     setIsBookingSlot(true);
     try {
+      const currentStage = currentSession.current_stage_order;
+      const isFirstSlotBookingStage = isFirstSlotBooking(currentStage);
+
       // Determine the actual slot time
       let slotTime: Date;
       let slotLabel: string;
       
-      if (isFirstSlotBookingStage) {
-        // For Stage 2, use the form date and time
-        slotTime = new Date(`${slotBookingForm.date}T${slotBookingForm.time}`);
-        slotLabel = `${new Date(slotBookingForm.date).toLocaleDateString('en-IN', { 
-          weekday: 'short', month: 'short', day: 'numeric' 
-        })} at ${slotBookingForm.time}`;
-        
-        // Save to slot_bookings table
-        const { error: bookingError } = await supabase
-          .from('slot_bookings')
-          .insert({
-            candidate_id: user?.id,
-            booking_type: 'technical_assessment',
-            booking_date: slotBookingForm.date,
-            booking_time: slotBookingForm.time,
-            location: slotBookingForm.location || null,
-            state: slotBookingForm.state,
-            district: slotBookingForm.district,
-            pincode: slotBookingForm.pincode || null,
-            segment: slotBookingForm.segment,
-            category: slotBookingForm.category || null,
-            designation: slotBookingForm.designation,
-            class_level: slotBookingForm.classLevel || null,
-            status: 'confirmed'
-          });
-        if (bookingError) {
-          console.error('Error saving booking:', bookingError);
-          throw bookingError;
-        }
-
-        // Send notification to management team
-        await supabase.functions.invoke('send-management-notification', {
-          body: {
-            notificationType: 'slot_booking',
-            candidateName: profile?.full_name || 'Candidate',
-            candidateEmail: profile?.email,
-            bookingDetails: {
-              date: slotBookingForm.date,
-              time: slotBookingForm.time,
-              segment: slotBookingForm.segment,
-              category: slotBookingForm.category,
-              designation: slotBookingForm.designation,
-              state: slotBookingForm.state,
-              district: slotBookingForm.district
-            },
-            appUrl: window.location.origin
-          }
-        });
+      if (selectedSlot === 'immediately') {
+        slotTime = new Date();
+        slotLabel = 'Immediately';
+      } else if (selectedSlot === 'next_10_min') {
+        slotTime = new Date(Date.now() + 10 * 60 * 1000);
+        slotLabel = 'In 10 minutes';
       } else {
-        // For Stage 4, use selectedSlot
-        if (selectedSlot === 'immediately') {
-          slotTime = new Date();
-          slotLabel = 'Immediately';
-        } else if (selectedSlot === 'next_10_min') {
-          slotTime = new Date(Date.now() + 10 * 60 * 1000);
-          slotLabel = 'In 10 minutes';
-        } else {
-          slotTime = new Date(selectedSlot);
-          slotLabel = slotTime.toLocaleString();
-        }
-        
-        // Save demo slot booking
-        const { error: bookingError } = await supabase
-          .from('slot_bookings')
-          .insert({
-            candidate_id: user?.id,
-            booking_type: 'demo_interview',
-            booking_date: slotTime.toISOString().split('T')[0],
-            booking_time: slotTime.toTimeString().slice(0, 5),
-            status: 'confirmed'
-          });
-        
-        if (bookingError) {
-          console.error('Error saving demo booking:', bookingError);
-          // Don't throw, continue with the flow
-        }
+        slotTime = new Date(selectedSlot);
+        slotLabel = slotTime.toLocaleString();
+      }
+
+      // Save slot booking
+      const bookingType = isFirstSlotBookingStage ? 'technical_assessment' : 'demo_interview';
+      const { error: bookingError } = await supabase
+        .from('slot_bookings')
+        .insert({
+          candidate_id: user?.id,
+          booking_type: bookingType,
+          booking_date: slotTime.toISOString().split('T')[0],
+          booking_time: slotTime.toTimeString().slice(0, 5),
+          status: 'confirmed'
+        });
+      
+      if (bookingError) {
+        console.error('Error saving booking:', bookingError);
       }
 
       const isForTechnicalAssessment = isFirstSlotBookingStage;
       const stageName = isForTechnicalAssessment ? 'Technical Assessment Slot Booking' : 'Demo Slot Booking';
-      const nextStageOrder = (currentStage ?? 0) + 1;
+      const nextStageOrder = currentStage + 1;
       const nextStageName = isForTechnicalAssessment ? 'Technical Assessment' : 'Demo Round';
       const nextStageDescription = isForTechnicalAssessment 
         ? 'Answer 8 domain-specific questions to assess your technical knowledge. Your responses will be video recorded.'
@@ -2228,232 +2169,100 @@ export const MockInterviewTab = () => {
                   <div className="mt-4 pt-4 border-t space-y-4">
                     {isFirstSlotBooking(stage.order) ? (
                       <>
-                        {/* Stage 2: Technical Assessment Slot Booking with additional fields */}
-                        <ScrollArea className="max-h-[500px]">
-                          <div className="space-y-4 pr-2">
-                            {/* Date and Time Row */}
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Date *</Label>
-                                <Input
-                                  type="date"
-                                  value={slotBookingForm.date}
-                                  onChange={(e) => setSlotBookingForm(prev => ({ ...prev, date: e.target.value }))}
-                                  min={new Date().toISOString().split('T')[0]}
-                                  className="h-9 text-sm"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Time *</Label>
-                                <Select 
-                                  value={slotBookingForm.time} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, time: value }))}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select time" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border z-50 max-h-60">
-                                    {['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', 
-                                      '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', 
-                                      '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM',
-                                      '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', '08:00 PM', '08:30 PM',
-                                      '09:00 PM', '09:30 PM', '10:00 PM', '10:30 PM', '11:00 PM', '11:30 PM', '12:00 AM'].map(time => (
-                                      <SelectItem key={time} value={time}>{time}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
+                        {/* Written Test Slot Booking - same style as Demo Slot Booking */}
+                        {/* Quick Options */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-muted-foreground">Quick:</span>
+                          <Button
+                            variant={selectedSlot === 'immediately' ? 'default' : 'outline'}
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => setSelectedSlot('immediately')}
+                          >
+                            <Play className="h-3.5 w-3.5" />
+                            Start Now
+                          </Button>
+                          <Button
+                            variant={selectedSlot === 'next_10_min' ? 'default' : 'outline'}
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => setSelectedSlot('next_10_min')}
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            In 10 Min
+                          </Button>
+                        </div>
 
-                            {/* Location Row - Only for Education */}
-                            {isEducationIndustry && (
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                                <MapPin className="h-3.5 w-3.5" />
-                                Location Details
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <Label className="text-xs font-medium">Location</Label>
-                                  <Input
-                                    placeholder="Enter location"
-                                    value={slotBookingForm.location}
-                                    onChange={(e) => setSlotBookingForm(prev => ({ ...prev, location: e.target.value }))}
-                                    className="h-9 text-sm"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs font-medium">Pincode</Label>
-                                  <Input
-                                    placeholder="Enter pincode"
-                                    value={slotBookingForm.pincode}
-                                    onChange={(e) => setSlotBookingForm(prev => ({ ...prev, pincode: e.target.value }))}
-                                    maxLength={6}
-                                    className="h-9 text-sm"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs font-medium">State *</Label>
-                                  <Select 
-                                    value={slotBookingForm.state} 
-                                    onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, state: value, district: '' }))}
-                                  >
-                                    <SelectTrigger className="h-9 text-sm">
-                                      <SelectValue placeholder="Select state" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-background border z-50 max-h-48">
-                                      {Object.keys(indiaLocationData).map(state => (
-                                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                        {/* Date & Time Slots */}
+                        <div className="space-y-2">
+                          <span className="text-sm font-medium text-muted-foreground">Or schedule for:</span>
+                          <ScrollArea className="max-h-[200px]">
+                            <RadioGroup value={selectedSlot} onValueChange={setSelectedSlot} className="space-y-2">
+                              {Object.entries(
+                                generateTimeSlots().reduce((groups: { [key: string]: { date: string; time: string; value: string }[] }, slot) => {
+                                  if (!groups[slot.date]) groups[slot.date] = [];
+                                  groups[slot.date].push(slot);
+                                  return groups;
+                                }, {} as { [key: string]: { date: string; time: string; value: string }[] })
+                              ).map(([date, slots]) => {
+                                const firstSlot = (slots as { date: string; time: string; value: string }[])[0];
+                                const slotDate = new Date(firstSlot.value);
+                                const dayName = slotDate.toLocaleDateString('en-US', { weekday: 'short' });
+                                
+                                return (
+                                  <div key={date} className="flex items-start gap-3 p-2 rounded-lg bg-muted/30">
+                                    <div className="flex items-center gap-1.5 min-w-[90px] pt-0.5">
+                                      <Calendar className="h-3.5 w-3.5 text-primary" />
+                                      <span className="text-xs font-medium">{date}</span>
+                                      <span className="text-xs text-muted-foreground">({dayName})</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5 flex-1">
+                                      {(slots as { date: string; time: string; value: string }[]).map((slot) => (
+                                        <div key={slot.value}>
+                                          <RadioGroupItem value={slot.value} id={`first-${slot.value}`} className="peer sr-only" />
+                                          <Label
+                                            htmlFor={`first-${slot.value}`}
+                                            className="inline-block px-2 py-1 rounded text-xs font-medium border cursor-pointer transition-all
+                                              peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground
+                                              hover:border-primary/50 hover:bg-primary/5"
+                                          >
+                                            {slot.time}
+                                          </Label>
+                                        </div>
                                       ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-1">
-                                  <Label className="text-xs font-medium">District *</Label>
-                                  <Select 
-                                    value={slotBookingForm.district} 
-                                    onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, district: value }))}
-                                    disabled={!slotBookingForm.state}
-                                  >
-                                    <SelectTrigger className="h-9 text-sm">
-                                      <SelectValue placeholder="Select district" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-background border z-50 max-h-48">
-                                      {slotBookingForm.state && Object.keys(indiaLocationData[slotBookingForm.state] || {}).map(district => (
-                                        <SelectItem key={district} value={district}>{district}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </div>
-                            )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </RadioGroup>
+                          </ScrollArea>
+                        </div>
 
-                            {/* Segment, Category, Designation Row - only for Education */}
-                            {isEducationIndustry && (
-                            <>
-                            <div className="grid grid-cols-3 gap-3">
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Segment *</Label>
-                                <Select 
-                                  value={slotBookingForm.segment} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ 
-                                    ...prev, 
-                                    segment: value, 
-                                    category: '', 
-                                    classLevel: '', 
-                                    designation: '' 
-                                  }))}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select segment" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border z-50">
-                                    {segmentOptions.map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Category *</Label>
-                                <Select 
-                                  value={slotBookingForm.category} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ 
-                                    ...prev, 
-                                    category: value, 
-                                    classLevel: '', 
-                                    designation: '' 
-                                  }))}
-                                  disabled={!slotBookingForm.segment}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select category" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border z-50">
-                                    {getCurrentCategories().map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Designation *</Label>
-                                <Select 
-                                  value={slotBookingForm.designation} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, designation: value }))}
-                                  disabled={showClassLevel ? !slotBookingForm.classLevel : !slotBookingForm.category}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select designation" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border z-50">
-                                    {getCurrentDesignations().map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-
-                            {/* Class Level Row - only shows for High School Board/Compititive */}
-                            {showClassLevel && (
-                              <div className="space-y-1">
-                                <Label className="text-xs font-medium">Class Level *</Label>
-                                <Select 
-                                  value={slotBookingForm.classLevel} 
-                                  onValueChange={(value) => setSlotBookingForm(prev => ({ 
-                                    ...prev, 
-                                    classLevel: value, 
-                                    designation: '' 
-                                  }))}
-                                >
-                                  <SelectTrigger className="h-9 text-sm">
-                                    <SelectValue placeholder="Select class level" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-background border z-50">
-                                    {getCurrentClassLevels().map(option => (
-                                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-                            </>
+                        {/* Selected Slot & Confirm */}
+                        <div className="flex items-center justify-between gap-3 pt-2 border-t">
+                          <div className="flex items-center gap-2 text-sm">
+                            {selectedSlot ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 text-primary" />
+                                <span className="text-muted-foreground">
+                                  {selectedSlot === 'immediately' 
+                                    ? 'Start Now' 
+                                    : selectedSlot === 'next_10_min'
+                                      ? 'In 10 Minutes'
+                                      : (() => {
+                                          const slotDate = new Date(selectedSlot);
+                                          return `${slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at ${slotDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+                                        })()
+                                  }
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">Select a time slot</span>
                             )}
                           </div>
-                        </ScrollArea>
-
-                        {/* Summary for Stage 2 */}
-                        {slotBookingForm.date && slotBookingForm.time && (
-                          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
-                            <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
-                              <CheckCircle2 className="h-4 w-4" />
-                              <span className="font-medium">
-                                {new Date(slotBookingForm.date).toLocaleDateString('en-IN', { 
-                                  weekday: 'short', 
-                                  month: 'short', 
-                                  day: 'numeric' 
-                                })} at {slotBookingForm.time}
-                                {slotBookingForm.state && ` • ${slotBookingForm.district}, ${slotBookingForm.state}`}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Confirm Button for Stage 2 */}
-                        <div className="flex justify-end pt-2 border-t">
                           <Button 
                             onClick={bookSlot}
-                            disabled={
-                              !slotBookingForm.date || !slotBookingForm.time || 
-                              (isEducationIndustry && (
-                                !slotBookingForm.state || !slotBookingForm.district ||
-                                !slotBookingForm.segment || !slotBookingForm.category ||
-                                !slotBookingForm.designation || (showClassLevel && !slotBookingForm.classLevel)
-                              )) ||
-                              isBookingSlot
-                            }
+                            disabled={!selectedSlot || isBookingSlot}
                             size="sm"
                             className="gap-1.5"
                           >
@@ -2462,7 +2271,7 @@ export const MockInterviewTab = () => {
                             ) : (
                               <CheckCircle2 className="h-3.5 w-3.5" />
                             )}
-                            {isBookingSlot ? 'Booking...' : 'Confirm Booking'}
+                            {isBookingSlot ? 'Booking...' : 'Confirm'}
                           </Button>
                         </div>
                       </>
