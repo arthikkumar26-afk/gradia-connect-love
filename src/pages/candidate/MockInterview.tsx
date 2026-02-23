@@ -31,7 +31,9 @@ import {
   BarChart3,
   Mail,
   ListChecks,
-  MapPin
+  MapPin,
+  Code,
+  Terminal
 } from "lucide-react";
 import { useVideoRecorder } from "@/hooks/useVideoRecorder";
 import { MockInterviewResults } from "@/components/candidate/MockInterviewResults";
@@ -43,10 +45,17 @@ import { indiaLocationData } from "@/data/indiaLocations";
 interface StageQuestion {
   id: number;
   question: string;
-  type: 'text' | 'multiple_choice' | 'scenario';
+  type: 'text' | 'multiple_choice' | 'scenario' | 'coding';
   options?: string[];
   expectedPoints?: string[];
   category: string;
+  functionSignature?: string;
+  examples?: Array<{ input: string; output: string; explanation?: string }>;
+  constraints?: string[];
+  starterCode?: string;
+  testCases?: Array<{ input: string; output: string; expectedOutput?: string }>;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  language?: string;
 }
 
 interface InterviewStage {
@@ -347,6 +356,10 @@ const MockInterview = () => {
       if (data?.questions) {
         setQuestions(data.questions);
         setTimeLeft(data.timePerQuestion || 120);
+        // Initialize code editor with starter code for coding questions
+        if (data.questions[0]?.starterCode) {
+          setCurrentAnswer(data.questions[0].starterCode);
+        }
         setIsStarted(true);
         
         // Only auto-start recording if camera/mic available
@@ -370,8 +383,10 @@ const MockInterview = () => {
     setAnswers(newAnswers);
 
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setCurrentAnswer("");
+      const nextIdx = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIdx);
+      // Load starter code for next coding problem, or empty for text questions
+      setCurrentAnswer(questions[nextIdx]?.starterCode || "");
       setTimeLeft(stage?.timePerQuestion || 120);
     } else {
       if (isRecording) {
@@ -529,31 +544,37 @@ const MockInterview = () => {
   if (isStarted && questions.length > 0) {
     const currentQuestion = questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    const isCodingQuestion = currentQuestion.type === 'coding' || stage?.stageType === 'coding';
 
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className={`mx-auto space-y-4 ${isCodingQuestion ? 'max-w-7xl' : 'max-w-6xl'}`}>
           {/* Header */}
           <Card>
             <CardContent className="py-4">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-3">
-                  <Brain className="h-6 w-6 text-primary" />
+                  {isCodingQuestion ? <Code className="h-6 w-6 text-primary" /> : <Brain className="h-6 w-6 text-primary" />}
                   <div>
                     <h3 className="font-semibold">{stage?.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Question {currentQuestionIndex + 1} of {questions.length}
+                      {isCodingQuestion ? `Problem ${currentQuestionIndex + 1} of ${questions.length}` : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
+                  {currentQuestion.difficulty && (
+                    <Badge variant={currentQuestion.difficulty === 'easy' ? 'secondary' : currentQuestion.difficulty === 'medium' ? 'default' : 'destructive'}>
+                      {currentQuestion.difficulty.toUpperCase()}
+                    </Badge>
+                  )}
                   {isRecording && (
                     <Badge variant="destructive" className={`flex items-center gap-1.5 ${isPaused ? 'bg-amber-500' : 'animate-pulse'}`}>
                       <Circle className="h-2 w-2 fill-current" />
                       {isPaused ? 'PAUSED' : 'REC'} {formatTime(recordingDuration)}
                     </Badge>
                   )}
-                  <div className={`flex items-center gap-2 ${timeLeft <= 30 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                  <div className={`flex items-center gap-2 ${timeLeft <= 30 ? 'text-destructive' : 'text-muted-foreground'}`}>
                     <Timer className="h-5 w-5" />
                     <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
                   </div>
@@ -563,100 +584,229 @@ const MockInterview = () => {
             </CardContent>
           </Card>
 
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Video Preview */}
-            <Card className="lg:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Recording Preview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                  <video
-                    ref={videoPreviewRef}
-                    className="w-full h-full object-cover"
-                    playsInline
-                    muted
-                  />
-                  {isRecording && !isPaused && (
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="destructive" className="animate-pulse flex items-center gap-1">
-                        <Circle className="h-2 w-2 fill-current" />
-                        LIVE
-                      </Badge>
+          {isCodingQuestion ? (
+            /* Coding Problem Layout */
+            <div className="grid lg:grid-cols-2 gap-4 h-[calc(100vh-220px)]">
+              {/* Left: Problem Description */}
+              <Card className="overflow-auto">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">{currentQuestion.category}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Problem Statement */}
+                  <div>
+                    <h4 className="font-semibold text-base mb-2">Problem Statement</h4>
+                    <p className="text-foreground leading-relaxed">{currentQuestion.question}</p>
+                  </div>
+
+                  {/* Function Signature */}
+                  {currentQuestion.functionSignature && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Function Signature</h4>
+                      <pre className="bg-muted rounded-md p-3 text-sm font-mono overflow-x-auto">
+                        {currentQuestion.functionSignature}
+                      </pre>
                     </div>
                   )}
-                </div>
-                {recordingError && (
-                  <p className="text-xs text-destructive mt-2 text-center">{recordingError}</p>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Question Card */}
-            <Card className="lg:col-span-2">
-              <CardContent className="py-6 space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Brain className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <Badge variant="outline" className="mb-2">{currentQuestion.category}</Badge>
-                    <p className="text-lg font-medium text-foreground">{currentQuestion.question}</p>
-                  </div>
-                </div>
-
-                {currentQuestion.type === 'multiple_choice' && currentQuestion.options ? (
-                  <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
-                    <div className="space-y-3">
-                      {currentQuestion.options.map((option, idx) => (
-                        <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                          <RadioGroupItem value={option} id={`option-${idx}`} />
-                          <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
+                  {/* Examples */}
+                  {currentQuestion.examples && currentQuestion.examples.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Examples</h4>
+                      <div className="space-y-3">
+                        {currentQuestion.examples.map((ex, idx) => (
+                          <div key={idx} className="bg-muted/50 rounded-md p-3 space-y-1">
+                            <p className="text-sm font-mono"><span className="font-semibold">Input:</span> {ex.input}</p>
+                            <p className="text-sm font-mono"><span className="font-semibold">Output:</span> {ex.output}</p>
+                            {ex.explanation && (
+                              <p className="text-sm text-muted-foreground"><span className="font-semibold">Explanation:</span> {ex.explanation}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </RadioGroup>
-                ) : (
-                  <Textarea
-                    placeholder="Type your answer here..."
-                    value={currentAnswer}
-                    onChange={(e) => setCurrentAnswer(e.target.value)}
-                    className="min-h-[150px]"
-                  />
-                )}
+                  )}
 
-                <div className="flex justify-between items-center pt-4">
+                  {/* Constraints */}
+                  {currentQuestion.constraints && currentQuestion.constraints.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Constraints</h4>
+                      <ul className="list-disc list-inside text-sm space-y-1">
+                        {currentQuestion.constraints.map((c, idx) => (
+                          <li key={idx} className="font-mono text-muted-foreground">{c}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Right: Code Editor */}
+              <div className="flex flex-col gap-4">
+                <Card className="flex-1 flex flex-col">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Code className="h-4 w-4" />
+                        Code Editor
+                      </CardTitle>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {currentQuestion.language || 'JavaScript'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col pb-4">
+                    <textarea
+                      value={currentAnswer || currentQuestion.starterCode || ''}
+                      onChange={(e) => setCurrentAnswer(e.target.value)}
+                      className="flex-1 w-full font-mono text-sm bg-[#1e1e1e] text-[#d4d4d4] rounded-md p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary border border-border"
+                      style={{ minHeight: '300px', tabSize: 2 }}
+                      spellCheck={false}
+                      placeholder="// Write your code here..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Tab') {
+                          e.preventDefault();
+                          const start = e.currentTarget.selectionStart;
+                          const end = e.currentTarget.selectionEnd;
+                          const value = e.currentTarget.value;
+                          setCurrentAnswer(value.substring(0, start) + '  ' + value.substring(end));
+                          setTimeout(() => {
+                            e.currentTarget.selectionStart = e.currentTarget.selectionEnd = start + 2;
+                          }, 0);
+                        }
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+
+                {/* Submit Bar */}
+                <div className="flex justify-between items-center">
                   <p className="text-sm text-muted-foreground">
                     {currentQuestionIndex < questions.length - 1 
-                      ? `${questions.length - currentQuestionIndex - 1} questions remaining`
-                      : 'This is the last question'}
+                      ? `${questions.length - currentQuestionIndex - 1} problem(s) remaining`
+                      : 'This is the last problem'}
                   </p>
                   <Button 
                     onClick={handleNextQuestion} 
                     disabled={!currentAnswer.trim()}
                     className="gap-2"
+                    size="lg"
                   >
                     {currentQuestionIndex < questions.length - 1 ? (
                       <>
-                        Next Question
+                        Next Problem
                         <ArrowRight className="h-4 w-4" />
                       </>
                     ) : (
                       <>
-                        Submit Stage
+                        Submit Code
                         <CheckCircle2 className="h-4 w-4" />
                       </>
                     )}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </div>
+          ) : (
+            /* Original Non-Coding Layout */
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Video Preview */}
+              <Card className="lg:col-span-1">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Recording Preview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                    <video
+                      ref={videoPreviewRef}
+                      className="w-full h-full object-cover"
+                      playsInline
+                      muted
+                    />
+                    {isRecording && !isPaused && (
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="destructive" className="animate-pulse flex items-center gap-1">
+                          <Circle className="h-2 w-2 fill-current" />
+                          LIVE
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                  {recordingError && (
+                    <p className="text-xs text-destructive mt-2 text-center">{recordingError}</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Question Card */}
+              <Card className="lg:col-span-2">
+                <CardContent className="py-6 space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Brain className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <Badge variant="outline" className="mb-2">{currentQuestion.category}</Badge>
+                      <p className="text-lg font-medium text-foreground">{currentQuestion.question}</p>
+                    </div>
+                  </div>
+
+                  {currentQuestion.type === 'multiple_choice' && currentQuestion.options ? (
+                    <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
+                      <div className="space-y-3">
+                        {currentQuestion.options.map((option, idx) => (
+                          <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                            <RadioGroupItem value={option} id={`option-${idx}`} />
+                            <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </RadioGroup>
+                  ) : (
+                    <Textarea
+                      placeholder="Type your answer here..."
+                      value={currentAnswer}
+                      onChange={(e) => setCurrentAnswer(e.target.value)}
+                      className="min-h-[150px]"
+                    />
+                  )}
+
+                  <div className="flex justify-between items-center pt-4">
+                    <p className="text-sm text-muted-foreground">
+                      {currentQuestionIndex < questions.length - 1 
+                        ? `${questions.length - currentQuestionIndex - 1} questions remaining`
+                        : 'This is the last question'}
+                    </p>
+                    <Button 
+                      onClick={handleNextQuestion} 
+                      disabled={!currentAnswer.trim()}
+                      className="gap-2"
+                    >
+                      {currentQuestionIndex < questions.length - 1 ? (
+                        <>
+                          Next Question
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      ) : (
+                        <>
+                          Submit Stage
+                          <CheckCircle2 className="h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     );

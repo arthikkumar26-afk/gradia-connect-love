@@ -9,10 +9,18 @@ const corsHeaders = {
 interface StageQuestion {
   id: number;
   question: string;
-  type: 'text' | 'multiple_choice' | 'scenario';
+  type: 'text' | 'multiple_choice' | 'scenario' | 'coding';
   options?: string[];
   expectedPoints?: string[];
   category: string;
+  // Coding-specific fields
+  functionSignature?: string;
+  examples?: Array<{ input: string; output: string; explanation?: string }>;
+  constraints?: string[];
+  starterCode?: string;
+  testCases?: Array<{ input: string; expectedOutput: string }>;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  language?: string;
 }
 
 interface MockInterviewStage {
@@ -318,14 +326,18 @@ serve(async (req) => {
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
           messages: [
-            { role: 'system', content: 'You are an expert HR interviewer and technical recruiter. Generate realistic interview questions based on the stage and candidate profile.' },
+            { role: 'system', content: effectiveStageType === 'coding' 
+              ? 'You are an expert software engineering interviewer. Generate coding challenges with clear problem statements, examples, constraints, and starter code. The candidate will write actual code that gets evaluated.'
+              : 'You are an expert HR interviewer and technical recruiter. Generate realistic interview questions based on the stage and candidate profile.' },
             { role: 'user', content: prompt }
           ],
           tools: [{
             type: 'function',
             function: {
               name: 'generate_interview_questions',
-              description: 'Generate interview questions for a specific stage',
+              description: effectiveStageType === 'coding' 
+                ? 'Generate coding challenges with problem statements, examples, starter code, and test cases'
+                : 'Generate interview questions for a specific stage',
               parameters: {
                 type: 'object',
                 properties: {
@@ -335,11 +347,18 @@ serve(async (req) => {
                       type: 'object',
                       properties: {
                         id: { type: 'number' },
-                        question: { type: 'string' },
-                        type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario'] },
+                        question: { type: 'string', description: 'The problem statement or question text' },
+                        type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
                         options: { type: 'array', items: { type: 'string' } },
                         expectedPoints: { type: 'array', items: { type: 'string' } },
-                        category: { type: 'string' }
+                        category: { type: 'string' },
+                        functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
+                        examples: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, output: { type: 'string' }, explanation: { type: 'string' } }, required: ['input', 'output'] } },
+                        constraints: { type: 'array', items: { type: 'string' } },
+                        starterCode: { type: 'string', description: 'Starter code template for the candidate to complete' },
+                        testCases: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, expectedOutput: { type: 'string' } }, required: ['input', 'expectedOutput'] } },
+                        difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+                        language: { type: 'string', description: 'Programming language e.g. javascript, python' }
                       },
                       required: ['id', 'question', 'type', 'category']
                     }
@@ -605,12 +624,49 @@ Candidate Profile:
 - Skills: ${profile.skills?.join(', ') || 'Not specified'}
 - Highest Qualification: ${profile.highest_qualification || 'Not specified'}
 - Primary Subject: ${profile.primary_subject || 'General Knowledge'}
-- Classes Handled: ${profile.classes_handled || 'Not specified'}
-- Segment: ${profile.segment || 'Education'}
 ` : 'No profile information available.';
 
+  if (stage.stageType === 'coding') {
+    const role = profile?.preferred_role || profile?.primary_subject || 'software development';
+    const skills = profile?.skills?.join(', ') || 'JavaScript, Python';
+    return `Generate ${stage.questionCount} coding challenge(s) for a developer interview.
+
+${profileInfo}
+
+CRITICAL: Generate CODING PROBLEMS, not text questions or MCQs. Each problem must include:
+1. A clear problem statement describing what the candidate needs to implement
+2. A function signature they need to complete
+3. 2-3 examples with input, output, and explanation
+4. Constraints (e.g., array length limits, value ranges)
+5. Starter code template with the function skeleton
+6. 3-4 test cases with input and expected output for validation
+7. Difficulty level (easy/medium/hard)
+
+Focus the problems on skills relevant to: ${role}
+Candidate's known skills: ${skills}
+
+The problems should test:
+- Algorithm design and problem solving
+- Data structure usage
+- Code correctness and edge case handling
+- Clean code practices
+
+Set type to "coding" for all questions. Use JavaScript/TypeScript as the default language.
+Generate problems appropriate for the candidate's experience level: ${profile?.experience_level || 'Entry Level'}.
+
+Example format for a coding problem:
+- question: "Two Sum - Given an array of integers nums and an integer target, return indices of the two numbers that add up to target."
+- functionSignature: "function twoSum(nums: number[], target: number): number[]"
+- examples: [{input: "nums = [2,7,11,15], target = 9", output: "[0, 1]", explanation: "nums[0] + nums[1] = 2 + 7 = 9"}]
+- constraints: ["2 <= nums.length <= 10^4", "Each input has exactly one solution"]
+- starterCode: "function twoSum(nums, target) {\\n  // Write your code here\\n  \\n}"
+- testCases: [{input: "[2,7,11,15], 9", expectedOutput: "[0,1]"}]
+- difficulty: "easy"
+- language: "javascript"`;
+  }
+
   const subjectFocus = profile?.primary_subject 
-    ? `Focus questions specifically on ${profile.primary_subject} topics, concepts, and teaching methodologies for this subject.`
+    ? `Focus questions specifically on ${profile.primary_subject} topics.`
     : 'Focus on general teaching aptitude and pedagogical skills.';
 
   return `Generate ${stage.questionCount} interview questions for the "${stage.name}" stage.
@@ -622,30 +678,60 @@ ${profileInfo}
 IMPORTANT: ${subjectFocus}
 
 Requirements:
-1. Questions should be directly related to the candidate's PRIMARY SUBJECT: ${profile?.primary_subject || 'General'}
-2. Include subject-specific concepts, theories, and teaching approaches
-3. Mix of difficulty levels (easy to challenging)
-4. For multiple choice questions, provide 4 options
-5. Include expected key points for text answers
-6. Make questions specific to the candidate's experience level and background
+1. Questions should be relevant to the candidate's background
+2. Mix of difficulty levels
+3. For multiple choice questions, provide 4 options
+4. Include expected key points for text answers
 
 For "${stage.name}" stage, focus on:
-${stage.stageType === 'coding' ? `- Programming and coding problems relevant to ${profile?.preferred_role || profile?.primary_subject || 'software development'}
-- Algorithm design, data structures, and problem solving
-- Code optimization and best practices
-- Practical coding scenarios and debugging
-- Generate coding challenges with clear input/output expectations` : ''}
-${stage.order === 2 || stage.stageType === 'assessment' ? `- Deep knowledge of ${profile?.primary_subject || profile?.preferred_role || 'the subject'} concepts
-- Problem-solving in ${profile?.primary_subject || 'technical'} contexts
-- Real-world scenarios and practical application` : ''}
-${stage.order === 4 || stage.stageType === 'demo' ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
-${stage.order === 6 || stage.stageType === 'hr_documents' ? '- HR questions, document verification, future plans, final assessment' : ''}
+${stage.stageType === 'assessment' ? `- Deep knowledge of ${profile?.primary_subject || profile?.preferred_role || 'the subject'} concepts
+- Problem-solving and practical application` : ''}
+${stage.stageType === 'demo' ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
+${stage.stageType === 'hr_documents' ? '- HR questions, document verification, future plans' : ''}
 
-Generate exactly ${stage.questionCount} questions that test the candidate's expertise in ${profile?.primary_subject || profile?.preferred_role || 'their field'}.`;
+Generate exactly ${stage.questionCount} questions.`;
 }
 
 function buildEvaluationPrompt(stage: MockInterviewStage, questions: any[], answers: any[], profile: any): string {
-  const qaPairs = questions.map((q, i) => `
+  if (stage.stageType === 'coding') {
+    const qaPairs = questions.map((q: any, i: number) => `
+Problem ${i + 1}: ${q.question}
+Function Signature: ${q.functionSignature || 'N/A'}
+Test Cases: ${JSON.stringify(q.testCases || [])}
+Candidate's Code:
+\`\`\`
+${answers[i] || 'No code submitted'}
+\`\`\`
+`).join('\n');
+
+    return `Evaluate the following coding submissions for the "${stage.name}" stage.
+
+Passing Score Required: ${stage.passingScore}%
+
+Candidate Profile:
+- Name: ${profile?.full_name || 'Not specified'}
+- Experience Level: ${profile?.experience_level || 'Entry Level'}
+
+Problems and Submissions:
+${qaPairs}
+
+Evaluation Criteria:
+1. Correctness - Does the code solve the problem? Would it pass the test cases?
+2. Code Quality - Is the code clean, readable, well-structured?
+3. Algorithm Efficiency - Time and space complexity analysis
+4. Edge Cases - Does the code handle edge cases?
+5. Best Practices - Variable naming, comments, error handling
+
+Provide:
+- Overall score (0-100)
+- Whether they passed (score >= ${stage.passingScore})
+- Detailed feedback on their code
+- Key strengths (2-4 points about their coding)
+- Areas for improvement (2-4 specific coding improvements)
+- Individual problem scores and code review feedback`;
+  }
+
+  const qaPairs = questions.map((q: any, i: number) => `
 Question ${i + 1}: ${q.question}
 ${q.expectedPoints ? `Expected Points: ${q.expectedPoints.join(', ')}` : ''}
 Candidate Answer: ${answers[i] || 'No answer provided'}
@@ -661,13 +747,6 @@ Candidate Profile:
 
 Questions and Answers:
 ${qaPairs}
-
-Evaluation Criteria:
-1. Relevance and completeness of answers
-2. Communication clarity
-3. Technical accuracy (if applicable)
-4. Professionalism and confidence
-5. Specific examples and experiences mentioned
 
 Provide:
 - Overall score (0-100)
