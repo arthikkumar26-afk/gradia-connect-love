@@ -50,13 +50,13 @@ const FreelancerLogin = () => {
         </Link>
 
         <div className="bg-card rounded-lg shadow-large p-8 animate-scale-in">
-          <div className="flex justify-center mb-6">
-            <img src={gradiaLogo} alt="Gradia" className="h-20 w-auto object-contain" />
+          <div className="flex justify-center mb-3">
+            <img src={gradiaLogo} alt="Gradia" className="h-12 w-auto object-contain" />
           </div>
 
-          <div className="text-center mb-2">
-            <h1 className="text-2xl font-bold text-foreground mb-1">Freelancer Login</h1>
-            <p className="text-sm text-muted-foreground">Access your projects & mentorship</p>
+          <div className="text-center mb-1">
+            <h1 className="text-xl font-bold text-foreground mb-0.5">Freelancer Login</h1>
+            <p className="text-xs text-muted-foreground">Access your projects & mentorship</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5 mt-6">
