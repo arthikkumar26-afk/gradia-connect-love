@@ -1991,12 +1991,47 @@ export const MockInterviewTab = () => {
                         {isExpanded ? 'Hide Booking' : 'Book Slot'}
                       </Button>
                     )}
-                    {/* For Technical Assessment (stage 3) in progress, show email sent indicator */}
-                    {status === 'current' && stage.order === 3 && (
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        <Mail className="h-3 w-3 mr-1" />
-                        Check Email to Start
-                      </Badge>
+                    {/* For current (in-progress) stages, show Resend Mail button */}
+                    {status === 'current' && currentSession && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={resendingStage === stage.order}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!profile?.email || !currentSession) return;
+                          setResendingStage(stage.order);
+                          try {
+                            const appUrl = window.location.origin;
+                            const { error } = await supabase.functions.invoke('send-mock-interview-invitation', {
+                              body: {
+                                candidateEmail: profile.email,
+                                candidateName: profile.full_name,
+                                sessionId: currentSession.id,
+                                stageOrder: stage.order,
+                                stageName: stage.name,
+                                stageDescription: stage.description || `${stage.name} stage.`,
+                                appUrl,
+                              },
+                            });
+                            if (error) throw error;
+                            toast.success(`Email resent for ${stage.name}`);
+                          } catch (err) {
+                            console.error('Resend mail error:', err);
+                            toast.error('Failed to resend email');
+                          } finally {
+                            setResendingStage(null);
+                          }
+                        }}
+                        className="gap-1 text-xs"
+                      >
+                        {resendingStage === stage.order ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Mail className="h-3 w-3" />
+                        )}
+                        Resend Mail
+                      </Button>
                     )}
                     {/* For Demo Slot Booking (stage 4) in progress, show Book Slot button */}
                     {status === 'current' && isSlotBookingOrder(stage.order) && !isFirstSlotBooking(stage.order) && (
