@@ -21,7 +21,7 @@ const Layout = ({ children }: LayoutProps) => {
                      location.pathname.startsWith('/employer/candidate') ||
                      location.pathname.startsWith('/candidate/dashboard') ||
                      location.pathname.startsWith('/admin/') ||
-                     
+                     location.pathname.startsWith('/freelancer/dashboard') ||
                      location.pathname.startsWith('/owner/');
   
   return (
