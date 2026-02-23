@@ -2117,8 +2117,7 @@ export const MockInterviewTab = () => {
                         {isExpanded ? 'Hide Summary' : 'View Final Summary'}
                       </Button>
                     )}
-                    {/* For completed stages with results, show expand/collapse button */}
-                    {/* Resend Mail button for completed stages */}
+                    {/* Resend Mail button for completed stages - sends results summary, not restart link */}
                     {status === 'completed' && currentSession && (
                       <Button
                         variant="ghost"
@@ -2130,19 +2129,32 @@ export const MockInterviewTab = () => {
                           setResendingStage(stage.order);
                           try {
                             const appUrl = window.location.origin;
+                            // For completed stages, send feedback/results email pointing to dashboard
+                            const feedbackData = result ? {
+                              score: result.ai_score || 0,
+                              passed: result.passed || false,
+                              feedback: result.ai_feedback || 'Stage completed.',
+                              strengths: (result.strengths as string[]) || [],
+                              improvements: (result.improvements as string[]) || [],
+                            } : undefined;
+                            
+                            // Determine stage name for email - use feedback variant for completed stages
+                            const completedStageName = `${stage.name} - Results`;
+                            
                             const { error } = await supabase.functions.invoke('send-mock-interview-invitation', {
                               body: {
                                 candidateEmail: profile.email,
                                 candidateName: profile.full_name,
                                 sessionId: currentSession.id,
                                 stageOrder: stage.order,
-                                stageName: stage.name,
-                                stageDescription: stage.description || `${stage.name} stage completed.`,
+                                stageName: completedStageName,
+                                stageDescription: `Your ${stage.name} results. Score: ${result?.ai_score || 0}%. View your dashboard for full details.`,
                                 appUrl,
+                                feedbackData,
                               },
                             });
                             if (error) throw error;
-                            toast.success(`Email resent for ${stage.name}`);
+                            toast.success(`Results email resent for ${stage.name}`);
                           } catch (err) {
                             console.error('Resend mail error:', err);
                             toast.error('Failed to resend email');
