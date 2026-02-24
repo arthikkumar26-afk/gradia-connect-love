@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Eye, Share2, Download, Globe, Github, Linkedin, Twitter,
-  ExternalLink, Loader2, Link2, Copy, Pencil, Briefcase, Code
+  ExternalLink, Loader2, Link2, Copy, Pencil, Briefcase, Code, Sparkles, Upload
 } from "lucide-react";
 import jsPDF from "jspdf";
 
@@ -61,6 +61,8 @@ const PortfolioTab = () => {
   const [newSkill, setNewSkill] = useState("");
   const [newTech, setNewTech] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const resumeRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [tagline, setTagline] = useState("");
@@ -273,13 +275,99 @@ const PortfolioTab = () => {
     toast.success("PDF downloaded!");
   };
 
+  const handleAiAnalyze = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (resumeRef.current) resumeRef.current.value = '';
+
+    setAiLoading(true);
+    try {
+      // First parse resume text via existing edge function
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+
+      const parseRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData }
+      );
+      
+      let resumeText = "";
+      if (parseRes.ok) {
+        const parsed = await parseRes.json();
+        resumeText = JSON.stringify(parsed);
+      }
+
+      // Now generate portfolio via AI
+      const { data, error } = await supabase.functions.invoke('generate-portfolio', {
+        body: { profile, resumeText },
+      });
+
+      if (error) throw error;
+
+      // Fill form fields
+      if (data.tagline) setTagline(data.tagline);
+      if (data.bio) setBio(data.bio);
+      if (data.skills?.length) setSkills(data.skills);
+
+      // Auto-save portfolio first
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) return;
+
+      const payload = {
+        user_id: userId,
+        tagline: data.tagline || tagline,
+        bio: data.bio || bio,
+        skills: data.skills || skills,
+        website, github, linkedin, twitter,
+        is_public: isPublic,
+      };
+
+      let portfolioId = portfolio?.id;
+      if (portfolio) {
+        await supabase.from("freelancer_portfolios").update(payload).eq("id", portfolio.id);
+      } else {
+        const { data: newP } = await supabase.from("freelancer_portfolios").insert(payload).select().single();
+        if (newP) { setPortfolio(newP as Portfolio); portfolioId = newP.id; }
+      }
+
+      // Add AI-suggested projects
+      if (data.projects?.length && portfolioId) {
+        for (let i = 0; i < data.projects.length; i++) {
+          const p = data.projects[i];
+          await supabase.from("freelancer_portfolio_projects").insert({
+            portfolio_id: portfolioId,
+            title: p.title,
+            description: p.description,
+            tech_stack: p.tech_stack || [],
+            display_order: projects.length + i,
+          });
+        }
+      }
+
+      await fetchPortfolio();
+      toast.success("AI has analyzed your resume and created your portfolio!");
+    } catch (err: any) {
+      console.error("AI analyze error:", err);
+      toast.error(err.message || "Failed to generate portfolio");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>;
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">My Portfolio</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <input ref={resumeRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleAiAnalyze} />
+          <Button size="sm" onClick={() => resumeRef.current?.click()} disabled={aiLoading}
+            className="bg-gradient-to-r from-accent to-accent/80">
+            {aiLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analyzing...</> : <><Sparkles className="h-4 w-4 mr-2" /> AI Analyze Resume</>}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setActiveTab("preview")}>
             <Eye className="h-4 w-4 mr-2" /> Preview
           </Button>
