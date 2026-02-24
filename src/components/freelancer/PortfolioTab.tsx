@@ -316,6 +316,10 @@ const PortfolioTab = () => {
       if (data.tagline) setTagline(data.tagline);
       if (data.bio) setBio(data.bio);
       if (data.skills?.length) setSkills(data.skills);
+      if (data.website) setWebsite(data.website);
+      if (data.github) setGithub(data.github);
+      if (data.linkedin) setLinkedin(data.linkedin);
+      if (data.twitter) setTwitter(data.twitter);
 
       // Auto-save portfolio first
       const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -326,7 +330,10 @@ const PortfolioTab = () => {
         tagline: data.tagline || tagline,
         bio: data.bio || bio,
         skills: data.skills || skills,
-        website, github, linkedin, twitter,
+        website: data.website || website,
+        github: data.github || github,
+        linkedin: data.linkedin || linkedin,
+        twitter: data.twitter || twitter,
         is_public: isPublic,
       };
 
@@ -338,7 +345,7 @@ const PortfolioTab = () => {
         if (newP) { setPortfolio(newP as Portfolio); portfolioId = newP.id; }
       }
 
-      // Add AI-suggested projects
+      // Add AI-suggested projects with dates and URLs
       if (data.projects?.length && portfolioId) {
         for (let i = 0; i < data.projects.length; i++) {
           const p = data.projects[i];
@@ -347,6 +354,9 @@ const PortfolioTab = () => {
             title: p.title,
             description: p.description,
             tech_stack: p.tech_stack || [],
+            project_url: p.project_url || "",
+            start_date: p.start_date || null,
+            end_date: p.end_date || null,
             display_order: projects.length + i,
           });
         }

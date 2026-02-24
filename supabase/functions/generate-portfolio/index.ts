@@ -30,7 +30,19 @@ Generate a JSON response with these fields:
 - tagline: A professional one-line tagline (max 80 chars)
 - bio: A 3-4 sentence professional bio highlighting experience and expertise
 - skills: An array of 5-10 relevant technical/professional skills
-- projects: An array of 2-3 suggested portfolio project entries based on their experience, each with: title, description (2-3 sentences), tech_stack (array of technologies)
+- website: Personal website URL if found in resume, otherwise empty string
+- github: GitHub profile URL if found in resume, otherwise empty string
+- linkedin: LinkedIn profile URL if found in resume, otherwise empty string
+- twitter: Twitter/X profile URL if found in resume, otherwise empty string
+- projects: An array of 2-4 portfolio project entries extracted or inferred from their experience, each with:
+  - title: project name
+  - description: 2-3 sentence description
+  - tech_stack: array of technologies used
+  - project_url: URL if mentioned, otherwise empty string
+  - start_date: project start date in YYYY-MM-DD format if inferable from resume, otherwise empty string
+  - end_date: project end date in YYYY-MM-DD format if inferable (use empty string if ongoing/current)
+
+Extract as many details as possible from the resume. For dates, infer from work experience timelines mentioned in the resume.
 
 Return ONLY valid JSON, no markdown.`;
 
