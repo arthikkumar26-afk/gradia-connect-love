@@ -103,6 +103,8 @@ const MockInterview = () => {
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [isBookingSlot, setIsBookingSlot] = useState(false);
+  const [runResults, setRunResults] = useState<{ status: 'idle' | 'running' | 'success' | 'error' | 'partial'; results: Array<{ input: string; expected: string; actual: string; passed: boolean }>; error?: string } | null>(null);
+  const [showTestResults, setShowTestResults] = useState(false);
   const [allStageResults, setAllStageResults] = useState<any[]>([]);
   const [sessionData, setSessionData] = useState<any>(null);
   
@@ -317,6 +319,69 @@ const MockInterview = () => {
     }
   };
 
+  const runCode = async () => {
+    if (!currentAnswer.trim()) {
+      toast.error("Please write some code first");
+      return;
+    }
+    const currentQuestion = questions[currentQuestionIndex];
+    const testCases = currentQuestion.testCases || currentQuestion.examples?.map(ex => ({ input: ex.input, output: ex.output, expectedOutput: ex.output })) || [];
+    
+    setRunResults({ status: 'running', results: [] });
+    setShowTestResults(true);
+
+    // Small delay for UX
+    await new Promise(r => setTimeout(r, 500));
+
+    if (testCases.length === 0) {
+      // No test cases: just check syntax
+      try {
+        new Function(currentAnswer);
+        setRunResults({ status: 'success', results: [{ input: 'Syntax Check', expected: 'No errors', actual: 'No errors', passed: true }] });
+      } catch (err: any) {
+        setRunResults({ status: 'error', results: [], error: err.message });
+      }
+      return;
+    }
+
+    try {
+      // Try to extract function name from code
+      const fnMatch = currentAnswer.match(/function\s+(\w+)/);
+      if (!fnMatch) {
+        // Check for arrow function: const name = ...
+        const arrowMatch = currentAnswer.match(/(?:const|let|var)\s+(\w+)\s*=/);
+        if (!arrowMatch) {
+          setRunResults({ status: 'error', results: [], error: "Could not find a function definition. Define your solution as a named function." });
+          return;
+        }
+      }
+
+      const results: Array<{ input: string; expected: string; actual: string; passed: boolean }> = [];
+      let hasError = false;
+
+      for (const tc of testCases) {
+        try {
+          // Create isolated execution
+          const wrappedCode = `${currentAnswer}\n\n// Return result\nreturn typeof ${fnMatch?.[1] || currentAnswer.match(/(?:const|let|var)\s+(\w+)/)?.[1]} === 'function' ? ${fnMatch?.[1] || currentAnswer.match(/(?:const|let|var)\s+(\w+)/)?.[1]}(${tc.input}) : undefined;`;
+          const fn = new Function(wrappedCode);
+          const result = fn();
+          const expected = tc.expectedOutput || tc.output;
+          const actual = JSON.stringify(result);
+          const passed = actual === expected || String(result) === String(expected);
+          results.push({ input: tc.input, expected, actual: actual ?? 'undefined', passed });
+        } catch (err: any) {
+          results.push({ input: tc.input, expected: tc.expectedOutput || tc.output, actual: `Error: ${err.message}`, passed: false });
+          hasError = true;
+        }
+      }
+
+      const allPassed = results.every(r => r.passed);
+      setRunResults({ status: hasError ? 'error' : allPassed ? 'success' : 'partial', results, error: hasError ? 'Some test cases failed with errors' : undefined });
+    } catch (err: any) {
+      setRunResults({ status: 'error', results: [], error: `Compilation error: ${err.message}` });
+    }
+  };
+
   const startInterview = async () => {
     const isCodingStage = stage?.stageType === 'coding' || stage?.name?.toLowerCase().includes('coding test');
     let canRecord = false;
@@ -387,6 +452,8 @@ const MockInterview = () => {
       setCurrentQuestionIndex(nextIdx);
       // Load starter code for next coding problem, or empty for text questions
       setCurrentAnswer(questions[nextIdx]?.starterCode || "");
+      setRunResults(null);
+      setShowTestResults(false);
       setTimeLeft(stage?.timePerQuestion || 120);
     } else {
       if (isRecording) {
@@ -741,32 +808,112 @@ const MockInterview = () => {
                   </CardContent>
                 </Card>
 
-                {/* Submit Bar */}
+                {/* Action Bar: Run Code + Submit */}
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-muted-foreground">
                     {currentQuestionIndex < questions.length - 1 
                       ? `${questions.length - currentQuestionIndex - 1} problem(s) remaining`
                       : 'This is the last problem'}
                   </p>
-                  <Button 
-                    onClick={handleNextQuestion} 
-                    disabled={!currentAnswer.trim()}
-                    className="gap-2"
-                    size="lg"
-                  >
-                    {currentQuestionIndex < questions.length - 1 ? (
-                      <>
-                        Next Problem
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    ) : (
-                      <>
-                        Submit Code
-                        <CheckCircle2 className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button 
+                      variant="outline"
+                      onClick={runCode} 
+                      disabled={!currentAnswer.trim() || runResults?.status === 'running'}
+                      className="gap-2"
+                      size="lg"
+                    >
+                      {runResults?.status === 'running' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      Run Code
+                    </Button>
+                    <Button 
+                      onClick={handleNextQuestion} 
+                      disabled={!currentAnswer.trim()}
+                      className="gap-2"
+                      size="lg"
+                    >
+                      {currentQuestionIndex < questions.length - 1 ? (
+                        <>
+                          Next Problem
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      ) : (
+                        <>
+                          Submit Code
+                          <CheckCircle2 className="h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Test Results Panel */}
+                {showTestResults && runResults && (
+                  <Card className="border-t-2 border-primary/30">
+                    <CardHeader className="pb-2 pt-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Terminal className="h-4 w-4" />
+                          Test Results
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" onClick={() => setShowTestResults(false)} className="h-6 px-2 text-xs">
+                          Hide
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0 space-y-3">
+                      {runResults.status === 'running' && (
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Running test cases...
+                        </div>
+                      )}
+
+                      {runResults.error && (
+                        <div className="space-y-2">
+                          <p className="text-destructive font-semibold text-sm">
+                            {runResults.status === 'error' && runResults.results.length === 0 ? 'Compilation error' : 'Runtime error'}
+                          </p>
+                          <div className="bg-muted rounded-md p-3">
+                            <p className="font-semibold text-sm">Compiler Message</p>
+                            <pre className="text-sm font-mono text-destructive mt-1 whitespace-pre-wrap">{runResults.error}</pre>
+                          </div>
+                        </div>
+                      )}
+
+                      {runResults.results.length > 0 && (
+                        <div className="space-y-2">
+                          {runResults.results.map((r, idx) => (
+                            <div key={idx} className={`rounded-md p-3 border ${r.passed ? 'border-green-500/30 bg-green-500/5' : 'border-destructive/30 bg-destructive/5'}`}>
+                              <div className="flex items-center gap-2 mb-1">
+                                {r.passed ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-destructive" />
+                                )}
+                                <span className={`text-sm font-semibold ${r.passed ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                                  Case {idx + 1}: {r.passed ? 'Passed' : 'Failed'}
+                                </span>
+                              </div>
+                              <div className="text-xs font-mono space-y-1 ml-6">
+                                <p><span className="text-muted-foreground">Input:</span> {r.input}</p>
+                                <p><span className="text-muted-foreground">Expected:</span> {r.expected}</p>
+                                {!r.passed && <p><span className="text-muted-foreground">Output:</span> {r.actual}</p>}
+                              </div>
+                            </div>
+                          ))}
+                          <div className="text-sm text-muted-foreground pt-1">
+                            {runResults.results.filter(r => r.passed).length}/{runResults.results.length} test cases passed
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           ) : (
