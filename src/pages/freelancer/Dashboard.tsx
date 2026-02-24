@@ -9,13 +9,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMentorship } from "@/hooks/useMentorship";
-import { 
+import {
   LayoutDashboard, Briefcase, Search, Users, GraduationCap, Star, 
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
    FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
-   ClipboardList, Send, Radio, Download
+   ClipboardList, Send, Radio, Download, FolderOpen
 } from "lucide-react";
+import PortfolioTab from "@/components/freelancer/PortfolioTab";
 import { Textarea } from "@/components/ui/textarea";
 
 const sampleProjects = [
@@ -42,6 +43,7 @@ const sampleMentorships = [
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "portfolio", label: "Portfolio", icon: FolderOpen },
   { id: "projects", label: "Find Projects", icon: Search },
   { id: "mentorship", label: "Mentorship", icon: GraduationCap },
   { id: "proposals", label: "My Proposals", icon: MessageSquare },
@@ -271,6 +273,7 @@ const FreelancerDashboard = () => {
   const getPageTitle = () => {
     switch (activeMenu) {
       case "dashboard": return `Welcome, ${profile?.full_name || "Freelancer"}`;
+      case "portfolio": return "My Portfolio";
       case "projects": return "Find Projects";
       case "mentorship": return "Mentorship";
       case "proposals": return "My Proposals";
@@ -532,6 +535,9 @@ const FreelancerDashboard = () => {
             </div>
           </div>
         );
+
+      case "portfolio":
+        return <PortfolioTab />;
 
       case "projects":
         return (

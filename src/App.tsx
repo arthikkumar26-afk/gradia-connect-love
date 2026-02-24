@@ -75,7 +75,7 @@ import Interview from "./pages/Interview";
 import BookSlot from "./pages/BookSlot";
 import CandidateProfilePage from "./pages/employer/CandidateProfile";
 import FreelancerDashboard from "./pages/freelancer/Dashboard";
-
+import PublicPortfolio from "./pages/freelancer/PublicPortfolio";
 
 // Admin & Owner Pages
 import AdminLogin from "./pages/admin/Login";
@@ -203,6 +203,7 @@ const MainRoutes = () => (
       <Route path="/freelancer/login" element={<FreelancerLogin />} />
       <Route path="/freelancer/dashboard" element={<FreelancerDashboard />} />
       <Route path="/freelancer/edit-profile" element={<EditProfile />} />
+      <Route path="/portfolio/:userId" element={<PublicPortfolio />} />
 
 
       {/* Public Company Jobs (QR Code destination) */}

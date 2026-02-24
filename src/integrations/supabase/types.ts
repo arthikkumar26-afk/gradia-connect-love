@@ -705,6 +705,104 @@ export type Database = {
         }
         Relationships: []
       }
+      freelancer_portfolio_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          end_date: string | null
+          id: string
+          image_url: string | null
+          portfolio_id: string
+          project_url: string | null
+          start_date: string | null
+          tech_stack: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          portfolio_id: string
+          project_url?: string | null
+          start_date?: string | null
+          tech_stack?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          portfolio_id?: string
+          project_url?: string | null
+          start_date?: string | null
+          tech_stack?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "freelancer_portfolio_projects_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "freelancer_portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      freelancer_portfolios: {
+        Row: {
+          bio: string | null
+          created_at: string
+          github: string | null
+          id: string
+          is_public: boolean | null
+          linkedin: string | null
+          skills: string[] | null
+          tagline: string | null
+          twitter: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          github?: string | null
+          id?: string
+          is_public?: boolean | null
+          linkedin?: string | null
+          skills?: string[] | null
+          tagline?: string | null
+          twitter?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          github?: string | null
+          id?: string
+          is_public?: boolean | null
+          linkedin?: string | null
+          skills?: string[] | null
+          tagline?: string | null
+          twitter?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       hr_negotiations: {
         Row: {
           additional_requirements: string | null
