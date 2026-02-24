@@ -118,6 +118,30 @@ export const MockInterviewTab = () => {
   const [selectedMockPipelineType, setSelectedMockPipelineType] = useState(() => localStorage.getItem('mock_pipeline_type') || '');
   const [selectedMockRole, setSelectedMockRole] = useState(() => localStorage.getItem('mock_role') || '');
 
+  // Load admin pipeline config defaults (if no localStorage values exist)
+  useEffect(() => {
+    const loadAdminConfig = async () => {
+      // Only load if user hasn't already made a selection
+      if (localStorage.getItem('mock_interview_type')) return;
+      try {
+        const { data } = await supabase
+          .from('mock_interview_pipeline_config')
+          .select('interview_type, pipeline_type, role')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data) {
+          if ((data as any).interview_type) setSelectedMockInterviewType((data as any).interview_type);
+          if ((data as any).pipeline_type) setSelectedMockPipelineType((data as any).pipeline_type);
+          if ((data as any).role) setSelectedMockRole((data as any).role);
+        }
+      } catch (err) {
+        console.error('Error loading admin pipeline config:', err);
+      }
+    };
+    loadAdminConfig();
+  }, []);
+
   // Sync selections to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('mock_interview_type', selectedMockInterviewType);

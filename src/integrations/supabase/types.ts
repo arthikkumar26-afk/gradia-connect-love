@@ -1779,7 +1779,10 @@ export type Database = {
           designation: string | null
           id: string
           industry_category: string
+          interview_type: string | null
+          pipeline_type: string | null
           question_count: number
+          role: string | null
           segment: string | null
           stage_type: string
           updated_at: string
@@ -1794,7 +1797,10 @@ export type Database = {
           designation?: string | null
           id?: string
           industry_category: string
+          interview_type?: string | null
+          pipeline_type?: string | null
           question_count?: number
+          role?: string | null
           segment?: string | null
           stage_type?: string
           updated_at?: string
@@ -1809,7 +1815,10 @@ export type Database = {
           designation?: string | null
           id?: string
           industry_category?: string
+          interview_type?: string | null
+          pipeline_type?: string | null
           question_count?: number
+          role?: string | null
           segment?: string | null
           stage_type?: string
           updated_at?: string

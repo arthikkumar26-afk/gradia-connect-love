@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { interviewPipelineConfig, pipelineRoleOptions, defaultRoleOptions } from "@/data/interviewPipelineConfig";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -91,6 +92,9 @@ export default function MockInterviewPipeline() {
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [savedConfigId, setSavedConfigId] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState(10);
+  const [selectedInterviewType, setSelectedInterviewType] = useState('');
+  const [selectedPipelineType, setSelectedPipelineType] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [manualQuestionsSets, setManualQuestionsSets] = useState<ManualQuestion[][]>([[], [], [], [], [], [], [], [], [], []]);
   const [activeManualSet, setActiveManualSet] = useState(0);
   const setLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -400,6 +404,9 @@ export default function MockInterviewPipeline() {
         }));
         setAiQuestionsEnabled(data.ai_questions_enabled || false);
         setQuestionCount(data.question_count || 10);
+        setSelectedInterviewType((data as any).interview_type || '');
+        setSelectedPipelineType((data as any).pipeline_type || '');
+        setSelectedRole((data as any).role || '');
       }
     } catch (error) {
       console.error('Error loading pipeline config:', error);
@@ -424,6 +431,9 @@ export default function MockInterviewPipeline() {
         ai_questions_enabled: aiQuestionsEnabled,
         stage_type: newPaper.stage_type,
         question_count: questionCount,
+        interview_type: selectedInterviewType || null,
+        pipeline_type: selectedPipelineType || null,
+        role: selectedRole || null,
         updated_by: user?.id || null,
       };
 
@@ -1267,6 +1277,92 @@ export default function MockInterviewPipeline() {
                 </div>
               </div>
             )}
+
+            {/* Mock Interview Options (same as candidate page) */}
+            <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
+              <div className="space-y-1">
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  <Play className="h-4 w-4 text-primary" />
+                  Mock Interview Options
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  These options will be shown to candidates on their mock interview page. Changes here will update the candidate view.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Interview Type</Label>
+                  <Select
+                    value={selectedInterviewType}
+                    onValueChange={(v) => {
+                      setSelectedInterviewType(v);
+                      setSelectedPipelineType('');
+                      setSelectedRole('');
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Interview Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {interviewPipelineConfig.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedInterviewType && (
+                  <div className="space-y-2">
+                    <Label>Pipeline Type</Label>
+                    <Select
+                      value={selectedPipelineType}
+                      onValueChange={(v) => {
+                        setSelectedPipelineType(v);
+                        setSelectedRole('');
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Pipeline Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(interviewPipelineConfig.find(t => t.value === selectedInterviewType)?.pipelineTypes || []).map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {selectedPipelineType && (
+                  <div className="space-y-2">
+                    <Label>Role</Label>
+                    <Select value={selectedRole} onValueChange={setSelectedRole}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(pipelineRoleOptions[`${selectedInterviewType}.${selectedPipelineType}`] || defaultRoleOptions).map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              {selectedInterviewType && selectedPipelineType && (
+                <div className="mt-3 p-3 border rounded bg-background">
+                  <Label className="text-sm font-medium mb-2 block">Pipeline Stages Preview</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {(interviewPipelineConfig
+                      .find(t => t.value === selectedInterviewType)
+                      ?.pipelineTypes.find(pt => pt.value === selectedPipelineType)
+                      ?.stages || []).map((stage, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {idx + 1}. {stage.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* AI Questions Toggle */}
             <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
