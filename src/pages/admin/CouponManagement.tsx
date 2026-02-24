@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Ticket, Users, Tag, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Plus, Ticket, Users, Tag, RefreshCw, Trash2, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -56,6 +56,23 @@ const CouponManagement = () => {
   const [couponCodesMap, setCouponCodesMap] = useState<Record<string, string>>({});
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editCoupon, setEditCoupon] = useState<Coupon | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    code: "",
+    discount_type: "percentage",
+    discount_value: "",
+    min_order_amount: "",
+    max_discount_amount: "",
+    applicable_to: "both",
+    max_total_uses: "",
+    max_uses_per_user: "1",
+    valid_until: "",
+    applicable_packages: [] as string[],
+  });
 
   // Form state
   const candidatePackages = ["Pro (₹1499/mo)", "Premium (₹1999/mo)"];
@@ -74,9 +91,10 @@ const CouponManagement = () => {
     valid_until: "",
   });
 
-  const getAvailablePackages = () => {
-    if (form.applicable_to === "candidate") return candidatePackages;
-    if (form.applicable_to === "employer") return employerPackages;
+  const getAvailablePackages = (applicableTo?: string) => {
+    const target = applicableTo || form.applicable_to;
+    if (target === "candidate") return candidatePackages;
+    if (target === "employer") return employerPackages;
     return [...candidatePackages, ...employerPackages];
   };
 
@@ -87,6 +105,58 @@ const CouponManagement = () => {
         ? prev.applicable_packages.filter(p => p !== pkg)
         : [...prev.applicable_packages, pkg],
     }));
+  };
+
+  const toggleEditPackage = (pkg: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      applicable_packages: prev.applicable_packages.includes(pkg)
+        ? prev.applicable_packages.filter(p => p !== pkg)
+        : [...prev.applicable_packages, pkg],
+    }));
+  };
+
+  const openEditDialog = (c: Coupon) => {
+    setEditCoupon(c);
+    setEditForm({
+      code: c.code,
+      discount_type: c.discount_type,
+      discount_value: String(c.discount_value),
+      min_order_amount: c.min_order_amount ? String(c.min_order_amount) : "",
+      max_discount_amount: c.max_discount_amount ? String(c.max_discount_amount) : "",
+      applicable_to: c.applicable_to,
+      max_total_uses: c.max_total_uses ? String(c.max_total_uses) : "",
+      max_uses_per_user: String(c.max_uses_per_user),
+      valid_until: c.valid_until ? c.valid_until.slice(0, 16) : "",
+      applicable_packages: c.description ? c.description.split(", ").filter(Boolean) : [],
+    });
+  };
+
+  const handleEdit = async () => {
+    if (!editCoupon) return;
+    setEditSaving(true);
+    try {
+      const { error } = await supabase.from("discount_coupons").update({
+        code: editForm.code.toUpperCase().trim(),
+        description: editForm.applicable_packages.length > 0 ? editForm.applicable_packages.join(", ") : null,
+        discount_type: editForm.discount_type,
+        discount_value: parseFloat(editForm.discount_value),
+        min_order_amount: editForm.min_order_amount ? parseFloat(editForm.min_order_amount) : 0,
+        max_discount_amount: editForm.max_discount_amount ? parseFloat(editForm.max_discount_amount) : null,
+        applicable_to: editForm.applicable_to,
+        max_total_uses: editForm.max_total_uses ? parseInt(editForm.max_total_uses) : null,
+        max_uses_per_user: parseInt(editForm.max_uses_per_user) || 1,
+        valid_until: editForm.valid_until || null,
+      }).eq("id", editCoupon.id);
+      if (error) throw error;
+      toast({ title: "Coupon Updated!", description: `Code: ${editForm.code.toUpperCase()}` });
+      setEditCoupon(null);
+      fetchCoupons();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -123,7 +193,6 @@ const CouponManagement = () => {
       .order("used_at", { ascending: false });
     if (data) {
       setUsages(data as CouponUsage[]);
-      // Fetch user names
       const userIds = [...new Set((data as CouponUsage[]).map(u => u.user_id))];
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
@@ -136,7 +205,6 @@ const CouponManagement = () => {
           setUsersMap(map);
         }
       }
-      // Fetch coupon codes
       const couponIds = [...new Set((data as CouponUsage[]).map(u => u.coupon_id))];
       if (couponIds.length > 0) {
         const { data: cpns } = await supabase
@@ -199,6 +267,90 @@ const CouponManagement = () => {
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   if (!isAuthorized) return null;
 
+  const renderCouponFormFields = (
+    formState: typeof form,
+    setFormState: (v: any) => void,
+    togglePkg: (pkg: string) => void
+  ) => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Coupon Code *</Label>
+          <Input value={formState.code} onChange={e => setFormState({...formState, code: e.target.value})} placeholder="e.g. SAVE20" className="uppercase" />
+        </div>
+        <div>
+          <Label>Discount Type</Label>
+          <Select value={formState.discount_type} onValueChange={v => setFormState({...formState, discount_type: v})}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="percentage">Percentage (%)</SelectItem>
+              <SelectItem value="fixed">Fixed Amount (₹)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div>
+        <Label>Applicable Packages</Label>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {getAvailablePackages(formState.applicable_to).map(pkg => (
+            <Badge
+              key={pkg}
+              variant={formState.applicable_packages.includes(pkg) ? "default" : "outline"}
+              className="cursor-pointer select-none"
+              onClick={() => togglePkg(pkg)}
+            >
+              {pkg}
+            </Badge>
+          ))}
+        </div>
+        {formState.applicable_packages.length === 0 && (
+          <p className="text-xs text-muted-foreground mt-1">All packages if none selected</p>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Discount Value *</Label>
+          <Input type="number" value={formState.discount_value} onChange={e => setFormState({...formState, discount_value: e.target.value})} placeholder={formState.discount_type === "percentage" ? "e.g. 20" : "e.g. 500"} />
+        </div>
+        <div>
+          <Label>Max Discount (₹)</Label>
+          <Input type="number" value={formState.max_discount_amount} onChange={e => setFormState({...formState, max_discount_amount: e.target.value})} placeholder="Optional cap" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Applicable To</Label>
+          <Select value={formState.applicable_to} onValueChange={v => setFormState({...formState, applicable_to: v})}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="both">Both</SelectItem>
+              <SelectItem value="candidate">Candidates Only</SelectItem>
+              <SelectItem value="employer">Employers Only</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Min Order Amount (₹)</Label>
+          <Input type="number" value={formState.min_order_amount} onChange={e => setFormState({...formState, min_order_amount: e.target.value})} placeholder="0" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Max Total Uses</Label>
+          <Input type="number" value={formState.max_total_uses} onChange={e => setFormState({...formState, max_total_uses: e.target.value})} placeholder="Unlimited" />
+        </div>
+        <div>
+          <Label>Max Uses Per User</Label>
+          <Input type="number" value={formState.max_uses_per_user} onChange={e => setFormState({...formState, max_uses_per_user: e.target.value})} placeholder="1" />
+        </div>
+      </div>
+      <div>
+        <Label>Valid Until</Label>
+        <Input type="datetime-local" value={formState.valid_until} onChange={e => setFormState({...formState, valid_until: e.target.value})} />
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-muted/30 p-4 lg:p-6">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -222,87 +374,11 @@ const CouponManagement = () => {
                 <DialogHeader>
                   <DialogTitle>Create New Coupon</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Coupon Code *</Label>
-                      <Input value={form.code} onChange={e => setForm({...form, code: e.target.value})} placeholder="e.g. SAVE20" className="uppercase" />
-                    </div>
-                    <div>
-                      <Label>Discount Type</Label>
-                      <Select value={form.discount_type} onValueChange={v => setForm({...form, discount_type: v})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="percentage">Percentage (%)</SelectItem>
-                          <SelectItem value="fixed">Fixed Amount (₹)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Applicable Packages</Label>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {getAvailablePackages().map(pkg => (
-                        <Badge
-                          key={pkg}
-                          variant={form.applicable_packages.includes(pkg) ? "default" : "outline"}
-                          className="cursor-pointer select-none"
-                          onClick={() => togglePackage(pkg)}
-                        >
-                          {pkg}
-                        </Badge>
-                      ))}
-                    </div>
-                    {form.applicable_packages.length === 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">All packages if none selected</p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Discount Value *</Label>
-                      <Input type="number" value={form.discount_value} onChange={e => setForm({...form, discount_value: e.target.value})} placeholder={form.discount_type === "percentage" ? "e.g. 20" : "e.g. 500"} />
-                    </div>
-                    <div>
-                      <Label>Max Discount (₹)</Label>
-                      <Input type="number" value={form.max_discount_amount} onChange={e => setForm({...form, max_discount_amount: e.target.value})} placeholder="Optional cap" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Applicable To</Label>
-                      <Select value={form.applicable_to} onValueChange={v => setForm({...form, applicable_to: v})}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="both">Both</SelectItem>
-                          <SelectItem value="candidate">Candidates Only</SelectItem>
-                          <SelectItem value="employer">Employers Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Min Order Amount (₹)</Label>
-                      <Input type="number" value={form.min_order_amount} onChange={e => setForm({...form, min_order_amount: e.target.value})} placeholder="0" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Max Total Uses</Label>
-                      <Input type="number" value={form.max_total_uses} onChange={e => setForm({...form, max_total_uses: e.target.value})} placeholder="Unlimited" />
-                    </div>
-                    <div>
-                      <Label>Max Uses Per User</Label>
-                      <Input type="number" value={form.max_uses_per_user} onChange={e => setForm({...form, max_uses_per_user: e.target.value})} placeholder="1" />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Valid Until</Label>
-                    <Input type="datetime-local" value={form.valid_until} onChange={e => setForm({...form, valid_until: e.target.value})} />
-                  </div>
-                  <Button onClick={handleCreate} disabled={saving} className="w-full">
-                    {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-                    Create Coupon
-                  </Button>
-                </div>
+                {renderCouponFormFields(form, setForm, togglePackage)}
+                <Button onClick={handleCreate} disabled={saving} className="w-full">
+                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                  Create Coupon
+                </Button>
               </DialogContent>
             </Dialog>
           </div>
@@ -324,6 +400,7 @@ const CouponManagement = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead></TableHead>
                         <TableHead>Code</TableHead>
                         <TableHead>Discount</TableHead>
                         <TableHead>For</TableHead>
@@ -335,29 +412,93 @@ const CouponManagement = () => {
                     </TableHeader>
                     <TableBody>
                       {coupons.length === 0 ? (
-                        <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No coupons created yet</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No coupons created yet</TableCell></TableRow>
                       ) : coupons.map(c => (
-                        <TableRow key={c.id}>
-                          <TableCell className="font-mono font-bold">{c.code}</TableCell>
-                          <TableCell>
-                            {c.discount_type === "percentage" ? `${c.discount_value}%` : `₹${c.discount_value}`}
-                            {c.max_discount_amount && <span className="text-xs text-muted-foreground ml-1">(max ₹{c.max_discount_amount})</span>}
-                          </TableCell>
-                          <TableCell><Badge variant="outline" className="capitalize text-xs">{c.applicable_to}</Badge></TableCell>
-                          <TableCell>{c.total_used}/{c.max_total_uses || "∞"}</TableCell>
-                          <TableCell className="text-xs">{c.valid_until ? format(new Date(c.valid_until), "dd MMM yyyy") : "No expiry"}</TableCell>
-                          <TableCell>
-                            <Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Active" : "Inactive"}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Switch checked={c.is_active} onCheckedChange={() => toggleCoupon(c.id, c.is_active)} />
-                              <Button variant="ghost" size="icon" onClick={() => deleteCoupon(c.id)} className="text-destructive h-8 w-8">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
+                        <>
+                          <TableRow key={c.id} className="cursor-pointer" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
+                            <TableCell className="w-8">
+                              {expandedId === c.id ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                            </TableCell>
+                            <TableCell className="font-mono font-bold">{c.code}</TableCell>
+                            <TableCell>
+                              {c.discount_type === "percentage" ? `${c.discount_value}%` : `₹${c.discount_value}`}
+                              {c.max_discount_amount && <span className="text-xs text-muted-foreground ml-1">(max ₹{c.max_discount_amount})</span>}
+                            </TableCell>
+                            <TableCell><Badge variant="outline" className="capitalize text-xs">{c.applicable_to}</Badge></TableCell>
+                            <TableCell>{c.total_used}/{c.max_total_uses || "∞"}</TableCell>
+                            <TableCell className="text-xs">{c.valid_until ? format(new Date(c.valid_until), "dd MMM yyyy") : "No expiry"}</TableCell>
+                            <TableCell>
+                              <Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Active" : "Inactive"}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(c)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Switch checked={c.is_active} onCheckedChange={() => toggleCoupon(c.id, c.is_active)} />
+                                <Button variant="ghost" size="icon" onClick={() => deleteCoupon(c.id)} className="text-destructive h-8 w-8">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          {expandedId === c.id && (
+                            <TableRow key={`${c.id}-expand`}>
+                              <TableCell colSpan={8} className="bg-muted/30 p-4">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                  <div>
+                                    <p className="text-muted-foreground">Discount Type</p>
+                                    <p className="font-medium capitalize text-foreground">{c.discount_type}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Discount Value</p>
+                                    <p className="font-medium text-foreground">{c.discount_type === "percentage" ? `${c.discount_value}%` : `₹${c.discount_value}`}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Max Discount</p>
+                                    <p className="font-medium text-foreground">{c.max_discount_amount ? `₹${c.max_discount_amount}` : "No cap"}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Min Order</p>
+                                    <p className="font-medium text-foreground">{c.min_order_amount ? `₹${c.min_order_amount}` : "₹0"}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Max Total Uses</p>
+                                    <p className="font-medium text-foreground">{c.max_total_uses || "Unlimited"}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Max Per User</p>
+                                    <p className="font-medium text-foreground">{c.max_uses_per_user}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Created</p>
+                                    <p className="font-medium text-foreground">{format(new Date(c.created_at), "dd MMM yyyy HH:mm")}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Applicable Packages</p>
+                                    <p className="font-medium text-foreground">{c.description || "All packages"}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Valid From</p>
+                                    <p className="font-medium text-foreground">{format(new Date(c.valid_from), "dd MMM yyyy HH:mm")}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Valid Until</p>
+                                    <p className="font-medium text-foreground">{c.valid_until ? format(new Date(c.valid_until), "dd MMM yyyy HH:mm") : "No expiry"}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Times Used</p>
+                                    <p className="font-medium text-foreground">{c.total_used}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground">Status</p>
+                                    <Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Active" : "Inactive"}</Badge>
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
                       ))}
                     </TableBody>
                   </Table>
@@ -410,6 +551,20 @@ const CouponManagement = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Coupon Dialog */}
+      <Dialog open={!!editCoupon} onOpenChange={open => { if (!open) setEditCoupon(null); }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto z-[1100]">
+          <DialogHeader>
+            <DialogTitle>Edit Coupon — {editCoupon?.code}</DialogTitle>
+          </DialogHeader>
+          {renderCouponFormFields(editForm, setEditForm, toggleEditPackage)}
+          <Button onClick={handleEdit} disabled={editSaving} className="w-full">
+            {editSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Pencil className="h-4 w-4 mr-2" />}
+            Save Changes
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
