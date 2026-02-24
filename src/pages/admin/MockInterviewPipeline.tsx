@@ -90,6 +90,7 @@ export default function MockInterviewPipeline() {
   const [aiQuestionsEnabled, setAiQuestionsEnabled] = useState(false);
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [savedConfigId, setSavedConfigId] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState(10);
   const [manualQuestionsSets, setManualQuestionsSets] = useState<ManualQuestion[][]>([[], [], [], [], [], [], [], [], [], []]);
   const [activeManualSet, setActiveManualSet] = useState(0);
   const setLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -398,6 +399,7 @@ export default function MockInterviewPipeline() {
           stage_type: data.stage_type || 'all',
         }));
         setAiQuestionsEnabled(data.ai_questions_enabled || false);
+        setQuestionCount(data.question_count || 10);
       }
     } catch (error) {
       console.error('Error loading pipeline config:', error);
@@ -421,6 +423,7 @@ export default function MockInterviewPipeline() {
         designation: newPaper.designation || null,
         ai_questions_enabled: aiQuestionsEnabled,
         stage_type: newPaper.stage_type,
+        question_count: questionCount,
         updated_by: user?.id || null,
       };
 
@@ -1280,6 +1283,26 @@ export default function MockInterviewPipeline() {
                 checked={aiQuestionsEnabled}
                 onCheckedChange={setAiQuestionsEnabled}
               />
+            </div>
+
+            {/* Number of Questions */}
+            <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">Number of Questions</Label>
+                <p className="text-sm text-muted-foreground">
+                  How many questions to generate per candidate
+                </p>
+              </div>
+              <Select value={String(questionCount)} onValueChange={(v) => setQuestionCount(Number(v))}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 10, 15, 20, 25, 30].map(n => (
+                    <SelectItem key={n} value={String(n)}>{n} Questions</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Save Pipeline Config Button */}

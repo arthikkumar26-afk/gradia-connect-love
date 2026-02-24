@@ -1779,6 +1779,7 @@ export type Database = {
           designation: string | null
           id: string
           industry_category: string
+          question_count: number
           segment: string | null
           stage_type: string
           updated_at: string
@@ -1793,6 +1794,7 @@ export type Database = {
           designation?: string | null
           id?: string
           industry_category: string
+          question_count?: number
           segment?: string | null
           stage_type?: string
           updated_at?: string
@@ -1807,6 +1809,7 @@ export type Database = {
           designation?: string | null
           id?: string
           industry_category?: string
+          question_count?: number
           segment?: string | null
           stage_type?: string
           updated_at?: string

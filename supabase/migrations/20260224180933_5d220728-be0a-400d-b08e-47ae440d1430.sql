@@ -1,0 +1,1 @@
+ALTER TABLE public.mock_interview_pipeline_config ADD COLUMN question_count INTEGER NOT NULL DEFAULT 10;
