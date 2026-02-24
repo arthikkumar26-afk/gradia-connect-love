@@ -88,6 +88,8 @@ export default function MockInterviewPipeline() {
   const [activeTab, setActiveTab] = useState("questions");
   const [createMode, setCreateMode] = useState<'pdf' | 'manual'>('pdf');
   const [aiQuestionsEnabled, setAiQuestionsEnabled] = useState(false);
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
+  const [savedConfigId, setSavedConfigId] = useState<string | null>(null);
   const [manualQuestionsSets, setManualQuestionsSets] = useState<ManualQuestion[][]>([[], [], [], [], [], [], [], [], [], []]);
   const [activeManualSet, setActiveManualSet] = useState(0);
   const setLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
@@ -370,7 +372,81 @@ export default function MockInterviewPipeline() {
 
   useEffect(() => {
     loadPapers();
+    loadPipelineConfig();
   }, []);
+
+  const loadPipelineConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mock_interview_pipeline_config')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setSavedConfigId(data.id);
+        setNewPaper(prev => ({
+          ...prev,
+          industryCategory: data.industry_category || '',
+          segment: data.segment || '',
+          category: data.category || '',
+          classLevel: data.class_level || '',
+          coreSubject: data.core_subject || '',
+          designation: data.designation || '',
+          stage_type: data.stage_type || 'all',
+        }));
+        setAiQuestionsEnabled(data.ai_questions_enabled || false);
+      }
+    } catch (error) {
+      console.error('Error loading pipeline config:', error);
+    }
+  };
+
+  const savePipelineConfig = async () => {
+    if (!newPaper.industryCategory) {
+      toast.error('Please select an industry category');
+      return;
+    }
+    setIsSavingConfig(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const configData = {
+        industry_category: newPaper.industryCategory,
+        segment: newPaper.segment || null,
+        category: newPaper.category || null,
+        class_level: newPaper.classLevel || null,
+        core_subject: newPaper.coreSubject || null,
+        designation: newPaper.designation || null,
+        ai_questions_enabled: aiQuestionsEnabled,
+        stage_type: newPaper.stage_type,
+        updated_by: user?.id || null,
+      };
+
+      if (savedConfigId) {
+        const { error } = await supabase
+          .from('mock_interview_pipeline_config')
+          .update(configData)
+          .eq('id', savedConfigId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('mock_interview_pipeline_config')
+          .insert(configData)
+          .select('id')
+          .single();
+        if (error) throw error;
+        setSavedConfigId(data.id);
+      }
+      toast.success('Pipeline configuration saved successfully!');
+    } catch (error) {
+      console.error('Error saving pipeline config:', error);
+      toast.error('Failed to save pipeline configuration');
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedPaper) {
@@ -1204,6 +1280,18 @@ export default function MockInterviewPipeline() {
                 checked={aiQuestionsEnabled}
                 onCheckedChange={setAiQuestionsEnabled}
               />
+            </div>
+
+            {/* Save Pipeline Config Button */}
+            <div className="flex justify-end pt-2">
+              <Button
+                onClick={savePipelineConfig}
+                disabled={isSavingConfig || !newPaper.industryCategory}
+                className="min-w-[180px]"
+              >
+                {isSavingConfig && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                {savedConfigId ? 'Update Pipeline Config' : 'Save Pipeline Config'}
+              </Button>
             </div>
 
             {/* Creation Mode Tabs - hidden when AI Questions is enabled */}

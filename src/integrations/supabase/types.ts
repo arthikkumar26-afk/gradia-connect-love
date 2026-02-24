@@ -1769,6 +1769,51 @@ export type Database = {
           },
         ]
       }
+      mock_interview_pipeline_config: {
+        Row: {
+          ai_questions_enabled: boolean
+          category: string | null
+          class_level: string | null
+          core_subject: string | null
+          created_at: string
+          designation: string | null
+          id: string
+          industry_category: string
+          segment: string | null
+          stage_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ai_questions_enabled?: boolean
+          category?: string | null
+          class_level?: string | null
+          core_subject?: string | null
+          created_at?: string
+          designation?: string | null
+          id?: string
+          industry_category: string
+          segment?: string | null
+          stage_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ai_questions_enabled?: boolean
+          category?: string | null
+          class_level?: string | null
+          core_subject?: string | null
+          created_at?: string
+          designation?: string | null
+          id?: string
+          industry_category?: string
+          segment?: string | null
+          stage_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       mock_interview_sessions: {
         Row: {
           candidate_id: string
