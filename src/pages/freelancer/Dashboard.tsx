@@ -14,7 +14,7 @@ import {
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
    FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
-   ClipboardList, Send, Radio, Download, FolderOpen
+   ClipboardList, Send, Radio, Download, FolderOpen, Crown, Check, Zap
 } from "lucide-react";
 import PortfolioTab from "@/components/freelancer/PortfolioTab";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +48,7 @@ const menuItems = [
   { id: "mentorship", label: "Mentorship", icon: GraduationCap },
   { id: "proposals", label: "My Proposals", icon: MessageSquare },
   { id: "earnings", label: "Earnings", icon: TrendingUp },
+  { id: "upgrade", label: "Upgrade Plan", icon: Crown },
   { id: "profile", label: "Profile", icon: User },
 ];
 
@@ -278,6 +279,7 @@ const FreelancerDashboard = () => {
       case "mentorship": return "Mentorship";
       case "proposals": return "My Proposals";
       case "earnings": return "Earnings";
+      case "upgrade": return "Upgrade Plan";
       case "profile": return "Profile";
       default: return "Dashboard";
     }
@@ -895,6 +897,165 @@ const FreelancerDashboard = () => {
                 <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">Earnings Dashboard</h3>
                 <p className="text-muted-foreground mb-4">Your earnings and payment history will appear here.</p>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "upgrade":
+        return (
+          <div className="p-6 space-y-8">
+            <div className="text-center max-w-2xl mx-auto">
+              <Crown className="h-10 w-10 text-accent mx-auto mb-3" />
+              <h2 className="text-3xl font-bold text-foreground mb-2">Upgrade Your Plan</h2>
+              <p className="text-muted-foreground">Unlock premium features to grow your freelancing career</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {/* Free Plan */}
+              <Card className="relative border-border">
+                <CardHeader className="text-center pb-2">
+                  <CardTitle className="text-xl">Starter</CardTitle>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-foreground">₹0</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {[
+                      "1 Portfolio page",
+                      "5 Project proposals/month",
+                      "Basic profile visibility",
+                      "Community support",
+                      "Standard search ranking",
+                    ].map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full" disabled>Current Plan</Button>
+                </CardContent>
+              </Card>
+
+              {/* Pro Plan */}
+              <Card className="relative border-primary shadow-lg">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-xs font-semibold">
+                  Most Popular
+                </div>
+                <CardHeader className="text-center pb-2">
+                  <CardTitle className="text-xl">Pro</CardTitle>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-foreground">₹1,499</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {[
+                      "Unlimited Portfolio projects",
+                      "30 Project proposals/month",
+                      "AI Resume Analyzer",
+                      "Priority profile visibility",
+                      "Featured in search results",
+                      "Mentorship tools (up to 10 students)",
+                      "Earnings analytics dashboard",
+                      "Email support",
+                    ].map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full gap-2">
+                    <Zap className="h-4 w-4" /> Upgrade to Pro
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Premium Plan */}
+              <Card className="relative border-border">
+                <CardHeader className="text-center pb-2">
+                  <CardTitle className="text-xl">Premium</CardTitle>
+                  <div className="mt-2">
+                    <span className="text-3xl font-bold text-foreground">₹2,999</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-2">
+                    {[
+                      "Everything in Pro",
+                      "Unlimited proposals",
+                      "AI Portfolio auto-generation",
+                      "Top search ranking & badge",
+                      "Unlimited mentorship students",
+                      "Advanced analytics & reports",
+                      "Custom branded portfolio URL",
+                      "Priority 24/7 support",
+                      "Early access to new features",
+                    ].map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full gap-2">
+                    <Crown className="h-4 w-4" /> Upgrade to Premium
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Comparison Table */}
+            <Card className="max-w-5xl mx-auto">
+              <CardHeader>
+                <CardTitle>Feature Comparison</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 text-foreground">Feature</th>
+                        <th className="text-center py-3 px-4 text-foreground">Starter</th>
+                        <th className="text-center py-3 px-4 text-foreground">Pro</th>
+                        <th className="text-center py-3 px-4 text-foreground">Premium</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { feature: "Portfolio Projects", starter: "1", pro: "Unlimited", premium: "Unlimited" },
+                        { feature: "Monthly Proposals", starter: "5", pro: "30", premium: "Unlimited" },
+                        { feature: "AI Resume Analyzer", starter: false, pro: true, premium: true },
+                        { feature: "AI Portfolio Generation", starter: false, pro: false, premium: true },
+                        { feature: "Mentorship Students", starter: "—", pro: "Up to 10", premium: "Unlimited" },
+                        { feature: "Earnings Analytics", starter: false, pro: true, premium: true },
+                        { feature: "Search Priority", starter: "Standard", pro: "High", premium: "Top" },
+                        { feature: "Custom Portfolio URL", starter: false, pro: false, premium: true },
+                        { feature: "Support", starter: "Community", pro: "Email", premium: "24/7 Priority" },
+                      ].map((row) => (
+                        <tr key={row.feature} className="border-b">
+                          <td className="py-3 px-4 text-foreground">{row.feature}</td>
+                          {(["starter", "pro", "premium"] as const).map((tier) => (
+                            <td key={tier} className="text-center py-3 px-4">
+                              {typeof row[tier] === "boolean"
+                                ? row[tier]
+                                  ? <Check className="h-4 w-4 text-primary mx-auto" />
+                                  : <span className="text-muted-foreground">—</span>
+                                : <span className="text-foreground">{row[tier]}</span>
+                              }
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           </div>
