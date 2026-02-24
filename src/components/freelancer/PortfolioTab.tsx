@@ -17,6 +17,12 @@ import {
 } from "lucide-react";
 import jsPDF from "jspdf";
 
+const ensureUrl = (url: string) => {
+  if (!url) return url;
+  if (url.match(/^https?:\/\//i)) return url;
+  return `https://${url}`;
+};
+
 interface Portfolio {
   id: string;
   user_id: string;
@@ -519,10 +525,10 @@ const PortfolioTab = () => {
                 <h2 className="text-2xl font-bold text-foreground">{profile?.full_name || "Your Name"}</h2>
                 {tagline && <p className="text-muted-foreground mt-1">{tagline}</p>}
                 <div className="flex justify-center gap-3 mt-3">
-                  {website && <a href={website} target="_blank" rel="noopener noreferrer"><Globe className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
-                  {github && <a href={github} target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
-                  {linkedin && <a href={linkedin} target="_blank" rel="noopener noreferrer"><Linkedin className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
-                  {twitter && <a href={twitter} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
+                  {website && <a href={ensureUrl(website)} target="_blank" rel="noopener noreferrer"><Globe className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
+                  {github && <a href={ensureUrl(github)} target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
+                  {linkedin && <a href={ensureUrl(linkedin)} target="_blank" rel="noopener noreferrer"><Linkedin className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
+                  {twitter && <a href={ensureUrl(twitter)} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground hover:text-accent" /></a>}
                 </div>
               </div>
 

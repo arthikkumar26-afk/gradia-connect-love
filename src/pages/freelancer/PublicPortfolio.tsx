@@ -5,6 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Globe, Github, Linkedin, Twitter, ExternalLink, Loader2, Code, Mail, Phone, MapPin } from "lucide-react";
 
+const ensureUrl = (url: string) => {
+  if (!url) return url;
+  if (url.match(/^https?:\/\//i)) return url;
+  return `https://${url}`;
+};
+
 const PublicPortfolio = () => {
   const { userId } = useParams();
   const [loading, setLoading] = useState(true);
@@ -77,10 +83,10 @@ const PublicPortfolio = () => {
           )}
 
           <div className="flex justify-center gap-4 mt-4">
-            {portfolio.website && <a href={portfolio.website} target="_blank" rel="noopener noreferrer"><Globe className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
-            {portfolio.github && <a href={portfolio.github} target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
-            {portfolio.linkedin && <a href={portfolio.linkedin} target="_blank" rel="noopener noreferrer"><Linkedin className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
-            {portfolio.twitter && <a href={portfolio.twitter} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
+            {portfolio.website && <a href={ensureUrl(portfolio.website)} target="_blank" rel="noopener noreferrer"><Globe className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
+            {portfolio.github && <a href={ensureUrl(portfolio.github)} target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
+            {portfolio.linkedin && <a href={ensureUrl(portfolio.linkedin)} target="_blank" rel="noopener noreferrer"><Linkedin className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
+            {portfolio.twitter && <a href={ensureUrl(portfolio.twitter)} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground hover:text-accent transition-colors" /></a>}
           </div>
         </div>
 
