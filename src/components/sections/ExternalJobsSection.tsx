@@ -144,13 +144,11 @@ const ExternalJobsSection = () => {
           ))}
         </div>
 
-        {totalCount > 6 && (
-          <div className="text-center mt-8">
-            <Button variant="outline" size="lg" className="gap-2" onClick={handleApply}>
-              View More Jobs ({totalCount - 6}+) <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        <div className="text-center mt-8">
+          <Button variant="outline" size="lg" className="gap-2" onClick={handleApply}>
+            View More Jobs <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </section>
   );
