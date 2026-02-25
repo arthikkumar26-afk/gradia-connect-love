@@ -44,7 +44,7 @@ const ExternalJobsSection = () => {
   if (loading || jobs.length === 0) return null;
 
   const handleApply = () => {
-    navigate("/candidate/login", { state: { redirectTab: "externaljobs" } });
+    navigate("/candidate/login?redirect=" + encodeURIComponent("/candidate/dashboard?tab=externaljobs"));
   };
 
   return (
