@@ -1235,6 +1235,7 @@ const CandidateDashboard = () => {
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "mentors", label: "Mentors", icon: Users },
     { id: "externaljobs", label: "External Job Listings", icon: ExternalLink },
+    { id: "freelancer", label: "Freelancer", icon: Zap, link: "/freelancer/login" },
     
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
@@ -2074,7 +2075,13 @@ const CandidateDashboard = () => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveMenu(item.id)}
+                onClick={() => {
+                  if ((item as any).link) {
+                    navigate((item as any).link);
+                    return;
+                  }
+                  setActiveMenu(item.id);
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                   isActive
                     ? "bg-accent/10 text-accent font-medium border-l-4 border-accent -ml-1 pl-5"
