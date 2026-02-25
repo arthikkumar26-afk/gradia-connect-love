@@ -20,9 +20,9 @@ import PortfolioTab from "@/components/freelancer/PortfolioTab";
 import { Textarea } from "@/components/ui/textarea";
 
 const sampleProjects = [
-  { id: 1, title: "React Dashboard Development", budget: "₹50,000 - ₹80,000", duration: "2-3 months", skills: ["React", "TypeScript", "Tailwind"], posted: "2 days ago", proposals: 12 },
-  { id: 2, title: "Mobile App UI/UX Design", budget: "₹30,000 - ₹50,000", duration: "1 month", skills: ["Figma", "UI/UX", "Mobile"], posted: "1 day ago", proposals: 8 },
-  { id: 3, title: "Python Data Analysis Script", budget: "₹20,000 - ₹35,000", duration: "2 weeks", skills: ["Python", "Pandas", "SQL"], posted: "3 hours ago", proposals: 5 },
+  { id: 1, title: "React Dashboard Development", budget: "₹50,000 - ₹80,000", duration: "2-3 months", skills: ["React", "TypeScript", "Tailwind"], posted: "2 days ago", proposals: 12, description: "Build a comprehensive admin dashboard with charts, tables, user management, and real-time data updates using React and TypeScript.", clientName: "TechVista Solutions Pvt Ltd", clientEmail: "hr@techvista.in", clientLocation: "Hyderabad, Telangana", clientRating: 4.7, clientProjectsPosted: 15, clientJoinedDate: "Jan 2024", paymentVerified: true, profileVerified: true, clientIndustry: "IT Services", deliverables: ["Admin Panel UI", "REST API Integration", "User Auth Module", "Deployment"] },
+  { id: 2, title: "Mobile App UI/UX Design", budget: "₹30,000 - ₹50,000", duration: "1 month", skills: ["Figma", "UI/UX", "Mobile"], posted: "1 day ago", proposals: 8, description: "Design a modern mobile app for a food delivery startup. Includes wireframes, high-fidelity mockups, and a clickable prototype.", clientName: "FoodRush Startups", clientEmail: "design@foodrush.com", clientLocation: "Bangalore, Karnataka", clientRating: 4.2, clientProjectsPosted: 6, clientJoinedDate: "Aug 2025", paymentVerified: true, profileVerified: false, clientIndustry: "Food & Beverage", deliverables: ["Wireframes", "UI Mockups", "Prototype", "Design System"] },
+  { id: 3, title: "Python Data Analysis Script", budget: "₹20,000 - ₹35,000", duration: "2 weeks", skills: ["Python", "Pandas", "SQL"], posted: "3 hours ago", proposals: 5, description: "Automate data extraction from multiple CSV sources, clean and transform data, and generate weekly PDF reports with charts.", clientName: "DataMinds Analytics", clientEmail: "projects@dataminds.co", clientLocation: "Pune, Maharashtra", clientRating: 3.9, clientProjectsPosted: 3, clientJoinedDate: "Dec 2025", paymentVerified: false, profileVerified: true, clientIndustry: "Analytics", deliverables: ["ETL Script", "PDF Report Generator", "Documentation"] },
 ];
 
 const sampleMentorships = [
@@ -81,8 +81,8 @@ const FreelancerDashboard = () => {
   const [mentorshipStatusFilter, setMentorshipStatusFilter] = useState<string>("all");
   const [mentorshipSearchQuery, setMentorshipSearchQuery] = useState("");
 
-  // Mentorship candidate detail modal
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
 
   const allProjectSkills = Array.from(new Set(sampleProjects.flatMap(p => p.skills)));
 
@@ -585,7 +585,7 @@ const FreelancerDashboard = () => {
             {filteredProjects.length === 0 ? (
               <Card><CardContent className="p-8 text-center text-muted-foreground">No projects match your filters.</CardContent></Card>
             ) : filteredProjects.map((project) => (
-              <Card key={project.id} className="hover:border-accent/50 transition-colors cursor-pointer">
+              <Card key={project.id} className="hover:border-accent/50 transition-colors cursor-pointer" onClick={() => setSelectedProject(project)}>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-3">
                     <div>
@@ -603,10 +603,123 @@ const FreelancerDashboard = () => {
                       <Badge key={skill} variant="outline" className="text-xs">{skill}</Badge>
                     ))}
                   </div>
-                  <Button size="sm" className="gap-1">Submit Proposal <ArrowRight className="h-3.5 w-3.5" /></Button>
+                  <Button size="sm" className="gap-1" onClick={(e) => { e.stopPropagation(); navigate("/freelancer/submit-proposal"); }}>Submit Proposal <ArrowRight className="h-3.5 w-3.5" /></Button>
                 </CardContent>
               </Card>
             ))}
+
+            {/* Project Detail Modal */}
+            <Dialog open={!!selectedProject} onOpenChange={(open) => !open && setSelectedProject(null)}>
+              <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">{selectedProject?.title}</DialogTitle>
+                </DialogHeader>
+                {selectedProject && (
+                  <div className="space-y-5">
+                    {/* Project Overview */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><Briefcase className="h-4 w-4" /> Project Details</h4>
+                      <div className="border border-border rounded-lg p-4 space-y-3 bg-muted/20">
+                        <p className="text-sm text-muted-foreground">{selectedProject.description}</p>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div><span className="text-muted-foreground">Budget:</span> <span className="font-medium text-foreground">{selectedProject.budget}</span></div>
+                          <div><span className="text-muted-foreground">Duration:</span> <span className="font-medium text-foreground">{selectedProject.duration}</span></div>
+                          <div><span className="text-muted-foreground">Posted:</span> <span className="font-medium text-foreground">{selectedProject.posted}</span></div>
+                          <div><span className="text-muted-foreground">Proposals:</span> <span className="font-medium text-foreground">{selectedProject.proposals}</span></div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">Required Skills:</span>
+                          <div className="flex gap-1.5 flex-wrap mt-1">
+                            {selectedProject.skills.map((s: string) => <Badge key={s} variant="outline" className="text-xs">{s}</Badge>)}
+                          </div>
+                        </div>
+                        {selectedProject.deliverables && (
+                          <div>
+                            <span className="text-xs text-muted-foreground">Deliverables:</span>
+                            <ul className="list-disc list-inside mt-1 text-sm text-foreground">
+                              {selectedProject.deliverables.map((d: string) => <li key={d}>{d}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Client Details */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2"><User className="h-4 w-4" /> Client Details</h4>
+                      <div className="border border-border rounded-lg overflow-hidden text-sm">
+                        <table className="w-full">
+                          <tbody>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30 w-40">Company</td>
+                              <td className="px-3 py-2 text-foreground font-medium">{selectedProject.clientName}</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Industry</td>
+                              <td className="px-3 py-2 text-foreground">{selectedProject.clientIndustry}</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Email</td>
+                              <td className="px-3 py-2 text-foreground">{selectedProject.clientEmail}</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Location</td>
+                              <td className="px-3 py-2 text-foreground">{selectedProject.clientLocation}</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Rating</td>
+                              <td className="px-3 py-2 text-foreground flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> {selectedProject.clientRating}/5</td>
+                            </tr>
+                            <tr className="border-b border-border">
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Projects Posted</td>
+                              <td className="px-3 py-2 text-foreground">{selectedProject.clientProjectsPosted}</td>
+                            </tr>
+                            <tr>
+                              <td className="px-3 py-2 text-muted-foreground bg-muted/30">Member Since</td>
+                              <td className="px-3 py-2 text-foreground">{selectedProject.clientJoinedDate}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Verification Status */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <Card className={selectedProject.paymentVerified ? "border-green-500/40" : "border-destructive/40"}>
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${selectedProject.paymentVerified ? "bg-green-100 dark:bg-green-900/30" : "bg-red-100 dark:bg-red-900/30"}`}>
+                            <DollarSign className={`h-5 w-5 ${selectedProject.paymentVerified ? "text-green-600" : "text-red-500"}`} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Payment Verification</p>
+                            <p className={`text-xs font-medium ${selectedProject.paymentVerified ? "text-green-600" : "text-red-500"}`}>
+                              {selectedProject.paymentVerified ? "✓ Verified" : "✗ Not Verified"}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className={selectedProject.profileVerified ? "border-green-500/40" : "border-destructive/40"}>
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${selectedProject.profileVerified ? "bg-green-100 dark:bg-green-900/30" : "bg-red-100 dark:bg-red-900/30"}`}>
+                            <CheckCircle2 className={`h-5 w-5 ${selectedProject.profileVerified ? "text-green-600" : "text-red-500"}`} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Profile Verification</p>
+                            <p className={`text-xs font-medium ${selectedProject.profileVerified ? "text-green-600" : "text-red-500"}`}>
+                              {selectedProject.profileVerified ? "✓ Verified" : "✗ Not Verified"}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Button className="w-full gap-2" onClick={() => { setSelectedProject(null); navigate("/freelancer/submit-proposal"); }}>
+                      Submit Proposal <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         );
 
