@@ -35,6 +35,8 @@ interface ExternalJob {
   skills: string[];
   apply_url: string;
   company_logo_url: string | null;
+  hr_name: string | null;
+  hr_contact: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -61,6 +63,8 @@ const ExternalJobs = () => {
     skills: "",
     apply_url: "",
     company_logo_url: "",
+    hr_name: "",
+    hr_contact: "",
   });
 
   const menuItems = [
@@ -97,7 +101,7 @@ const ExternalJobs = () => {
   };
 
   const resetForm = () => {
-    setForm({ company_name: "", job_title: "", location: "", job_type: "full-time", salary_range: "", experience_required: "", description: "", skills: "", apply_url: "", company_logo_url: "" });
+    setForm({ company_name: "", job_title: "", location: "", job_type: "full-time", salary_range: "", experience_required: "", description: "", skills: "", apply_url: "", company_logo_url: "", hr_name: "", hr_contact: "" });
     setEditingJob(null);
   };
 
@@ -113,6 +117,8 @@ const ExternalJobs = () => {
       description: data.description || f.description,
       skills: data.skills || f.skills,
       apply_url: data.apply_url || f.apply_url,
+      hr_name: data.hr_name || f.hr_name,
+      hr_contact: data.hr_contact || f.hr_contact,
     }));
   };
 
@@ -187,6 +193,8 @@ const ExternalJobs = () => {
       skills: (job.skills || []).join(", "),
       apply_url: job.apply_url,
       company_logo_url: job.company_logo_url || "",
+      hr_name: (job as any).hr_name || "",
+      hr_contact: (job as any).hr_contact || "",
     });
     setShowForm(true);
   };
@@ -208,6 +216,8 @@ const ExternalJobs = () => {
       skills: form.skills ? form.skills.split(",").map(s => s.trim()).filter(Boolean) : [],
       apply_url: form.apply_url,
       company_logo_url: form.company_logo_url || null,
+      hr_name: form.hr_name || null,
+      hr_contact: form.hr_contact || null,
     };
 
     if (editingJob) {
@@ -324,6 +334,9 @@ const ExternalJobs = () => {
                         </div>
                         <p className="text-sm text-muted-foreground">{job.company_name} {job.location ? `• ${job.location}` : ""}</p>
                         {job.salary_range && <p className="text-xs text-muted-foreground mt-1">Salary: {job.salary_range}</p>}
+                        {((job as any).hr_name || (job as any).hr_contact) && (
+                          <p className="text-xs text-muted-foreground mt-1">HR: {(job as any).hr_name}{(job as any).hr_contact ? ` • ${(job as any).hr_contact}` : ""}</p>
+                        )}
                         <div className="flex items-center gap-1 mt-1">
                           <ExternalLink className="h-3 w-3 text-muted-foreground" />
                           <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate max-w-xs">{job.apply_url}</a>
@@ -440,6 +453,16 @@ const ExternalJobs = () => {
                 <div>
                   <Label>Description</Label>
                   <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>HR Name</Label>
+                    <Input value={form.hr_name} onChange={e => setForm(f => ({ ...f, hr_name: e.target.value }))} placeholder="e.g. Nikhil" />
+                  </div>
+                  <div>
+                    <Label>HR Contact Number</Label>
+                    <Input value={form.hr_contact} onChange={e => setForm(f => ({ ...f, hr_contact: e.target.value }))} placeholder="e.g. 9876543210" />
+                  </div>
                 </div>
                 <div>
                   <Label>Company Logo URL</Label>
