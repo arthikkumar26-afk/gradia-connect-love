@@ -250,11 +250,21 @@ const CandidateSignup = () => {
       // Move to next step instead of navigating
       setCurrentStep('benefits');
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred during signup",
-        variant: "destructive",
-      });
+      const isNetworkError = error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("fetch");
+      if (isNetworkError) {
+        setRetryError("Network issue detected. Please check your internet connection and try again.");
+        toast({
+          title: "Connection Error",
+          description: "Unable to connect to the server. Please check your internet and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "An error occurred during signup",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -852,8 +862,16 @@ const CandidateSignup = () => {
           )}
 
 
-          <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating Account..." : "Continue"}
+          {retryError && (
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+              {retryError}
+            </div>
+          )}
+
+          <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isLoading} onClick={() => setRetryError(null)}>
+            {isLoading ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating Account...</>
+            ) : retryError ? "Retry" : "Continue"}
           </Button>
         </form>
 
