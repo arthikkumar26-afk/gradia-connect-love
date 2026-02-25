@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, MapPin, Clock, Building2, Loader2, IndianRupee, Globe } from "lucide-react";
+import { ExternalLink, MapPin, Clock, Building2, Loader2, IndianRupee, Globe, User, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ExternalJob {
@@ -17,6 +17,8 @@ interface ExternalJob {
   skills: string[];
   apply_url: string;
   company_logo_url: string | null;
+  hr_name: string | null;
+  hr_contact: string | null;
 }
 
 const ExternalJobListings = () => {
@@ -108,6 +110,21 @@ const ExternalJobListings = () => {
                     ))}
                     {job.skills.length > 4 && (
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0">+{job.skills.length - 4}</Badge>
+                    )}
+                  </div>
+                )}
+
+                {(job.hr_name || job.hr_contact) && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground border-t pt-2">
+                    {job.hr_name && (
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3" /> {job.hr_name}
+                      </span>
+                    )}
+                    {job.hr_contact && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {job.hr_contact}
+                      </span>
                     )}
                   </div>
                 )}

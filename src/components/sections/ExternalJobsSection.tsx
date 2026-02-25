@@ -3,8 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Clock, Building2, ExternalLink, ArrowRight, Briefcase, Phone, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MapPin, Clock, Building2, ArrowRight, Briefcase, Phone, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface ExternalJob {
   id: string;
@@ -25,6 +25,7 @@ interface ExternalJob {
 const ExternalJobsSection = () => {
   const [jobs, setJobs] = useState<ExternalJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -41,6 +42,10 @@ const ExternalJobsSection = () => {
   }, []);
 
   if (loading || jobs.length === 0) return null;
+
+  const handleApply = () => {
+    navigate("/candidate/login", { state: { redirectTab: "externaljobs" } });
+  };
 
   return (
     <section className="py-16 bg-subtle">
@@ -106,25 +111,23 @@ const ExternalJobsSection = () => {
                 )}
 
                 {(job.hr_name || job.hr_contact) && (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-3 border-t pt-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-3 border-t pt-2 select-none">
                     {job.hr_name && (
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" /> {job.hr_name}
+                      <span className="flex items-center gap-1 blur-[4px]">
+                        <User className="h-3 w-3 blur-none" /> {job.hr_name}
                       </span>
                     )}
                     {job.hr_contact && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> {job.hr_contact}
+                      <span className="flex items-center gap-1 blur-[4px]">
+                        <Phone className="h-3 w-3 blur-none" /> {job.hr_contact}
                       </span>
                     )}
                   </div>
                 )}
 
                 <div className="mt-auto pt-2">
-                  <Button size="sm" className="w-full gap-1.5" asChild>
-                    <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-                      Apply Now <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+                  <Button size="sm" className="w-full gap-1.5" onClick={handleApply}>
+                    Apply Now <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </CardContent>
