@@ -16,8 +16,9 @@ import {
 import {
   Home, Users, Briefcase, Building2, ClipboardList, UserCog, MessageSquare,
   Ticket, BarChart3, FileText, Settings, Plus, Pencil, Trash2, ExternalLink,
-  Loader2, LogOut, ShieldCheck, CreditCard, UserCheck, UserX, Globe
+  Loader2, LogOut, ShieldCheck, CreditCard, UserCheck, UserX, Globe, Sparkles, Upload, FileUp
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +48,8 @@ const ExternalJobs = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingJob, setEditingJob] = useState<ExternalJob | null>(null);
   const [saving, setSaving] = useState(false);
-
+  const [aiParsing, setAiParsing] = useState(false);
+  const [pasteText, setPasteText] = useState("");
   const [form, setForm] = useState({
     company_name: "",
     job_title: "",
@@ -97,6 +99,79 @@ const ExternalJobs = () => {
   const resetForm = () => {
     setForm({ company_name: "", job_title: "", location: "", job_type: "full-time", salary_range: "", experience_required: "", description: "", skills: "", apply_url: "", company_logo_url: "" });
     setEditingJob(null);
+  };
+
+  const applyAiData = (data: any) => {
+    setForm(f => ({
+      ...f,
+      company_name: data.company_name || f.company_name,
+      job_title: data.job_title || f.job_title,
+      location: data.location || f.location,
+      job_type: data.job_type || f.job_type,
+      salary_range: data.salary_range || f.salary_range,
+      experience_required: data.experience_required || f.experience_required,
+      description: data.description || f.description,
+      skills: data.skills || f.skills,
+      apply_url: data.apply_url || f.apply_url,
+    }));
+  };
+
+  const handleParseText = async () => {
+    if (!pasteText.trim()) {
+      toast({ title: "No text", description: "Paste job text to analyze.", variant: "destructive" });
+      return;
+    }
+    setAiParsing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-external-job", {
+        body: { text: pasteText },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        applyAiData(data.data);
+        setPasteText("");
+        toast({ title: "AI Filled", description: "Fields populated from text." });
+      } else {
+        throw new Error(data?.error || "Parse failed");
+      }
+    } catch (err: any) {
+      toast({ title: "AI Error", description: err.message, variant: "destructive" });
+    } finally {
+      setAiParsing(false);
+    }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      toast({ title: "Invalid file", description: "Only PDF files are supported.", variant: "destructive" });
+      return;
+    }
+    setAiParsing(true);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke("parse-external-job", {
+        body: { pdfBase64: base64 },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        applyAiData(data.data);
+        toast({ title: "AI Filled", description: "Fields populated from PDF." });
+      } else {
+        throw new Error(data?.error || "Parse failed");
+      }
+    } catch (err: any) {
+      toast({ title: "AI Error", description: err.message, variant: "destructive" });
+    } finally {
+      setAiParsing(false);
+      e.target.value = "";
+    }
   };
 
   const openEdit = (job: ExternalJob) => {
@@ -277,6 +352,42 @@ const ExternalJobs = () => {
               <DialogHeader>
                 <DialogTitle>{editingJob ? "Edit External Job" : "Add External Job"}</DialogTitle>
               </DialogHeader>
+
+              {/* AI Auto-Fill Section */}
+              {!editingJob && (
+                <div className="border border-dashed border-primary/40 rounded-lg p-4 bg-primary/5 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                    <Sparkles className="h-4 w-4" />
+                    AI Auto-Fill — Paste text or upload PDF
+                  </div>
+                  <Tabs defaultValue="text" className="w-full">
+                    <TabsList className="w-full">
+                      <TabsTrigger value="text" className="flex-1 gap-1.5"><FileText className="h-3.5 w-3.5" /> Paste Text</TabsTrigger>
+                      <TabsTrigger value="pdf" className="flex-1 gap-1.5"><FileUp className="h-3.5 w-3.5" /> Upload PDF</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="text" className="space-y-2 mt-2">
+                      <Textarea
+                        value={pasteText}
+                        onChange={e => setPasteText(e.target.value)}
+                        placeholder="Paste job description text here..."
+                        rows={4}
+                        className="text-xs"
+                      />
+                      <Button size="sm" onClick={handleParseText} disabled={aiParsing} className="gap-1.5 w-full">
+                        {aiParsing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                        {aiParsing ? "Analyzing..." : "Analyze & Fill Fields"}
+                      </Button>
+                    </TabsContent>
+                    <TabsContent value="pdf" className="mt-2">
+                      <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${aiParsing ? "opacity-50 pointer-events-none" : "hover:border-primary/60 hover:bg-primary/5"}`}>
+                        {aiParsing ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <Upload className="h-6 w-6 text-muted-foreground" />}
+                        <span className="text-sm text-muted-foreground">{aiParsing ? "Analyzing PDF..." : "Click to upload PDF"}</span>
+                        <input type="file" accept=".pdf" className="hidden" onChange={handlePdfUpload} disabled={aiParsing} />
+                      </label>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              )}
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
