@@ -28,14 +28,20 @@ const FreelancerLogin = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const signInPromise = supabase.auth.signInWithPassword({ email, password });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timed out.')), 15000)
+      );
+      const { error } = await Promise.race([signInPromise, timeoutPromise]) as any;
       if (error) {
-        toast({ title: "Login Failed", description: error.message, variant: "destructive" });
+        const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("fetch");
+        toast({ title: isNetworkError ? "Connection Error" : "Login Failed", description: isNetworkError ? "Unable to connect. Check your internet and try again." : error.message, variant: "destructive" });
         return;
       }
       toast({ title: "Login Successful", description: "Redirecting to your dashboard..." });
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "An error occurred", variant: "destructive" });
+      const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
+      toast({ title: isNetworkError ? "Connection Error" : "Error", description: isNetworkError ? "Unable to connect. Check your internet." : (error.message || "An error occurred"), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
