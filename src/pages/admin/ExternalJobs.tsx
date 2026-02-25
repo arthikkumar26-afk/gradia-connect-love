@@ -404,16 +404,16 @@ const ExternalJobs = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Company Name *</Label>
+                    <Label>Company Name</Label>
                     <Input value={form.company_name} onChange={e => setForm(f => ({ ...f, company_name: e.target.value }))} />
                   </div>
                   <div>
-                    <Label>Job Title *</Label>
+                    <Label>Job Title</Label>
                     <Input value={form.job_title} onChange={e => setForm(f => ({ ...f, job_title: e.target.value }))} />
                   </div>
                 </div>
                 <div>
-                  <Label>Apply URL *</Label>
+                  <Label>Apply URL</Label>
                   <Input value={form.apply_url} onChange={e => setForm(f => ({ ...f, apply_url: e.target.value }))} placeholder="https://company.com/careers/apply" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
