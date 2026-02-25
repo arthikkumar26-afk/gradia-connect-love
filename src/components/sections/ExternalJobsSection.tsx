@@ -66,32 +66,38 @@ const ExternalJobsSection = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {jobs.map((job) => (
-            <Card key={job.id} className="hover:shadow-medium transition-all duration-200 hover:-translate-y-1 flex flex-col">
-              <CardContent className="p-5 flex flex-col flex-1">
-                <div className="flex items-start justify-between gap-2 mb-3">
+            <Card key={job.id} className="group hover:shadow-medium transition-all duration-200 hover:-translate-y-1 h-full flex flex-col border border-border">
+              <CardContent className="p-3 flex flex-col flex-1 gap-2">
+                <div className="flex items-start justify-between gap-1">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                      {job.company_logo_url ? (
+                        <img src={job.company_logo_url} alt={job.company_name} className="w-5 h-5 rounded object-contain" />
+                      ) : (
+                        <span className="text-sm">💼</span>
+                      )}
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">External</Badge>
                       {job.job_type && (
-                        <Badge variant="outline" className="text-[10px] capitalize">{job.job_type}</Badge>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">{job.job_type}</Badge>
                       )}
                     </div>
-                    <h3 className="font-semibold text-base text-foreground line-clamp-1">{job.job_title}</h3>
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                      <Building2 className="h-3.5 w-3.5 shrink-0" />
+                    <h3 className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors line-clamp-2 leading-tight">
+                      {job.job_title}
+                    </h3>
+                    <p className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                      <Building2 className="h-3 w-3 flex-shrink-0" />
                       <span className="truncate">{job.company_name}</span>
-                    </div>
+                    </p>
                   </div>
-                  {job.company_logo_url && (
-                    <img src={job.company_logo_url} alt={job.company_name} className="w-10 h-10 rounded-md object-contain border" />
-                  )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   {job.location && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> {job.location}
+                      <MapPin className="h-3 w-3" />
+                      <span className="truncate max-w-[80px]">{job.location}</span>
                     </span>
                   )}
                   {job.experience_required && (
@@ -99,44 +105,39 @@ const ExternalJobsSection = () => {
                       <Clock className="h-3 w-3" /> {job.experience_required}
                     </span>
                   )}
-                  {job.salary_range && (
-                    <span className="flex items-center gap-1">
-                      <Briefcase className="h-3 w-3" /> {job.salary_range}
-                    </span>
-                  )}
                 </div>
 
                 {job.skills && job.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
+                  <div className="flex flex-wrap gap-1 flex-1">
                     {job.skills.slice(0, 3).map((s) => (
-                      <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>
+                      <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0 h-5">{s}</Badge>
                     ))}
                     {job.skills.length > 3 && (
-                      <Badge variant="secondary" className="text-[10px]">+{job.skills.length - 3}</Badge>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">+{job.skills.length - 3}</Badge>
                     )}
                   </div>
                 )}
 
                 {(job.hr_name || job.hr_contact) && (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-3 border-t pt-2 select-none">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground border-t pt-1.5 select-none">
                     <span className="font-medium text-foreground">HR Contact</span>
-                    <span className="text-muted-foreground">-</span>
+                    <span>-</span>
                     {job.hr_name && (
-                      <span className="flex items-center gap-1 blur-[4px]">
-                        <User className="h-3 w-3 blur-none" /> {job.hr_name}
+                      <span className="flex items-center gap-0.5 blur-[4px]">
+                        <User className="h-2.5 w-2.5 blur-none" /> {job.hr_name}
                       </span>
                     )}
                     {job.hr_contact && (
-                      <span className="flex items-center gap-1 blur-[4px]">
-                        <Phone className="h-3 w-3 blur-none" /> {job.hr_contact}
+                      <span className="flex items-center gap-0.5 blur-[4px]">
+                        <Phone className="h-2.5 w-2.5 blur-none" /> {job.hr_contact}
                       </span>
                     )}
                   </div>
                 )}
 
-                <div className="mt-auto pt-2">
-                  <Button size="sm" className="w-full gap-1.5" onClick={handleApply}>
-                    Apply Now <ArrowRight className="h-3.5 w-3.5" />
+                <div className="mt-auto">
+                  <Button size="sm" className="w-full h-7 text-xs gap-1" onClick={handleApply}>
+                    Apply Now <ArrowRight className="h-3 w-3" />
                   </Button>
                 </div>
               </CardContent>
