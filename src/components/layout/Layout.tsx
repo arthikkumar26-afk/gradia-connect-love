@@ -22,7 +22,8 @@ const Layout = ({ children }: LayoutProps) => {
                      location.pathname.startsWith('/candidate/dashboard') ||
                      location.pathname.startsWith('/admin/') ||
                      location.pathname.startsWith('/freelancer/dashboard') ||
-                     location.pathname.startsWith('/owner/');
+                     location.pathname.startsWith('/owner/') ||
+                     location.pathname === '/edit-profile';
   
   return (
     <div className="min-h-screen flex flex-col">
