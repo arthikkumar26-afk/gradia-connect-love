@@ -719,12 +719,14 @@ export type Database = {
           end_date: string | null
           id: string
           image_url: string | null
+          media_urls: string[] | null
           portfolio_id: string
           project_url: string | null
           start_date: string | null
           tech_stack: string[] | null
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string
@@ -733,12 +735,14 @@ export type Database = {
           end_date?: string | null
           id?: string
           image_url?: string | null
+          media_urls?: string[] | null
           portfolio_id: string
           project_url?: string | null
           start_date?: string | null
           tech_stack?: string[] | null
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string
@@ -747,12 +751,14 @@ export type Database = {
           end_date?: string | null
           id?: string
           image_url?: string | null
+          media_urls?: string[] | null
           portfolio_id?: string
           project_url?: string | null
           start_date?: string | null
           tech_stack?: string[] | null
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
