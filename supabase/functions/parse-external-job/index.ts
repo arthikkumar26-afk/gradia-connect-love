@@ -60,6 +60,8 @@ serve(async (req) => {
                   skills: { type: "string", description: "Comma-separated list of required skills" },
                   description: { type: "string", description: "Brief job description" },
                   apply_url: { type: "string", description: "Application URL if found" },
+                  hr_name: { type: "string", description: "HR contact person name if mentioned" },
+                  hr_contact: { type: "string", description: "HR contact phone number if mentioned" },
                 },
                 required: ["company_name", "job_title"],
                 additionalProperties: false,
