@@ -25,7 +25,6 @@ import Jobs from "./pages/Jobs";
 import JobsSoftware from "./pages/JobsSoftware";
 import JobsEducation from "./pages/JobsEducation";
 import NotFound from "./pages/NotFound";
-import Sitemap from "./pages/Sitemap";
 import EmployerLogin from "./pages/EmployerLogin";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import CandidateLogin from "./pages/CandidateLogin";
@@ -133,7 +132,7 @@ const MainRoutes = () => (
       <Route path="/faq" element={<FAQ />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<PlaceholderPage title="Terms of Service" />} />
-      <Route path="/sitemap" element={<Sitemap />} />
+      <Route path="/sitemap" element={<PlaceholderPage title="Sitemap" />} />
 
       {/* Candidate Routes */}
       <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
