@@ -555,7 +555,7 @@ const EmployerDashboard = () => {
                         <Briefcase className="h-4 w-4 mr-2" />
                         <div className="text-left">
                           <div className="text-sm font-medium">Manage Jobs</div>
-                          <div className="text-xs text-muted-foreground">View postings</div>
+                          <div className="text-xs opacity-70">View postings</div>
                         </div>
                       </Button>
                       
@@ -563,7 +563,7 @@ const EmployerDashboard = () => {
                         <Users className="h-4 w-4 mr-2" />
                         <div className="text-left">
                           <div className="text-sm font-medium">Browse Talent</div>
-                          <div className="text-xs text-muted-foreground">Find candidates</div>
+                          <div className="text-xs opacity-70">Find candidates</div>
                         </div>
                       </Button>
                       
@@ -571,7 +571,7 @@ const EmployerDashboard = () => {
                         <CheckSquare className="h-4 w-4 mr-2" />
                         <div className="text-left">
                           <div className="text-sm font-medium">Review Approvals</div>
-                          <div className="text-xs text-muted-foreground">Pending actions</div>
+                          <div className="text-xs opacity-70">Pending actions</div>
                         </div>
                       </Button>
                     </div>
