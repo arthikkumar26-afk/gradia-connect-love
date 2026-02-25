@@ -194,10 +194,9 @@ const CandidateSignup = () => {
       }
 
       if (authData.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({
+        // Create profile and role in parallel for speed
+        const [profileResult, roleResult] = await Promise.all([
+          supabase.from("profiles").upsert({
             id: authData.user.id,
             email: email,
             full_name: fullName,
@@ -206,36 +205,20 @@ const CandidateSignup = () => {
             category: industryCategory || null,
             primary_subject: primarySubject || null,
             segment: segment || null,
-          });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-        }
-
-        // Create user role entry
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .upsert({
+          }),
+          supabase.from("user_roles").upsert({
             user_id: authData.user.id,
             role: 'candidate' as const,
-          }, { onConflict: 'user_id,role' });
+          }, { onConflict: 'user_id,role' }),
+        ]);
 
-        if (roleError) {
-          console.error("Role creation error:", roleError);
-        }
-        // Refresh the profile in AuthContext to ensure it's available
-        await refreshProfile();
+        if (profileResult.error) console.error("Profile creation error:", profileResult.error);
+        if (roleResult.error) console.error("Role creation error:", roleResult.error);
 
-        // Send welcome email (fire and forget)
+        // Non-blocking: refresh profile and send welcome email
+        refreshProfile().catch(err => console.error("Profile refresh error:", err));
         supabase.functions.invoke('send-welcome-email', {
-          body: {
-            email: email,
-            fullName: fullName,
-            role: 'candidate',
-          }
-        }).then(res => {
-          if (res.error) console.error("Welcome email error:", res.error);
-          else console.log("Welcome email sent successfully");
+          body: { email, fullName, role: 'candidate' }
         }).catch(err => console.error("Welcome email failed:", err));
       }
 
