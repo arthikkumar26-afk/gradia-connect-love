@@ -67,14 +67,20 @@ export default function SponsorLogin() {
     setIsLoading(true);
 
     try {
-      // Sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const signInPromise = supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timed out.')), 15000)
+      );
+      const { data: authData, error: authError } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
       if (authError) {
-        if (authError.message.includes("Invalid login credentials")) {
+        const isNetworkError = authError.message?.includes("NetworkError") || authError.message?.includes("Failed to fetch") || authError.message?.includes("fetch");
+        if (isNetworkError) {
+          toast.error("Unable to connect. Please check your internet connection and try again.");
+        } else if (authError.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password");
         } else {
           toast.error(authError.message);
