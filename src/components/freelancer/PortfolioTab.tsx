@@ -13,7 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Eye, Share2, Download, Globe, Github, Linkedin, Twitter,
-  ExternalLink, Loader2, Link2, Copy, Pencil, Briefcase, Code, Sparkles, Upload
+  ExternalLink, Loader2, Link2, Copy, Pencil, Briefcase, Code, Sparkles, Upload,
+  Image, Video, X
 } from "lucide-react";
 import jsPDF from "jspdf";
 
@@ -44,6 +45,8 @@ interface PortfolioProject {
   tech_stack: string[];
   project_url: string;
   image_url: string;
+  video_url: string;
+  media_urls: string[];
   start_date: string;
   end_date: string;
   display_order: number;
@@ -51,7 +54,7 @@ interface PortfolioProject {
 
 const emptyProject: PortfolioProject = {
   title: "", description: "", tech_stack: [], project_url: "",
-  image_url: "", start_date: "", end_date: "", display_order: 0,
+  image_url: "", video_url: "", media_urls: [], start_date: "", end_date: "", display_order: 0,
 };
 
 const PortfolioTab = () => {
@@ -68,6 +71,9 @@ const PortfolioTab = () => {
   const [newTech, setNewTech] = useState("");
   const [showShareModal, setShowShareModal] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const resumeRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -200,6 +206,51 @@ const PortfolioTab = () => {
       setProjectForm({ ...projectForm, tech_stack: [...projectForm.tech_stack, newTech.trim()] });
       setNewTech("");
     }
+  };
+
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video") => {
+    const files = e.target.files;
+    if (!files?.length) return;
+    setMediaUploading(true);
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) throw new Error("Not authenticated");
+
+      const uploadedUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        const filePath = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+        const { error } = await supabase.storage.from('portfolio-media').upload(filePath, file, { upsert: true });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('portfolio-media').getPublicUrl(filePath);
+        uploadedUrls.push(urlData.publicUrl);
+      }
+
+      if (type === "image") {
+        if (uploadedUrls.length === 1 && !projectForm.image_url) {
+          setProjectForm({ ...projectForm, image_url: uploadedUrls[0], media_urls: [...(projectForm.media_urls || []), ...uploadedUrls] });
+        } else {
+          setProjectForm({ ...projectForm, media_urls: [...(projectForm.media_urls || []), ...uploadedUrls] });
+        }
+      } else {
+        setProjectForm({ ...projectForm, video_url: uploadedUrls[0] });
+      }
+      toast.success(`${type === "image" ? "Image(s)" : "Video"} uploaded!`);
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setMediaUploading(false);
+      if (mediaInputRef.current) mediaInputRef.current.value = '';
+      if (videoInputRef.current) videoInputRef.current.value = '';
+    }
+  };
+
+  const removeMediaUrl = (url: string) => {
+    setProjectForm({
+      ...projectForm,
+      media_urls: (projectForm.media_urls || []).filter(u => u !== url),
+      image_url: projectForm.image_url === url ? "" : projectForm.image_url,
+    });
   };
 
   const getPortfolioUrl = () => {
@@ -496,7 +547,7 @@ const PortfolioTab = () => {
                       <h3 className="font-semibold text-foreground">{p.title}</h3>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                          setEditingProject(p); setProjectForm(p); setShowProjectModal(true);
+                          setEditingProject(p); setProjectForm({ ...emptyProject, ...p, media_urls: (p as any).media_urls || [], video_url: (p as any).video_url || "" }); setShowProjectModal(true);
                         }}><Pencil className="h-3 w-3" /></Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => p.id && deleteProject(p.id)}>
                           <Trash2 className="h-3 w-3" />
@@ -504,6 +555,20 @@ const PortfolioTab = () => {
                       </div>
                     </div>
                     {p.description && <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>}
+                    {/* Media gallery thumbnails */}
+                    {((p as any).media_urls?.length > 0) && (
+                      <div className="flex gap-1 overflow-x-auto">
+                        {(p as any).media_urls.slice(0, 4).map((url: string, i: number) => (
+                          <img key={i} src={url} alt="" className="h-12 w-12 rounded object-cover border border-border flex-shrink-0" />
+                        ))}
+                        {(p as any).media_urls.length > 4 && <span className="text-xs text-muted-foreground self-center ml-1">+{(p as any).media_urls.length - 4}</span>}
+                      </div>
+                    )}
+                    {(p as any).video_url && (
+                      <div className="flex items-center gap-1 text-xs text-accent">
+                        <Video className="h-3 w-3" /> Video attached
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-1">
                       {p.tech_stack?.map(t => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
                     </div>
@@ -571,6 +636,16 @@ const PortfolioTab = () => {
                         <CardContent className="pt-3 space-y-2">
                           <h4 className="font-semibold text-foreground">{p.title}</h4>
                           {p.description && <p className="text-sm text-muted-foreground">{p.description}</p>}
+                          {((p as any).media_urls?.length > 0) && (
+                            <div className="flex gap-1 overflow-x-auto">
+                              {(p as any).media_urls.map((url: string, i: number) => (
+                                <img key={i} src={url} alt="" className="h-16 w-16 rounded object-cover border border-border flex-shrink-0" />
+                              ))}
+                            </div>
+                          )}
+                          {(p as any).video_url && (
+                            <video src={(p as any).video_url} controls className="w-full rounded-md max-h-40" />
+                          )}
                           <div className="flex flex-wrap gap-1">
                             {p.tech_stack?.map(t => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
                           </div>
@@ -634,9 +709,43 @@ const PortfolioTab = () => {
               <Label>Project URL</Label>
               <Input placeholder="https://..." value={projectForm.project_url} onChange={e => setProjectForm({ ...projectForm, project_url: e.target.value })} />
             </div>
+
+            {/* Image Upload */}
             <div>
-              <Label>Image URL</Label>
-              <Input placeholder="https://... (screenshot or cover image)" value={projectForm.image_url} onChange={e => setProjectForm({ ...projectForm, image_url: e.target.value })} />
+              <Label className="flex items-center gap-1 mb-2"><Image className="h-3.5 w-3.5" /> Project Images</Label>
+              <input ref={mediaInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleMediaUpload(e, "image")} />
+              <Button type="button" variant="outline" size="sm" className="gap-1.5 w-full" onClick={() => mediaInputRef.current?.click()} disabled={mediaUploading}>
+                {mediaUploading ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading...</> : <><Upload className="h-3.5 w-3.5" /> Upload Images</>}
+              </Button>
+              {(projectForm.media_urls?.length > 0 || projectForm.image_url) && (
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {[...(projectForm.image_url && !(projectForm.media_urls || []).includes(projectForm.image_url) ? [projectForm.image_url] : []), ...(projectForm.media_urls || [])].map((url, i) => (
+                    <div key={i} className="relative group rounded-md overflow-hidden border border-border h-20">
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <button onClick={() => removeMediaUrl(url)} className="absolute top-0.5 right-0.5 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="h-3 w-3 text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Video Upload */}
+            <div>
+              <Label className="flex items-center gap-1 mb-2"><Video className="h-3.5 w-3.5" /> Project Video</Label>
+              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={e => handleMediaUpload(e, "video")} />
+              <Button type="button" variant="outline" size="sm" className="gap-1.5 w-full" onClick={() => videoInputRef.current?.click()} disabled={mediaUploading}>
+                {mediaUploading ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading...</> : <><Upload className="h-3.5 w-3.5" /> Upload Video</>}
+              </Button>
+              {projectForm.video_url && (
+                <div className="mt-2 relative group">
+                  <video src={projectForm.video_url} controls className="w-full rounded-md border border-border max-h-40" />
+                  <button onClick={() => setProjectForm({ ...projectForm, video_url: "" })} className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X className="h-3 w-3 text-destructive" />
+                  </button>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
