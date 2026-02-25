@@ -200,10 +200,6 @@ const ExternalJobs = () => {
   };
 
   const handleSave = async () => {
-    if (!form.company_name || !form.job_title || !form.apply_url) {
-      toast({ title: "Missing Fields", description: "Company name, job title and apply URL are required.", variant: "destructive" });
-      return;
-    }
     setSaving(true);
     const payload = {
       company_name: form.company_name,
