@@ -112,6 +112,8 @@ const ExternalJobsSection = () => {
 
                 {(job.hr_name || job.hr_contact) && (
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-3 border-t pt-2 select-none">
+                    <span className="font-medium text-foreground">HR Contact</span>
+                    <span className="text-muted-foreground">-</span>
                     {job.hr_name && (
                       <span className="flex items-center gap-1 blur-[4px]">
                         <User className="h-3 w-3 blur-none" /> {job.hr_name}
