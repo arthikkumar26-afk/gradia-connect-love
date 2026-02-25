@@ -142,7 +142,12 @@ const FreelancerDashboard = () => {
   // Ensure profile exists for this user
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate("/login");
+      navigate("/freelancer/login");
+      return;
+    }
+    // Only allow freelancer role
+    if (profile && profile.role !== 'freelancer') {
+      navigate("/freelancer/login");
       return;
     }
     const ensureProfile = async () => {
@@ -150,7 +155,11 @@ const FreelancerDashboard = () => {
       if (!currentUser) return;
       
       // Check if profile exists
-      const { data: existing } = await supabase.from('profiles').select('id').eq('id', currentUser.id).maybeSingle();
+      const { data: existing } = await supabase.from('profiles').select('id, role').eq('id', currentUser.id).maybeSingle();
+      if (existing && existing.role !== 'freelancer') {
+        navigate("/freelancer/login");
+        return;
+      }
       if (!existing) {
         // Create profile from auth metadata
         const meta = currentUser.user_metadata || {};
@@ -165,7 +174,7 @@ const FreelancerDashboard = () => {
       }
     };
     ensureProfile();
-  }, [isAuthenticated, navigate, refreshProfile]);
+  }, [isAuthenticated, profile, navigate, refreshProfile]);
 
   const handleLogout = async () => {
     await logout();
