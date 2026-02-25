@@ -1159,66 +1159,6 @@ export default function MockInterviewPipeline() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Interview Type (matches candidate mock interview page) */}
-            <div className="space-y-2">
-              <Label>Interview Type *</Label>
-              <Select 
-                value={newPaper.industryCategory} 
-                onValueChange={(v) => setNewPaper(p => ({ ...p, industryCategory: v, segment: '', category: '', classLevel: '', coreSubject: '', designation: '' }))}
-              >
-                <SelectTrigger className="max-w-md">
-                  <SelectValue placeholder="Select Interview Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {interviewPipelineConfig.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Pipeline Type & Role - shown after interview type is selected */}
-            {newPaper.industryCategory && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Pipeline Type *</Label>
-                  <Select 
-                    key={`segment-${newPaper.industryCategory}`}
-                    value={newPaper.segment || undefined} 
-                    onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', classLevel: '', coreSubject: '', designation: '' }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select pipeline type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(interviewPipelineConfig.find(t => t.value === newPaper.industryCategory)?.pipelineTypes || []).map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {newPaper.segment && (
-                  <div className="space-y-2">
-                    <Label>Role *</Label>
-                    <Select 
-                      key={`designation-${newPaper.segment}`}
-                      value={newPaper.designation || undefined} 
-                      onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(pipelineRoleOptions[`${newPaper.industryCategory}.${newPaper.segment}`] || defaultRoleOptions).map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Mock Interview Options (same as candidate page) */}
             <div className="p-4 border rounded-lg bg-muted/30 space-y-4">
               <div className="space-y-1">
