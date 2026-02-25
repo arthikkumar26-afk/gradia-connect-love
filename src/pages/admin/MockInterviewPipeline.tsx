@@ -1159,122 +1159,63 @@ export default function MockInterviewPipeline() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Industry Category */}
+            {/* Interview Type (matches candidate mock interview page) */}
             <div className="space-y-2">
-              <Label>Industry Category *</Label>
+              <Label>Interview Type *</Label>
               <Select 
                 value={newPaper.industryCategory} 
                 onValueChange={(v) => setNewPaper(p => ({ ...p, industryCategory: v, segment: '', category: '', classLevel: '', coreSubject: '', designation: '' }))}
               >
                 <SelectTrigger className="max-w-md">
-                  <SelectValue placeholder="Select Industry Category" />
+                  <SelectValue placeholder="Select Interview Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {industryCategoryOptions.map(ic => (
-                    <SelectItem key={ic} value={ic}>{ic}</SelectItem>
+                  {interviewPipelineConfig.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Role Selection Fields - shown after industry category is selected */}
+            {/* Pipeline Type & Role - shown after interview type is selected */}
             {newPaper.industryCategory && (
-              <div className={`grid grid-cols-1 gap-4 ${showClassLevel || showCoreSubject ? 'md:grid-cols-5' : isEducation ? 'md:grid-cols-3' : 'md:grid-cols-3'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label>Segment *</Label>
+                  <Label>Pipeline Type *</Label>
                   <Select 
                     key={`segment-${newPaper.industryCategory}`}
                     value={newPaper.segment || undefined} 
                     onValueChange={(v) => setNewPaper(p => ({ ...p, segment: v, category: '', classLevel: '', coreSubject: '', designation: '' }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select segment" />
+                      <SelectValue placeholder="Select pipeline type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {segmentOptions.map(seg => (
-                        <SelectItem key={seg} value={seg}>{seg}</SelectItem>
+                      {(interviewPipelineConfig.find(t => t.value === newPaper.industryCategory)?.pipelineTypes || []).map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                {(isEducation || getCurrentCategories().length > 0) && (
+                {newPaper.segment && (
                   <div className="space-y-2">
-                    <Label>{isEducation ? 'Category' : 'Specialization'} *</Label>
+                    <Label>Role *</Label>
                     <Select 
-                      key={`category-${newPaper.segment}`}
-                      value={newPaper.category || undefined} 
-                      onValueChange={(v) => setNewPaper(p => ({ ...p, category: v, classLevel: '', coreSubject: '', designation: '' }))}
-                      disabled={!newPaper.segment}
+                      key={`designation-${newPaper.segment}`}
+                      value={newPaper.designation || undefined} 
+                      onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={`Select ${isEducation ? 'category' : 'specialization'}`} />
+                        <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {getCurrentCategories().map(cat => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        {(pipelineRoleOptions[`${newPaper.industryCategory}.${newPaper.segment}`] || defaultRoleOptions).map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 )}
-                {showClassLevel && (
-                  <div className="space-y-2">
-                    <Label>Class *</Label>
-                    <Select 
-                      key={`class-${newPaper.category}`}
-                      value={newPaper.classLevel || undefined} 
-                      onValueChange={(v) => setNewPaper(p => ({ ...p, classLevel: v, designation: '' }))}
-                      disabled={!newPaper.category}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select class" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getCurrentClassLevels().map(cls => (
-                          <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {showCoreSubject && (
-                  <div className="space-y-2">
-                    <Label>Core Subject *</Label>
-                    <Select 
-                      key={`subject-${newPaper.category}`}
-                      value={newPaper.coreSubject || undefined} 
-                      onValueChange={(v) => setNewPaper(p => ({ ...p, coreSubject: v }))}
-                      disabled={!newPaper.category}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select core subject" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {coreSubjectOptions.map(subj => (
-                          <SelectItem key={subj} value={subj}>{subj}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <Label>Designation *</Label>
-                  <Select 
-                    key={`designation-${newPaper.segment}-${newPaper.category}-${newPaper.classLevel}`}
-                    value={newPaper.designation || undefined} 
-                    onValueChange={(v) => setNewPaper(p => ({ ...p, designation: v }))}
-                    disabled={isEducation ? (showClassLevel ? !newPaper.classLevel : !newPaper.category) : !newPaper.segment}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select designation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getCurrentDesignations().map(des => (
-                        <SelectItem key={des} value={des}>{des}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             )}
 
