@@ -70,6 +70,7 @@ import AIJobApplyTab from "@/components/candidate/AIJobApplyTab";
 import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 import { CouponInput } from "@/components/shared/CouponInput";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
+import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 
 interface FamilyRecord {
   id?: string;
@@ -2182,6 +2183,7 @@ const CandidateDashboard = () => {
         </header>
 
 
+
         {/* Dashboard Content */}
         <main className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
@@ -3134,6 +3136,17 @@ const CandidateDashboard = () => {
                   </Card>
                 )}
 
+                {/* AI Learning Recommendations after Mock Test */}
+                {mockInterviewStageResults.length > 0 && (
+                  <div className="mt-6">
+                    <AILearningRecommendations 
+                      stageResults={mockInterviewStageResults} 
+                      candidateProfile={profile}
+                      compact={true}
+                    />
+                  </div>
+                )}
+
                 {/* Personalized Job Recommendations */}
                 <Card className="mt-6 overflow-hidden border-border">
                   <CardHeader className="bg-gradient-to-r from-accent/10 via-primary/5 to-accent/10 pb-4">
@@ -3720,6 +3733,12 @@ const CandidateDashboard = () => {
                     </div>
                   </Card>
                 )}
+
+                {/* AI Learning Recommendations - Mentors, EdTech & Institutions */}
+                <AILearningRecommendations 
+                  stageResults={mockInterviewStageResults} 
+                  candidateProfile={profile}
+                />
 
                 {/* General Course Platforms */}
                 <Card className="p-6">
