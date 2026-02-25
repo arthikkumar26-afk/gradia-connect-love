@@ -1,4 +1,5 @@
 import Hero from "@/components/sections/Hero";
+import ExternalJobsSection from "@/components/sections/ExternalJobsSection";
 import SalesChatbot from "@/components/SalesChatbot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +93,9 @@ const Index = () => {
     <div className="min-h-screen">
       {/* Hero Section with Trending Jobs */}
       <Hero />
+
+      {/* External Jobs Section */}
+      <ExternalJobsSection />
 
       {/* Features Section */}
       <section className="py-16 bg-background">
