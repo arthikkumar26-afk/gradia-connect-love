@@ -57,11 +57,11 @@ const ExternalJobsSection = () => {
   return (
     <section className="py-16 bg-subtle">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <div className="text-center mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
             External Job Opportunities
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
             Explore exciting career opportunities from top companies across industries.
           </p>
         </div>
