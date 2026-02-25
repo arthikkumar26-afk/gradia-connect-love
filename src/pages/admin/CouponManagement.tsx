@@ -77,6 +77,7 @@ const CouponManagement = () => {
   // Form state
   const candidatePackages = ["Pro (₹1499/mo)", "Premium (₹1999/mo)"];
   const employerPackages = ["Growth (₹4,999/mo)", "Professional (₹14,999/mo)", "Enterprise (₹29,000/mo)"];
+  const freelancerPackages = ["Starter (₹0/mo)", "Pro (₹1,499/mo)", "Premium (₹2,999/mo)"];
 
   const [form, setForm] = useState({
     code: "",
@@ -95,7 +96,8 @@ const CouponManagement = () => {
     const target = applicableTo || form.applicable_to;
     if (target === "candidate") return candidatePackages;
     if (target === "employer") return employerPackages;
-    return [...candidatePackages, ...employerPackages];
+    if (target === "freelancer") return freelancerPackages;
+    return [...candidatePackages, ...employerPackages, ...freelancerPackages];
   };
 
   const togglePackage = (pkg: string) => {
@@ -323,9 +325,10 @@ const CouponManagement = () => {
           <Select value={formState.applicable_to} onValueChange={v => setFormState({...formState, applicable_to: v})}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="both">Both</SelectItem>
+              <SelectItem value="both">All Users</SelectItem>
               <SelectItem value="candidate">Candidates Only</SelectItem>
               <SelectItem value="employer">Employers Only</SelectItem>
+              <SelectItem value="freelancer">Freelancers Only</SelectItem>
             </SelectContent>
           </Select>
         </div>
