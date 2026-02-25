@@ -24,11 +24,18 @@ interface ExternalJob {
 
 const ExternalJobsSection = () => {
   const [jobs, setJobs] = useState<ExternalJob[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchJobs = async () => {
+      const { count } = await supabase
+        .from("external_jobs")
+        .select("*", { count: "exact", head: true })
+        .eq("is_active", true);
+      setTotalCount(count || 0);
+
       const { data } = await supabase
         .from("external_jobs")
         .select("*")
@@ -136,6 +143,14 @@ const ExternalJobsSection = () => {
             </Card>
           ))}
         </div>
+
+        {totalCount > 6 && (
+          <div className="text-center mt-8">
+            <Button variant="outline" size="lg" className="gap-2" onClick={handleApply}>
+              View More Jobs ({totalCount - 6}+) <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
