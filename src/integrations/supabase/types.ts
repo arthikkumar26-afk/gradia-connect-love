@@ -2257,6 +2257,50 @@ export type Database = {
         }
         Relationships: []
       }
+      project_proposals: {
+        Row: {
+          cover_letter: string | null
+          created_at: string
+          freelancer_id: string
+          id: string
+          project_id: string
+          proposed_budget: number | null
+          proposed_duration: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cover_letter?: string | null
+          created_at?: string
+          freelancer_id: string
+          id?: string
+          project_id: string
+          proposed_budget?: number | null
+          proposed_duration?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cover_letter?: string | null
+          created_at?: string
+          freelancer_id?: string
+          id?: string
+          project_id?: string
+          proposed_budget?: number | null
+          proposed_duration?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_proposals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "outsource_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resume_analyses: {
         Row: {
           analyzed_at: string

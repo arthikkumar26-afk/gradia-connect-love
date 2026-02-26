@@ -60,6 +60,12 @@ const FreelancerDashboard = () => {
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const [myProposals, setMyProposals] = useState<Set<string>>(new Set());
+  const [submittingInterest, setSubmittingInterest] = useState<string | null>(null);
+  const [showInterestModal, setShowInterestModal] = useState<any>(null);
+  const [interestNote, setInterestNote] = useState("");
+  const [interestBudget, setInterestBudget] = useState("");
+  const [interestDuration, setInterestDuration] = useState("");
 
   // Mentorship from DB
   const { enrollments: dbMentorships, loading: mentorshipLoading, assignHomework, uploadDocument, reviewDocument } = useMentorship("mentor");
@@ -131,6 +137,51 @@ const FreelancerDashboard = () => {
     };
     fetchProjects();
   }, []);
+
+  // Fetch freelancer's existing proposals
+  useEffect(() => {
+    const fetchMyProposals = async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) return;
+      const { data } = await supabase
+        .from("project_proposals")
+        .select("project_id")
+        .eq("freelancer_id", currentUser.id);
+      if (data) setMyProposals(new Set(data.map((p: any) => p.project_id)));
+    };
+    fetchMyProposals();
+  }, []);
+
+  const handleShowInterest = async (project: any) => {
+    setShowInterestModal(project);
+    setInterestNote("");
+    setInterestBudget("");
+    setInterestDuration("");
+  };
+
+  const submitInterest = async () => {
+    if (!showInterestModal) return;
+    setSubmittingInterest(showInterestModal.id);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser) { toast({ title: "Please login first", variant: "destructive" }); return; }
+
+    const { error } = await supabase.from("project_proposals").insert({
+      project_id: showInterestModal.id,
+      freelancer_id: currentUser.id,
+      cover_letter: interestNote.trim() || null,
+      proposed_budget: interestBudget ? Number(interestBudget) : null,
+      proposed_duration: interestDuration.trim() || null,
+    });
+
+    if (error) {
+      toast({ title: "Failed to submit", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Interest submitted!", description: "The employer will be notified." });
+      setMyProposals(prev => new Set([...prev, showInterestModal.id]));
+      setShowInterestModal(null);
+    }
+    setSubmittingInterest(null);
+  };
 
   const allProjectSkills = Array.from(new Set(dbProjects.flatMap((p: any) => p.skills)));
 
@@ -651,7 +702,13 @@ const FreelancerDashboard = () => {
                       <Badge key={skill} variant="outline" className="text-xs">{skill}</Badge>
                     ))}
                   </div>
-                  <Button size="sm" className="gap-1" onClick={(e) => { e.stopPropagation(); navigate("/freelancer/submit-proposal"); }}>Submit Proposal <ArrowRight className="h-3.5 w-3.5" /></Button>
+                  {myProposals.has(project.id) ? (
+                    <Button size="sm" variant="secondary" disabled className="gap-1"><Check className="h-3.5 w-3.5" /> Interest Sent</Button>
+                  ) : (
+                    <Button size="sm" className="gap-1" onClick={(e) => { e.stopPropagation(); handleShowInterest(project); }}>
+                      <Send className="h-3.5 w-3.5" /> I'm Interested
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -761,8 +818,43 @@ const FreelancerDashboard = () => {
                       </Card>
                     </div>
 
-                    <Button className="w-full gap-2" onClick={() => { setSelectedProject(null); navigate("/freelancer/submit-proposal"); }}>
-                      Submit Proposal <ArrowRight className="h-4 w-4" />
+                    {myProposals.has(selectedProject.id) ? (
+                      <Button className="w-full gap-2" variant="secondary" disabled>
+                        <Check className="h-4 w-4" /> Interest Already Sent
+                      </Button>
+                    ) : (
+                      <Button className="w-full gap-2" onClick={() => { setSelectedProject(null); handleShowInterest(selectedProject); }}>
+                        <Send className="h-4 w-4" /> I'm Interested
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+            {/* Interest Submission Modal */}
+            <Dialog open={!!showInterestModal} onOpenChange={(open) => !open && setShowInterestModal(null)}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Express Interest</DialogTitle>
+                </DialogHeader>
+                {showInterestModal && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">Show your interest in <span className="font-semibold text-foreground">{showInterestModal.title}</span></p>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Your Proposed Budget (₹)</label>
+                      <input type="number" value={interestBudget} onChange={(e) => setInterestBudget(e.target.value)} placeholder="e.g. 25000" className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Proposed Duration</label>
+                      <input value={interestDuration} onChange={(e) => setInterestDuration(e.target.value)} placeholder="e.g. 2 weeks" className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Why are you interested? (optional)</label>
+                      <Textarea value={interestNote} onChange={(e) => setInterestNote(e.target.value)} placeholder="Briefly describe your relevant experience..." rows={3} />
+                    </div>
+                    <Button className="w-full gap-2" onClick={submitInterest} disabled={submittingInterest === showInterestModal.id}>
+                      {submittingInterest === showInterestModal.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      Submit Interest
                     </Button>
                   </div>
                 )}
