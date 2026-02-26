@@ -143,7 +143,7 @@ export function AllCandidatesContent() {
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">All Candidates</h2>
-          <Badge variant="secondary" className="text-xs">{filtered.length}</Badge>
+          
         </div>
       </div>
 
