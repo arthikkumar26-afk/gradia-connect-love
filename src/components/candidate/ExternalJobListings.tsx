@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, MapPin, Clock, Building2, Loader2, IndianRupee, Globe, User, Phone } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ExternalJob {
@@ -24,6 +25,7 @@ interface ExternalJob {
 const ExternalJobListings = () => {
   const [jobs, setJobs] = useState<ExternalJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hrModalJob, setHrModalJob] = useState<ExternalJob | null>(null);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -130,20 +132,60 @@ const ExternalJobListings = () => {
                 )}
 
                 <div className="mt-auto pt-2">
-                  <Button
-                    size="sm"
-                    className="w-full gap-2 text-xs"
-                    onClick={() => window.open(job.apply_url, "_blank", "noopener,noreferrer")}
-                  >
-                    Apply on Company Site
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </Button>
+                  {job.apply_url ? (
+                    <Button
+                      size="sm"
+                      className="w-full gap-2 text-xs"
+                      onClick={() => window.open(job.apply_url, "_blank", "noopener,noreferrer")}
+                    >
+                      Apply on Company Site
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full gap-2 text-xs"
+                      onClick={() => setHrModalJob(job)}
+                    >
+                      <Phone className="h-3.5 w-3.5" />
+                      Contact HR
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <Dialog open={!!hrModalJob} onOpenChange={(open) => !open && setHrModalJob(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">HR Contact Details</DialogTitle>
+          </DialogHeader>
+          {hrModalJob && (
+            <div className="space-y-3 pt-2">
+              <p className="text-sm font-medium">{hrModalJob.job_title} — {hrModalJob.company_name}</p>
+              {hrModalJob.hr_name && (
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>{hrModalJob.hr_name}</span>
+                </div>
+              )}
+              {hrModalJob.hr_contact && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <a href={`tel:${hrModalJob.hr_contact}`} className="text-primary underline">{hrModalJob.hr_contact}</a>
+                </div>
+              )}
+              {!hrModalJob.hr_name && !hrModalJob.hr_contact && (
+                <p className="text-sm text-muted-foreground">No HR contact details available for this job.</p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
