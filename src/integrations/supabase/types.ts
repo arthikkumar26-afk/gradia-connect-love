@@ -622,6 +622,7 @@ export type Database = {
           description: string | null
           experience_required: string | null
           hr_contact: string | null
+          hr_email: string | null
           hr_name: string | null
           id: string
           is_active: boolean
@@ -641,6 +642,7 @@ export type Database = {
           description?: string | null
           experience_required?: string | null
           hr_contact?: string | null
+          hr_email?: string | null
           hr_name?: string | null
           id?: string
           is_active?: boolean
@@ -660,6 +662,7 @@ export type Database = {
           description?: string | null
           experience_required?: string | null
           hr_contact?: string | null
+          hr_email?: string | null
           hr_name?: string | null
           id?: string
           is_active?: boolean

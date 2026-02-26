@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, MapPin, Clock, Building2, Loader2, IndianRupee, Globe, User, Phone } from "lucide-react";
+import { ExternalLink, MapPin, Clock, Building2, Loader2, IndianRupee, Globe, User, Phone, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,6 +20,7 @@ interface ExternalJob {
   company_logo_url: string | null;
   hr_name: string | null;
   hr_contact: string | null;
+  hr_email: string | null;
 }
 
 const ExternalJobListings = () => {
@@ -179,7 +180,13 @@ const ExternalJobListings = () => {
                   <a href={`tel:${hrModalJob.hr_contact}`} className="text-primary underline">{hrModalJob.hr_contact}</a>
                 </div>
               )}
-              {!hrModalJob.hr_name && !hrModalJob.hr_contact && (
+              {hrModalJob.hr_email && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <a href={`mailto:${hrModalJob.hr_email}`} className="text-primary underline">{hrModalJob.hr_email}</a>
+                </div>
+              )}
+              {!hrModalJob.hr_name && !hrModalJob.hr_contact && !hrModalJob.hr_email && (
                 <p className="text-sm text-muted-foreground">No HR contact details available for this job.</p>
               )}
             </div>

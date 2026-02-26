@@ -37,6 +37,7 @@ interface ExternalJob {
   company_logo_url: string | null;
   hr_name: string | null;
   hr_contact: string | null;
+  hr_email: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -65,6 +66,7 @@ const ExternalJobs = () => {
     company_logo_url: "",
     hr_name: "",
     hr_contact: "",
+    hr_email: "",
   });
 
   const menuItems = [
@@ -101,7 +103,7 @@ const ExternalJobs = () => {
   };
 
   const resetForm = () => {
-    setForm({ company_name: "", job_title: "", location: "", job_type: "full-time", salary_range: "", experience_required: "", description: "", skills: "", apply_url: "", company_logo_url: "", hr_name: "", hr_contact: "" });
+    setForm({ company_name: "", job_title: "", location: "", job_type: "full-time", salary_range: "", experience_required: "", description: "", skills: "", apply_url: "", company_logo_url: "", hr_name: "", hr_contact: "", hr_email: "" });
     setEditingJob(null);
   };
 
@@ -119,6 +121,7 @@ const ExternalJobs = () => {
       apply_url: data.apply_url || f.apply_url,
       hr_name: data.hr_name || f.hr_name,
       hr_contact: data.hr_contact || f.hr_contact,
+      hr_email: data.hr_email || f.hr_email,
     }));
   };
 
@@ -195,6 +198,7 @@ const ExternalJobs = () => {
       company_logo_url: job.company_logo_url || "",
       hr_name: (job as any).hr_name || "",
       hr_contact: (job as any).hr_contact || "",
+      hr_email: (job as any).hr_email || "",
     });
     setShowForm(true);
   };
@@ -214,6 +218,7 @@ const ExternalJobs = () => {
       company_logo_url: form.company_logo_url || null,
       hr_name: form.hr_name || null,
       hr_contact: form.hr_contact || null,
+      hr_email: form.hr_email || null,
     };
 
     if (editingJob) {
@@ -459,6 +464,10 @@ const ExternalJobs = () => {
                     <Label>HR Contact Number</Label>
                     <Input value={form.hr_contact} onChange={e => setForm(f => ({ ...f, hr_contact: e.target.value }))} placeholder="e.g. 9876543210" />
                   </div>
+                </div>
+                <div>
+                  <Label>HR Email</Label>
+                  <Input type="email" value={form.hr_email} onChange={e => setForm(f => ({ ...f, hr_email: e.target.value }))} placeholder="e.g. hr@company.com" />
                 </div>
                 <div>
                   <Label>Company Logo URL</Label>
