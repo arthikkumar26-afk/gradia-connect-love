@@ -1,0 +1,1 @@
+ALTER TABLE public.external_jobs ADD COLUMN hr_email TEXT DEFAULT NULL;
