@@ -19,11 +19,7 @@ import {
 import PortfolioTab from "@/components/freelancer/PortfolioTab";
 import { Textarea } from "@/components/ui/textarea";
 
-const sampleProjects = [
-  { id: 1, title: "React Dashboard Development", budget: "₹50,000 - ₹80,000", duration: "2-3 months", skills: ["React", "TypeScript", "Tailwind"], posted: "2 days ago", proposals: 12, description: "Build a comprehensive admin dashboard with charts, tables, user management, and real-time data updates using React and TypeScript.", clientName: "TechVista Solutions Pvt Ltd", clientEmail: "hr@techvista.in", clientLocation: "Hyderabad, Telangana", clientRating: 4.7, clientProjectsPosted: 15, clientJoinedDate: "Jan 2024", paymentVerified: true, profileVerified: true, clientIndustry: "IT Services", deliverables: ["Admin Panel UI", "REST API Integration", "User Auth Module", "Deployment"] },
-  { id: 2, title: "Mobile App UI/UX Design", budget: "₹30,000 - ₹50,000", duration: "1 month", skills: ["Figma", "UI/UX", "Mobile"], posted: "1 day ago", proposals: 8, description: "Design a modern mobile app for a food delivery startup. Includes wireframes, high-fidelity mockups, and a clickable prototype.", clientName: "FoodRush Startups", clientEmail: "design@foodrush.com", clientLocation: "Bangalore, Karnataka", clientRating: 4.2, clientProjectsPosted: 6, clientJoinedDate: "Aug 2025", paymentVerified: true, profileVerified: false, clientIndustry: "Food & Beverage", deliverables: ["Wireframes", "UI Mockups", "Prototype", "Design System"] },
-  { id: 3, title: "Python Data Analysis Script", budget: "₹20,000 - ₹35,000", duration: "2 weeks", skills: ["Python", "Pandas", "SQL"], posted: "3 hours ago", proposals: 5, description: "Automate data extraction from multiple CSV sources, clean and transform data, and generate weekly PDF reports with charts.", clientName: "DataMinds Analytics", clientEmail: "projects@dataminds.co", clientLocation: "Pune, Maharashtra", clientRating: 3.9, clientProjectsPosted: 3, clientJoinedDate: "Dec 2025", paymentVerified: false, profileVerified: true, clientIndustry: "Analytics", deliverables: ["ETL Script", "PDF Report Generator", "Documentation"] },
-];
+const sampleProjects: any[] = [];
 
 const sampleMentorships = [
   { id: 1, student: "Rahul Sharma", topic: "Full Stack Development", sessions: 12, nextSession: "Tomorrow, 4 PM", status: "active", email: "rahul@example.com", mobile: "+91 9876543210", location: "Hyderabad, Telangana", qualification: "B.Tech CSE", experience: "1 year", mockTestScore: 78, assignmentScore: 85, skillsToLearn: ["React", "Node.js", "MongoDB", "Docker"], gender: "Male", dob: "1999-05-15", liveTraining: "in-progress" as const, homeworkGiven: 3, homeworkCompleted: 2, submissions: [
@@ -59,6 +55,8 @@ const FreelancerDashboard = () => {
   const { toast } = useToast();
   const [activeMenu, setActiveMenu] = useState(() => searchParams.get("tab") || "dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [dbProjects, setDbProjects] = useState<any[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [parsedResumeData, setParsedResumeData] = useState<any>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
@@ -84,12 +82,62 @@ const FreelancerDashboard = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
 
-  const allProjectSkills = Array.from(new Set(sampleProjects.flatMap(p => p.skills)));
+  // Fetch outsource projects from DB
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setProjectsLoading(true);
+      const { data, error } = await supabase
+        .from("outsource_projects")
+        .select("*, profiles:employer_id(full_name, email, company_name, location)")
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
 
-  const filteredProjects = sampleProjects.filter(p => {
+      if (!error && data) {
+        const mapped = data.map((p: any) => {
+          const profile = p.profiles;
+          const postedDate = new Date(p.created_at);
+          const now = new Date();
+          const diffMs = now.getTime() - postedDate.getTime();
+          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffDays = Math.floor(diffHours / 24);
+          const posted = diffDays > 0 ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago` : diffHours > 0 ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago` : "Just now";
+
+          return {
+            id: p.id,
+            title: p.title,
+            budget: `₹${(p.budget_min || 0).toLocaleString()} - ₹${(p.budget_max || 0).toLocaleString()}`,
+            budget_min: p.budget_min || 0,
+            budget_max: p.budget_max || 0,
+            duration: p.duration || "Flexible",
+            skills: p.skills || [],
+            posted,
+            proposals: 0,
+            description: p.description || "",
+            clientName: profile?.company_name || profile?.full_name || "Company",
+            clientEmail: profile?.email || "",
+            clientLocation: profile?.location || "",
+            clientRating: 4.5,
+            clientProjectsPosted: 0,
+            clientJoinedDate: "",
+            paymentVerified: true,
+            profileVerified: true,
+            clientIndustry: "",
+            deliverables: p.deliverables || [],
+          };
+        });
+        setDbProjects(mapped);
+      }
+      setProjectsLoading(false);
+    };
+    fetchProjects();
+  }, []);
+
+  const allProjectSkills = Array.from(new Set(dbProjects.flatMap((p: any) => p.skills)));
+
+  const filteredProjects = dbProjects.filter((p: any) => {
     if (projectSkillFilter !== "all" && !p.skills.includes(projectSkillFilter)) return false;
-    if (projectBudgetFilter === "under50k" && !p.budget.includes("20,000") && !p.budget.includes("30,000")) return false;
-    if (projectBudgetFilter === "50k+" && !p.budget.includes("50,000") && !p.budget.includes("80,000")) return false;
+    if (projectBudgetFilter === "under50k" && p.budget_max >= 50000) return false;
+    if (projectBudgetFilter === "50k+" && p.budget_max < 50000) return false;
     if (projectSearchQuery && !p.title.toLowerCase().includes(projectSearchQuery.toLowerCase())) return false;
     return true;
   });
