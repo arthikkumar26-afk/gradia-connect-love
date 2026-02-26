@@ -1066,6 +1066,7 @@ export default function MockInterviewPipeline() {
     { title: "Unsubscribed Employers", icon: UserX, path: "/admin/unsubscribed-employers" },
     { title: "Unsubscribed Candidates", icon: UserX, path: "/admin/unsubscribed-candidates" },
     { title: "Job Moderation", icon: Briefcase, path: "/admin/jobs" },
+    { title: "External Jobs", icon: Briefcase, path: "/admin/external-jobs" },
     { title: "Companies", icon: Building2, path: "/admin/companies" },
     { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
     { title: "Management", icon: UserCog, path: "/admin/management" },
