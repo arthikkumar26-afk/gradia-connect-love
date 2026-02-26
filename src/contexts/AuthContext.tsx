@@ -106,43 +106,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    try {
+      // Set up auth state listener FIRST
+      const { data } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          console.log("Auth state changed:", event, session?.user?.email);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Use setTimeout to prevent deadlock
+            setTimeout(() => {
+              fetchProfile(session.user.id).finally(() => {
+                setIsLoading(false);
+              });
+            }, 0);
+          } else {
+            setProfile(null);
+            setIsLoading(false);
+          }
+        }
+      );
+      subscription = data.subscription;
+    } catch (err) {
+      console.warn("Auth state listener failed (likely iframe security restriction):", err);
+      setIsLoading(false);
+    }
+
+    // THEN check for existing session
+    try {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log("Initial session check:", session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to prevent deadlock
-          setTimeout(() => {
-            fetchProfile(session.user.id).finally(() => {
-              setIsLoading(false);
-            });
-          }, 0);
+          fetchProfile(session.user.id).finally(() => {
+            setIsLoading(false);
+          });
         } else {
-          setProfile(null);
           setIsLoading(false);
         }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id).finally(() => {
-          setIsLoading(false);
-        });
-      } else {
+      }).catch((err) => {
+        console.warn("getSession failed:", err);
         setIsLoading(false);
-      }
-    });
+      });
+    } catch (err) {
+      console.warn("getSession call failed (likely iframe security restriction):", err);
+      setIsLoading(false);
+    }
 
-    return () => subscription.unsubscribe();
+    return () => subscription?.unsubscribe();
   }, []);
 
   const logout = async () => {
