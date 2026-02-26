@@ -2086,6 +2086,51 @@ export type Database = {
           },
         ]
       }
+      outsource_projects: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          created_at: string
+          deliverables: string[] | null
+          description: string | null
+          duration: string | null
+          employer_id: string
+          id: string
+          skills: string[] | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          created_at?: string
+          deliverables?: string[] | null
+          description?: string | null
+          duration?: string | null
+          employer_id: string
+          id?: string
+          skills?: string[] | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          created_at?: string
+          deliverables?: string[] | null
+          description?: string | null
+          duration?: string | null
+          employer_id?: string
+          id?: string
+          skills?: string[] | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           alternate_number: string | null
