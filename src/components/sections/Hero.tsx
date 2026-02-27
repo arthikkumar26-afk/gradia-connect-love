@@ -27,7 +27,7 @@ const Hero = () => {
           .from('jobs')
           .select('id, job_title, location, job_type, salary_range, experience_required, created_at, skills, description, employer_id')
           .eq('is_featured', true)
-          .eq('status', 'active')
+          .eq('moderation_status', 'approved')
           .order('created_at', { ascending: false })
           .limit(8);
 
