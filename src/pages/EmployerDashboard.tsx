@@ -122,7 +122,7 @@ const EmployerDashboard = () => {
     };
     
     fetchCompanyName();
-  }, [user?.id]);
+  }, [user?.id, profile?.company_name]);
 
   // Fetch live dashboard stats
   useEffect(() => {
