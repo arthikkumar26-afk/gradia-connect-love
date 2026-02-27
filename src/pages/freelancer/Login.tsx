@@ -15,14 +15,14 @@ const FreelancerLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, profile } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && profile?.role === 'freelancer') {
       navigate("/freelancer/dashboard", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, profile, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
