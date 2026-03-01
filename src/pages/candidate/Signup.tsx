@@ -270,7 +270,7 @@ const CandidateSignup = () => {
       // Move to next step instead of navigating
       setCurrentStep('benefits');
     } catch (error: any) {
-      const isNetworkError = error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("fetch") || error.message?.includes("timed out");
+      const isNetworkError = error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
       if (isNetworkError) {
         setRetryError("Network issue detected. Please check your internet connection and try again.");
         toast({

@@ -50,13 +50,13 @@ const AdminLogin = () => {
       });
       
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timed out. Please check your internet and try again.')), 15000)
+        setTimeout(() => reject(new Error('Connection timed out. Please check your internet and try again.')), 30000)
       );
 
       const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
       if (error) {
-        const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("fetch");
+        const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
         toast({
           title: isNetworkError ? "Connection Error" : "Login Failed",
           description: isNetworkError ? "Unable to connect. Please check your internet connection and try again." : error.message,
@@ -88,7 +88,7 @@ const AdminLogin = () => {
       });
       navigate("/admin/dashboard");
     } catch (error: any) {
-      const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out") || error.message?.includes("fetch");
+      const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
       toast({
         title: isNetworkError ? "Connection Error" : "Error",
         description: isNetworkError ? "Unable to connect to server. Please check your internet connection and try again." : (error.message || "An error occurred during login"),
