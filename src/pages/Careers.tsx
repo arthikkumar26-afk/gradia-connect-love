@@ -26,6 +26,27 @@ const Careers = () => {
       location: "New York, NY",
       type: "Full-time",
       description: "Help our clients achieve their hiring goals and build lasting relationships."
+    },
+    {
+      title: "Civil Engineer",
+      department: "Infrastructure",
+      location: "Hyderabad, India",
+      type: "Full-time",
+      description: "Design and oversee construction projects, ensuring structural integrity and compliance with safety standards."
+    },
+    {
+      title: "Senior Civil Engineer",
+      department: "Infrastructure",
+      location: "Bangalore, India",
+      type: "Full-time",
+      description: "Lead large-scale infrastructure projects from planning through execution with a focus on sustainability."
+    },
+    {
+      title: "Site Engineer - Civil",
+      department: "Construction",
+      location: "Chennai, India",
+      type: "Full-time",
+      description: "Manage on-site construction activities, coordinate with contractors, and ensure quality control."
     }
   ];
 
