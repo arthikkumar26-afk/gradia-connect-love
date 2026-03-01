@@ -68,7 +68,7 @@ const FreelancerDashboard = () => {
   const [interestDuration, setInterestDuration] = useState("");
 
   // Mentorship from DB
-  const { enrollments: dbMentorships, loading: mentorshipLoading, assignHomework, uploadDocument, reviewDocument } = useMentorship("mentor");
+  const { enrollments: dbMentorships, loading: mentorshipLoading, assignHomework, uploadDocument, reviewDocument, refetch: refetchMentorships } = useMentorship("mentor");
 
   // Homework form state
   const [hwTitle, setHwTitle] = useState("");
@@ -87,6 +87,14 @@ const FreelancerDashboard = () => {
 
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [selectedProject, setSelectedProject] = useState<any>(null);
+
+  // Enroll candidate state
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [enrollSearchQuery, setEnrollSearchQuery] = useState("");
+  const [enrollSearchResults, setEnrollSearchResults] = useState<any[]>([]);
+  const [enrollSearching, setEnrollSearching] = useState(false);
+  const [enrollTopic, setEnrollTopic] = useState("");
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
   // Fetch outsource projects from DB
   useEffect(() => {
@@ -237,6 +245,53 @@ const FreelancerDashboard = () => {
     if (mentorshipSearchQuery && !m.student.toLowerCase().includes(mentorshipSearchQuery.toLowerCase()) && !m.topic.toLowerCase().includes(mentorshipSearchQuery.toLowerCase())) return false;
     return true;
   });
+
+  // Search candidates for enrollment
+  const searchCandidatesForEnroll = async (query: string) => {
+    if (!query.trim() || query.trim().length < 2) { setEnrollSearchResults([]); return; }
+    setEnrollSearching(true);
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, mobile, location, highest_qualification, experience_level")
+        .eq("role", "candidate")
+        .or(`full_name.ilike.%${query}%,email.ilike.%${query}%,mobile.ilike.%${query}%`)
+        .limit(10);
+      const enrolledIds = new Set(allMentorships.map(m => m.candidateId));
+      setEnrollSearchResults((data || []).filter(c => !enrolledIds.has(c.id)));
+    } catch (err) {
+      console.error("Search error:", err);
+    } finally {
+      setEnrollSearching(false);
+    }
+  };
+
+  const handleEnrollCandidate = async (candidateId: string) => {
+    if (!profile?.id || !enrollTopic.trim()) {
+      toast({ title: "Enter a topic", variant: "destructive" });
+      return;
+    }
+    setEnrollingId(candidateId);
+    try {
+      const { error } = await supabase.from("mentorship_enrollments").insert({
+        mentor_id: profile.id,
+        candidate_id: candidateId,
+        topic: enrollTopic.trim(),
+        status: "active",
+      });
+      if (error) throw error;
+      toast({ title: "Candidate Enrolled!", description: "They will now appear in your mentorship list." });
+      setShowEnrollModal(false);
+      setEnrollSearchQuery("");
+      setEnrollSearchResults([]);
+      setEnrollTopic("");
+      refetchMentorships();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setEnrollingId(null);
+    }
+  };
 
   // Ensure profile exists for this user
   useEffect(() => {
@@ -868,7 +923,7 @@ const FreelancerDashboard = () => {
           <div className="space-y-4 p-6 overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-foreground">My Mentorship</h2>
-              <Button size="sm" className="gap-1"><Users className="h-4 w-4" /> Find Students</Button>
+              <Button size="sm" className="gap-1" onClick={() => setShowEnrollModal(true)}><Users className="h-4 w-4" /> Enroll Candidate</Button>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex-1 min-w-[200px]">
@@ -1132,6 +1187,88 @@ const FreelancerDashboard = () => {
                     </div>
                   </div>
                 )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Enroll Candidate Modal */}
+            <Dialog open={showEnrollModal} onOpenChange={setShowEnrollModal}>
+              <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-accent" />
+                    Enroll Candidate
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Mentorship Topic *</label>
+                    <input
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mt-1"
+                      placeholder="e.g. Full Stack Development, Data Science..."
+                      value={enrollTopic}
+                      onChange={(e) => setEnrollTopic(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Search Candidate</label>
+                    <div className="relative mt-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <input
+                        className="flex h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        placeholder="Search by name, email, or mobile..."
+                        value={enrollSearchQuery}
+                        onChange={(e) => {
+                          setEnrollSearchQuery(e.target.value);
+                          searchCandidatesForEnroll(e.target.value);
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {enrollSearching && (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+                    </div>
+                  )}
+
+                  {!enrollSearching && enrollSearchQuery.length >= 2 && enrollSearchResults.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No candidates found.</p>
+                  )}
+
+                  {enrollSearchResults.length > 0 && (
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                      {enrollSearchResults.map((c) => (
+                        <div key={c.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-accent/50 transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                            <User className="h-5 w-5 text-accent" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{c.full_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                            <div className="flex gap-2 mt-0.5">
+                              {c.location && <span className="text-xs text-muted-foreground flex items-center gap-0.5"><MapPin className="h-3 w-3" />{c.location}</span>}
+                              {c.highest_qualification && <span className="text-xs text-muted-foreground">• {c.highest_qualification}</span>}
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="gap-1 flex-shrink-0"
+                            disabled={enrollingId === c.id || !enrollTopic.trim()}
+                            onClick={() => handleEnrollCandidate(c.id)}
+                          >
+                            {enrollingId === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <GraduationCap className="h-3.5 w-3.5" />}
+                            Enroll
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {!enrollTopic.trim() && enrollSearchResults.length > 0 && (
+                    <p className="text-xs text-amber-600">Please enter a mentorship topic above before enrolling.</p>
+                  )}
+                </div>
               </DialogContent>
             </Dialog>
           </div>
