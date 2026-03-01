@@ -15,7 +15,7 @@ import {
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
    FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
    ClipboardList, Send, Radio, Download, FolderOpen, Crown, Check, Zap,
-   Mail, Phone, RefreshCw
+   Mail, Phone, RefreshCw,
 } from "lucide-react";
 import PortfolioTab from "@/components/freelancer/PortfolioTab";
 import { Textarea } from "@/components/ui/textarea";
