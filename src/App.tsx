@@ -49,6 +49,7 @@ import FreelancerSignup from "./pages/freelancer/Signup";
 import FreelancerLogin from "./pages/freelancer/Login";
 import EduTechLanding from "./pages/edutech/EduTechLanding";
 import EduTechLogin from "./pages/edutech/EduTechLogin";
+import EduTechDashboard from "./pages/edutech/EduTechDashboard";
 
 import LearningPlatform from "./pages/LearningPlatform";
 import ResumeBuilder from "./pages/candidate/ResumeBuilder";
@@ -205,7 +206,7 @@ const MainRoutes = () => (
       <Route path="/edutech" element={<EduTechLanding />} />
       <Route path="/edutech/login" element={<EduTechLogin />} />
       <Route path="/edutech/signup" element={<EduTechLanding />} />
-      <Route path="/edutech/dashboard" element={<EduTechLanding />} />
+      <Route path="/edutech/dashboard" element={<EduTechDashboard />} />
 
       {/* Freelancer Routes */}
       <Route path="/freelancer/signup" element={<FreelancerSignup />} />
