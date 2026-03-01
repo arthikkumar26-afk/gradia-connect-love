@@ -468,8 +468,8 @@ export const QPMContent = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Written Test Papers</h2>
-            <p className="text-sm text-muted-foreground">Select a job vacancy to manage its written test papers</p>
+            <h2 className="text-lg font-semibold text-foreground">Smart Assessment</h2>
+            <p className="text-sm text-muted-foreground">Select a job vacancy to manage its smart assessments</p>
           </div>
         </div>
 
