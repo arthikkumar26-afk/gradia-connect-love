@@ -58,7 +58,7 @@ const CandidateLogin = () => {
       const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
       if (error) {
-        const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("fetch");
+        const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
         toast({
           title: isNetworkError ? "Connection Error" : "Login Failed",
           description: isNetworkError ? "Unable to connect. Please check your internet connection and try again." : error.message,

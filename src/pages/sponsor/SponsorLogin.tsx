@@ -72,12 +72,12 @@ export default function SponsorLogin() {
         password,
       });
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timed out.')), 15000)
+        setTimeout(() => reject(new Error('Connection timed out.')), 30000)
       );
       const { data: authData, error: authError } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
       if (authError) {
-        const isNetworkError = authError.message?.includes("NetworkError") || authError.message?.includes("Failed to fetch") || authError.message?.includes("fetch");
+        const isNetworkError = authError.message?.includes("NetworkError") || authError.message?.includes("Failed to fetch") || authError.message?.includes("timed out");
         if (isNetworkError) {
           toast.error("Unable to connect. Please check your internet connection and try again.");
         } else if (authError.message.includes("Invalid login credentials")) {
