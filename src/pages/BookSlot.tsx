@@ -389,16 +389,29 @@ const BookSlot = () => {
 
           {/* Quick Action Buttons */}
           <div className="flex gap-2">
-            {getTodayDate() && (
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-11 text-sm font-semibold border-2 border-blue-400 text-blue-700 hover:bg-blue-100 bg-blue-50"
-                onClick={() => setSelectedDate(getTodayDate()!)}
-              >
-                📅 Today
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
+              onClick={() => {
+                const today = getTodayDate();
+                if (today) {
+                  setSelectedDate(today);
+                  // Set to nearest upcoming slot
+                  const now = new Date();
+                  const minutes = now.getMinutes();
+                  const roundedMinutes = minutes < 30 ? 30 : 0;
+                  const hour = roundedMinutes === 0 ? now.getHours() + 1 : now.getHours();
+                  const minute = roundedMinutes.toString().padStart(2, "0");
+                  const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
+                  setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
+                } else {
+                  toast.info("Today is Sunday. Please select another date.");
+                }
+              }}
+            >
+              🚀 Start Now
+            </Button>
             <Button
               type="button"
               variant="outline"
