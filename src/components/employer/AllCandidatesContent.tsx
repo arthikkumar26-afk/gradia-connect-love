@@ -5,11 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, MapPin, Briefcase, Mail, Phone, GraduationCap, X, Download, PhoneCall, FileText, Calendar, IndianRupee, Globe, Home, UserCheck, BookOpen } from "lucide-react";
+import { Search, Users, MapPin, Briefcase, Mail, Phone, GraduationCap, X, Download, PhoneCall, FileText, Calendar, IndianRupee, Globe, Home, UserCheck, BookOpen, Send } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 interface CandidateProfile {
@@ -303,6 +305,8 @@ function CandidateDetailDialog({
   const [addresses, setAddresses] = useState<any>(null);
   const [family, setFamily] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sendingProposal, setSendingProposal] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (candidate) {
@@ -387,6 +391,43 @@ function CandidateDetailDialog({
               </a>
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="default"
+            disabled={sendingProposal}
+            onClick={async () => {
+              setSendingProposal(true);
+              try {
+                // Get employer info
+                const { data: employerProfile } = await supabase
+                  .from("profiles")
+                  .select("full_name, company_name, email")
+                  .eq("id", user?.id || "")
+                  .maybeSingle();
+
+                const employerName = employerProfile?.company_name || employerProfile?.full_name || "An employer";
+
+                const { error } = await supabase.functions.invoke("send-notification-email", {
+                  body: {
+                    to: candidate.email,
+                    subject: `Job Proposal from ${employerName}`,
+                    heading: "You've Received a Job Proposal! 🎉",
+                    body: `Dear ${candidate.full_name},\n\nGreat news! ${employerName} has reviewed your profile and would like to send you a job proposal.\n\nThey are interested in your skills and experience and would like to discuss a potential opportunity with you.\n\nPlease log in to your Gradia account to view more details and respond.\n\nBest regards,\nGradia Team`,
+                  },
+                });
+
+                if (error) throw error;
+                toast.success(`Proposal notification sent to ${candidate.full_name}`);
+              } catch (err) {
+                console.error("Error sending proposal:", err);
+                toast.error("Failed to send proposal notification");
+              } finally {
+                setSendingProposal(false);
+              }
+            }}
+          >
+            <Send className="h-4 w-4 mr-1.5" /> {sendingProposal ? "Sending..." : "Proposal"}
+          </Button>
         </div>
 
         <Separator />
