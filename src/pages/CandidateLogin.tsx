@@ -53,7 +53,7 @@ const CandidateLogin = () => {
         password
       });
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timed out. Please check your internet and try again.')), 15000)
+        setTimeout(() => reject(new Error('Connection timed out. Please check your internet and try again.')), 30000)
       );
       const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
 

@@ -54,10 +54,11 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const signInPromise = supabase.auth.signInWithPassword({ email, password });
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timed out. Please check your internet and try again.')), 30000)
+      );
+      const { error } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
       if (error) {
         toast({
