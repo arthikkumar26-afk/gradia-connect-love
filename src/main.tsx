@@ -2,13 +2,18 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Prevent "Should have a queue" React HMR errors from crashing the app
+// Suppress non-critical unhandled rejections (React HMR + network errors)
 window.addEventListener("unhandledrejection", (event) => {
+  const msg = event.reason?.message || "";
+  const name = event.reason?.name || "";
   if (
-    event.reason?.message?.includes("Should have a queue") ||
-    event.reason?.message?.includes("bug in React")
+    msg.includes("Should have a queue") ||
+    msg.includes("bug in React") ||
+    msg.includes("NetworkError") ||
+    msg.includes("Failed to fetch") ||
+    name === "TypeError"
   ) {
-    console.warn("Suppressed React HMR error:", event.reason?.message);
+    console.warn("Suppressed unhandled rejection:", msg || name);
     event.preventDefault();
   }
 });
