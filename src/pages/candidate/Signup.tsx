@@ -164,11 +164,13 @@ const CandidateSignup = () => {
     }
 
     setIsLoading(true);
+    setRetryError(null);
     
     try {
       const redirectUrl = `${window.location.origin}/candidate/dashboard`;
       
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Add timeout to prevent hanging on slow connections
+      const signupPromise = supabase.auth.signUp({
         email,
         password,
         options: {
@@ -180,13 +182,27 @@ const CandidateSignup = () => {
         }
       });
 
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Request timed out. Please check your internet connection and try again.")), 30000)
+      );
+
+      const { data: authData, error: authError } = await Promise.race([signupPromise, timeoutPromise]);
+
       if (authError) {
-        if (authError.message.includes("already registered")) {
+        const msg = authError.message || '';
+        if (msg.includes("already registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
+        } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("fetch")) {
+          setRetryError("Network issue detected. Please check your internet connection and try again.");
+          toast({
+            title: "Connection Error",
+            description: "Unable to connect to the server. Please check your internet and try again.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Signup Failed",
-            description: authError.message,
+            description: msg,
             variant: "destructive",
           });
         }
@@ -233,7 +249,7 @@ const CandidateSignup = () => {
       // Move to next step instead of navigating
       setCurrentStep('benefits');
     } catch (error: any) {
-      const isNetworkError = error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("fetch");
+      const isNetworkError = error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("fetch") || error.message?.includes("timed out");
       if (isNetworkError) {
         setRetryError("Network issue detected. Please check your internet connection and try again.");
         toast({
