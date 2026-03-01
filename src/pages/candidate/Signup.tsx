@@ -169,24 +169,44 @@ const CandidateSignup = () => {
     try {
       const redirectUrl = `${window.location.origin}/candidate/dashboard`;
       
-      // Add timeout to prevent hanging on slow connections
-      const signupPromise = supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            role: 'candidate',
-            full_name: fullName,
+      // Helper: retry a promise-returning function
+      const withRetry = async <T,>(fn: () => Promise<T>, maxRetries = 3, delayMs = 1500): Promise<T> => {
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+          try {
+            return await fn();
+          } catch (err: any) {
+            const isRetryable = err.name === "TypeError" || err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");
+            if (isRetryable && attempt < maxRetries - 1) {
+              console.warn(`Retry attempt ${attempt + 1}...`);
+              await new Promise(r => setTimeout(r, delayMs * (attempt + 1)));
+              continue;
+            }
+            throw err;
           }
         }
-      });
+        throw new Error("Max retries exceeded");
+      };
 
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Request timed out. Please check your internet connection and try again.")), 30000)
-      );
+      // Sign up with retry + timeout
+      const signupWithTimeout = async () => {
+        const signupPromise = supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: {
+              role: 'candidate',
+              full_name: fullName,
+            }
+          }
+        });
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Request timed out. Please check your internet connection and try again.")), 30000)
+        );
+        return Promise.race([signupPromise, timeoutPromise]);
+      };
 
-      const { data: authData, error: authError } = await Promise.race([signupPromise, timeoutPromise]);
+      const { data: authData, error: authError } = await withRetry(signupWithTimeout, 2);
 
       if (authError) {
         const msg = authError.message || '';
@@ -224,23 +244,36 @@ const CandidateSignup = () => {
         return;
       }
 
-      // Create profile and role in parallel
-      const [profileResult, roleResult] = await Promise.all([
-        supabase.from("profiles").upsert({
-          id: authData.user.id,
-          email: email,
-          full_name: fullName,
-          mobile: mobile,
-          role: 'candidate',
-          category: industryCategory || null,
-          primary_subject: primarySubject || null,
-          segment: segment || null,
-        }),
-        supabase.from("user_roles").upsert({
-          user_id: authData.user.id,
-          role: 'candidate' as const,
-        }, { onConflict: 'user_id,role' }),
-      ]);
+      // Create profile and role with retry
+      const createProfileAndRole = async () => {
+        const [profileResult, roleResult] = await Promise.all([
+          supabase.from("profiles").upsert({
+            id: authData.user!.id,
+            email: email,
+            full_name: fullName,
+            mobile: mobile,
+            role: 'candidate',
+            category: industryCategory || null,
+            primary_subject: primarySubject || null,
+            segment: segment || null,
+          }),
+          supabase.from("user_roles").upsert({
+            user_id: authData.user!.id,
+            role: 'candidate' as const,
+          }, { onConflict: 'user_id,role' }),
+        ]);
+        if (profileResult.error) {
+          const isNet = profileResult.error.message?.includes("Failed to fetch") || profileResult.error.message?.includes("NetworkError");
+          if (isNet) throw new TypeError(profileResult.error.message);
+        }
+        if (roleResult.error) {
+          const isNet = roleResult.error.message?.includes("Failed to fetch") || roleResult.error.message?.includes("NetworkError");
+          if (isNet) throw new TypeError(roleResult.error.message);
+        }
+        return { profileResult, roleResult };
+      };
+
+      const { profileResult, roleResult } = await withRetry(createProfileAndRole);
 
       if (profileResult.error || roleResult.error) {
         console.error("Profile creation error:", profileResult.error);
@@ -270,7 +303,7 @@ const CandidateSignup = () => {
       // Move to next step instead of navigating
       setCurrentStep('benefits');
     } catch (error: any) {
-      const isNetworkError = error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
+      const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
       if (isNetworkError) {
         setRetryError("Network issue detected. Please check your internet connection and try again.");
         toast({
