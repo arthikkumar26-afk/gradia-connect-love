@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Search, Menu, X, Sun, Moon, ChevronDown, LogOut, LayoutDashboard, Briefcase, Users, Settings as SettingsIcon, User, ShieldCheck, Crown, Handshake, Award, FileText, Send, Building2, BookOpen, Star, MessageSquare, Palette, Package, Calendar, HelpCircle, ExternalLink } from "lucide-react";
+import { Search, Menu, X, Sun, Moon, ChevronDown, LogOut, LayoutDashboard, Briefcase, Users, Settings as SettingsIcon, User, ShieldCheck, Crown, Handshake, Award, FileText, Send, Building2, BookOpen, Star, MessageSquare, Palette, Package, Calendar, HelpCircle, ExternalLink, GraduationCap } from "lucide-react";
 import SignupQRButton from "./SignupQRButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
@@ -246,6 +246,17 @@ const Header = () => {
                         <div>
                           <div className="font-medium text-foreground">Freelancer Login</div>
                           <div className="text-xs text-muted-foreground">Projects & mentorship</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/employer/login?edutech=true" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
+                          <GraduationCap className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground">EduTech Login</div>
+                          <div className="text-xs text-muted-foreground">Institutes & training</div>
                         </div>
                       </Link>
                     </DropdownMenuItem>
