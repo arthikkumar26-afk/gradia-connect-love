@@ -44,20 +44,34 @@ const EmployerLogin = () => {
     setIsLoading(true);
     
     try {
-      const signInPromise = supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timed out. Please check your internet and try again.')), 30000)
-      );
-      const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
+      const isNetErr = (msg?: string) => 
+        msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("timed out");
+
+      let data: any = null;
+      let error: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const signInPromise = supabase.auth.signInWithPassword({ email, password });
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timed out.')), 30000)
+          );
+          const result = await Promise.race([signInPromise, timeoutPromise]) as any;
+          data = result.data;
+          error = result.error;
+          if (!error || !isNetErr(error.message)) break;
+          console.warn(`Login attempt ${attempt + 1} failed (network):`, error.message);
+        } catch (err: any) {
+          error = err;
+          if (!(err.name === "TypeError" || isNetErr(err.message)) || attempt >= 2) break;
+        }
+        if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+      }
 
       if (error) {
-        const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
+        const isNetwork = error.name === "TypeError" || isNetErr(error.message);
         toast({
-          title: isNetworkError ? "Connection Error" : "Login Failed",
-          description: isNetworkError ? "Unable to connect. Please check your internet connection and try again." : error.message,
+          title: isNetwork ? "Connection Error" : "Login Failed",
+          description: isNetwork ? "Unable to connect. Please check your internet connection and try again." : error.message,
           variant: "destructive",
         });
         setIsLoading(false);

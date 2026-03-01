@@ -28,19 +28,34 @@ const FreelancerLogin = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const signInPromise = supabase.auth.signInWithPassword({ email, password });
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timed out.')), 30000)
-      );
-      const { error } = await Promise.race([signInPromise, timeoutPromise]) as any;
+      const isNetErr = (msg?: string) => 
+        msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("timed out");
+
+      let error: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const signInPromise = supabase.auth.signInWithPassword({ email, password });
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Connection timed out.')), 30000)
+          );
+          const result = await Promise.race([signInPromise, timeoutPromise]) as any;
+          error = result.error;
+          if (!error || !isNetErr(error.message)) break;
+          console.warn(`Login attempt ${attempt + 1} failed (network)`);
+        } catch (err: any) {
+          error = err;
+          if (!(err.name === "TypeError" || isNetErr(err.message)) || attempt >= 2) break;
+        }
+        if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+      }
       if (error) {
-        const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("fetch");
-        toast({ title: isNetworkError ? "Connection Error" : "Login Failed", description: isNetworkError ? "Unable to connect. Check your internet and try again." : error.message, variant: "destructive" });
+        const isNetwork = error.name === "TypeError" || isNetErr(error.message);
+        toast({ title: isNetwork ? "Connection Error" : "Login Failed", description: isNetwork ? "Unable to connect. Check your internet and try again." : error.message, variant: "destructive" });
         return;
       }
       toast({ title: "Login Successful", description: "Redirecting to your dashboard..." });
     } catch (error: any) {
-      const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
+      const isNetworkError = error.name === "TypeError" || error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
       toast({ title: isNetworkError ? "Connection Error" : "Error", description: isNetworkError ? "Unable to connect. Check your internet." : (error.message || "An error occurred"), variant: "destructive" });
     } finally {
       setIsLoading(false);
