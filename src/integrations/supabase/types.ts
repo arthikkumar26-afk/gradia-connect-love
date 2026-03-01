@@ -3076,6 +3076,7 @@ export type Database = {
       is_employer: { Args: { u_id: string }; Returns: boolean }
       is_employer_by_role: { Args: { _user_id: string }; Returns: boolean }
       is_employer_profile: { Args: { _user_id: string }; Returns: boolean }
+      is_freelancer_profile: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
