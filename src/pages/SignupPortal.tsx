@@ -7,7 +7,7 @@ import {
   CreditCard, Megaphone, Database, Monitor, MessageSquare, 
   Award, Sparkles, Receipt, CheckCircle, Video, Download,
   Plus, Table, Bot, Activity, Calendar, Clock, UserCheck, XCircle,
-  HeadphonesIcon, Wallet, Building2, Check
+  HeadphonesIcon, Wallet, Building2, Check, GraduationCap
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -855,6 +855,29 @@ const SignupPortal = () => {
                   <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">Mentorship</span>
                 </div>
                 <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white" size="sm">
+                  Continue <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* EduTech Option */}
+            <Card 
+              className="bg-slate-800/50 border-slate-700 hover:border-purple-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10"
+              onClick={() => navigate("/edutech")}
+            >
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                  <GraduationCap className="h-8 w-8 text-purple-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white mb-2">EduTech</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Register institute & market courses
+                </p>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Courses</span>
+                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Marketing</span>
+                </div>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" size="sm">
                   Continue <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </CardContent>
