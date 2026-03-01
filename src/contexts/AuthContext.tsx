@@ -59,43 +59,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retries = 3) => {
     console.log("Fetching profile for user:", userId);
-    try {
-      // Fetch profile data
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .maybeSingle();
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        // Fetch profile data
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle();
 
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-        return;
+        if (profileError) {
+          const isNetworkError = profileError.message?.includes("Failed to fetch") || profileError.message?.includes("NetworkError");
+          if (isNetworkError && attempt < retries - 1) {
+            console.warn(`Profile fetch attempt ${attempt + 1} failed (network), retrying...`);
+            await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+            continue;
+          }
+          console.error("Error fetching profile:", profileError);
+          return;
+        }
+
+        // Also check user_roles table for admin/owner roles
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (roleError) {
+          console.error("Error fetching user role:", roleError);
+        }
+
+        if (profileData) {
+          const actualRole = roleData?.role || profileData.role;
+          console.log("Profile fetched successfully, role:", actualRole);
+          setProfile({ ...profileData, role: actualRole } as Profile);
+        } else {
+          console.log("No profile found for user");
+          setProfile(null);
+        }
+        return; // Success, exit retry loop
+      } catch (err: any) {
+        const isNetworkError = err.name === "TypeError" || err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");
+        if (isNetworkError && attempt < retries - 1) {
+          console.warn(`Profile fetch attempt ${attempt + 1} failed (exception), retrying...`);
+          await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+          continue;
+        }
+        console.error("Exception fetching profile:", err);
       }
-
-      // Also check user_roles table for admin/owner roles
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (roleError) {
-        console.error("Error fetching user role:", roleError);
-      }
-
-      if (profileData) {
-        // Use role from user_roles table if it exists (for admin/owner), otherwise use profile role
-        const actualRole = roleData?.role || profileData.role;
-        console.log("Profile fetched successfully, role:", actualRole);
-        setProfile({ ...profileData, role: actualRole } as Profile);
-      } else {
-        console.log("No profile found for user");
-        setProfile(null);
-      }
-    } catch (err) {
-      console.error("Exception fetching profile:", err);
     }
   };
 

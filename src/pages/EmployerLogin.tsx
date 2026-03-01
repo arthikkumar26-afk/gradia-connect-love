@@ -64,17 +64,26 @@ const EmployerLogin = () => {
         return;
       }
 
-      // Check the user's role from profiles
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
+      // Check the user's role from profiles (with retry for network issues)
+      let profileData = null;
+      let profileError = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const result = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+        profileData = result.data;
+        profileError = result.error;
+        if (!profileError) break;
+        if (attempt < 2) await new Promise(r => setTimeout(r, 1000));
+      }
 
       if (profileError || !profileData) {
+        const isNetErr = profileError?.message?.includes("Failed to fetch") || profileError?.message?.includes("NetworkError");
         toast({
-          title: "Profile Not Found",
-          description: "Please complete your employer registration first.",
+          title: isNetErr ? "Connection Error" : "Profile Not Found",
+          description: isNetErr ? "Unable to connect. Please check your internet and try again." : "Please complete your employer registration first.",
           variant: "destructive",
         });
         await supabase.auth.signOut();
@@ -101,9 +110,10 @@ const EmployerLogin = () => {
       // Navigate to employer dashboard
       navigate(from);
     } catch (error: any) {
+      const isNetworkError = error.name === "TypeError" || error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
       toast({
-        title: "Error",
-        description: error.message || "An error occurred during login",
+        title: isNetworkError ? "Connection Error" : "Error",
+        description: isNetworkError ? "Unable to connect. Please check your internet connection and try again." : (error.message || "An error occurred during login"),
         variant: "destructive",
       });
     } finally {
