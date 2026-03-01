@@ -250,7 +250,7 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/employer/login?edutech=true" className="flex items-center gap-3 py-2">
+                      <Link to="/edutech/login" className="flex items-center gap-3 py-2">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
                           <GraduationCap className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                         </div>
