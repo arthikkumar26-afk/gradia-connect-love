@@ -168,38 +168,81 @@ const EmployerSignup = () => {
     }
 
     setIsLoading(true);
+    setRetryError(null);
     
     try {
       const redirectUrl = `${window.location.origin}/employer/signup`;
       
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            role: 'employer',
-            company_name: companyName,
-            company_category: companyCategory,
-            full_name: contactPerson,
-          }
-        }
-      });
+      const isNetErr = (msg?: string) => 
+        msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("TypeError") || msg?.includes("timed out");
 
-      if (authError) {
-        if (authError.message.includes("already registered")) {
+      // Sign up with retry + timeout
+      let authData: any = null;
+      let authError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const signupPromise = supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: redirectUrl,
+              data: {
+                role: 'employer',
+                company_name: companyName,
+                company_category: companyCategory,
+                full_name: contactPerson,
+              }
+            }
+          });
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Request timed out.")), 30000)
+          );
+          const result = await Promise.race([signupPromise, timeoutPromise]);
+          authData = result.data;
+          authError = result.error;
+          if (!authError || !isNetErr(authError.message)) break;
+          console.warn(`Employer signup attempt ${attempt + 1} failed (network):`, authError.message);
+        } catch (err: any) {
+          authError = err;
+          if (!(err.name === "TypeError" || isNetErr(err.message)) || attempt >= 2) break;
+          console.warn(`Employer signup attempt ${attempt + 1} threw:`, err.message);
+        }
+        if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+      }
+
+      if (authError && !authData?.user) {
+        const msg = authError.message || '';
+        if (msg.includes("already registered") || msg.includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
+        } else if (isNetErr(msg)) {
+          setRetryError("Network issue detected. Please check your internet connection and try again.");
+          toast({
+            title: "Connection Error",
+            description: "Unable to connect to the server. Please check your internet and try again.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Signup Failed",
-            description: authError.message,
+            description: msg,
             variant: "destructive",
           });
         }
         return;
       }
 
-      if (authData.user) {
+      if (authData?.user && (!authData.user.identities || authData.user.identities.length === 0)) {
+        setErrors({ email: "This email is already registered. Please login instead." });
+        return;
+      }
+
+      if (!authData?.user) {
+        toast({ title: "Signup Failed", description: "Could not create account. Please try again.", variant: "destructive" });
+        return;
+      }
+
+      // Create profile with retry
+      for (let attempt = 0; attempt < 3; attempt++) {
         const { error: profileError } = await supabase
           .from("profiles")
           .upsert({
@@ -209,37 +252,34 @@ const EmployerSignup = () => {
             company_name: companyName,
             role: 'employer',
           });
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
+        if (!profileError) break;
+        if (isNetErr(profileError.message) && attempt < 2) {
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
         }
-
-        // Send welcome email (fire and forget)
-        supabase.functions.invoke('send-welcome-email', {
-          body: {
-            email: email,
-            fullName: contactPerson,
-            role: 'employer',
-          }
-        }).then(res => {
-          if (res.error) console.error("Welcome email error:", res.error);
-          else console.log("Welcome email sent successfully");
-        }).catch(err => console.error("Welcome email failed:", err));
+        console.error("Profile creation error:", profileError);
+        break;
       }
+
+      // Send welcome email (fire and forget)
+      supabase.functions.invoke('send-welcome-email', {
+        body: { email, fullName: contactPerson, role: 'employer' }
+      }).catch(err => console.error("Welcome email failed:", err));
 
       toast({
         title: "Account Created!",
         description: "Explore the benefits of partnering with Gradia",
       });
 
-      // Move to next step instead of navigating
       setCurrentStep('benefits');
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred during signup",
-        variant: "destructive",
-      });
+      const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
+      if (isNetworkError) {
+        setRetryError("Network issue detected. Please check your internet connection and try again.");
+        toast({ title: "Connection Error", description: "Unable to connect. Please check your internet and try again.", variant: "destructive" });
+      } else {
+        toast({ title: "Error", description: error.message || "An error occurred during signup", variant: "destructive" });
+      }
     } finally {
       setIsLoading(false);
     }

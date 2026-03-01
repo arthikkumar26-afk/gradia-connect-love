@@ -51,42 +51,93 @@ const FreelancerSignup = () => {
     setIsLoading(true);
     
     try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email, password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/freelancer/dashboard`,
-          data: { role: 'freelancer', full_name: fullName }
-        }
-      });
+      const isNetErr = (msg?: string) => 
+        msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("TypeError") || msg?.includes("timed out");
 
-      if (authError) {
-        if (authError.message.includes("already registered")) {
+      let authData: any = null;
+      let authError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const signupPromise = supabase.auth.signUp({
+            email, password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/freelancer/dashboard`,
+              data: { role: 'freelancer', full_name: fullName }
+            }
+          });
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Request timed out.")), 30000)
+          );
+          const result = await Promise.race([signupPromise, timeoutPromise]);
+          authData = result.data;
+          authError = result.error;
+          if (!authError || !isNetErr(authError.message)) break;
+          console.warn(`Freelancer signup attempt ${attempt + 1} failed (network):`, authError.message);
+        } catch (err: any) {
+          authError = err;
+          if (!(err.name === "TypeError" || isNetErr(err.message)) || attempt >= 2) break;
+          console.warn(`Freelancer signup attempt ${attempt + 1} threw:`, err.message);
+        }
+        if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+      }
+
+      if (authError && !authData?.user) {
+        const msg = authError.message || '';
+        if (msg.includes("already registered") || msg.includes("already been registered")) {
           setErrors({ email: "Email already registered. Please login." });
+        } else if (isNetErr(msg)) {
+          toast({ title: "Connection Error", description: "Unable to connect. Please check your internet and try again.", variant: "destructive" });
         } else {
-          toast({ title: "Signup Failed", description: authError.message, variant: "destructive" });
+          toast({ title: "Signup Failed", description: msg, variant: "destructive" });
         }
         return;
       }
 
-      if (authData.user) {
-        await supabase.from("profiles").upsert({
-          id: authData.user.id, email, full_name: fullName, mobile, role: 'freelancer',
-        });
-        await supabase.from("user_roles").upsert(
-          { user_id: authData.user.id, role: 'freelancer' as any },
-          { onConflict: 'user_id,role' }
-        );
-        await refreshProfile();
-
-        supabase.functions.invoke('send-welcome-email', {
-          body: { email, fullName, role: 'freelancer' }
-        }).catch(err => console.error("Welcome email failed:", err));
+      if (authData?.user && (!authData.user.identities || authData.user.identities.length === 0)) {
+        setErrors({ email: "Email already registered. Please login." });
+        return;
       }
+
+      if (!authData?.user) {
+        toast({ title: "Signup Failed", description: "Could not create account. Please try again.", variant: "destructive" });
+        return;
+      }
+
+      // Create profile and role with retry
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const [profileResult, roleResult] = await Promise.all([
+          supabase.from("profiles").upsert({
+            id: authData.user.id, email, full_name: fullName, mobile, role: 'freelancer',
+          }),
+          supabase.from("user_roles").upsert(
+            { user_id: authData.user.id, role: 'freelancer' as any },
+            { onConflict: 'user_id,role' }
+          ),
+        ]);
+        if (!profileResult.error && !roleResult.error) break;
+        if (attempt < 2 && (isNetErr(profileResult.error?.message) || isNetErr(roleResult.error?.message))) {
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+          continue;
+        }
+        if (profileResult.error) console.error("Profile error:", profileResult.error);
+        if (roleResult.error) console.error("Role error:", roleResult.error);
+        break;
+      }
+
+      refreshProfile().catch(err => console.error("Profile refresh error:", err));
+      supabase.functions.invoke('send-welcome-email', {
+        body: { email, fullName, role: 'freelancer' }
+      }).catch(err => console.error("Welcome email failed:", err));
 
       toast({ title: "Account Created!", description: "Welcome to Gradia as a Freelancer" });
       navigate('/freelancer/dashboard');
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
+      toast({
+        title: isNetworkError ? "Connection Error" : "Error",
+        description: isNetworkError ? "Unable to connect. Please check your internet and try again." : error.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
