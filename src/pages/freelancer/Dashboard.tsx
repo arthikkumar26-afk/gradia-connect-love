@@ -15,7 +15,7 @@ import {
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
    FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
    ClipboardList, Send, Radio, Download, FolderOpen, Crown, Check, Zap,
-   Mail, Phone
+   Mail, Phone, RefreshCw
 } from "lucide-react";
 import PortfolioTab from "@/components/freelancer/PortfolioTab";
 import { Textarea } from "@/components/ui/textarea";
@@ -170,37 +170,38 @@ const FreelancerDashboard = () => {
   }, []);
 
   // Fetch candidate mentorship requests
-  useEffect(() => {
-    const fetchRequests = async () => {
-      if (!profile?.id) return;
-      setRequestsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("mentorship_requests")
-          .select("*")
-          .eq("mentor_id", profile.id)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        if (data && data.length > 0) {
-          const candidateIds = data.map((r: any) => r.candidate_id);
-          const { data: candidateProfiles } = await supabase
-            .from("profiles")
-            .select("id, full_name, email, mobile, location, highest_qualification, experience_level, profile_picture")
-            .in("id", candidateIds);
-          const enriched = data.map((r: any) => ({
-            ...r,
-            candidate: candidateProfiles?.find((p: any) => p.id === r.candidate_id),
-          }));
-          setCandidateRequests(enriched);
-        } else {
-          setCandidateRequests([]);
-        }
-      } catch (err) {
-        console.error("Error fetching requests:", err);
-      } finally {
-        setRequestsLoading(false);
+  const fetchRequests = async () => {
+    if (!profile?.id) return;
+    setRequestsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("mentorship_requests")
+        .select("*")
+        .eq("mentor_id", profile.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (data && data.length > 0) {
+        const candidateIds = data.map((r: any) => r.candidate_id);
+        const { data: candidateProfiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, mobile, location, highest_qualification, experience_level, profile_picture")
+          .in("id", candidateIds);
+        const enriched = data.map((r: any) => ({
+          ...r,
+          candidate: candidateProfiles?.find((p: any) => p.id === r.candidate_id),
+        }));
+        setCandidateRequests(enriched);
+      } else {
+        setCandidateRequests([]);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching requests:", err);
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchRequests();
   }, [profile?.id]);
 
@@ -1033,7 +1034,12 @@ const FreelancerDashboard = () => {
                 <h2 className="text-lg font-semibold text-foreground">Candidate Requests</h2>
                 <p className="text-sm text-muted-foreground">Candidates interested in your mentorship</p>
               </div>
-              <Badge variant="secondary">{candidateRequests.filter(r => r.status === "pending").length} Pending</Badge>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={fetchRequests} disabled={requestsLoading}>
+                  <RefreshCw className={`h-4 w-4 mr-1.5 ${requestsLoading ? "animate-spin" : ""}`} /> Refresh
+                </Button>
+                <Badge variant="secondary">{candidateRequests.filter(r => r.status === "pending").length} Pending</Badge>
+              </div>
             </div>
 
             {requestsLoading ? (
