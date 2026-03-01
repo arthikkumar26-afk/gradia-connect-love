@@ -190,9 +190,9 @@ const CandidateSignup = () => {
 
       if (authError) {
         const msg = authError.message || '';
-        if (msg.includes("already registered")) {
+        if (msg.includes("already registered") || msg.includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
-        } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("fetch")) {
+        } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("timed out")) {
           setRetryError("Network issue detected. Please check your internet connection and try again.");
           toast({
             title: "Connection Error",
@@ -209,34 +209,55 @@ const CandidateSignup = () => {
         return;
       }
 
-      if (authData.user) {
-        // Create profile and role in parallel for speed
-        const [profileResult, roleResult] = await Promise.all([
-          supabase.from("profiles").upsert({
-            id: authData.user.id,
-            email: email,
-            full_name: fullName,
-            mobile: mobile,
-            role: 'candidate',
-            category: industryCategory || null,
-            primary_subject: primarySubject || null,
-            segment: segment || null,
-          }),
-          supabase.from("user_roles").upsert({
-            user_id: authData.user.id,
-            role: 'candidate' as const,
-          }, { onConflict: 'user_id,role' }),
-        ]);
-
-        if (profileResult.error) console.error("Profile creation error:", profileResult.error);
-        if (roleResult.error) console.error("Role creation error:", roleResult.error);
-
-        // Non-blocking: refresh profile and send welcome email
-        refreshProfile().catch(err => console.error("Profile refresh error:", err));
-        supabase.functions.invoke('send-welcome-email', {
-          body: { email, fullName, role: 'candidate' }
-        }).catch(err => console.error("Welcome email failed:", err));
+      // Detect duplicate email: with auto-confirm, Supabase returns 200 but empty identities
+      if (authData.user && (!authData.user.identities || authData.user.identities.length === 0)) {
+        setErrors({ email: "This email is already registered. Please login instead." });
+        return;
       }
+
+      if (!authData.user) {
+        toast({
+          title: "Signup Failed",
+          description: "Could not create account. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create profile and role in parallel
+      const [profileResult, roleResult] = await Promise.all([
+        supabase.from("profiles").upsert({
+          id: authData.user.id,
+          email: email,
+          full_name: fullName,
+          mobile: mobile,
+          role: 'candidate',
+          category: industryCategory || null,
+          primary_subject: primarySubject || null,
+          segment: segment || null,
+        }),
+        supabase.from("user_roles").upsert({
+          user_id: authData.user.id,
+          role: 'candidate' as const,
+        }, { onConflict: 'user_id,role' }),
+      ]);
+
+      if (profileResult.error || roleResult.error) {
+        console.error("Profile creation error:", profileResult.error);
+        console.error("Role creation error:", roleResult.error);
+        toast({
+          title: "Account created but profile setup failed",
+          description: "Please try logging in and complete your profile.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Non-blocking: refresh profile and send welcome email
+      refreshProfile().catch(err => console.error("Profile refresh error:", err));
+      supabase.functions.invoke('send-welcome-email', {
+        body: { email, fullName, role: 'candidate' }
+      }).catch(err => console.error("Welcome email failed:", err));
 
       // Mark that user just signed up to prevent redirect during wizard flow
       setJustSignedUp(true);
