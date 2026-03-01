@@ -257,7 +257,6 @@ const Header = () => {
                         </div>
                         <div>
                           <div className="font-medium text-foreground">Admin Login</div>
-                          <div className="text-xs text-muted-foreground">Platform management</div>
                         </div>
                       </Link>
                     </DropdownMenuItem>
@@ -268,7 +267,6 @@ const Header = () => {
                         </div>
                         <div>
                           <div className="font-medium text-foreground">Owner Login</div>
-                          <div className="text-xs text-muted-foreground">Full system access</div>
                         </div>
                       </Link>
                     </DropdownMenuItem>
