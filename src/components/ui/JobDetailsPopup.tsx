@@ -95,14 +95,6 @@ const JobDetailsPopup = ({ job, open, onOpenChange }: JobDetailsPopupProps) => {
                 <span>{job.company}</span>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8" 
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </DialogHeader>
 
