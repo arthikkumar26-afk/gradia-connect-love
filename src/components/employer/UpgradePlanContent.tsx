@@ -14,8 +14,8 @@ const plans = [
     id: "starter",
     name: "Starter",
     subtitle: "For small teams getting started",
-    price: 0,
-    duration: "Free forever",
+    monthlyPrice: 0,
+    annualPrice: 0,
     icon: Zap,
     features: [
       "Up to 3 active job posts",
@@ -31,8 +31,8 @@ const plans = [
     id: "growth",
     name: "Growth",
     subtitle: "Scale your hiring pipeline",
-    price: 4999,
-    duration: "per month",
+    monthlyPrice: 4999,
+    annualPrice: 49990,
     icon: Star,
     popular: true,
     features: [
@@ -53,8 +53,8 @@ const plans = [
     id: "professional",
     name: "Professional",
     subtitle: "Full AI-powered recruitment",
-    price: 14999,
-    duration: "per month",
+    monthlyPrice: 14999,
+    annualPrice: 149990,
     icon: Rocket,
     badge: "Best Value",
     features: [
@@ -77,8 +77,8 @@ const plans = [
     id: "enterprise",
     name: "Enterprise",
     subtitle: "Custom solutions at scale",
-    price: 29000,
-    duration: "per month",
+    monthlyPrice: 29000,
+    annualPrice: 290000,
     icon: Building2,
     features: [
       "Unlimited job posts & seats",
@@ -111,8 +111,11 @@ export const UpgradePlanContent = () => {
   const navigate = useNavigate();
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [isAnnual, setIsAnnual] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string } | null>(null);
   const [selectedPlanForCoupon, setSelectedPlanForCoupon] = useState<string | null>(null);
+
+  const getPrice = (plan: typeof plans[0]) => isAnnual ? plan.annualPrice : plan.monthlyPrice;
 
   useEffect(() => {
     const fetchCurrentPlan = async () => {
@@ -146,7 +149,8 @@ export const UpgradePlanContent = () => {
     const selectedPlan = plans.find((p) => p.id === planId);
     if (!selectedPlan || !user?.id) return;
 
-    const payAmount = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.price;
+    const planPrice = getPrice(selectedPlan);
+    const payAmount = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : planPrice;
 
     setLoading(planId);
     try {
@@ -181,7 +185,7 @@ export const UpgradePlanContent = () => {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "Gradia",
-        description: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+        description: `${selectedPlan.name} Plan - ${isAnnual ? 'Annual' : 'Monthly'}`,
         order_id: orderData.order_id,
         handler: async (response: any) => {
           try {
@@ -192,9 +196,9 @@ export const UpgradePlanContent = () => {
                 razorpay_signature: response.razorpay_signature,
                 plan_id: planId,
                 plan_name: selectedPlan.name,
-                amount: selectedPlan.price,
+                amount: planPrice,
                 employer_id: user.id,
-                billing_cycle: "monthly",
+                billing_cycle: isAnnual ? "annual" : "monthly",
               },
             });
 
@@ -210,7 +214,7 @@ export const UpgradePlanContent = () => {
                 user_role: "employer",
                 plan_name: selectedPlan.name,
                 discount_applied: appliedCoupon.discount,
-                original_amount: selectedPlan.price,
+                original_amount: planPrice,
                 final_amount: appliedCoupon.finalAmount,
               });
               // Increment total_used
@@ -259,11 +263,25 @@ export const UpgradePlanContent = () => {
         <h2 className="text-2xl font-bold text-foreground">
           {currentPlan ? "Upgrade or Change Your Plan" : "Choose a Plan"}
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-6">
           {currentPlan
             ? `You're currently on the ${plans.find((p) => p.id === currentPlan)?.name || "Starter"} plan`
             : "Select a plan to get started"}
         </p>
+        <div className="inline-flex items-center gap-3 bg-muted rounded-full p-1">
+          <button
+            onClick={() => setIsAnnual(false)}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${!isAnnual ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setIsAnnual(true)}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${isAnnual ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Annual <span className="text-xs opacity-80">(Save ~17%)</span>
+          </button>
+        </div>
       </div>
 
       {/* Plans Grid */}
@@ -273,6 +291,7 @@ export const UpgradePlanContent = () => {
           const isCurrent = currentPlan === plan.id;
           const planIndex = planOrder.indexOf(plan.id);
           const isUpgrade = planIndex > currentIndex;
+          const price = getPrice(plan);
 
           return (
             <Card
@@ -305,10 +324,10 @@ export const UpgradePlanContent = () => {
                 <p className="text-xs text-muted-foreground">{plan.subtitle}</p>
                 <div className="mt-3">
                   <span className="text-2xl font-bold text-foreground">
-                    {plan.price === 0 ? "Free" : `₹${plan.price.toLocaleString()}`}
+                    {price === 0 ? "Free" : `₹${price.toLocaleString()}`}
                   </span>
-                  {plan.price > 0 && (
-                    <span className="text-muted-foreground text-xs">/{plan.duration}</span>
+                  {price > 0 && (
+                    <span className="text-muted-foreground text-xs">/{isAnnual ? 'year' : 'month'}</span>
                   )}
                 </div>
               </CardHeader>
@@ -348,7 +367,7 @@ export const UpgradePlanContent = () => {
                 {/* Coupon Input for paid plans */}
                 {plan.cta === "subscribe" && !isCurrent && (
                   <CouponInput
-                    originalAmount={plan.price}
+                    originalAmount={price}
                     userRole="employer"
                     onCouponApplied={(discount, finalAmount, couponId, couponCode) => {
                       setAppliedCoupon({ discount, finalAmount, couponId, couponCode });
@@ -362,7 +381,7 @@ export const UpgradePlanContent = () => {
                 )}
                 {appliedCoupon && selectedPlanForCoupon === plan.id && (
                   <p className="text-xs text-center text-muted-foreground">
-                    Pay ₹{appliedCoupon.finalAmount.toLocaleString()} instead of ₹{plan.price.toLocaleString()}
+                    Pay ₹{appliedCoupon.finalAmount.toLocaleString()} instead of ₹{price.toLocaleString()}
                   </p>
                 )}
 
