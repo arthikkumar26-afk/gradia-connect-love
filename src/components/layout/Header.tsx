@@ -222,7 +222,7 @@ const Header = () => {
                           <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                          <div className="font-medium">Candidate Login</div>
+                          <div className="font-medium text-foreground">Candidate Login</div>
                           <div className="text-xs text-muted-foreground">Job seekers & applicants</div>
                         </div>
                       </Link>
@@ -233,7 +233,7 @@ const Header = () => {
                           <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
                         </div>
                         <div>
-                          <div className="font-medium">Employer Login</div>
+                          <div className="font-medium text-foreground">Employer Login</div>
                           <div className="text-xs text-muted-foreground">Post jobs & hire talent</div>
                         </div>
                       </Link>
@@ -244,7 +244,7 @@ const Header = () => {
                           <Award className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         </div>
                         <div>
-                          <div className="font-medium">Freelancer Login</div>
+                          <div className="font-medium text-foreground">Freelancer Login</div>
                           <div className="text-xs text-muted-foreground">Projects & mentorship</div>
                         </div>
                       </Link>
@@ -256,7 +256,7 @@ const Header = () => {
                           <ShieldCheck className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                         </div>
                         <div>
-                          <div className="font-medium">Admin Login</div>
+                          <div className="font-medium text-foreground">Admin Login</div>
                           <div className="text-xs text-muted-foreground">Platform management</div>
                         </div>
                       </Link>
@@ -267,7 +267,7 @@ const Header = () => {
                           <Crown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div>
-                          <div className="font-medium">Owner Login</div>
+                          <div className="font-medium text-foreground">Owner Login</div>
                           <div className="text-xs text-muted-foreground">Full system access</div>
                         </div>
                       </Link>
