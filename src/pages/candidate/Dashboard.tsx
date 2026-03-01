@@ -54,6 +54,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -248,6 +249,14 @@ const CandidateDashboard = () => {
   const [selectedEnrolledMentor, setSelectedEnrolledMentor] = useState<any>(null);
   const { enrollments: dbCandidateMentorships, loading: candidateMentorshipLoading, uploadDocument: candidateUploadDoc, updateHomeworkStatus } = useMentorship("candidate");
   
+  // Mentorship request state
+  const [realFreelancerMentors, setRealFreelancerMentors] = useState<any[]>([]);
+  const [mentorRequestTopic, setMentorRequestTopic] = useState("");
+  const [mentorRequestMessage, setMentorRequestMessage] = useState("");
+  const [sendingMentorRequest, setSendingMentorRequest] = useState(false);
+  const [showMentorRequestForm, setShowMentorRequestForm] = useState<any>(null);
+
+
   // Education state
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
@@ -300,6 +309,45 @@ const CandidateDashboard = () => {
     };
     fetchSubscription();
   }, [profile?.id]);
+
+  // Fetch real freelancer mentors
+  useEffect(() => {
+    const fetchFreelancerMentors = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, mobile, location, highest_qualification, experience_level, profile_picture, preferred_role, primary_subject")
+        .eq("role", "freelancer")
+        .limit(20);
+      if (data) setRealFreelancerMentors(data);
+    };
+    fetchFreelancerMentors();
+  }, []);
+
+  const sendMentorshipRequest = async (mentorId: string, mentorName: string) => {
+    if (!profile?.id || !mentorRequestTopic.trim()) {
+      toast({ title: "Please enter a topic", variant: "destructive" });
+      return;
+    }
+    setSendingMentorRequest(true);
+    try {
+      const { error } = await supabase.from("mentorship_requests").insert({
+        candidate_id: profile.id,
+        mentor_id: mentorId,
+        topic: mentorRequestTopic.trim(),
+        message: mentorRequestMessage.trim() || null,
+        status: "pending",
+      });
+      if (error) throw error;
+      toast({ title: "Request Sent! 🎉", description: `Your mentorship request has been sent to ${mentorName}.` });
+      setShowMentorRequestForm(null);
+      setMentorRequestTopic("");
+      setMentorRequestMessage("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingMentorRequest(false);
+    }
+  };
 
   const hasUsedTrial = false;
   const isActiveSub = candidateSubscription?.status === "active";
@@ -4014,6 +4062,95 @@ const CandidateDashboard = () => {
                     ))}
                   </div>
                 </Card>
+
+                {/* Request Mentorship from Real Freelancers */}
+                {realFreelancerMentors.length > 0 && (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Zap className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Request Mentorship</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">Connect with real freelancer mentors on our platform</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {realFreelancerMentors.map((mentor) => (
+                        <div key={mentor.id} className="p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50">
+                          <div className="flex items-center gap-3 mb-3">
+                            {mentor.profile_picture ? (
+                              <img src={mentor.profile_picture} alt="" className="h-10 w-10 rounded-full object-cover border-2 border-border" />
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                                {mentor.full_name?.charAt(0) || "M"}
+                              </div>
+                            )}
+                            <div>
+                              <h4 className="font-medium text-foreground text-sm">{mentor.full_name}</h4>
+                              <p className="text-xs text-muted-foreground">{mentor.preferred_role || mentor.primary_subject || "Mentor"}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {mentor.location && <Badge variant="outline" className="text-xs"><MapPin className="h-3 w-3 mr-1" />{mentor.location}</Badge>}
+                            {mentor.experience_level && <Badge variant="secondary" className="text-xs">{mentor.experience_level}</Badge>}
+                          </div>
+                          <Button size="sm" className="w-full" onClick={() => setShowMentorRequestForm(mentor)}>
+                            <Mail className="h-3.5 w-3.5 mr-1.5" /> Request Mentorship
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Request Mentorship Modal */}
+                    <Dialog open={!!showMentorRequestForm} onOpenChange={(open) => { if (!open) { setShowMentorRequestForm(null); setMentorRequestTopic(""); setMentorRequestMessage(""); } }}>
+                      <DialogContent className="max-w-md">
+                        {showMentorRequestForm && (
+                          <>
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-3">
+                                {showMentorRequestForm.profile_picture ? (
+                                  <img src={showMentorRequestForm.profile_picture} alt="" className="h-10 w-10 rounded-full object-cover" />
+                                ) : (
+                                  <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                    {showMentorRequestForm.full_name?.charAt(0)}
+                                  </div>
+                                )}
+                                <div>
+                                  <span className="block">Request Mentorship</span>
+                                  <span className="block text-sm font-normal text-muted-foreground">from {showMentorRequestForm.full_name}</span>
+                                </div>
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 mt-2">
+                              <div>
+                                <Label className="text-sm font-medium">Topic *</Label>
+                                <Input
+                                  placeholder="e.g., Full Stack Development, Data Science"
+                                  value={mentorRequestTopic}
+                                  onChange={(e) => setMentorRequestTopic(e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-sm font-medium">Message (optional)</Label>
+                                <Textarea
+                                  placeholder="Tell the mentor about your goals and what you want to learn..."
+                                  value={mentorRequestMessage}
+                                  onChange={(e) => setMentorRequestMessage(e.target.value)}
+                                  className="min-h-[80px]"
+                                />
+                              </div>
+                              <Button
+                                className="w-full"
+                                disabled={sendingMentorRequest || !mentorRequestTopic.trim()}
+                                onClick={() => sendMentorshipRequest(showMentorRequestForm.id, showMentorRequestForm.full_name)}
+                              >
+                                {sendingMentorRequest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
+                                Send Request
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+                  </Card>
+                )}
 
                 {/* Internal Learning Platform */}
                 <Card className="p-6 bg-gradient-to-r from-primary/5 to-accent/5">

@@ -1784,6 +1784,42 @@ export type Database = {
           },
         ]
       }
+      mentorship_requests: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          mentor_id: string
+          mentor_reply: string | null
+          message: string | null
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          mentor_id: string
+          mentor_reply?: string | null
+          message?: string | null
+          status?: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          mentor_id?: string
+          mentor_reply?: string | null
+          message?: string | null
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mock_interview_pipeline_config: {
         Row: {
           ai_questions_enabled: boolean

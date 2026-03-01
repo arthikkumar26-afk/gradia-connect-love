@@ -14,7 +14,8 @@ import {
   Clock, MapPin, DollarSign, ArrowRight, BookOpen,
   MessageSquare, Calendar, TrendingUp, User, LogOut, Menu, X,
    FileText, Settings, Sparkles, Upload, Loader2, Video, CheckCircle2,
-   ClipboardList, Send, Radio, Download, FolderOpen, Crown, Check, Zap
+   ClipboardList, Send, Radio, Download, FolderOpen, Crown, Check, Zap,
+   Mail, Phone
 } from "lucide-react";
 import PortfolioTab from "@/components/freelancer/PortfolioTab";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +42,7 @@ const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "portfolio", label: "Portfolio", icon: FolderOpen },
   { id: "projects", label: "Find Projects", icon: Search },
+  { id: "candidate-requests", label: "Candidate Requests", icon: Users },
   { id: "mentorship", label: "Mentorship", icon: GraduationCap },
   { id: "proposals", label: "My Proposals", icon: MessageSquare },
   { id: "earnings", label: "Earnings", icon: TrendingUp },
@@ -95,6 +97,13 @@ const FreelancerDashboard = () => {
   const [enrollSearching, setEnrollSearching] = useState(false);
   const [enrollTopic, setEnrollTopic] = useState("");
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
+
+  // Candidate requests state
+  const [candidateRequests, setCandidateRequests] = useState<any[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [requestEnrollTopic, setRequestEnrollTopic] = useState("");
 
   // Fetch outsource projects from DB
   useEffect(() => {
@@ -159,6 +168,103 @@ const FreelancerDashboard = () => {
     };
     fetchMyProposals();
   }, []);
+
+  // Fetch candidate mentorship requests
+  useEffect(() => {
+    const fetchRequests = async () => {
+      if (!profile?.id) return;
+      setRequestsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("mentorship_requests")
+          .select("*")
+          .eq("mentor_id", profile.id)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        if (data && data.length > 0) {
+          const candidateIds = data.map((r: any) => r.candidate_id);
+          const { data: candidateProfiles } = await supabase
+            .from("profiles")
+            .select("id, full_name, email, mobile, location, highest_qualification, experience_level, profile_picture")
+            .in("id", candidateIds);
+          const enriched = data.map((r: any) => ({
+            ...r,
+            candidate: candidateProfiles?.find((p: any) => p.id === r.candidate_id),
+          }));
+          setCandidateRequests(enriched);
+        } else {
+          setCandidateRequests([]);
+        }
+      } catch (err) {
+        console.error("Error fetching requests:", err);
+      } finally {
+        setRequestsLoading(false);
+      }
+    };
+    fetchRequests();
+  }, [profile?.id]);
+
+  const handleReplyToRequest = async (requestId: string) => {
+    if (!replyText.trim()) return;
+    setReplyingTo(requestId);
+    try {
+      const { error } = await supabase
+        .from("mentorship_requests")
+        .update({ mentor_reply: replyText.trim(), status: "replied", updated_at: new Date().toISOString() })
+        .eq("id", requestId);
+      if (error) throw error;
+      toast({ title: "Reply sent!", description: "The candidate will be notified." });
+      setCandidateRequests(prev => prev.map(r => r.id === requestId ? { ...r, mentor_reply: replyText.trim(), status: "replied" } : r));
+      setReplyText("");
+      const request = candidateRequests.find(r => r.id === requestId);
+      if (request?.candidate?.email) {
+        await supabase.functions.invoke("send-notification-email", {
+          body: {
+            to: request.candidate.email,
+            subject: `Mentor Response - ${profile?.full_name}`,
+            heading: "Your Mentorship Request Got a Reply! 💬",
+            body: `Dear ${request.candidate.full_name},\n\n${profile?.full_name} has replied to your mentorship request.\n\nReply: "${replyText.trim()}"\n\nLog in to your account to continue the conversation.\n\nBest regards,\nGradia Team`,
+          },
+        });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setReplyingTo(null);
+    }
+  };
+
+  const handleAcceptAndEnroll = async (request: any) => {
+    if (!profile?.id || !request.topic) return;
+    setEnrollingId(request.id);
+    try {
+      const { error: enrollError } = await supabase.from("mentorship_enrollments").insert({
+        mentor_id: profile.id,
+        candidate_id: request.candidate_id,
+        topic: request.topic,
+        status: "active",
+      });
+      if (enrollError) throw enrollError;
+      await supabase.from("mentorship_requests").update({ status: "accepted", updated_at: new Date().toISOString() }).eq("id", request.id);
+      setCandidateRequests(prev => prev.map(r => r.id === request.id ? { ...r, status: "accepted" } : r));
+      toast({ title: "Candidate Enrolled!", description: `${request.candidate?.full_name} is now your mentee.` });
+      refetchMentorships();
+      if (request.candidate?.email) {
+        await supabase.functions.invoke("send-notification-email", {
+          body: {
+            to: request.candidate.email,
+            subject: `Mentorship Request Accepted! 🎉`,
+            heading: "You've Been Accepted for Mentorship!",
+            body: `Dear ${request.candidate.full_name},\n\n${profile?.full_name} has accepted your mentorship request for "${request.topic}".\n\nYou can now access your mentorship dashboard to start learning.\n\nBest regards,\nGradia Team`,
+          },
+        });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setEnrollingId(null);
+    }
+  };
 
   const handleShowInterest = async (project: any) => {
     setShowInterestModal(project);
@@ -439,6 +545,7 @@ const FreelancerDashboard = () => {
       case "dashboard": return `Welcome, ${profile?.full_name || "Freelancer"}`;
       case "portfolio": return "My Portfolio";
       case "projects": return "Find Projects";
+      case "candidate-requests": return "Candidate Requests";
       case "mentorship": return "Mentorship";
       case "proposals": return "My Proposals";
       case "earnings": return "Earnings";
@@ -915,6 +1022,124 @@ const FreelancerDashboard = () => {
                 )}
               </DialogContent>
             </Dialog>
+          </div>
+        );
+
+      case "candidate-requests":
+        return (
+          <div className="space-y-4 p-6 overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Candidate Requests</h2>
+                <p className="text-sm text-muted-foreground">Candidates interested in your mentorship</p>
+              </div>
+              <Badge variant="secondary">{candidateRequests.filter(r => r.status === "pending").length} Pending</Badge>
+            </div>
+
+            {requestsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+              </div>
+            ) : candidateRequests.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No requests yet</h3>
+                  <p className="text-sm text-muted-foreground">When candidates express interest in your mentorship, they'll appear here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {candidateRequests.map((req) => (
+                  <Card key={req.id} className={req.status === "accepted" ? "border-accent/30 bg-accent/5" : ""}>
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          {req.candidate?.profile_picture ? (
+                            <img src={req.candidate.profile_picture} alt="" className="h-12 w-12 rounded-full object-cover border-2 border-border" />
+                          ) : (
+                            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                              <User className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-foreground">{req.candidate?.full_name || "Unknown"}</h3>
+                            <Badge variant={req.status === "pending" ? "default" : req.status === "accepted" ? "secondary" : "outline"} className="text-xs">
+                              {req.status === "pending" ? "New" : req.status === "replied" ? "Replied" : req.status === "accepted" ? "Enrolled" : req.status}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-2">
+                            {req.candidate?.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{req.candidate.email}</span>}
+                            {req.candidate?.mobile && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{req.candidate.mobile}</span>}
+                            {req.candidate?.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{req.candidate.location}</span>}
+                            {req.candidate?.highest_qualification && <span className="flex items-center gap-1"><GraduationCap className="h-3 w-3" />{req.candidate.highest_qualification}</span>}
+                          </div>
+                          <div className="bg-muted/50 rounded-lg p-3 mb-3">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Topic of Interest</p>
+                            <p className="text-sm font-medium text-foreground">{req.topic}</p>
+                            {req.message && (
+                              <>
+                                <p className="text-xs font-medium text-muted-foreground mt-2 mb-1">Message</p>
+                                <p className="text-sm text-foreground">{req.message}</p>
+                              </>
+                            )}
+                          </div>
+                          {req.mentor_reply && (
+                            <div className="bg-accent/10 rounded-lg p-3 mb-3">
+                              <p className="text-xs font-medium text-accent mb-1">Your Reply</p>
+                              <p className="text-sm text-foreground">{req.mentor_reply}</p>
+                            </div>
+                          )}
+
+                          {req.status !== "accepted" && (
+                            <div className="space-y-3">
+                              <div className="flex gap-2">
+                                <Textarea
+                                  placeholder="Reply to this candidate..."
+                                  className="text-sm min-h-[60px]"
+                                  value={replyingTo === req.id ? replyText : ""}
+                                  onFocus={() => { setReplyingTo(req.id); if (replyingTo !== req.id) setReplyText(""); }}
+                                  onChange={(e) => { setReplyingTo(req.id); setReplyText(e.target.value); }}
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={replyingTo === req.id && !replyText.trim()}
+                                  onClick={() => handleReplyToRequest(req.id)}
+                                >
+                                  <Send className="h-3.5 w-3.5 mr-1.5" /> Reply
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  disabled={enrollingId === req.id}
+                                  onClick={() => handleAcceptAndEnroll(req)}
+                                >
+                                  {enrollingId === req.id ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1.5" />}
+                                  Accept & Enroll
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                          {req.status === "accepted" && (
+                            <div className="flex items-center gap-2 text-accent text-sm font-medium">
+                              <CheckCircle2 className="h-4 w-4" /> Candidate enrolled in mentorship
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(req.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         );
 
