@@ -484,21 +484,11 @@ const CandidateDashboard = () => {
             
             // Migrate localStorage data to database
             try {
-              const response = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-resume-analysis`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    user_id: profile.id,
-                    analysis: parsedAnalysis
-                  })
-                }
-              );
-              
-              if (response.ok) {
+              const { error: migErr } = await supabase.functions.invoke('save-resume-analysis', {
+                body: { user_id: profile.id, analysis: parsedAnalysis }
+              });
+              if (!migErr) {
                 console.log('Successfully migrated resume analysis to database');
-                // Clear localStorage after successful migration
                 localStorage.removeItem('resumeAnalysis');
               }
             } catch (migrationError) {
@@ -984,37 +974,20 @@ const CandidateDashboard = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const parseResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+      const { data: analysisDataRaw, error: parseError } = await supabase.functions.invoke('parse-resume', {
+        body: formData,
+      });
       
-      if (!parseResponse.ok) {
-        const errorData = await parseResponse.json();
-        throw new Error(errorData.error || "Failed to analyze resume");
+      if (parseError) {
+        throw new Error(parseError.message || "Failed to analyze resume");
       }
       
-      const analysisData = await parseResponse.json();
+      const analysisData = analysisDataRaw;
       
       // Save the new analysis to the database
-      const saveResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-resume-analysis`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: profile.id,
-            analysis: analysisData
-          })
-        }
-      );
-      
-      if (!saveResponse.ok) {
-        console.error('Failed to save analysis to database');
-      }
+      await supabase.functions.invoke('save-resume-analysis', {
+        body: { user_id: profile.id, analysis: analysisData }
+      });
       
       // Update local state
       setResumeAnalysis({
@@ -1033,9 +1006,12 @@ const CandidateDashboard = () => {
       
     } catch (error: any) {
       console.error('Error re-analyzing resume:', error);
+      const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.name === "TypeError";
       toast({
         title: "Analysis Failed",
-        description: error.message || "Could not re-analyze your resume. Please try again.",
+        description: isNetworkError 
+          ? "Network issue. Please check your internet connection and try again." 
+          : (error.message || "Could not re-analyze your resume. Please try again."),
         variant: "destructive",
       });
     } finally {
@@ -1100,20 +1076,14 @@ const CandidateDashboard = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('file', file);
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
-        {
-          method: 'POST',
-          body: formDataToSend,
-        }
-      );
+      const { data, error: parseErr } = await supabase.functions.invoke('parse-resume', {
+        body: formDataToSend,
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to parse resume');
+      if (parseErr) {
+        throw new Error(parseErr.message || 'Failed to parse resume');
       }
 
-      const data = await response.json();
       console.log('AI parsed resume data:', data);
 
       // Update profile with extracted data
@@ -1233,24 +1203,19 @@ const CandidateDashboard = () => {
       });
 
       // Save analysis to database
-      await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-resume-analysis`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: profile.id,
-            analysis: {
-              overall_score: data.overall_score,
-              career_level: data.career_level,
-              experience_summary: data.experience_summary,
-              strengths: data.strengths,
-              improvements: data.improvements,
-              skill_highlights: data.skill_highlights || data.skills
-            }
-          })
+      await supabase.functions.invoke('save-resume-analysis', {
+        body: {
+          user_id: profile.id,
+          analysis: {
+            overall_score: data.overall_score,
+            career_level: data.career_level,
+            experience_summary: data.experience_summary,
+            strengths: data.strengths,
+            improvements: data.improvements,
+            skill_highlights: data.skill_highlights || data.skills
+          }
         }
-      );
+      });
 
       // Refresh profile
       await refreshProfile();
@@ -1262,9 +1227,12 @@ const CandidateDashboard = () => {
 
     } catch (error: any) {
       console.error('Error uploading resume:', error);
+      const isNetworkError = error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.name === "TypeError";
       toast({
         title: "Upload Failed",
-        description: error.message || "Could not process your resume. Please try again.",
+        description: isNetworkError 
+          ? "Network issue. Please check your internet connection and try again." 
+          : (error.message || "Could not process your resume. Please try again."),
         variant: "destructive",
       });
     } finally {
