@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check } from "lucide-react";
 
 export default function SponsorshipTiers() {
+  const [isAnnual, setIsAnnual] = useState(false);
+
   const tiers = [
     {
       name: "Silver",
-      price: "₹35,000",
-      period: "/year",
+      monthlyPrice: "₹3,500",
+      annualPrice: "₹35,000",
       features: [
         "Logo on posters at 4 job melas/year",
         "Access to 200 resumes per mela",
@@ -18,8 +21,8 @@ export default function SponsorshipTiers() {
     },
     {
       name: "Gold",
-      price: "₹75,000",
-      period: "/year",
+      monthlyPrice: "₹7,500",
+      annualPrice: "₹75,000",
       popular: true,
       features: [
         "Logo on posters at 8 job melas/year",
@@ -33,8 +36,8 @@ export default function SponsorshipTiers() {
     },
     {
       name: "Platinum",
-      price: "₹1,50,000",
-      period: "/year",
+      monthlyPrice: "₹15,000",
+      annualPrice: "₹1,50,000",
       features: [
         "Logo on posters at 12 job melas/year",
         "Unlimited resume access from all melas",
@@ -53,9 +56,23 @@ export default function SponsorshipTiers() {
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold mb-4">Sponsorship Tiers</h1>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-xl text-muted-foreground mb-8">
             Choose the perfect sponsorship plan for your brand
           </p>
+          <div className="inline-flex items-center gap-3 bg-muted rounded-full p-1">
+            <button
+              onClick={() => setIsAnnual(false)}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${!isAnnual ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setIsAnnual(true)}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${isAnnual ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Annual <span className="text-xs opacity-80">(Save ~17%)</span>
+            </button>
+          </div>
         </div>
 
         {/* Pricing Cards */}
@@ -70,8 +87,8 @@ export default function SponsorshipTiers() {
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-4xl font-bold">{tier.price}</span>
-                  <span className="text-muted-foreground">{tier.period}</span>
+                  <span className="text-4xl font-bold">{isAnnual ? tier.annualPrice : tier.monthlyPrice}</span>
+                  <span className="text-muted-foreground">{isAnnual ? '/year' : '/month'}</span>
                 </div>
               </div>
               <ul className="space-y-3 mb-8">
