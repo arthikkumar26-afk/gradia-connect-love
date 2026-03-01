@@ -227,6 +227,12 @@ const AccountSettingsSection = ({ user }: { user: any }) => {
   );
 };
 
+const isNetworkError = (err: any) => 
+  err?.name === "TypeError" || err?.message?.includes("NetworkError") || err?.message?.includes("Failed to fetch");
+
+const friendlyError = (err: any, fallback: string) => 
+  isNetworkError(err) ? "Network issue. Please check your internet and try again." : (err?.message || fallback);
+
 const CandidateDashboard = () => {
   const navigate = useNavigate();
   const { user, profile, isAuthenticated, logout, isLoading: authLoading, refreshProfile } = useAuth();
@@ -298,14 +304,18 @@ const CandidateDashboard = () => {
   useEffect(() => {
     const fetchSubscription = async () => {
       if (!profile?.id) return;
-      const { data } = await supabase
-        .from("candidate_subscriptions")
-        .select("*")
-        .eq("candidate_id", profile.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      setCandidateSubscription(data);
+      try {
+        const { data } = await supabase
+          .from("candidate_subscriptions")
+          .select("*")
+          .eq("candidate_id", profile.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setCandidateSubscription(data);
+      } catch (e) {
+        console.warn("Error fetching subscription:", e);
+      }
     };
     fetchSubscription();
   }, [profile?.id]);
@@ -313,12 +323,16 @@ const CandidateDashboard = () => {
   // Fetch real freelancer mentors
   useEffect(() => {
     const fetchFreelancerMentors = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, mobile, location, highest_qualification, experience_level, profile_picture, preferred_role, primary_subject")
-        .eq("role", "freelancer")
-        .limit(20);
-      if (data) setRealFreelancerMentors(data);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, mobile, location, highest_qualification, experience_level, profile_picture, preferred_role, primary_subject")
+          .eq("role", "freelancer")
+          .limit(20);
+        if (data) setRealFreelancerMentors(data);
+      } catch (e) {
+        console.warn("Error fetching freelancer mentors:", e);
+      }
     };
     fetchFreelancerMentors();
   }, []);
@@ -343,7 +357,7 @@ const CandidateDashboard = () => {
       setMentorRequestTopic("");
       setMentorRequestMessage("");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: isNetworkError(err) ? "Connection Error" : "Error", description: friendlyError(err, "Failed to send request"), variant: "destructive" });
     } finally {
       setSendingMentorRequest(false);
     }
@@ -584,8 +598,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error saving education:', error);
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to save education",
+        title: isNetworkError(error) ? "Connection Error" : "Error", 
+        description: friendlyError(error, "Failed to save education"),
         variant: "destructive" 
       });
     } finally {
@@ -608,8 +622,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error deleting education:', error);
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to delete education",
+        title: isNetworkError(error) ? "Connection Error" : "Error", 
+        description: friendlyError(error, "Failed to delete education"),
         variant: "destructive" 
       });
     }
@@ -705,8 +719,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error saving experience:', error);
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to save experience",
+        title: isNetworkError(error) ? "Connection Error" : "Error", 
+        description: friendlyError(error, "Failed to save experience"),
         variant: "destructive" 
       });
     } finally {
@@ -729,8 +743,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error deleting experience:', error);
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to delete experience",
+        title: isNetworkError(error) ? "Connection Error" : "Error", 
+        description: friendlyError(error, "Failed to delete experience"),
         variant: "destructive" 
       });
     }
@@ -814,8 +828,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error saving family:', error);
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to save family member",
+        title: isNetworkError(error) ? "Connection Error" : "Error", 
+        description: friendlyError(error, "Failed to save family member"),
         variant: "destructive" 
       });
     } finally {
@@ -838,8 +852,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error deleting family:', error);
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to delete family member",
+        title: isNetworkError(error) ? "Connection Error" : "Error", 
+        description: friendlyError(error, "Failed to delete family member"),
         variant: "destructive" 
       });
     }
@@ -940,8 +954,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error saving address:', error);
       toast({ 
-        title: "Error", 
-        description: error.message || "Failed to save address",
+        title: isNetworkError(error) ? "Connection Error" : "Error", 
+        description: friendlyError(error, "Failed to save address"),
         variant: "destructive" 
       });
     }
