@@ -1129,6 +1129,9 @@ const CandidateDashboard = () => {
       if (data.experience && Array.isArray(data.experience) && data.experience.length > 0) {
         console.log('Saving work experience records:', data.experience.length);
         
+        // Delete existing experience records first to prevent duplicates
+        await supabase.from('work_experience').delete().eq('user_id', profile.id);
+        
         // Helper to normalize date strings from AI (YYYY-MM, YYYY-MM-DD, "Present", etc.) to valid date or null
         const normalizeDate = (dateStr: string | null | undefined): string | null => {
           if (!dateStr || dateStr.toLowerCase() === 'present' || dateStr.toLowerCase() === 'current' || dateStr.toLowerCase() === 'till date') {
