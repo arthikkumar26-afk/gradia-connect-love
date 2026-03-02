@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Building2, BarChart3, Clapperboard, HardHat, Cpu, GraduationCap, Stethoscope, Landmark } from "lucide-react";
+import { Users, Building2, BarChart3, Clapperboard, HardHat, Cpu, GraduationCap, Landmark } from "lucide-react";
 
 const WhoWeAre = () => {
   const highlights = [
@@ -25,7 +25,7 @@ const WhoWeAre = () => {
     { icon: Clapperboard, name: "Film & Media" },
     { icon: Cpu, name: "Software & IT" },
     { icon: GraduationCap, name: "Education" },
-    { icon: Stethoscope, name: "Healthcare" },
+    { icon: Landmark, name: "Government & PSU" },
     { icon: Landmark, name: "Government & PSU" },
   ];
 

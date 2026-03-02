@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Building2, Rocket, GraduationCap, Users, Handshake, Clapperboard, HardHat, Stethoscope, Scale, Landmark } from "lucide-react";
+import { Building2, Rocket, GraduationCap, Users, Handshake, Clapperboard, HardHat, Scale, Landmark } from "lucide-react";
 
 const WhoWeWorkWith = () => {
   const partners = [
@@ -22,11 +22,6 @@ const WhoWeWorkWith = () => {
       icon: GraduationCap,
       title: "Colleges & Universities",
       description: "Premier educational institutions preparing students for industry success"
-    },
-    {
-      icon: Stethoscope,
-      title: "Healthcare & Pharma",
-      description: "Hospitals, clinics, and pharmaceutical companies building skilled medical teams"
     },
     {
       icon: Scale,
