@@ -8,7 +8,7 @@ const CoreOfferings = () => {
     {
       icon: Briefcase,
       title: "Placements & Hiring Solutions",
-      description: "Connecting candidates with verified opportunities across software, civil engineering, film production, education, healthcare, and more through our extensive industry network.",
+      description: "Connecting candidates with verified opportunities across software, civil engineering, film production, education, legal, and more through our extensive industry network.",
       link: "/jobs",
       linkText: "Browse Jobs"
     },
