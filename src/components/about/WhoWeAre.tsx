@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Building2, BarChart3 } from "lucide-react";
+import { Users, Building2, BarChart3, Clapperboard, HardHat, Cpu, GraduationCap, Stethoscope, Landmark } from "lucide-react";
 
 const WhoWeAre = () => {
   const highlights = [
@@ -20,6 +20,15 @@ const WhoWeAre = () => {
     }
   ];
 
+  const industries = [
+    { icon: HardHat, name: "Civil Engineering" },
+    { icon: Clapperboard, name: "Film & Media" },
+    { icon: Cpu, name: "Software & IT" },
+    { icon: GraduationCap, name: "Education" },
+    { icon: Stethoscope, name: "Healthcare" },
+    { icon: Landmark, name: "Government & PSU" },
+  ];
+
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -29,10 +38,27 @@ const WhoWeAre = () => {
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Gradia is a career and hiring ecosystem built to bridge the gap between skilled 
-            individuals and forward-thinking organizations. We work closely with software 
-            companies, startups, and educational institutions to deliver reliable hiring, 
-            transparent sponsorships, and measurable outcomes.
+            individuals and forward-thinking organizations. From <strong className="text-foreground">software companies</strong> and <strong className="text-foreground">civil engineering firms</strong> to the <strong className="text-foreground">film & entertainment industry</strong>, 
+            we connect talent across every sector — including education, healthcare, government, and beyond.
           </p>
+        </div>
+
+        {/* Industries We Serve */}
+        <div className="mb-16">
+          <p className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-8">
+            Industries We Serve
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {industries.map((ind, i) => (
+              <div 
+                key={i} 
+                className="flex items-center gap-2.5 px-5 py-3 rounded-full border border-border/60 bg-card hover:border-accent/40 hover:shadow-md transition-all duration-300"
+              >
+                <ind.icon className="h-5 w-5 text-accent" />
+                <span className="text-sm font-medium text-foreground">{ind.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

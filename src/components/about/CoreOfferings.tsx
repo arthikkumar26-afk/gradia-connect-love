@@ -1,38 +1,45 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Briefcase, CalendarDays, Handshake, GraduationCap, ArrowRight } from "lucide-react";
+import { Briefcase, CalendarDays, Handshake, GraduationCap, ArrowRight, HardHat, Clapperboard, Building, Cpu } from "lucide-react";
 
 const CoreOfferings = () => {
   const offerings = [
     {
       icon: Briefcase,
       title: "Placements & Hiring Solutions",
-      description: "Connecting candidates with verified opportunities in tech and education sectors through our extensive network of partner companies.",
+      description: "Connecting candidates with verified opportunities across software, civil engineering, film production, education, healthcare, and more through our extensive industry network.",
       link: "/jobs",
       linkText: "Browse Jobs"
     },
     {
       icon: CalendarDays,
       title: "Job Melas & Campus Drives",
-      description: "Large-scale hiring events with transparent sponsor analytics, connecting hundreds of candidates with top employers in a single venue.",
+      description: "Large-scale multi-industry hiring events — from IT campuses to civil engineering firms and media houses — connecting hundreds of candidates with top employers.",
       link: "/sponsors",
       linkText: "View Events"
     },
     {
       icon: Handshake,
       title: "Sponsorship & Partnerships",
-      description: "Structured sponsorship programs with measurable ROI, dedicated relationship managers, and comprehensive post-event analytics.",
+      description: "Structured sponsorship programs with measurable ROI, dedicated relationship managers, and comprehensive post-event analytics across all sectors.",
       link: "/sponsors",
       linkText: "Become a Sponsor"
     },
     {
       icon: GraduationCap,
       title: "Training & Skill Development",
-      description: "Preparing candidates to meet real-world industry needs through curated learning paths, certifications, and practical workshops.",
+      description: "Industry-specific training in tech, construction management, media production, teaching methodologies, and more through curated learning paths.",
       link: "/learning",
       linkText: "Start Learning"
     }
+  ];
+
+  const hiringDomains = [
+    { icon: Cpu, label: "Software & IT", count: "200+" },
+    { icon: HardHat, label: "Civil Engineering", count: "80+" },
+    { icon: Clapperboard, label: "Film & Media", count: "50+" },
+    { icon: Building, label: "Construction & Infra", count: "60+" },
   ];
 
   return (
@@ -43,8 +50,21 @@ const CoreOfferings = () => {
             What We Do
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Comprehensive solutions for every step of your career journey
+            Comprehensive solutions for every step of your career journey — across every industry
           </p>
+        </div>
+
+        {/* Live Vacancy Domains */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {hiringDomains.map((domain, i) => (
+            <div key={i} className="relative overflow-hidden rounded-xl border border-border/50 bg-card p-5 text-center hover:border-accent/40 hover:shadow-lg transition-all duration-300 group">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-accent mb-3 group-hover:scale-110 transition-transform">
+                <domain.icon className="h-6 w-6 text-accent-foreground" />
+              </div>
+              <div className="text-2xl font-bold text-foreground">{domain.count}</div>
+              <div className="text-sm text-muted-foreground font-medium">{domain.label} Vacancies</div>
+            </div>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
