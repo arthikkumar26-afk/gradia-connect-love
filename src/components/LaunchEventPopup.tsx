@@ -48,13 +48,8 @@ const LaunchEventPopup = () => {
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none bg-transparent shadow-none [&>button]:z-50 [&>button]:bg-white/80 [&>button]:rounded-full [&>button]:p-1">
         <div className="bg-background rounded-lg overflow-hidden">
-          <img
-            src="/images/launch-event.png"
-            alt="Gradia Launch Event - Tuesday 03-03-2026, 8PM-9PM Online"
-            className="w-full rounded-t-lg"
-          />
           <div className="p-4 space-y-3">
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-sm text-muted-foreground text-center font-medium">
               Enter your email to get the Zoom meeting link
             </p>
             <div className="flex gap-2">
@@ -71,6 +66,11 @@ const LaunchEventPopup = () => {
               </Button>
             </div>
           </div>
+          <img
+            src="/images/launch-event.png"
+            alt="Gradia Launch Event - Tuesday 03-03-2026, 8PM-9PM Online"
+            className="w-full"
+          />
         </div>
       </DialogContent>
     </Dialog>
