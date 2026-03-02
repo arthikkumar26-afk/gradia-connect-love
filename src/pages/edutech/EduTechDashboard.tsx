@@ -17,7 +17,7 @@ import {
   BookOpen, Settings, LogOut, User, Menu, X,
   TrendingUp, Eye, MousePointerClick, UserPlus,
   Plus, Send, LayoutDashboard, ChevronRight,
-  Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote
+  Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote, Trash2
 } from "lucide-react";
 
 const statsData = [
@@ -577,7 +577,12 @@ function CandidatesContent() {
                           {pending > 0 ? `₹${pending.toLocaleString("en-IN")}` : "Paid ✓"}
                         </span>
                       </td>
-                      <td className="p-3"><Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button></td>
+                      <td className="p-3 flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); toast.success(`${c.name} has been removed`); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
