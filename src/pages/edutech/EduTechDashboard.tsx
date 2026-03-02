@@ -270,7 +270,7 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
 function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeof recentCandidates[0] | null; isOpen: boolean; onClose: () => void }) {
   const [editMode, setEditMode] = useState(false);
   const [paymentMode, setPaymentMode] = useState(false);
-  const [editData, setEditData] = useState({ name: "", email: "", phone: "", location: "", qualification: "", course: "", batchId: "", status: "", company: "" });
+  const [editData, setEditData] = useState({ name: "", email: "", phone: "", location: "", qualification: "", course: "", batchId: "", status: "", company: "", totalFee: "", paidAmount: "" });
   const [paymentData, setPaymentData] = useState({ amount: "", method: "cash", reference: "", date: new Date().toISOString().split("T")[0] });
 
   if (!candidate) return null;
@@ -282,7 +282,7 @@ function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeo
       name: candidate.name, email: candidate.email, phone: candidate.phone,
       location: candidate.location, qualification: candidate.qualification,
       course: candidate.course, batchId: candidate.batchId, status: candidate.status,
-      company: candidate.company
+      company: candidate.company, totalFee: String(candidate.totalFee), paidAmount: String(candidate.paidAmount)
     });
     setEditMode(true);
     setPaymentMode(false);
@@ -381,6 +381,25 @@ function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeo
                   <div className="space-y-1 col-span-2">
                     <Label className="text-xs">Placed at (Company)</Label>
                     <Input value={editData.company} onChange={e => setEditData({...editData, company: e.target.value})} className="h-8 text-sm" />
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+              <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><IndianRupee className="h-3.5 w-3.5" /> Modify Payment Amounts</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Total Fee (₹)</Label>
+                  <Input type="number" value={editData.totalFee} onChange={e => setEditData({...editData, totalFee: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Paid Amount (₹)</Label>
+                  <Input type="number" value={editData.paidAmount} onChange={e => setEditData({...editData, paidAmount: e.target.value})} className="h-8 text-sm" />
+                </div>
+                {Number(editData.totalFee) > 0 && (
+                  <div className="col-span-2 text-xs text-muted-foreground flex items-center justify-between bg-muted/50 rounded-md px-3 py-2">
+                    <span>Pending: <span className={`font-semibold ${Number(editData.totalFee) - Number(editData.paidAmount) > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>₹{(Number(editData.totalFee) - Number(editData.paidAmount)).toLocaleString("en-IN")}</span></span>
+                    <span>Cleared: <span className="font-semibold text-green-600 dark:text-green-400">₹{Number(editData.paidAmount).toLocaleString("en-IN")}</span></span>
                   </div>
                 )}
               </div>
