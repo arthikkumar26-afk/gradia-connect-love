@@ -183,6 +183,9 @@ const Header = () => {
               EduTech
             </Link>
 
+            <Link to="/pricing" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+              Pricing
+            </Link>
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
               About
             </Link>
