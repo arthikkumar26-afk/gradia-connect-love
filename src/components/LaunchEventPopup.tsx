@@ -8,7 +8,6 @@ import { Mail, Loader2 } from "lucide-react";
 
 const LaunchEventPopup = () => {
   const [open, setOpen] = useState(false);
-  const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -23,10 +22,6 @@ const LaunchEventPopup = () => {
   const handleClose = () => {
     setOpen(false);
     sessionStorage.setItem("launch_event_dismissed", "true");
-  };
-
-  const handleImageClick = () => {
-    setShowEmailForm(true);
   };
 
   const handleSendEmail = async () => {
@@ -52,25 +47,15 @@ const LaunchEventPopup = () => {
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none bg-transparent shadow-none [&>button]:z-50 [&>button]:bg-white/80 [&>button]:rounded-full [&>button]:p-1">
-        {!showEmailForm ? (
+        <div className="bg-background rounded-lg overflow-hidden">
           <img
             src="/images/launch-event.png"
             alt="Gradia Launch Event - Tuesday 03-03-2026, 8PM-9PM Online"
-            className="w-full cursor-pointer rounded-lg"
-            onClick={handleImageClick}
+            className="w-full rounded-t-lg"
           />
-        ) : (
-          <div className="bg-background rounded-lg p-6 space-y-4">
-            <img
-              src="/images/launch-event.png"
-              alt="Gradia Launch Event"
-              className="w-full rounded-lg max-h-60 object-cover object-top"
-            />
-            <h3 className="text-lg font-bold text-foreground text-center">
-              Join Our Launch Event!
-            </h3>
+          <div className="p-4 space-y-3">
             <p className="text-sm text-muted-foreground text-center">
-              Enter your email to receive the Zoom meeting link
+              Enter your email to get the Zoom meeting link
             </p>
             <div className="flex gap-2">
               <Input
@@ -82,11 +67,11 @@ const LaunchEventPopup = () => {
               />
               <Button onClick={handleSendEmail} disabled={sending} className="shrink-0">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4 mr-1" />}
-                {sending ? "" : "Send"}
+                {sending ? "" : "Join"}
               </Button>
             </div>
           </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
