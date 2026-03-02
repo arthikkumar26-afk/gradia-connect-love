@@ -45,6 +45,7 @@ const Terms = lazy(() => import("./pages/employer/Terms"));
 const Plans = lazy(() => import("./pages/employer/Plans"));
 const Onboarding = lazy(() => import("./pages/employer/Onboarding"));
 const Pricing = lazy(() => import("./pages/employer/Pricing"));
+const PricingPage = lazy(() => import("./pages/Pricing"));
 const RequestDemo = lazy(() => import("./pages/employer/RequestDemo"));
 const DemoRequestsAdmin = lazy(() => import("./pages/employer/DemoRequestsAdmin"));
 const EmployerSignup = lazy(() => import("./pages/employer/Signup"));
@@ -154,6 +155,7 @@ const MainRoutes = () => (
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/sitemap" element={<PlaceholderPage title="Sitemap" />} />
+        <Route path="/pricing" element={<PricingPage />} />
 
         {/* Candidate Routes */}
         <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
