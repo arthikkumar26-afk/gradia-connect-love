@@ -2,116 +2,132 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { EmployerProvider } from "./contexts/EmployerContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { lazy, Suspense } from "react";
 
-// Layout
+// Layout - keep eagerly loaded
 import Layout from "./components/layout/Layout";
 import ScrollToTop from "./components/layout/ScrollToTop";
 
-// Main Pages
+// Critical pages - eagerly loaded for fast first paint
 import Index from "./pages/Index";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Careers from "./pages/Careers";
-import Blog from "./pages/Blog";
-import Companies from "./pages/Companies";
-import FAQ from "./pages/FAQ";
-import Privacy from "./pages/Privacy";
-import PlaceholderPage from "./components/PlaceholderPage";
-import JobsResults from "./pages/JobsResults";
-import Jobs from "./pages/Jobs";
-import JobsSoftware from "./pages/JobsSoftware";
-import JobsEducation from "./pages/JobsEducation";
-import NotFound from "./pages/NotFound";
-import TermsOfService from "./pages/TermsOfService";
-import EmployerLogin from "./pages/EmployerLogin";
-import EmployerDashboard from "./pages/EmployerDashboard";
-import CandidateLogin from "./pages/CandidateLogin";
 import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import ProfileSuccess from "./pages/ProfileSuccess";
-import JobRequirements from "./pages/JobRequirements";
-import Registration from "./pages/employer/Registration";
-import Agreement from "./pages/employer/Agreement";
-import Benefits from "./pages/employer/Benefits";
-import Terms from "./pages/employer/Terms";
-import Plans from "./pages/employer/Plans";
-import Onboarding from "./pages/employer/Onboarding";
-import Pricing from "./pages/employer/Pricing";
-import RequestDemo from "./pages/employer/RequestDemo";
-import DemoRequestsAdmin from "./pages/employer/DemoRequestsAdmin";
-import EmployerSignup from "./pages/employer/Signup";
-import CandidateSignup from "./pages/candidate/Signup";
-import FreelancerSignup from "./pages/freelancer/Signup";
-import FreelancerLogin from "./pages/freelancer/Login";
-import EduTechLanding from "./pages/edutech/EduTechLanding";
-import EduTechLogin from "./pages/edutech/EduTechLogin";
-import EduTechDashboard from "./pages/edutech/EduTechDashboard";
-
-import LearningPlatform from "./pages/LearningPlatform";
-import ResumeBuilder from "./pages/candidate/ResumeBuilder";
-import InterviewPrep from "./pages/candidate/InterviewPrep";
-import MockTest from "./pages/candidate/MockTest";
-import MockInterview from "./pages/candidate/MockInterview";
-import MockInterviewStart from "./pages/candidate/MockInterviewStart";
-import DemoRound from "./pages/candidate/DemoRound";
-import DemoFeedback from "./pages/candidate/DemoFeedback";
-import CareerCoaching from "./pages/candidate/CareerCoaching";
-
+import NotFound from "./pages/NotFound";
 import SignupPortal from "./pages/SignupPortal";
-import QuickRegister from "./pages/candidate/QuickRegister";
-import { Navigate } from "react-router-dom";
-import EmployerCreateProfile from "./pages/employer/CreateProfile";
-import TechLearning from "./pages/learning/TechLearning";
-import NonTechLearning from "./pages/learning/NonTechLearning";
-import EducationLearning from "./pages/learning/EducationLearning";
-import LanguagesLearning from "./pages/learning/LanguagesLearning";
-import AllCategories from "./pages/learning/AllCategories";
-import CandidateDashboard from "./pages/candidate/Dashboard";
-import EditProfile from "./pages/EditProfile";
-import PostJob from "./pages/employer/PostJob";
-import CompanyJobs from "./pages/CompanyJobs";
-import JobApply from "./pages/JobApply";
-import Interview from "./pages/Interview";
-import BookSlot from "./pages/BookSlot";
-import CandidateProfilePage from "./pages/employer/CandidateProfile";
-import FreelancerDashboard from "./pages/freelancer/Dashboard";
-import PublicPortfolio from "./pages/freelancer/PublicPortfolio";
 
-// Admin & Owner Pages
-import AdminLogin from "./pages/admin/Login";
-import AdminDashboard from "./pages/admin/Dashboard";
-import JobModeration from "./pages/admin/JobModeration";
-import AdminUsers from "./pages/admin/Users";
-import AdminCompanies from "./pages/admin/Companies";
-import AdminReports from "./pages/admin/Reports";
-import AdminAuditLogs from "./pages/admin/AuditLogs";
-import AdminSettings from "./pages/admin/AdminSettings";
-import SubscribedEmployers from "./pages/admin/SubscribedEmployers";
-import SubscribedCandidates from "./pages/admin/SubscribedCandidates";
-import OwnerLogin from "./pages/owner/Login";
-import OwnerDashboard from "./pages/owner/Dashboard";
-import OwnerInitialSetup from "./pages/owner/InitialSetup";
-import OwnerRevenueAnalytics from "./pages/owner/RevenueAnalytics";
-import OwnerSystemConfiguration from "./pages/owner/SystemConfiguration";
-import OwnerDatabaseManagement from "./pages/owner/DatabaseManagement";
-import OwnerAllJobsOverview from "./pages/owner/AllJobsOverview";
-import OwnerGrowthMetrics from "./pages/owner/GrowthMetrics";
-import MockInterviewPipeline from "./pages/admin/MockInterviewPipeline";
-import AdminManagement from "./pages/admin/Management";
-import ManagementFeedback from "./pages/admin/ManagementFeedback";
-import LiveDemoView from "./pages/admin/LiveDemoView";
-import HRNegotiations from "./pages/admin/HRNegotiations";
-import CouponManagement from "./pages/admin/CouponManagement";
-import UnsubscribedEmployers from "./pages/admin/UnsubscribedEmployers";
-import UnsubscribedCandidates from "./pages/admin/UnsubscribedCandidates";
-import ExternalJobs from "./pages/admin/ExternalJobs";
+// Lazy-loaded pages - split into chunks by section
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Blog = lazy(() => import("./pages/Blog"));
+const Companies = lazy(() => import("./pages/Companies"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PlaceholderPage = lazy(() => import("./components/PlaceholderPage"));
+const JobsResults = lazy(() => import("./pages/JobsResults"));
+const Jobs = lazy(() => import("./pages/Jobs"));
+const JobsSoftware = lazy(() => import("./pages/JobsSoftware"));
+const JobsEducation = lazy(() => import("./pages/JobsEducation"));
+const EmployerLogin = lazy(() => import("./pages/EmployerLogin"));
+const EmployerDashboard = lazy(() => import("./pages/EmployerDashboard"));
+const CandidateLogin = lazy(() => import("./pages/CandidateLogin"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ProfileSuccess = lazy(() => import("./pages/ProfileSuccess"));
+const JobRequirements = lazy(() => import("./pages/JobRequirements"));
+const Registration = lazy(() => import("./pages/employer/Registration"));
+const Agreement = lazy(() => import("./pages/employer/Agreement"));
+const Benefits = lazy(() => import("./pages/employer/Benefits"));
+const Terms = lazy(() => import("./pages/employer/Terms"));
+const Plans = lazy(() => import("./pages/employer/Plans"));
+const Onboarding = lazy(() => import("./pages/employer/Onboarding"));
+const Pricing = lazy(() => import("./pages/employer/Pricing"));
+const RequestDemo = lazy(() => import("./pages/employer/RequestDemo"));
+const DemoRequestsAdmin = lazy(() => import("./pages/employer/DemoRequestsAdmin"));
+const EmployerSignup = lazy(() => import("./pages/employer/Signup"));
+const CandidateSignup = lazy(() => import("./pages/candidate/Signup"));
+const FreelancerSignup = lazy(() => import("./pages/freelancer/Signup"));
+const FreelancerLogin = lazy(() => import("./pages/freelancer/Login"));
+const EduTechLanding = lazy(() => import("./pages/edutech/EduTechLanding"));
+const EduTechLogin = lazy(() => import("./pages/edutech/EduTechLogin"));
+const EduTechDashboard = lazy(() => import("./pages/edutech/EduTechDashboard"));
+const LearningPlatform = lazy(() => import("./pages/LearningPlatform"));
+const ResumeBuilder = lazy(() => import("./pages/candidate/ResumeBuilder"));
+const InterviewPrep = lazy(() => import("./pages/candidate/InterviewPrep"));
+const MockTest = lazy(() => import("./pages/candidate/MockTest"));
+const MockInterview = lazy(() => import("./pages/candidate/MockInterview"));
+const MockInterviewStart = lazy(() => import("./pages/candidate/MockInterviewStart"));
+const DemoRound = lazy(() => import("./pages/candidate/DemoRound"));
+const DemoFeedback = lazy(() => import("./pages/candidate/DemoFeedback"));
+const CareerCoaching = lazy(() => import("./pages/candidate/CareerCoaching"));
+const QuickRegister = lazy(() => import("./pages/candidate/QuickRegister"));
+const EmployerCreateProfile = lazy(() => import("./pages/employer/CreateProfile"));
+const TechLearning = lazy(() => import("./pages/learning/TechLearning"));
+const NonTechLearning = lazy(() => import("./pages/learning/NonTechLearning"));
+const EducationLearning = lazy(() => import("./pages/learning/EducationLearning"));
+const LanguagesLearning = lazy(() => import("./pages/learning/LanguagesLearning"));
+const AllCategories = lazy(() => import("./pages/learning/AllCategories"));
+const CandidateDashboard = lazy(() => import("./pages/candidate/Dashboard"));
+const EditProfile = lazy(() => import("./pages/EditProfile"));
+const PostJob = lazy(() => import("./pages/employer/PostJob"));
+const CompanyJobs = lazy(() => import("./pages/CompanyJobs"));
+const JobApply = lazy(() => import("./pages/JobApply"));
+const Interview = lazy(() => import("./pages/Interview"));
+const BookSlot = lazy(() => import("./pages/BookSlot"));
+const CandidateProfilePage = lazy(() => import("./pages/employer/CandidateProfile"));
+const FreelancerDashboard = lazy(() => import("./pages/freelancer/Dashboard"));
+const PublicPortfolio = lazy(() => import("./pages/freelancer/PublicPortfolio"));
 
+// Admin & Owner Pages - lazy loaded
+const AdminLogin = lazy(() => import("./pages/admin/Login"));
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const JobModeration = lazy(() => import("./pages/admin/JobModeration"));
+const AdminUsers = lazy(() => import("./pages/admin/Users"));
+const AdminCompanies = lazy(() => import("./pages/admin/Companies"));
+const AdminReports = lazy(() => import("./pages/admin/Reports"));
+const AdminAuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const SubscribedEmployers = lazy(() => import("./pages/admin/SubscribedEmployers"));
+const SubscribedCandidates = lazy(() => import("./pages/admin/SubscribedCandidates"));
+const OwnerLogin = lazy(() => import("./pages/owner/Login"));
+const OwnerDashboard = lazy(() => import("./pages/owner/Dashboard"));
+const OwnerInitialSetup = lazy(() => import("./pages/owner/InitialSetup"));
+const OwnerRevenueAnalytics = lazy(() => import("./pages/owner/RevenueAnalytics"));
+const OwnerSystemConfiguration = lazy(() => import("./pages/owner/SystemConfiguration"));
+const OwnerDatabaseManagement = lazy(() => import("./pages/owner/DatabaseManagement"));
+const OwnerAllJobsOverview = lazy(() => import("./pages/owner/AllJobsOverview"));
+const OwnerGrowthMetrics = lazy(() => import("./pages/owner/GrowthMetrics"));
+const MockInterviewPipeline = lazy(() => import("./pages/admin/MockInterviewPipeline"));
+const AdminManagement = lazy(() => import("./pages/admin/Management"));
+const ManagementFeedback = lazy(() => import("./pages/admin/ManagementFeedback"));
+const LiveDemoView = lazy(() => import("./pages/admin/LiveDemoView"));
+const HRNegotiations = lazy(() => import("./pages/admin/HRNegotiations"));
+const CouponManagement = lazy(() => import("./pages/admin/CouponManagement"));
+const UnsubscribedEmployers = lazy(() => import("./pages/admin/UnsubscribedEmployers"));
+const UnsubscribedCandidates = lazy(() => import("./pages/admin/UnsubscribedCandidates"));
+const ExternalJobs = lazy(() => import("./pages/admin/ExternalJobs"));
 
-const queryClient = new QueryClient();
+// Optimized QueryClient with caching
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+      refetchOnWindowFocus: false,
+      retry: 2,
+    },
+  },
+});
+
+// Loading fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+  </div>
+);
 
 // Helper component for external redirects
 const ExternalRedirect = ({ url }: { url: string }) => {
@@ -122,174 +138,173 @@ const ExternalRedirect = ({ url }: { url: string }) => {
 // Main Routes Component with Layout
 const MainRoutes = () => (
   <Layout>
-    <Routes>
-      {/* Main Pages */}
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/careers" element={<Careers />} />
-      <Route path="/blog" element={<Blog />} />
-      <Route path="/companies" element={<Companies />} />
-      <Route path="/faq" element={<FAQ />} />
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/sitemap" element={<PlaceholderPage title="Sitemap" />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Main Pages */}
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/companies" element={<Companies />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/sitemap" element={<PlaceholderPage title="Sitemap" />} />
 
-      {/* Candidate Routes */}
-      <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
-      <Route path="/jobs" element={<Jobs />} />
-      <Route path="/jobs-results" element={<JobsResults />} />
-      <Route path="/jobs/software" element={<JobsSoftware />} />
-      <Route path="/jobs/education" element={<JobsEducation />} />
-      <Route path="/job/:id" element={<PlaceholderPage title="Job Details" />} />
-      <Route path="/job/:jobId/apply" element={<JobApply />} />
-      <Route path="/candidate/signup" element={<CandidateSignup />} />
-      <Route path="/candidate/login" element={<CandidateLogin />} />
-      <Route path="/candidate/forgot-password" element={<ForgotPassword />} />
-      <Route path="/candidate/create-profile" element={<Navigate to="/candidate/signup" replace />} />
-      <Route path="/candidate/apply" element={<Navigate to="/candidate/signup" replace />} />
-      <Route path="/create-profile" element={<Navigate to="/candidate/signup" replace />} />
-      <Route path="/signup" element={<SignupPortal />} />
-      <Route path="/candidate/quick-register" element={<QuickRegister />} />
-      <Route path="/profile/success" element={<ProfileSuccess />} />
-      <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
-      <Route path="/profile/edit" element={<EditProfile />} />
-      <Route path="/edit-profile" element={<EditProfile />} />
-      <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
-      <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
-      <Route path="/candidate/mock-test/:sessionId" element={<MockTest />} />
-      <Route path="/candidate/mock-interview/:sessionId/:stageOrder" element={<MockInterview />} />
-      <Route path="/candidate/mock-interview-start/:type" element={<MockInterviewStart />} />
-      <Route path="/candidate/demo-round" element={<DemoRound />} />
-      <Route path="/candidate/demo-feedback" element={<DemoFeedback />} />
-      <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
-      <Route path="/candidate/assessments" element={<PlaceholderPage title="Skill Assessments" />} />
-      <Route path="/candidate/mock-interviews" element={<PlaceholderPage title="Mock Interviews" />} />
-      <Route path="/candidate/salary-insights" element={<PlaceholderPage title="Salary Insights" />} />
-      <Route path="/candidate/coaching" element={<CareerCoaching />} />
+        {/* Candidate Routes */}
+        <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/jobs-results" element={<JobsResults />} />
+        <Route path="/jobs/software" element={<JobsSoftware />} />
+        <Route path="/jobs/education" element={<JobsEducation />} />
+        <Route path="/job/:id" element={<PlaceholderPage title="Job Details" />} />
+        <Route path="/job/:jobId/apply" element={<JobApply />} />
+        <Route path="/candidate/signup" element={<CandidateSignup />} />
+        <Route path="/candidate/login" element={<CandidateLogin />} />
+        <Route path="/candidate/forgot-password" element={<ForgotPassword />} />
+        <Route path="/candidate/create-profile" element={<Navigate to="/candidate/signup" replace />} />
+        <Route path="/candidate/apply" element={<Navigate to="/candidate/signup" replace />} />
+        <Route path="/create-profile" element={<Navigate to="/candidate/signup" replace />} />
+        <Route path="/signup" element={<SignupPortal />} />
+        <Route path="/candidate/quick-register" element={<QuickRegister />} />
+        <Route path="/profile/success" element={<ProfileSuccess />} />
+        <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
+        <Route path="/profile/edit" element={<EditProfile />} />
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/candidate/applications" element={<PlaceholderPage title="My Applications" />} />
+        <Route path="/candidate/interview-prep" element={<InterviewPrep />} />
+        <Route path="/candidate/mock-test/:sessionId" element={<MockTest />} />
+        <Route path="/candidate/mock-interview/:sessionId/:stageOrder" element={<MockInterview />} />
+        <Route path="/candidate/mock-interview-start/:type" element={<MockInterviewStart />} />
+        <Route path="/candidate/demo-round" element={<DemoRound />} />
+        <Route path="/candidate/demo-feedback" element={<DemoFeedback />} />
+        <Route path="/candidate/resume-builder" element={<ResumeBuilder />} />
+        <Route path="/candidate/assessments" element={<PlaceholderPage title="Skill Assessments" />} />
+        <Route path="/candidate/mock-interviews" element={<PlaceholderPage title="Mock Interviews" />} />
+        <Route path="/candidate/salary-insights" element={<PlaceholderPage title="Salary Insights" />} />
+        <Route path="/candidate/coaching" element={<CareerCoaching />} />
 
-      {/* Learning Platform Routes - redirect to Skillory */}
-      <Route path="/learning" element={<ExternalRedirect url="https://skillory.in" />} />
-      <Route path="/learning/tech" element={<TechLearning />} />
-      <Route path="/learning/non-tech" element={<NonTechLearning />} />
-      <Route path="/learning/education" element={<EducationLearning />} />
-      <Route path="/learning/languages" element={<LanguagesLearning />} />
-      <Route path="/learning/all-categories" element={<AllCategories />} />
+        {/* Learning Platform Routes */}
+        <Route path="/learning" element={<ExternalRedirect url="https://skillory.in" />} />
+        <Route path="/learning/tech" element={<TechLearning />} />
+        <Route path="/learning/non-tech" element={<NonTechLearning />} />
+        <Route path="/learning/education" element={<EducationLearning />} />
+        <Route path="/learning/languages" element={<LanguagesLearning />} />
+        <Route path="/learning/all-categories" element={<AllCategories />} />
 
-      {/* Employer Routes */}
-      <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
-      <Route path="/employer/signup" element={<EmployerSignup />} />
-      <Route path="/employer/login" element={<EmployerLogin />} />
-      <Route path="/employer/forgot-password" element={<ForgotPassword />} />
-      <Route path="/employer/create-profile" element={<EmployerCreateProfile />} />
-      <Route path="/employer/benefits" element={<Benefits />} />
-      <Route path="/employer/agreement" element={<Agreement />} />
-      <Route path="/employer/terms" element={<Terms />} />
-      <Route path="/employer/plans" element={<Plans />} />
-      <Route path="/employer/onboarding" element={<Onboarding />} />
-      <Route path="/employer/dashboard" element={<EmployerDashboard />} />
-      <Route path="/employer/candidate/:candidateId" element={<CandidateProfilePage />} />
-      <Route path="/learning-platform" element={<LearningPlatform />} />
-      <Route path="/employer/post-job" element={<PostJob />} />
-      <Route path="/employer/job-requirements" element={<JobRequirements />} />
-      <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
-      <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
-      <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
-      <Route path="/employer/pricing" element={<Pricing />} />
-      <Route path="/employer/demo" element={<RequestDemo />} />
-      <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
+        {/* Employer Routes */}
+        <Route path="/employer" element={<PlaceholderPage title="Employer Home" />} />
+        <Route path="/employer/signup" element={<EmployerSignup />} />
+        <Route path="/employer/login" element={<EmployerLogin />} />
+        <Route path="/employer/forgot-password" element={<ForgotPassword />} />
+        <Route path="/employer/create-profile" element={<EmployerCreateProfile />} />
+        <Route path="/employer/benefits" element={<Benefits />} />
+        <Route path="/employer/agreement" element={<Agreement />} />
+        <Route path="/employer/terms" element={<Terms />} />
+        <Route path="/employer/plans" element={<Plans />} />
+        <Route path="/employer/onboarding" element={<Onboarding />} />
+        <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+        <Route path="/employer/candidate/:candidateId" element={<CandidateProfilePage />} />
+        <Route path="/learning-platform" element={<LearningPlatform />} />
+        <Route path="/employer/post-job" element={<PostJob />} />
+        <Route path="/employer/job-requirements" element={<JobRequirements />} />
+        <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
+        <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
+        <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />
+        <Route path="/employer/pricing" element={<Pricing />} />
+        <Route path="/employer/demo" element={<RequestDemo />} />
+        <Route path="/employer/demo-admin" element={<DemoRequestsAdmin />} />
 
-      {/* EduTech Routes */}
-      <Route path="/edutech" element={<EduTechLanding />} />
-      <Route path="/edutech/login" element={<EduTechLogin />} />
-      <Route path="/edutech/signup" element={<EduTechLanding />} />
-      <Route path="/edutech/dashboard" element={<EduTechDashboard />} />
+        {/* EduTech Routes */}
+        <Route path="/edutech" element={<EduTechLanding />} />
+        <Route path="/edutech/login" element={<EduTechLogin />} />
+        <Route path="/edutech/signup" element={<EduTechLanding />} />
+        <Route path="/edutech/dashboard" element={<EduTechDashboard />} />
 
-      {/* Freelancer Routes */}
-      <Route path="/freelancer/signup" element={<FreelancerSignup />} />
-      <Route path="/freelancer/login" element={<FreelancerLogin />} />
-      <Route path="/freelancer/dashboard" element={<FreelancerDashboard />} />
-      <Route path="/freelancer/edit-profile" element={<EditProfile />} />
-      <Route path="/portfolio/:userId" element={<PublicPortfolio />} />
+        {/* Freelancer Routes */}
+        <Route path="/freelancer/signup" element={<FreelancerSignup />} />
+        <Route path="/freelancer/login" element={<FreelancerLogin />} />
+        <Route path="/freelancer/dashboard" element={<FreelancerDashboard />} />
+        <Route path="/freelancer/edit-profile" element={<EditProfile />} />
+        <Route path="/portfolio/:userId" element={<PublicPortfolio />} />
 
+        {/* Public Company Jobs */}
+        <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
 
-      {/* Public Company Jobs (QR Code destination) */}
-      <Route path="/company/:employerId/jobs" element={<CompanyJobs />} />
+        {/* Service Routes */}
+        <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
+        <Route path="/services/fast-track" element={<PlaceholderPage title="Fast Track Hiring" />} />
+        <Route path="/services/volume-hiring" element={<PlaceholderPage title="Volume Hiring" />} />
+        <Route path="/services/staffing" element={<PlaceholderPage title="Staffing Solutions" />} />
+        <Route path="/services/training" element={<PlaceholderPage title="Training Programs" />} />
+        <Route path="/services/assessments" element={<PlaceholderPage title="Skills Assessments" />} />
+        <Route path="/services/background-checks" element={<PlaceholderPage title="Background Checks" />} />
 
-      {/* Service Routes */}
-      <Route path="/services/placement" element={<PlaceholderPage title="Placement Services" />} />
-      <Route path="/services/fast-track" element={<PlaceholderPage title="Fast Track Hiring" />} />
-      <Route path="/services/volume-hiring" element={<PlaceholderPage title="Volume Hiring" />} />
-      <Route path="/services/staffing" element={<PlaceholderPage title="Staffing Solutions" />} />
-      <Route path="/services/training" element={<PlaceholderPage title="Training Programs" />} />
-      <Route path="/services/assessments" element={<PlaceholderPage title="Skills Assessments" />} />
-      <Route path="/services/background-checks" element={<PlaceholderPage title="Background Checks" />} />
+        {/* Resource Routes */}
+        <Route path="/events" element={<PlaceholderPage title="Events" />} />
+        <Route path="/workshops" element={<PlaceholderPage title="Workshops" />} />
+        <Route path="/library" element={<PlaceholderPage title="Resource Library" />} />
+        <Route path="/downloads" element={<PlaceholderPage title="Downloads" />} />
+        <Route path="/newsletter" element={<PlaceholderPage title="Newsletter" />} />
+        <Route path="/testimonials" element={<PlaceholderPage title="Video Testimonials" />} />
 
-      {/* Resource Routes */}
-      <Route path="/events" element={<PlaceholderPage title="Events" />} />
-      <Route path="/workshops" element={<PlaceholderPage title="Workshops" />} />
-      <Route path="/library" element={<PlaceholderPage title="Resource Library" />} />
-      <Route path="/downloads" element={<PlaceholderPage title="Downloads" />} />
-      <Route path="/newsletter" element={<PlaceholderPage title="Newsletter" />} />
-      <Route path="/testimonials" element={<PlaceholderPage title="Video Testimonials" />} />
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/jobs" element={<JobModeration />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/subscribed-employers" element={<SubscribedEmployers />} />
+        <Route path="/admin/subscribed-candidates" element={<SubscribedCandidates />} />
+        <Route path="/admin/unsubscribed-employers" element={<UnsubscribedEmployers />} />
+        <Route path="/admin/unsubscribed-candidates" element={<UnsubscribedCandidates />} />
+        <Route path="/admin/companies" element={<AdminCompanies />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+        <Route path="/admin/audit" element={<AdminAuditLogs />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
+        <Route path="/admin/mock-interview-pipeline" element={<MockInterviewPipeline />} />
+        <Route path="/admin/management" element={<AdminManagement />} />
+        <Route path="/admin/feedback" element={<ManagementFeedback />} />
+        <Route path="/admin/live-demo" element={<LiveDemoView />} />
+        <Route path="/admin/hr-negotiations" element={<HRNegotiations />} />
+        <Route path="/admin/coupons" element={<CouponManagement />} />
+        <Route path="/admin/external-jobs" element={<ExternalJobs />} />
+        <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
+        <Route path="/admin" element={<AdminDashboard />} />
 
-      {/* Admin Routes */}
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      
-      <Route path="/admin/jobs" element={<JobModeration />} />
-      <Route path="/admin/users" element={<AdminUsers />} />
-      <Route path="/admin/subscribed-employers" element={<SubscribedEmployers />} />
-      <Route path="/admin/subscribed-candidates" element={<SubscribedCandidates />} />
-      <Route path="/admin/unsubscribed-employers" element={<UnsubscribedEmployers />} />
-      <Route path="/admin/unsubscribed-candidates" element={<UnsubscribedCandidates />} />
-      <Route path="/admin/companies" element={<AdminCompanies />} />
-      <Route path="/admin/reports" element={<AdminReports />} />
-      <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
-      <Route path="/admin/audit" element={<AdminAuditLogs />} />
-      <Route path="/admin/settings" element={<AdminSettings />} />
-      <Route path="/admin/mock-interview-pipeline" element={<MockInterviewPipeline />} />
-      <Route path="/admin/management" element={<AdminManagement />} />
-      <Route path="/admin/feedback" element={<ManagementFeedback />} />
-      <Route path="/admin/live-demo" element={<LiveDemoView />} />
-      <Route path="/admin/hr-negotiations" element={<HRNegotiations />} />
-      <Route path="/admin/coupons" element={<CouponManagement />} />
-      <Route path="/admin/external-jobs" element={<ExternalJobs />} />
-      <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
-      <Route path="/admin" element={<AdminDashboard />} />
+        {/* Owner Routes */}
+        <Route path="/owner/login" element={<OwnerLogin />} />
+        <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+        <Route path="/owner/setup" element={<OwnerInitialSetup />} />
+        <Route path="/owner/revenue-analytics" element={<OwnerRevenueAnalytics />} />
+        <Route path="/owner/system-configuration" element={<OwnerSystemConfiguration />} />
+        <Route path="/owner/database-management" element={<OwnerDatabaseManagement />} />
+        <Route path="/owner/all-jobs" element={<OwnerAllJobsOverview />} />
+        <Route path="/owner/growth-metrics" element={<OwnerGrowthMetrics />} />
+        <Route path="/owner" element={<OwnerDashboard />} />
 
-      {/* Owner Routes */}
-      <Route path="/owner/login" element={<OwnerLogin />} />
-      <Route path="/owner/dashboard" element={<OwnerDashboard />} />
-      <Route path="/owner/setup" element={<OwnerInitialSetup />} />
-      <Route path="/owner/revenue-analytics" element={<OwnerRevenueAnalytics />} />
-      <Route path="/owner/system-configuration" element={<OwnerSystemConfiguration />} />
-      <Route path="/owner/database-management" element={<OwnerDatabaseManagement />} />
-      <Route path="/owner/all-jobs" element={<OwnerAllJobsOverview />} />
-      <Route path="/owner/growth-metrics" element={<OwnerGrowthMetrics />} />
-      <Route path="/owner" element={<OwnerDashboard />} />
+        {/* Support & Community Routes */}
+        <Route path="/support" element={<PlaceholderPage title="Support Center" />} />
+        <Route path="/ambassador" element={<PlaceholderPage title="Ambassador Program" />} />
+        <Route path="/referral" element={<PlaceholderPage title="Referral Program" />} />
+        <Route path="/partner-portal" element={<PlaceholderPage title="Partner Portal" />} />
+        <Route path="/api" element={<PlaceholderPage title="API Documentation" />} />
+        <Route path="/accessibility" element={<PlaceholderPage title="Accessibility" />} />
+        <Route path="/press" element={<PlaceholderPage title="Press & Media" />} />
+        <Route path="/community-guidelines" element={<PlaceholderPage title="Community Guidelines" />} />
 
-      {/* Support & Community Routes */}
-      <Route path="/support" element={<PlaceholderPage title="Support Center" />} />
-      <Route path="/ambassador" element={<PlaceholderPage title="Ambassador Program" />} />
-      <Route path="/referral" element={<PlaceholderPage title="Referral Program" />} />
-      <Route path="/partner-portal" element={<PlaceholderPage title="Partner Portal" />} />
-      <Route path="/api" element={<PlaceholderPage title="API Documentation" />} />
-      <Route path="/accessibility" element={<PlaceholderPage title="Accessibility" />} />
-      <Route path="/press" element={<PlaceholderPage title="Press & Media" />} />
-      <Route path="/community-guidelines" element={<PlaceholderPage title="Community Guidelines" />} />
+        {/* Interview & Booking pages */}
+        <Route path="/interview" element={<Interview />} />
+        <Route path="/book-slot" element={<BookSlot />} />
 
-
-      {/* Interview & Booking pages - standalone */}
-      <Route path="/interview" element={<Interview />} />
-      <Route path="/book-slot" element={<BookSlot />} />
-
-      {/* Catch-all route */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* Catch-all route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   </Layout>
 );
 
