@@ -5,12 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   GraduationCap, Users, BarChart3, Megaphone, CalendarCheck,
   BookOpen, Settings, LogOut, User, Menu, X,
   TrendingUp, Eye, MousePointerClick, UserPlus,
-  Plus, Send, LayoutDashboard, ChevronRight
+  Plus, Send, LayoutDashboard, ChevronRight,
+  Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award
 } from "lucide-react";
 
 const statsData = [
@@ -28,11 +31,11 @@ const quickActions = [
 ];
 
 const recentCandidates = [
-  { name: "Priya Sharma", course: "Full Stack Development", status: "Placed", company: "TCS" },
-  { name: "Rahul Verma", course: "Data Science", status: "Interviewing", company: "Infosys" },
-  { name: "Anjali Patel", course: "Digital Marketing", status: "Training", company: "-" },
-  { name: "Kiran Reddy", course: "Cloud Computing", status: "Placed", company: "Wipro" },
-  { name: "Sneha Gupta", course: "UI/UX Design", status: "Job Seeking", company: "-" },
+  { name: "Priya Sharma", course: "Full Stack Development", status: "Placed", company: "TCS", email: "priya.sharma@email.com", phone: "+91 98765 43210", enrollDate: "2025-06-15", completionDate: "2025-12-10", totalFee: 45000, paidAmount: 45000, courseDuration: "6 months", batchId: "FSB-2025-03", qualification: "B.Tech (CSE)", location: "Hyderabad" },
+  { name: "Rahul Verma", course: "Data Science", status: "Interviewing", company: "Infosys", email: "rahul.verma@email.com", phone: "+91 87654 32109", enrollDate: "2025-08-01", completionDate: null, totalFee: 55000, paidAmount: 35000, courseDuration: "4 months", batchId: "DSB-2025-05", qualification: "M.Sc (Statistics)", location: "Bangalore" },
+  { name: "Anjali Patel", course: "Digital Marketing", status: "Training", company: "-", email: "anjali.patel@email.com", phone: "+91 76543 21098", enrollDate: "2025-11-10", completionDate: null, totalFee: 25000, paidAmount: 15000, courseDuration: "3 months", batchId: "DMB-2025-08", qualification: "BBA", location: "Pune" },
+  { name: "Kiran Reddy", course: "Cloud Computing", status: "Placed", company: "Wipro", email: "kiran.reddy@email.com", phone: "+91 65432 10987", enrollDate: "2025-07-20", completionDate: "2025-10-18", totalFee: 35000, paidAmount: 35000, courseDuration: "3 months", batchId: "CCB-2025-04", qualification: "B.Tech (IT)", location: "Chennai" },
+  { name: "Sneha Gupta", course: "UI/UX Design", status: "Job Seeking", company: "-", email: "sneha.gupta@email.com", phone: "+91 54321 09876", enrollDate: "2025-09-01", completionDate: "2025-12-28", totalFee: 30000, paidAmount: 20000, courseDuration: "4 months", batchId: "UXB-2025-06", qualification: "B.Des", location: "Mumbai" },
 ];
 
 const campaignsList = [
@@ -176,6 +179,8 @@ export default function EduTechDashboard() {
 /* ─── Sub-components ─── */
 
 function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => void }) {
+  const [selectedCandidate, setSelectedCandidate] = useState<typeof recentCandidates[0] | null>(null);
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -231,13 +236,13 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
         <CardContent>
           <div className="space-y-3">
             {recentCandidates.map((c, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+              <div key={i} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0 cursor-pointer hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors" onClick={() => setSelectedCandidate(c)}>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="text-xs bg-muted">{c.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{c.name}</p>
+                    <p className="text-sm font-medium text-primary hover:underline">{c.name}</p>
                     <p className="text-xs text-muted-foreground">{c.course}</p>
                   </div>
                 </div>
@@ -252,11 +257,121 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
           </div>
         </CardContent>
       </Card>
+
+      <CandidateDetailModal candidate={selectedCandidate} isOpen={!!selectedCandidate} onClose={() => setSelectedCandidate(null)} />
     </div>
   );
 }
 
+function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeof recentCandidates[0] | null; isOpen: boolean; onClose: () => void }) {
+  if (!candidate) return null;
+  const pending = candidate.totalFee - candidate.paidAmount;
+  const paidPercent = Math.round((candidate.paidAmount / candidate.totalFee) * 100);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">{candidate.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-lg">{candidate.name}</p>
+              <p className="text-sm font-normal text-muted-foreground">{candidate.qualification}</p>
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          {/* Contact Info */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-foreground">Contact Information</h4>
+            <div className="grid grid-cols-1 gap-2 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" /> {candidate.email}</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> {candidate.phone}</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> {candidate.location}</div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Course Info */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-foreground">Course Details</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-muted-foreground">Course:</span> <span className="font-medium text-foreground">{candidate.course}</span></div>
+              <div><span className="text-muted-foreground">Batch:</span> <span className="font-medium text-foreground">{candidate.batchId}</span></div>
+              <div><span className="text-muted-foreground">Duration:</span> <span className="font-medium text-foreground">{candidate.courseDuration}</span></div>
+              <div><span className="text-muted-foreground">Enrolled:</span> <span className="font-medium text-foreground">{new Date(candidate.enrollDate).toLocaleDateString("en-IN")}</span></div>
+              <div>
+                <span className="text-muted-foreground">Status:</span>{" "}
+                <Badge variant={candidate.status === "Placed" ? "default" : candidate.status === "Training" ? "secondary" : "outline"} className="text-xs ml-1">{candidate.status}</Badge>
+              </div>
+              {candidate.completionDate && (
+                <div><span className="text-muted-foreground">Completed:</span> <span className="font-medium text-foreground">{new Date(candidate.completionDate).toLocaleDateString("en-IN")}</span></div>
+              )}
+              {candidate.company !== "-" && (
+                <div><span className="text-muted-foreground">Placed at:</span> <span className="font-medium text-foreground">{candidate.company}</span></div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Payment Info */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2"><IndianRupee className="h-4 w-4" /> Payment Details</h4>
+            
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="border-border/50">
+                <CardContent className="p-3 text-center">
+                  <p className="text-xs text-muted-foreground">Total Fee</p>
+                  <p className="text-lg font-bold text-foreground">₹{candidate.totalFee.toLocaleString("en-IN")}</p>
+                </CardContent>
+              </Card>
+              <Card className="border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
+                <CardContent className="p-3 text-center">
+                  <p className="text-xs text-muted-foreground">Paid</p>
+                  <p className="text-lg font-bold text-green-600 dark:text-green-400">₹{candidate.paidAmount.toLocaleString("en-IN")}</p>
+                </CardContent>
+              </Card>
+              <Card className={`${pending > 0 ? "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20" : "border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20"}`}>
+                <CardContent className="p-3 text-center">
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                  <p className={`text-lg font-bold ${pending > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>₹{pending.toLocaleString("en-IN")}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Payment Progress</span>
+                <span>{paidPercent}%</span>
+              </div>
+              <Progress value={paidPercent} className="h-2" />
+            </div>
+
+            {pending > 0 && (
+              <p className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
+                <Clock className="h-3 w-3" /> ₹{pending.toLocaleString("en-IN")} payment is pending
+              </p>
+            )}
+            {pending === 0 && (
+              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                <Award className="h-3 w-3" /> Full payment completed
+              </p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CandidatesContent() {
+  const [selectedCandidate, setSelectedCandidate] = useState<typeof recentCandidates[0] | null>(null);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -273,24 +388,37 @@ function CandidatesContent() {
                   <th className="text-left p-3 font-medium text-muted-foreground">Course</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">Company</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">Fee</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">Pending</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {recentCandidates.map((c, i) => (
-                  <tr key={i} className="border-b border-border/30">
-                    <td className="p-3 font-medium text-foreground">{c.name}</td>
-                    <td className="p-3 text-muted-foreground">{c.course}</td>
-                    <td className="p-3"><Badge variant={c.status === "Placed" ? "default" : "outline"} className="text-xs">{c.status}</Badge></td>
-                    <td className="p-3 text-muted-foreground">{c.company}</td>
-                    <td className="p-3"><Button variant="ghost" size="sm">View</Button></td>
-                  </tr>
-                ))}
+                {recentCandidates.map((c, i) => {
+                  const pending = c.totalFee - c.paidAmount;
+                  return (
+                    <tr key={i} className="border-b border-border/30">
+                      <td className="p-3 font-medium text-primary cursor-pointer hover:underline" onClick={() => setSelectedCandidate(c)}>{c.name}</td>
+                      <td className="p-3 text-muted-foreground">{c.course}</td>
+                      <td className="p-3"><Badge variant={c.status === "Placed" ? "default" : "outline"} className="text-xs">{c.status}</Badge></td>
+                      <td className="p-3 text-muted-foreground">{c.company}</td>
+                      <td className="p-3 text-foreground">₹{c.totalFee.toLocaleString("en-IN")}</td>
+                      <td className="p-3">
+                        <span className={pending > 0 ? "text-red-600 dark:text-red-400 font-medium" : "text-green-600 dark:text-green-400"}>
+                          {pending > 0 ? `₹${pending.toLocaleString("en-IN")}` : "Paid ✓"}
+                        </span>
+                      </td>
+                      <td className="p-3"><Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
+
+      <CandidateDetailModal candidate={selectedCandidate} isOpen={!!selectedCandidate} onClose={() => setSelectedCandidate(null)} />
     </div>
   );
 }
