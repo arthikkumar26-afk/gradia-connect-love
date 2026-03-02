@@ -179,6 +179,10 @@ const Header = () => {
               Freelancer
             </Link>
 
+            <Link to="/edutech/login" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+              EduTech
+            </Link>
+
             <Link to="/about" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
               About
             </Link>
