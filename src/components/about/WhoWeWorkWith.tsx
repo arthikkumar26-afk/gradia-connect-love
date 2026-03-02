@@ -52,27 +52,27 @@ const WhoWeWorkWith = () => {
   ];
 
   return (
-    <section className="py-20 bg-subtle">
+    <section className="py-12 bg-subtle">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
             Who We Work With
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
             Building partnerships across industries to create meaningful career opportunities
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4 mb-10">
           {partners.map((partner, index) => (
             <div 
               key={index} 
-              className="group p-6 rounded-xl border border-border/50 bg-card hover:border-accent/30 hover:shadow-medium transition-all duration-300 text-center"
+              className="group p-4 rounded-lg border border-border/50 bg-card hover:border-accent/30 hover:shadow-medium transition-all duration-300 text-center"
             >
-              <div className="w-12 h-12 rounded-xl bg-gradient-accent mx-auto mb-4 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <partner.icon className="h-6 w-6 text-accent-foreground" />
+              <div className="w-10 h-10 rounded-lg bg-gradient-accent mx-auto mb-2 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <partner.icon className="h-5 w-5 text-accent-foreground" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2 text-sm">
+              <h3 className="font-semibold text-foreground mb-1 text-xs">
                 {partner.title}
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
