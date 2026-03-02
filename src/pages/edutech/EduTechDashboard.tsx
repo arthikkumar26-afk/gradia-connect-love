@@ -8,12 +8,16 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   GraduationCap, Users, BarChart3, Megaphone, CalendarCheck,
   BookOpen, Settings, LogOut, User, Menu, X,
   TrendingUp, Eye, MousePointerClick, UserPlus,
   Plus, Send, LayoutDashboard, ChevronRight,
-  Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award
+  Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote
 } from "lucide-react";
 
 const statsData = [
@@ -264,12 +268,52 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
 }
 
 function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeof recentCandidates[0] | null; isOpen: boolean; onClose: () => void }) {
+  const [editMode, setEditMode] = useState(false);
+  const [paymentMode, setPaymentMode] = useState(false);
+  const [editData, setEditData] = useState({ name: "", email: "", phone: "", location: "", qualification: "", course: "", batchId: "", status: "", company: "" });
+  const [paymentData, setPaymentData] = useState({ amount: "", method: "cash", reference: "", date: new Date().toISOString().split("T")[0] });
+
   if (!candidate) return null;
   const pending = candidate.totalFee - candidate.paidAmount;
   const paidPercent = Math.round((candidate.paidAmount / candidate.totalFee) * 100);
 
+  const handleEditOpen = () => {
+    setEditData({
+      name: candidate.name, email: candidate.email, phone: candidate.phone,
+      location: candidate.location, qualification: candidate.qualification,
+      course: candidate.course, batchId: candidate.batchId, status: candidate.status,
+      company: candidate.company
+    });
+    setEditMode(true);
+    setPaymentMode(false);
+  };
+
+  const handlePaymentOpen = () => {
+    setPaymentData({ amount: "", method: "cash", reference: "", date: new Date().toISOString().split("T")[0] });
+    setPaymentMode(true);
+    setEditMode(false);
+  };
+
+  const handleSaveDetails = () => {
+    toast.success(`Details updated for ${editData.name}`);
+    setEditMode(false);
+  };
+
+  const handleSavePayment = () => {
+    if (!paymentData.amount || Number(paymentData.amount) <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    if (Number(paymentData.amount) > pending) {
+      toast.error(`Amount cannot exceed pending balance ₹${pending.toLocaleString("en-IN")}`);
+      return;
+    }
+    toast.success(`Payment of ₹${Number(paymentData.amount).toLocaleString("en-IN")} recorded via ${paymentData.method}`);
+    setPaymentMode(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={() => { onClose(); setEditMode(false); setPaymentMode(false); }}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
@@ -282,6 +326,112 @@ function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeo
             </div>
           </DialogTitle>
         </DialogHeader>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button size="sm" variant={editMode ? "default" : "outline"} onClick={handleEditOpen} className="flex-1">
+            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Update Details
+          </Button>
+          {pending > 0 && (
+            <Button size="sm" variant={paymentMode ? "default" : "outline"} onClick={handlePaymentOpen} className="flex-1">
+              <Banknote className="h-3.5 w-3.5 mr-1.5" /> Manual Payment
+            </Button>
+          )}
+        </div>
+
+        {/* Edit Details Form */}
+        {editMode && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Edit Candidate Details</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Full Name</Label>
+                  <Input value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Email</Label>
+                  <Input value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Phone</Label>
+                  <Input value={editData.phone} onChange={e => setEditData({...editData, phone: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Location</Label>
+                  <Input value={editData.location} onChange={e => setEditData({...editData, location: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Qualification</Label>
+                  <Input value={editData.qualification} onChange={e => setEditData({...editData, qualification: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Status</Label>
+                  <Select value={editData.status} onValueChange={v => setEditData({...editData, status: v})}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Training">Training</SelectItem>
+                      <SelectItem value="Job Seeking">Job Seeking</SelectItem>
+                      <SelectItem value="Interviewing">Interviewing</SelectItem>
+                      <SelectItem value="Placed">Placed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editData.status === "Placed" && (
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Placed at (Company)</Label>
+                    <Input value={editData.company} onChange={e => setEditData({...editData, company: e.target.value})} className="h-8 text-sm" />
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Button size="sm" onClick={handleSaveDetails}>Save Changes</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditMode(false)}>Cancel</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Manual Payment Form */}
+        {paymentMode && (
+          <Card className="border-accent/30 bg-accent/5">
+            <CardContent className="p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Record Manual Payment</h4>
+              <p className="text-xs text-muted-foreground">Pending balance: <span className="font-medium text-foreground">₹{pending.toLocaleString("en-IN")}</span></p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Amount (₹)</Label>
+                  <Input type="number" placeholder="e.g. 5000" value={paymentData.amount} onChange={e => setPaymentData({...paymentData, amount: e.target.value})} className="h-8 text-sm" max={pending} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Payment Method</Label>
+                  <Select value={paymentData.method} onValueChange={v => setPaymentData({...paymentData, method: v})}>
+                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="upi">UPI</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Payment Date</Label>
+                  <Input type="date" value={paymentData.date} onChange={e => setPaymentData({...paymentData, date: e.target.value})} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Reference / Receipt No.</Label>
+                  <Input placeholder="Optional" value={paymentData.reference} onChange={e => setPaymentData({...paymentData, reference: e.target.value})} className="h-8 text-sm" />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Button size="sm" onClick={handleSavePayment}>Record Payment</Button>
+                <Button size="sm" variant="ghost" onClick={() => setPaymentMode(false)}>Cancel</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="space-y-5">
           {/* Contact Info */}
