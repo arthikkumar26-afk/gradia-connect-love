@@ -144,7 +144,8 @@ const AccountSettingsSection = ({ user }: { user: any }) => {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to update password.", variant: "destructive" });
+      const netErr = err?.name === "TypeError" || err?.message?.includes("NetworkError") || err?.message?.includes("Failed to fetch");
+      toast({ title: netErr ? "Connection Error" : "Error", description: netErr ? "Network issue. Please check your internet." : (err.message || "Failed to update password."), variant: "destructive" });
     } finally {
       setIsChangingPassword(false);
     }
@@ -451,7 +452,7 @@ const CandidateDashboard = () => {
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to process", variant: "destructive" });
+      toast({ title: isNetworkError(error) ? "Connection Error" : "Error", description: friendlyError(error, "Failed to process"), variant: "destructive" });
     } finally {
       setUpgradingPlan(null);
     }
@@ -1410,8 +1411,8 @@ const CandidateDashboard = () => {
     } catch (error: any) {
       console.error('Error starting mock test:', error);
       toast({
-        title: "Error",
-        description: error.message || "Could not start mock test. Please try again.",
+        title: isNetworkError(error) ? "Connection Error" : "Error",
+        description: friendlyError(error, "Could not start mock test. Please try again."),
         variant: "destructive"
       });
     } finally {
@@ -1446,11 +1447,13 @@ const CandidateDashboard = () => {
       setCourseSuggestions(prev => ({ ...prev, [session.id]: data }));
     } catch (error: any) {
       console.error('Error fetching course suggestions:', error);
-      toast({
-        title: "Could not load suggestions",
-        description: error.message || "Unable to fetch course recommendations.",
-        variant: "destructive"
-      });
+      if (!isNetworkError(error)) {
+        toast({
+          title: "Could not load suggestions",
+          description: friendlyError(error, "Unable to fetch course recommendations."),
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoadingCourseSuggestions(prev => ({ ...prev, [session.id]: false }));
     }
@@ -2037,11 +2040,13 @@ const CandidateDashboard = () => {
         setJobs(sortedJobs.slice(0, 10) as Job[]);
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (!isNetworkError(error)) {
+        toast({
+          title: "Error",
+          description: friendlyError(error, "Failed to load jobs"),
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
