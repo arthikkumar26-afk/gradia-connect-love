@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { UserPlus, Building2, Handshake, MessageCircle, ArrowRight } from "lucide-react";
+import { UserPlus, Building2, Handshake, MessageCircle, GraduationCap, ArrowRight } from "lucide-react";
 
 const AboutCTA = () => {
   const actions = [
@@ -9,28 +9,30 @@ const AboutCTA = () => {
       label: "Apply with Gradia",
       description: "Start your career journey",
       link: "/candidate/signup",
-      variant: "default" as const
     },
     {
       icon: Building2,
       label: "Hire Through Gradia",
       description: "Find verified talent",
       link: "/employer/signup",
-      variant: "outline" as const
+    },
+    {
+      icon: GraduationCap,
+      label: "EduTech Portal",
+      description: "For training institutes",
+      link: "/edutech",
     },
     {
       icon: Handshake,
       label: "Become a Sponsor",
       description: "Partner with us",
       link: "/sponsors",
-      variant: "outline" as const
     },
     {
       icon: MessageCircle,
       label: "Contact Us",
       description: "Get in touch",
       link: "/contact",
-      variant: "outline" as const
     }
   ];
 
@@ -57,7 +59,7 @@ const AboutCTA = () => {
             or partner with us for impactful hiring events — we're here to help.
           </p>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {actions.map((action, index) => (
               <Link key={index} to={action.link} className="group">
                 <div className="p-6 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 h-full">
