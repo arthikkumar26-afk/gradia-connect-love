@@ -78,7 +78,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Gradia <onboarding@resend.dev>",
+        from: "Gradia <events@gradia.co.in>",
         to: [email],
         subject: "🎉 You're Invited! Gradia Launch Event - Tuesday 03-03-2026",
         html: htmlContent,
