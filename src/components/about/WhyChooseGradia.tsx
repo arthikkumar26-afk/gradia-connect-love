@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 
 const WhyChooseGradia = () => {
   const reasons = [
-    "Vacancies across 15+ industries — IT, Civil Engineering, Film, Healthcare & more",
+    "Vacancies across 15+ industries — IT, Civil Engineering, Film, Legal & more",
     "Verified candidates & institutions with thorough background checks",
     "Multi-industry hiring events from tech parks to construction sites",
     "Sponsor-friendly analytics dashboards with real-time insights",

@@ -39,7 +39,7 @@ const WhoWeAre = () => {
           <p className="text-lg text-muted-foreground leading-relaxed">
             Gradia is a career and hiring ecosystem built to bridge the gap between skilled 
             individuals and forward-thinking organizations. From <strong className="text-foreground">software companies</strong> and <strong className="text-foreground">civil engineering firms</strong> to the <strong className="text-foreground">film & entertainment industry</strong>, 
-            we connect talent across every sector — including education, healthcare, government, and beyond.
+            we connect talent across every sector — including education, legal, government, and beyond.
           </p>
         </div>
 
