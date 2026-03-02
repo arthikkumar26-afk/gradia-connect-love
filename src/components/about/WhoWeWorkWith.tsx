@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Building2, Rocket, GraduationCap, Users, Handshake } from "lucide-react";
+import { Building2, Rocket, GraduationCap, Users, Handshake, Clapperboard, HardHat, Stethoscope, Scale, Landmark } from "lucide-react";
 
 const WhoWeWorkWith = () => {
   const partners = [
@@ -9,14 +9,34 @@ const WhoWeWorkWith = () => {
       description: "Leading tech giants and established enterprises seeking top-tier talent"
     },
     {
-      icon: Rocket,
-      title: "Startups",
-      description: "Fast-growing startups building innovative solutions and disruptive products"
+      icon: Clapperboard,
+      title: "Film & Media Industry",
+      description: "Production houses, OTT platforms, and media companies hiring creative & technical talent"
+    },
+    {
+      icon: HardHat,
+      title: "Civil & Construction",
+      description: "Engineering firms, infrastructure companies, and real estate developers"
     },
     {
       icon: GraduationCap,
       title: "Colleges & Universities",
       description: "Premier educational institutions preparing students for industry success"
+    },
+    {
+      icon: Stethoscope,
+      title: "Healthcare & Pharma",
+      description: "Hospitals, clinics, and pharmaceutical companies building skilled medical teams"
+    },
+    {
+      icon: Scale,
+      title: "Legal & Government",
+      description: "Law firms, government bodies, and PSU organizations with specialized hiring needs"
+    },
+    {
+      icon: Rocket,
+      title: "Startups",
+      description: "Fast-growing startups building innovative solutions and disruptive products"
     },
     {
       icon: Users,
@@ -26,7 +46,7 @@ const WhoWeWorkWith = () => {
     {
       icon: Handshake,
       title: "Sponsors",
-      description: "Organizations looking to maximize their hiring ROI through strategic partnerships"
+      description: "Organizations maximizing hiring ROI through strategic partnerships"
     }
   ];
 
@@ -48,7 +68,7 @@ const WhoWeWorkWith = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-16">
           {partners.map((partner, index) => (
             <div 
               key={index} 
