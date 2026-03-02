@@ -54,18 +54,17 @@ const sampleCandidates = [
 
 export function CandidateAccess() {
   return (
-    <section className="py-24 bg-background">
+    <section className="py-12 bg-background">
       <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left - Content */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm">
+            <Badge variant="secondary" className="mb-3 px-4 py-1.5 text-sm">
               Talent Access
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Connect with Verified Candidates
             </h2>
-            <p className="text-lg text-muted-foreground mb-8">
+            <p className="text-muted-foreground mb-6">
               Access a curated pool of verified candidates. Filter, shortlist, and engage with talent that matches your exact requirements.
             </p>
 

@@ -38,9 +38,9 @@ const deliverables = [
 
 export function PostEventDeliverables() {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-12 bg-muted/30">
       <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left - Visual */}
           <div className="relative order-2 lg:order-1">
             <div className="absolute -top-8 -left-8 w-64 h-64 bg-gradient-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-3xl" />

@@ -72,17 +72,16 @@ export function StallReservation() {
   };
 
   return (
-    <section id="stalls" className="py-24 bg-muted/30">
+    <section id="stalls" className="py-12 bg-muted/30">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm">
+        <div className="text-center mb-8">
+          <Badge variant="secondary" className="mb-3 px-4 py-1.5 text-sm">
             Live Availability
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
             Choose Your Stall
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Interactive floor map with real-time availability. Select your preferred location.
           </p>
         </div>

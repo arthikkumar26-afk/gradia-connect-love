@@ -113,17 +113,16 @@ export function SponsorshipPackages() {
   const [selectedPackage, setSelectedPackage] = useState<typeof packages[0] | null>(null);
 
   return (
-    <section id="packages" className="py-24 bg-gradient-to-b from-background to-muted/30">
+    <section id="packages" className="py-12 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm">
+        <div className="text-center mb-10">
+          <Badge variant="secondary" className="mb-3 px-4 py-1.5 text-sm">
             Sponsorship Tiers
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
             Choose Your Partnership Level
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Select a sponsorship package that aligns with your hiring goals and brand visibility needs.
           </p>
         </div>
