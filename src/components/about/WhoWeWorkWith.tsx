@@ -81,25 +81,6 @@ const WhoWeWorkWith = () => {
             </div>
           ))}
         </div>
-
-        {/* Logo cloud */}
-        <div className="border-t border-border/50 pt-12">
-          <p className="text-center text-sm text-muted-foreground mb-8">
-            Trusted by leading organizations
-          </p>
-          <div className="flex flex-wrap justify-center gap-8">
-            {logos.map((logo, index) => (
-              <div 
-                key={index}
-                className="flex items-center justify-center w-28 h-12 rounded-lg bg-muted/50 px-4"
-              >
-                <span className="text-sm font-semibold text-muted-foreground">
-                  {logo}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
