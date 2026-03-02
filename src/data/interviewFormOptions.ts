@@ -436,6 +436,88 @@ const nonItCorporateConfig: InterviewTypeFormConfig = {
   ],
 };
 
+// ─── Film & Media ───
+const filmMediaConfig: InterviewTypeFormConfig = {
+  interviewType: 'film_media',
+  jobTitlePlaceholder: 'e.g., Assistant Director, VFX Artist, Cinematographer',
+  departmentLabel: 'Department',
+  departmentPlaceholder: 'e.g., Direction, Post-Production',
+  skillsPlaceholder: 'e.g., Premiere Pro, DaVinci Resolve, Cinematography, Script Writing',
+  salaryPlaceholder: 'e.g., ₹5-15 LPA or per-project',
+  experienceOptions: [
+    { value: 'Fresher', label: 'Fresher / Debut' },
+    { value: '0-1 years', label: '0-1 years' },
+    { value: '1-3 years', label: '1-3 years' },
+    { value: '3-5 years', label: '3-5 years' },
+    { value: '5-10 years', label: '5-10 years' },
+    { value: '10+ years', label: '10+ years (Industry Veteran)' },
+  ],
+  jobTypeOptions: [
+    { value: 'Full-time', label: 'Full-time' },
+    { value: 'Contract', label: 'Contract / Per-Project' },
+    { value: 'Freelance', label: 'Freelance' },
+    { value: 'Part-time', label: 'Part-time' },
+    { value: 'Internship', label: 'Internship' },
+  ],
+  fields: [
+    {
+      name: 'production_type',
+      label: 'Production Type *',
+      type: 'select',
+      placeholder: 'Select production type',
+      required: true,
+      helpText: 'Type of film/media production',
+      options: [
+        { value: 'Feature Film', label: 'Feature Film' },
+        { value: 'Short Film', label: 'Short Film' },
+        { value: 'Web Series', label: 'Web Series / OTT' },
+        { value: 'Documentary', label: 'Documentary' },
+        { value: 'Ad Film', label: 'Ad Film / Commercial' },
+        { value: 'Music Video', label: 'Music Video' },
+        { value: 'TV Serial', label: 'TV Serial / Daily Soap' },
+        { value: 'Reality Show', label: 'Reality Show' },
+        { value: 'Corporate Film', label: 'Corporate Film' },
+        { value: 'Animation', label: 'Animation / VFX Studio' },
+      ],
+    },
+    {
+      name: 'language',
+      label: 'Language / Industry',
+      type: 'select',
+      placeholder: 'Select language',
+      options: [
+        { value: 'Hindi', label: 'Hindi (Bollywood)' },
+        { value: 'Telugu', label: 'Telugu (Tollywood)' },
+        { value: 'Tamil', label: 'Tamil (Kollywood)' },
+        { value: 'Kannada', label: 'Kannada (Sandalwood)' },
+        { value: 'Malayalam', label: 'Malayalam (Mollywood)' },
+        { value: 'Marathi', label: 'Marathi' },
+        { value: 'Bengali', label: 'Bengali' },
+        { value: 'Punjabi', label: 'Punjabi (Pollywood)' },
+        { value: 'English', label: 'English / International' },
+        { value: 'Multi-language', label: 'Multi-language / Pan-India' },
+      ],
+    },
+    {
+      name: 'work_location',
+      label: 'Work Location',
+      type: 'select',
+      placeholder: 'Select location',
+      options: [
+        { value: 'Mumbai', label: 'Mumbai' },
+        { value: 'Hyderabad', label: 'Hyderabad' },
+        { value: 'Chennai', label: 'Chennai' },
+        { value: 'Bangalore', label: 'Bangalore' },
+        { value: 'Pune', label: 'Pune' },
+        { value: 'Delhi NCR', label: 'Delhi NCR' },
+        { value: 'Kochi', label: 'Kochi' },
+        { value: 'Remote', label: 'Remote / WFH' },
+        { value: 'On-Location', label: 'On-Location (Travel)' },
+      ],
+    },
+  ],
+};
+
 // Map of interview type → config
 const configMap: Record<string, InterviewTypeFormConfig> = {
   education: educationConfig,
@@ -444,6 +526,7 @@ const configMap: Record<string, InterviewTypeFormConfig> = {
   sales: salesConfig,
   management: managementConfig,
   standard: standardConfig,
+  film_media: filmMediaConfig,
 };
 
 export const getFormConfigForInterviewType = (interviewType: string): InterviewTypeFormConfig | null => {
