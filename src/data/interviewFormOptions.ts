@@ -518,6 +518,67 @@ const filmMediaConfig: InterviewTypeFormConfig = {
   ],
 };
 
+// ─── Civil Engineering ───
+const civilEngineeringConfig: InterviewTypeFormConfig = {
+  interviewType: 'civil_engineering',
+  jobTitlePlaceholder: 'e.g., Site Engineer, Structural Engineer',
+  departmentLabel: 'Department / Division',
+  departmentPlaceholder: 'e.g., Structural, Highway, Construction',
+  skillsPlaceholder: 'e.g., AutoCAD, STAAD Pro, Revit, Site Supervision',
+  salaryPlaceholder: 'e.g., ₹4-8 LPA',
+  experienceOptions: [
+    { value: 'Fresher', label: 'Fresher' },
+    { value: '0-1 years', label: '0-1 years' },
+    { value: '1-3 years', label: '1-3 years' },
+    { value: '3-5 years', label: '3-5 years' },
+    { value: '5-10 years', label: '5-10 years' },
+    { value: '10-15 years', label: '10-15 years (Senior)' },
+    { value: '15+ years', label: '15+ years (Expert)' },
+  ],
+  jobTypeOptions: [
+    { value: 'Full-time', label: 'Full-time' },
+    { value: 'Contract', label: 'Contract / Project-based' },
+    { value: 'Freelance', label: 'Freelance / Consultant' },
+    { value: 'Internship', label: 'Internship / Trainee' },
+  ],
+  fields: [
+    {
+      name: 'project_type',
+      label: 'Project Type',
+      type: 'select',
+      placeholder: 'Select project type',
+      options: [
+        { value: 'Residential', label: 'Residential' },
+        { value: 'Commercial', label: 'Commercial' },
+        { value: 'Infrastructure', label: 'Infrastructure (Roads, Bridges)' },
+        { value: 'Industrial', label: 'Industrial' },
+        { value: 'Government', label: 'Government / PSU' },
+        { value: 'Real Estate', label: 'Real Estate Development' },
+        { value: 'MEP', label: 'MEP (Mechanical, Electrical, Plumbing)' },
+        { value: 'Interior', label: 'Interior / Fit-out' },
+      ],
+    },
+    {
+      name: 'work_location',
+      label: 'Work Location',
+      type: 'select',
+      placeholder: 'Select location',
+      options: [
+        { value: 'Hyderabad', label: 'Hyderabad' },
+        { value: 'Bangalore', label: 'Bangalore' },
+        { value: 'Chennai', label: 'Chennai' },
+        { value: 'Mumbai', label: 'Mumbai' },
+        { value: 'Pune', label: 'Pune' },
+        { value: 'Delhi NCR', label: 'Delhi NCR' },
+        { value: 'Kolkata', label: 'Kolkata' },
+        { value: 'Ahmedabad', label: 'Ahmedabad' },
+        { value: 'On-Site', label: 'On-Site (Project Location)' },
+        { value: 'Pan India', label: 'Pan India (Transferable)' },
+      ],
+    },
+  ],
+};
+
 // Map of interview type → config
 const configMap: Record<string, InterviewTypeFormConfig> = {
   education: educationConfig,
@@ -527,6 +588,7 @@ const configMap: Record<string, InterviewTypeFormConfig> = {
   management: managementConfig,
   standard: standardConfig,
   film_media: filmMediaConfig,
+  civil_engineering: civilEngineeringConfig,
 };
 
 export const getFormConfigForInterviewType = (interviewType: string): InterviewTypeFormConfig | null => {
