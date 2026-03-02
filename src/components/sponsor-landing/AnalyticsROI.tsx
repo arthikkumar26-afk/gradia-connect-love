@@ -30,17 +30,16 @@ const funnelData = [
 
 export function AnalyticsROI() {
   return (
-    <section className="py-24 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <section className="py-12 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <Badge className="mb-4 px-4 py-1.5 text-sm bg-teal-500/20 text-teal-300 border-teal-500/30">
+        <div className="text-center mb-10">
+          <Badge className="mb-3 px-4 py-1.5 text-sm bg-teal-500/20 text-teal-300 border-teal-500/30">
             ROI Dashboard
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-3">
             Measure Your Hiring Success
           </h2>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto">
+          <p className="text-slate-300 max-w-2xl mx-auto">
             Real-time analytics and transparent ROI tracking. Know exactly how your sponsorship translates to hires.
           </p>
         </div>

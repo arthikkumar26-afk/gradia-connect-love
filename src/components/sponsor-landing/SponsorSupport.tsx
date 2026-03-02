@@ -44,17 +44,16 @@ const supportFeatures = [
 
 export function SponsorSupport() {
   return (
-    <section className="py-24 bg-background">
+    <section className="py-12 bg-background">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm">
+        <div className="text-center mb-10">
+          <Badge variant="secondary" className="mb-3 px-4 py-1.5 text-sm">
             Sponsor Support
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
             White-Glove Support at Every Step
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             From onboarding to post-event analysis, our dedicated team ensures your sponsorship experience is seamless.
           </p>
         </div>
@@ -81,7 +80,7 @@ export function SponsorSupport() {
         </div>
 
         {/* Support Stats */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+        <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           {[
             { value: "< 2hrs", label: "Avg. Response Time" },
             { value: "98%", label: "Satisfaction Rate" },

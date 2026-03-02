@@ -87,18 +87,17 @@ export function BrandVisibility() {
     .reduce((sum, opt) => sum + opt.price, 0);
 
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-12 bg-muted/30">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm">
+        <div className="text-center mb-10">
+          <Badge variant="secondary" className="mb-3 px-4 py-1.5 text-sm">
             Add-On Services
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
             Maximize Your Brand Visibility
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Enhance your sponsorship with premium branding add-ons. Select the options that best fit your marketing goals.
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Enhance your sponsorship with premium branding add-ons.
           </p>
         </div>
 

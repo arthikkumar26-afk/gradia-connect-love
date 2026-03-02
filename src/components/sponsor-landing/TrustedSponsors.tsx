@@ -43,23 +43,22 @@ const stats = [
 
 export function TrustedSponsors() {
   return (
-    <section className="py-24 bg-background">
+    <section className="py-12 bg-background">
       <div className="container mx-auto px-6">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <Badge variant="secondary" className="mb-4 px-4 py-1.5 text-sm">
+        <div className="text-center mb-10">
+          <Badge variant="secondary" className="mb-3 px-4 py-1.5 text-sm">
             Trusted Partners
           </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
             Trusted by Industry Leaders
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Join 500+ companies who have successfully hired through Gradia's platform.
           </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto mb-16">
+        <div className="grid grid-cols-3 gap-6 max-w-3xl mx-auto mb-10">
           {stats.map((stat, i) => {
             const Icon = stat.icon;
             return (
@@ -75,7 +74,7 @@ export function TrustedSponsors() {
         </div>
 
         {/* Logo Cloud */}
-        <div className="mb-16 py-8 border-y">
+        <div className="mb-10 py-6 border-y">
           <div className="flex flex-wrap justify-center gap-x-12 gap-y-6">
             {sponsorLogos.map((logo, i) => (
               <div 
