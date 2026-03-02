@@ -2,14 +2,14 @@ import { Check } from "lucide-react";
 
 const WhyChooseGradia = () => {
   const reasons = [
+    "Vacancies across 15+ industries — IT, Civil Engineering, Film, Healthcare & more",
     "Verified candidates & institutions with thorough background checks",
-    "Structured hiring processes with clear timelines and expectations",
+    "Multi-industry hiring events from tech parks to construction sites",
     "Sponsor-friendly analytics dashboards with real-time insights",
     "Dedicated relationship managers for personalized support",
     "End-to-end support from registration to placement",
     "Transparent pricing with no hidden fees",
-    "Post-event reports with actionable hiring insights",
-    "Multi-city presence with local expertise"
+    "Domain-specific question papers for civil, film, education & software roles"
   ];
 
   return (

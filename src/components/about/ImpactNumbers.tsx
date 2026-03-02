@@ -7,7 +7,7 @@ const ImpactNumbers = () => {
 
   const stats = [
     { icon: Users, value: 75000, suffix: "+", label: "Candidates Supported" },
-    { icon: Building2, value: 500, suffix: "+", label: "Companies & Institutions" },
+    { icon: Building2, value: 500, suffix: "+", label: "Companies Across 15+ Industries" },
     { icon: CalendarCheck, value: 120, suffix: "+", label: "Job Melas Conducted" },
     { icon: MapPin, value: 45, suffix: "+", label: "Cities Covered" },
     { icon: Award, value: 35000, suffix: "+", label: "Successful Placements" }

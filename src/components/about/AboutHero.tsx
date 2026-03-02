@@ -35,8 +35,8 @@ const AboutHero = () => {
           </h1>
           
           <p className="text-lg md:text-xl text-white/85 max-w-3xl mx-auto mb-10 leading-relaxed">
-            Gradia is a next-generation placement and partnership platform helping talent and 
-            institutions grow together through meaningful career opportunities.
+            Gradia is a next-generation placement platform connecting talent across <strong>Software, Civil Engineering, 
+            Film & Media, Education, Healthcare</strong>, and more — with 500+ partner companies and thousands of live vacancies.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
