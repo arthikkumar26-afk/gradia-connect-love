@@ -3,34 +3,34 @@ import { Milestone } from "lucide-react";
 const OurJourney = () => {
   const milestones = [
     {
-      year: "2019",
+      year: "2025",
       title: "The Beginning",
       description: "Founded with a vision to simplify hiring and create meaningful career pathways for talent across India."
     },
     {
-      year: "2020",
-      title: "Multi-City Expansion",
-      description: "Expanded operations to 10+ cities, conducting our first large-scale multi-location job melas."
+      year: "2025",
+      title: "Platform Launch",
+      description: "Launched our digital platform with AI-powered matching, sponsor analytics, and real-time reporting dashboards."
     },
     {
-      year: "2021",
-      title: "Tech Platform Launch",
-      description: "Launched our digital platform with sponsor analytics, candidate tracking, and real-time reporting dashboards."
+      year: "2025",
+      title: "Multi-Industry Expansion",
+      description: "Expanded across Software, Civil Engineering, Film & Media, Education, and Legal sectors with 500+ partner companies."
     },
     {
-      year: "2022",
-      title: "Education Partnerships",
-      description: "Partnered with 100+ educational institutions, integrating campus placements into our ecosystem."
-    },
-    {
-      year: "2023",
+      year: "2026",
       title: "Growing Ecosystem",
-      description: "Crossed 50,000+ placements with 500+ partner organizations and expanded to 45+ cities."
+      description: "Scaling to 45+ cities with large-scale job melas, campus drives, and comprehensive training programs."
     },
     {
-      year: "2024",
+      year: "2026",
       title: "Innovation & Scale",
-      description: "Launched advanced AI-powered matching, enhanced sponsor tools, and comprehensive training programs."
+      description: "Advanced AI interviews, enhanced sponsor tools, and industry-specific hiring pipelines driving 35,000+ placements."
+    },
+    {
+      year: "Now",
+      title: "Building the Future",
+      description: "Continuously expanding our ecosystem with new industries, deeper partnerships, and cutting-edge hiring technology."
     }
   ];
 
