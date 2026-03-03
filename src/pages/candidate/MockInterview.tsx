@@ -1034,36 +1034,62 @@ const MockInterview = () => {
     
     setIsBookingSlot(true);
     try {
+      const currentStageOrder = parseInt(stageOrder || '3');
       const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: {
           action: 'book_slot',
           sessionId,
-          stageOrder: parseInt(stageOrder || '3'),
+          stageOrder: currentStageOrder,
           bookedSlot: slotValue
         }
       });
 
       if (error) throw error;
 
-      // Send demo round invitation with booked slot
-      const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
-        body: {
-          candidateEmail: profile?.email,
-          candidateName: profile?.full_name || 'Candidate',
-          sessionId,
-          stageOrder: 4,
-          stageName: 'Demo Round',
-          stageDescription: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
-          appUrl: window.location.origin,
-          bookedSlot: slotValue
-        }
-      });
+      // Determine the next stage details from pipeline config
+      const nextStageOrder = currentStageOrder + 1;
+      const nextStage = stages.find(s => s.order === nextStageOrder);
+      const isEducationType = currentInterviewType === 'education';
+      
+      // Only send Demo Round email for education types
+      if (isEducationType) {
+        const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
+          body: {
+            candidateEmail: profile?.email,
+            candidateName: profile?.full_name || 'Candidate',
+            sessionId,
+            stageOrder: nextStageOrder,
+            stageName: 'Demo Round',
+            stageDescription: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
+            appUrl: window.location.origin,
+            bookedSlot: slotValue
+          }
+        });
 
-      if (emailError) {
-        console.error('Email error:', emailError);
+        if (emailError) {
+          console.error('Email error:', emailError);
+        }
+      } else if (nextStage) {
+        // For non-education types, send invitation for the actual next stage (e.g., Technical Test)
+        const { error: emailError } = await supabase.functions.invoke('send-mock-interview-invitation', {
+          body: {
+            candidateEmail: profile?.email,
+            candidateName: profile?.full_name || 'Candidate',
+            sessionId,
+            stageOrder: nextStageOrder,
+            stageName: nextStage.name,
+            stageDescription: nextStage.description || 'Your next assessment stage is ready.',
+            appUrl: window.location.origin,
+            bookedSlot: slotValue
+          }
+        });
+
+        if (emailError) {
+          console.error('Email error:', emailError);
+        }
       }
 
-      toast.success(`Demo slot booked for ${slotValue}! Check your email for details.`);
+      toast.success(`Slot booked for ${slotValue}! Check your email for details.`);
       goToDashboard();
     } catch (error) {
       console.error('Error booking slot:', error);
@@ -1250,8 +1276,8 @@ const MockInterview = () => {
       );
     }
 
-    // Stage 2 & 4: Slot Booking (Technical Assessment Slot Booking or Demo Slot Booking)
-    if (stage.stageType === 'slot_booking' || stage.order === 2 || stage.order === 4) {
+    // Slot Booking stages (use stageType, not hardcoded order)
+    if (stage.stageType === 'slot_booking') {
       const timeSlots = generateTimeSlots();
       const states = Object.keys(indiaLocationData);
       const districts = slotBookingForm.state ? Object.keys(indiaLocationData[slotBookingForm.state] || {}) : [];
@@ -1559,8 +1585,8 @@ const MockInterview = () => {
       );
     }
 
-    // Stage 6: Demo Feedback
-    if (stage.stageType === 'feedback' || stage.order === 6) {
+    // Demo Feedback stage (use stageType, not hardcoded order)
+    if (stage.stageType === 'feedback') {
       return (
         <div className="min-h-screen bg-background p-4 md:p-8">
           <div className="max-w-3xl mx-auto">
@@ -1609,8 +1635,8 @@ const MockInterview = () => {
       );
     }
 
-    // Stage 8: All Reviews
-    if (stage.stageType === 'review' || stage.order === 8) {
+    // All Reviews stage (use stageType, not hardcoded order)
+    if (stage.stageType === 'review') {
       return (
         <div className="min-h-screen bg-background p-4 md:p-8">
           <div className="max-w-3xl mx-auto">
