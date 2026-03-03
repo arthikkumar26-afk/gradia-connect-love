@@ -107,6 +107,7 @@ const MockInterview = () => {
   const [showTestResults, setShowTestResults] = useState(false);
   const [allStageResults, setAllStageResults] = useState<any[]>([]);
   const [sessionData, setSessionData] = useState<any>(null);
+  const [currentInterviewType, setCurrentInterviewType] = useState<string>('');
   
   // New slot booking form state
   const [slotBookingForm, setSlotBookingForm] = useState({
@@ -225,6 +226,7 @@ const MockInterview = () => {
       // Override stages from pipeline config if session has interview_type & pipeline_type
       const sessInterviewType = (fetchedSessionData as any).interview_type || localStorage.getItem('mock_interview_type') || '';
       const sessPipelineType = (fetchedSessionData as any).pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
+      setCurrentInterviewType(sessInterviewType);
 
       if (sessInterviewType && sessPipelineType) {
         const configStages = interviewPipelineConfig
@@ -1255,10 +1257,14 @@ const MockInterview = () => {
       const designationOptions = ['Asso.Teacher', 'Teacher', 'Vice-Principal', 'Principal', 'Zonal Co', 'R&D Head', 'SME'];
       const classOptions = ['Nursery', 'PP-1 & PP-2', 'C-1 & C-2', 'C-3, C-4 & C-5', 'C-6, C-7 & C-8', 'C-9 & C-10'];
       
+      const isEducationType = currentInterviewType === 'education';
+      
       const isStage2FormValid = stage.order === 2 
-        ? slotBookingForm.date && slotBookingForm.time && slotBookingForm.state && slotBookingForm.district && 
-          slotBookingForm.programme && slotBookingForm.segment && slotBookingForm.department && 
-          slotBookingForm.designation && slotBookingForm.classLevel
+        ? isEducationType
+          ? slotBookingForm.date && slotBookingForm.time && slotBookingForm.state && slotBookingForm.district && 
+            slotBookingForm.programme && slotBookingForm.segment && slotBookingForm.department && 
+            slotBookingForm.designation && slotBookingForm.classLevel
+          : slotBookingForm.date && slotBookingForm.time
         : selectedSlot;
       
       return (
@@ -1317,157 +1323,162 @@ const MockInterview = () => {
                       </div>
                     </div>
 
-                    {/* Location Details */}
-                    <div className="space-y-4">
-                      <h4 className="font-medium flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        Location Details
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="location">Location</Label>
-                          <Input
-                            id="location"
-                            placeholder="Enter location"
-                            value={slotBookingForm.location}
-                            onChange={(e) => setSlotBookingForm(prev => ({ ...prev, location: e.target.value }))}
-                          />
+                    {/* Location & Education Details - only for education interviews */}
+                    {isEducationType && (
+                      <>
+                        {/* Location Details */}
+                        <div className="space-y-4">
+                          <h4 className="font-medium flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            Location Details
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="location">Location</Label>
+                              <Input
+                                id="location"
+                                placeholder="Enter location"
+                                value={slotBookingForm.location}
+                                onChange={(e) => setSlotBookingForm(prev => ({ ...prev, location: e.target.value }))}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="pincode">Pincode</Label>
+                              <Input
+                                id="pincode"
+                                placeholder="Enter pincode"
+                                value={slotBookingForm.pincode}
+                                onChange={(e) => setSlotBookingForm(prev => ({ ...prev, pincode: e.target.value }))}
+                                maxLength={6}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="state">State *</Label>
+                              <Select 
+                                value={slotBookingForm.state} 
+                                onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, state: value, district: '' }))}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select state" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border z-50 max-h-60">
+                                  {states.map(state => (
+                                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="district">District *</Label>
+                              <Select 
+                                value={slotBookingForm.district} 
+                                onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, district: value }))}
+                                disabled={!slotBookingForm.state}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select district" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background border z-50 max-h-60">
+                                  {districts.map(district => (
+                                    <SelectItem key={district} value={district}>{district}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="pincode">Pincode</Label>
-                          <Input
-                            id="pincode"
-                            placeholder="Enter pincode"
-                            value={slotBookingForm.pincode}
-                            onChange={(e) => setSlotBookingForm(prev => ({ ...prev, pincode: e.target.value }))}
-                            maxLength={6}
-                          />
+
+                        {/* Programme and Segment */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="programme">Programme *</Label>
+                            <Select 
+                              value={slotBookingForm.programme} 
+                              onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, programme: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select programme" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border z-50">
+                                {programmeOptions.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="segment">Segment *</Label>
+                            <Select 
+                              value={slotBookingForm.segment} 
+                              onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, segment: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select segment" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border z-50">
+                                {segmentOptions.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
+
+                        {/* Department and Designation */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="department">Department *</Label>
+                            <Select 
+                              value={slotBookingForm.department} 
+                              onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, department: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select department" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border z-50">
+                                {departmentOptions.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="designation">Designation *</Label>
+                            <Select 
+                              value={slotBookingForm.designation} 
+                              onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, designation: value }))}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select designation" />
+                              </SelectTrigger>
+                              <SelectContent className="bg-background border z-50">
+                                {designationOptions.map(option => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {/* Class */}
                         <div className="space-y-2">
-                          <Label htmlFor="state">State *</Label>
+                          <Label htmlFor="classLevel">Class *</Label>
                           <Select 
-                            value={slotBookingForm.state} 
-                            onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, state: value, district: '' }))}
+                            value={slotBookingForm.classLevel} 
+                            onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classLevel: value }))}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select state" />
+                              <SelectValue placeholder="Select class" />
                             </SelectTrigger>
-                            <SelectContent className="bg-background border z-50 max-h-60">
-                              {states.map(state => (
-                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                            <SelectContent className="bg-background border z-50">
+                              {classOptions.map(option => (
+                                <SelectItem key={option} value={option}>{option}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="district">District *</Label>
-                          <Select 
-                            value={slotBookingForm.district} 
-                            onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, district: value }))}
-                            disabled={!slotBookingForm.state}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select district" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-background border z-50 max-h-60">
-                              {districts.map(district => (
-                                <SelectItem key={district} value={district}>{district}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Programme and Segment */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="programme">Programme *</Label>
-                        <Select 
-                          value={slotBookingForm.programme} 
-                          onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, programme: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select programme" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background border z-50">
-                            {programmeOptions.map(option => (
-                              <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="segment">Segment *</Label>
-                        <Select 
-                          value={slotBookingForm.segment} 
-                          onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, segment: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select segment" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background border z-50">
-                            {segmentOptions.map(option => (
-                              <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Department and Designation */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="department">Department *</Label>
-                        <Select 
-                          value={slotBookingForm.department} 
-                          onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, department: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select department" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background border z-50">
-                            {departmentOptions.map(option => (
-                              <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="designation">Designation *</Label>
-                        <Select 
-                          value={slotBookingForm.designation} 
-                          onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, designation: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select designation" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background border z-50">
-                            {designationOptions.map(option => (
-                              <SelectItem key={option} value={option}>{option}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Class */}
-                    <div className="space-y-2">
-                      <Label htmlFor="classLevel">Class *</Label>
-                      <Select 
-                        value={slotBookingForm.classLevel} 
-                        onValueChange={(value) => setSlotBookingForm(prev => ({ ...prev, classLevel: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select class" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border z-50">
-                          {classOptions.map(option => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                      </>
+                    )}
 
                     {/* Summary */}
                     {slotBookingForm.date && slotBookingForm.time && (
