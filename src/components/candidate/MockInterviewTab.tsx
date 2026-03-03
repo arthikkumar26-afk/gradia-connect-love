@@ -471,7 +471,7 @@ export const MockInterviewTab = () => {
               : s.name.toLowerCase().includes('demo') ? 'demo' as const
               : s.name.toLowerCase().includes('feedback') ? 'feedback' as const
               : s.name.toLowerCase().includes('hr') ? 'hr_documents' as const
-              : s.name.toLowerCase().includes('review') || s.name.toLowerCase().includes('offer') ? 'review' as const
+              : (s.name.toLowerCase() === 'final review' || s.name.toLowerCase() === 'offer stage') ? 'review' as const
               : s.name.toLowerCase().includes('instruction') || s.name.toLowerCase().includes('cv') || s.name.toLowerCase().includes('resume') ? 'email_info' as const
               : 'assessment' as const,
           }));
@@ -1223,9 +1223,9 @@ export const MockInterviewTab = () => {
     if (stageName.includes('coding') || stageName.includes('mcq') || stageName.includes('technical') || stageName.includes('written') || stageName.includes('assessment') || stageName.includes('challenge')) return Code;
     if (stageName.includes('demo') && !stageName.includes('feedback')) return Monitor;
     if (stageName.includes('feedback') || stageName.includes('result')) return BarChart3;
-    if (stageName.includes('hr') || stageName.includes('document') || stageName.includes('review')) return FileText;
-    if (stageName.includes('interview') || stageName.includes('discussion') || stageName.includes('live')) return Video;
-    if (stageName.includes('final') || stageName.includes('offer') || stageName.includes('all review')) return ListChecks;
+    if (stageName.includes('hr') || stageName.includes('document')) return FileText;
+    if (stageName === 'final review' || stageName === 'offer stage') return ListChecks;
+    if (stageName.includes('interview') || stageName.includes('discussion') || stageName.includes('live') || stageName.includes('review')) return Video;
     if (stageName.includes('negotiation')) return MessageSquare;
     // Fallback by order
     switch (stageOrder) {
