@@ -386,21 +386,26 @@ const MockInterview = () => {
 
   const startInterview = async () => {
     const isCodingStage = stage?.stageType === 'coding' || stage?.name?.toLowerCase().includes('coding test');
+    const isDemoStage = stage?.stageType === 'demo' || stage?.name?.toLowerCase().includes('demo');
+    const isEducationType = currentInterviewType === 'education';
+    // Camera/mic is REQUIRED only for demo stages in education pipeline
+    // For all other stages (MCQ assessments, coding, technical tests), camera is optional
+    const requiresCamera = isDemoStage || (isEducationType && stage?.stageType === 'assessment');
     let canRecord = false;
 
-    if (!isCodingStage) {
+    if (requiresCamera) {
       const hasPermissions = await requestPermissions();
       if (!hasPermissions) return;
       canRecord = true;
     } else {
-      // Coding test: camera/mic is optional, never block
+      // Non-required: camera/mic is optional, never block the user
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         stream.getTracks().forEach(track => track.stop());
         setPermissionsGranted(true);
         canRecord = true;
       } catch {
-        console.log('[MockInterview] Camera/mic not available for coding test - proceeding without');
+        console.log('[MockInterview] Camera/mic not available - proceeding without');
         canRecord = false;
       }
     }
