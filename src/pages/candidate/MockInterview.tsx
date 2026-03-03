@@ -1022,7 +1022,12 @@ const MockInterview = () => {
 
   // Helper function for slot booking
   const handleSlotBooking = async () => {
-    if (!selectedSlot) {
+    // For non-education types, construct slot from date/time form fields
+    const slotValue = selectedSlot || (slotBookingForm.date && slotBookingForm.time 
+      ? `${new Date(slotBookingForm.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} at ${slotBookingForm.time}`
+      : '');
+    
+    if (!slotValue) {
       toast.error("Please select a time slot");
       return;
     }
@@ -1034,7 +1039,7 @@ const MockInterview = () => {
           action: 'book_slot',
           sessionId,
           stageOrder: parseInt(stageOrder || '3'),
-          bookedSlot: selectedSlot
+          bookedSlot: slotValue
         }
       });
 
@@ -1050,7 +1055,7 @@ const MockInterview = () => {
           stageName: 'Demo Round',
           stageDescription: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
           appUrl: window.location.origin,
-          bookedSlot: selectedSlot
+          bookedSlot: slotValue
         }
       });
 
@@ -1058,7 +1063,7 @@ const MockInterview = () => {
         console.error('Email error:', emailError);
       }
 
-      toast.success(`Demo slot booked for ${selectedSlot}! Check your email for details.`);
+      toast.success(`Demo slot booked for ${slotValue}! Check your email for details.`);
       goToDashboard();
     } catch (error) {
       console.error('Error booking slot:', error);
