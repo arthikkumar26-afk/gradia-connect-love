@@ -289,7 +289,12 @@ serve(async (req) => {
       const effectiveStageType = clientStageType || stage?.stageType;
       const effectiveStageName = clientStageName || stage?.name || `Stage ${stageOrder}`;
       
-      if (!stage) {
+      // If client overrides stage type/name (non-default pipeline like Civil Engineering),
+      // always create a virtual stage to avoid using hardcoded education pipeline defaults
+      const clientOverridesStage = clientStageType && clientStageName && 
+        stage && (stage.stageType !== clientStageType || stage.name !== clientStageName);
+      
+      if (!stage || clientOverridesStage) {
         const isTechnicalInterview = effectiveStageName.toLowerCase().includes('technical interview');
         // Create a virtual stage from client data for non-default pipelines
         stage = {
