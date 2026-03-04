@@ -407,12 +407,14 @@ function CandidateDetailDialog({
 
                 const employerName = employerProfile?.company_name || employerProfile?.full_name || "An employer";
 
+                const proposalBody = `Dear ${candidate.full_name},<br><br>Great news! <strong>${employerName}</strong> has reviewed your profile and would like to send you a job proposal.<br><br>They are interested in your skills and experience and would like to discuss a potential opportunity with you.<br><br>Please log in to your Gradia account to view more details and respond.<br><br>Best regards,<br>Gradia Team`;
+
                 const { error } = await supabase.functions.invoke("send-notification-email", {
                   body: {
-                    to: candidate.email,
+                    type: "direct",
+                    recipientEmail: candidate.email,
                     subject: `Job Proposal from ${employerName}`,
-                    heading: "You've Received a Job Proposal! 🎉",
-                    body: `Dear ${candidate.full_name},\n\nGreat news! ${employerName} has reviewed your profile and would like to send you a job proposal.\n\nThey are interested in your skills and experience and would like to discuss a potential opportunity with you.\n\nPlease log in to your Gradia account to view more details and respond.\n\nBest regards,\nGradia Team`,
+                    html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;"><h2 style="color: #333;">You've Received a Job Proposal! 🎉</h2>${proposalBody}</div>`,
                   },
                 });
 
