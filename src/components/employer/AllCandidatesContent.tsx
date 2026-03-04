@@ -74,18 +74,18 @@ export function AllCandidatesContent() {
         .order("created_at", { ascending: false });
 
       if (industryFilter !== "all") {
-        // Map filter values to actual DB segment values (case-insensitive match)
-        const segmentMap: Record<string, string> = {
+        // Map filter values to actual DB category values
+        const categoryMap: Record<string, string> = {
           education: "Education",
           it_corporate: "IT Corporate",
           non_it_corporate: "Non-IT Corporate",
           legal: "Legal",
           doctor: "Doctor",
-          civil: "Civil",
+          civil: "Civil Service",
         };
-        const dbSegment = segmentMap[industryFilter];
-        if (dbSegment) {
-          query = query.ilike("segment", dbSegment);
+        const dbCategory = categoryMap[industryFilter];
+        if (dbCategory) {
+          query = query.ilike("category", dbCategory);
         }
       }
 
@@ -114,7 +114,9 @@ export function AllCandidatesContent() {
         c.preferred_role?.toLowerCase().includes(q) ||
         c.location?.toLowerCase().includes(q) ||
         c.category?.toLowerCase().includes(q) ||
-        c.segment?.toLowerCase().includes(q)
+        c.segment?.toLowerCase().includes(q) ||
+        c.current_state?.toLowerCase().includes(q) ||
+        c.current_district?.toLowerCase().includes(q)
       );
     })
     .filter((c, index, self) =>
