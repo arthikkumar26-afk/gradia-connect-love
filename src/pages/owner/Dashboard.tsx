@@ -194,133 +194,127 @@ const OwnerDashboard = () => {
               ))}
             </div>
 
-            {/* Platform Overview Charts */}
-            <h2 className="text-2xl font-bold text-foreground">Platform Analytics</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Monthly Growth Bar Chart */}
-              <Card className="border-purple-100 dark:border-purple-900">
-                <CardHeader>
-                  <CardTitle className="text-lg">Monthly User Growth</CardTitle>
-                  <CardDescription>New registrations over last 6 months</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={{
-                    candidates: { label: "Candidates", color: "hsl(262, 83%, 58%)" },
-                    employers: { label: "Employers", color: "hsl(220, 70%, 55%)" },
-                  }} className="h-[250px] w-full">
-                    <BarChart data={[
-                      { month: "Oct", candidates: 1200, employers: 45 },
-                      { month: "Nov", candidates: 1800, employers: 62 },
-                      { month: "Dec", candidates: 2100, employers: 78 },
-                      { month: "Jan", candidates: 2800, employers: 95 },
-                      { month: "Feb", candidates: 3200, employers: 110 },
-                      { month: "Mar", candidates: 3600, employers: 130 },
-                    ]}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="candidates" fill="var(--color-candidates)" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="employers" fill="var(--color-employers)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+            {/* Platform Analytics - Single Section */}
+            <Card className="border-purple-100 dark:border-purple-900">
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  Platform Analytics
+                </CardTitle>
+                <CardDescription>Key metrics and trends across the platform</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Monthly Growth Bar Chart */}
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground mb-1">Monthly User Growth</h3>
+                    <p className="text-sm text-muted-foreground mb-3">New registrations over last 6 months</p>
+                    <ChartContainer config={{
+                      candidates: { label: "Candidates", color: "hsl(262, 83%, 58%)" },
+                      employers: { label: "Employers", color: "hsl(220, 70%, 55%)" },
+                    }} className="h-[250px] w-full">
+                      <BarChart data={[
+                        { month: "Oct", candidates: 1200, employers: 45 },
+                        { month: "Nov", candidates: 1800, employers: 62 },
+                        { month: "Dec", candidates: 2100, employers: 78 },
+                        { month: "Jan", candidates: 2800, employers: 95 },
+                        { month: "Feb", candidates: 3200, employers: 110 },
+                        { month: "Mar", candidates: 3600, employers: 130 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="candidates" fill="var(--color-candidates)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="employers" fill="var(--color-employers)" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ChartContainer>
+                  </div>
 
-              {/* Job Postings Trend */}
-              <Card className="border-purple-100 dark:border-purple-900">
-                <CardHeader>
-                  <CardTitle className="text-lg">Job Postings & Applications</CardTitle>
-                  <CardDescription>Monthly activity overview</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={{
-                    jobs: { label: "Jobs Posted", color: "hsl(262, 83%, 58%)" },
-                    applications: { label: "Applications", color: "hsl(38, 92%, 50%)" },
-                  }} className="h-[250px] w-full">
-                    <BarChart data={[
-                      { month: "Oct", jobs: 18, applications: 240 },
-                      { month: "Nov", jobs: 25, applications: 380 },
-                      { month: "Dec", jobs: 22, applications: 310 },
-                      { month: "Jan", jobs: 30, applications: 520 },
-                      { month: "Feb", jobs: 28, applications: 460 },
-                      { month: "Mar", jobs: 35, applications: 620 },
-                    ]}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="jobs" fill="var(--color-jobs)" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="applications" fill="var(--color-applications)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+                  {/* Job Postings Trend */}
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground mb-1">Job Postings & Applications</h3>
+                    <p className="text-sm text-muted-foreground mb-3">Monthly activity overview</p>
+                    <ChartContainer config={{
+                      jobs: { label: "Jobs Posted", color: "hsl(262, 83%, 58%)" },
+                      applications: { label: "Applications", color: "hsl(38, 92%, 50%)" },
+                    }} className="h-[250px] w-full">
+                      <BarChart data={[
+                        { month: "Oct", jobs: 18, applications: 240 },
+                        { month: "Nov", jobs: 25, applications: 380 },
+                        { month: "Dec", jobs: 22, applications: 310 },
+                        { month: "Jan", jobs: 30, applications: 520 },
+                        { month: "Feb", jobs: 28, applications: 460 },
+                        { month: "Mar", jobs: 35, applications: 620 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="jobs" fill="var(--color-jobs)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="applications" fill="var(--color-applications)" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ChartContainer>
+                  </div>
 
-              {/* Industry Distribution Pie Chart */}
-              <Card className="border-purple-100 dark:border-purple-900">
-                <CardHeader>
-                  <CardTitle className="text-lg">Industry Distribution</CardTitle>
-                  <CardDescription>Candidates by industry category</CardDescription>
-                </CardHeader>
-                <CardContent className="flex justify-center">
-                  <ChartContainer config={{
-                    education: { label: "Education", color: "hsl(262, 83%, 58%)" },
-                    itCorporate: { label: "IT Corporate", color: "hsl(220, 70%, 55%)" },
-                    nonIt: { label: "Non-IT", color: "hsl(142, 71%, 45%)" },
-                    legal: { label: "Legal", color: "hsl(38, 92%, 50%)" },
-                    civil: { label: "Civil Service", color: "hsl(0, 72%, 51%)" },
-                  }} className="h-[250px] w-full">
-                    <PieChart>
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Pie
-                        data={[
-                          { name: "Education", value: 35, fill: "hsl(262, 83%, 58%)" },
-                          { name: "IT Corporate", value: 28, fill: "hsl(220, 70%, 55%)" },
-                          { name: "Non-IT", value: 18, fill: "hsl(142, 71%, 45%)" },
-                          { name: "Legal", value: 12, fill: "hsl(38, 92%, 50%)" },
-                          { name: "Civil Service", value: 7, fill: "hsl(0, 72%, 51%)" },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={90}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      />
-                    </PieChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+                  {/* Industry Distribution Pie Chart */}
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground mb-1">Industry Distribution</h3>
+                    <p className="text-sm text-muted-foreground mb-3">Candidates by industry category</p>
+                    <ChartContainer config={{
+                      education: { label: "Education", color: "hsl(262, 83%, 58%)" },
+                      itCorporate: { label: "IT Corporate", color: "hsl(220, 70%, 55%)" },
+                      nonIt: { label: "Non-IT", color: "hsl(142, 71%, 45%)" },
+                      legal: { label: "Legal", color: "hsl(38, 92%, 50%)" },
+                      civil: { label: "Civil Service", color: "hsl(0, 72%, 51%)" },
+                    }} className="h-[250px] w-full">
+                      <PieChart>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Pie
+                          data={[
+                            { name: "Education", value: 35, fill: "hsl(262, 83%, 58%)" },
+                            { name: "IT Corporate", value: 28, fill: "hsl(220, 70%, 55%)" },
+                            { name: "Non-IT", value: 18, fill: "hsl(142, 71%, 45%)" },
+                            { name: "Legal", value: 12, fill: "hsl(38, 92%, 50%)" },
+                            { name: "Civil Service", value: 7, fill: "hsl(0, 72%, 51%)" },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        />
+                      </PieChart>
+                    </ChartContainer>
+                  </div>
 
-              {/* Revenue Trend Line Chart */}
-              <Card className="border-purple-100 dark:border-purple-900">
-                <CardHeader>
-                  <CardTitle className="text-lg">Revenue Trend (₹ Lakhs)</CardTitle>
-                  <CardDescription>Monthly revenue over last 6 months</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={{
-                    revenue: { label: "Revenue", color: "hsl(142, 71%, 45%)" },
-                  }} className="h-[250px] w-full">
-                    <LineChart data={[
-                      { month: "Oct", revenue: 2.1 },
-                      { month: "Nov", revenue: 3.4 },
-                      { month: "Dec", revenue: 2.8 },
-                      { month: "Jan", revenue: 4.5 },
-                      { month: "Feb", revenue: 5.2 },
-                      { month: "Mar", revenue: 6.5 },
-                    ]}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={3} dot={{ r: 5 }} />
-                    </LineChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            </div>
+                  {/* Revenue Trend Line Chart */}
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground mb-1">Revenue Trend (₹ Lakhs)</h3>
+                    <p className="text-sm text-muted-foreground mb-3">Monthly revenue over last 6 months</p>
+                    <ChartContainer config={{
+                      revenue: { label: "Revenue", color: "hsl(142, 71%, 45%)" },
+                    }} className="h-[250px] w-full">
+                      <LineChart data={[
+                        { month: "Oct", revenue: 2.1 },
+                        { month: "Nov", revenue: 3.4 },
+                        { month: "Dec", revenue: 2.8 },
+                        { month: "Jan", revenue: 4.5 },
+                        { month: "Feb", revenue: 5.2 },
+                        { month: "Mar", revenue: 6.5 },
+                      ]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={3} dot={{ r: 5 }} />
+                      </LineChart>
+                    </ChartContainer>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Owner Actions */}
             <h2 className="text-2xl font-bold text-foreground">System Controls</h2>
