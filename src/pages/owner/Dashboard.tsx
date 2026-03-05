@@ -227,30 +227,32 @@ const OwnerDashboard = () => {
                 </CardContent>
               </Card>
 
-              {/* Revenue Trend Line Chart */}
+              {/* Job Postings Trend */}
               <Card className="border-purple-100 dark:border-purple-900">
                 <CardHeader>
-                  <CardTitle className="text-lg">Revenue Trend (₹ Lakhs)</CardTitle>
-                  <CardDescription>Monthly revenue over last 6 months</CardDescription>
+                  <CardTitle className="text-lg">Job Postings & Applications</CardTitle>
+                  <CardDescription>Monthly activity overview</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer config={{
-                    revenue: { label: "Revenue", color: "hsl(142, 71%, 45%)" },
+                    jobs: { label: "Jobs Posted", color: "hsl(262, 83%, 58%)" },
+                    applications: { label: "Applications", color: "hsl(38, 92%, 50%)" },
                   }} className="h-[250px] w-full">
-                    <LineChart data={[
-                      { month: "Oct", revenue: 2.1 },
-                      { month: "Nov", revenue: 3.4 },
-                      { month: "Dec", revenue: 2.8 },
-                      { month: "Jan", revenue: 4.5 },
-                      { month: "Feb", revenue: 5.2 },
-                      { month: "Mar", revenue: 6.5 },
+                    <BarChart data={[
+                      { month: "Oct", jobs: 18, applications: 240 },
+                      { month: "Nov", jobs: 25, applications: 380 },
+                      { month: "Dec", jobs: 22, applications: 310 },
+                      { month: "Jan", jobs: 30, applications: 520 },
+                      { month: "Feb", jobs: 28, applications: 460 },
+                      { month: "Mar", jobs: 35, applications: 620 },
                     ]}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={3} dot={{ r: 5 }} />
-                    </LineChart>
+                      <Bar dataKey="jobs" fill="var(--color-jobs)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="applications" fill="var(--color-applications)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
                   </ChartContainer>
                 </CardContent>
               </Card>
@@ -291,32 +293,30 @@ const OwnerDashboard = () => {
                 </CardContent>
               </Card>
 
-              {/* Job Postings Trend */}
+              {/* Revenue Trend Line Chart */}
               <Card className="border-purple-100 dark:border-purple-900">
                 <CardHeader>
-                  <CardTitle className="text-lg">Job Postings & Applications</CardTitle>
-                  <CardDescription>Monthly activity overview</CardDescription>
+                  <CardTitle className="text-lg">Revenue Trend (₹ Lakhs)</CardTitle>
+                  <CardDescription>Monthly revenue over last 6 months</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer config={{
-                    jobs: { label: "Jobs Posted", color: "hsl(262, 83%, 58%)" },
-                    applications: { label: "Applications", color: "hsl(38, 92%, 50%)" },
+                    revenue: { label: "Revenue", color: "hsl(142, 71%, 45%)" },
                   }} className="h-[250px] w-full">
-                    <BarChart data={[
-                      { month: "Oct", jobs: 18, applications: 240 },
-                      { month: "Nov", jobs: 25, applications: 380 },
-                      { month: "Dec", jobs: 22, applications: 310 },
-                      { month: "Jan", jobs: 30, applications: 520 },
-                      { month: "Feb", jobs: 28, applications: 460 },
-                      { month: "Mar", jobs: 35, applications: 620 },
+                    <LineChart data={[
+                      { month: "Oct", revenue: 2.1 },
+                      { month: "Nov", revenue: 3.4 },
+                      { month: "Dec", revenue: 2.8 },
+                      { month: "Jan", revenue: 4.5 },
+                      { month: "Feb", revenue: 5.2 },
+                      { month: "Mar", revenue: 6.5 },
                     ]}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="month" />
                       <YAxis />
                       <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="jobs" fill="var(--color-jobs)" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="applications" fill="var(--color-applications)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                      <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={3} dot={{ r: 5 }} />
+                    </LineChart>
                   </ChartContainer>
                 </CardContent>
               </Card>
