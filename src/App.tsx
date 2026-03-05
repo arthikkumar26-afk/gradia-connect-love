@@ -111,6 +111,7 @@ const UnsubscribedEmployers = lazy(() => import("./pages/admin/UnsubscribedEmplo
 const UnsubscribedCandidates = lazy(() => import("./pages/admin/UnsubscribedCandidates"));
 const ExternalJobs = lazy(() => import("./pages/admin/ExternalJobs"));
 const EventAlerts = lazy(() => import("./pages/admin/EventAlerts"));
+const PopupAds = lazy(() => import("./pages/admin/PopupAds"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -277,6 +278,7 @@ const MainRoutes = () => (
         <Route path="/admin/coupons" element={<CouponManagement />} />
         <Route path="/admin/external-jobs" element={<ExternalJobs />} />
         <Route path="/admin/event-alerts" element={<EventAlerts />} />
+        <Route path="/admin/popup-ads" element={<PopupAds />} />
         <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
         <Route path="/admin" element={<AdminDashboard />} />
 

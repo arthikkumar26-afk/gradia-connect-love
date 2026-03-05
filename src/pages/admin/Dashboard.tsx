@@ -220,6 +220,7 @@ const AdminDashboard = () => {
     { title: "Management", icon: UserCog, path: "/admin/management" },
     { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
     { title: "Coupons", icon: Ticket, path: "/admin/coupons" },
+    { title: "Popup Ads", icon: Bell, path: "/admin/popup-ads" },
     { title: "Event Alerts", icon: Bell, path: "/admin/event-alerts" },
     { title: "Reports", icon: BarChart3, path: "/admin/reports" },
     { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
