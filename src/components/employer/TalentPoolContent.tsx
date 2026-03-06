@@ -72,7 +72,7 @@ export default function TalentPoolContent() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [showFilters, setShowFilters] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterScoreMin, setFilterScoreMin] = useState('');
+  const [filterScoreMin, setFilterScoreMin] = useState('any');
   const [filterJob, setFilterJob] = useState('all');
   const [filterSkill, setFilterSkill] = useState('');
   const [filterRecommendation, setFilterRecommendation] = useState('all');
@@ -257,7 +257,7 @@ export default function TalentPoolContent() {
 
   const activeFilterCount = [
     filterStatus !== 'all',
-    filterScoreMin !== '',
+    filterScoreMin !== 'any',
     filterJob !== 'all',
     filterSkill !== '',
     filterRecommendation !== 'all',
@@ -266,7 +266,7 @@ export default function TalentPoolContent() {
 
   const clearFilters = () => {
     setFilterStatus('all');
-    setFilterScoreMin('');
+    setFilterScoreMin('any');
     setFilterJob('all');
     setFilterSkill('');
     setFilterRecommendation('all');
@@ -286,7 +286,7 @@ export default function TalentPoolContent() {
     );
 
     const matchesStatus = filterStatus === 'all' || candidate.status === filterStatus;
-    const matchesScore = !filterScoreMin || (candidate.ai_score && candidate.ai_score >= parseInt(filterScoreMin));
+    const matchesScore = filterScoreMin === 'any' || (candidate.ai_score && candidate.ai_score >= parseInt(filterScoreMin));
     const matchesJob = filterJob === 'all' || candidate.job_id === filterJob;
     const matchesSkill = !filterSkill || (data.skills && data.skills.some((s: string) => s.toLowerCase().includes(filterSkill.toLowerCase())));
     const matchesRec = filterRecommendation === 'all' || candidate.ai_analysis?.recommendation === filterRecommendation;
@@ -512,7 +512,7 @@ export default function TalentPoolContent() {
                   <SelectValue placeholder="Any" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Score</SelectItem>
+                  <SelectItem value="any">Any Score</SelectItem>
                   <SelectItem value="80">80%+</SelectItem>
                   <SelectItem value="60">60%+</SelectItem>
                   <SelectItem value="40">40%+</SelectItem>
