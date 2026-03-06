@@ -638,11 +638,96 @@ function CoursesContent() {
 }
 
 function CampaignsContent() {
+  const [showNewCampaign, setShowNewCampaign] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailList, setEmailList] = useState<string[]>([]);
+  const [subject, setSubject] = useState("");
+  const [messageBody, setMessageBody] = useState("");
+  const [campaignName, setCampaignName] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [sendResults, setSendResults] = useState<{ totalSent: number; totalFailed: number } | null>(null);
+
+  const addEmails = () => {
+    const newEmails = emailInput
+      .split(/[,;\n\s]+/)
+      .map(e => e.trim())
+      .filter(e => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !emailList.includes(e));
+    if (newEmails.length > 0) {
+      setEmailList(prev => [...prev, ...newEmails]);
+      setEmailInput("");
+    } else if (emailInput.trim()) {
+      toast.error("No valid new email addresses found");
+    }
+  };
+
+  const removeEmail = (email: string) => {
+    setEmailList(prev => prev.filter(e => e !== email));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addEmails();
+    }
+  };
+
+  const handleSendCampaign = async () => {
+    if (emailList.length === 0) { toast.error("Add at least one recipient email"); return; }
+    if (!subject.trim()) { toast.error("Subject is required"); return; }
+    if (!messageBody.trim()) { toast.error("Message body is required"); return; }
+
+    setIsSending(true);
+    setSendResults(null);
+
+    try {
+      // Convert plain text message to HTML
+      const htmlBody = messageBody
+        .split("\n")
+        .map(line => line.trim() ? `<p style="margin:0 0 12px;color:#374151;font-size:15px;line-height:1.7;">${line}</p>` : `<br/>`)
+        .join("");
+
+      const { data, error } = await supabase.functions.invoke("send-campaign-emails", {
+        body: {
+          recipients: emailList,
+          subject: subject.trim(),
+          htmlBody,
+          senderName: campaignName.trim() || "Gradia EduTech",
+        },
+      });
+
+      if (error) throw error;
+
+      setSendResults({ totalSent: data.totalSent, totalFailed: data.totalFailed });
+
+      if (data.totalSent > 0) {
+        toast.success(`Campaign sent! ${data.totalSent} email(s) delivered successfully.`);
+      }
+      if (data.totalFailed > 0) {
+        toast.error(`${data.totalFailed} email(s) failed to send.`);
+      }
+    } catch (err: any) {
+      console.error("Campaign send error:", err);
+      toast.error(err.message || "Failed to send campaign");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const resetForm = () => {
+    setEmailInput("");
+    setEmailList([]);
+    setSubject("");
+    setMessageBody("");
+    setCampaignName("");
+    setSendResults(null);
+    setShowNewCampaign(false);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">Marketing Campaigns</h3>
-        <Button size="sm"><Plus className="h-4 w-4 mr-1" /> New Campaign</Button>
+        <Button size="sm" onClick={() => setShowNewCampaign(true)}><Plus className="h-4 w-4 mr-1" /> New Campaign</Button>
       </div>
       <Card className="border-border/50">
         <CardContent className="p-0">
@@ -676,6 +761,104 @@ function CampaignsContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* New Campaign Dialog */}
+      <Dialog open={showNewCampaign} onOpenChange={(open) => { if (!open) resetForm(); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> New Email Campaign</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            {/* Campaign Name */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Campaign / Sender Name</Label>
+              <Input placeholder="e.g. Gradia EduTech, Summer Batch 2026" value={campaignName} onChange={e => setCampaignName(e.target.value)} />
+              <p className="text-xs text-muted-foreground">This name appears as the sender in recipient's inbox</p>
+            </div>
+
+            {/* Recipients */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Recipients <span className="text-destructive">*</span></Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter emails (comma, space, or newline separated)"
+                  value={emailInput}
+                  onChange={e => setEmailInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1"
+                />
+                <Button size="sm" variant="outline" onClick={addEmails}>Add</Button>
+              </div>
+              {emailList.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2 max-h-32 overflow-y-auto p-2 rounded-md border border-border bg-muted/30">
+                  {emailList.map((email) => (
+                    <Badge key={email} variant="secondary" className="text-xs gap-1 pr-1">
+                      <Mail className="h-3 w-3" />
+                      {email}
+                      <button onClick={() => removeEmail(email)} className="ml-0.5 hover:text-destructive">
+                        <XCircle className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">{emailList.length} recipient(s) added • Emails sent individually to each</p>
+            </div>
+
+            {/* Subject */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Subject <span className="text-destructive">*</span></Label>
+              <Input placeholder="e.g. Exciting Placement Drive Opportunity!" value={subject} onChange={e => setSubject(e.target.value)} />
+            </div>
+
+            {/* Message Body */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Message <span className="text-destructive">*</span></Label>
+              <Textarea
+                placeholder="Type your email message here...&#10;&#10;Use line breaks for paragraphs. The message will be formatted in a professional email template automatically."
+                value={messageBody}
+                onChange={e => setMessageBody(e.target.value)}
+                rows={8}
+                className="resize-y"
+              />
+              <p className="text-xs text-muted-foreground">Your message will be wrapped in a branded email template with header & footer</p>
+            </div>
+
+            {/* Send Results */}
+            {sendResults && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2 w-2 rounded-full bg-green-500" />
+                      <span className="text-foreground font-medium">{sendResults.totalSent} Sent</span>
+                    </div>
+                    {sendResults.totalFailed > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-destructive" />
+                        <span className="text-foreground font-medium">{sendResults.totalFailed} Failed</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
+              <Button onClick={handleSendCampaign} disabled={isSending || emailList.length === 0} className="flex-1">
+                {isSending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending {emailList.length} email(s)...</>
+                ) : (
+                  <><Send className="h-4 w-4 mr-2" /> Send Campaign ({emailList.length})</>
+                )}
+              </Button>
+              <Button variant="ghost" onClick={resetForm} disabled={isSending}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
