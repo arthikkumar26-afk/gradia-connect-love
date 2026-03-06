@@ -84,6 +84,8 @@ const UserRoleManagement = () => {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [roleToRemove, setRoleToRemove] = useState<{ userId: string; role: string } | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -258,6 +260,25 @@ const UserRoleManagement = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    try {
+      const response = await supabase.functions.invoke("manage-user-roles", {
+        body: { action: "delete-user", targetUserId: userToDelete.id },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      toast({ title: "Deleted", description: `Account ${userToDelete.email} has been deleted.` });
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to delete account", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -373,17 +394,27 @@ const UserRoleManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setIsDialogOpen(true);
-                          }}
-                        >
-                          <UserPlus className="h-4 w-4 mr-1" />
-                          Assign Role
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setIsDialogOpen(true);
+                            }}
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Assign Role
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => setUserToDelete(user)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -571,6 +602,25 @@ const UserRoleManagement = () => {
               <Button onClick={handleCreateAccount} disabled={isCreating || !createForm.fullName || !createForm.email || !createForm.password}>
                 {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Create Account
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Account Confirmation */}
+        <Dialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-destructive">Delete Account</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to permanently delete <strong>{userToDelete?.full_name}</strong> ({userToDelete?.email})? This will remove their profile, roles, and auth account. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setUserToDelete(null)}>Cancel</Button>
+              <Button variant="destructive" onClick={handleDeleteAccount} disabled={isDeleting}>
+                {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Delete Account
               </Button>
             </DialogFooter>
           </DialogContent>
