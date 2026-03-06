@@ -428,6 +428,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                   </Card>
                 ))}
               </div>
+            </div>
 
               {/* Paper Layout Preview */}
               <Card className="border border-primary/20 bg-primary/5">
