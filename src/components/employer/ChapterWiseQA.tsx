@@ -505,80 +505,73 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                 </Button>
               )}
 
-            {/* Preview Generated Questions */}
-            {generatedQuestions && showPreview && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-primary" />
-                    Generated Question Paper Preview
-                  </h3>
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
-                    {showPreview ? "Hide" : "Show"}
-                  </Button>
-                </div>
+              {/* Preview Generated Questions */}
+              {generatedQuestions && showPreview && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-primary" />
+                      Generated Question Paper Preview
+                    </h3>
+                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
+                      {showPreview ? "Hide" : "Show"}
+                    </Button>
+                  </div>
 
-                {generatedQuestions.sections?.map((section: any, sIdx: number) => (
-                  <Card key={sIdx} className="border-2 border-muted">
-                    <CardHeader className="py-2.5 px-4 bg-muted/40 border-b">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-                          {section.name}
-                        </div>
-                        <div>
-                          <CardTitle className="text-sm font-semibold">Section {section.name}</CardTitle>
-                          <p className="text-[10px] text-muted-foreground">
-                            {section.questions?.length} questions • {section.marks_per_question} marks each
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-3 space-y-2">
-                      {section.questions?.map((q: any, qIdx: number) => (
-                        <div key={qIdx} className={`p-3 rounded-lg border ${qIdx % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
-                          <div className="flex items-start gap-2">
-                            <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">Q{q.id}</Badge>
-                            <div className="flex-1 space-y-1.5">
-                              <p className="text-xs font-medium leading-relaxed">{q.question}</p>
-                              
-                              {q.chapter && (
-                                <Badge variant="secondary" className="text-[9px]">📖 {q.chapter}</Badge>
-                              )}
-
-                              {/* MCQ Options */}
-                              {q.type === "mcq" && q.options && (
-                                <div className="grid grid-cols-2 gap-1 ml-1 mt-1">
-                                  {q.options.map((opt: string, oIdx: number) => (
-                                    <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
-                                      q.correct_option === String.fromCharCode(65 + oIdx)
-                                        ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
-                                        : "bg-muted/30 border-border"
-                                    }`}>
-                                      {String.fromCharCode(65 + oIdx)}) {opt}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-
-                              {/* Answer */}
-                              <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
-                                <p className="text-[10px] text-primary font-semibold">
-                                  ✅ Answer: {q.answer}
-                                </p>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
+                  {generatedQuestions.sections?.map((section: any, sIdx: number) => (
+                    <Card key={sIdx} className="border-2 border-muted">
+                      <CardHeader className="py-2.5 px-4 bg-muted/40 border-b">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                            {section.name}
+                          </div>
+                          <div>
+                            <CardTitle className="text-sm font-semibold">Section {section.name}</CardTitle>
+                            <p className="text-[10px] text-muted-foreground">
+                              {section.questions?.length} questions • {section.marks_per_question} marks each
+                            </p>
                           </div>
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
+                      </CardHeader>
+                      <CardContent className="p-3 space-y-2">
+                        {section.questions?.map((q: any, qIdx: number) => (
+                          <div key={qIdx} className={`p-3 rounded-lg border ${qIdx % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
+                            <div className="flex items-start gap-2">
+                              <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">Q{q.id}</Badge>
+                              <div className="flex-1 space-y-1.5">
+                                <p className="text-xs font-medium leading-relaxed">{q.question}</p>
+                                {q.chapter && (
+                                  <Badge variant="secondary" className="text-[9px]">📖 {q.chapter}</Badge>
+                                )}
+                                {q.type === "mcq" && q.options && (
+                                  <div className="grid grid-cols-2 gap-1 ml-1 mt-1">
+                                    {q.options.map((opt: string, oIdx: number) => (
+                                      <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                        q.correct_option === String.fromCharCode(65 + oIdx)
+                                          ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                          : "bg-muted/30 border-border"
+                                      }`}>
+                                        {String.fromCharCode(65 + oIdx)}) {opt}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
+                                  <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.answer}</p>
+                                </div>
+                              </div>
+                              <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
