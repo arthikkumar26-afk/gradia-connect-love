@@ -1121,6 +1121,14 @@ export const QPMContent = () => {
         />
       )}
 
+      {/* Chapter-wise Q&A Section */}
+      {!useAiQuestions && (
+        <ChapterWiseQA
+          jobId={selectedJob.id}
+          jobTitle={selectedJob.job_title}
+        />
+      )}
+
       {/* Info about how QPM works */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="py-5 px-6">
