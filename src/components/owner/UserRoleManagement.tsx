@@ -94,6 +94,8 @@ const UserRoleManagement = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string; name: string; role: string } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [managePlan, setManagePlan] = useState<{ plan: string; billingCycle: "monthly" | "annual" }>({ plan: "", billingCycle: "monthly" });
+  const [isUpdatingPlan, setIsUpdatingPlan] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -311,6 +313,31 @@ const UserRoleManagement = () => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleUpdateSubscription = async (userId: string, role: string, planAction: "update" | "cancel") => {
+    setIsUpdatingPlan(true);
+    try {
+      const response = await supabase.functions.invoke("manage-user-roles", {
+        body: {
+          action: "update-subscription",
+          targetUserId: userId,
+          plan: managePlan.plan,
+          billingCycle: managePlan.billingCycle,
+          planAction,
+          targetRole: role,
+        },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      toast({ title: "Success", description: planAction === "cancel" ? "Subscription cancelled" : `Plan updated to ${managePlan.plan}` });
+      // Refresh details
+      if (viewUser) handleViewDetails(viewUser);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsUpdatingPlan(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -740,11 +767,80 @@ const UserRoleManagement = () => {
                       <div className="font-medium capitalize">{viewDetails.subscription.plan || viewDetails.subscription.plan_name}</div>
                       <div><span className="text-muted-foreground">Status:</span></div>
                       <div><Badge variant="default">{viewDetails.subscription.status}</Badge></div>
+                      <div><span className="text-muted-foreground">Started:</span></div>
+                      <div>{viewDetails.subscription.started_at ? new Date(viewDetails.subscription.started_at).toLocaleDateString() : "N/A"}</div>
                       <div><span className="text-muted-foreground">Expires:</span></div>
                       <div>{viewDetails.subscription.ends_at ? new Date(viewDetails.subscription.ends_at).toLocaleDateString() : "N/A"}</div>
+                      {viewDetails.subscription.billing_cycle && (
+                        <>
+                          <div><span className="text-muted-foreground">Billing:</span></div>
+                          <div className="capitalize">{viewDetails.subscription.billing_cycle}</div>
+                        </>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="mt-3 w-full"
+                      disabled={isUpdatingPlan}
+                      onClick={() => handleUpdateSubscription(viewUser!.id, viewDetails.profile?.role, "cancel")}
+                    >
+                      {isUpdatingPlan ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                      Cancel Subscription
+                    </Button>
+                  </div>
+                )}
+                {!viewDetails.subscription && (
+                  <div className="rounded-lg border p-3 border-dashed">
+                    <p className="text-sm text-muted-foreground flex items-center gap-1"><CreditCard className="h-4 w-4" /> No active subscription</p>
+                  </div>
+                )}
+
+                {/* Change / Assign Plan */}
+                {MEMBERSHIP_PLANS[viewDetails.profile?.role] && (
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <p className="font-medium mb-2 text-sm">{viewDetails.subscription ? "Change Plan" : "Assign Plan"}</p>
+                    <div className="space-y-2">
+                      <Select
+                        value={managePlan.plan}
+                        onValueChange={(val) => setManagePlan(p => ({ ...p, plan: val }))}
+                      >
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue placeholder="Select a plan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MEMBERSHIP_PLANS[viewDetails.profile?.role]?.map((p: any) => (
+                            <SelectItem key={p.name} value={p.name}>
+                              {p.name} — ₹{managePlan.billingCycle === "annual" ? p.annual.toLocaleString() + "/yr" : p.monthly.toLocaleString() + "/mo"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={managePlan.billingCycle}
+                        onValueChange={(val: "monthly" | "annual") => setManagePlan(p => ({ ...p, billingCycle: val }))}
+                      >
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="annual">Annual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        disabled={!managePlan.plan || isUpdatingPlan}
+                        onClick={() => handleUpdateSubscription(viewUser!.id, viewDetails.profile?.role, "update")}
+                      >
+                        {isUpdatingPlan ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                        {viewDetails.subscription ? "Update Plan" : "Activate Plan"}
+                      </Button>
                     </div>
                   </div>
                 )}
+
                 {viewDetails.profile?.registration_number && (
                   <div className="rounded-lg border p-3">
                     <span className="text-muted-foreground">Registration #: </span>
