@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { JobApplicationFlow } from "@/components/jobs/JobApplicationFlow";
+import { correctJobTitle, correctLocation } from "@/utils/spellCorrect";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
   Search, 
@@ -94,9 +95,9 @@ const JobsResults = () => {
         // Transform DB jobs to match the Job interface
         const transformedJobs: Job[] = (dbJobs || []).map((job: any) => ({
           id: job.id,
-          title: job.job_title,
+          title: correctJobTitle(job.job_title || ''),
           company: job.employer?.company_name || 'Unknown Company',
-          location: job.location || 'Remote',
+          location: correctLocation(job.location || 'Remote'),
           type: job.job_type || 'full-time',
           experience: job.experience_required || 'Not specified',
           salary: job.salary_range,

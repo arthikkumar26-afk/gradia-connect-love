@@ -5,6 +5,7 @@ import { getFeaturedJobs, Job } from "@/data/sampleJobs";
 import { ArrowRight, Briefcase, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { correctJobTitle, correctLocation } from "@/utils/spellCorrect";
 
 interface FeaturedJob {
   id: string;
@@ -133,9 +134,9 @@ const FeaturedJobs = () => {
                   <div key={job.id} className="animate-fade-in">
                     <JobCard
                       id={job.id}
-                      title={job.job_title}
+                      title={correctJobTitle(job.job_title)}
                       company={job.employer?.company_name || job.employer?.full_name || 'Company'}
-                      location={job.location || 'Location not specified'}
+                      location={correctLocation(job.location || 'Location not specified')}
                       type={(job.job_type as any) || 'full-time'}
                       category={getCategory(job.job_type)}
                       salary={job.salary_range || undefined}
