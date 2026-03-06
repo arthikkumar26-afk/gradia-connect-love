@@ -358,6 +358,65 @@ export type Database = {
         }
         Relationships: []
       }
+      chapter_wise_papers: {
+        Row: {
+          chapters: Json | null
+          created_at: string
+          employer_id: string
+          generated_questions: Json | null
+          id: string
+          is_active: boolean | null
+          job_id: string
+          pdf_url: string | null
+          sections_config: Json | null
+          status: string
+          title: string
+          total_marks: number | null
+          total_questions: number | null
+          updated_at: string
+        }
+        Insert: {
+          chapters?: Json | null
+          created_at?: string
+          employer_id: string
+          generated_questions?: Json | null
+          id?: string
+          is_active?: boolean | null
+          job_id: string
+          pdf_url?: string | null
+          sections_config?: Json | null
+          status?: string
+          title: string
+          total_marks?: number | null
+          total_questions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          chapters?: Json | null
+          created_at?: string
+          employer_id?: string
+          generated_questions?: Json | null
+          id?: string
+          is_active?: boolean | null
+          job_id?: string
+          pdf_url?: string | null
+          sections_config?: Json | null
+          status?: string
+          title?: string
+          total_marks?: number | null
+          total_questions?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapter_wise_papers_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupon_usages: {
         Row: {
           coupon_id: string

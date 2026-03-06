@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AIPaperDetection } from "./AIPaperDetection";
+import { ChapterWiseQA } from "./ChapterWiseQA";
 import {
   Select,
   SelectContent,
@@ -1117,6 +1118,14 @@ export const QPMContent = () => {
           jobTitle={selectedJob.job_title}
           existingSets={papers.map(p => p.set_number)}
           onSaved={() => fetchPapers(selectedJob.id)}
+        />
+      )}
+
+      {/* Chapter-wise Q&A Section */}
+      {!useAiQuestions && (
+        <ChapterWiseQA
+          jobId={selectedJob.id}
+          jobTitle={selectedJob.job_title}
         />
       )}
 
