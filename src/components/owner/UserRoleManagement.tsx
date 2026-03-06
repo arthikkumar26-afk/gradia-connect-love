@@ -26,9 +26,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Shield, Crown, Users, UserPlus, Trash2, Search, Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Shield, Crown, Users, UserPlus, Trash2, Search, Loader2, Plus, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const MEMBERSHIP_PLANS: Record<string, { name: string; monthly: number; annual: number }[]> = {
+  candidate: [
+    { name: "Pro", monthly: 1499, annual: 14990 },
+    { name: "Premium", monthly: 1999, annual: 19990 },
+  ],
+  employer: [
+    { name: "Starter", monthly: 0, annual: 0 },
+    { name: "Growth", monthly: 4999, annual: 49990 },
+    { name: "Professional", monthly: 14999, annual: 149990 },
+    { name: "Enterprise", monthly: 29000, annual: 290000 },
+  ],
+  freelancer: [
+    { name: "Starter", monthly: 0, annual: 0 },
+    { name: "Pro", monthly: 1499, annual: 14990 },
+    { name: "Premium", monthly: 2999, annual: 29990 },
+  ],
+  edutech: [
+    { name: "Starter", monthly: 0, annual: 0 },
+    { name: "Growth", monthly: 4999, annual: 49990 },
+    { name: "Enterprise", monthly: 14999, annual: 149990 },
+  ],
+};
 
 interface UserWithRoles {
   id: string;
@@ -47,6 +72,17 @@ const UserRoleManagement = () => {
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [isAssigning, setIsAssigning] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    role: "candidate" as string,
+    withMembership: false,
+    plan: "",
+    billingCycle: "monthly" as "monthly" | "annual",
+  });
+  const [isCreating, setIsCreating] = useState(false);
   const [roleToRemove, setRoleToRemove] = useState<{ userId: string; role: string } | null>(null);
   const { toast } = useToast();
 
@@ -152,6 +188,76 @@ const UserRoleManagement = () => {
     }
   };
 
+  const handleCreateAccount = async () => {
+    if (!createForm.fullName || !createForm.email || !createForm.password) {
+      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
+      return;
+    }
+    setIsCreating(true);
+    try {
+      const response = await supabase.functions.invoke("manage-user-roles", {
+        body: {
+          action: "create-user",
+          targetEmail: createForm.email,
+          password: createForm.password,
+          fullName: createForm.fullName,
+          role: createForm.role,
+        },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      const newUserId = response.data?.userId;
+
+      if (createForm.withMembership && createForm.plan && newUserId) {
+        const plans = MEMBERSHIP_PLANS[createForm.role] || [];
+        const selectedPlan = plans.find(p => p.name === createForm.plan);
+        if (selectedPlan) {
+          const amount = createForm.billingCycle === "annual" ? selectedPlan.annual : selectedPlan.monthly;
+          const now = new Date();
+          const endsAt = new Date(now);
+          if (createForm.billingCycle === "annual") {
+            endsAt.setFullYear(endsAt.getFullYear() + 1);
+          } else {
+            endsAt.setMonth(endsAt.getMonth() + 1);
+          }
+          if (createForm.role === "candidate") {
+            await supabase.from("candidate_subscriptions").insert({
+              candidate_id: newUserId,
+              plan: createForm.plan.toLowerCase(),
+              status: "active",
+              started_at: now.toISOString(),
+              ends_at: endsAt.toISOString(),
+            });
+          } else {
+            await supabase.from("subscriptions").insert({
+              employer_id: newUserId,
+              plan_id: createForm.plan.toLowerCase(),
+              plan_name: createForm.plan,
+              amount,
+              status: "active",
+              billing_cycle: createForm.billingCycle,
+              started_at: now.toISOString(),
+              ends_at: endsAt.toISOString(),
+              payment_method: "owner_assigned",
+            });
+          }
+        }
+      }
+
+      toast({
+        title: "Account Created",
+        description: `${createForm.role} account for ${createForm.email}${createForm.withMembership ? ` with ${createForm.plan} plan` : ""}`,
+      });
+      setCreateForm({ fullName: "", email: "", password: "", role: "candidate", withMembership: false, plan: "", billingCycle: "monthly" });
+      setIsCreateOpen(false);
+      fetchUsers();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to create account", variant: "destructive" });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -190,9 +296,13 @@ const UserRoleManagement = () => {
             </div>
             <div>
               <CardTitle>User Role Management</CardTitle>
-              <CardDescription>Assign admin and owner roles to users</CardDescription>
+              <CardDescription>Create & manage user accounts and roles</CardDescription>
             </div>
           </div>
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Account
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -341,6 +451,126 @@ const UserRoleManagement = () => {
               <Button variant="destructive" onClick={handleRemoveRole} disabled={isAssigning}>
                 {isAssigning && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Remove Role
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Account Dialog */}
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Create New Account
+              </DialogTitle>
+              <DialogDescription>
+                Create a new user account with a specific role and optional membership.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Full Name *</Label>
+                <Input
+                  placeholder="Enter full name"
+                  value={createForm.fullName}
+                  onChange={(e) => setCreateForm(f => ({ ...f, fullName: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email *</Label>
+                <Input
+                  type="email"
+                  placeholder="Enter email address"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Password *</Label>
+                <Input
+                  type="password"
+                  placeholder="Set password"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Role *</Label>
+                <Select
+                  value={createForm.role}
+                  onValueChange={(val) => setCreateForm(f => ({ ...f, role: val, plan: "", withMembership: false }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="candidate">Candidate</SelectItem>
+                    <SelectItem value="employer">Employer</SelectItem>
+                    <SelectItem value="freelancer">Freelancer</SelectItem>
+                    <SelectItem value="edutech">EduTech</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Membership Toggle */}
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <Label className="text-sm font-medium">Assign Membership</Label>
+                    <p className="text-xs text-muted-foreground">Create with an active subscription plan</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={createForm.withMembership}
+                  onCheckedChange={(checked) => setCreateForm(f => ({ ...f, withMembership: checked, plan: "" }))}
+                />
+              </div>
+
+              {createForm.withMembership && MEMBERSHIP_PLANS[createForm.role] && (
+                <div className="space-y-3 rounded-lg border p-3 bg-muted/30">
+                  <div className="space-y-2">
+                    <Label>Plan</Label>
+                    <Select
+                      value={createForm.plan}
+                      onValueChange={(val) => setCreateForm(f => ({ ...f, plan: val }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a plan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MEMBERSHIP_PLANS[createForm.role].map((plan) => (
+                          <SelectItem key={plan.name} value={plan.name}>
+                            {plan.name} — ₹{createForm.billingCycle === "annual" ? plan.annual.toLocaleString() + "/yr" : plan.monthly.toLocaleString() + "/mo"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Billing Cycle</Label>
+                    <Select
+                      value={createForm.billingCycle}
+                      onValueChange={(val: "monthly" | "annual") => setCreateForm(f => ({ ...f, billingCycle: val }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="annual">Annual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreateAccount} disabled={isCreating || !createForm.fullName || !createForm.email || !createForm.password}>
+                {isCreating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Create Account
               </Button>
             </DialogFooter>
           </DialogContent>
