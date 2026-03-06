@@ -428,29 +428,82 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                   </Card>
                 ))}
               </div>
-            </div>
 
-            {/* Generate Button */}
-            {pdfFile && (
-              <Button
-                onClick={handleGenerateQuestions}
-                disabled={isGenerating}
-                className="w-full"
-                size="lg"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    AI is generating {totalQuestions} questions...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generate {totalQuestions} Questions ({totalMarks} Marks)
-                  </>
-                )}
-              </Button>
-            )}
+              {/* Paper Layout Preview */}
+              <Card className="border border-primary/20 bg-primary/5">
+                <CardHeader className="py-2.5 px-4 border-b border-primary/15">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-primary" />
+                      Paper Layout Preview
+                    </CardTitle>
+                    <Badge className="text-[10px]">{totalQuestions} Qs • {totalMarks} Marks</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3 space-y-2">
+                  {sections.map((section, idx) => (
+                    <div key={section.id} className={`p-3 rounded-lg border ${idx % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
+                            {section.name}
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold">Section {section.name}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {section.questionCount} × {section.marksPerQuestion} marks = {section.questionCount * section.marksPerQuestion} marks
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">
+                          {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : "Long Answer"}
+                        </Badge>
+                      </div>
+                      {/* Placeholder question slots */}
+                      <div className="mt-2 space-y-1">
+                        {Array.from({ length: Math.min(section.questionCount, 3) }).map((_, qIdx) => (
+                          <div key={qIdx} className="flex items-center gap-2 text-[10px] text-muted-foreground pl-8">
+                            <span className="font-mono">Q{qIdx + 1}.</span>
+                            <div className="flex-1 h-3 bg-muted/50 rounded animate-pulse" />
+                            <span className="text-[9px]">[{section.marksPerQuestion} mk]</span>
+                          </div>
+                        ))}
+                        {section.questionCount > 3 && (
+                          <p className="text-[9px] text-muted-foreground/60 pl-8 italic">
+                            ... +{section.questionCount - 3} more questions
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-between pt-2 border-t text-xs font-semibold text-foreground">
+                    <span>Total Questions: {totalQuestions}</span>
+                    <span>Total Marks: {totalMarks}</span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Generate Button */}
+              {pdfFile && (
+                <Button
+                  onClick={handleGenerateQuestions}
+                  disabled={isGenerating}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      AI is generating {totalQuestions} questions...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate {totalQuestions} Questions ({totalMarks} Marks)
+                    </>
+                  )}
+                </Button>
+              )}
 
             {/* Preview Generated Questions */}
             {generatedQuestions && showPreview && (
