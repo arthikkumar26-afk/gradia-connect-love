@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Crown, Users, UserPlus, Trash2, Search, Loader2, Plus, CreditCard } from "lucide-react";
+import { Shield, Crown, Users, UserPlus, Trash2, Search, Loader2, Plus, CreditCard, Eye, KeyRound, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -86,6 +86,14 @@ const UserRoleManagement = () => {
   const [roleToRemove, setRoleToRemove] = useState<{ userId: string; role: string } | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewUser, setViewUser] = useState<UserWithRoles | null>(null);
+  const [viewDetails, setViewDetails] = useState<any>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [resetUser, setResetUser] = useState<UserWithRoles | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string; name: string; role: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -246,9 +254,11 @@ const UserRoleManagement = () => {
         }
       }
 
-      toast({
-        title: "Account Created",
-        description: `${createForm.role} account for ${createForm.email}${createForm.withMembership ? ` with ${createForm.plan} plan` : ""}`,
+      setCreatedCredentials({
+        email: createForm.email,
+        password: createForm.password,
+        name: createForm.fullName,
+        role: createForm.role,
       });
       setCreateForm({ fullName: "", email: "", password: "", role: "candidate", withMembership: false, plan: "", billingCycle: "monthly" });
       setIsCreateOpen(false);
@@ -258,6 +268,49 @@ const UserRoleManagement = () => {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleViewDetails = async (user: UserWithRoles) => {
+    setViewUser(user);
+    setIsLoadingDetails(true);
+    setViewDetails(null);
+    try {
+      const response = await supabase.functions.invoke("manage-user-roles", {
+        body: { action: "get-user-details", targetUserId: user.id },
+      });
+      if (response.error) throw new Error(response.error.message);
+      setViewDetails(response.data);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to fetch details", variant: "destructive" });
+      setViewUser(null);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetUser || !newPassword) return;
+    setIsResetting(true);
+    try {
+      const response = await supabase.functions.invoke("manage-user-roles", {
+        body: { action: "reset-password", targetUserId: resetUser.id, newPassword },
+      });
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      toast({ title: "Success", description: `Password reset for ${resetUser.email}` });
+      setResetUser(null);
+      setNewPassword("");
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to reset password", variant: "destructive" });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   const handleDeleteAccount = async () => {
@@ -394,7 +447,23 @@ const UserRoleManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            title="View Details"
+                            onClick={() => handleViewDetails(user)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            title="Reset Password"
+                            onClick={() => setResetUser(user)}
+                          >
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -622,6 +691,138 @@ const UserRoleManagement = () => {
                 {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Delete Account
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* View User Details */}
+        <Dialog open={!!viewUser} onOpenChange={() => { setViewUser(null); setViewDetails(null); }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Account Details
+              </DialogTitle>
+              <DialogDescription>{viewUser?.full_name} — {viewUser?.email}</DialogDescription>
+            </DialogHeader>
+            {isLoadingDetails ? (
+              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            ) : viewDetails ? (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2 rounded-lg border p-3">
+                  <div><span className="text-muted-foreground">Email:</span></div>
+                  <div className="font-medium">{viewDetails.authUser?.email}</div>
+                  <div><span className="text-muted-foreground">Base Role:</span></div>
+                  <div><Badge variant="outline">{viewDetails.profile?.role}</Badge></div>
+                  <div><span className="text-muted-foreground">Privileged Roles:</span></div>
+                  <div className="flex gap-1 flex-wrap">
+                    {viewDetails.roles?.length > 0 ? viewDetails.roles.map((r: string) => (
+                      <Badge key={r} variant="secondary">{r}</Badge>
+                    )) : <span className="text-muted-foreground">None</span>}
+                  </div>
+                  <div><span className="text-muted-foreground">Created:</span></div>
+                  <div>{viewDetails.authUser?.created_at ? new Date(viewDetails.authUser.created_at).toLocaleDateString() : "N/A"}</div>
+                  <div><span className="text-muted-foreground">Last Sign In:</span></div>
+                  <div>{viewDetails.authUser?.last_sign_in_at ? new Date(viewDetails.authUser.last_sign_in_at).toLocaleString() : "Never"}</div>
+                  <div><span className="text-muted-foreground">Email Confirmed:</span></div>
+                  <div>{viewDetails.authUser?.email_confirmed_at ? "Yes" : "No"}</div>
+                  {viewDetails.authUser?.banned_until && (
+                    <>
+                      <div><span className="text-muted-foreground">Banned Until:</span></div>
+                      <div className="text-destructive">{new Date(viewDetails.authUser.banned_until).toLocaleString()}</div>
+                    </>
+                  )}
+                </div>
+                {viewDetails.subscription && (
+                  <div className="rounded-lg border p-3">
+                    <p className="font-medium mb-2 flex items-center gap-1"><CreditCard className="h-4 w-4" /> Active Subscription</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div><span className="text-muted-foreground">Plan:</span></div>
+                      <div className="font-medium capitalize">{viewDetails.subscription.plan || viewDetails.subscription.plan_name}</div>
+                      <div><span className="text-muted-foreground">Status:</span></div>
+                      <div><Badge variant="default">{viewDetails.subscription.status}</Badge></div>
+                      <div><span className="text-muted-foreground">Expires:</span></div>
+                      <div>{viewDetails.subscription.ends_at ? new Date(viewDetails.subscription.ends_at).toLocaleDateString() : "N/A"}</div>
+                    </div>
+                  </div>
+                )}
+                {viewDetails.profile?.registration_number && (
+                  <div className="rounded-lg border p-3">
+                    <span className="text-muted-foreground">Registration #: </span>
+                    <span className="font-mono font-medium">{viewDetails.profile.registration_number}</span>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </DialogContent>
+        </Dialog>
+
+        {/* Reset Password Dialog */}
+        <Dialog open={!!resetUser} onOpenChange={() => { setResetUser(null); setNewPassword(""); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5" />
+                Reset Password
+              </DialogTitle>
+              <DialogDescription>
+                Set a new password for <strong>{resetUser?.full_name}</strong> ({resetUser?.email})
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 py-2">
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                placeholder="Enter new password (min 6 chars)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setResetUser(null); setNewPassword(""); }}>Cancel</Button>
+              <Button onClick={handleResetPassword} disabled={isResetting || newPassword.length < 6}>
+                {isResetting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Reset Password
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Created Credentials Dialog */}
+        <Dialog open={!!createdCredentials} onOpenChange={() => setCreatedCredentials(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-green-600">
+                <Check className="h-5 w-5" />
+                Account Created Successfully
+              </DialogTitle>
+              <DialogDescription>
+                Save these credentials — the password cannot be retrieved later.
+              </DialogDescription>
+            </DialogHeader>
+            {createdCredentials && (
+              <div className="space-y-3 rounded-lg border p-4 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div><span className="text-muted-foreground text-sm">Name:</span> <span className="font-medium">{createdCredentials.name}</span></div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div><span className="text-muted-foreground text-sm">Role:</span> <Badge variant="outline" className="ml-1 capitalize">{createdCredentials.role}</Badge></div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0"><span className="text-muted-foreground text-sm">Email:</span> <span className="font-mono font-medium text-sm">{createdCredentials.email}</span></div>
+                  <Button size="sm" variant="ghost" onClick={() => copyToClipboard(createdCredentials.email, "email")}>
+                    {copiedField === "email" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0"><span className="text-muted-foreground text-sm">Password:</span> <span className="font-mono font-medium text-sm">{createdCredentials.password}</span></div>
+                  <Button size="sm" variant="ghost" onClick={() => copyToClipboard(createdCredentials.password, "password")}>
+                    {copiedField === "password" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button onClick={() => setCreatedCredentials(null)}>Done</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

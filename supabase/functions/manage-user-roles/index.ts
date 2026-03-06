@@ -336,6 +336,96 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "reset-password") {
+      if (!targetUserId) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const newPassword = reqBody.newPassword;
+      if (!newPassword || newPassword.length < 6) {
+        return new Response(
+          JSON.stringify({ error: "newPassword is required and must be at least 6 characters" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { error: resetError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+        password: newPassword,
+      });
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Password reset successfully" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (action === "get-user-details") {
+      if (!targetUserId) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("*")
+        .eq("id", targetUserId)
+        .single();
+
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+
+      const { data: roles } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", targetUserId);
+
+      // Check subscriptions
+      let subscription = null;
+      if (profile?.role === "candidate") {
+        const { data } = await supabaseAdmin
+          .from("candidate_subscriptions")
+          .select("*")
+          .eq("candidate_id", targetUserId)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        subscription = data?.[0] || null;
+      } else {
+        const { data } = await supabaseAdmin
+          .from("subscriptions")
+          .select("*")
+          .eq("employer_id", targetUserId)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        subscription = data?.[0] || null;
+      }
+
+      return new Response(
+        JSON.stringify({
+          profile,
+          authUser: authUser?.user ? {
+            email: authUser.user.email,
+            created_at: authUser.user.created_at,
+            last_sign_in_at: authUser.user.last_sign_in_at,
+            email_confirmed_at: authUser.user.email_confirmed_at,
+            banned_until: authUser.user.banned_until,
+          } : null,
+          roles: roles?.map(r => r.role) || [],
+          subscription,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (action === "block-user") {
       if (!targetUserId) {
         return new Response(
