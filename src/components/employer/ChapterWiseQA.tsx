@@ -373,8 +373,9 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                               <Input
                                 type="number"
                                 min={1}
-                                value={section.marksPerQuestion}
-                                onChange={(e) => updateSection(section.id, "marksPerQuestion", parseInt(e.target.value) || 1)}
+                                value={section.marksPerQuestion || ""}
+                                onChange={(e) => updateSection(section.id, "marksPerQuestion", e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+                                onBlur={(e) => { if (!e.target.value || parseInt(e.target.value) < 1) updateSection(section.id, "marksPerQuestion", 1); }}
                                 className="h-7 text-xs"
                               />
                             </div>
