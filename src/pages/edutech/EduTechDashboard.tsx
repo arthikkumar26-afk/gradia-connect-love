@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,14 +10,17 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   GraduationCap, Users, BarChart3, Megaphone, CalendarCheck,
   BookOpen, Settings, LogOut, User, Menu, X,
   TrendingUp, Eye, MousePointerClick, UserPlus,
   Plus, Send, LayoutDashboard, ChevronRight,
-  Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote, Trash2
+  Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote, Trash2,
+  Paperclip, Loader2, XCircle
 } from "lucide-react";
 
 const statsData = [
