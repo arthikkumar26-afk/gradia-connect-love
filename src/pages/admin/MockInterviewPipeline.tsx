@@ -147,7 +147,7 @@ export default function MockInterviewPipeline() {
   const categoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
-    'High School': ['Board', 'Compititive'],
+    'High School': ['Board', 'Competitive'],
     'School': ['CBSE', 'State Board'],
   };
 
@@ -236,7 +236,7 @@ export default function MockInterviewPipeline() {
   // Class options for High School > Board/Competitive
   const classLevelOptions: Record<string, string[]> = {
     'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
-    'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
+    'Competitive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
   };
 
   // Core subjects for School segment
@@ -282,7 +282,7 @@ export default function MockInterviewPipeline() {
       'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
     },
     'High School': {
-      'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
+      'Competitive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
     },
     'School': {
       'CBSE': schoolDesignationOptions,
@@ -292,8 +292,8 @@ export default function MockInterviewPipeline() {
 
   const isEducation = newPaper.industryCategory === 'Education';
 
-  // Check if we need to show class level field (for Board or Compititive)
-  const showClassLevel = isEducation && newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive');
+  // Check if we need to show class level field (for Board or Competitive)
+  const showClassLevel = isEducation && newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Competitive');
   
   // Check if we need to show core subject field (for School segment)
   const showCoreSubject = isEducation && newPaper.segment === 'School';
@@ -316,7 +316,7 @@ export default function MockInterviewPipeline() {
     
     if (isEducation) {
       if (!newPaper.category) return [];
-      if (newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Compititive')) {
+      if (newPaper.segment === 'High School' && (newPaper.category === 'Board' || newPaper.category === 'Competitive')) {
         if (!newPaper.classLevel) return [];
         return classDesignationOptions[newPaper.classLevel] || [];
       }

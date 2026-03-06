@@ -201,7 +201,7 @@ export const MockInterviewTab = () => {
   const educationCategoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
-    'High School': ['Board', 'Compititive'],
+    'High School': ['Board', 'Competitive'],
   };
 
   // Non-education industry category options
@@ -291,14 +291,14 @@ export const MockInterviewTab = () => {
       'CLASSES-3,4&5': ['1st Language', '2nd Language', '3rd Language', 'MATHS', 'GEN.SCIENCE', 'SOCIAL', 'COMPUTERS', 'PHYSICAL EDUCATION', 'CCA']
     },
     'High School': {
-      'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
+      'Competitive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
     }
   };
 
   // Class level options for Education > High School
   const classLevelOptions: Record<string, string[]> = {
     'Board': ['CLASS-6,7&8', 'CLASS-9&10'],
-    'Compititive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
+    'Competitive': ['CLASSES-6,7&8', 'CLASSES-9&10'],
   };
 
   const classDesignationOptions: Record<string, string[]> = {
@@ -310,9 +310,9 @@ export const MockInterviewTab = () => {
 
   const isEducationIndustry = currentIndustryKey === 'Education';
 
-  // Check if we need to show class level field (for Board or Compititive)
+  // Check if we need to show class level field (for Board or Competitive)
   const showClassLevel = isEducationIndustry && slotBookingForm.segment === 'High School' && 
-    (slotBookingForm.category === 'Board' || slotBookingForm.category === 'Compititive');
+    (slotBookingForm.category === 'Board' || slotBookingForm.category === 'Competitive');
 
   const getCurrentCategories = () => {
     if (!slotBookingForm.segment) return [];
@@ -335,11 +335,11 @@ export const MockInterviewTab = () => {
       if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Board') {
         return classDesignationOptions[slotBookingForm.classLevel] || [];
       }
-      if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Compititive') {
+      if (slotBookingForm.segment === 'High School' && slotBookingForm.category === 'Competitive') {
         if (slotBookingForm.classLevel) {
           return classDesignationOptions[slotBookingForm.classLevel] || [];
         }
-        return designationOptions['High School']?.['Compititive'] || [];
+        return designationOptions['High School']?.['Competitive'] || [];
       }
       if (slotBookingForm.segment && slotBookingForm.category) {
         return designationOptions[slotBookingForm.segment]?.[slotBookingForm.category] || [];

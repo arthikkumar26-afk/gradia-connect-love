@@ -176,7 +176,7 @@ const SignupPortal = () => {
   const categoryOptions: Record<string, string[]> = {
     'Pre-Primary': ['Teaching', 'Helping/Supporting', 'Admin'],
     'Primary': ['Teaching', 'Helping/Supporting', 'Admin', 'CLASS-1&2', 'CLASSES-3,4&5'],
-    'High School': ['Board', 'Compititive'],
+    'High School': ['Board', 'Competitive'],
     'School': ['CBSE', 'State Board'],
   };
 
@@ -199,7 +199,7 @@ const SignupPortal = () => {
     },
     'High School': {
       'Board': ['Telugu', 'Hindi', 'English', 'Maths', 'Physics', 'Chemistry', 'Biology'],
-      'Compititive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
+      'Competitive': ['TGT', 'PGT', 'SENIOR TEACHER', 'HOD']
     },
     'School': {
       'CBSE': schoolDesignationOptions,

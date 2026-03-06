@@ -26,7 +26,6 @@ const WhoWeAre = () => {
     { icon: Cpu, name: "Software & IT" },
     { icon: GraduationCap, name: "Education" },
     { icon: Landmark, name: "Government & PSU" },
-    { icon: Landmark, name: "Government & PSU" },
   ];
 
   return (
