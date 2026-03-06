@@ -1,0 +1,531 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  BookOpen, Upload, Loader2, Plus, Trash2, Sparkles, FileText,
+  CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface SectionConfig {
+  id: string;
+  name: string;
+  marksPerQuestion: number;
+  questionCount: number;
+  questionType: "mcq" | "short_answer" | "long_answer";
+}
+
+interface Chapter {
+  id: number;
+  title: string;
+  summary: string;
+}
+
+interface ChapterWiseQAProps {
+  jobId: string;
+  jobTitle: string;
+}
+
+export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfText, setPdfText] = useState("");
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
+  const [sections, setSections] = useState<SectionConfig[]>([
+    { id: "1", name: "A", marksPerQuestion: 10, questionCount: 3, questionType: "long_answer" },
+    { id: "2", name: "B", marksPerQuestion: 5, questionCount: 5, questionType: "short_answer" },
+    { id: "3", name: "C", marksPerQuestion: 1, questionCount: 10, questionType: "mcq" },
+  ]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<any>(null);
+  const [paperId, setPaperId] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const totalMarks = sections.reduce((sum, s) => sum + (s.marksPerQuestion * s.questionCount), 0);
+  const totalQuestions = sections.reduce((sum, s) => sum + s.questionCount, 0);
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".pdf")) {
+      toast.error("Please upload a PDF file");
+      return;
+    }
+    setPdfFile(file);
+    setChapters([]);
+    setSelectedChapters([]);
+    setGeneratedQuestions(null);
+
+    // Read PDF text (basic extraction - send to AI for chapter detection)
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const arrayBuffer = reader.result as ArrayBuffer;
+      // Convert to base64 for sending
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < uint8Array.length; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64 = btoa(binary);
+      
+      // We'll extract text content on the server side via AI
+      // For now, store a placeholder and let the edge function handle it
+      setPdfText(base64);
+      toast.success(`PDF "${file.name}" uploaded successfully`);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleExtractChapters = async () => {
+    if (!pdfText) {
+      toast.error("Please upload a PDF first");
+      return;
+    }
+
+    setIsExtracting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Create paper record
+      let currentPaperId = paperId;
+      if (!currentPaperId) {
+        const { data: paper, error } = await supabase
+          .from("chapter_wise_papers" as any)
+          .insert({
+            job_id: jobId,
+            employer_id: user.id,
+            title: `Chapter-wise Q&A - ${jobTitle}`,
+            status: "draft",
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        currentPaperId = (paper as any).id;
+        setPaperId(currentPaperId);
+      }
+
+      const { data, error } = await supabase.functions.invoke("generate-chapter-questions", {
+        body: {
+          action: "extract-chapters",
+          paperId: currentPaperId,
+          pdfText: pdfText.substring(0, 50000), // Limit size
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setChapters(data.chapters || []);
+      setSelectedChapters(data.chapters?.map((c: Chapter) => c.id) || []);
+      toast.success(`${data.chapters?.length || 0} chapters detected!`);
+    } catch (err: any) {
+      console.error("Error extracting chapters:", err);
+      toast.error(err.message || "Failed to extract chapters");
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleAddSection = () => {
+    const nextName = String.fromCharCode(65 + sections.length);
+    if (sections.length >= 8) {
+      toast.error("Maximum 8 sections allowed");
+      return;
+    }
+    setSections([...sections, {
+      id: Date.now().toString(),
+      name: nextName,
+      marksPerQuestion: 2,
+      questionCount: 5,
+      questionType: "short_answer",
+    }]);
+  };
+
+  const handleRemoveSection = (id: string) => {
+    if (sections.length <= 1) {
+      toast.error("At least one section is required");
+      return;
+    }
+    setSections(sections.filter(s => s.id !== id));
+  };
+
+  const updateSection = (id: string, field: keyof SectionConfig, value: any) => {
+    setSections(sections.map(s => s.id === id ? { ...s, [field]: value } : s));
+  };
+
+  const handleGenerateQuestions = async () => {
+    if (chapters.length > 0 && selectedChapters.length === 0) {
+      toast.error("Please select at least one chapter");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const selected = chapters.filter(c => selectedChapters.includes(c.id));
+
+      const { data, error } = await supabase.functions.invoke("generate-chapter-questions", {
+        body: {
+          action: "generate-questions",
+          paperId,
+          pdfText: pdfText.substring(0, 50000),
+          sectionsConfig: sections,
+          selectedChapters: selected,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setGeneratedQuestions(data.questions);
+      setShowPreview(true);
+      toast.success(`Generated ${data.totalQuestions} questions (${data.totalMarks} marks total)!`);
+    } catch (err: any) {
+      console.error("Error generating questions:", err);
+      toast.error(err.message || "Failed to generate questions");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const toggleChapter = (chapterId: number) => {
+    setSelectedChapters(prev =>
+      prev.includes(chapterId)
+        ? prev.filter(id => id !== chapterId)
+        : [...prev, chapterId]
+    );
+  };
+
+  return (
+    <Card className={`border-2 transition-colors ${isExpanded ? "border-primary/40 bg-primary/5" : "border-dashed border-muted-foreground/30"}`}>
+      <CardContent className="py-4 px-5">
+        {/* Header */}
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <BookOpen className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                Chapter-wise Questions & Answers
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Upload a book PDF → AI detects chapters → Configure sections → Generate Q&A
+              </p>
+            </div>
+          </div>
+          {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        </div>
+
+        {isExpanded && (
+          <div className="mt-5 space-y-5">
+            {/* Step 1: Upload PDF */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs font-bold">Step 1</Badge>
+                <Label className="text-sm font-semibold">Upload Book / Chapter PDF</Label>
+              </div>
+              <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                  id="chapter-pdf-upload"
+                />
+                <label htmlFor="chapter-pdf-upload" className="cursor-pointer">
+                  {pdfFile ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <span className="text-sm font-medium text-primary">{pdfFile.name}</span>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {(pdfFile.size / 1024 / 1024).toFixed(1)} MB
+                      </Badge>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Upload className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                      <p className="text-sm text-muted-foreground">Click to upload PDF</p>
+                      <p className="text-xs text-muted-foreground/70">Supported: PDF files up to 20MB</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+              {pdfFile && !chapters.length && (
+                <Button
+                  onClick={handleExtractChapters}
+                  disabled={isExtracting}
+                  className="w-full"
+                  size="sm"
+                >
+                  {isExtracting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      AI is detecting chapters...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Detect Chapters with AI
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+
+            {/* Step 2: Select Chapters */}
+            {chapters.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs font-bold">Step 2</Badge>
+                    <Label className="text-sm font-semibold">Select Chapters ({selectedChapters.length}/{chapters.length})</Label>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-6"
+                    onClick={() => setSelectedChapters(
+                      selectedChapters.length === chapters.length ? [] : chapters.map(c => c.id)
+                    )}
+                  >
+                    {selectedChapters.length === chapters.length ? "Deselect All" : "Select All"}
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
+                  {chapters.map((chapter) => (
+                    <div
+                      key={chapter.id}
+                      className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                        selectedChapters.includes(chapter.id)
+                          ? "bg-primary/5 border-primary/30"
+                          : "bg-background border-border hover:border-muted-foreground/40"
+                      }`}
+                      onClick={() => toggleChapter(chapter.id)}
+                    >
+                      <Checkbox
+                        checked={selectedChapters.includes(chapter.id)}
+                        onCheckedChange={() => toggleChapter(chapter.id)}
+                        className="mt-0.5"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate">{chapter.title}</p>
+                        <p className="text-[10px] text-muted-foreground line-clamp-1">{chapter.summary}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Configure Sections */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs font-bold">Step 3</Badge>
+                  <Label className="text-sm font-semibold">Configure Sections</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="text-[10px]">{totalQuestions} Qs • {totalMarks} Marks</Badge>
+                  <Button variant="outline" size="sm" className="text-xs h-6" onClick={handleAddSection}>
+                    <Plus className="h-3 w-3 mr-1" /> Add Section
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {sections.map((section) => (
+                  <Card key={section.id} className="border">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shrink-0">
+                          {section.name}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">Section Name</Label>
+                              <Input
+                                value={section.name}
+                                onChange={(e) => updateSection(section.id, "name", e.target.value)}
+                                className="h-7 text-xs"
+                                maxLength={2}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">Marks / Question</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                value={section.marksPerQuestion}
+                                onChange={(e) => updateSection(section.id, "marksPerQuestion", parseInt(e.target.value) || 1)}
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">No. of Questions</Label>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={50}
+                                value={section.questionCount}
+                                onChange={(e) => updateSection(section.id, "questionCount", parseInt(e.target.value) || 1)}
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">Question Type</Label>
+                              <Select
+                                value={section.questionType}
+                                onValueChange={(v) => updateSection(section.id, "questionType", v)}
+                              >
+                                <SelectTrigger className="h-7 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="long_answer">Long Answer</SelectItem>
+                                  <SelectItem value="short_answer">Short Answer</SelectItem>
+                                  <SelectItem value="mcq">MCQ</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant="secondary" className="text-[10px]">
+                            {section.marksPerQuestion * section.questionCount} marks
+                          </Badge>
+                          {sections.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-destructive"
+                              onClick={() => handleRemoveSection(section.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Generate Button */}
+            {pdfFile && (
+              <Button
+                onClick={handleGenerateQuestions}
+                disabled={isGenerating}
+                className="w-full"
+                size="lg"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    AI is generating {totalQuestions} questions...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate {totalQuestions} Questions ({totalMarks} Marks)
+                  </>
+                )}
+              </Button>
+            )}
+
+            {/* Preview Generated Questions */}
+            {generatedQuestions && showPreview && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Eye className="h-4 w-4 text-primary" />
+                    Generated Question Paper Preview
+                  </h3>
+                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
+                    {showPreview ? "Hide" : "Show"}
+                  </Button>
+                </div>
+
+                {generatedQuestions.sections?.map((section: any, sIdx: number) => (
+                  <Card key={sIdx} className="border-2 border-muted">
+                    <CardHeader className="py-2.5 px-4 bg-muted/40 border-b">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                          {section.name}
+                        </div>
+                        <div>
+                          <CardTitle className="text-sm font-semibold">Section {section.name}</CardTitle>
+                          <p className="text-[10px] text-muted-foreground">
+                            {section.questions?.length} questions • {section.marks_per_question} marks each
+                          </p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-3 space-y-2">
+                      {section.questions?.map((q: any, qIdx: number) => (
+                        <div key={qIdx} className={`p-3 rounded-lg border ${qIdx % 2 === 0 ? "bg-background" : "bg-muted/20"}`}>
+                          <div className="flex items-start gap-2">
+                            <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">Q{q.id}</Badge>
+                            <div className="flex-1 space-y-1.5">
+                              <p className="text-xs font-medium leading-relaxed">{q.question}</p>
+                              
+                              {q.chapter && (
+                                <Badge variant="secondary" className="text-[9px]">📖 {q.chapter}</Badge>
+                              )}
+
+                              {/* MCQ Options */}
+                              {q.type === "mcq" && q.options && (
+                                <div className="grid grid-cols-2 gap-1 ml-1 mt-1">
+                                  {q.options.map((opt: string, oIdx: number) => (
+                                    <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                      q.correct_option === String.fromCharCode(65 + oIdx)
+                                        ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                        : "bg-muted/30 border-border"
+                                    }`}>
+                                      {String.fromCharCode(65 + oIdx)}) {opt}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Answer */}
+                              <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
+                                <p className="text-[10px] text-primary font-semibold">
+                                  ✅ Answer: {q.answer}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
