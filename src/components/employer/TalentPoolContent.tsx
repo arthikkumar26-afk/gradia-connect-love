@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus, Trash2, LayoutGrid, List, MapPin, Briefcase, Download, ExternalLink, IndianRupee, Calendar } from 'lucide-react';
+import { Search, Filter, Mail, Phone, Eye, Brain, Star, FileText, Users, UserPlus, Trash2, LayoutGrid, List, MapPin, Briefcase, Download, ExternalLink, IndianRupee, Calendar, X, ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,6 +70,13 @@ export default function TalentPoolContent() {
   const [deleteCandidate, setDeleteCandidate] = useState<AppliedCandidate | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterScoreMin, setFilterScoreMin] = useState('');
+  const [filterJob, setFilterJob] = useState('all');
+  const [filterSkill, setFilterSkill] = useState('');
+  const [filterRecommendation, setFilterRecommendation] = useState('all');
+  const [filterExperience, setFilterExperience] = useState('all');
   const [stats, setStats] = useState({
     total: 0,
     shortlisted: 0,
@@ -242,16 +251,48 @@ export default function TalentPoolContent() {
     }).format(amount);
   };
 
+  const allSkills = Array.from(new Set(
+    candidates.flatMap(c => getCandidateData(c).skills || []).filter(Boolean)
+  )).sort();
+
+  const activeFilterCount = [
+    filterStatus !== 'all',
+    filterScoreMin !== '',
+    filterJob !== 'all',
+    filterSkill !== '',
+    filterRecommendation !== 'all',
+    filterExperience !== 'all',
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setFilterStatus('all');
+    setFilterScoreMin('');
+    setFilterJob('all');
+    setFilterSkill('');
+    setFilterRecommendation('all');
+    setFilterExperience('all');
+  };
+
   const filteredCandidates = candidates.filter((candidate) => {
     const data = getCandidateData(candidate);
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = !searchTerm || (
       data.full_name?.toLowerCase().includes(searchLower) ||
       data.email?.toLowerCase().includes(searchLower) ||
       candidate.job?.job_title?.toLowerCase().includes(searchLower) ||
       (data.location && data.location.toLowerCase().includes(searchLower)) ||
-      (data.registration_number && data.registration_number.toLowerCase().includes(searchLower))
+      (data.registration_number && data.registration_number.toLowerCase().includes(searchLower)) ||
+      (data.skills && data.skills.some((s: string) => s.toLowerCase().includes(searchLower)))
     );
+
+    const matchesStatus = filterStatus === 'all' || candidate.status === filterStatus;
+    const matchesScore = !filterScoreMin || (candidate.ai_score && candidate.ai_score >= parseInt(filterScoreMin));
+    const matchesJob = filterJob === 'all' || candidate.job_id === filterJob;
+    const matchesSkill = !filterSkill || (data.skills && data.skills.some((s: string) => s.toLowerCase().includes(filterSkill.toLowerCase())));
+    const matchesRec = filterRecommendation === 'all' || candidate.ai_analysis?.recommendation === filterRecommendation;
+    const matchesExp = filterExperience === 'all' || data.experience_level === filterExperience;
+
+    return matchesSearch && matchesStatus && matchesScore && matchesJob && matchesSkill && matchesRec && matchesExp;
   });
 
   const getScoreBadge = (score: number | null) => {
@@ -414,15 +455,152 @@ export default function TalentPoolContent() {
             <UserPlus className="h-4 w-4 mr-2" />
             Add Candidate
           </Button>
-          <Button variant="outline">
+          <Button 
+            variant={showFilters ? 'default' : 'outline'} 
+            onClick={() => setShowFilters(!showFilters)}
+            className="relative"
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filter
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
+                {activeFilterCount}
+              </span>
+            )}
           </Button>
           <Button variant="outline" onClick={loadAppliedCandidates}>
             Refresh
           </Button>
         </div>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-foreground">Filters</h4>
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-7">
+                <X className="h-3 w-3 mr-1" /> Clear All
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Status */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Status</label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="applied">Applied</SelectItem>
+                  <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="hired">Hired</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Min AI Score */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Min AI Score</label>
+              <Select value={filterScoreMin} onValueChange={setFilterScoreMin}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any Score</SelectItem>
+                  <SelectItem value="80">80%+</SelectItem>
+                  <SelectItem value="60">60%+</SelectItem>
+                  <SelectItem value="40">40%+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Job */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Job</label>
+              <Select value={filterJob} onValueChange={setFilterJob}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Jobs</SelectItem>
+                  {jobs.map(j => (
+                    <SelectItem key={j.id} value={j.id}>{j.job_title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Recommendation */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">AI Recommendation</label>
+              <Select value={filterRecommendation} onValueChange={setFilterRecommendation}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="strong_yes">Strong Yes</SelectItem>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="maybe">Maybe</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Experience */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Experience</label>
+              <Select value={filterExperience} onValueChange={setFilterExperience}>
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="Fresher">Fresher</SelectItem>
+                  <SelectItem value="0-1 years">0-1 years</SelectItem>
+                  <SelectItem value="1-3 years">1-3 years</SelectItem>
+                  <SelectItem value="3-5 years">3-5 years</SelectItem>
+                  <SelectItem value="5+ years">5+ years</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Skills search */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Skill</label>
+              <Input
+                placeholder="e.g. React, Java..."
+                value={filterSkill}
+                onChange={(e) => setFilterSkill(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+          </div>
+
+          {/* Popular Skills Quick Chips */}
+          {allSkills.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <span className="text-xs text-muted-foreground mr-1">Popular:</span>
+              {allSkills.slice(0, 10).map(skill => (
+                <Badge
+                  key={skill}
+                  variant={filterSkill.toLowerCase() === skill.toLowerCase() ? 'default' : 'outline'}
+                  className="text-[10px] cursor-pointer hover:bg-primary/10"
+                  onClick={() => setFilterSkill(filterSkill === skill ? '' : skill)}
+                >
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Add Candidate Modal */}
       <AddCandidateModal
