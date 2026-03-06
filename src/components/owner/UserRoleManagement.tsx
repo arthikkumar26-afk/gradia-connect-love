@@ -221,38 +221,20 @@ const UserRoleManagement = () => {
       const newUserId = response.data?.userId;
 
       if (createForm.withMembership && createForm.plan && newUserId) {
-        const plans = MEMBERSHIP_PLANS[createForm.role] || [];
-        const selectedPlan = plans.find(p => p.name === createForm.plan);
-        if (selectedPlan) {
-          const amount = createForm.billingCycle === "annual" ? selectedPlan.annual : selectedPlan.monthly;
-          const now = new Date();
-          const endsAt = new Date(now);
-          if (createForm.billingCycle === "annual") {
-            endsAt.setFullYear(endsAt.getFullYear() + 1);
-          } else {
-            endsAt.setMonth(endsAt.getMonth() + 1);
-          }
-          if (createForm.role === "candidate") {
-            await supabase.from("candidate_subscriptions").insert({
-              candidate_id: newUserId,
-              plan: createForm.plan.toLowerCase(),
-              status: "active",
-              started_at: now.toISOString(),
-              ends_at: endsAt.toISOString(),
-            });
-          } else {
-            await supabase.from("subscriptions").insert({
-              employer_id: newUserId,
-              plan_id: createForm.plan.toLowerCase(),
-              plan_name: createForm.plan,
-              amount,
-              status: "active",
-              billing_cycle: createForm.billingCycle,
-              started_at: now.toISOString(),
-              ends_at: endsAt.toISOString(),
-              payment_method: "owner_assigned",
-            });
-          }
+        // Use edge function (service role) to create subscription - avoids RLS issues
+        const subResponse = await supabase.functions.invoke("manage-user-roles", {
+          body: {
+            action: "update-subscription",
+            targetUserId: newUserId,
+            plan: createForm.plan,
+            billingCycle: createForm.billingCycle,
+            planAction: "update",
+            targetRole: createForm.role,
+          },
+        });
+        if (subResponse.error || subResponse.data?.error) {
+          console.error("Failed to create subscription:", subResponse.error || subResponse.data?.error);
+          toast({ title: "Warning", description: "Account created but membership activation failed. You can activate it from user details.", variant: "destructive" });
         }
       }
 
