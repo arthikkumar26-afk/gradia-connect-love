@@ -426,6 +426,87 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "update-subscription") {
+      if (!targetUserId) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { plan, billingCycle, planAction, targetRole } = reqBody;
+
+      if (planAction === "cancel") {
+        // Cancel active subscription
+        if (targetRole === "candidate") {
+          await supabaseAdmin
+            .from("candidate_subscriptions")
+            .update({ status: "cancelled", updated_at: new Date().toISOString() })
+            .eq("candidate_id", targetUserId)
+            .eq("status", "active");
+        } else {
+          await supabaseAdmin
+            .from("subscriptions")
+            .update({ status: "cancelled", updated_at: new Date().toISOString() })
+            .eq("employer_id", targetUserId)
+            .eq("status", "active");
+        }
+        return new Response(
+          JSON.stringify({ success: true, message: "Subscription cancelled" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Create or update subscription
+      const now = new Date();
+      const endsAt = new Date(now);
+      if (billingCycle === "annual") {
+        endsAt.setFullYear(endsAt.getFullYear() + 1);
+      } else {
+        endsAt.setMonth(endsAt.getMonth() + 1);
+      }
+
+      if (targetRole === "candidate") {
+        // Cancel existing active
+        await supabaseAdmin
+          .from("candidate_subscriptions")
+          .update({ status: "cancelled" })
+          .eq("candidate_id", targetUserId)
+          .eq("status", "active");
+
+        await supabaseAdmin.from("candidate_subscriptions").insert({
+          candidate_id: targetUserId,
+          plan: plan.toLowerCase(),
+          status: "active",
+          started_at: now.toISOString(),
+          ends_at: endsAt.toISOString(),
+        });
+      } else {
+        await supabaseAdmin
+          .from("subscriptions")
+          .update({ status: "cancelled" })
+          .eq("employer_id", targetUserId)
+          .eq("status", "active");
+
+        await supabaseAdmin.from("subscriptions").insert({
+          employer_id: targetUserId,
+          plan_id: plan.toLowerCase(),
+          plan_name: plan,
+          amount: 0,
+          status: "active",
+          billing_cycle: billingCycle || "monthly",
+          started_at: now.toISOString(),
+          ends_at: endsAt.toISOString(),
+          payment_method: "owner_assigned",
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Subscription updated to ${plan}` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (action === "block-user") {
       if (!targetUserId) {
         return new Response(
