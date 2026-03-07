@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -82,7 +83,20 @@ serve(async (req) => {
   }
 
   try {
-    const { recipients, subject, htmlBody, senderName, attachments } = await req.json();
+    const { recipients, subject, htmlBody, senderName, attachments, campaignName } = await req.json();
+
+    // Get user from auth header
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
+    if (authHeader) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      userId = user?.id ?? null;
+    }
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
       return new Response(JSON.stringify({ error: "Recipients list is required" }), {
@@ -192,6 +206,29 @@ serve(async (req) => {
 
     const successCount = results.filter(r => r.status === "sent").length;
     const failedCount = results.filter(r => r.status === "failed").length;
+
+    // Save campaign history to database
+    if (userId) {
+      try {
+        const serviceClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
+        const rows = results.map(r => ({
+          campaign_name: campaignName || senderName || "Untitled Campaign",
+          sender_name: senderName || "Gradia EduTech",
+          subject,
+          recipient_email: r.email,
+          status: r.status === "sent" ? "delivered" : "failed",
+          user_id: userId,
+          attachments: attachments ? JSON.stringify(attachments) : "[]",
+        }));
+        const { error: insertError } = await serviceClient.from("campaign_emails").insert(rows);
+        if (insertError) console.error("Failed to save campaign history:", insertError);
+      } catch (dbErr) {
+        console.error("DB save error:", dbErr);
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, totalSent: successCount, totalFailed: failedCount, results }),
