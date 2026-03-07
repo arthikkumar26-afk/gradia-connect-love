@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -692,7 +692,7 @@ function CampaignsContent() {
     setLoadingHistory(false);
   };
 
-  useState(() => { fetchCampaignHistory(); } as any);
+  useEffect(() => { fetchCampaignHistory(); }, []);
 
   // Group campaigns by campaign_name
   const groupedCampaigns = campaignHistory.reduce((acc: Record<string, any[]>, row) => {
