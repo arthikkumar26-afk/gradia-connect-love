@@ -46,9 +46,31 @@ const recentCandidates = [
 ];
 
 const campaignsList = [
-  { name: "Summer Batch 2026", type: "Email", sent: 2400, opened: 1680, ctr: "18%", status: "Completed" },
-  { name: "Free Webinar Invite", type: "SMS", sent: 5000, opened: 3200, ctr: "22%", status: "Active" },
-  { name: "Placement Drive Alert", type: "Email", sent: 1800, opened: 1100, ctr: "15%", status: "Draft" },
+  {
+    name: "Summer Batch 2026", type: "Email", sent: 2400, opened: 1680, ctr: "18%", status: "Completed",
+    emails: [
+      { to: "priya@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:30", status: "delivered" },
+      { to: "rahul@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "delivered" },
+      { to: "anjali@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "opened" },
+      { to: "kiran@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:32", status: "bounced" },
+    ]
+  },
+  {
+    name: "Free Webinar Invite", type: "SMS", sent: 5000, opened: 3200, ctr: "22%", status: "Active",
+    emails: [
+      { to: "sneha@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:00", status: "delivered" },
+      { to: "amit@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:01", status: "opened" },
+      { to: "neha@email.com", subject: "Free Webinar - Data Science", sentAt: null, status: "scheduled", scheduledAt: "2026-03-10 09:00" },
+    ]
+  },
+  {
+    name: "Placement Drive Alert", type: "Email", sent: 1800, opened: 1100, ctr: "15%", status: "Draft",
+    emails: [
+      { to: "ravi@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
+      { to: "meena@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
+      { to: "suresh@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "scheduled", scheduledAt: "2026-03-15 08:00" },
+    ]
+  },
 ];
 
 const courses = [
@@ -647,6 +669,8 @@ interface AttachmentFile {
 }
 
 function CampaignsContent() {
+  const [selectedCampaign, setSelectedCampaign] = useState<typeof campaignsList[0] | null>(null);
+  const [detailTab, setDetailTab] = useState<"all" | "sent" | "draft" | "scheduled">("all");
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [emailInput, setEmailInput] = useState("");
   const [emailList, setEmailList] = useState<string[]>([]);
@@ -830,8 +854,8 @@ function CampaignsContent() {
               </thead>
               <tbody>
                 {campaignsList.map((c, i) => (
-                  <tr key={i} className="border-b border-border/30">
-                    <td className="p-3 font-medium text-foreground">{c.name}</td>
+                  <tr key={i} className="border-b border-border/30 hover:bg-muted/30 cursor-pointer" onClick={() => { setSelectedCampaign(c); setDetailTab("all"); }}>
+                    <td className="p-3 font-medium text-primary hover:underline">{c.name}</td>
                     <td className="p-3"><Badge variant="outline" className="text-xs">{c.type}</Badge></td>
                     <td className="p-3 text-muted-foreground">{c.sent.toLocaleString()}</td>
                     <td className="p-3 text-muted-foreground">{c.opened.toLocaleString()}</td>
@@ -846,6 +870,116 @@ function CampaignsContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Campaign Detail Dialog */}
+      <Dialog open={!!selectedCampaign} onOpenChange={(open) => { if (!open) setSelectedCampaign(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Megaphone className="h-5 w-5 text-primary" />
+              {selectedCampaign?.name}
+              <Badge variant={selectedCampaign?.status === "Active" ? "default" : selectedCampaign?.status === "Completed" ? "secondary" : "outline"} className="text-xs ml-2">
+                {selectedCampaign?.status}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Stats Row */}
+          <div className="grid grid-cols-4 gap-3 mt-2">
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <p className="text-lg font-bold text-foreground">{selectedCampaign?.sent.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Total Sent</p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <p className="text-lg font-bold text-foreground">{selectedCampaign?.opened.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Opened</p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <p className="text-lg font-bold text-foreground">{selectedCampaign?.ctr}</p>
+              <p className="text-xs text-muted-foreground">CTR</p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <p className="text-lg font-bold text-foreground">{selectedCampaign?.type}</p>
+              <p className="text-xs text-muted-foreground">Channel</p>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 mt-3 border-b border-border">
+            {(["all", "sent", "draft", "scheduled"] as const).map(tab => {
+              const count = selectedCampaign?.emails.filter(e =>
+                tab === "all" ? true :
+                tab === "sent" ? (e.status === "delivered" || e.status === "opened" || e.status === "bounced") :
+                tab === "draft" ? e.status === "draft" :
+                e.status === "scheduled"
+              ).length || 0;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setDetailTab(tab)}
+                  className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+                    detailTab === tab
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab} ({count})
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Email List */}
+          <div className="mt-2 space-y-2">
+            {selectedCampaign?.emails
+              .filter(e =>
+                detailTab === "all" ? true :
+                detailTab === "sent" ? (e.status === "delivered" || e.status === "opened" || e.status === "bounced") :
+                detailTab === "draft" ? e.status === "draft" :
+                e.status === "scheduled"
+              )
+              .map((email, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{email.to}</p>
+                    <p className="text-xs text-muted-foreground truncate">{email.subject}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${
+                        email.status === "delivered" ? "border-green-500/50 text-green-600" :
+                        email.status === "opened" ? "border-blue-500/50 text-blue-600" :
+                        email.status === "bounced" ? "border-destructive/50 text-destructive" :
+                        email.status === "scheduled" ? "border-warning/50 text-yellow-600" :
+                        "border-muted-foreground/50 text-muted-foreground"
+                      }`}
+                    >
+                      {email.status === "scheduled" ? <Clock className="h-3 w-3 mr-1" /> : null}
+                      {email.status}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {email.sentAt || (email as any).scheduledAt || "—"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            {selectedCampaign?.emails.filter(e =>
+              detailTab === "all" ? true :
+              detailTab === "sent" ? (e.status === "delivered" || e.status === "opened" || e.status === "bounced") :
+              detailTab === "draft" ? e.status === "draft" :
+              e.status === "scheduled"
+            ).length === 0 && (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No {detailTab} emails in this campaign
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* New Campaign Dialog */}
       <Dialog open={showNewCampaign} onOpenChange={(open) => { if (!open) resetForm(); }}>
