@@ -46,9 +46,31 @@ const recentCandidates = [
 ];
 
 const campaignsList = [
-  { name: "Summer Batch 2026", type: "Email", sent: 2400, opened: 1680, ctr: "18%", status: "Completed" },
-  { name: "Free Webinar Invite", type: "SMS", sent: 5000, opened: 3200, ctr: "22%", status: "Active" },
-  { name: "Placement Drive Alert", type: "Email", sent: 1800, opened: 1100, ctr: "15%", status: "Draft" },
+  {
+    name: "Summer Batch 2026", type: "Email", sent: 2400, opened: 1680, ctr: "18%", status: "Completed",
+    emails: [
+      { to: "priya@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:30", status: "delivered" },
+      { to: "rahul@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "delivered" },
+      { to: "anjali@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "opened" },
+      { to: "kiran@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:32", status: "bounced" },
+    ]
+  },
+  {
+    name: "Free Webinar Invite", type: "SMS", sent: 5000, opened: 3200, ctr: "22%", status: "Active",
+    emails: [
+      { to: "sneha@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:00", status: "delivered" },
+      { to: "amit@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:01", status: "opened" },
+      { to: "neha@email.com", subject: "Free Webinar - Data Science", sentAt: null, status: "scheduled", scheduledAt: "2026-03-10 09:00" },
+    ]
+  },
+  {
+    name: "Placement Drive Alert", type: "Email", sent: 1800, opened: 1100, ctr: "15%", status: "Draft",
+    emails: [
+      { to: "ravi@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
+      { to: "meena@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
+      { to: "suresh@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "scheduled", scheduledAt: "2026-03-15 08:00" },
+    ]
+  },
 ];
 
 const courses = [
