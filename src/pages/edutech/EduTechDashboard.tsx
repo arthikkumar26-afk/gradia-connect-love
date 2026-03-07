@@ -669,6 +669,8 @@ interface AttachmentFile {
 }
 
 function CampaignsContent() {
+  const [selectedCampaign, setSelectedCampaign] = useState<typeof campaignsList[0] | null>(null);
+  const [detailTab, setDetailTab] = useState<"all" | "sent" | "draft" | "scheduled">("all");
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [emailInput, setEmailInput] = useState("");
   const [emailList, setEmailList] = useState<string[]>([]);
