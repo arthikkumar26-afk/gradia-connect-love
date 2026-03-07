@@ -804,6 +804,7 @@ function CampaignsContent() {
     setMessageBody("");
     setCampaignName("");
     setSendResults(null);
+    setAttachments([]);
     setShowNewCampaign(false);
   };
 
