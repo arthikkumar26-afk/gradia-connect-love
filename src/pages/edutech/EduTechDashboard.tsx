@@ -910,6 +910,48 @@ function CampaignsContent() {
               <p className="text-xs text-muted-foreground">Your message will be wrapped in a branded email template with header & footer</p>
             </div>
 
+            {/* Attachments */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Attachments</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*,.pdf,.doc,.docx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-full border-dashed border-2"
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  <><Paperclip className="h-4 w-4 mr-2" /> Add Images, Videos, or PDFs</>
+                )}
+              </Button>
+              {attachments.length > 0 && (
+                <div className="space-y-1.5 mt-2">
+                  {attachments.map((att, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 rounded-md border border-border bg-muted/30 text-sm">
+                      <span>{getFileIcon(att.type)}</span>
+                      <span className="flex-1 truncate text-foreground">{att.name}</span>
+                      <span className="text-muted-foreground text-xs">{formatFileSize(att.size)}</span>
+                      <button onClick={() => removeAttachment(idx)} className="text-muted-foreground hover:text-destructive">
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <p className="text-xs text-muted-foreground">{attachments.length} file(s) attached • Max 20MB each</p>
+                </div>
+              )}
+            </div>
+
             {/* Send Results */}
             {sendResults && (
               <Card className="border-primary/20 bg-primary/5">
