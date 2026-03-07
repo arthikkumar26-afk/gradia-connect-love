@@ -8,6 +8,74 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function buildInlineMediaHtml(attachments: { name: string; url: string; type: string; size: number }[]): string {
+  if (!attachments || attachments.length === 0) return "";
+
+  let html = `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:20px;">`;
+
+  for (const att of attachments) {
+    if (att.type.startsWith("image/")) {
+      // Images displayed inline
+      html += `
+        <tr>
+          <td style="padding:8px 0;">
+            <img src="${att.url}" alt="${att.name}" style="max-width:100%;height:auto;border-radius:8px;display:block;" />
+            <p style="margin:4px 0 12px;color:#6b7280;font-size:12px;">${att.name}</p>
+          </td>
+        </tr>`;
+    } else if (att.type.startsWith("video/")) {
+      // Videos as thumbnail with play icon + download link
+      html += `
+        <tr>
+          <td style="padding:8px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" style="background:#f3f4f6;border-radius:8px;width:100%;">
+              <tr>
+                <td style="padding:16px;text-align:center;">
+                  <div style="font-size:40px;margin-bottom:8px;">🎬</div>
+                  <a href="${att.url}" target="_blank" style="color:#0f766e;font-weight:600;font-size:14px;text-decoration:none;">${att.name}</a>
+                  <p style="margin:4px 0 0;color:#9ca3af;font-size:12px;">Video attachment • Click to download/view</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`;
+    } else if (att.type.includes("pdf")) {
+      // PDFs as styled download card
+      html += `
+        <tr>
+          <td style="padding:8px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" style="background:#fef3c7;border-radius:8px;width:100%;">
+              <tr>
+                <td style="padding:14px 16px;">
+                  <a href="${att.url}" target="_blank" style="color:#92400e;font-weight:600;font-size:14px;text-decoration:none;">📄 ${att.name}</a>
+                  <p style="margin:4px 0 0;color:#b45309;font-size:12px;">PDF Document • Click to download</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`;
+    } else {
+      // Other files as generic download link
+      html += `
+        <tr>
+          <td style="padding:8px 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0" style="background:#f3f4f6;border-radius:8px;width:100%;">
+              <tr>
+                <td style="padding:14px 16px;">
+                  <a href="${att.url}" target="_blank" style="color:#374151;font-weight:600;font-size:14px;text-decoration:none;">📎 ${att.name}</a>
+                  <p style="margin:4px 0 0;color:#6b7280;font-size:12px;">Attachment • Click to download</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>`;
+    }
+  }
+
+  html += `</table>`;
+  return html;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,16 +98,24 @@ serve(async (req) => {
       });
     }
 
-    // Build Resend attachments using path (URL) - no need to download the file
+    // Build Resend attachments using path (URL) for downloadable files
     const resendAttachments: { filename: string; path: string }[] = [];
+    const inlineAttachments: { name: string; url: string; type: string; size: number }[] = [];
+
     if (attachments && Array.isArray(attachments)) {
       for (const att of attachments) {
         if (att.url) {
+          // Add as downloadable attachment
           resendAttachments.push({ filename: att.name, path: att.url });
-          console.log(`Attachment added: ${att.name} via URL`);
+          // Also add to inline display list
+          inlineAttachments.push({ name: att.name, url: att.url, type: att.type, size: att.size });
+          console.log(`Attachment added: ${att.name} (${att.type})`);
         }
       }
     }
+
+    // Build inline media HTML for the email body
+    const inlineMediaHtml = buildInlineMediaHtml(inlineAttachments);
 
     const fromAddress = `${senderName || "Gradia EduTech"} <noreply@gradia.co.in>`;
     const results: { email: string; status: string; error?: string }[] = [];
@@ -70,6 +146,7 @@ serve(async (req) => {
           <tr>
             <td style="padding:32px 40px;">
               ${htmlBody}
+              ${inlineMediaHtml}
             </td>
           </tr>
           <tr>
