@@ -683,6 +683,74 @@ function CampaignsContent() {
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/webm', 'video/quicktime',
+      'application/pdf',
+      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    const maxSize = 20 * 1024 * 1024; // 20MB
+
+    setIsUploading(true);
+    const newAttachments: AttachmentFile[] = [];
+
+    for (const file of Array.from(files)) {
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Unsupported file type: ${file.name}`);
+        continue;
+      }
+      if (file.size > maxSize) {
+        toast.error(`File too large (max 20MB): ${file.name}`);
+        continue;
+      }
+
+      const filePath = `campaigns/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { data, error } = await supabase.storage.from('campaign-attachments').upload(filePath, file);
+
+      if (error) {
+        toast.error(`Upload failed: ${file.name}`);
+        console.error(error);
+        continue;
+      }
+
+      const { data: urlData } = supabase.storage.from('campaign-attachments').getPublicUrl(data.path);
+
+      newAttachments.push({
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url: urlData.publicUrl,
+      });
+    }
+
+    setAttachments(prev => [...prev, ...newAttachments]);
+    setIsUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (newAttachments.length > 0) toast.success(`${newAttachments.length} file(s) attached`);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return '🖼️';
+    if (type.startsWith('video/')) return '🎬';
+    if (type.includes('pdf')) return '📄';
+    return '📎';
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
   const handleSendCampaign = async () => {
     if (emailList.length === 0) { toast.error("Add at least one recipient email"); return; }
     if (!subject.trim()) { toast.error("Subject is required"); return; }
@@ -692,11 +760,14 @@ function CampaignsContent() {
     setSendResults(null);
 
     try {
-      // Convert plain text message to HTML
       const htmlBody = messageBody
         .split("\n")
         .map(line => line.trim() ? `<p style="margin:0 0 12px;color:#374151;font-size:15px;line-height:1.7;">${line}</p>` : `<br/>`)
         .join("");
+
+      const attachmentPayload = attachments
+        .filter(a => a.url)
+        .map(a => ({ name: a.name, url: a.url!, type: a.type, size: a.size }));
 
       const { data, error } = await supabase.functions.invoke("send-campaign-emails", {
         body: {
@@ -704,6 +775,7 @@ function CampaignsContent() {
           subject: subject.trim(),
           htmlBody,
           senderName: campaignName.trim() || "Gradia EduTech",
+          attachments: attachmentPayload.length > 0 ? attachmentPayload : undefined,
         },
       });
 
