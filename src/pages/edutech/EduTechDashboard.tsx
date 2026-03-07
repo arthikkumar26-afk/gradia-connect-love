@@ -799,6 +799,7 @@ function CampaignsContent() {
           subject: subject.trim(),
           htmlBody,
           senderName: campaignName.trim() || "Gradia EduTech",
+          campaignName: campaignName.trim() || "Untitled Campaign",
           attachments: attachmentPayload.length > 0 ? attachmentPayload : undefined,
         },
       });
