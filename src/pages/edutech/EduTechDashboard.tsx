@@ -861,6 +861,7 @@ function CampaignsContent() {
     setSendResults(null);
     setAttachments([]);
     setShowNewCampaign(false);
+    fetchCampaignHistory();
   };
 
   return (
