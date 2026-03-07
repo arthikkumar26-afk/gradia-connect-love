@@ -277,6 +277,48 @@ export type Database = {
           },
         ]
       }
+      campaign_emails: {
+        Row: {
+          attachments: Json | null
+          campaign_name: string
+          created_at: string | null
+          html_body: string | null
+          id: string
+          recipient_email: string
+          sender_name: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          campaign_name: string
+          created_at?: string | null
+          html_body?: string | null
+          id?: string
+          recipient_email: string
+          sender_name?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          campaign_name?: string
+          created_at?: string | null
+          html_body?: string | null
+          id?: string
+          recipient_email?: string
+          sender_name?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       candidate_resumes: {
         Row: {
           created_at: string
