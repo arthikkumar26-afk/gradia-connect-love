@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -30,16 +31,22 @@ serve(async (req) => {
       });
     }
 
-    // Fetch attachment content as base64 for Resend
+    // Fetch attachment content for Resend
     const resendAttachments: { filename: string; content: string }[] = [];
     if (attachments && Array.isArray(attachments)) {
       for (const att of attachments) {
         try {
+          console.log(`Fetching attachment: ${att.name} (${att.size} bytes)`);
           const res = await fetch(att.url);
           if (res.ok) {
             const arrayBuffer = await res.arrayBuffer();
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-            resendAttachments.push({ filename: att.name, content: base64 });
+            const uint8Array = new Uint8Array(arrayBuffer);
+            // Use proper base64 encoding that handles large files
+            const base64String = base64Encode(uint8Array);
+            resendAttachments.push({ filename: att.name, content: base64String });
+            console.log(`Attachment ready: ${att.name} (${base64String.length} base64 chars)`);
+          } else {
+            console.error(`Failed to fetch ${att.name}: HTTP ${res.status}`);
           }
         } catch (e) {
           console.error(`Failed to fetch attachment ${att.name}:`, e);
