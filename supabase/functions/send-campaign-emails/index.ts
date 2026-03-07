@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { recipients, subject, htmlBody, senderName } = await req.json();
+    const { recipients, subject, htmlBody, senderName, attachments } = await req.json();
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
       return new Response(JSON.stringify({ error: "Recipients list is required" }), {
@@ -30,16 +30,31 @@ serve(async (req) => {
       });
     }
 
+    // Fetch attachment content as base64 for Resend
+    const resendAttachments: { filename: string; content: string }[] = [];
+    if (attachments && Array.isArray(attachments)) {
+      for (const att of attachments) {
+        try {
+          const res = await fetch(att.url);
+          if (res.ok) {
+            const arrayBuffer = await res.arrayBuffer();
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+            resendAttachments.push({ filename: att.name, content: base64 });
+          }
+        } catch (e) {
+          console.error(`Failed to fetch attachment ${att.name}:`, e);
+        }
+      }
+    }
+
     const fromAddress = `${senderName || "Gradia EduTech"} <noreply@gradia.co.in>`;
     const results: { email: string; status: string; error?: string }[] = [];
 
-    // Send emails individually to each recipient to avoid spam triggers
     for (const email of recipients) {
       try {
         const trimmedEmail = email.trim();
         if (!trimmedEmail) continue;
 
-        // Wrap the HTML body in a professional email template
         const fullHtml = `
 <!DOCTYPE html>
 <html>
@@ -53,19 +68,16 @@ serve(async (req) => {
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);padding:28px 40px;text-align:center;">
               <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">${senderName || "Gradia EduTech"}</h1>
             </td>
           </tr>
-          <!-- Body -->
           <tr>
             <td style="padding:32px 40px;">
               ${htmlBody}
             </td>
           </tr>
-          <!-- Footer -->
           <tr>
             <td style="padding:20px 40px;background-color:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;">
               <p style="margin:0;color:#9ca3af;font-size:12px;">This email was sent by ${senderName || "Gradia EduTech"} via Gradia Platform.</p>
@@ -79,12 +91,11 @@ serve(async (req) => {
 </body>
 </html>`;
 
-        // Add small delay between emails to avoid rate limiting
         if (results.length > 0) {
           await new Promise(r => setTimeout(r, 200));
         }
 
-        const response = await resend.emails.send({
+        const emailPayload: any = {
           from: fromAddress,
           to: [trimmedEmail],
           subject: subject,
@@ -93,8 +104,13 @@ serve(async (req) => {
             "X-Entity-Ref-ID": crypto.randomUUID(),
             "List-Unsubscribe": `<mailto:unsubscribe@gradia.co.in?subject=Unsubscribe>`,
           },
-        });
+        };
 
+        if (resendAttachments.length > 0) {
+          emailPayload.attachments = resendAttachments;
+        }
+
+        const response = await resend.emails.send(emailPayload);
         console.log(`Email sent to ${trimmedEmail}:`, response);
         results.push({ email: trimmedEmail, status: "sent" });
       } catch (emailError: any) {
@@ -107,12 +123,7 @@ serve(async (req) => {
     const failedCount = results.filter(r => r.status === "failed").length;
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        totalSent: successCount, 
-        totalFailed: failedCount, 
-        results 
-      }),
+      JSON.stringify({ success: true, totalSent: successCount, totalFailed: failedCount, results }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
