@@ -669,8 +669,8 @@ interface AttachmentFile {
 }
 
 function CampaignsContent() {
-  const [selectedCampaign, setSelectedCampaign] = useState<typeof campaignsList[0] | null>(null);
-  const [detailTab, setDetailTab] = useState<"all" | "sent" | "draft" | "scheduled">("all");
+  const [selectedCampaignName, setSelectedCampaignName] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<"all" | "delivered" | "failed">("all");
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [emailInput, setEmailInput] = useState("");
   const [emailList, setEmailList] = useState<string[]>([]);
@@ -682,6 +682,36 @@ function CampaignsContent() {
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [campaignHistory, setCampaignHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const fetchCampaignHistory = async () => {
+    setLoadingHistory(true);
+    const { data, error } = await supabase.from("campaign_emails").select("*").order("sent_at", { ascending: false });
+    if (!error && data) setCampaignHistory(data);
+    setLoadingHistory(false);
+  };
+
+  useState(() => { fetchCampaignHistory(); } as any);
+
+  // Group campaigns by campaign_name
+  const groupedCampaigns = campaignHistory.reduce((acc: Record<string, any[]>, row) => {
+    const key = row.campaign_name || "Untitled";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(row);
+    return acc;
+  }, {});
+
+  const campaignSummaries = Object.entries(groupedCampaigns).map(([name, emails]: [string, any[]]) => ({
+    name,
+    type: "Email",
+    sent: emails.length,
+    delivered: emails.filter(e => e.status === "delivered").length,
+    failed: emails.filter(e => e.status === "failed").length,
+    status: emails.some(e => e.status === "failed") ? "Partial" : "Completed",
+    lastSent: emails[0]?.sent_at,
+    emails,
+  }));
 
   const addEmails = () => {
     const newEmails = emailInput
