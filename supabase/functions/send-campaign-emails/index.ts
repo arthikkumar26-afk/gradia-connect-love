@@ -83,7 +83,20 @@ serve(async (req) => {
   }
 
   try {
-    const { recipients, subject, htmlBody, senderName, attachments } = await req.json();
+    const { recipients, subject, htmlBody, senderName, attachments, campaignName } = await req.json();
+
+    // Get user from auth header
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
+    if (authHeader) {
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      userId = user?.id ?? null;
+    }
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
       return new Response(JSON.stringify({ error: "Recipients list is required" }), {
