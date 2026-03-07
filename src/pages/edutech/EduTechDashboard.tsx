@@ -854,8 +854,8 @@ function CampaignsContent() {
               </thead>
               <tbody>
                 {campaignsList.map((c, i) => (
-                  <tr key={i} className="border-b border-border/30">
-                    <td className="p-3 font-medium text-foreground">{c.name}</td>
+                  <tr key={i} className="border-b border-border/30 hover:bg-muted/30 cursor-pointer" onClick={() => { setSelectedCampaign(c); setDetailTab("all"); }}>
+                    <td className="p-3 font-medium text-primary hover:underline">{c.name}</td>
                     <td className="p-3"><Badge variant="outline" className="text-xs">{c.type}</Badge></td>
                     <td className="p-3 text-muted-foreground">{c.sent.toLocaleString()}</td>
                     <td className="p-3 text-muted-foreground">{c.opened.toLocaleString()}</td>
