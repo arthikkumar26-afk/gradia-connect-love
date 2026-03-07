@@ -207,6 +207,29 @@ serve(async (req) => {
     const successCount = results.filter(r => r.status === "sent").length;
     const failedCount = results.filter(r => r.status === "failed").length;
 
+    // Save campaign history to database
+    if (userId) {
+      try {
+        const serviceClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
+        const rows = results.map(r => ({
+          campaign_name: campaignName || senderName || "Untitled Campaign",
+          sender_name: senderName || "Gradia EduTech",
+          subject,
+          recipient_email: r.email,
+          status: r.status === "sent" ? "delivered" : "failed",
+          user_id: userId,
+          attachments: attachments ? JSON.stringify(attachments) : "[]",
+        }));
+        const { error: insertError } = await serviceClient.from("campaign_emails").insert(rows);
+        if (insertError) console.error("Failed to save campaign history:", insertError);
+      } catch (dbErr) {
+        console.error("DB save error:", dbErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, totalSent: successCount, totalFailed: failedCount, results }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
