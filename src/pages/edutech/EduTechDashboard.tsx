@@ -637,6 +637,15 @@ function CoursesContent() {
   );
 }
 
+interface AttachmentFile {
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+  uploading?: boolean;
+  url?: string;
+}
+
 function CampaignsContent() {
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [emailInput, setEmailInput] = useState("");
@@ -646,6 +655,9 @@ function CampaignsContent() {
   const [campaignName, setCampaignName] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendResults, setSendResults] = useState<{ totalSent: number; totalFailed: number } | null>(null);
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addEmails = () => {
     const newEmails = emailInput
