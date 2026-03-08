@@ -188,13 +188,17 @@ NEVER fabricate or make up questions that don't exist in the source text.`;
     }
 
     const data = await response.json();
-    console.log('AI response received');
+    console.log('AI response received, finish_reason:', data.choices?.[0]?.finish_reason);
 
     // Extract the tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       const questions = JSON.parse(toolCall.function.arguments);
-      console.log('Extracted questions:', questions.questions?.length || 0);
+      const extractedCount = questions.questions?.length || 0;
+      console.log(`Extracted ${extractedCount} questions (expected approx ${approxCount})`);
+      if (typeof approxCount === 'number' && extractedCount < approxCount * 0.7) {
+        console.warn(`WARNING: Only extracted ${extractedCount} of ~${approxCount} detected questions. Possible truncation.`);
+      }
       return new Response(JSON.stringify(questions), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
