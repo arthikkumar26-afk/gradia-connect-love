@@ -225,6 +225,26 @@ Return ONLY valid JSON in this format:
           "chapter": "Chapter name"
         }
       ]
+    },
+    {
+      "name": "G",
+      "marks_per_question": 2,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Read the statements I and II.",
+          "type": "statement_based",
+          "marks": 2,
+          "statements": [
+            {"label": "I", "text": "Due to anaemia, children do not grow well, and their energy levels are low."},
+            {"label": "II", "text": "Anaemia affects both, children's physical as well as mental health."}
+          ],
+          "options": ["I is true but II is false", "I is false but II is true", "Both I and II are true", "Both I and II are false"],
+          "correct_option": "3",
+          "answer": "Both I and II are true",
+          "chapter": "Chapter name"
+        }
+      ]
     }
   ]
 }`
