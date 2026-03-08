@@ -23,8 +23,8 @@ export const DemoRoundOptions = ({
   existingMeetType,
   onUpdate,
 }: DemoRoundOptionsProps) => {
-  const [meetType, setMeetType] = useState<'ai_video' | 'manual_link'>(
-    (existingMeetType as 'ai_video' | 'manual_link') || 'ai_video'
+  const [meetType, setMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>(
+    (existingMeetType as 'ai_video' | 'google_meet' | 'zoom_meet') || 'ai_video'
   );
   const [meetLink, setMeetLink] = useState(existingMeetLink || '');
   const [isSending, setIsSending] = useState(false);
