@@ -98,6 +98,7 @@ export default function EduTechDashboard() {
     { id: "campaigns", label: "Campaigns", icon: Megaphone },
     { id: "events", label: "Job Mela & Events", icon: CalendarCheck },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
