@@ -369,16 +369,24 @@ Return ONLY valid JSON in this format:
                 options: ["Option A", "Option B", "Option C", "Option D"],
                 correct_option: "A",
               } : {}),
+              ...(s.questionType === "map_based" ? {
+                map_instruction: "On the given outline map, identify the locations.",
+                image_prompt: "An outline political map with locations A and B marked with red dots, clean educational style on white background",
+                sub_questions: [
+                  { id: 1, question: "Identify location A", options: ["Option A", "Option B", "Option C", "Option D"], correct_option: "A", answer: "Option A" },
+                  { id: 2, question: "Identify location B", options: ["Option A", "Option B", "Option C", "Option D"], correct_option: "A", answer: "Option A" },
+                ],
+              } : {}),
             })),
           })),
         };
       }
 
-      // Generate images for image_based questions
+      // Generate images for image_based and map_based questions
       const imageQuestions: { sectionIdx: number; questionIdx: number; prompt: string }[] = [];
       generatedData.sections?.forEach((s: any, sIdx: number) => {
         s.questions?.forEach((q: any, qIdx: number) => {
-          if (q.type === "image_based" && q.image_prompt) {
+          if ((q.type === "image_based" || q.type === "map_based") && q.image_prompt) {
             imageQuestions.push({ sectionIdx: sIdx, questionIdx: qIdx, prompt: q.image_prompt });
           }
         });
