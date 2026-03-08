@@ -230,7 +230,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                 <div key={section.key} className="border rounded-lg overflow-hidden bg-background">
                   {/* Section Header */}
                   <div
-                    className="flex items-center gap-2 px-3 py-2.5 bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2.5 bg-muted/60 border-b cursor-pointer hover:bg-muted transition-colors"
                     onClick={() => toggleSection(section.key)}
                   >
                     <span className={section.color}>{section.icon}</span>
