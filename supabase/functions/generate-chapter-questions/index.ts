@@ -101,6 +101,11 @@ If you cannot find clear chapters, create logical topic groupings from the conte
               role: "system",
               content: `You are an expert exam paper creator. Generate questions from the given book content based on the section configuration. Each question must have a correct answer.
 
+IMPORTANT: Respect the difficulty level for each section:
+- "easy" = Basic recall, definitions, simple facts
+- "medium" = Application-based, moderate analysis
+- "hard" = Critical thinking, complex analysis, higher-order reasoning
+
 Section Configuration:
 ${sectionInstructions}
 
