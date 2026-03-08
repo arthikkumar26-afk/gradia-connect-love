@@ -972,7 +972,8 @@ const Interview = () => {
             <h2 className="text-lg font-semibold mb-6">{currentQuestion.question}</h2>
 
             <RadioGroup
-              value={answers[currentIndex]?.toString()}
+              key={currentIndex}
+              value={answers[currentIndex] !== null ? answers[currentIndex]!.toString() : ""}
               onValueChange={(val) => handleAnswer(parseInt(val))}
               className="space-y-3"
             >
@@ -986,8 +987,8 @@ const Interview = () => {
                   }`}
                   onClick={() => handleAnswer(idx)}
                 >
-                  <RadioGroupItem value={idx.toString()} id={`option-${idx}`} />
-                  <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
+                  <RadioGroupItem value={idx.toString()} id={`option-${currentIndex}-${idx}`} />
+                  <Label htmlFor={`option-${currentIndex}-${idx}`} className="flex-1 cursor-pointer">
                     <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
                     {typeof option === 'string' ? option : JSON.stringify(option)}
                   </Label>
@@ -995,25 +996,32 @@ const Interview = () => {
               ))}
             </RadioGroup>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end gap-3 mt-6">
               {currentIndex < questions.length - 1 ? (
-                <Button onClick={handleNext} disabled={answers[currentIndex] === null}>
-                  Next Question
-                </Button>
+                <>
+                  <Button variant="outline" onClick={handleNext}>
+                    Skip
+                  </Button>
+                  <Button onClick={handleNext} disabled={answers[currentIndex] === null}>
+                    Next Question
+                  </Button>
+                </>
               ) : (
-                <Button 
-                  onClick={handleSubmit} 
-                  disabled={answers[currentIndex] === null || submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Interview'
-                  )}
-                </Button>
+                <>
+                  <Button 
+                    onClick={handleSubmit} 
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit Interview'
+                    )}
+                  </Button>
+                </>
               )}
             </div>
           </CardContent>
