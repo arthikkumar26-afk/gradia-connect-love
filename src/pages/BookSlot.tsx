@@ -441,113 +441,239 @@ const BookSlot = () => {
             </div>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
-              onClick={() => {
-                const today = getTodayDate();
-                setSelectedDate(today);
-                  // Set to nearest upcoming slot
-                  const now = new Date();
-                  const minutes = now.getMinutes();
-                  const roundedMinutes = minutes < 30 ? 30 : 0;
-                  const hour = roundedMinutes === 0 ? now.getHours() + 1 : now.getHours();
-                  const minute = roundedMinutes.toString().padStart(2, "0");
-                  const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
-                  setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
-              }}
-            >
-              🚀 Start Now
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 h-11 text-sm font-semibold border-2 border-green-400 text-green-700 hover:bg-green-100 bg-green-50"
-              onClick={() => {
-                const nextTime = getNext10MinTime();
-                setSelectedTime(nextTime);
-                if (!selectedDate && getTodayDate()) {
-                  setSelectedDate(getTodayDate()!);
-                }
-              }}
-            >
-              ⏰ Next 10 mins
-            </Button>
-          </div>
+          {isDemoStage ? (
+            <>
+              {/* Demo: 3 Preferred Timings */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <p className="text-sm text-purple-800 font-medium">
+                  📋 Choose up to 3 preferred timings. The employer will select one and send you the meeting link.
+                </p>
+              </div>
 
-          {/* Today's Current Time Info */}
-          {selectedDate === getTodayDate() && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-600 shrink-0" />
-              <p className="text-xs text-blue-700">
-                <strong>Current time:</strong>{" "}
-                {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
-                {" • "}
-                <strong>Next available slot:</strong>{" "}
-                {getTimeSlots().find((s) => s.value === getNext10MinTime())?.label || getNext10MinTime()}
-              </p>
-            </div>
+              {/* Added slots */}
+              {preferredSlots.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Your Preferred Timings ({preferredSlots.length}/3)</label>
+                  {preferredSlots.map((slot, i) => (
+                    <div key={i} className="flex items-center justify-between bg-muted/50 rounded-lg p-3 border">
+                      <div className="flex items-center gap-3">
+                        <Badge className="bg-purple-100 text-purple-700 border-purple-200">Option {i + 1}</Badge>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>{new Date(slot.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>{getTimeSlots().find(s => s.value === slot.time)?.label || slot.time}</span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleRemovePreferredSlot(i)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {preferredSlots.length < 3 && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-purple-600" />
+                      Select Date
+                    </label>
+                    <Select value={currentSlotDate} onValueChange={setCurrentSlotDate}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a date" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableDates().map((date) => (
+                          <SelectItem key={date.value} value={date.value}>
+                            {date.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-purple-600" />
+                      Select Time
+                    </label>
+                    <Select value={currentSlotTime} onValueChange={setCurrentSlotTime}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a time slot" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {getTimeSlots().map((slot) => (
+                          <SelectItem key={slot.value} value={slot.value}>
+                            {slot.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
+                    onClick={handleAddPreferredSlot}
+                    disabled={!currentSlotDate || !currentSlotTime}
+                  >
+                    + Add Timing ({preferredSlots.length}/3)
+                  </Button>
+                </>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleBookSlot}
+                disabled={isBooking || preferredSlots.length < 1}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
+              >
+                {isBooking ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Submit Preferred Timings ({preferredSlots.length})
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Quick Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
+                  onClick={() => {
+                    const today = getTodayDate();
+                    setSelectedDate(today);
+                    const now = new Date();
+                    const minutes = now.getMinutes();
+                    const roundedMinutes = minutes < 30 ? 30 : 0;
+                    const hour = roundedMinutes === 0 ? now.getHours() + 1 : now.getHours();
+                    const minute = roundedMinutes.toString().padStart(2, "0");
+                    const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
+                    setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
+                  }}
+                >
+                  🚀 Start Now
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11 text-sm font-semibold border-2 border-green-400 text-green-700 hover:bg-green-100 bg-green-50"
+                  onClick={() => {
+                    const nextTime = getNext10MinTime();
+                    setSelectedTime(nextTime);
+                    if (!selectedDate && getTodayDate()) {
+                      setSelectedDate(getTodayDate()!);
+                    }
+                  }}
+                >
+                  ⏰ Next 10 mins
+                </Button>
+              </div>
+
+              {/* Today's Current Time Info */}
+              {selectedDate === getTodayDate() && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600 shrink-0" />
+                  <p className="text-xs text-blue-700">
+                    <strong>Current time:</strong>{" "}
+                    {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                    {" • "}
+                    <strong>Next available slot:</strong>{" "}
+                    {getTimeSlots().find((s) => s.value === getNext10MinTime())?.label || getNext10MinTime()}
+                  </p>
+                </div>
+              )}
+
+              {/* Date Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  Select Date *
+                </label>
+                <Select value={selectedDate} onValueChange={setSelectedDate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAvailableDates().map((date) => (
+                      <SelectItem key={date.value} value={date.value}>
+                        {date.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Time Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  Select Time *
+                </label>
+                <Select value={selectedTime} onValueChange={setSelectedTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a time slot" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {getTimeSlots().map((slot) => (
+                      <SelectItem key={slot.value} value={slot.value}>
+                        {slot.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Info Note - only show for Written Test/Technical stages */}
+              {!stageName.toLowerCase().includes("hr") && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-xs text-amber-800">
+                    <strong>Note:</strong> Once booked, you'll receive an email with your interview link. 
+                    The assessment consists of 10 MCQ questions with 90 seconds per question. 
+                    Ensure you have a stable internet connection.
+                  </p>
+                </div>
+              )}
+
+              {/* Book Button */}
+              <Button
+                onClick={handleBookSlot}
+                disabled={isBooking || !selectedDate || !selectedTime}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
+              >
+                {isBooking ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Booking...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Confirm Booking
+                  </>
+                )}
+              </Button>
+            </>
           )}
-
-          {/* Date Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
-              Select Date *
-            </label>
-            <Select value={selectedDate} onValueChange={setSelectedDate}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a date" />
-              </SelectTrigger>
-              <SelectContent>
-                {getAvailableDates().map((date) => (
-                  <SelectItem key={date.value} value={date.value}>
-                    {date.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Time Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-600" />
-              Select Time *
-            </label>
-            <Select value={selectedTime} onValueChange={setSelectedTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a time slot" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {getTimeSlots().map((slot) => (
-                  <SelectItem key={slot.value} value={slot.value}>
-                    {slot.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Info Note - only show for Written Test/Technical stages */}
-          {!stageName.toLowerCase().includes("hr") && !stageName.toLowerCase().includes("demo") && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-800">
-                <strong>Note:</strong> Once booked, you'll receive an email with your interview link. 
-                The assessment consists of 10 MCQ questions with 90 seconds per question. 
-                Ensure you have a stable internet connection.
-              </p>
-            </div>
-          )}
-
-          {/* Book Button */}
-          <Button
-            onClick={handleBookSlot}
-            disabled={isBooking || !selectedDate || !selectedTime}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
           >
             {isBooking ? (
               <>
