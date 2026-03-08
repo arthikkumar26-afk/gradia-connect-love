@@ -21,7 +21,7 @@ interface SectionConfig {
   name: string;
   marksPerQuestion: number;
   questionCount: number;
-  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks" | "match_the_following" | "assertion_reasoning";
+  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks" | "match_the_following" | "assertion_reasoning" | "statement_based";
   difficulty: "easy" | "medium" | "hard";
 }
 
@@ -467,7 +467,8 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <SelectItem value="mcq">MCQ</SelectItem>
                                   <SelectItem value="fill_in_the_blanks">Fill in the Blanks</SelectItem>
                                   <SelectItem value="match_the_following">Match the Following</SelectItem>
-                                  <SelectItem value="assertion_reasoning">Assertion & Reasoning</SelectItem>
+                                   <SelectItem value="assertion_reasoning">Assertion & Reasoning</SelectItem>
+                                  <SelectItem value="statement_based">Statement Based</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -540,7 +541,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Badge variant="outline" className="text-[10px]">
-                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : section.questionType === "match_the_following" ? "Match the Following" : section.questionType === "assertion_reasoning" ? "Assertion & Reasoning" : "Long Answer"}
+                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : section.questionType === "match_the_following" ? "Match the Following" : section.questionType === "assertion_reasoning" ? "Assertion & Reasoning" : section.questionType === "statement_based" ? "Statement Based" : "Long Answer"}
                           </Badge>
                           <Badge className={`text-[10px] ${section.difficulty === "hard" ? "bg-destructive" : section.difficulty === "easy" ? "bg-green-600" : "bg-yellow-500"}`}>
                             {section.difficulty.charAt(0).toUpperCase() + section.difficulty.slice(1)}
@@ -719,6 +720,29 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                     {q.options.map((opt: string, oIdx: number) => (
                                       <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
                                         showAnswers && q.correct_option === String.fromCharCode(49 + oIdx)
+                                          ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                          : "bg-muted/30 border-border"
+                                      }`}>
+                                        ({oIdx + 1}) {opt}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {q.type === "statement_based" && (
+                              <div className="mt-1 space-y-1 ml-1">
+                                {q.statements && q.statements.map((stmt: { label: string; text: string }, sIdx: number) => (
+                                  <p key={sIdx} className="text-[10px]">
+                                    <span className="font-bold">Statement {stmt.label} :</span> {stmt.text}
+                                  </p>
+                                ))}
+                                <p className="text-[10px] mt-1 font-medium">Choose the correct answer from the following :</p>
+                                {q.options && (
+                                  <div className="grid grid-cols-2 gap-1 mt-1">
+                                    {q.options.map((opt: string, oIdx: number) => (
+                                      <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                        showAnswers && q.correct_option === String(oIdx + 1)
                                           ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
                                           : "bg-muted/30 border-border"
                                       }`}>
