@@ -182,6 +182,42 @@ Return ONLY valid JSON in this format:
           "chapter": "Chapter name"
         }
       ]
+    },
+    {
+      "name": "E",
+      "marks_per_question": 2,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Match the following:",
+          "type": "match_the_following",
+          "marks": 2,
+          "column_a": ["Photosynthesis", "Respiration", "Transpiration"],
+          "column_b": ["Loss of water", "CO2 absorption", "O2 consumption"],
+          "options": ["1-B, 2-C, 3-A", "1-A, 2-B, 3-C", "1-C, 2-A, 3-B", "1-B, 2-A, 3-C"],
+          "correct_option": "A",
+          "answer": "1-B, 2-C, 3-A",
+          "chapter": "Chapter name"
+        }
+      ]
+    },
+    {
+      "name": "F",
+      "marks_per_question": 2,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Read the Assertion and Reason and choose the correct option.",
+          "type": "assertion_reasoning",
+          "marks": 2,
+          "assertion": "Photosynthesis occurs in chloroplasts.",
+          "reason": "Chloroplasts contain chlorophyll which absorbs light energy.",
+          "options": ["(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)"],
+          "correct_option": "3",
+          "answer": "Both (A) and (R) are true and (R) is the correct explanation of (A)",
+          "chapter": "Chapter name"
+        }
+      ]
     }
   ]
 }`
