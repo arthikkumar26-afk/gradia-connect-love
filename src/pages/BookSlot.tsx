@@ -29,34 +29,13 @@ const BookSlot = () => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Demo slot booking: 3 preferred timings
+  // Demo slot booking: single date + 3 preferred timings
   const isDemoStage = stageName.toLowerCase().includes("demo");
   const [preferredSlots, setPreferredSlots] = useState<{ date: string; time: string }[]>([]);
-  const [currentSlotDate, setCurrentSlotDate] = useState("");
-  const [currentSlotTime, setCurrentSlotTime] = useState("");
-
-  const handleAddPreferredSlot = () => {
-    if (!currentSlotDate || !currentSlotTime) {
-      toast.error("Please select both date and time");
-      return;
-    }
-    if (preferredSlots.length >= 3) {
-      toast.error("You can only add up to 3 preferred timings");
-      return;
-    }
-    const duplicate = preferredSlots.some(s => s.date === currentSlotDate && s.time === currentSlotTime);
-    if (duplicate) {
-      toast.error("This timing is already added");
-      return;
-    }
-    setPreferredSlots(prev => [...prev, { date: currentSlotDate, time: currentSlotTime }]);
-    setCurrentSlotDate("");
-    setCurrentSlotTime("");
-  };
-
-  const handleRemovePreferredSlot = (index: number) => {
-    setPreferredSlots(prev => prev.filter((_, i) => i !== index));
-  };
+  const [demoDate, setDemoDate] = useState("");
+  const [demoTime1, setDemoTime1] = useState("");
+  const [demoTime2, setDemoTime2] = useState("");
+  const [demoTime3, setDemoTime3] = useState("");
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
