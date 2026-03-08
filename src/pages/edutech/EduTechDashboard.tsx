@@ -20,7 +20,7 @@ import {
   TrendingUp, Eye, MousePointerClick, UserPlus,
   Plus, Send, LayoutDashboard, ChevronRight,
   Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote, Trash2,
-  Paperclip, Loader2, XCircle
+  Paperclip, Loader2, XCircle, Crown, Check, Zap, Star
 } from "lucide-react";
 
 const statsData = [
