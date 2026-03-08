@@ -247,9 +247,9 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,.doc,.docx"
                 className="hidden"
-                onChange={handlePdfUpload}
+                onChange={handleFileUpload}
               />
               <Button
                 variant="outline"
