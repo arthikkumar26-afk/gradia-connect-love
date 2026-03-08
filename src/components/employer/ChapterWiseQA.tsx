@@ -13,6 +13,7 @@ import {
   CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import * as pdfjsLib from "pdfjs-dist";
 import { toast } from "sonner";
 
 interface SectionConfig {
