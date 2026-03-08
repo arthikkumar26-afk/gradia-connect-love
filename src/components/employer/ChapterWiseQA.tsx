@@ -579,27 +579,30 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
               )}
 
               {/* Preview Generated Questions */}
-              {generatedQuestions && showPreview && (
+              {generatedQuestions && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <Eye className="h-4 w-4 text-primary" />
-                      Generated Question Paper Preview
+                      {showAnswers ? "Question Paper with Answer Key" : "Question Paper (Candidate View)"}
                     </h3>
                     <div className="flex items-center gap-2">
                       <Button
-                        variant={showAnswers ? "default" : "outline"}
+                        variant={showAnswers ? "default" : "secondary"}
                         size="sm"
                         className="text-xs h-7"
                         onClick={() => setShowAnswers(!showAnswers)}
                       >
-                        {showAnswers ? "📝 With Answers" : "📄 Without Answers"}
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
-                        {showPreview ? "Hide" : "Show"}
+                        {showAnswers ? "🔓 Hide Answers" : "🔒 Show Answers"}
                       </Button>
                     </div>
                   </div>
+                  {!showAnswers && (
+                    <div className="p-2 rounded-lg bg-accent/50 border border-accent text-xs text-accent-foreground flex items-center gap-2">
+                      <span>👁️</span>
+                      <span>Showing candidate view — answers are hidden. This is how candidates will see the paper.</span>
+                    </div>
+                  )}
 
                   {generatedQuestions.sections?.map((section: any, sIdx: number) => (
                     <Card key={sIdx} className="border-2 border-muted">
