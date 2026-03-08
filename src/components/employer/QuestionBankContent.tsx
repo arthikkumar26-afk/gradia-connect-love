@@ -190,6 +190,8 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   };
 
   const totalQuestions = Object.values(sectionQuestions).reduce((sum, qs) => sum + qs.length, 0);
+  const grandTotalMarks = Object.values(sectionQuestions).reduce((sum, qs) => sum + qs.reduce((s, q) => s + (q.marks || 0), 0), 0);
+  const [showPreview, setShowPreview] = useState(false);
 
   const formatDate = (date: Date) =>
     date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
