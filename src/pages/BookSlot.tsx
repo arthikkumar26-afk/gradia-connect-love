@@ -141,12 +141,17 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    // For demo, require 3 preferred slots
+    // For demo, build preferred slots from single date + 3 times
     if (isDemoStage) {
-      if (preferredSlots.length < 1) {
-        toast.error("Please add at least 1 preferred timing (up to 3)");
+      const times = [demoTime1, demoTime2, demoTime3].filter(Boolean);
+      const uniqueTimes = [...new Set(times)];
+      if (!demoDate || uniqueTimes.length < 3) {
+        toast.error("Please select a date and 3 different timings");
         return;
       }
+      // Set preferredSlots for the booking
+      const slots = uniqueTimes.map(t => ({ date: demoDate, time: t }));
+      setPreferredSlots(slots);
     } else {
       if (!selectedDate || !selectedTime) {
         toast.error("Please select both date and time");
