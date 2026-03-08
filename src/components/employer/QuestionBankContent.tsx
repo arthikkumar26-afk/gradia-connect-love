@@ -263,7 +263,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                 ) : (
                   <Upload className="h-3.5 w-3.5 mr-1" />
                 )}
-                {isParsing ? "Detecting Questions..." : "Upload PDF"}
+                {isParsing ? "Detecting Questions..." : "Upload PDF/Word"}
               </Button>
               <Button variant="outline" size="sm" className="text-xs h-8" onClick={addManualQuestion}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Manually
