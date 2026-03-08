@@ -338,7 +338,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
             )}
 
             {/* Total Marks Input */}
-            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            <div className={`flex items-center gap-3 p-3 rounded-lg border ${totalMarks !== paperTotalMarks ? "border-destructive bg-destructive/5" : "bg-muted/30"}`}>
               <Label className="text-sm font-semibold whitespace-nowrap">Total Marks for Paper:</Label>
               <Input
                 type="number"
@@ -348,9 +348,14 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                 className="h-8 w-28 text-sm font-bold"
               />
               {totalMarks !== paperTotalMarks && (
-                <Badge variant="destructive" className="text-[10px]">
-                  Section total: {totalMarks} ≠ {paperTotalMarks}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="destructive" className="text-[10px]">
+                    Section total: {totalMarks} ≠ {paperTotalMarks}
+                  </Badge>
+                  <p className="text-[10px] text-destructive font-medium">
+                    Adjust sections to match {paperTotalMarks} marks
+                  </p>
+                </div>
               )}
               {totalMarks === paperTotalMarks && (
                 <Badge className="text-[10px] bg-green-600">✓ Matched</Badge>
