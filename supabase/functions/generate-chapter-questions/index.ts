@@ -203,10 +203,51 @@ Return ONLY valid JSON in this format:
 
       let generatedData;
       try {
-        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-        generatedData = JSON.parse(jsonMatch ? jsonMatch[1].trim() : content.trim());
-      } catch {
-        throw new Error("Failed to parse AI-generated questions");
+        // Try multiple parsing strategies
+        let jsonStr = content.trim();
+        
+        // Strategy 1: Extract from markdown code blocks
+        const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (jsonMatch) {
+          jsonStr = jsonMatch[1].trim();
+        }
+        
+        // Strategy 2: Find the first { and last } to extract JSON object
+        if (!jsonStr.startsWith("{") && !jsonStr.startsWith("[")) {
+          const firstBrace = jsonStr.indexOf("{");
+          const lastBrace = jsonStr.lastIndexOf("}");
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+          }
+        }
+        
+        generatedData = JSON.parse(jsonStr);
+      } catch (parseErr) {
+        console.error("Failed to parse AI response. Raw content:", content.substring(0, 2000));
+        console.error("Parse error:", parseErr);
+        
+        // Fallback: generate a minimal valid response matching the sections
+        generatedData = {
+          sections: sectionsConfig.map((s: any, idx: number) => ({
+            name: s.name || String.fromCharCode(65 + idx),
+            marks_per_question: s.marksPerQuestion,
+            questions: Array.from({ length: s.questionCount }, (_, i) => ({
+              id: i + 1,
+              question: `[Question generation failed - please retry] Sample question ${i + 1} for section ${s.name}`,
+              type: s.questionType,
+              marks: s.marksPerQuestion,
+              answer: "Please regenerate questions",
+              chapter: chapterNames,
+              ...(s.questionType === "mcq" || s.questionType === "fill_in_the_blanks" ? {
+                options: ["Option A", "Option B", "Option C", "Option D"],
+                correct_option: "A",
+              } : {}),
+              ...(s.questionType === "fill_in_the_blanks" ? {
+                sentence_with_blank: "The ______ needs to be regenerated.",
+              } : {}),
+            })),
+          })),
+        };
       }
 
       const totalMarks = generatedData.sections?.reduce((sum: number, s: any) => 
