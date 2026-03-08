@@ -108,6 +108,7 @@ Question Types:
 - "mcq" = Multiple choice with 4 options (A, B, C, D). Include correct_option field.
 - "short_answer" = Short answer (1-2 lines). Include answer field.
 - "long_answer" = Long/descriptive answer (essay type). Include answer field with detailed answer.
+- "fill_in_the_blanks" = A sentence with one word/phrase replaced by "______". Include 4 options (A, B, C, D), correct_option field, answer field, and sentence_with_blank field showing the sentence with the blank.
 
 Chapters to cover: ${chapterNames}
 
@@ -154,6 +155,23 @@ Return ONLY valid JSON in this format:
           "options": ["Option A", "Option B", "Option C", "Option D"],
           "correct_option": "A",
           "answer": "Option A",
+          "chapter": "Chapter name"
+        }
+      ]
+    },
+    {
+      "name": "D",
+      "marks_per_question": 1,
+      "questions": [
+        {
+          "id": 1,
+          "question": "The process of ______ is essential for photosynthesis.",
+          "type": "fill_in_the_blanks",
+          "marks": 1,
+          "sentence_with_blank": "The process of ______ is essential for photosynthesis.",
+          "options": ["Respiration", "Light absorption", "Fermentation", "Digestion"],
+          "correct_option": "B",
+          "answer": "Light absorption",
           "chapter": "Chapter name"
         }
       ]
