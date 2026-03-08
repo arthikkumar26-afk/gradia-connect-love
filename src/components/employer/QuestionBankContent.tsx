@@ -579,83 +579,41 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>{jobTitle}</span>
                 <Separator orientation="vertical" className="h-3" />
-                <span className="font-medium text-foreground">{Math.min(previewCount, totalQuestions)} of {totalQuestions} Questions</span>
+                <span className="font-medium text-foreground">{currentPreviewSections.reduce((s, sec) => s + sec.questions.length, 0)} Questions</span>
                 <Separator orientation="vertical" className="h-3" />
-                <span className="font-medium text-amber-600">{grandTotalMarks} Marks</span>
+                <span className="font-medium text-amber-600">{currentPreviewSections.reduce((s, sec) => s + sec.questions.reduce((m, q) => m + (q.marks || 0), 0), 0)} Marks</span>
               </div>
             </DialogHeader>
-            <ScrollArea className="max-h-[70vh] px-6 py-4">
+            <ScrollArea className="max-h-[60vh] px-6 py-4">
               <div className="space-y-6">
                 {(() => {
                   const sectionLetters = "ABCDEFGHIJ".split("");
-
-                  // Shuffle helper
-                  const shuffle = <T,>(arr: T[]): T[] => {
-                    const a = [...arr];
-                    for (let i = a.length - 1; i > 0; i--) {
-                      const j = Math.floor(Math.random() * (i + 1));
-                      [a[i], a[j]] = [a[j], a[i]];
-                    }
-                    return a;
-                  };
-
-                  // Distribute previewCount proportionally across available sections
-                  const availableSections = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
-                  const totalAvailable = availableSections.reduce((s, sec) => s + (sectionQuestions[sec.key] || []).length, 0);
-                  const targetCount = Math.min(previewCount, totalAvailable);
-
-                  // Proportional distribution
-                  const pickCounts: Record<string, number> = {};
-                  let assigned = 0;
-                  availableSections.forEach((sec, i) => {
-                    const secQs = (sectionQuestions[sec.key] || []).length;
-                    if (i === availableSections.length - 1) {
-                      pickCounts[sec.key] = Math.min(secQs, targetCount - assigned);
-                    } else {
-                      const proportion = Math.max(1, Math.round((secQs / totalAvailable) * targetCount));
-                      pickCounts[sec.key] = Math.min(secQs, proportion);
-                      assigned += pickCounts[sec.key];
-                    }
-                  });
-
-
                   let globalQ = 0;
-                  let sectionIdx = 0;
-
-                  return SECTIONS.map((section) => {
-                    const allQs = sectionQuestions[section.key] || [];
-                    if (allQs.length === 0) return null;
-
-                    const pick = Math.min(pickCounts[section.key] || 3, allQs.length);
-                    const selected = shuffle(allQs).slice(0, pick);
-                    const sectionMarks = selected.reduce((s, q) => s + (q.marks || 0), 0);
+                  return currentPreviewSections.map((sec, sectionIdx) => {
+                    const sectionMarks = sec.questions.reduce((s, q) => s + (q.marks || 0), 0);
                     const letter = sectionLetters[sectionIdx] || `${sectionIdx + 1}`;
-                    sectionIdx++;
-
-                    const sectionContent = (
-                      <div key={section.key}>
+                    return (
+                      <div key={sec.key}>
                         <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-foreground/20">
-                          <h3 className="text-sm font-bold text-foreground flex-1">
-                            Section {letter} — {section.label}
-                          </h3>
-                          <Badge variant="outline" className="text-[10px]">{selected.length} Q</Badge>
+                          <h3 className="text-sm font-bold text-foreground flex-1">Section {letter} — {sec.label}</h3>
+                          <Badge variant="outline" className="text-[10px]">{sec.questions.length} Q</Badge>
                           <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300">
                             {sectionMarks} Marks
                           </Badge>
                         </div>
                         <p className="text-[10px] text-muted-foreground italic mb-2">
-                          {section.key === "mcq" && "Choose the correct option for each question."}
-                          {section.key === "fill_blank" && "Fill in the blanks with appropriate words."}
-                          {section.key === "true_false" && "State whether the following statements are True or False."}
-                          {section.key === "match" && "Match the items in Column A with Column B."}
-                          {section.key === "assertion" && "Read the Assertion and Reason, then choose the correct option."}
-                          {section.key === "short_answer" && "Answer the following questions briefly."}
-                          {section.key === "long_answer" && "Answer the following questions in detail."}
-                          {section.key === "image_base" && "Observe the image and answer the questions."}
-                          {section.key === "map_base" && "Study the map and answer the questions."}
+                          {sec.key === "mcq" && "Choose the correct option for each question."}
+                          {sec.key === "fill_blank" && "Fill in the blanks with appropriate words."}
+                          {sec.key === "true_false" && "State whether the following statements are True or False."}
+                          {sec.key === "match" && "Match the items in Column A with Column B."}
+                          {sec.key === "assertion" && "Read the Assertion and Reason, then choose the correct option."}
+                          {sec.key === "short_answer" && "Answer the following questions briefly."}
+                          {sec.key === "long_answer" && "Answer the following questions in detail."}
+                          {sec.key === "image_base" && "Observe the image and answer the questions."}
+                          {sec.key === "map_base" && "Study the map and answer the questions."}
                         </p>
                         <div className="space-y-3">
-                          {selected.map((q, idx) => {
+                          {sec.questions.map((q) => {
                             globalQ++;
                             return (
                               <div key={q.id} className="pl-1">
@@ -675,16 +633,16 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                                         ))}
                                       </div>
                                     )}
-                                    {section.key === "true_false" && (
+                                    {sec.key === "true_false" && (
                                       <div className="flex gap-3 ml-1">
                                         <span className="text-[11px] text-muted-foreground">A) True</span>
                                         <span className="text-[11px] text-muted-foreground">B) False</span>
                                       </div>
                                     )}
-                                    {(section.key === "short_answer" || section.key === "long_answer") && (
-                                      <div className={`border border-dashed rounded mt-1 ${section.key === "long_answer" ? "h-20" : "h-10"}`} />
+                                    {(sec.key === "short_answer" || sec.key === "long_answer") && (
+                                      <div className={`border border-dashed rounded mt-1 ${sec.key === "long_answer" ? "h-20" : "h-10"}`} />
                                     )}
-                                    {section.key === "fill_blank" && (
+                                    {sec.key === "fill_blank" && (
                                       <div className="border-b border-dashed w-40 mt-1" />
                                     )}
                                   </div>
@@ -695,13 +653,137 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                         </div>
                       </div>
                     );
-                    return sectionContent;
+                  });
+                })()}
+              </div>
+            </ScrollArea>
+            <div className="px-6 py-3 border-t flex justify-end gap-2">
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowPreview(false)}>Close</Button>
+              <Button size="sm" className="text-xs gap-1.5" onClick={handleSavePaper}>
+                <Save className="h-3.5 w-3.5" /> Save Paper
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Saved Paper Dialog */}
+        <Dialog open={!!viewingSavedPaper} onOpenChange={(open) => { if (!open) setViewingSavedPaper(null); }}>
+          <DialogContent className="max-w-3xl max-h-[90vh] p-0">
+            <DialogHeader className="px-6 pt-5 pb-3 border-b">
+              <DialogTitle className="text-base font-bold">Saved Paper</DialogTitle>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{jobTitle}</span>
+                <Separator orientation="vertical" className="h-3" />
+                <span className="font-medium text-foreground">{viewingSavedPaper?.questionCount} Questions</span>
+                <Separator orientation="vertical" className="h-3" />
+                <span className="font-medium text-amber-600">{viewingSavedPaper?.totalMarks} Marks</span>
+                <Separator orientation="vertical" className="h-3" />
+                <Clock className="h-3 w-3" />
+                <span>{viewingSavedPaper && formatDate(viewingSavedPaper.savedAt)}</span>
+              </div>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh] px-6 py-4">
+              <div className="space-y-6">
+                {(() => {
+                  if (!viewingSavedPaper) return null;
+                  const sectionLetters = "ABCDEFGHIJ".split("");
+                  let globalQ = 0;
+                  return viewingSavedPaper.sections.map((sec, sectionIdx) => {
+                    const sectionMarks = sec.questions.reduce((s, q) => s + (q.marks || 0), 0);
+                    const letter = sectionLetters[sectionIdx] || `${sectionIdx + 1}`;
+                    return (
+                      <div key={sec.key}>
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-foreground/20">
+                          <h3 className="text-sm font-bold text-foreground flex-1">Section {letter} — {sec.label}</h3>
+                          <Badge variant="outline" className="text-[10px]">{sec.questions.length} Q</Badge>
+                          <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300">
+                            {sectionMarks} Marks
+                          </Badge>
+                        </div>
+                        <div className="space-y-3">
+                          {sec.questions.map((q) => {
+                            globalQ++;
+                            return (
+                              <div key={q.id} className="pl-1">
+                                <div className="flex gap-2">
+                                  <span className="text-xs font-semibold text-muted-foreground shrink-0 w-7">{globalQ}.</span>
+                                  <div className="flex-1 space-y-1.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <p className="text-xs text-foreground">{q.question_text}</p>
+                                      <Badge variant="secondary" className="text-[9px] shrink-0">{q.marks}m</Badge>
+                                    </div>
+                                    {q.options && q.options.length > 0 && (
+                                      <div className="grid grid-cols-2 gap-1 ml-1">
+                                        {q.options.map((opt, oIdx) => (
+                                          <p key={oIdx} className="text-[11px] text-muted-foreground">
+                                            {String.fromCharCode(65 + oIdx)}) {opt}
+                                          </p>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {(sec.key === "short_answer" || sec.key === "long_answer") && (
+                                      <div className={`border border-dashed rounded mt-1 ${sec.key === "long_answer" ? "h-20" : "h-10"}`} />
+                                    )}
+                                    {sec.key === "fill_blank" && (
+                                      <div className="border-b border-dashed w-40 mt-1" />
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
                   });
                 })()}
               </div>
             </ScrollArea>
           </DialogContent>
         </Dialog>
+
+        {/* Saved Papers History */}
+        {savedPapers.length > 0 && (
+          <div className="mt-4 border-t pt-3 space-y-3">
+            <div className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4 text-primary" />
+              <p className="text-sm font-semibold text-foreground">Saved Papers</p>
+              <Badge variant="secondary" className="text-[10px]">{savedPapers.length}</Badge>
+            </div>
+            {Object.entries(groupedPapers).map(([dateKey, papers]) => (
+              <div key={dateKey} className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3 w-3 text-muted-foreground" />
+                  <p className="text-[11px] font-semibold text-muted-foreground">{dateKey}</p>
+                </div>
+                <div className="space-y-1 pl-5">
+                  {papers.map((paper, idx) => (
+                    <div key={paper.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">
+                          Paper #{savedPapers.length - savedPapers.indexOf(paper)} — {paper.questionCount} Questions
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {paper.totalMarks} Marks · {paper.sections.map(s => s.label).join(", ")}
+                        </p>
+                      </div>
+                      <span className="text-[9px] text-muted-foreground shrink-0">
+                        {paper.savedAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={() => setViewingSavedPaper(paper)}>
+                        <Eye className="h-3 w-3 mr-0.5" /> View
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2 text-destructive" onClick={() => deleteSavedPaper(paper.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
