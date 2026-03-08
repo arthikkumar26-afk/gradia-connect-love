@@ -1479,7 +1479,7 @@ const ClickableStagesList = ({
                 )}
 
                 {/* Slot Booking Details for Demo Slot Booking stage */}
-                {step.title === 'Demo Slot Booking' && slotBooking && (
+                {step.title === 'Demo Slot Booking' && (slotBooking ? (
                   <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
                       <Calendar className="h-3 w-3" />
