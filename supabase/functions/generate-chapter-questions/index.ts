@@ -40,7 +40,7 @@ If you cannot find clear chapters, create logical topic groupings from the conte
             },
             {
               role: "user",
-              content: `Extract chapters from this book content:\n\n${pdfText.substring(0, 30000)}`
+              content: `Extract chapters from this book content:\n\n${pdfText.substring(0, 50000)}`
             }
           ],
         }),
