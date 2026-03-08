@@ -2088,6 +2088,49 @@ const CandidateProfileInline = ({
     }
   };
 
+  // Confirm a preferred slot for HR booking
+  const handleConfirmHrPreferredSlot = async () => {
+    if (!hrSlotBooking || selectedHrPreferredSlot === null || !hrSlotBooking.preferred_slots) return;
+    const chosen = hrSlotBooking.preferred_slots[selectedHrPreferredSlot];
+    if (!chosen) return;
+
+    setIsConfirmingHrSlot(true);
+    try {
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ 
+          booking_date: chosen.date, 
+          booking_time: chosen.time, 
+          status: 'confirmed', 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', hrSlotBooking.id);
+      if (!error) {
+        setHrSlotBooking({ ...hrSlotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
+        setSelectedHrPreferredSlot(null);
+        toast.success('HR slot confirmed!');
+
+        // Send confirmation email
+        try {
+          await supabase.functions.invoke('send-demo-slot-confirmed', {
+            body: {
+              interviewCandidateId,
+              confirmedDate: chosen.date,
+              confirmedTime: chosen.time,
+            },
+          });
+        } catch (emailErr) {
+          console.error('Error sending HR slot confirmed email:', emailErr);
+        }
+      }
+    } catch (err) {
+      console.error('Error confirming HR slot:', err);
+      toast.error('Failed to confirm slot');
+    } finally {
+      setIsConfirmingHrSlot(false);
+    }
+  };
+
 
   const getStepIcon = (step: InterviewStep) => {
     // Show live pulsing indicator for active interviews
