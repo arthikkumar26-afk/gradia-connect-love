@@ -226,6 +226,8 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
               const isExpanded = expandedSections.has(section.key);
               const isLoading = uploadingSection === section.key;
 
+              const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+
               return (
                 <div key={section.key} className="border rounded-lg overflow-hidden bg-background">
                   {/* Section Header */}
@@ -235,11 +237,32 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                   >
                     <span className={section.color}>{section.icon}</span>
                     <p className="text-xs font-semibold text-foreground flex-1">{section.label}</p>
+                    {questions.length > 0 && (
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300">
+                        {totalMarks} Marks
+                      </Badge>
+                    )}
                     <Badge variant="outline" className={`text-[9px] px-1.5 py-0 ${section.badgeColor}`}>
                       {questions.length} Q
                     </Badge>
                     {isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
                   </div>
+
+                  {/* Collapsed Preview - show first 3 questions */}
+                  {!isExpanded && questions.length > 0 && (
+                    <div className="px-3 py-1.5 bg-muted/20 border-b space-y-0.5">
+                      {questions.slice(0, 3).map((q, idx) => (
+                        <div key={q.id} className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <span className="font-medium text-foreground/70 w-5 shrink-0">Q{idx + 1}</span>
+                          <span className="truncate flex-1">{q.question_text}</span>
+                          <span className="shrink-0 text-amber-600 font-medium">{q.marks}m</span>
+                        </div>
+                      ))}
+                      {questions.length > 3 && (
+                        <p className="text-[9px] text-muted-foreground/60 pl-5">+{questions.length - 3} more questions...</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Section Body */}
                   {isExpanded && (
