@@ -276,18 +276,92 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     setShowPreview(true);
   };
 
-  const handleSavePaper = () => {
+  const [savingPaper, setSavingPaper] = useState(false);
+
+  const handleSavePaper = async () => {
     const sections = currentPreviewSections.length > 0 ? currentPreviewSections : buildPreviewSections();
     const allQs = sections.flatMap(s => s.questions);
-    const paper: SavedPaper = {
-      id: `paper-${Date.now()}`,
-      savedAt: new Date(),
-      questionCount: allQs.length,
-      totalMarks: allQs.reduce((s, q) => s + (q.marks || 0), 0),
-      sections,
-    };
-    setSavedPapers(prev => [paper, ...prev]);
-    toast.success(`Paper saved with ${paper.questionCount} questions`);
+    
+    setSavingPaper(true);
+    try {
+      // 1. Deactivate any existing Question Bank papers for this job
+      await supabase
+        .from('interview_question_papers')
+        .update({ is_active: false })
+        .eq('job_id', jobId)
+        .eq('stage_type', 'question_bank');
+
+      // 2. Create the question paper in DB
+      const { data: paperData, error: paperError } = await supabase
+        .from('interview_question_papers')
+        .insert({
+          title: `Question Bank Paper — ${allQs.length} Questions`,
+          stage_type: 'question_bank',
+          job_id: jobId,
+          is_active: true,
+          set_number: savedPapers.length + 1,
+        })
+        .select()
+        .single();
+
+      if (paperError || !paperData) throw paperError || new Error('Failed to create paper');
+
+      // 3. Insert questions
+      const questionsToInsert = allQs.map((q, idx) => ({
+        paper_id: paperData.id,
+        question_number: idx + 1,
+        question_text: q.question_text,
+        question_type: q.question_type === 'mcq' ? 'multiple_choice' : q.question_type,
+        options: q.options && q.options.length > 0 ? { options: q.options } : null,
+        marks: q.marks || 1,
+        section: sections.find(s => s.questions.includes(q))?.label || 'General',
+        display_order: idx + 1,
+      }));
+
+      const { data: insertedQuestions, error: qError } = await supabase
+        .from('interview_questions')
+        .insert(questionsToInsert)
+        .select();
+
+      if (qError) throw qError;
+
+      // 4. Insert answer keys for questions that have correct answers
+      if (insertedQuestions) {
+        const answerKeys = insertedQuestions
+          .map((iq, idx) => {
+            const originalQ = allQs[idx];
+            if (!originalQ.correct_answer) return null;
+            return {
+              question_id: iq.id,
+              answer_text: originalQ.correct_answer,
+              keywords: [originalQ.correct_answer],
+            };
+          })
+          .filter(Boolean);
+
+        if (answerKeys.length > 0) {
+          await supabase.from('interview_answer_keys').insert(answerKeys);
+        }
+      }
+
+      const paper: SavedPaper = {
+        id: `paper-${Date.now()}`,
+        dbPaperId: paperData.id,
+        savedAt: new Date(),
+        questionCount: allQs.length,
+        totalMarks: allQs.reduce((s, q) => s + (q.marks || 0), 0),
+        sections,
+        isActiveForTest: true,
+      };
+      // Mark all previous papers as inactive
+      setSavedPapers(prev => [paper, ...prev.map(p => ({ ...p, isActiveForTest: false }))]);
+      toast.success(`Paper saved with ${paper.questionCount} questions — will be used in Written Test`);
+    } catch (err: any) {
+      console.error('Error saving paper to DB:', err);
+      toast.error('Failed to save paper: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSavingPaper(false);
+    }
     setShowPreview(false);
   };
 
