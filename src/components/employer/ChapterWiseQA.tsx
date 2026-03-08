@@ -344,7 +344,27 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                 type="number"
                 min={1}
                 value={paperTotalMarks}
-                onChange={(e) => setPaperTotalMarks(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const newTotal = parseInt(e.target.value) || 0;
+                  setPaperTotalMarks(newTotal);
+                  if (newTotal > 0 && sections.length > 0) {
+                    const currentTotal = sections.reduce((sum, s) => sum + (s.marksPerQuestion * s.questionCount), 0);
+                    if (currentTotal > 0) {
+                      let remaining = newTotal;
+                      const updated = sections.map((s, idx) => {
+                        const currentSectionMarks = s.marksPerQuestion * s.questionCount;
+                        const proportion = currentSectionMarks / currentTotal;
+                        const newSectionMarks = idx === sections.length - 1
+                          ? remaining
+                          : Math.round(newTotal * proportion);
+                        remaining -= newSectionMarks;
+                        const newMarksPerQ = Math.max(1, Math.round(newSectionMarks / s.questionCount));
+                        return { ...s, marksPerQuestion: newMarksPerQ };
+                      });
+                      setSections(updated);
+                    }
+                  }
+                }}
                 className="h-8 w-28 text-sm font-bold"
               />
               {totalMarks !== paperTotalMarks && (
