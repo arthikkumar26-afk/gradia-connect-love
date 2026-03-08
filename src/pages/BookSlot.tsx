@@ -29,6 +29,34 @@ const BookSlot = () => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Demo slot booking: 3 preferred timings
+  const isDemoStage = stageName.toLowerCase().includes("demo");
+  const [preferredSlots, setPreferredSlots] = useState<{ date: string; time: string }[]>([]);
+  const [currentSlotDate, setCurrentSlotDate] = useState("");
+  const [currentSlotTime, setCurrentSlotTime] = useState("");
+
+  const handleAddPreferredSlot = () => {
+    if (!currentSlotDate || !currentSlotTime) {
+      toast.error("Please select both date and time");
+      return;
+    }
+    if (preferredSlots.length >= 3) {
+      toast.error("You can only add up to 3 preferred timings");
+      return;
+    }
+    const duplicate = preferredSlots.some(s => s.date === currentSlotDate && s.time === currentSlotTime);
+    if (duplicate) {
+      toast.error("This timing is already added");
+      return;
+    }
+    setPreferredSlots(prev => [...prev, { date: currentSlotDate, time: currentSlotTime }]);
+    setCurrentSlotDate("");
+    setCurrentSlotTime("");
+  };
+
+  const handleRemovePreferredSlot = (index: number) => {
+    setPreferredSlots(prev => prev.filter((_, i) => i !== index));
+  };
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
@@ -134,9 +162,17 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    if (!selectedDate || !selectedTime) {
-      toast.error("Please select both date and time");
-      return;
+    // For demo, require 3 preferred slots
+    if (isDemoStage) {
+      if (preferredSlots.length < 1) {
+        toast.error("Please add at least 1 preferred timing (up to 3)");
+        return;
+      }
+    } else {
+      if (!selectedDate || !selectedTime) {
+        toast.error("Please select both date and time");
+        return;
+      }
     }
     if (!candidateId) {
       toast.error("Invalid booking link - missing candidate information");
@@ -145,8 +181,6 @@ const BookSlot = () => {
 
     setIsBooking(true);
     try {
-      const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-
       // Create slot booking record
       const { data: interviewCandidate } = await supabase
         .from("interview_candidates")
@@ -156,36 +190,51 @@ const BookSlot = () => {
 
       // Determine booking type based on stage name
       const isWrittenTestSlotBooking = stageName.toLowerCase().includes("written");
-      const isDemoSlotBooking = stageName.toLowerCase().includes("demo");
       const isHrSlotBooking = stageName.toLowerCase().includes("hr");
 
-      const bookingType = isDemoSlotBooking ? "demo_round" 
+      const bookingType = isDemoStage ? "demo_round" 
         : isHrSlotBooking ? "hr_round" 
         : isWrittenTestSlotBooking ? "written_test" 
         : "technical_assessment";
 
       if (interviewCandidate?.candidate_id) {
-        await supabase.from("slot_bookings").insert({
-          candidate_id: interviewCandidate.candidate_id,
-          booking_date: selectedDate,
-          booking_time: selectedTime,
-          booking_type: bookingType,
-          status: "confirmed",
-          subject: stageName,
-        });
+        if (isDemoStage) {
+          // For demo: save first preferred slot as booking_date/time, all 3 in preferred_slots
+          await supabase.from("slot_bookings").insert({
+            candidate_id: interviewCandidate.candidate_id,
+            booking_date: preferredSlots[0].date,
+            booking_time: preferredSlots[0].time,
+            booking_type: bookingType,
+            status: "pending",
+            subject: stageName,
+            preferred_slots: preferredSlots as any,
+          });
+        } else {
+          await supabase.from("slot_bookings").insert({
+            candidate_id: interviewCandidate.candidate_id,
+            booking_date: selectedDate,
+            booking_time: selectedTime,
+            booking_type: bookingType,
+            status: "confirmed",
+            subject: stageName,
+          });
+        }
       }
 
-      // Send interview invitation with the scheduled time
-      const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
-        body: {
-          interviewCandidateId: candidateId,
-          stageName,
-          scheduledDate: scheduledDateTime,
-        },
-      });
+      if (!isDemoStage) {
+        const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+        // Send interview invitation with the scheduled time
+        const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
+          body: {
+            interviewCandidateId: candidateId,
+            stageName,
+            scheduledDate: scheduledDateTime,
+          },
+        });
 
-      if (inviteError) {
-        console.error("Error sending invitation:", inviteError);
+        if (inviteError) {
+          console.error("Error sending invitation:", inviteError);
+        }
       }
 
       // Auto-advance to Written Test and send invitation when Written Test slot is booked
@@ -203,23 +252,8 @@ const BookSlot = () => {
         }
       }
 
-      // Auto-advance to Demo Round and send dual emails
-      if (isDemoSlotBooking) {
-        try {
-          await supabase.functions.invoke("process-interview-stage", {
-            body: {
-              interviewCandidateId: candidateId,
-              action: "advance",
-              feedback: "Slot booked by candidate, auto-advancing to Demo Round",
-            },
-          });
-          await supabase.functions.invoke("send-demo-round-emails", {
-            body: { interviewCandidateId: candidateId },
-          });
-        } catch (advanceErr) {
-          console.error("Error auto-advancing to Demo Round:", advanceErr);
-        }
-      }
+      // For Demo: DON'T auto-advance, employer will select timing and send link
+      // Just mark booking as pending for employer review
 
       // Auto-advance to HR Round and send dual emails
       if (isHrSlotBooking) {
@@ -240,7 +274,11 @@ const BookSlot = () => {
       }
 
       setIsBooked(true);
-      toast.success("Slot booked successfully! Check your email for details.");
+      if (isDemoStage) {
+        toast.success("Preferred timings submitted! The employer will confirm your slot.");
+      } else {
+        toast.success("Slot booked successfully! Check your email for details.");
+      }
     } catch (err) {
       console.error("Error booking slot:", err);
       toast.error("Failed to book slot. Please try again.");
@@ -295,41 +333,66 @@ const BookSlot = () => {
             <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">Slot Booked Successfully! 🎉</h2>
-            <p className="text-muted-foreground">
-              Your <strong>{stageName}</strong> has been scheduled for:
-            </p>
-            <div className="bg-blue-50 rounded-lg p-4 space-y-2">
-              <div className="flex items-center justify-center gap-2 text-blue-700">
-                <Calendar className="h-4 w-4" />
-                <span className="font-medium">
-                  {new Date(selectedDate).toLocaleDateString("en-IN", {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-blue-700">
-                <Clock className="h-4 w-4" />
-                <span className="font-medium">
-                  {getTimeSlots().find((s) => s.value === selectedTime)?.label || selectedTime} IST
-                </span>
-              </div>
-            </div>
-            {stageName.toLowerCase().includes("demo") ? (
-              <p className="text-sm text-muted-foreground">
-                📧 You will receive a Demo Round invitation email with instructions shortly. Please check your inbox.
-              </p>
-            ) : stageName.toLowerCase().includes("hr") ? (
-              <p className="text-sm text-muted-foreground">
-                📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
-              </p>
+            {isDemoStage ? (
+              <>
+                <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
+                <p className="text-muted-foreground">
+                  You have submitted <strong>{preferredSlots.length}</strong> preferred timing(s) for <strong>{stageName}</strong>.
+                </p>
+                <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                  {preferredSlots.map((slot, i) => (
+                    <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
+                      <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
+                      <Calendar className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        {new Date(slot.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })}
+                      </span>
+                      <Clock className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        {getTimeSlots().find((s) => s.value === slot.time)?.label || slot.time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  📧 The employer will review your preferred timings and confirm one. You'll receive an email once confirmed.
+                </p>
+              </>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
-              </p>
+              <>
+                <h2 className="text-xl font-bold text-foreground">Slot Booked Successfully! 🎉</h2>
+                <p className="text-muted-foreground">
+                  Your <strong>{stageName}</strong> has been scheduled for:
+                </p>
+                <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-blue-700">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-medium">
+                      {new Date(selectedDate).toLocaleDateString("en-IN", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-blue-700">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">
+                      {getTimeSlots().find((s) => s.value === selectedTime)?.label || selectedTime} IST
+                    </span>
+                  </div>
+                </div>
+                {stageName.toLowerCase().includes("hr") ? (
+                  <p className="text-sm text-muted-foreground">
+                    📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
+                  </p>
+                )}
+              </>
             )}
             <div className="pt-2">
               <Badge className="bg-blue-100 text-blue-800 border-blue-200">
@@ -378,126 +441,239 @@ const BookSlot = () => {
             </div>
           </div>
 
-          {/* Quick Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
-              onClick={() => {
-                const today = getTodayDate();
-                setSelectedDate(today);
-                  // Set to nearest upcoming slot
-                  const now = new Date();
-                  const minutes = now.getMinutes();
-                  const roundedMinutes = minutes < 30 ? 30 : 0;
-                  const hour = roundedMinutes === 0 ? now.getHours() + 1 : now.getHours();
-                  const minute = roundedMinutes.toString().padStart(2, "0");
-                  const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
-                  setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
-              }}
-            >
-              🚀 Start Now
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 h-11 text-sm font-semibold border-2 border-green-400 text-green-700 hover:bg-green-100 bg-green-50"
-              onClick={() => {
-                const nextTime = getNext10MinTime();
-                setSelectedTime(nextTime);
-                if (!selectedDate && getTodayDate()) {
-                  setSelectedDate(getTodayDate()!);
-                }
-              }}
-            >
-              ⏰ Next 10 mins
-            </Button>
-          </div>
+          {isDemoStage ? (
+            <>
+              {/* Demo: 3 Preferred Timings */}
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <p className="text-sm text-purple-800 font-medium">
+                  📋 Choose up to 3 preferred timings. The employer will select one and send you the meeting link.
+                </p>
+              </div>
 
-          {/* Today's Current Time Info */}
-          {selectedDate === getTodayDate() && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-600 shrink-0" />
-              <p className="text-xs text-blue-700">
-                <strong>Current time:</strong>{" "}
-                {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
-                {" • "}
-                <strong>Next available slot:</strong>{" "}
-                {getTimeSlots().find((s) => s.value === getNext10MinTime())?.label || getNext10MinTime()}
-              </p>
-            </div>
+              {/* Added slots */}
+              {preferredSlots.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Your Preferred Timings ({preferredSlots.length}/3)</label>
+                  {preferredSlots.map((slot, i) => (
+                    <div key={i} className="flex items-center justify-between bg-muted/50 rounded-lg p-3 border">
+                      <div className="flex items-center gap-3">
+                        <Badge className="bg-purple-100 text-purple-700 border-purple-200">Option {i + 1}</Badge>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>{new Date(slot.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>{getTimeSlots().find(s => s.value === slot.time)?.label || slot.time}</span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleRemovePreferredSlot(i)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {preferredSlots.length < 3 && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-purple-600" />
+                      Select Date
+                    </label>
+                    <Select value={currentSlotDate} onValueChange={setCurrentSlotDate}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a date" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableDates().map((date) => (
+                          <SelectItem key={date.value} value={date.value}>
+                            {date.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-purple-600" />
+                      Select Time
+                    </label>
+                    <Select value={currentSlotTime} onValueChange={setCurrentSlotTime}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a time slot" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {getTimeSlots().map((slot) => (
+                          <SelectItem key={slot.value} value={slot.value}>
+                            {slot.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
+                    onClick={handleAddPreferredSlot}
+                    disabled={!currentSlotDate || !currentSlotTime}
+                  >
+                    + Add Timing ({preferredSlots.length}/3)
+                  </Button>
+                </>
+              )}
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleBookSlot}
+                disabled={isBooking || preferredSlots.length < 1}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
+              >
+                {isBooking ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Submit Preferred Timings ({preferredSlots.length})
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Quick Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
+                  onClick={() => {
+                    const today = getTodayDate();
+                    setSelectedDate(today);
+                    const now = new Date();
+                    const minutes = now.getMinutes();
+                    const roundedMinutes = minutes < 30 ? 30 : 0;
+                    const hour = roundedMinutes === 0 ? now.getHours() + 1 : now.getHours();
+                    const minute = roundedMinutes.toString().padStart(2, "0");
+                    const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
+                    setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
+                  }}
+                >
+                  🚀 Start Now
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 h-11 text-sm font-semibold border-2 border-green-400 text-green-700 hover:bg-green-100 bg-green-50"
+                  onClick={() => {
+                    const nextTime = getNext10MinTime();
+                    setSelectedTime(nextTime);
+                    if (!selectedDate && getTodayDate()) {
+                      setSelectedDate(getTodayDate()!);
+                    }
+                  }}
+                >
+                  ⏰ Next 10 mins
+                </Button>
+              </div>
+
+              {/* Today's Current Time Info */}
+              {selectedDate === getTodayDate() && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600 shrink-0" />
+                  <p className="text-xs text-blue-700">
+                    <strong>Current time:</strong>{" "}
+                    {new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
+                    {" • "}
+                    <strong>Next available slot:</strong>{" "}
+                    {getTimeSlots().find((s) => s.value === getNext10MinTime())?.label || getNext10MinTime()}
+                  </p>
+                </div>
+              )}
+
+              {/* Date Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  Select Date *
+                </label>
+                <Select value={selectedDate} onValueChange={setSelectedDate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAvailableDates().map((date) => (
+                      <SelectItem key={date.value} value={date.value}>
+                        {date.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Time Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  Select Time *
+                </label>
+                <Select value={selectedTime} onValueChange={setSelectedTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a time slot" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {getTimeSlots().map((slot) => (
+                      <SelectItem key={slot.value} value={slot.value}>
+                        {slot.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Info Note - only show for Written Test/Technical stages */}
+              {!stageName.toLowerCase().includes("hr") && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-xs text-amber-800">
+                    <strong>Note:</strong> Once booked, you'll receive an email with your interview link. 
+                    The assessment consists of 10 MCQ questions with 90 seconds per question. 
+                    Ensure you have a stable internet connection.
+                  </p>
+                </div>
+              )}
+
+              {/* Book Button */}
+              <Button
+                onClick={handleBookSlot}
+                disabled={isBooking || !selectedDate || !selectedTime}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
+              >
+                {isBooking ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Booking...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Confirm Booking
+                  </>
+                )}
+              </Button>
+            </>
           )}
-
-          {/* Date Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
-              Select Date *
-            </label>
-            <Select value={selectedDate} onValueChange={setSelectedDate}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a date" />
-              </SelectTrigger>
-              <SelectContent>
-                {getAvailableDates().map((date) => (
-                  <SelectItem key={date.value} value={date.value}>
-                    {date.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Time Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4 text-blue-600" />
-              Select Time *
-            </label>
-            <Select value={selectedTime} onValueChange={setSelectedTime}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a time slot" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {getTimeSlots().map((slot) => (
-                  <SelectItem key={slot.value} value={slot.value}>
-                    {slot.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Info Note - only show for Written Test/Technical stages */}
-          {!stageName.toLowerCase().includes("hr") && !stageName.toLowerCase().includes("demo") && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <p className="text-xs text-amber-800">
-                <strong>Note:</strong> Once booked, you'll receive an email with your interview link. 
-                The assessment consists of 10 MCQ questions with 90 seconds per question. 
-                Ensure you have a stable internet connection.
-              </p>
-            </div>
-          )}
-
-          {/* Book Button */}
-          <Button
-            onClick={handleBookSlot}
-            disabled={isBooking || !selectedDate || !selectedTime}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
-          >
-            {isBooking ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Booking...
-              </>
-            ) : (
-              <>
-                <Calendar className="h-5 w-5 mr-2" />
-                Confirm Booking
-              </>
-            )}
-          </Button>
         </CardContent>
       </Card>
     </div>

@@ -1,0 +1,1 @@
+ALTER TABLE public.slot_bookings ADD COLUMN preferred_slots jsonb DEFAULT '[]'::jsonb;

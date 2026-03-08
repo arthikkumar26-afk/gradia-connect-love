@@ -2547,6 +2547,7 @@ export type Database = {
           location: string | null
           observer_email: string | null
           pincode: string | null
+          preferred_slots: Json | null
           programme: string | null
           segment: string | null
           state: string | null
@@ -2572,6 +2573,7 @@ export type Database = {
           location?: string | null
           observer_email?: string | null
           pincode?: string | null
+          preferred_slots?: Json | null
           programme?: string | null
           segment?: string | null
           state?: string | null
@@ -2597,6 +2599,7 @@ export type Database = {
           location?: string | null
           observer_email?: string | null
           pincode?: string | null
+          preferred_slots?: Json | null
           programme?: string | null
           segment?: string | null
           state?: string | null
