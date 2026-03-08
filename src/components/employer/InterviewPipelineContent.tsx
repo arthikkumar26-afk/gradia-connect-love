@@ -1020,7 +1020,7 @@ const ClickableStagesList = ({
             b.subject?.toLowerCase().includes('demo')
           ) || null;
           
-          setSlotBooking(demoBooking);
+          setSlotBooking(demoBooking ? { ...demoBooking, preferred_slots: (demoBooking.preferred_slots as any) || null } : null);
           if (demoBooking?.observer_email) {
             const emails = demoBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
             setObserverEmails(emails);
