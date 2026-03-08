@@ -494,7 +494,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>{jobTitle}</span>
                 <Separator orientation="vertical" className="h-3" />
-                <span className="font-medium text-foreground">{totalQuestions} Questions</span>
+                <span className="font-medium text-foreground">{Math.min(previewCount, totalQuestions)} of {totalQuestions} Questions</span>
                 <Separator orientation="vertical" className="h-3" />
                 <span className="font-medium text-amber-600">{grandTotalMarks} Marks</span>
               </div>
