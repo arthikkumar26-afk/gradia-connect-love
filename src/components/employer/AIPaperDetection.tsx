@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -48,6 +49,7 @@ interface AIPaperDetectionProps {
 }
 
 export const AIPaperDetection = ({ jobId, jobTitle, existingSets, onSaved }: AIPaperDetectionProps) => {
+  const [isEnabled, setIsEnabled] = useState(false);
   const [qpFile, setQpFile] = useState<File | null>(null);
   const [akFile, setAkFile] = useState<File | null>(null);
   const [isParsingQP, setIsParsingQP] = useState(false);
