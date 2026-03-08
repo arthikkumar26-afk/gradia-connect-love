@@ -183,7 +183,7 @@ const BookSlot = () => {
 
       if (interviewCandidate?.candidate_id) {
         if (isDemoStage) {
-          await supabase.from("slot_bookings").insert({
+          const { error: insertError } = await supabase.from("slot_bookings").insert({
             candidate_id: interviewCandidate.candidate_id,
             booking_date: demoSlots[0].date,
             booking_time: demoSlots[0].time,
@@ -192,8 +192,14 @@ const BookSlot = () => {
             subject: stageName,
             preferred_slots: demoSlots as any,
           });
+          if (insertError) {
+            console.error("Error inserting demo slot booking:", insertError);
+            toast.error("Failed to save booking. Please try again.");
+            setIsBooking(false);
+            return;
+          }
         } else {
-          await supabase.from("slot_bookings").insert({
+          const { error: insertError } = await supabase.from("slot_bookings").insert({
             candidate_id: interviewCandidate.candidate_id,
             booking_date: selectedDate,
             booking_time: selectedTime,
@@ -201,6 +207,12 @@ const BookSlot = () => {
             status: "confirmed",
             subject: stageName,
           });
+          if (insertError) {
+            console.error("Error inserting slot booking:", insertError);
+            toast.error("Failed to save booking. Please try again.");
+            setIsBooking(false);
+            return;
+          }
         }
       }
 
