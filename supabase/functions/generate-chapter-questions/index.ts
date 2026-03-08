@@ -264,6 +264,26 @@ Return ONLY valid JSON in this format:
           "chapter": "Chapter name"
         }
       ]
+    },
+    {
+      "name": "I",
+      "marks_per_question": 5,
+      "questions": [
+        {
+          "id": 1,
+          "question": "On the given outline map, identify the locations with the help of specified information.",
+          "type": "map_based",
+          "marks": 5,
+          "map_instruction": "On the given outline map of India, identify the locations with the help of specified information.",
+          "image_prompt": "An outline political map of India with location A marked with a red dot at Gujarat on the western coast, and location B marked with a red dot at Assam in the northeast, clean educational style, black and white line drawing on white background with state boundaries visible",
+          "sub_questions": [
+            {"id": 39, "question": "Identify dam marked as A on the map and choose the correct option.", "options": ["Sardar Sarovar", "Tungabhadra", "Rana Pratap Sagar", "Hirakud"], "correct_option": "A", "answer": "Sardar Sarovar"},
+            {"id": 40, "question": "Identify the type of crop marked as B on the map and choose the correct option.", "options": ["Tea", "Wheat", "Rice", "Sugarcane"], "correct_option": "A", "answer": "Tea"}
+          ],
+          "answer": "A: Sardar Sarovar, B: Tea",
+          "chapter": "Chapter name"
+        }
+      ]
     }
   ]
 }`
