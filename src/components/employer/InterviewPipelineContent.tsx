@@ -990,7 +990,7 @@ const ClickableStagesList = ({
   const [isSavingWrittenTestSlot, setIsSavingWrittenTestSlot] = useState(false);
 
   // HR Round Slot Booking states
-  const [hrSlotBooking, setHrSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string; observer_email: string | null } | null>(null);
+  const [hrSlotBooking, setHrSlotBooking] = useState<{ id: string; booking_date: string; booking_time: string; status: string; subject: string | null; updated_at: string; created_at: string; observer_email: string | null; preferred_slots: { date: string; time: string }[] | null } | null>(null);
   const [isEditingHrSlot, setIsEditingHrSlot] = useState(false);
   const [editHrDate, setEditHrDate] = useState("");
   const [editHrTime, setEditHrTime] = useState("");
