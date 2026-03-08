@@ -97,12 +97,12 @@ export const StageResultsModal = ({
 
             const { data: bookings } = await supabase
               .from('slot_bookings')
-              .select('booking_date, booking_time, status, preferred_slots, subject, created_at, observer_email')
+              .select('id, booking_date, booking_time, status, preferred_slots, subject, created_at, observer_email, booking_type')
               .eq('candidate_id', icData.candidate_id)
               .order('created_at', { ascending: false });
 
             const booking = bookings?.find(b => 
-              b.subject?.toLowerCase().includes(bookingType)
+              b.subject?.toLowerCase().includes(bookingType) || b.booking_type?.includes(bookingType)
             ) || null;
 
             setSlotBookingData(booking ? { ...booking, preferred_slots: (booking.preferred_slots as any) || null } : null);
