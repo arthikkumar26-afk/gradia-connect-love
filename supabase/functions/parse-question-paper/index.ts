@@ -81,16 +81,24 @@ serve(async (req) => {
 
     console.log('Parsing PDF text for questions, length:', textContent.length);
     console.log('First 500 chars of extracted text:', textContent.substring(0, 500));
+    console.log('Last 500 chars of extracted text:', textContent.substring(Math.max(0, textContent.length - 500)));
+
+    // Count approximate question patterns to tell AI how many to expect
+    const questionPatterns = textContent.match(/(?:^|\n)\s*(?:\d+[\.\)\:]|Q\s*\d+|q\s*\d+|[ivxIVX]+[\.\)]|[a-zA-Z][\.\)])\s/gm);
+    const approxCount = questionPatterns ? questionPatterns.length : 'unknown';
+    console.log('Approximate question patterns detected:', approxCount);
 
     const systemPrompt = `You are a STRICT multilingual question extraction expert. Your ONLY job is to extract questions that ALREADY EXIST in the document text. You must NEVER create, generate, or invent any questions on your own.
 
 CRITICAL RULES:
 - ONLY extract questions that are explicitly written in the document
 - Do NOT create new questions, do NOT rephrase, do NOT generate your own content
+- Do NOT skip any questions. Extract EVERY SINGLE question from the document - even if there are 30, 50, or 100+ questions
 - Detect questions by looking for: question marks (?), numbered items (1., 2., Q1, Q2, i., ii., a., b.), commas separating options, periods ending sentences that are clearly questions, fill-in-the-blank patterns (___), true/false patterns
 - Punctuation like (,) (.) (?) (;) (:) should be used to identify question boundaries and option separators
 - The content may be in ANY language including Telugu, Hindi, Tamil, or other Indian languages
 - Preserve the ORIGINAL language of the questions - do NOT translate them to English
+- The document appears to contain approximately ${approxCount} questions - make sure you extract ALL of them
 
 For each question found:
 1. Extract the question number (if present)
@@ -110,8 +118,8 @@ Return a JSON array of questions with this structure:
   ]
 }
 
-Be thorough and extract ALL questions from the document. Ignore headers, footers, and general instructions.
-If text has question-like patterns separated by commas, periods or semicolons, treat each as a separate question.
+IMPORTANT: Do NOT stop early. Continue extracting until you have found EVERY question in the document.
+Ignore headers, footers, and general instructions.
 NEVER fabricate or make up questions that don't exist in the source text.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -122,16 +130,17 @@ NEVER fabricate or make up questions that don't exist in the source text.`;
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
+        max_tokens: 16000,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Extract all questions from this ${paperType || 'question paper'} PDF content (language: ${language || 'auto-detect'}):\n\n${textContent}` }
+          { role: 'user', content: `Extract ALL questions from this ${paperType || 'question paper'} document (language: ${language || 'auto-detect'}). The document has approximately ${approxCount} questions - make sure you get every single one:\n\n${textContent}` }
         ],
         tools: [
           {
             type: "function",
             function: {
               name: "extract_questions",
-              description: "Extract questions from the PDF text",
+              description: "Extract ALL questions from the PDF text - do not skip any",
               parameters: {
                 type: "object",
                 properties: {
