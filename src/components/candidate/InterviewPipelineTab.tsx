@@ -1014,6 +1014,21 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           </div>
         )}
       </Card>
+
+      {/* Detailed Stage Results Modal - same as employer view */}
+      {selectedStageForResults && (
+        <StageResultsModal
+          isOpen={resultsModalOpen}
+          onClose={() => {
+            setResultsModalOpen(false);
+            setSelectedStageForResults(null);
+          }}
+          interviewCandidateId={selectedStageForResults.interviewCandidateId}
+          stageId={selectedStageForResults.stageId}
+          stageName={selectedStageForResults.stageName}
+          candidateName="My Results"
+        />
+      )}
     </div>
   );
 };
