@@ -502,13 +502,36 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             <ScrollArea className="max-h-[70vh] px-6 py-4">
               <div className="space-y-6">
                 {(() => {
-                  // Build exam sections from available question types
                   const sectionLetters = "ABCDEFGHIJ".split("");
-                  const pickCounts: Record<string, number> = {
-                    mcq: 5, fill_blank: 5, true_false: 5, match: 3,
-                    assertion: 3, short_answer: 4, long_answer: 2,
-                    image_base: 2, map_base: 2,
+
+                  // Shuffle helper
+                  const shuffle = <T,>(arr: T[]): T[] => {
+                    const a = [...arr];
+                    for (let i = a.length - 1; i > 0; i--) {
+                      const j = Math.floor(Math.random() * (i + 1));
+                      [a[i], a[j]] = [a[j], a[i]];
+                    }
+                    return a;
                   };
+
+                  // Distribute previewCount proportionally across available sections
+                  const availableSections = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
+                  const totalAvailable = availableSections.reduce((s, sec) => s + (sectionQuestions[sec.key] || []).length, 0);
+                  const targetCount = Math.min(previewCount, totalAvailable);
+
+                  // Proportional distribution
+                  const pickCounts: Record<string, number> = {};
+                  let assigned = 0;
+                  availableSections.forEach((sec, i) => {
+                    const secQs = (sectionQuestions[sec.key] || []).length;
+                    if (i === availableSections.length - 1) {
+                      pickCounts[sec.key] = Math.min(secQs, targetCount - assigned);
+                    } else {
+                      const proportion = Math.max(1, Math.round((secQs / totalAvailable) * targetCount));
+                      pickCounts[sec.key] = Math.min(secQs, proportion);
+                      assigned += pickCounts[sec.key];
+                    }
+                  });
 
                   // Shuffle helper
                   const shuffle = <T,>(arr: T[]): T[] => {
