@@ -541,8 +541,19 @@ serve(async (req) => {
       console.log('AI Question Papers enabled for this job — skipping manual papers, using AI generation');
     }
 
-    // FALLBACK: Generate questions via AI if no admin questions found
-    if (!usingAdminQuestions || questions.length === 0) {
+    // FALLBACK: Generate questions via AI ONLY if AI is enabled or no admin questions found and AI is the only option
+    if (useAiQuestions || (!usingAdminQuestions && questions.length === 0)) {
+      // If AI is explicitly disabled and no papers found, return error
+      if (!useAiQuestions && !usingAdminQuestions && questions.length === 0) {
+        console.log('AI is disabled and no question papers found for this job. Returning error.');
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'No question papers have been created for this job yet. Please ask the employer to create question papers in Smart Assessment or enable AI question generation.',
+        }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
       // Fetch candidate's resume analysis and profile data for resume-based question generation
       let resumeContext = '';
       try {
