@@ -1012,12 +1012,12 @@ const ClickableStagesList = ({
         if (icData?.candidate_id) {
           const { data: bookings } = await supabase
             .from('slot_bookings')
-            .select('id, booking_date, booking_time, status, subject, updated_at, created_at, observer_email, demo_meet_link, demo_meet_type, preferred_slots')
+            .select('id, booking_date, booking_time, status, subject, updated_at, created_at, observer_email, demo_meet_link, demo_meet_type, preferred_slots, booking_type')
             .eq('candidate_id', icData.candidate_id)
             .order('created_at', { ascending: false });
 
           const demoBooking = bookings?.find(b => 
-            b.subject?.toLowerCase().includes('demo')
+            b.subject?.toLowerCase().includes('demo') || (b as any).booking_type === 'demo_round'
           ) || null;
           
           setSlotBooking(demoBooking ? { ...demoBooking, preferred_slots: (demoBooking.preferred_slots as any) || null } : null);
