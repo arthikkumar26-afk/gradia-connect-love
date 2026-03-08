@@ -344,29 +344,62 @@ export const StageResultsModal = ({
                           </p>
                           <div className="space-y-2">
                             {slotBookingData.preferred_slots.map((slot, i) => {
-                              const isSelected = slotBookingData.status === 'confirmed' && 
+                              const isConfirmed = slotBookingData.status === 'confirmed' && 
                                 slot.date === slotBookingData.booking_date && 
                                 slot.time === slotBookingData.booking_time;
+                              const hour = parseInt(slot.time.split(':')[0]);
+                              const minute = slot.time.split(':')[1];
+                              const displayHour = hour % 12 || 12;
+                              const ampm = hour < 12 ? 'AM' : 'PM';
+                              const timeLabel = `${displayHour}:${minute} ${ampm}`;
                               return (
-                                <div key={i} className={`flex items-center gap-3 p-2 rounded-md border ${
-                                  isSelected ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200'
+                                <label key={i} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
+                                  isConfirmed ? 'border-emerald-300 bg-emerald-50' 
+                                  : selectedSlotIndex === i ? 'border-purple-400 bg-purple-50 ring-1 ring-purple-300' 
+                                  : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
                                 }`}>
+                                  {slotBookingData.status !== 'confirmed' && (
+                                    <input 
+                                      type="radio" 
+                                      name="preferred-slot" 
+                                      checked={selectedSlotIndex === i} 
+                                      onChange={() => setSelectedSlotIndex(i)}
+                                      className="accent-purple-600"
+                                    />
+                                  )}
                                   <Badge variant="outline" className="text-xs px-2 border-purple-300 text-purple-600">
                                     Option {i + 1}
                                   </Badge>
                                   <span className="text-sm">
-                                    📅 {new Date(slot.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                                    📅 {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                                   </span>
-                                  <span className="text-sm">🕐 {slot.time}</span>
-                                  {isSelected && (
+                                  <span className="text-sm">🕐 {timeLabel}</span>
+                                  {isConfirmed && (
                                     <Badge className="ml-auto text-xs bg-emerald-100 text-emerald-700 border-emerald-300">
-                                      ✓ Selected
+                                      ✓ Confirmed
                                     </Badge>
                                   )}
-                                </div>
+                                </label>
                               );
                             })}
                           </div>
+                          {/* Confirm button */}
+                          {slotBookingData.status !== 'confirmed' && (
+                            <div className="mt-4 flex justify-end">
+                              <Button 
+                                onClick={handleConfirmSlot} 
+                                disabled={selectedSlotIndex === null || isConfirming}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                size="sm"
+                              >
+                                {isConfirming ? (
+                                  <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Confirming...</>
+                                ) : (
+                                  <><CheckCircle className="h-3 w-3 mr-1" /> Confirm Selected Slot</>
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 
