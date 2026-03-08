@@ -21,6 +21,7 @@ interface SectionConfig {
   marksPerQuestion: number;
   questionCount: number;
   questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks";
+  difficulty: "easy" | "medium" | "hard";
 }
 
 interface Chapter {
