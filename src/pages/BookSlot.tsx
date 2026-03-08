@@ -331,16 +331,18 @@ const BookSlot = () => {
               <>
                 <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
                 <p className="text-muted-foreground">
-                  You have submitted <strong>{preferredSlots.length}</strong> preferred timing(s) for <strong>{stageName}</strong>.
+                  You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      {demoDate ? new Date(demoDate).toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : ""}
+                    </span>
+                  </div>
                   {preferredSlots.map((slot, i) => (
                     <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
                       <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {new Date(slot.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })}
-                      </span>
                       <Clock className="h-4 w-4" />
                       <span className="text-sm font-medium">
                         {getTimeSlots().find((s) => s.value === slot.time)?.label || slot.time}
