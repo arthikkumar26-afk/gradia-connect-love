@@ -29,8 +29,10 @@ const BookSlot = () => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Demo slot booking: single date + 3 preferred timings
+  // Multi-slot booking: single date + 3 preferred timings (for Demo and HR stages)
   const isDemoStage = stageName.toLowerCase().includes("demo");
+  const isHrStage = stageName.toLowerCase().includes("hr");
+  const isMultiSlotStage = isDemoStage || isHrStage;
   const [preferredSlots, setPreferredSlots] = useState<{ date: string; time: string }[]>([]);
   const [demoDate, setDemoDate] = useState("");
   const [demoTime1, setDemoTime1] = useState("");
@@ -141,9 +143,9 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    // For demo, build preferred slots from single date + 3 times
+    // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
     let demoSlots: { date: string; time: string }[] = [];
-    if (isDemoStage) {
+    if (isMultiSlotStage) {
       const times = [demoTime1, demoTime2, demoTime3].filter(Boolean);
       const uniqueTimes = [...new Set(times)];
       if (!demoDate || uniqueTimes.length < 3) {
@@ -182,7 +184,7 @@ const BookSlot = () => {
         : "technical_assessment";
 
       if (interviewCandidate?.candidate_id) {
-        if (isDemoStage) {
+        if (isMultiSlotStage) {
           const { error: insertError } = await supabase.from("slot_bookings").insert({
             candidate_id: interviewCandidate.candidate_id,
             booking_date: demoSlots[0].date,
@@ -193,7 +195,7 @@ const BookSlot = () => {
             preferred_slots: demoSlots as any,
           });
           if (insertError) {
-            console.error("Error inserting demo slot booking:", insertError);
+            console.error("Error inserting slot booking:", insertError);
             toast.error("Failed to save booking. Please try again.");
             setIsBooking(false);
             return;
@@ -216,7 +218,7 @@ const BookSlot = () => {
         }
       }
 
-      if (isDemoStage) {
+      if (isMultiSlotStage) {
         try {
           await supabase.functions.invoke("send-demo-slot-confirmation", {
             body: {
@@ -225,7 +227,7 @@ const BookSlot = () => {
             },
           });
         } catch (emailErr) {
-          console.error("Error sending demo slot confirmation email:", emailErr);
+          console.error("Error sending slot confirmation email:", emailErr);
         }
       } else {
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
@@ -280,7 +282,7 @@ const BookSlot = () => {
       }
 
       setIsBooked(true);
-      if (isDemoStage) {
+      if (isMultiSlotStage) {
         toast.success("Preferred timings submitted! The employer will confirm your slot.");
       } else {
         toast.success("Slot booked successfully! Check your email for details.");
@@ -339,7 +341,7 @@ const BookSlot = () => {
             <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            {isDemoStage ? (
+            {isMultiSlotStage ? (
               <>
                 <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
                 <p className="text-muted-foreground">
@@ -449,9 +451,9 @@ const BookSlot = () => {
             </div>
           </div>
 
-          {isDemoStage ? (
+          {isMultiSlotStage ? (
             <>
-              {/* Demo: Single Date + 3 Preferred Timings */}
+              {/* Multi-slot: Single Date + 3 Preferred Timings */}
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <p className="text-sm text-purple-800 font-medium">
                   📋 Select a date and choose 3 preferred timings. The employer will confirm one and send you the meeting link.
