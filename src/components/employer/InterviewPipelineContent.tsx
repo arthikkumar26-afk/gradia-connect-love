@@ -1480,132 +1480,126 @@ const ClickableStagesList = ({
 
                 {/* Slot Booking Details for Demo Slot Booking stage */}
                 {step.title === 'Demo Slot Booking' && slotBooking && (
-                  <div className="mt-2 bg-blue-50 border border-blue-200 rounded-md p-2 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700">
-                        <Calendar className="h-3 w-3" />
-                        Slot Booked
-                        {isSlotEdited && (
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-400 text-amber-600 bg-amber-50">
-                            Edited
-                          </Badge>
-                        )}
-                      </div>
-                      {!isEditingSlot && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 text-[10px] px-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
-                          onClick={(e) => { e.stopPropagation(); handleEditSlot(); }}
-                        >
-                          ✏️ Edit
-                        </Button>
-                      )}
+                  <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
+                      <Calendar className="h-3 w-3" />
+                      {slotBooking.preferred_slots && slotBooking.preferred_slots.length > 0 
+                        ? `Candidate's Preferred Timings (${slotBooking.preferred_slots.length})`
+                        : 'Slot Booked'}
                     </div>
 
-                    {isEditingSlot ? (
-                      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex gap-2">
-                          <Input
-                            type="date"
-                            value={editDate}
-                            onChange={(e) => setEditDate(e.target.value)}
-                            className="h-7 text-xs flex-1"
-                          />
-                          <Input
-                            type="time"
-                            value={editTime}
-                            onChange={(e) => setEditTime(e.target.value)}
-                            className="h-7 text-xs w-28"
-                          />
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            className="h-6 text-[10px] px-2"
-                            onClick={handleSaveSlotEdit}
-                            disabled={isSavingSlot || !editDate || !editTime}
+                    {/* If preferred_slots exist, show them for employer to pick */}
+                    {slotBooking.preferred_slots && slotBooking.preferred_slots.length > 0 && slotBooking.status !== 'confirmed' ? (
+                      <div className="space-y-1.5">
+                        {slotBooking.preferred_slots.map((slot, i) => (
+                          <label
+                            key={i}
+                            className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
+                              selectedPreferredSlot === i 
+                                ? 'border-purple-500 bg-purple-100' 
+                                : 'border-purple-200 bg-white hover:bg-purple-50'
+                            }`}
+                            onClick={() => setSelectedPreferredSlot(i)}
                           >
-                            {isSavingSlot ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
-                            Save
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 text-[10px] px-2"
-                            onClick={() => setIsEditingSlot(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                            <input
+                              type="radio"
+                              name="preferred-slot"
+                              checked={selectedPreferredSlot === i}
+                              onChange={() => setSelectedPreferredSlot(i)}
+                              className="accent-purple-600"
+                            />
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 border-purple-400 text-purple-600">
+                              Option {i + 1}
+                            </Badge>
+                            <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
+                              📅 {new Date(slot.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                            </Badge>
+                            <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
+                              🕐 {slot.time}
+                            </Badge>
+                          </label>
+                        ))}
+                        
+                        <Button
+                          size="sm"
+                          className="w-full h-7 text-[10px] bg-purple-600 hover:bg-purple-700 mt-1"
+                          onClick={handleConfirmPreferredSlot}
+                          disabled={selectedPreferredSlot === null || isConfirmingSlot}
+                        >
+                          {isConfirmingSlot ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Confirming & Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="h-3 w-3 mr-1" />
+                              Confirm Timing & Send Link
+                            </>
+                          )}
+                        </Button>
                       </div>
                     ) : (
                       <>
+                        {/* Confirmed slot display */}
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
+                          <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
                             📅 {new Date(slotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                           </Badge>
-                          <Badge variant="secondary" className="text-[10px] bg-blue-100 text-blue-700 border-blue-200">
+                          <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
                             🕐 {slotBooking.booking_time}
                           </Badge>
-                          <Badge className={`text-[10px] py-0 ${
-                            slotBooking.status === 'confirmed' 
-                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-                              : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                          }`}>
-                            {slotBooking.status === 'confirmed' ? '✓ Confirmed' : slotBooking.status}
+                          <Badge className="text-[10px] py-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                            ✓ Confirmed
                           </Badge>
-                        </div>
-                        {slotBooking.subject && (
-                          <p className="text-[10px] text-muted-foreground">Stage: {slotBooking.subject}</p>
-                        )}
-                        
-                        {/* Observer Email Input - Multiple Emails */}
-                        <div className="mt-1.5 pt-1.5 border-t border-blue-200 space-y-1" onClick={(e) => e.stopPropagation()}>
-                          <label className="text-[10px] font-medium text-blue-700 flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            Observer/Employer Emails
-                          </label>
-                          <div className="flex gap-1.5">
-                            <Input
-                              type="email"
-                              placeholder="Add email address"
-                              value={observerEmail}
-                              onChange={(e) => setObserverEmail(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddObserverEmail(); }}}
-                              className="h-6 text-[10px] flex-1 border-blue-200"
-                            />
-                            <Button
-                              size="sm"
-                              className="h-6 text-[9px] px-2 bg-blue-600 hover:bg-blue-700"
-                              onClick={handleAddObserverEmail}
-                              disabled={isSavingObserver || !observerEmail.trim()}
-                            >
-                              {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                            </Button>
-                          </div>
-                          {observerEmails.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {observerEmails.map((email) => (
-                                <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
-                                  <CheckCircle2 className="h-2.5 w-2.5" />
-                                  {email}
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleRemoveObserverEmail(email); }}
-                                    className="ml-0.5 hover:text-red-500 transition-colors"
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </button>
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          <p className="text-[9px] text-muted-foreground">
-                            These emails will receive notifications when the Demo Round starts
-                          </p>
                         </div>
                       </>
                     )}
+
+                    {/* Observer Email Input */}
+                    <div className="mt-1.5 pt-1.5 border-t border-purple-200 space-y-1">
+                      <label className="text-[10px] font-medium text-purple-700 flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        Observer/Employer Emails
+                      </label>
+                      <div className="flex gap-1.5">
+                        <Input
+                          type="email"
+                          placeholder="Add email address"
+                          value={observerEmail}
+                          onChange={(e) => setObserverEmail(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddObserverEmail(); }}}
+                          className="h-6 text-[10px] flex-1 border-purple-200"
+                        />
+                        <Button
+                          size="sm"
+                          className="h-6 text-[9px] px-2 bg-purple-600 hover:bg-purple-700"
+                          onClick={handleAddObserverEmail}
+                          disabled={isSavingObserver || !observerEmail.trim()}
+                        >
+                          {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                        </Button>
+                      </div>
+                      {observerEmails.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {observerEmails.map((email) => (
+                            <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
+                              <CheckCircle2 className="h-2.5 w-2.5" />
+                              {email}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleRemoveObserverEmail(email); }}
+                                className="ml-0.5 hover:text-red-500 transition-colors"
+                              >
+                                <X className="h-2.5 w-2.5" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[9px] text-muted-foreground">
+                        These emails will receive notifications when the Demo Round starts
+                      </p>
+                    </div>
                   </div>
                 )}
 
