@@ -1148,35 +1148,99 @@ function CampaignsContent() {
 }
 
 function EventsContent() {
+  const [melas, setMelas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMelas = async () => {
+      const { data } = await supabase
+        .from("job_melas")
+        .select("*")
+        .eq("is_active", true)
+        .order("event_date", { ascending: true });
+      if (data) setMelas(data);
+      setLoading(false);
+    };
+    fetchMelas();
+  }, []);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "filling-fast":
+        return <Badge variant="secondary" className="bg-warning/10 text-warning text-[10px]">Filling Fast</Badge>;
+      case "sold-out":
+        return <Badge variant="secondary" className="bg-destructive/10 text-destructive text-[10px]">Sold Out</Badge>;
+      case "completed":
+        return <Badge variant="secondary" className="bg-muted text-muted-foreground text-[10px]">Completed</Badge>;
+      default:
+        return <Badge variant="secondary" className="bg-primary/10 text-primary text-[10px]">Upcoming</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-foreground">Job Mela & Events</h3>
-      <div className="grid md:grid-cols-2 gap-4">
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : melas.length === 0 ? (
         <Card className="border-border/50">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <CalendarCheck className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground">Hyderabad Job Mela 2026</h4>
-                <p className="text-xs text-muted-foreground">March 15, 2026 • HICC Convention Center</p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="mb-3">Stall Booked - A12</Badge>
-            <p className="text-sm text-muted-foreground">Your stall is confirmed. Upload banners and promotional materials before the event.</p>
-            <Button variant="outline" size="sm" className="mt-3">Manage Stall</Button>
+          <CardContent className="p-8 text-center">
+            <CalendarCheck className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <p className="font-medium text-foreground">No Upcoming Job Melas</p>
+            <p className="text-sm text-muted-foreground mt-1">Check back later for new events.</p>
           </CardContent>
         </Card>
-        <Card className="border-border/50 border-dashed">
-          <CardContent className="p-5 flex flex-col items-center justify-center text-center h-full min-h-[180px]">
-            <CalendarCheck className="h-8 w-8 text-muted-foreground mb-2" />
-            <p className="font-medium text-foreground">Book a Stall</p>
-            <p className="text-sm text-muted-foreground mb-3">Reserve your space at upcoming Job Mela events</p>
-            <Button size="sm">Browse Events</Button>
-          </CardContent>
-        </Card>
-      </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-4">
+          {melas.map((mela) => (
+            <Card key={mela.id} className="border-border/50 hover:shadow-md transition-shadow">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <CalendarCheck className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground text-sm">{mela.title}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(mela.event_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} • {mela.location}
+                    </p>
+                  </div>
+                  {getStatusBadge(mela.status)}
+                </div>
+
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    <span>{mela.city}, {mela.state}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span>{mela.event_time}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    <span>{mela.expected_attendees?.toLocaleString()} expected attendees</span>
+                  </div>
+                  {mela.spots_available > 0 && mela.status !== "sold-out" && (
+                    <p className="text-xs text-primary font-medium">{mela.spots_available} stall spots available</p>
+                  )}
+                </div>
+
+                {mela.description && (
+                  <p className="text-xs text-muted-foreground mb-3">{mela.description}</p>
+                )}
+
+                {mela.status !== "sold-out" && mela.status !== "completed" && (
+                  <Button variant="outline" size="sm">Book Stall</Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
