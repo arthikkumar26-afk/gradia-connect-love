@@ -20,7 +20,7 @@ interface SectionConfig {
   name: string;
   marksPerQuestion: number;
   questionCount: number;
-  questionType: "mcq" | "short_answer" | "long_answer";
+  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks";
 }
 
 interface Chapter {
@@ -403,6 +403,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <SelectItem value="long_answer">Long Answer</SelectItem>
                                   <SelectItem value="short_answer">Short Answer</SelectItem>
                                   <SelectItem value="mcq">MCQ</SelectItem>
+                                  <SelectItem value="fill_in_the_blanks">Fill in the Blanks</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -458,7 +459,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                           </div>
                         </div>
                         <Badge variant="outline" className="text-[10px]">
-                          {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : "Long Answer"}
+                          {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : "Long Answer"}
                         </Badge>
                       </div>
                       {/* Placeholder question slots */}
@@ -556,6 +557,26 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                         {String.fromCharCode(65 + oIdx)}) {opt}
                                       </div>
                                     ))}
+                                  </div>
+                                )}
+                                {q.type === "fill_in_the_blanks" && (
+                                  <div className="mt-1 space-y-1">
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                      {q.sentence_with_blank || q.question}
+                                    </p>
+                                    {q.options && (
+                                      <div className="flex flex-wrap gap-1 ml-1">
+                                        {q.options.map((opt: string, oIdx: number) => (
+                                          <span key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                            q.correct_option === String.fromCharCode(65 + oIdx)
+                                              ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                              : "bg-muted/30 border-border"
+                                          }`}>
+                                            {String.fromCharCode(65 + oIdx)}) {opt}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                                 <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
