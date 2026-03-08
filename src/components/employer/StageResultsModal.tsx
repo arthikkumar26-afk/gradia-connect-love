@@ -266,6 +266,105 @@ export const StageResultsModal = ({
                   The candidate may not have completed this stage yet.
                 </p>
               </div>
+            ) : isSlotBookingStage ? (
+              <>
+                {slotBookingData ? (
+                  <div className="space-y-4">
+                    {/* Booking Info */}
+                    <div className="rounded-xl p-6 border-2 bg-purple-50 border-purple-200">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Calendar className="h-6 w-6 text-purple-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Slot Booking Details</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Booked on {new Date(slotBookingData.created_at).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                          </p>
+                        </div>
+                        <Badge className={`ml-auto text-sm px-3 py-1 ${
+                          slotBookingData.status === 'confirmed' 
+                            ? 'bg-emerald-100 text-emerald-700 border-emerald-300' 
+                            : 'bg-amber-100 text-amber-700 border-amber-300'
+                        }`}>
+                          {slotBookingData.status === 'confirmed' ? '✓ Confirmed' : '⏳ Pending'}
+                        </Badge>
+                      </div>
+
+                      {/* Confirmed Timing */}
+                      {slotBookingData.status === 'confirmed' && (
+                        <div className="bg-white rounded-lg p-4 border border-purple-200 mb-3">
+                          <p className="text-xs font-medium text-purple-600 mb-2">Confirmed Timing</p>
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="text-sm bg-purple-100 text-purple-700 border-purple-200">
+                              📅 {new Date(slotBookingData.booking_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+                            </Badge>
+                            <Badge variant="secondary" className="text-sm bg-purple-100 text-purple-700 border-purple-200">
+                              🕐 {slotBookingData.booking_time}
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Preferred Timings */}
+                      {slotBookingData.preferred_slots && slotBookingData.preferred_slots.length > 0 && (
+                        <div className="bg-white rounded-lg p-4 border border-purple-200">
+                          <p className="text-xs font-medium text-purple-600 mb-2">
+                            Candidate's Preferred Timings ({slotBookingData.preferred_slots.length})
+                          </p>
+                          <div className="space-y-2">
+                            {slotBookingData.preferred_slots.map((slot, i) => {
+                              const isSelected = slotBookingData.status === 'confirmed' && 
+                                slot.date === slotBookingData.booking_date && 
+                                slot.time === slotBookingData.booking_time;
+                              return (
+                                <div key={i} className={`flex items-center gap-3 p-2 rounded-md border ${
+                                  isSelected ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200'
+                                }`}>
+                                  <Badge variant="outline" className="text-xs px-2 border-purple-300 text-purple-600">
+                                    Option {i + 1}
+                                  </Badge>
+                                  <span className="text-sm">
+                                    📅 {new Date(slot.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </span>
+                                  <span className="text-sm">🕐 {slot.time}</span>
+                                  {isSelected && (
+                                    <Badge className="ml-auto text-xs bg-emerald-100 text-emerald-700 border-emerald-300">
+                                      ✓ Selected
+                                    </Badge>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Observer Emails */}
+                      {slotBookingData.observer_email && (
+                        <div className="mt-3 bg-white rounded-lg p-4 border border-purple-200">
+                          <p className="text-xs font-medium text-purple-600 mb-2">Observer Emails</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {slotBookingData.observer_email.split(',').map((email, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                {email.trim()}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground">No slot booking found for this stage.</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      The candidate has not booked a slot yet.
+                    </p>
+                  </div>
+                )}
+              </>
             ) : (
               <>
                 {/* Score Summary Card */}
