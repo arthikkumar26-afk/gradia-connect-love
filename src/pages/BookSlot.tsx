@@ -221,7 +221,19 @@ const BookSlot = () => {
         }
       }
 
-      if (!isDemoStage) {
+      if (isDemoStage) {
+        // Send confirmation email to candidate with 3 preferred timings + notify employer
+        try {
+          await supabase.functions.invoke("send-demo-slot-confirmation", {
+            body: {
+              interviewCandidateId: candidateId,
+              preferredSlots,
+            },
+          });
+        } catch (emailErr) {
+          console.error("Error sending demo slot confirmation email:", emailErr);
+        }
+      } else {
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
         // Send interview invitation with the scheduled time
         const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
