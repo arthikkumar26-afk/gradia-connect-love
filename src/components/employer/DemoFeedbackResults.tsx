@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play } from "lucide-react";
+import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -16,6 +16,8 @@ interface FeedbackReview {
   subject_knowledge_rating: number | null;
   recommendation: string | null;
   feedback_text: string | null;
+  strengths: string[] | null;
+  areas_for_improvement: string[] | null;
   submitted_at: string | null;
 }
 
@@ -25,18 +27,17 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
   const [isResending, setIsResending] = useState(false);
   const [demoRecordingUrl, setDemoRecordingUrl] = useState<string | null>(null);
   const [showRecording, setShowRecording] = useState(false);
+  const [expandedReview, setExpandedReview] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch reviews and demo recording in parallel
         const [reviewsResult, recordingResult] = await Promise.all([
           supabase
             .from('management_reviews')
-            .select('id, reviewer_email, reviewer_name, status, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, submitted_at')
+            .select('id, reviewer_email, reviewer_name, status, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, strengths, areas_for_improvement, submitted_at')
             .eq('interview_candidate_id', interviewCandidateId)
             .order('created_at', { ascending: true }),
-          // Get demo recording from interview_responses (demo_video_url or recording_url)
           supabase
             .from('interview_events')
             .select(`
@@ -48,13 +49,8 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
             .eq('status', 'completed')
         ]);
 
-        if (reviewsResult.error) {
-          console.error('Error fetching reviews:', reviewsResult.error);
-        } else {
-          setReviews(reviewsResult.data || []);
-        }
+        if (!reviewsResult.error) setReviews(reviewsResult.data || []);
 
-        // Find demo round recording
         if (!recordingResult.error && recordingResult.data) {
           const demoEvent = recordingResult.data.find((e: any) => {
             const stageName = e.stage?.name?.toLowerCase() || '';
@@ -69,9 +65,7 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
           }
         }
 
-        // Also check mock_interview_stage_results for AI video demo recordings
         if (!demoRecordingUrl) {
-          // Get candidate_id from interview_candidates
           const { data: icData } = await supabase
             .from('interview_candidates')
             .select('candidate_id')
@@ -131,10 +125,25 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
     switch (rec) {
       case 'strongly_recommend': return { label: 'Strongly Recommend', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
       case 'recommend': return { label: 'Recommend', color: 'bg-blue-100 text-blue-700 border-blue-200' };
-      case 'consider': return { label: 'Consider', color: 'bg-amber-100 text-amber-700 border-amber-200' };
+      case 'needs_improvement': return { label: 'Needs Improvement', color: 'bg-amber-100 text-amber-700 border-amber-200' };
       case 'not_recommend': return { label: 'Not Recommended', color: 'bg-red-100 text-red-700 border-red-200' };
       default: return { label: rec || 'N/A', color: 'bg-muted text-muted-foreground' };
     }
+  };
+
+  const MiniStars = ({ value, label, icon: Icon }: { value: number | null; label: string; icon: any }) => {
+    if (!value) return null;
+    return (
+      <div className="flex items-center gap-1">
+        <Icon className="h-2.5 w-2.5 text-muted-foreground" />
+        <span className="text-[9px] text-muted-foreground">{label}:</span>
+        <div className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <Star key={s} className={`h-2 w-2 ${s <= value ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20"}`} />
+          ))}
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -223,7 +232,10 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
 
           {reviews.map((review) => (
             <div key={review.id} className="bg-white rounded border border-amber-100 p-1.5 space-y-1">
-              <div className="flex items-center justify-between">
+              <div
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
+              >
                 <div className="flex items-center gap-1 text-[10px]">
                   <User className="h-2.5 w-2.5 text-muted-foreground" />
                   <span className="font-medium truncate max-w-[120px]">{review.reviewer_name || review.reviewer_email}</span>
@@ -243,6 +255,7 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
 
               {review.status === 'submitted' && (
                 <>
+                  {/* Summary row - always visible */}
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-0.5">
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -263,8 +276,75 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
                       </Badge>
                     )}
                   </div>
-                  {review.feedback_text && (
+
+                  {/* Expanded detailed view */}
+                  {expandedReview === review.id && (
+                    <div className="space-y-1.5 pt-1 border-t border-amber-100">
+                      {/* Detailed Ratings */}
+                      <div className="space-y-0.5">
+                        <MiniStars value={review.teaching_skills_rating} label="Teaching" icon={BookOpen} />
+                        <MiniStars value={review.communication_rating} label="Communication" icon={Mic} />
+                        <MiniStars value={review.subject_knowledge_rating} label="Subject" icon={MessageSquare} />
+                      </div>
+
+                      {/* Strengths */}
+                      {review.strengths && review.strengths.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-0.5 text-[9px] font-medium text-emerald-700 mb-0.5">
+                            <TrendingUp className="h-2.5 w-2.5" />
+                            Strengths
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {review.strengths.map((s, i) => (
+                              <span key={i} className="text-[8px] bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-1 py-0.5">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Areas for Improvement */}
+                      {review.areas_for_improvement && review.areas_for_improvement.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-0.5 text-[9px] font-medium text-orange-700 mb-0.5">
+                            <TrendingDown className="h-2.5 w-2.5" />
+                            Areas for Improvement
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {review.areas_for_improvement.map((a, i) => (
+                              <span key={i} className="text-[8px] bg-orange-50 text-orange-700 border border-orange-200 rounded px-1 py-0.5">{a}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Detailed Feedback Text */}
+                      {review.feedback_text && (
+                        <div>
+                          <div className="text-[9px] font-medium text-muted-foreground mb-0.5">💬 Feedback</div>
+                          <p className="text-[9px] text-muted-foreground italic bg-muted/30 rounded p-1">"{review.feedback_text}"</p>
+                        </div>
+                      )}
+
+                      {review.submitted_at && (
+                        <p className="text-[8px] text-muted-foreground/60">
+                          Submitted: {new Date(review.submitted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Collapsed feedback preview */}
+                  {expandedReview !== review.id && review.feedback_text && (
                     <p className="text-[9px] text-muted-foreground line-clamp-2 italic">"{review.feedback_text}"</p>
+                  )}
+
+                  {review.status === 'submitted' && (
+                    <button
+                      className="text-[8px] text-primary hover:underline"
+                      onClick={(e) => { e.stopPropagation(); setExpandedReview(expandedReview === review.id ? null : review.id); }}
+                    >
+                      {expandedReview === review.id ? '▲ Less' : '▼ View Details'}
+                    </button>
                   )}
                 </>
               )}
@@ -279,7 +359,6 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
         </>
       )}
 
-      {/* Show send feedback button if only recording exists but no reviews */}
       {reviews.length === 0 && demoRecordingUrl && (
         <Button
           size="sm"

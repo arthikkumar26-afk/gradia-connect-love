@@ -127,6 +127,14 @@ serve(async (req) => {
             .value { font-size: 16px; font-weight: 600; color: #1f2937; }
             .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
             .expire-note { background: #fef3c7; border: 1px solid #fcd34d; padding: 12px; border-radius: 6px; margin: 15px 0; font-size: 13px; color: #92400e; }
+            .q-section { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0; }
+            .q-title { font-size: 15px; font-weight: 700; color: #1f2937; margin-bottom: 16px; border-bottom: 2px solid #10b981; padding-bottom: 8px; }
+            .q-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px dashed #e5e7eb; }
+            .q-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+            .q-label { font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+            .q-options { display: flex; flex-wrap: wrap; gap: 6px; }
+            .q-option { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #4b5563; }
+            .q-note { font-size: 11px; color: #9ca3af; margin-top: 4px; font-style: italic; }
           </style>
         </head>
         <body>
@@ -152,6 +160,57 @@ serve(async (req) => {
                 <div>
                   <p class="label">Company</p>
                   <p class="value">${companyName}</p>
+                </div>
+              </div>
+
+              <!-- Evaluation Questions Preview -->
+              <div class="q-section">
+                <div class="q-title">📋 You will be evaluating the following:</div>
+
+                <div class="q-item">
+                  <div class="q-label">1. Overall Rating</div>
+                  <div class="q-options">
+                    <span class="q-option">⭐ 1 - Poor</span>
+                    <span class="q-option">⭐⭐ 2 - Below Avg</span>
+                    <span class="q-option">⭐⭐⭐ 3 - Average</span>
+                    <span class="q-option">⭐⭐⭐⭐ 4 - Good</span>
+                    <span class="q-option">⭐⭐⭐⭐⭐ 5 - Excellent</span>
+                  </div>
+                </div>
+
+                <div class="q-item">
+                  <div class="q-label">2. Teaching Skills</div>
+                  <div class="q-note">Rate 1-5 stars — clarity of explanation, engagement, methodology</div>
+                </div>
+
+                <div class="q-item">
+                  <div class="q-label">3. Communication Skills</div>
+                  <div class="q-note">Rate 1-5 stars — fluency, confidence, body language</div>
+                </div>
+
+                <div class="q-item">
+                  <div class="q-label">4. Subject Knowledge</div>
+                  <div class="q-note">Rate 1-5 stars — depth of understanding, accuracy, examples</div>
+                </div>
+
+                <div class="q-item">
+                  <div class="q-label">5. Recommendation</div>
+                  <div class="q-options">
+                    <span class="q-option" style="border-color:#10b981;color:#059669;">✅ Strongly Recommend</span>
+                    <span class="q-option" style="border-color:#3b82f6;color:#2563eb;">👍 Recommend</span>
+                    <span class="q-option" style="border-color:#f59e0b;color:#d97706;">⚠️ Needs Improvement</span>
+                    <span class="q-option" style="border-color:#ef4444;color:#dc2626;">❌ Do Not Recommend</span>
+                  </div>
+                </div>
+
+                <div class="q-item">
+                  <div class="q-label">6. Strengths & Areas for Improvement</div>
+                  <div class="q-note">Open text — highlight what went well and what can be improved</div>
+                </div>
+
+                <div class="q-item">
+                  <div class="q-label">7. Detailed Feedback</div>
+                  <div class="q-note">Open text — provide any additional comments or observations</div>
                 </div>
               </div>
 
