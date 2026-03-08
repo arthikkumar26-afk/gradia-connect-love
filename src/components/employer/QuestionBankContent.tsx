@@ -463,13 +463,24 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
 
           {/* Preview Button */}
           {totalQuestions > 0 && (
-            <div className="flex items-center justify-between pt-2 border-t">
+            <div className="flex items-center justify-between pt-2 border-t gap-3">
               <p className="text-xs text-muted-foreground">
                 Total: <span className="font-semibold text-foreground">{totalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{grandTotalMarks} Marks</span>
               </p>
-              <Button size="sm" className="text-xs h-8 gap-1.5" onClick={() => setShowPreview(true)}>
-                <Eye className="h-3.5 w-3.5" /> Preview Question Paper
-              </Button>
+              <div className="flex items-center gap-2">
+                <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Paper Questions:</Label>
+                <Input
+                  type="number"
+                  value={previewCount}
+                  min={1}
+                  max={totalQuestions}
+                  onChange={e => setPreviewCount(Math.max(1, Math.min(totalQuestions, parseInt(e.target.value) || 1)))}
+                  className="w-16 h-7 text-xs text-center"
+                />
+                <Button size="sm" className="text-xs h-8 gap-1.5" onClick={() => setShowPreview(true)}>
+                  <Eye className="h-3.5 w-3.5" /> Preview Question Paper
+                </Button>
+              </div>
             </div>
           )}
         </>
