@@ -122,6 +122,7 @@ Question Types:
 - "fill_in_the_blanks" = A sentence with one word/phrase replaced by "______". Include 4 options (A, B, C, D), correct_option field, answer field, and sentence_with_blank field showing the sentence with the blank.
 - "match_the_following" = Match items from Column A to Column B. Include column_a (array of items), column_b (array of shuffled items), 4 options showing different match combinations (A, B, C, D), correct_option field, and answer field with correct matching.
 - "assertion_reasoning" = Assertion & Reasoning type. Include assertion field, reason field, 4 options like "(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)". Include correct_option (1-4), and answer field.
+- "statement_based" = Read Statement I and Statement II type. Include statements array with objects [{label: "I", text: "..."}, {label: "II", text: "..."}], 4 options like "I is true but II is false", "I is false but II is true", "Both I and II are true", "Both I and II are false". Include correct_option (1-4), and answer field.
 
 Chapters to cover: ${chapterNames}
 
