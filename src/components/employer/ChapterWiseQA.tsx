@@ -382,7 +382,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                             <div>
                               <Label className="text-[10px] text-muted-foreground">Section Name</Label>
                               <Input
@@ -428,6 +428,22 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <SelectItem value="short_answer">Short Answer</SelectItem>
                                   <SelectItem value="mcq">MCQ</SelectItem>
                                   <SelectItem value="fill_in_the_blanks">Fill in the Blanks</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">Difficulty</Label>
+                              <Select
+                                value={section.difficulty}
+                                onValueChange={(v) => updateSection(section.id, "difficulty", v)}
+                              >
+                                <SelectTrigger className="h-7 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="easy">Easy</SelectItem>
+                                  <SelectItem value="medium">Medium</SelectItem>
+                                  <SelectItem value="hard">Hard</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
