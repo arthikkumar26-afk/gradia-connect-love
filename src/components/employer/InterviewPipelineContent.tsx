@@ -1601,7 +1601,14 @@ const ClickableStagesList = ({
                       </p>
                     </div>
                   </div>
-                )}
+                ) : (step.status === 'completed' || step.status === 'current') && (
+                  <div className="mt-2 bg-amber-50 border border-amber-200 rounded-md p-2">
+                    <div className="flex items-center gap-1.5 text-xs text-amber-700">
+                      <Calendar className="h-3 w-3" />
+                      No slot booking found — stage was manually advanced
+                    </div>
+                  </div>
+                ))}
 
                 {/* Demo Round Options - Show only during Demo Round stage */}
                 {step.title === 'Demo Round' && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
