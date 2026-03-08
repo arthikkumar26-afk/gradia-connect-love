@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Loader2, Bot, User } from "lucide-react";
+import { X, Send, Loader2, Bot, User } from "lucide-react";
+import ChatbotAnimatedEntry from "./ChatbotAnimatedEntry";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -141,15 +142,8 @@ const SalesChatbot = ({ externalOpen, onExternalClose }: SalesChatbotProps = {})
 
   return (
     <>
-      {/* Floating Button */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-[998] w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center animate-fade-in"
-          aria-label="Open chat"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </button>
+        <ChatbotAnimatedEntry onClick={() => setIsOpen(true)} />
       )}
 
       {/* Chat Window */}
