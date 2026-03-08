@@ -333,41 +333,66 @@ const BookSlot = () => {
             <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">Slot Booked Successfully! 🎉</h2>
-            <p className="text-muted-foreground">
-              Your <strong>{stageName}</strong> has been scheduled for:
-            </p>
-            <div className="bg-blue-50 rounded-lg p-4 space-y-2">
-              <div className="flex items-center justify-center gap-2 text-blue-700">
-                <Calendar className="h-4 w-4" />
-                <span className="font-medium">
-                  {new Date(selectedDate).toLocaleDateString("en-IN", {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-blue-700">
-                <Clock className="h-4 w-4" />
-                <span className="font-medium">
-                  {getTimeSlots().find((s) => s.value === selectedTime)?.label || selectedTime} IST
-                </span>
-              </div>
-            </div>
-            {stageName.toLowerCase().includes("demo") ? (
-              <p className="text-sm text-muted-foreground">
-                📧 You will receive a Demo Round invitation email with instructions shortly. Please check your inbox.
-              </p>
-            ) : stageName.toLowerCase().includes("hr") ? (
-              <p className="text-sm text-muted-foreground">
-                📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
-              </p>
+            {isDemoStage ? (
+              <>
+                <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
+                <p className="text-muted-foreground">
+                  You have submitted <strong>{preferredSlots.length}</strong> preferred timing(s) for <strong>{stageName}</strong>.
+                </p>
+                <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                  {preferredSlots.map((slot, i) => (
+                    <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
+                      <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
+                      <Calendar className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        {new Date(slot.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })}
+                      </span>
+                      <Clock className="h-4 w-4" />
+                      <span className="text-sm font-medium">
+                        {getTimeSlots().find((s) => s.value === slot.time)?.label || slot.time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  📧 The employer will review your preferred timings and confirm one. You'll receive an email once confirmed.
+                </p>
+              </>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
-              </p>
+              <>
+                <h2 className="text-xl font-bold text-foreground">Slot Booked Successfully! 🎉</h2>
+                <p className="text-muted-foreground">
+                  Your <strong>{stageName}</strong> has been scheduled for:
+                </p>
+                <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-blue-700">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-medium">
+                      {new Date(selectedDate).toLocaleDateString("en-IN", {
+                        weekday: "long",
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-blue-700">
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">
+                      {getTimeSlots().find((s) => s.value === selectedTime)?.label || selectedTime} IST
+                    </span>
+                  </div>
+                </div>
+                {stageName.toLowerCase().includes("hr") ? (
+                  <p className="text-sm text-muted-foreground">
+                    📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
+                  </p>
+                )}
+              </>
             )}
             <div className="pt-2">
               <Badge className="bg-blue-100 text-blue-800 border-blue-200">
