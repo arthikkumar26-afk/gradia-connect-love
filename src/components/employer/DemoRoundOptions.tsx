@@ -228,7 +228,7 @@ export const DemoRoundOptions = ({
         <p className="text-[9px] text-muted-foreground">
           {meetType === 'ai_video'
             ? 'Observers can watch the live demo and provide feedback'
-            : 'Observers will receive the meeting link to join as viewers'}
+            : `Observers will receive the ${meetType === 'google_meet' ? 'Google Meet' : 'Zoom'} link to join as viewers`}
         </p>
       </div>
 
