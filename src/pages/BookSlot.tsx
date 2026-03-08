@@ -70,20 +70,14 @@ const BookSlot = () => {
     fetchDetails();
   }, [candidateId]);
 
-  // Generate available dates (today + next 7 days, excluding Sundays)
+  // Generate available dates (today + next 7 days, including all days)
   const getAvailableDates = () => {
     const dates: { value: string; label: string }[] = [];
     const today = new Date();
-    let count = 0;
-    let daysChecked = 0;
     
-    while (count < 8 && daysChecked < 14) {
+    for (let i = 0; i < 8; i++) {
       const date = new Date(today);
-      date.setDate(today.getDate() + daysChecked);
-      daysChecked++;
-      
-      // Skip Sundays
-      if (date.getDay() === 0) continue;
+      date.setDate(today.getDate() + i);
       
       const value = date.toISOString().split("T")[0];
       const label = date.toLocaleDateString("en-IN", {
@@ -92,16 +86,13 @@ const BookSlot = () => {
         day: "numeric",
         year: "numeric",
       });
-      dates.push({ value, label: daysChecked === 1 ? `Today - ${label}` : label });
-      count++;
+      dates.push({ value, label: i === 0 ? `Today - ${label}` : label });
     }
     return dates;
   };
 
   const getTodayDate = () => {
-    const today = new Date();
-    if (today.getDay() === 0) return null; // Sunday
-    return today.toISOString().split("T")[0];
+    return new Date().toISOString().split("T")[0];
   };
 
   const getNext10MinTime = () => {
@@ -395,8 +386,7 @@ const BookSlot = () => {
               className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
               onClick={() => {
                 const today = getTodayDate();
-                if (today) {
-                  setSelectedDate(today);
+                setSelectedDate(today);
                   // Set to nearest upcoming slot
                   const now = new Date();
                   const minutes = now.getMinutes();
@@ -405,9 +395,6 @@ const BookSlot = () => {
                   const minute = roundedMinutes.toString().padStart(2, "0");
                   const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
                   setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
-                } else {
-                  toast.info("Today is Sunday. Please select another date.");
-                }
               }}
             >
               🚀 Start Now
