@@ -282,7 +282,7 @@ const BookSlot = () => {
       }
 
       setIsBooked(true);
-      if (isDemoStage) {
+      if (isMultiSlotStage) {
         toast.success("Preferred timings submitted! The employer will confirm your slot.");
       } else {
         toast.success("Slot booked successfully! Check your email for details.");
