@@ -31,6 +31,7 @@ import {
   TrendingUp,
   Eye,
 } from "lucide-react";
+import { StageResultsModal } from "@/components/employer/StageResultsModal";
 
 interface InterviewStage {
   id: string;
@@ -117,6 +118,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [responses, setResponses] = useState<InterviewResponse[]>([]);
   const [reviews, setReviews] = useState<ManagementReview[]>([]);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -941,20 +944,37 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
                       {/* View Results button for completed stages */}
                       {hasReviewData && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedStageId(isExpanded ? null : stage.id);
-                          }}
-                          className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors ${
-                            isExpanded 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-muted text-foreground hover:bg-muted/80'
-                          }`}
-                        >
-                          <Eye className="h-3 w-3" />
-                          {isExpanded ? 'Hide' : 'View Results'}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedStageId(isExpanded ? null : stage.id);
+                            }}
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors ${
+                              isExpanded 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'bg-muted text-foreground hover:bg-muted/80'
+                            }`}
+                          >
+                            <Eye className="h-3 w-3" />
+                            {isExpanded ? 'Hide' : 'View'}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStageForResults({
+                                stageId: stage.id,
+                                stageName: stage.name,
+                                interviewCandidateId: currentInterview.id,
+                              });
+                              setResultsModalOpen(true);
+                            }}
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            <FileText className="h-3 w-3" />
+                            Detailed Results
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -994,6 +1014,21 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           </div>
         )}
       </Card>
+
+      {/* Detailed Stage Results Modal - same as employer view */}
+      {selectedStageForResults && (
+        <StageResultsModal
+          isOpen={resultsModalOpen}
+          onClose={() => {
+            setResultsModalOpen(false);
+            setSelectedStageForResults(null);
+          }}
+          interviewCandidateId={selectedStageForResults.interviewCandidateId}
+          stageId={selectedStageForResults.stageId}
+          stageName={selectedStageForResults.stageName}
+          candidateName="My Results"
+        />
+      )}
     </div>
   );
 };
