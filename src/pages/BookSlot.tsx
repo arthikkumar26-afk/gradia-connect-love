@@ -451,9 +451,9 @@ const BookSlot = () => {
             </div>
           </div>
 
-          {isDemoStage ? (
+          {isMultiSlotStage ? (
             <>
-              {/* Demo: Single Date + 3 Preferred Timings */}
+              {/* Multi-slot: Single Date + 3 Preferred Timings */}
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <p className="text-sm text-purple-800 font-medium">
                   📋 Select a date and choose 3 preferred timings. The employer will confirm one and send you the meeting link.
