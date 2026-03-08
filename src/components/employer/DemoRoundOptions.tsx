@@ -238,10 +238,12 @@ export const DemoRoundOptions = ({
         className={`w-full h-7 text-[10px] ${
           meetType === 'ai_video' 
             ? 'bg-pink-600 hover:bg-pink-700' 
+            : meetType === 'google_meet'
+            ? 'bg-blue-600 hover:bg-blue-700'
             : 'bg-purple-600 hover:bg-purple-700'
         }`}
         onClick={handleSendMeetLink}
-        disabled={isSending || (meetType === 'manual_link' && !meetLink.trim())}
+        disabled={isSending || ((meetType === 'google_meet' || meetType === 'zoom_meet') && !meetLink.trim())}
       >
         {isSending ? (
           <>
