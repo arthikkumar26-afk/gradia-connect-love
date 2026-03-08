@@ -94,6 +94,19 @@ export const StageResultsModal = ({
       if (!updateError) {
         setSlotBookingData({ ...slotBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
         setSelectedSlotIndex(null);
+
+        // Send confirmation email to candidate
+        try {
+          await supabase.functions.invoke('send-demo-slot-confirmed', {
+            body: {
+              interviewCandidateId,
+              confirmedDate: chosen.date,
+              confirmedTime: chosen.time,
+            },
+          });
+        } catch (emailErr) {
+          console.error('Error sending slot confirmed email:', emailErr);
+        }
       }
     } catch (err) {
       console.error('Error confirming slot:', err);
