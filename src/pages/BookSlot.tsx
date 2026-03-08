@@ -673,6 +673,7 @@ const BookSlot = () => {
                 )}
               </Button>
             </>
+          )}
         </CardContent>
       </Card>
     </div>
