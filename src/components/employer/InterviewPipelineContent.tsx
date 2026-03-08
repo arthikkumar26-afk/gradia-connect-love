@@ -998,7 +998,8 @@ const ClickableStagesList = ({
   const [hrObserverEmail, setHrObserverEmail] = useState("");
   const [hrObserverEmails, setHrObserverEmails] = useState<string[]>([]);
   const [isSavingHrObserver, setIsSavingHrObserver] = useState(false);
-
+  const [selectedHrPreferredSlot, setSelectedHrPreferredSlot] = useState<number | null>(null);
+  const [isConfirmingHrSlot, setIsConfirmingHrSlot] = useState(false);
   // Fetch slot booking details for this candidate
   useEffect(() => {
     const fetchSlotBooking = async () => {
