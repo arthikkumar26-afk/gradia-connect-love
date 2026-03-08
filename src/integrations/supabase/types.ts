@@ -1458,6 +1458,60 @@ export type Database = {
         }
         Relationships: []
       }
+      job_melas: {
+        Row: {
+          city: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_date: string
+          event_time: string
+          expected_attendees: number | null
+          id: string
+          is_active: boolean
+          location: string
+          spots_available: number | null
+          state: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date: string
+          event_time: string
+          expected_attendees?: number | null
+          id?: string
+          is_active?: boolean
+          location: string
+          spots_available?: number | null
+          state: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_date?: string
+          event_time?: string
+          expected_attendees?: number | null
+          id?: string
+          is_active?: boolean
+          location?: string
+          spots_available?: number | null
+          state?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           board: string | null
