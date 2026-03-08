@@ -79,11 +79,34 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     }
   };
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove data URL prefix (e.g. "data:application/pdf;base64,")
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== "application/pdf") {
-      toast.error("Please upload a PDF file");
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    const allowedExts = [".pdf", ".doc", ".docx"];
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+
+    if (!allowedTypes.includes(file.type) && !allowedExts.includes(ext)) {
+      toast.error("Please upload a PDF or Word file (.pdf, .doc, .docx)");
       return;
     }
 
@@ -91,37 +114,15 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     setIsParsing(true);
 
     try {
-      // Extract text from PDF
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullText = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map((item: any) => item.str).join(" ");
-        fullText += pageText + "\n\n";
-      }
+      const base64 = await fileToBase64(file);
 
-      if (!fullText.trim()) {
-        // Try base64 fallback
-        const base64 = btoa(
-          new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
-        );
-        const { data, error } = await supabase.functions.invoke("parse-question-paper", {
-          body: { pdfBase64: base64, paperType: "question_bank", language: "auto-detect" },
-        });
-        if (error) throw error;
-        if (data?.questions?.length) {
-          addParsedQuestions(data.questions, file.name);
-        } else {
-          toast.error("No questions detected in the PDF");
-        }
-        return;
-      }
-
-      // Send to AI for parsing
       const { data, error } = await supabase.functions.invoke("parse-question-paper", {
-        body: { pdfText: fullText, paperType: "question_bank", language: "auto-detect" },
+        body: {
+          pdfBase64: base64,
+          fileName: file.name,
+          paperType: "question_bank",
+          language: "auto-detect",
+        },
       });
 
       if (error) throw error;
@@ -129,11 +130,11 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
       if (data?.questions?.length) {
         addParsedQuestions(data.questions, file.name);
       } else {
-        toast.error("No questions detected in the PDF");
+        toast.error("No questions detected in the file");
       }
     } catch (err) {
-      console.error("PDF parse error:", err);
-      toast.error("Failed to parse PDF");
+      console.error("File parse error:", err);
+      toast.error("Failed to parse file. Please try again.");
     } finally {
       setIsUploading(false);
       setIsParsing(false);
