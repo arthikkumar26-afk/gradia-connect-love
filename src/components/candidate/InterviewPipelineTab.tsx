@@ -944,20 +944,37 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
                       {/* View Results button for completed stages */}
                       {hasReviewData && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedStageId(isExpanded ? null : stage.id);
-                          }}
-                          className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors ${
-                            isExpanded 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-muted text-foreground hover:bg-muted/80'
-                          }`}
-                        >
-                          <Eye className="h-3 w-3" />
-                          {isExpanded ? 'Hide' : 'View Results'}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedStageId(isExpanded ? null : stage.id);
+                            }}
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-md transition-colors ${
+                              isExpanded 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'bg-muted text-foreground hover:bg-muted/80'
+                            }`}
+                          >
+                            <Eye className="h-3 w-3" />
+                            {isExpanded ? 'Hide' : 'View'}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedStageForResults({
+                                stageId: stage.id,
+                                stageName: stage.name,
+                                interviewCandidateId: currentInterview.id,
+                              });
+                              setResultsModalOpen(true);
+                            }}
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                          >
+                            <FileText className="h-3 w-3" />
+                            Detailed Results
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
