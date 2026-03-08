@@ -1079,6 +1079,65 @@ const ClickableStagesList = ({
     }
   };
 
+  // Confirm a preferred slot for demo booking
+  const handleConfirmPreferredSlot = async () => {
+    if (!slotBooking || selectedPreferredSlot === null || !slotBooking.preferred_slots) return;
+    const chosen = slotBooking.preferred_slots[selectedPreferredSlot];
+    if (!chosen) return;
+
+    setIsConfirmingSlot(true);
+    try {
+      const { error } = await supabase
+        .from('slot_bookings')
+        .update({ 
+          booking_date: chosen.date, 
+          booking_time: chosen.time, 
+          status: 'confirmed',
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', slotBooking.id);
+
+      if (error) throw error;
+
+      setSlotBooking({ ...slotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
+
+      // Auto-advance to Demo Round
+      try {
+        await supabase.functions.invoke('process-interview-stage', {
+          body: {
+            interviewCandidateId,
+            action: 'advance',
+            feedback: `Employer confirmed demo slot: ${chosen.date} at ${chosen.time}`,
+          }
+        });
+      } catch (advanceErr) {
+        console.error('Error auto-advancing:', advanceErr);
+      }
+
+      // Send demo round emails
+      try {
+        await supabase.functions.invoke('send-demo-round-emails', {
+          body: { interviewCandidateId }
+        });
+      } catch (emailErr) {
+        console.error('Error sending demo emails:', emailErr);
+      }
+
+      toast.success(`Demo slot confirmed! Moved to Demo Round`, {
+        description: `Scheduled for ${new Date(chosen.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })} at ${chosen.time}`,
+        duration: 5000,
+      });
+
+      // Trigger pipeline refresh
+      window.location.reload();
+    } catch (err) {
+      console.error('Error confirming slot:', err);
+      toast.error('Failed to confirm slot');
+    } finally {
+      setIsConfirmingSlot(false);
+    }
+  };
+
   const handleAddObserverEmail = async () => {
     if (!slotBooking || !observerEmail.trim()) return;
     const email = observerEmail.trim().toLowerCase();
