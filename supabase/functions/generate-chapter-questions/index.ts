@@ -123,6 +123,7 @@ Question Types:
 - "match_the_following" = Match items from Column A to Column B. Include column_a (array of items), column_b (array of shuffled items), 4 options showing different match combinations (A, B, C, D), correct_option field, and answer field with correct matching.
 - "assertion_reasoning" = Assertion & Reasoning type. Include assertion field, reason field, 4 options like "(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)". Include correct_option (1-4), and answer field.
 - "statement_based" = Read Statement I and Statement II type. Include statements array with objects [{label: "I", text: "..."}, {label: "II", text: "..."}], 4 options like "I is true but II is false", "I is false but II is true", "Both I and II are true", "Both I and II are false". Include correct_option (1-4), and answer field.
+- "image_based" = Questions that require a diagram/figure/chart. Include image_prompt field with a detailed description of the educational diagram to generate (e.g. "A labeled diagram of the human heart showing chambers, valves and blood flow", "A bar chart comparing photosynthesis rates at different light intensities"). Include 4 MCQ options (A, B, C, D), correct_option field, and answer field. The image_prompt MUST describe a diagram directly relevant to the question and based on the PDF content.
 
 Chapters to cover: ${chapterNames}
 
@@ -245,6 +246,23 @@ Return ONLY valid JSON in this format:
           "chapter": "Chapter name"
         }
       ]
+    },
+    {
+      "name": "H",
+      "marks_per_question": 2,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Observe the given diagram and identify the parts labeled A and B.",
+          "type": "image_based",
+          "marks": 2,
+          "image_prompt": "A labeled diagram of human digestive system with parts A pointing to stomach and B pointing to small intestine, clean educational style on white background",
+          "options": ["A-Stomach, B-Small intestine", "A-Liver, B-Pancreas", "A-Esophagus, B-Large intestine", "A-Stomach, B-Liver"],
+          "correct_option": "A",
+          "answer": "A-Stomach, B-Small intestine",
+          "chapter": "Chapter name"
+        }
+      ]
     }
   ]
 }`
@@ -325,9 +343,73 @@ Return ONLY valid JSON in this format:
                 options: ["I is true but II is false", "I is false but II is true", "Both I and II are true", "Both I and II are false"],
                 correct_option: "3",
               } : {}),
+              ...(s.questionType === "image_based" ? {
+                image_prompt: "A simple educational diagram",
+                options: ["Option A", "Option B", "Option C", "Option D"],
+                correct_option: "A",
+              } : {}),
             })),
           })),
         };
+      }
+
+      // Generate images for image_based questions
+      const imageQuestions: { sectionIdx: number; questionIdx: number; prompt: string }[] = [];
+      generatedData.sections?.forEach((s: any, sIdx: number) => {
+        s.questions?.forEach((q: any, qIdx: number) => {
+          if (q.type === "image_based" && q.image_prompt) {
+            imageQuestions.push({ sectionIdx: sIdx, questionIdx: qIdx, prompt: q.image_prompt });
+          }
+        });
+      });
+
+      // Generate images in parallel (max 3 at a time to avoid rate limits)
+      if (imageQuestions.length > 0) {
+        console.log(`Generating ${imageQuestions.length} images for image-based questions...`);
+        const batchSize = 3;
+        for (let i = 0; i < imageQuestions.length; i += batchSize) {
+          const batch = imageQuestions.slice(i, i + batchSize);
+          const imageResults = await Promise.allSettled(
+            batch.map(async (iq) => {
+              try {
+                const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${lovableApiKey}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    model: "google/gemini-2.5-flash-image",
+                    messages: [
+                      {
+                        role: "user",
+                        content: `Generate a clean, educational diagram: ${iq.prompt}. Style: simple, labeled, black and white line drawing suitable for an exam paper, on a clean white background.`
+                      }
+                    ],
+                    modalities: ["image", "text"],
+                  }),
+                });
+                if (!imgResponse.ok) {
+                  console.error(`Image generation failed for question: ${imgResponse.status}`);
+                  return { ...iq, image_url: null };
+                }
+                const imgData = await imgResponse.json();
+                const imageUrl = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+                return { ...iq, image_url: imageUrl || null };
+              } catch (err) {
+                console.error("Image generation error:", err);
+                return { ...iq, image_url: null };
+              }
+            })
+          );
+
+          for (const result of imageResults) {
+            if (result.status === "fulfilled" && result.value.image_url) {
+              const { sectionIdx, questionIdx, image_url } = result.value;
+              generatedData.sections[sectionIdx].questions[questionIdx].image_url = image_url;
+            }
+          }
+        }
       }
 
       const totalMarks = generatedData.sections?.reduce((sum: number, s: any) => 
