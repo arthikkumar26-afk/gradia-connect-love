@@ -20,7 +20,7 @@ import {
   TrendingUp, Eye, MousePointerClick, UserPlus,
   Plus, Send, LayoutDashboard, ChevronRight,
   Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote, Trash2,
-  Paperclip, Loader2, XCircle
+  Paperclip, Loader2, XCircle, Crown, Check, Zap, Star
 } from "lucide-react";
 
 const statsData = [
@@ -98,6 +98,7 @@ export default function EduTechDashboard() {
     { id: "campaigns", label: "Campaigns", icon: Megaphone },
     { id: "events", label: "Job Mela & Events", icon: CalendarCheck },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "upgrade", label: "Upgrade Plans", icon: Crown },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -115,6 +116,8 @@ export default function EduTechDashboard() {
         return <EventsContent />;
       case "analytics":
         return <AnalyticsContent />;
+      case "upgrade":
+        return <UpgradePlansContent />;
       case "settings":
         return <SettingsContent profile={profile} />;
       default:
@@ -1277,6 +1280,210 @@ function AnalyticsContent() {
               <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-30" />
               <p className="text-sm">Detailed charts will appear once campaigns have data</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function UpgradePlansContent() {
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+
+  const plans = [
+    {
+      id: "starter",
+      name: "Starter",
+      icon: Zap,
+      monthlyPrice: 0,
+      annualPrice: 0,
+      description: "Get started with basic features",
+      badge: "Free",
+      badgeColor: "bg-muted text-muted-foreground",
+      features: [
+        "Up to 50 candidates",
+        "3 active courses",
+        "Basic email campaigns",
+        "1 Job Mela stall/year",
+        "Standard analytics",
+        "Email support",
+      ],
+      cta: "Current Plan",
+      disabled: true,
+      highlight: false,
+    },
+    {
+      id: "growth",
+      name: "Growth",
+      icon: TrendingUp,
+      monthlyPrice: 4999,
+      annualPrice: 49990,
+      description: "Scale your training institute",
+      badge: "Popular",
+      badgeColor: "bg-primary text-primary-foreground",
+      features: [
+        "Up to 500 candidates",
+        "15 active courses",
+        "SMS + Email campaigns",
+        "5 Job Mela stalls/year",
+        "Advanced analytics & reports",
+        "Priority stall booking",
+        "Banner ads on platform",
+        "Bulk candidate import",
+        "Priority email support",
+      ],
+      cta: "Upgrade to Growth",
+      disabled: false,
+      highlight: true,
+    },
+    {
+      id: "enterprise",
+      name: "Enterprise",
+      icon: Star,
+      monthlyPrice: 14999,
+      annualPrice: 149990,
+      description: "For large institutions & universities",
+      badge: "Best Value",
+      badgeColor: "bg-accent text-accent-foreground",
+      features: [
+        "Unlimited candidates",
+        "Unlimited courses",
+        "SMS + Email + WhatsApp campaigns",
+        "Unlimited Job Mela stalls",
+        "Custom analytics dashboard",
+        "Dedicated account manager",
+        "White-label branding",
+        "API access & integrations",
+        "Placement guarantee tools",
+        "24/7 phone & chat support",
+      ],
+      cta: "Contact Sales",
+      disabled: false,
+      highlight: false,
+    },
+  ];
+
+  const formatPrice = (price: number) => {
+    if (price === 0) return "Free";
+    return `₹${price.toLocaleString("en-IN")}`;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-2xl font-bold text-foreground">Choose Your Plan</h3>
+        <p className="text-muted-foreground mt-1">Scale your institute with the right plan</p>
+
+        {/* Billing Toggle */}
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <span className={`text-sm font-medium ${billingCycle === "monthly" ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+          <button
+            onClick={() => setBillingCycle(billingCycle === "monthly" ? "annual" : "monthly")}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${billingCycle === "annual" ? "bg-primary" : "bg-muted"}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${billingCycle === "annual" ? "translate-x-6" : "translate-x-1"}`} />
+          </button>
+          <span className={`text-sm font-medium ${billingCycle === "annual" ? "text-foreground" : "text-muted-foreground"}`}>
+            Annual <Badge variant="outline" className="ml-1 text-xs border-primary/30 text-primary">Save 17%</Badge>
+          </span>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {plans.map((plan) => {
+          const price = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
+          return (
+            <Card
+              key={plan.id}
+              className={`relative border-border/50 transition-all hover:shadow-lg ${plan.highlight ? "border-primary ring-2 ring-primary/20 shadow-md" : ""}`}
+            >
+              {plan.highlight && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className={plan.badgeColor}>{plan.badge}</Badge>
+                </div>
+              )}
+              <CardHeader className="text-center pb-2">
+                <div className="mx-auto h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                  <plan.icon className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="text-xl">{plan.name}</CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+                <div className="pt-2">
+                  <span className="text-3xl font-bold text-foreground">{formatPrice(price)}</span>
+                  {price > 0 && (
+                    <span className="text-sm text-muted-foreground">/{billingCycle === "monthly" ? "mo" : "yr"}</span>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Separator />
+                <ul className="space-y-2.5">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span className="text-foreground">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full"
+                  variant={plan.highlight ? "default" : "outline"}
+                  disabled={plan.disabled}
+                  onClick={() => {
+                    if (plan.id === "enterprise") {
+                      toast.info("Our sales team will contact you shortly!");
+                    } else {
+                      toast.success(`Upgrading to ${plan.name} plan...`);
+                    }
+                  }}
+                >
+                  {plan.cta}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Feature Comparison */}
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Feature Comparison</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 pr-4 font-medium text-muted-foreground">Feature</th>
+                  <th className="text-center py-3 px-4 font-medium text-muted-foreground">Starter</th>
+                  <th className="text-center py-3 px-4 font-medium text-primary">Growth</th>
+                  <th className="text-center py-3 px-4 font-medium text-muted-foreground">Enterprise</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {[
+                  { feature: "Candidates", starter: "50", growth: "500", enterprise: "Unlimited" },
+                  { feature: "Active Courses", starter: "3", growth: "15", enterprise: "Unlimited" },
+                  { feature: "Email Campaigns", starter: "✓", growth: "✓", enterprise: "✓" },
+                  { feature: "SMS Campaigns", starter: "✗", growth: "✓", enterprise: "✓" },
+                  { feature: "WhatsApp Campaigns", starter: "✗", growth: "✗", enterprise: "✓" },
+                  { feature: "Job Mela Stalls", starter: "1/yr", growth: "5/yr", enterprise: "Unlimited" },
+                  { feature: "Analytics Dashboard", starter: "Basic", growth: "Advanced", enterprise: "Custom" },
+                  { feature: "Banner Ads", starter: "✗", growth: "✓", enterprise: "✓" },
+                  { feature: "API Access", starter: "✗", growth: "✗", enterprise: "✓" },
+                  { feature: "Dedicated Manager", starter: "✗", growth: "✗", enterprise: "✓" },
+                  { feature: "Support", starter: "Email", growth: "Priority Email", enterprise: "24/7 Phone & Chat" },
+                ].map((row, i) => (
+                  <tr key={i}>
+                    <td className="py-2.5 pr-4 font-medium text-foreground">{row.feature}</td>
+                    <td className="py-2.5 px-4 text-center text-muted-foreground">{row.starter}</td>
+                    <td className="py-2.5 px-4 text-center text-foreground font-medium">{row.growth}</td>
+                    <td className="py-2.5 px-4 text-center text-muted-foreground">{row.enterprise}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
