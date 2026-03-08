@@ -1491,34 +1491,42 @@ const ClickableStagesList = ({
                     {/* If preferred_slots exist, show them for employer to pick */}
                     {slotBooking.preferred_slots && slotBooking.preferred_slots.length > 0 && slotBooking.status !== 'confirmed' ? (
                       <div className="space-y-1.5">
-                        {slotBooking.preferred_slots.map((slot, i) => (
-                          <label
-                            key={i}
-                            className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
-                              selectedPreferredSlot === i 
-                                ? 'border-purple-500 bg-purple-100' 
-                                : 'border-purple-200 bg-white hover:bg-purple-50'
-                            }`}
-                            onClick={() => setSelectedPreferredSlot(i)}
-                          >
-                            <input
-                              type="radio"
-                              name="preferred-slot"
-                              checked={selectedPreferredSlot === i}
-                              onChange={() => setSelectedPreferredSlot(i)}
-                              className="accent-purple-600"
-                            />
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 border-purple-400 text-purple-600">
-                              Option {i + 1}
-                            </Badge>
-                            <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                              📅 {new Date(slot.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                            </Badge>
-                            <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                              🕐 {slot.time}
-                            </Badge>
-                          </label>
-                        ))}
+                        {/* Show date once since all slots share the same date */}
+                        <div className="flex items-center gap-1.5 text-[10px] text-purple-600 font-medium">
+                          📅 {new Date(slotBooking.preferred_slots[0].date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        </div>
+                        {slotBooking.preferred_slots.map((slot, i) => {
+                          const hour = parseInt(slot.time.split(':')[0]);
+                          const minute = slot.time.split(':')[1];
+                          const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                          const ampm = hour < 12 ? 'AM' : 'PM';
+                          const timeLabel = `${displayHour}:${minute} ${ampm}`;
+                          return (
+                            <label
+                              key={i}
+                              className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
+                                selectedPreferredSlot === i 
+                                  ? 'border-purple-500 bg-purple-100' 
+                                  : 'border-purple-200 bg-white hover:bg-purple-50'
+                              }`}
+                              onClick={() => setSelectedPreferredSlot(i)}
+                            >
+                              <input
+                                type="radio"
+                                name="preferred-slot"
+                                checked={selectedPreferredSlot === i}
+                                onChange={() => setSelectedPreferredSlot(i)}
+                                className="accent-purple-600"
+                              />
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 border-purple-400 text-purple-600">
+                                Option {i + 1}
+                              </Badge>
+                              <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
+                                🕐 {timeLabel}
+                              </Badge>
+                            </label>
+                          );
+                        })}
                         
                         <Button
                           size="sm"
