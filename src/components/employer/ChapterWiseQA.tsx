@@ -862,6 +862,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   </div>
                                 ))}
                               </div>
+                            )}
                             {showAnswers && (
                               <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
                                 <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.answer}</p>
