@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -48,6 +49,7 @@ interface AIPaperDetectionProps {
 }
 
 export const AIPaperDetection = ({ jobId, jobTitle, existingSets, onSaved }: AIPaperDetectionProps) => {
+  const [isEnabled, setIsEnabled] = useState(false);
   const [qpFile, setQpFile] = useState<File | null>(null);
   const [akFile, setAkFile] = useState<File | null>(null);
   const [isParsingQP, setIsParsingQP] = useState(false);
@@ -231,21 +233,43 @@ export const AIPaperDetection = ({ jobId, jobTitle, existingSets, onSaved }: AIP
   return (
     <Card className="border-2 border-dashed border-accent/40 bg-accent/5">
       <CardContent className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-            <Brain className="h-4 w-4 text-accent" />
+        {/* Header with Enable/Disable */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+              <Brain className="h-4 w-4 text-accent" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-accent" />
+                AI Paper Detection
+              </h3>
+              <p className="text-[11px] text-muted-foreground">
+                Upload Question Paper & Answer Key PDFs — AI will auto-detect questions and answers
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-accent" />
-              AI Paper Detection
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              Upload Question Paper & Answer Key PDFs — AI will auto-detect questions and answers
-            </p>
+          <div className="flex items-center gap-2">
+            <Badge variant={isEnabled ? "default" : "secondary"} className="text-[10px]">
+              {isEnabled ? "Enabled" : "Disabled"}
+            </Badge>
+            <Switch checked={isEnabled} onCheckedChange={(checked) => {
+              setIsEnabled(checked);
+              toast.success(checked ? "AI Paper Detection enabled — detected questions will be shown to candidates" : "AI Paper Detection disabled");
+            }} />
           </div>
         </div>
+
+        {!isEnabled && (
+          <div className="p-3 rounded-lg bg-warning/10 border border-warning/30">
+            <p className="text-[11px] text-muted-foreground">
+              ⚠ AI Paper Detection is disabled. Enable it to upload PDFs and show detected questions to candidates.
+            </p>
+          </div>
+        )}
+
+        {isEnabled && (
+          <>
 
         {/* Upload Area */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -441,6 +465,8 @@ export const AIPaperDetection = ({ jobId, jobTitle, existingSets, onSaved }: AIP
               Answers detected! Now upload the <strong>Question Paper PDF</strong> to match questions automatically.
             </p>
           </div>
+        )}
+        </>
         )}
       </CardContent>
     </Card>

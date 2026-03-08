@@ -982,10 +982,28 @@ export const QPMContent = () => {
 
               {paper ? (
                 <>
-                  {paper.is_active ? (
-                    <Badge variant="default" className="text-[10px] mb-2">Active</Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-[10px] mb-2">Inactive</Badge>
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge variant={paper.is_active ? "default" : "secondary"} className="text-[10px]">
+                      {paper.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                    <Switch
+                      checked={paper.is_active}
+                      onCheckedChange={async (checked) => {
+                        const { error } = await supabase
+                          .from("interview_question_papers")
+                          .update({ is_active: checked } as any)
+                          .eq("id", paper.id);
+                        if (error) {
+                          toast.error("Failed to update status");
+                        } else {
+                          toast.success(checked ? `Set ${paper.set_number} enabled` : `Set ${paper.set_number} disabled`);
+                          fetchPapers(selectedJob.id);
+                        }
+                      }}
+                    />
+                  </div>
+                  {!paper.is_active && (
+                    <p className="text-[9px] text-warning mb-1.5">⚠ Candidates won't see this set</p>
                   )}
 
                   <div className="flex gap-1.5 mt-1">
