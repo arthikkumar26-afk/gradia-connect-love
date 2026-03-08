@@ -623,7 +623,21 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                   <Eye className="h-4 w-4 text-primary" />
                   {showAnswers ? "Question Paper with Answer Key" : "Question Paper (Candidate View)"}
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-muted/30">
+                    <Switch
+                      checked={isPaperActive}
+                      onCheckedChange={handleToggleActive}
+                    />
+                    <span className="text-xs font-medium">
+                      {isPaperActive ? "Enabled" : "Disabled"}
+                    </span>
+                    {isPaperActive ? (
+                      <Badge className="text-[10px] bg-green-600">Active</Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px]">Inactive</Badge>
+                    )}
+                  </div>
                   <Button
                     variant={showAnswers ? "default" : "secondary"}
                     size="sm"
@@ -634,6 +648,12 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                   </Button>
                 </div>
               </div>
+              {!isPaperActive && (
+                <div className="p-2 rounded-lg bg-yellow-50 border border-yellow-200 text-xs text-yellow-800 dark:bg-yellow-950 dark:border-yellow-700 dark:text-yellow-300 flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>This paper is disabled. Candidates will not see these questions during assessment.</span>
+                </div>
+              )}
               {!showAnswers && (
                 <div className="p-2 rounded-lg bg-accent/50 border border-accent text-xs text-accent-foreground flex items-center gap-2">
                   <span>👁️</span>
