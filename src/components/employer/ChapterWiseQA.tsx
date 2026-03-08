@@ -561,9 +561,19 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                       <Eye className="h-4 w-4 text-primary" />
                       Generated Question Paper Preview
                     </h3>
-                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
-                      {showPreview ? "Hide" : "Show"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={showAnswers ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => setShowAnswers(!showAnswers)}
+                      >
+                        {showAnswers ? "📝 With Answers" : "📄 Without Answers"}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
+                        {showPreview ? "Hide" : "Show"}
+                      </Button>
+                    </div>
                   </div>
 
                   {generatedQuestions.sections?.map((section: any, sIdx: number) => (
