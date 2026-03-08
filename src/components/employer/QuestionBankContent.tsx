@@ -562,7 +562,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                   onChange={e => setPreviewCount(Math.max(1, Math.min(totalQuestions, parseInt(e.target.value) || 1)))}
                   className="w-16 h-7 text-xs text-center"
                 />
-                <Button size="sm" className="text-xs h-8 gap-1.5" onClick={() => setShowPreview(true)}>
+                <Button size="sm" className="text-xs h-8 gap-1.5" onClick={handleOpenPreview}>
                   <Eye className="h-3.5 w-3.5" /> Preview Question Paper
                 </Button>
               </div>
