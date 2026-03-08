@@ -80,6 +80,34 @@ export const StageResultsModal = ({
       setError(null);
       
       try {
+        // For slot booking stages, fetch booking data instead
+        if (isSlotBookingStage) {
+          const { data: icData } = await supabase
+            .from('interview_candidates')
+            .select('candidate_id')
+            .eq('id', interviewCandidateId)
+            .single();
+
+          if (icData?.candidate_id) {
+            const bookingType = stageName.toLowerCase().includes('demo') ? 'demo' 
+              : stageName.toLowerCase().includes('hr') ? 'hr' 
+              : 'written';
+
+            const { data: bookings } = await supabase
+              .from('slot_bookings')
+              .select('booking_date, booking_time, status, preferred_slots, subject, created_at, observer_email')
+              .eq('candidate_id', icData.candidate_id)
+              .order('created_at', { ascending: false });
+
+            const booking = bookings?.find(b => 
+              b.subject?.toLowerCase().includes(bookingType)
+            ) || null;
+
+            setSlotBookingData(booking ? { ...booking, preferred_slots: (booking.preferred_slots as any) || null } : null);
+          }
+          setLoading(false);
+          return;
+        }
         // Get interview event for this stage - prefer completed events with actual AI scores
         // First try to find a completed event that has a real AI score (not 0/null from manual advance)
         let { data: event, error: eventError } = await supabase
