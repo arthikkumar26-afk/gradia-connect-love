@@ -438,8 +438,101 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
               );
             })}
           </div>
+
+            {/* Preview Button */}
+            {totalQuestions > 0 && (
+              <div className="flex items-center justify-between pt-2 border-t">
+                <p className="text-xs text-muted-foreground">
+                  Total: <span className="font-semibold text-foreground">{totalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{grandTotalMarks} Marks</span>
+                </p>
+                <Button size="sm" className="text-xs h-8 gap-1.5" onClick={() => setShowPreview(true)}>
+                  <Eye className="h-3.5 w-3.5" /> Preview Question Paper
+                </Button>
+              </div>
+            )}
+          </div>
         )}
-      </CardContent>
+
+        {/* Preview Dialog */}
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="max-w-3xl max-h-[90vh] p-0">
+            <DialogHeader className="px-6 pt-5 pb-3 border-b">
+              <DialogTitle className="text-base font-bold">Question Paper Preview</DialogTitle>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{jobTitle}</span>
+                <Separator orientation="vertical" className="h-3" />
+                <span className="font-medium text-foreground">{totalQuestions} Questions</span>
+                <Separator orientation="vertical" className="h-3" />
+                <span className="font-medium text-amber-600">{grandTotalMarks} Marks</span>
+              </div>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh] px-6 py-4">
+              <div className="space-y-6">
+                {SECTIONS.map((section) => {
+                  const questions = sectionQuestions[section.key] || [];
+                  if (questions.length === 0) return null;
+                  const sectionMarks = questions.reduce((s, q) => s + (q.marks || 0), 0);
+                  let globalQ = 0;
+                  // count questions before this section
+                  for (const sec of SECTIONS) {
+                    if (sec.key === section.key) break;
+                    globalQ += (sectionQuestions[sec.key] || []).length;
+                  }
+
+                  return (
+                    <div key={section.key}>
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b">
+                        <span className={section.color}>{section.icon}</span>
+                        <h3 className="text-sm font-bold text-foreground flex-1">{section.label}</h3>
+                        <Badge variant="outline" className="text-[10px]">{questions.length} Q</Badge>
+                        <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300">{sectionMarks} Marks</Badge>
+                      </div>
+                      <div className="space-y-3">
+                        {questions.map((q, idx) => {
+                          const qNum = globalQ + idx + 1;
+                          return (
+                            <div key={q.id} className="pl-1">
+                              <div className="flex gap-2">
+                                <span className="text-xs font-semibold text-muted-foreground shrink-0 w-7">{qNum}.</span>
+                                <div className="flex-1 space-y-1.5">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-xs text-foreground">{q.question_text}</p>
+                                    <Badge variant="secondary" className="text-[9px] shrink-0">{q.marks}m</Badge>
+                                  </div>
+                                  {q.options && q.options.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-1 ml-1">
+                                      {q.options.map((opt, oIdx) => (
+                                        <p key={oIdx} className="text-[11px] text-muted-foreground">
+                                          {String.fromCharCode(65 + oIdx)}) {opt}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {section.key === "true_false" && (
+                                    <div className="flex gap-3 ml-1">
+                                      <span className="text-[11px] text-muted-foreground">A) True</span>
+                                      <span className="text-[11px] text-muted-foreground">B) False</span>
+                                    </div>
+                                  )}
+                                  {(section.key === "short_answer" || section.key === "long_answer") && (
+                                    <div className={`border border-dashed rounded mt-1 ${section.key === "long_answer" ? "h-20" : "h-10"}`} />
+                                  )}
+                                  {section.key === "fill_blank" && (
+                                    <div className="border-b border-dashed w-40 mt-1" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
     </Card>
   );
 };
