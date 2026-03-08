@@ -59,7 +59,7 @@ export const DemoRoundOptions = ({
   };
 
   const handleSendMeetLink = async () => {
-    if (meetType === 'manual_link' && !meetLink.trim()) {
+    if ((meetType === 'google_meet' || meetType === 'zoom_meet') && !meetLink.trim()) {
       toast.error('Please enter a meeting link');
       return;
     }
