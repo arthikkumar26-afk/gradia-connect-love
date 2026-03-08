@@ -1035,10 +1035,10 @@ const ClickableStagesList = ({
 
           // Find HR Round slot booking
           const hrBooking = bookings?.find(b => 
-            b.subject?.toLowerCase().includes('hr')
+            b.subject?.toLowerCase().includes('hr') || b.booking_type === 'hr_round'
           ) || null;
           
-          setHrSlotBooking(hrBooking);
+          setHrSlotBooking(hrBooking ? { ...hrBooking, preferred_slots: (hrBooking.preferred_slots as any) || null } : null);
           if (hrBooking?.observer_email) {
             const emails = hrBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
             setHrObserverEmails(emails);
