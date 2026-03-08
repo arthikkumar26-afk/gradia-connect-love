@@ -337,6 +337,26 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
               </div>
             )}
 
+            {/* Total Marks Input */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+              <Label className="text-sm font-semibold whitespace-nowrap">Total Marks for Paper:</Label>
+              <Input
+                type="number"
+                min={1}
+                value={paperTotalMarks}
+                onChange={(e) => setPaperTotalMarks(parseInt(e.target.value) || 0)}
+                className="h-8 w-28 text-sm font-bold"
+              />
+              {totalMarks !== paperTotalMarks && (
+                <Badge variant="destructive" className="text-[10px]">
+                  Section total: {totalMarks} ≠ {paperTotalMarks}
+                </Badge>
+              )}
+              {totalMarks === paperTotalMarks && (
+                <Badge className="text-[10px] bg-green-600">✓ Matched</Badge>
+              )}
+            </div>
+
             {/* Step 3: Configure Sections */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
