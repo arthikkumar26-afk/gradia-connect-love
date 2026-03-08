@@ -489,67 +489,104 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] px-6 py-4">
               <div className="space-y-6">
-                {SECTIONS.map((section) => {
-                  const questions = sectionQuestions[section.key] || [];
-                  if (questions.length === 0) return null;
-                  const sectionMarks = questions.reduce((s, q) => s + (q.marks || 0), 0);
-                  let globalQ = 0;
-                  // count questions before this section
-                  for (const sec of SECTIONS) {
-                    if (sec.key === section.key) break;
-                    globalQ += (sectionQuestions[sec.key] || []).length;
-                  }
+                {(() => {
+                  // Build exam sections from available question types
+                  const sectionLetters = "ABCDEFGHIJ".split("");
+                  const pickCounts: Record<string, number> = {
+                    mcq: 5, fill_blank: 5, true_false: 5, match: 3,
+                    assertion: 3, short_answer: 4, long_answer: 2,
+                    image_base: 2, map_base: 2,
+                  };
 
-                  return (
-                    <div key={section.key}>
-                      <div className="flex items-center gap-2 mb-3 pb-2 border-b">
-                        <span className={section.color}>{section.icon}</span>
-                        <h3 className="text-sm font-bold text-foreground flex-1">{section.label}</h3>
-                        <Badge variant="outline" className="text-[10px]">{questions.length} Q</Badge>
-                        <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300">{sectionMarks} Marks</Badge>
-                      </div>
-                      <div className="space-y-3">
-                        {questions.map((q, idx) => {
-                          const qNum = globalQ + idx + 1;
-                          return (
-                            <div key={q.id} className="pl-1">
-                              <div className="flex gap-2">
-                                <span className="text-xs font-semibold text-muted-foreground shrink-0 w-7">{qNum}.</span>
-                                <div className="flex-1 space-y-1.5">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <p className="text-xs text-foreground">{q.question_text}</p>
-                                    <Badge variant="secondary" className="text-[9px] shrink-0">{q.marks}m</Badge>
+                  // Shuffle helper
+                  const shuffle = <T,>(arr: T[]): T[] => {
+                    const a = [...arr];
+                    for (let i = a.length - 1; i > 0; i--) {
+                      const j = Math.floor(Math.random() * (i + 1));
+                      [a[i], a[j]] = [a[j], a[i]];
+                    }
+                    return a;
+                  };
+
+                  let globalQ = 0;
+                  let sectionIdx = 0;
+
+                  return SECTIONS.map((section) => {
+                    const allQs = sectionQuestions[section.key] || [];
+                    if (allQs.length === 0) return null;
+
+                    const pick = Math.min(pickCounts[section.key] || 3, allQs.length);
+                    const selected = shuffle(allQs).slice(0, pick);
+                    const sectionMarks = selected.reduce((s, q) => s + (q.marks || 0), 0);
+                    const letter = sectionLetters[sectionIdx] || `${sectionIdx + 1}`;
+                    sectionIdx++;
+
+                    const sectionContent = (
+                      <div key={section.key}>
+                        <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-foreground/20">
+                          <h3 className="text-sm font-bold text-foreground flex-1">
+                            Section {letter} — {section.label}
+                          </h3>
+                          <Badge variant="outline" className="text-[10px]">{selected.length} Q</Badge>
+                          <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300">
+                            {sectionMarks} Marks
+                          </Badge>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground italic mb-2">
+                          {section.key === "mcq" && "Choose the correct option for each question."}
+                          {section.key === "fill_blank" && "Fill in the blanks with appropriate words."}
+                          {section.key === "true_false" && "State whether the following statements are True or False."}
+                          {section.key === "match" && "Match the items in Column A with Column B."}
+                          {section.key === "assertion" && "Read the Assertion and Reason, then choose the correct option."}
+                          {section.key === "short_answer" && "Answer the following questions briefly."}
+                          {section.key === "long_answer" && "Answer the following questions in detail."}
+                          {section.key === "image_base" && "Observe the image and answer the questions."}
+                          {section.key === "map_base" && "Study the map and answer the questions."}
+                        </p>
+                        <div className="space-y-3">
+                          {selected.map((q, idx) => {
+                            globalQ++;
+                            return (
+                              <div key={q.id} className="pl-1">
+                                <div className="flex gap-2">
+                                  <span className="text-xs font-semibold text-muted-foreground shrink-0 w-7">{globalQ}.</span>
+                                  <div className="flex-1 space-y-1.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <p className="text-xs text-foreground">{q.question_text}</p>
+                                      <Badge variant="secondary" className="text-[9px] shrink-0">{q.marks}m</Badge>
+                                    </div>
+                                    {q.options && q.options.length > 0 && (
+                                      <div className="grid grid-cols-2 gap-1 ml-1">
+                                        {q.options.map((opt, oIdx) => (
+                                          <p key={oIdx} className="text-[11px] text-muted-foreground">
+                                            {String.fromCharCode(65 + oIdx)}) {opt}
+                                          </p>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {section.key === "true_false" && (
+                                      <div className="flex gap-3 ml-1">
+                                        <span className="text-[11px] text-muted-foreground">A) True</span>
+                                        <span className="text-[11px] text-muted-foreground">B) False</span>
+                                      </div>
+                                    )}
+                                    {(section.key === "short_answer" || section.key === "long_answer") && (
+                                      <div className={`border border-dashed rounded mt-1 ${section.key === "long_answer" ? "h-20" : "h-10"}`} />
+                                    )}
+                                    {section.key === "fill_blank" && (
+                                      <div className="border-b border-dashed w-40 mt-1" />
+                                    )}
                                   </div>
-                                  {q.options && q.options.length > 0 && (
-                                    <div className="grid grid-cols-2 gap-1 ml-1">
-                                      {q.options.map((opt, oIdx) => (
-                                        <p key={oIdx} className="text-[11px] text-muted-foreground">
-                                          {String.fromCharCode(65 + oIdx)}) {opt}
-                                        </p>
-                                      ))}
-                                    </div>
-                                  )}
-                                  {section.key === "true_false" && (
-                                    <div className="flex gap-3 ml-1">
-                                      <span className="text-[11px] text-muted-foreground">A) True</span>
-                                      <span className="text-[11px] text-muted-foreground">B) False</span>
-                                    </div>
-                                  )}
-                                  {(section.key === "short_answer" || section.key === "long_answer") && (
-                                    <div className={`border border-dashed rounded mt-1 ${section.key === "long_answer" ? "h-20" : "h-10"}`} />
-                                  )}
-                                  {section.key === "fill_blank" && (
-                                    <div className="border-b border-dashed w-40 mt-1" />
-                                  )}
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                    return sectionContent;
+                  });
+                })()}
               </div>
             </ScrollArea>
           </DialogContent>
