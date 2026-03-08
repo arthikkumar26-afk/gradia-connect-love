@@ -114,6 +114,8 @@ Question Types:
 - "short_answer" = Short answer (1-2 lines). Include answer field.
 - "long_answer" = Long/descriptive answer (essay type). Include answer field with detailed answer.
 - "fill_in_the_blanks" = A sentence with one word/phrase replaced by "______". Include 4 options (A, B, C, D), correct_option field, answer field, and sentence_with_blank field showing the sentence with the blank.
+- "match_the_following" = Match items from Column A to Column B. Include column_a (array of items), column_b (array of shuffled items), 4 options showing different match combinations (A, B, C, D), correct_option field, and answer field with correct matching.
+- "assertion_reasoning" = Assertion & Reasoning type. Include assertion field, reason field, 4 options like "(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)". Include correct_option (1-4), and answer field.
 
 Chapters to cover: ${chapterNames}
 
@@ -180,6 +182,42 @@ Return ONLY valid JSON in this format:
           "chapter": "Chapter name"
         }
       ]
+    },
+    {
+      "name": "E",
+      "marks_per_question": 2,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Match the following:",
+          "type": "match_the_following",
+          "marks": 2,
+          "column_a": ["Photosynthesis", "Respiration", "Transpiration"],
+          "column_b": ["Loss of water", "CO2 absorption", "O2 consumption"],
+          "options": ["1-B, 2-C, 3-A", "1-A, 2-B, 3-C", "1-C, 2-A, 3-B", "1-B, 2-A, 3-C"],
+          "correct_option": "A",
+          "answer": "1-B, 2-C, 3-A",
+          "chapter": "Chapter name"
+        }
+      ]
+    },
+    {
+      "name": "F",
+      "marks_per_question": 2,
+      "questions": [
+        {
+          "id": 1,
+          "question": "Read the Assertion and Reason and choose the correct option.",
+          "type": "assertion_reasoning",
+          "marks": 2,
+          "assertion": "Photosynthesis occurs in chloroplasts.",
+          "reason": "Chloroplasts contain chlorophyll which absorbs light energy.",
+          "options": ["(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)"],
+          "correct_option": "3",
+          "answer": "Both (A) and (R) are true and (R) is the correct explanation of (A)",
+          "chapter": "Chapter name"
+        }
+      ]
     }
   ]
 }`
@@ -238,12 +276,22 @@ Return ONLY valid JSON in this format:
               marks: s.marksPerQuestion,
               answer: "Please regenerate questions",
               chapter: chapterNames,
-              ...(s.questionType === "mcq" || s.questionType === "fill_in_the_blanks" ? {
+              ...(s.questionType === "mcq" || s.questionType === "fill_in_the_blanks" || s.questionType === "match_the_following" ? {
                 options: ["Option A", "Option B", "Option C", "Option D"],
                 correct_option: "A",
               } : {}),
               ...(s.questionType === "fill_in_the_blanks" ? {
                 sentence_with_blank: "The ______ needs to be regenerated.",
+              } : {}),
+              ...(s.questionType === "match_the_following" ? {
+                column_a: ["Item 1", "Item 2", "Item 3"],
+                column_b: ["Match A", "Match B", "Match C"],
+              } : {}),
+              ...(s.questionType === "assertion_reasoning" ? {
+                assertion: "Assertion placeholder",
+                reason: "Reason placeholder",
+                options: ["(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)"],
+                correct_option: "3",
               } : {}),
             })),
           })),

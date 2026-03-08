@@ -20,7 +20,7 @@ interface SectionConfig {
   name: string;
   marksPerQuestion: number;
   questionCount: number;
-  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks";
+  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks" | "match_the_following" | "assertion_reasoning";
   difficulty: "easy" | "medium" | "hard";
 }
 
@@ -453,6 +453,8 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <SelectItem value="short_answer">Short Answer</SelectItem>
                                   <SelectItem value="mcq">MCQ</SelectItem>
                                   <SelectItem value="fill_in_the_blanks">Fill in the Blanks</SelectItem>
+                                  <SelectItem value="match_the_following">Match the Following</SelectItem>
+                                  <SelectItem value="assertion_reasoning">Assertion & Reasoning</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -525,7 +527,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Badge variant="outline" className="text-[10px]">
-                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : "Long Answer"}
+                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : section.questionType === "match_the_following" ? "Match the Following" : section.questionType === "assertion_reasoning" ? "Assertion & Reasoning" : "Long Answer"}
                           </Badge>
                           <Badge className={`text-[10px] ${section.difficulty === "hard" ? "bg-destructive" : section.difficulty === "easy" ? "bg-green-600" : "bg-yellow-500"}`}>
                             {section.difficulty.charAt(0).toUpperCase() + section.difficulty.slice(1)}
@@ -659,6 +661,56 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                       }`}>
                                         {String.fromCharCode(65 + oIdx)}) {opt}
                                       </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {q.type === "match_the_following" && q.column_a && q.column_b && (
+                              <div className="mt-1 space-y-1">
+                                <div className="grid grid-cols-2 gap-2 ml-1">
+                                  <div>
+                                    <p className="text-[10px] font-semibold text-muted-foreground mb-1">Column A</p>
+                                    {q.column_a.map((item: string, i: number) => (
+                                      <p key={i} className="text-[10px] py-0.5">{i + 1}. {item}</p>
+                                    ))}
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-semibold text-muted-foreground mb-1">Column B</p>
+                                    {q.column_b.map((item: string, i: number) => (
+                                      <p key={i} className="text-[10px] py-0.5">{String.fromCharCode(65 + i)}. {item}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                                {q.options && (
+                                  <div className="flex flex-wrap gap-1 ml-1 mt-1">
+                                    {q.options.map((opt: string, oIdx: number) => (
+                                      <span key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                        showAnswers && q.correct_option === String.fromCharCode(65 + oIdx)
+                                          ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                          : "bg-muted/30 border-border"
+                                      }`}>
+                                        {String.fromCharCode(65 + oIdx)}) {opt}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {q.type === "assertion_reasoning" && (
+                              <div className="mt-1 space-y-1 ml-1">
+                                <p className="text-[10px]"><span className="font-semibold">Assertion (A):</span> {q.assertion}</p>
+                                <p className="text-[10px]"><span className="font-semibold">Reason (R):</span> {q.reason}</p>
+                                {q.options && (
+                                  <div className="space-y-0.5 mt-1">
+                                    {q.options.map((opt: string, oIdx: number) => (
+                                      <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                        showAnswers && q.correct_option === String.fromCharCode(49 + oIdx)
+                                          ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                          : "bg-muted/30 border-border"
+                                      }`}>
+                                        ({oIdx + 1}) {opt}
+                                      </div>
                                     ))}
                                   </div>
                                 )}
