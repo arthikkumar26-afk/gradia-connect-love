@@ -39,6 +39,7 @@ interface ChapterWiseQAProps {
 
 export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isChapterEnabled, setIsChapterEnabled] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfText, setPdfText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
@@ -264,8 +265,27 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
               </p>
             </div>
           </div>
-          {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          <div className="flex items-center gap-2">
+            <Badge variant={isChapterEnabled ? "default" : "secondary"} className="text-[10px]">
+              {isChapterEnabled ? "Enabled" : "Disabled"}
+            </Badge>
+            <div onClick={(e) => e.stopPropagation()}>
+              <Switch checked={isChapterEnabled} onCheckedChange={(checked) => {
+                setIsChapterEnabled(checked);
+                toast.success(checked ? "Chapter-wise Q&A enabled — questions will be shown to candidates" : "Chapter-wise Q&A disabled — hidden from candidates");
+              }} />
+            </div>
+            {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          </div>
         </div>
+
+        {!isChapterEnabled && isExpanded && (
+          <div className="mt-3 p-3 rounded-lg bg-warning/10 border border-warning/30">
+            <p className="text-[11px] text-muted-foreground">
+              ⚠ Chapter-wise Q&A is disabled. Enable it to show generated questions to candidates.
+            </p>
+          </div>
+        )}
 
         {isExpanded && (
           <div className="mt-5 space-y-5">

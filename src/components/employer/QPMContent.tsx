@@ -85,6 +85,7 @@ export const QPMContent = () => {
   const [viewingPaper, setViewingPaper] = useState<QuestionPaper | null>(null);
   const [useAiQuestions, setUseAiQuestions] = useState(false);
   const [isTogglingAi, setIsTogglingAi] = useState(false);
+  const [isManualSetsEnabled, setIsManualSetsEnabled] = useState(true);
 
   // Fetch jobs - with auth state listener for reliability
   useEffect(() => {
@@ -952,8 +953,38 @@ export const QPMContent = () => {
         </CardContent>
       </Card>
 
-      {/* Always show 4 set slots side by side */}
+      {/* Manual Question Sets Section */}
       {!useAiQuestions && (
+      <Card className={`border-2 transition-colors ${isManualSetsEnabled ? "border-primary/30 bg-primary/5" : "border-dashed border-muted-foreground/30"}`}>
+        <CardContent className="py-4 px-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isManualSetsEnabled ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                <BookOpen className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Manual Question Sets (Set 1–4)</p>
+                <p className="text-xs text-muted-foreground">
+                  {isManualSetsEnabled ? "Create up to 4 question paper sets for candidates" : "Enable to use manual question sets for assessments"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={isManualSetsEnabled ? "default" : "secondary"} className="text-[10px]">
+                {isManualSetsEnabled ? "Enabled" : "Disabled"}
+              </Badge>
+              <Switch checked={isManualSetsEnabled} onCheckedChange={(checked) => {
+                setIsManualSetsEnabled(checked);
+                toast.success(checked ? "Manual question sets enabled — candidates will see these sets" : "Manual question sets disabled — hidden from candidates");
+              }} />
+            </div>
+          </div>
+          {!isManualSetsEnabled && (
+            <div className="p-3 rounded-lg bg-warning/10 border border-warning/30">
+              <p className="text-[11px] text-muted-foreground">⚠ Manual question sets are disabled. Candidates won't see Set 1–4 questions.</p>
+            </div>
+          )}
+          {isManualSetsEnabled && (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {allSets.map(({ setNumber, paper }) => (
           <Card 
@@ -1030,6 +1061,9 @@ export const QPMContent = () => {
           </Card>
         ))}
       </div>
+          )}
+        </CardContent>
+      </Card>
       )}
 
       {/* Review Question Papers - Show all created sets inline (only when AI mode is off) */}
