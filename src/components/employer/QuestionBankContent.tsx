@@ -899,7 +899,13 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
         </Dialog>
 
         {/* Saved Papers History */}
-        {savedPapers.length > 0 && (
+        {loadingPapers && (
+          <div className="mt-4 border-t pt-3 flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <p className="text-xs">Loading saved papers...</p>
+          </div>
+        )}
+        {!loadingPapers && savedPapers.length > 0 && (
           <div className="mt-4 border-t pt-3 space-y-3">
             <div className="flex items-center gap-2">
               <FolderOpen className="h-4 w-4 text-primary" />
