@@ -673,20 +673,6 @@ const BookSlot = () => {
                 )}
               </Button>
             </>
-          )}
-          >
-            {isBooking ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Booking...
-              </>
-            ) : (
-              <>
-                <Calendar className="h-5 w-5 mr-2" />
-                Confirm Booking
-              </>
-            )}
-          </Button>
         </CardContent>
       </Card>
     </div>
