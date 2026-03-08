@@ -231,6 +231,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
         )}
 
         {isEnabled && (
+          <>
           <div className="space-y-2">
             {SECTIONS.map((section) => {
               const questions = sectionQuestions[section.key] || [];
