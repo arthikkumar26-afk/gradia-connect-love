@@ -1017,7 +1017,7 @@ const ClickableStagesList = ({
             .order('created_at', { ascending: false });
 
           const demoBooking = bookings?.find(b => 
-            b.subject?.toLowerCase().includes('demo')
+            b.subject?.toLowerCase().includes('demo') || (b as any).booking_type === 'demo_round'
           ) || null;
           
           setSlotBooking(demoBooking ? { ...demoBooking, preferred_slots: (demoBooking.preferred_slots as any) || null } : null);
