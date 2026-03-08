@@ -42,6 +42,14 @@ interface QuestionBankQuestion {
   uploadedAt: Date;
 }
 
+interface SavedPaper {
+  id: string;
+  savedAt: Date;
+  questionCount: number;
+  totalMarks: number;
+  sections: { key: string; label: string; questions: QuestionBankQuestion[] }[];
+}
+
 interface SectionConfig {
   key: string;
   label: string;
