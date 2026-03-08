@@ -29,34 +29,13 @@ const BookSlot = () => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Demo slot booking: 3 preferred timings
+  // Demo slot booking: single date + 3 preferred timings
   const isDemoStage = stageName.toLowerCase().includes("demo");
   const [preferredSlots, setPreferredSlots] = useState<{ date: string; time: string }[]>([]);
-  const [currentSlotDate, setCurrentSlotDate] = useState("");
-  const [currentSlotTime, setCurrentSlotTime] = useState("");
-
-  const handleAddPreferredSlot = () => {
-    if (!currentSlotDate || !currentSlotTime) {
-      toast.error("Please select both date and time");
-      return;
-    }
-    if (preferredSlots.length >= 3) {
-      toast.error("You can only add up to 3 preferred timings");
-      return;
-    }
-    const duplicate = preferredSlots.some(s => s.date === currentSlotDate && s.time === currentSlotTime);
-    if (duplicate) {
-      toast.error("This timing is already added");
-      return;
-    }
-    setPreferredSlots(prev => [...prev, { date: currentSlotDate, time: currentSlotTime }]);
-    setCurrentSlotDate("");
-    setCurrentSlotTime("");
-  };
-
-  const handleRemovePreferredSlot = (index: number) => {
-    setPreferredSlots(prev => prev.filter((_, i) => i !== index));
-  };
+  const [demoDate, setDemoDate] = useState("");
+  const [demoTime1, setDemoTime1] = useState("");
+  const [demoTime2, setDemoTime2] = useState("");
+  const [demoTime3, setDemoTime3] = useState("");
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
@@ -162,12 +141,17 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    // For demo, require 3 preferred slots
+    // For demo, build preferred slots from single date + 3 times
+    let demoSlots: { date: string; time: string }[] = [];
     if (isDemoStage) {
-      if (preferredSlots.length < 1) {
-        toast.error("Please add at least 1 preferred timing (up to 3)");
+      const times = [demoTime1, demoTime2, demoTime3].filter(Boolean);
+      const uniqueTimes = [...new Set(times)];
+      if (!demoDate || uniqueTimes.length < 3) {
+        toast.error("Please select a date and 3 different timings");
         return;
       }
+      demoSlots = uniqueTimes.map(t => ({ date: demoDate, time: t }));
+      setPreferredSlots(demoSlots);
     } else {
       if (!selectedDate || !selectedTime) {
         toast.error("Please select both date and time");
@@ -199,15 +183,14 @@ const BookSlot = () => {
 
       if (interviewCandidate?.candidate_id) {
         if (isDemoStage) {
-          // For demo: save first preferred slot as booking_date/time, all 3 in preferred_slots
           await supabase.from("slot_bookings").insert({
             candidate_id: interviewCandidate.candidate_id,
-            booking_date: preferredSlots[0].date,
-            booking_time: preferredSlots[0].time,
+            booking_date: demoSlots[0].date,
+            booking_time: demoSlots[0].time,
             booking_type: bookingType,
             status: "pending",
             subject: stageName,
-            preferred_slots: preferredSlots as any,
+            preferred_slots: demoSlots as any,
           });
         } else {
           await supabase.from("slot_bookings").insert({
@@ -222,12 +205,11 @@ const BookSlot = () => {
       }
 
       if (isDemoStage) {
-        // Send confirmation email to candidate with 3 preferred timings + notify employer
         try {
           await supabase.functions.invoke("send-demo-slot-confirmation", {
             body: {
               interviewCandidateId: candidateId,
-              preferredSlots,
+              preferredSlots: demoSlots,
             },
           });
         } catch (emailErr) {
@@ -349,16 +331,18 @@ const BookSlot = () => {
               <>
                 <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
                 <p className="text-muted-foreground">
-                  You have submitted <strong>{preferredSlots.length}</strong> preferred timing(s) for <strong>{stageName}</strong>.
+                  You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-sm font-semibold">
+                      {demoDate ? new Date(demoDate).toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : ""}
+                    </span>
+                  </div>
                   {preferredSlots.map((slot, i) => (
                     <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
                       <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
-                      <Calendar className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {new Date(slot.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })}
-                      </span>
                       <Clock className="h-4 w-4" />
                       <span className="text-sm font-medium">
                         {getTimeSlots().find((s) => s.value === slot.time)?.label || slot.time}
@@ -455,99 +439,74 @@ const BookSlot = () => {
 
           {isDemoStage ? (
             <>
-              {/* Demo: 3 Preferred Timings */}
+              {/* Demo: Single Date + 3 Preferred Timings */}
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <p className="text-sm text-purple-800 font-medium">
-                  📋 Choose up to 3 preferred timings. The employer will select one and send you the meeting link.
+                  📋 Select a date and choose 3 preferred timings. The employer will confirm one and send you the meeting link.
                 </p>
               </div>
 
-              {/* Added slots */}
-              {preferredSlots.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Your Preferred Timings ({preferredSlots.length}/3)</label>
-                  {preferredSlots.map((slot, i) => (
-                    <div key={i} className="flex items-center justify-between bg-muted/50 rounded-lg p-3 border">
-                      <div className="flex items-center gap-3">
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200">Option {i + 1}</Badge>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>{new Date(slot.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span>{getTimeSlots().find(s => s.value === slot.time)?.label || slot.time}</span>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleRemovePreferredSlot(i)}
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Date Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-purple-600" />
+                  Select Date *
+                </label>
+                <Select value={demoDate} onValueChange={setDemoDate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAvailableDates().map((date) => (
+                      <SelectItem key={date.value} value={date.value}>
+                        {date.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              {preferredSlots.length < 3 && (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-purple-600" />
-                      Select Date
-                    </label>
-                    <Select value={currentSlotDate} onValueChange={setCurrentSlotDate}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a date" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAvailableDates().map((date) => (
-                          <SelectItem key={date.value} value={date.value}>
-                            {date.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {/* 3 Time Selections */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-purple-600" />
+                  Select 3 Preferred Timings *
+                </label>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-purple-600" />
-                      Select Time
-                    </label>
-                    <Select value={currentSlotTime} onValueChange={setCurrentSlotTime}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a time slot" />
+                {[
+                  { label: "Option 1", value: demoTime1, setter: setDemoTime1 },
+                  { label: "Option 2", value: demoTime2, setter: setDemoTime2 },
+                  { label: "Option 3", value: demoTime3, setter: setDemoTime3 },
+                ].map((slot, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 shrink-0 text-xs">
+                      {slot.label}
+                    </Badge>
+                    <Select value={slot.value} onValueChange={slot.setter}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder={`Choose time ${i + 1}`} />
                       </SelectTrigger>
                       <SelectContent className="max-h-60">
-                        {getTimeSlots().map((slot) => (
-                          <SelectItem key={slot.value} value={slot.value}>
-                            {slot.label}
+                        {getTimeSlots().map((ts) => (
+                          <SelectItem key={ts.value} value={ts.value}>
+                            {ts.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
+                ))}
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
-                    onClick={handleAddPreferredSlot}
-                    disabled={!currentSlotDate || !currentSlotTime}
-                  >
-                    + Add Timing ({preferredSlots.length}/3)
-                  </Button>
-                </>
-              )}
+                {/* Duplicate warning */}
+                {demoTime1 && demoTime2 && demoTime3 && new Set([demoTime1, demoTime2, demoTime3]).size < 3 && (
+                  <p className="text-xs text-red-500">⚠️ Please choose 3 different timings</p>
+                )}
+              </div>
 
               {/* Submit Button */}
               <Button
                 onClick={handleBookSlot}
-                disabled={isBooking || preferredSlots.length < 1}
+                disabled={isBooking || !demoDate || !demoTime1 || !demoTime2 || !demoTime3 || new Set([demoTime1, demoTime2, demoTime3]).size < 3}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               >
                 {isBooking ? (
@@ -558,7 +517,7 @@ const BookSlot = () => {
                 ) : (
                   <>
                     <Calendar className="h-5 w-5 mr-2" />
-                    Submit Preferred Timings ({preferredSlots.length})
+                    Submit 3 Preferred Timings
                   </>
                 )}
               </Button>
