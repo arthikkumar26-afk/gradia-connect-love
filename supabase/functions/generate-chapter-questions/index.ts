@@ -320,6 +320,11 @@ Return ONLY valid JSON in this format:
                 options: ["(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)"],
                 correct_option: "3",
               } : {}),
+              ...(s.questionType === "statement_based" ? {
+                statements: [{label: "I", text: "Statement placeholder"}, {label: "II", text: "Statement placeholder"}],
+                options: ["I is true but II is false", "I is false but II is true", "Both I and II are true", "Both I and II are false"],
+                correct_option: "3",
+              } : {}),
             })),
           })),
         };
