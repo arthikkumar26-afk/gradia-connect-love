@@ -74,6 +74,34 @@ export const StageResultsModal = ({
 
   const isSlotBookingStage = stageName.includes('Slot Booking');
 
+  const handleConfirmSlot = async () => {
+    if (!slotBookingData || selectedSlotIndex === null || !slotBookingData.preferred_slots) return;
+    const chosen = slotBookingData.preferred_slots[selectedSlotIndex];
+    if (!chosen) return;
+    
+    setIsConfirming(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('slot_bookings')
+        .update({ 
+          booking_date: chosen.date, 
+          booking_time: chosen.time, 
+          status: 'confirmed', 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', slotBookingData.id);
+      
+      if (!updateError) {
+        setSlotBookingData({ ...slotBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
+        setSelectedSlotIndex(null);
+      }
+    } catch (err) {
+      console.error('Error confirming slot:', err);
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!isOpen || !interviewCandidateId || !stageId) return;
