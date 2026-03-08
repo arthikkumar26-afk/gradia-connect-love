@@ -15,8 +15,17 @@ import {
 import {
   Database, Upload, Loader2, Trash2, FileText, Calendar,
   Edit, Save, ChevronDown, ChevronUp, ListChecks, ToggleLeft,
-  ArrowLeftRight, HelpCircle, FileQuestion, Image, Map, AlignLeft, AlignJustify
+  ArrowLeftRight, HelpCircle, FileQuestion, Image, Map, AlignLeft, AlignJustify, Eye
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
