@@ -73,6 +73,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewCount, setPreviewCount] = useState<number>(10);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
