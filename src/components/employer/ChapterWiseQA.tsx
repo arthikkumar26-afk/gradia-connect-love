@@ -43,14 +43,16 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [sections, setSections] = useState<SectionConfig[]>([
-    { id: "1", name: "A", marksPerQuestion: 10, questionCount: 3, questionType: "long_answer" },
-    { id: "2", name: "B", marksPerQuestion: 5, questionCount: 5, questionType: "short_answer" },
-    { id: "3", name: "C", marksPerQuestion: 1, questionCount: 10, questionType: "mcq" },
+    { id: "1", name: "A", marksPerQuestion: 10, questionCount: 3, questionType: "long_answer", difficulty: "medium" },
+    { id: "2", name: "B", marksPerQuestion: 5, questionCount: 5, questionType: "short_answer", difficulty: "medium" },
+    { id: "3", name: "C", marksPerQuestion: 1, questionCount: 10, questionType: "mcq", difficulty: "easy" },
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any>(null);
   const [paperId, setPaperId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [showAnswers, setShowAnswers] = useState(true);
+  const [paperTotalMarks, setPaperTotalMarks] = useState<number>(100);
 
   const totalMarks = sections.reduce((sum, s) => sum + (s.marksPerQuestion * s.questionCount), 0);
   const totalQuestions = sections.reduce((sum, s) => sum + s.questionCount, 0);
@@ -151,6 +153,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
       marksPerQuestion: 2,
       questionCount: 5,
       questionType: "short_answer",
+      difficulty: "medium",
     }]);
   };
 
