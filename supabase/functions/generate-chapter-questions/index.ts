@@ -99,7 +99,13 @@ If you cannot find clear chapters, create logical topic groupings from the conte
           messages: [
             {
               role: "system",
-              content: `You are an expert exam paper creator. Generate questions from the given book content based on the section configuration. Each question must have a correct answer.
+              content: `You are an expert exam paper creator. You MUST generate questions STRICTLY from the given book/PDF content only. Do NOT create questions from your own knowledge. Every question, answer, and option must be directly derived from the provided text content.
+
+CRITICAL RULES:
+- ONLY use facts, concepts, definitions, and information present in the provided content
+- Do NOT add external knowledge or information not in the text
+- If the content is about a specific subject (e.g., Biology, History, Math), generate questions ONLY from what is written in the provided text
+- Each question must be traceable to a specific part of the provided content
 
 IMPORTANT: Respect the difficulty level for each section:
 - "easy" = Basic recall, definitions, simple facts
@@ -224,7 +230,7 @@ Return ONLY valid JSON in this format:
             },
             {
               role: "user",
-              content: `Generate ${totalQuestions} questions from this content:\n\n${pdfText.substring(0, 30000)}`
+              content: `Generate ${totalQuestions} questions STRICTLY from the following PDF/book content. Do NOT use any external knowledge. Every question must come from this text:\n\n${pdfText.substring(0, 50000)}`
             }
           ],
         }),
