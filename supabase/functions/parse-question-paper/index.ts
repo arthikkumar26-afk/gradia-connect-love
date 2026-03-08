@@ -12,13 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { pdfText, pdfBase64, paperType, language } = await req.json();
+    const { pdfText, pdfBase64, fileName, paperType, language } = await req.json();
     
     let textContent = pdfText || '';
     
-    // If base64 PDF is provided, extract text using unpdf
-    if (pdfBase64) {
-      console.log('Extracting text from PDF binary data...');
+    // If base64 data is provided, extract text
+    if (pdfBase64 && !textContent) {
+      console.log('Processing base64 file data, fileName:', fileName || 'unknown');
       try {
         // Convert base64 to Uint8Array
         const binaryString = atob(pdfBase64);
@@ -27,16 +27,44 @@ serve(async (req) => {
           bytes[i] = binaryString.charCodeAt(i);
         }
         
-        // Get document proxy and extract text
-        const pdf = await getDocumentProxy(bytes);
-        const { text } = await extractText(pdf, { mergePages: true });
-        textContent = text;
-        console.log('Successfully extracted text from PDF, length:', textContent.length);
-      } catch (pdfError) {
-        console.error('PDF extraction error:', pdfError);
-        // Fall back to the raw text if PDF parsing fails
+        const ext = (fileName || '').toLowerCase();
+        const isPdf = ext.endsWith('.pdf') || !ext.includes('.');
+        
+        if (isPdf) {
+          // Try PDF extraction with unpdf
+          try {
+            const pdf = await getDocumentProxy(bytes);
+            const { text } = await extractText(pdf, { mergePages: true });
+            textContent = text;
+            console.log('PDF text extracted, length:', textContent.length);
+          } catch (pdfErr) {
+            console.log('unpdf extraction failed, sending raw bytes as text hint');
+            // Try to decode as plain text as last resort
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            const rawText = decoder.decode(bytes);
+            // Filter printable characters
+            textContent = rawText.replace(/[^\x20-\x7E\n\r\t\u0080-\uFFFF]/g, ' ').replace(/\s{3,}/g, ' ');
+            console.log('Fallback text length:', textContent.length);
+          }
+        } else {
+          // Word docs (.doc, .docx) - decode as text and let AI parse
+          const decoder = new TextDecoder('utf-8', { fatal: false });
+          const rawText = decoder.decode(bytes);
+          // Extract readable portions from Word XML
+          textContent = rawText.replace(/[^\x20-\x7E\n\r\t\u0080-\uFFFF]/g, ' ').replace(/\s{3,}/g, ' ');
+          // For docx, try to extract from XML content
+          const textMatches = textContent.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
+          if (textMatches && textMatches.length > 0) {
+            textContent = textMatches.map(m => m.replace(/<[^>]+>/g, '')).join(' ');
+            console.log('Extracted text from DOCX XML, length:', textContent.length);
+          } else {
+            console.log('Word file text (raw), length:', textContent.length);
+          }
+        }
+      } catch (parseError) {
+        console.error('File extraction error:', parseError);
         if (!pdfText) {
-          throw new Error('Failed to extract text from PDF: ' + (pdfError instanceof Error ? pdfError.message : 'Unknown error'));
+          throw new Error('Failed to extract text from file: ' + (parseError instanceof Error ? parseError.message : 'Unknown error'));
         }
         console.log('Falling back to raw text input');
       }
