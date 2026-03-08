@@ -540,7 +540,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
               {pdfFile && (
                 <Button
                   onClick={handleGenerateQuestions}
-                  disabled={isGenerating}
+                  disabled={isGenerating || totalMarks !== paperTotalMarks}
                   className="w-full"
                   size="lg"
                 >
