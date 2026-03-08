@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import {
   BookOpen, Upload, Loader2, Plus, Trash2, Sparkles, FileText,
-  CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye, Image
+  CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye, Image, MapPin
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import * as pdfjsLib from "pdfjs-dist";
@@ -22,7 +22,7 @@ interface SectionConfig {
   name: string;
   marksPerQuestion: number;
   questionCount: number;
-  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks" | "match_the_following" | "assertion_reasoning" | "statement_based" | "image_based";
+  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks" | "match_the_following" | "assertion_reasoning" | "statement_based" | "image_based" | "map_based";
   difficulty: "easy" | "medium" | "hard";
 }
 
@@ -488,6 +488,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                    <SelectItem value="assertion_reasoning">Assertion & Reasoning</SelectItem>
                                   <SelectItem value="statement_based">Statement Based</SelectItem>
                                   <SelectItem value="image_based">Image Based</SelectItem>
+                                  <SelectItem value="map_based">Map Based</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -560,7 +561,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Badge variant="outline" className="text-[10px]">
-                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : section.questionType === "match_the_following" ? "Match the Following" : section.questionType === "assertion_reasoning" ? "Assertion & Reasoning" : section.questionType === "statement_based" ? "Statement Based" : section.questionType === "image_based" ? "Image Based" : "Long Answer"}
+                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : section.questionType === "match_the_following" ? "Match the Following" : section.questionType === "assertion_reasoning" ? "Assertion & Reasoning" : section.questionType === "statement_based" ? "Statement Based" : section.questionType === "image_based" ? "Image Based" : section.questionType === "map_based" ? "Map Based" : "Long Answer"}
                           </Badge>
                           <Badge className={`text-[10px] ${section.difficulty === "hard" ? "bg-destructive" : section.difficulty === "easy" ? "bg-green-600" : "bg-yellow-500"}`}>
                             {section.difficulty.charAt(0).toUpperCase() + section.difficulty.slice(1)}
@@ -822,6 +823,44 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                     ))}
                                   </div>
                                 )}
+                              </div>
+                            )}
+                            {q.type === "map_based" && (
+                              <div className="mt-1 space-y-2 ml-1">
+                                <p className="text-[10px] font-medium italic">{q.map_instruction || "On the given outline map, identify the locations with the help of specified information."}</p>
+                                {q.image_url && (
+                                  <div className="border rounded-lg overflow-hidden bg-white dark:bg-muted/30 p-2 inline-block">
+                                    <img
+                                      src={q.image_url}
+                                      alt={`Map for Q${q.id}`}
+                                      className="max-w-[320px] max-h-[260px] object-contain"
+                                    />
+                                  </div>
+                                )}
+                                {!q.image_url && q.image_prompt && (
+                                  <div className="border rounded-lg border-dashed border-muted-foreground/40 p-3 flex items-center gap-2 text-muted-foreground">
+                                    <MapPin className="h-4 w-4" />
+                                    <span className="text-[10px] italic">Map generating: {q.image_prompt}</span>
+                                  </div>
+                                )}
+                                {q.sub_questions && q.sub_questions.map((sq: any, sqIdx: number) => (
+                                  <div key={sqIdx} className="p-2 rounded border bg-muted/10">
+                                    <p className="text-[10px] font-medium">{sq.id || sqIdx + 1}. {sq.question}</p>
+                                    {sq.options && (
+                                      <div className="grid grid-cols-2 gap-1 mt-1 ml-3">
+                                        {sq.options.map((opt: string, oIdx: number) => (
+                                          <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                            showAnswers && sq.correct_option === String.fromCharCode(65 + oIdx)
+                                              ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                              : "bg-muted/30 border-border"
+                                          }`}>
+                                            {String.fromCharCode(65 + oIdx)}. {opt}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
                             )}
                             {showAnswers && (

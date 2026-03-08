@@ -124,6 +124,7 @@ Question Types:
 - "assertion_reasoning" = Assertion & Reasoning type. Include assertion field, reason field, 4 options like "(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)". Include correct_option (1-4), and answer field.
 - "statement_based" = Read Statement I and Statement II type. Include statements array with objects [{label: "I", text: "..."}, {label: "II", text: "..."}], 4 options like "I is true but II is false", "I is false but II is true", "Both I and II are true", "Both I and II are false". Include correct_option (1-4), and answer field.
 - "image_based" = Questions that require a diagram/figure/chart. Include image_prompt field with a detailed description of the educational diagram to generate (e.g. "A labeled diagram of the human heart showing chambers, valves and blood flow", "A bar chart comparing photosynthesis rates at different light intensities"). Include 4 MCQ options (A, B, C, D), correct_option field, and answer field. The image_prompt MUST describe a diagram directly relevant to the question and based on the PDF content.
+- "map_based" = Questions based on an outline map with marked locations. Include image_prompt field describing the map to generate (e.g. "An outline political map of India with location A marked at Gujarat and location B marked at Assam with red dots"). Include map_instruction field (e.g. "On the given outline map of India, identify the locations with the help of specified information."). Include sub_questions array where each sub-question has: id (number), question (text asking to identify a marked location), options (4 choices A-D), correct_option, answer. Example sub_question: {"id": 39, "question": "Identify dam marked as A on the map and choose the correct option.", "options": ["Sardar Sarovar", "Tungabhadra", "Rana Pratap Sagar", "Hirakud"], "correct_option": "A", "answer": "Sardar Sarovar"}. Also include answer field summarizing all correct answers.
 
 Chapters to cover: ${chapterNames}
 
@@ -263,6 +264,26 @@ Return ONLY valid JSON in this format:
           "chapter": "Chapter name"
         }
       ]
+    },
+    {
+      "name": "I",
+      "marks_per_question": 5,
+      "questions": [
+        {
+          "id": 1,
+          "question": "On the given outline map, identify the locations with the help of specified information.",
+          "type": "map_based",
+          "marks": 5,
+          "map_instruction": "On the given outline map of India, identify the locations with the help of specified information.",
+          "image_prompt": "An outline political map of India with location A marked with a red dot at Gujarat on the western coast, and location B marked with a red dot at Assam in the northeast, clean educational style, black and white line drawing on white background with state boundaries visible",
+          "sub_questions": [
+            {"id": 39, "question": "Identify dam marked as A on the map and choose the correct option.", "options": ["Sardar Sarovar", "Tungabhadra", "Rana Pratap Sagar", "Hirakud"], "correct_option": "A", "answer": "Sardar Sarovar"},
+            {"id": 40, "question": "Identify the type of crop marked as B on the map and choose the correct option.", "options": ["Tea", "Wheat", "Rice", "Sugarcane"], "correct_option": "A", "answer": "Tea"}
+          ],
+          "answer": "A: Sardar Sarovar, B: Tea",
+          "chapter": "Chapter name"
+        }
+      ]
     }
   ]
 }`
@@ -348,16 +369,24 @@ Return ONLY valid JSON in this format:
                 options: ["Option A", "Option B", "Option C", "Option D"],
                 correct_option: "A",
               } : {}),
+              ...(s.questionType === "map_based" ? {
+                map_instruction: "On the given outline map, identify the locations.",
+                image_prompt: "An outline political map with locations A and B marked with red dots, clean educational style on white background",
+                sub_questions: [
+                  { id: 1, question: "Identify location A", options: ["Option A", "Option B", "Option C", "Option D"], correct_option: "A", answer: "Option A" },
+                  { id: 2, question: "Identify location B", options: ["Option A", "Option B", "Option C", "Option D"], correct_option: "A", answer: "Option A" },
+                ],
+              } : {}),
             })),
           })),
         };
       }
 
-      // Generate images for image_based questions
+      // Generate images for image_based and map_based questions
       const imageQuestions: { sectionIdx: number; questionIdx: number; prompt: string }[] = [];
       generatedData.sections?.forEach((s: any, sIdx: number) => {
         s.questions?.forEach((q: any, qIdx: number) => {
-          if (q.type === "image_based" && q.image_prompt) {
+          if ((q.type === "image_based" || q.type === "map_based") && q.image_prompt) {
             imageQuestions.push({ sectionIdx: sIdx, questionIdx: qIdx, prompt: q.image_prompt });
           }
         });
