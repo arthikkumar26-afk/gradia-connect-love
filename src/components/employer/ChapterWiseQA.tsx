@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import {
   BookOpen, Upload, Loader2, Plus, Trash2, Sparkles, FileText,
-  CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye
+  CheckCircle2, XCircle, ChevronDown, ChevronUp, Eye, Image
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import * as pdfjsLib from "pdfjs-dist";
@@ -21,7 +21,7 @@ interface SectionConfig {
   name: string;
   marksPerQuestion: number;
   questionCount: number;
-  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks" | "match_the_following" | "assertion_reasoning" | "statement_based";
+  questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks" | "match_the_following" | "assertion_reasoning" | "statement_based" | "image_based";
   difficulty: "easy" | "medium" | "hard";
 }
 
@@ -469,6 +469,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <SelectItem value="match_the_following">Match the Following</SelectItem>
                                    <SelectItem value="assertion_reasoning">Assertion & Reasoning</SelectItem>
                                   <SelectItem value="statement_based">Statement Based</SelectItem>
+                                  <SelectItem value="image_based">Image Based</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -541,7 +542,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Badge variant="outline" className="text-[10px]">
-                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : section.questionType === "match_the_following" ? "Match the Following" : section.questionType === "assertion_reasoning" ? "Assertion & Reasoning" : section.questionType === "statement_based" ? "Statement Based" : "Long Answer"}
+                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : section.questionType === "match_the_following" ? "Match the Following" : section.questionType === "assertion_reasoning" ? "Assertion & Reasoning" : section.questionType === "statement_based" ? "Statement Based" : section.questionType === "image_based" ? "Image Based" : "Long Answer"}
                           </Badge>
                           <Badge className={`text-[10px] ${section.difficulty === "hard" ? "bg-destructive" : section.difficulty === "easy" ? "bg-green-600" : "bg-yellow-500"}`}>
                             {section.difficulty.charAt(0).toUpperCase() + section.difficulty.slice(1)}
@@ -747,6 +748,38 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                           : "bg-muted/30 border-border"
                                       }`}>
                                         ({oIdx + 1}) {opt}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {q.type === "image_based" && (
+                              <div className="mt-1 space-y-2 ml-1">
+                                {q.image_url && (
+                                  <div className="border rounded-lg overflow-hidden bg-white dark:bg-muted/30 p-2 inline-block">
+                                    <img
+                                      src={q.image_url}
+                                      alt={`Diagram for Q${q.id}`}
+                                      className="max-w-[280px] max-h-[200px] object-contain"
+                                    />
+                                  </div>
+                                )}
+                                {!q.image_url && q.image_prompt && (
+                                  <div className="border rounded-lg border-dashed border-muted-foreground/40 p-3 flex items-center gap-2 text-muted-foreground">
+                                    <Image className="h-4 w-4" />
+                                    <span className="text-[10px] italic">Image generating: {q.image_prompt}</span>
+                                  </div>
+                                )}
+                                {q.options && (
+                                  <div className="grid grid-cols-2 gap-1">
+                                    {q.options.map((opt: string, oIdx: number) => (
+                                      <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                        showAnswers && q.correct_option === String.fromCharCode(65 + oIdx)
+                                          ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
+                                          : "bg-muted/30 border-border"
+                                      }`}>
+                                        {String.fromCharCode(65 + oIdx)}) {opt}
                                       </div>
                                     ))}
                                   </div>
