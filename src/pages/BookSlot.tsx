@@ -29,8 +29,10 @@ const BookSlot = () => {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Demo slot booking: single date + 3 preferred timings
+  // Multi-slot booking: single date + 3 preferred timings (for Demo and HR stages)
   const isDemoStage = stageName.toLowerCase().includes("demo");
+  const isHrStage = stageName.toLowerCase().includes("hr");
+  const isMultiSlotStage = isDemoStage || isHrStage;
   const [preferredSlots, setPreferredSlots] = useState<{ date: string; time: string }[]>([]);
   const [demoDate, setDemoDate] = useState("");
   const [demoTime1, setDemoTime1] = useState("");
