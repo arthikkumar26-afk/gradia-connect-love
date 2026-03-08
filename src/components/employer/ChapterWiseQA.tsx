@@ -605,7 +605,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <div className="grid grid-cols-2 gap-1 ml-1 mt-1">
                                     {q.options.map((opt: string, oIdx: number) => (
                                       <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
-                                        q.correct_option === String.fromCharCode(65 + oIdx)
+                                        showAnswers && q.correct_option === String.fromCharCode(65 + oIdx)
                                           ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
                                           : "bg-muted/30 border-border"
                                       }`}>
@@ -623,7 +623,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                       <div className="flex flex-wrap gap-1 ml-1">
                                         {q.options.map((opt: string, oIdx: number) => (
                                           <span key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
-                                            q.correct_option === String.fromCharCode(65 + oIdx)
+                                            showAnswers && q.correct_option === String.fromCharCode(65 + oIdx)
                                               ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
                                               : "bg-muted/30 border-border"
                                           }`}>
@@ -634,9 +634,11 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                     )}
                                   </div>
                                 )}
-                                <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
-                                  <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.answer}</p>
-                                </div>
+                                {showAnswers && (
+                                  <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
+                                    <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.answer}</p>
+                                  </div>
+                                )}
                               </div>
                               <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
                             </div>
