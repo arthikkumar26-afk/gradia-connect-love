@@ -735,8 +735,9 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             </ScrollArea>
             <div className="px-6 py-3 border-t flex justify-end gap-2">
               <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowPreview(false)}>Close</Button>
-              <Button size="sm" className="text-xs gap-1.5" onClick={handleSavePaper}>
-                <Save className="h-3.5 w-3.5" /> Save Paper
+              <Button size="sm" className="text-xs gap-1.5" onClick={handleSavePaper} disabled={savingPaper}>
+                {savingPaper ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                {savingPaper ? "Saving to Written Test..." : "Save & Use for Written Test"}
               </Button>
             </div>
           </DialogContent>
