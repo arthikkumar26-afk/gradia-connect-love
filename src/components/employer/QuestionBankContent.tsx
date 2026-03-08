@@ -118,24 +118,44 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
       if (error) throw error;
 
       if (data?.questions?.length) {
-        const newQuestions: QuestionBankQuestion[] = data.questions.map((q: any, idx: number) => ({
-          id: `qb-${sectionKey}-${Date.now()}-${idx}`,
-          question_number: idx + 1,
-          question_text: q.question_text,
-          question_type: sectionKey,
-          options: q.options || undefined,
-          correct_answer: q.options?.[0] || "",
-          marks: 1,
-          source_pdf: file.name,
-          uploadedAt: new Date(),
-        }));
+        const existingTexts = new Set(
+          (sectionQuestions[sectionKey] || []).map(q => q.question_text.trim().toLowerCase())
+        );
 
-        setSectionQuestions(prev => ({
-          ...prev,
-          [sectionKey]: [...newQuestions, ...(prev[sectionKey] || [])],
-        }));
-        setExpandedSections(prev => new Set([...prev, sectionKey]));
-        toast.success(`${newQuestions.length} questions added to ${sectionLabel} from ${file.name}`);
+        const newQuestions: QuestionBankQuestion[] = data.questions
+          .filter((q: any) => !existingTexts.has((q.question_text || "").trim().toLowerCase()))
+          .reduce((acc: QuestionBankQuestion[], q: any, idx: number) => {
+            const text = (q.question_text || "").trim().toLowerCase();
+            // Also deduplicate within the new batch
+            if (acc.some(a => a.question_text.trim().toLowerCase() === text)) return acc;
+            acc.push({
+              id: `qb-${sectionKey}-${Date.now()}-${idx}`,
+              question_number: idx + 1,
+              question_text: q.question_text,
+              question_type: sectionKey,
+              options: q.options || undefined,
+              correct_answer: q.options?.[0] || "",
+              marks: 1,
+              source_pdf: file.name,
+              uploadedAt: new Date(),
+            });
+            return acc;
+          }, []);
+
+        const skipped = data.questions.length - newQuestions.length;
+
+        if (newQuestions.length > 0) {
+          setSectionQuestions(prev => ({
+            ...prev,
+            [sectionKey]: [...newQuestions, ...(prev[sectionKey] || [])],
+          }));
+          setExpandedSections(prev => new Set([...prev, sectionKey]));
+          toast.success(
+            `${newQuestions.length} questions added to ${sectionLabel}${skipped > 0 ? ` (${skipped} duplicates removed)` : ""}`
+          );
+        } else {
+          toast.info("All questions were duplicates — nothing new added.");
+        }
       } else {
         toast.error("No questions detected in the file");
       }
