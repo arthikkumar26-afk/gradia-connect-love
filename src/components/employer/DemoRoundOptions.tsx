@@ -101,48 +101,77 @@ export const DemoRoundOptions = ({
         Demo Round - Meeting Options
       </div>
 
-      {/* Two options */}
-      <div className="flex gap-2">
+      {/* Three options */}
+      <div className="grid grid-cols-3 gap-1.5">
         <Button
           size="sm"
           variant={meetType === 'ai_video' ? 'default' : 'outline'}
-          className={`h-7 text-[10px] px-2.5 flex-1 ${
+          className={`h-7 text-[10px] px-1.5 ${
             meetType === 'ai_video'
               ? 'bg-pink-600 hover:bg-pink-700 text-white'
               : 'border-pink-300 text-pink-600 hover:bg-pink-50'
           }`}
           onClick={() => setMeetType('ai_video')}
         >
-          <Sparkles className="h-3 w-3 mr-1" />
-          AI Video Call
+          <Sparkles className="h-3 w-3 mr-0.5" />
+          AI Interview
         </Button>
         <Button
           size="sm"
-          variant={meetType === 'manual_link' ? 'default' : 'outline'}
-          className={`h-7 text-[10px] px-2.5 flex-1 ${
-            meetType === 'manual_link'
+          variant={meetType === 'google_meet' ? 'default' : 'outline'}
+          className={`h-7 text-[10px] px-1.5 ${
+            meetType === 'google_meet'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'border-blue-300 text-blue-600 hover:bg-blue-50'
+          }`}
+          onClick={() => setMeetType('google_meet')}
+        >
+          <Link2 className="h-3 w-3 mr-0.5" />
+          Google Meet
+        </Button>
+        <Button
+          size="sm"
+          variant={meetType === 'zoom_meet' ? 'default' : 'outline'}
+          className={`h-7 text-[10px] px-1.5 ${
+            meetType === 'zoom_meet'
               ? 'bg-purple-600 hover:bg-purple-700 text-white'
               : 'border-purple-300 text-purple-600 hover:bg-purple-50'
           }`}
-          onClick={() => setMeetType('manual_link')}
+          onClick={() => setMeetType('zoom_meet')}
         >
-          <Link2 className="h-3 w-3 mr-1" />
-          Manual Meet Link
+          <Video className="h-3 w-3 mr-0.5" />
+          Zoom Meet
         </Button>
       </div>
 
-      {/* Manual Meet Link Input */}
-      {meetType === 'manual_link' && (
+      {/* Google Meet Link Input */}
+      {meetType === 'google_meet' && (
         <div className="space-y-1.5">
           <Input
             type="url"
-            placeholder="Paste Zoom, Google Meet, or Teams link"
+            placeholder="Paste Google Meet link (e.g., meet.google.com/abc-defg-hij)"
+            value={meetLink}
+            onChange={(e) => { setMeetLink(e.target.value); setIsSaved(false); }}
+            className="h-7 text-xs border-blue-200 focus:border-blue-400"
+          />
+          <p className="text-[9px] text-muted-foreground">
+            Paste your Google Meet link. Candidate and observers will receive this link via email.
+          </p>
+        </div>
+      )}
+
+      {/* Zoom Meet Link Input */}
+      {meetType === 'zoom_meet' && (
+        <div className="space-y-1.5">
+          <Input
+            type="url"
+            placeholder="Paste Zoom link (e.g., zoom.us/j/123456789)"
             value={meetLink}
             onChange={(e) => { setMeetLink(e.target.value); setIsSaved(false); }}
             className="h-7 text-xs border-purple-200 focus:border-purple-400"
           />
           <p className="text-[9px] text-muted-foreground">
-            Supports Google Meet, Zoom, Microsoft Teams, or any video call link
+            Paste your Zoom meeting link. Candidate and observers will receive this link via email.
           </p>
         </div>
       )}
