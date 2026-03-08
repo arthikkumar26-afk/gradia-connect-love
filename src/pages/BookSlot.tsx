@@ -142,6 +142,7 @@ const BookSlot = () => {
 
   const handleBookSlot = async () => {
     // For demo, build preferred slots from single date + 3 times
+    let demoSlots: { date: string; time: string }[] = [];
     if (isDemoStage) {
       const times = [demoTime1, demoTime2, demoTime3].filter(Boolean);
       const uniqueTimes = [...new Set(times)];
@@ -149,9 +150,8 @@ const BookSlot = () => {
         toast.error("Please select a date and 3 different timings");
         return;
       }
-      // Set preferredSlots for the booking
-      const slots = uniqueTimes.map(t => ({ date: demoDate, time: t }));
-      setPreferredSlots(slots);
+      demoSlots = uniqueTimes.map(t => ({ date: demoDate, time: t }));
+      setPreferredSlots(demoSlots);
     } else {
       if (!selectedDate || !selectedTime) {
         toast.error("Please select both date and time");
@@ -183,15 +183,14 @@ const BookSlot = () => {
 
       if (interviewCandidate?.candidate_id) {
         if (isDemoStage) {
-          // For demo: save first preferred slot as booking_date/time, all 3 in preferred_slots
           await supabase.from("slot_bookings").insert({
             candidate_id: interviewCandidate.candidate_id,
-            booking_date: preferredSlots[0].date,
-            booking_time: preferredSlots[0].time,
+            booking_date: demoSlots[0].date,
+            booking_time: demoSlots[0].time,
             booking_type: bookingType,
             status: "pending",
             subject: stageName,
-            preferred_slots: preferredSlots as any,
+            preferred_slots: demoSlots as any,
           });
         } else {
           await supabase.from("slot_bookings").insert({
@@ -206,12 +205,11 @@ const BookSlot = () => {
       }
 
       if (isDemoStage) {
-        // Send confirmation email to candidate with 3 preferred timings + notify employer
         try {
           await supabase.functions.invoke("send-demo-slot-confirmation", {
             body: {
               interviewCandidateId: candidateId,
-              preferredSlots,
+              preferredSlots: demoSlots,
             },
           });
         } catch (emailErr) {
