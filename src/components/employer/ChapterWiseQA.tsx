@@ -498,9 +498,14 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                             </p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-[10px]">
-                          {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : "Long Answer"}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="outline" className="text-[10px]">
+                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : "Long Answer"}
+                          </Badge>
+                          <Badge className={`text-[10px] ${section.difficulty === "hard" ? "bg-destructive" : section.difficulty === "easy" ? "bg-green-600" : "bg-yellow-500"}`}>
+                            {section.difficulty.charAt(0).toUpperCase() + section.difficulty.slice(1)}
+                          </Badge>
+                        </div>
                       </div>
                       {/* Placeholder question slots */}
                       <div className="mt-2 space-y-1">
