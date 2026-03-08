@@ -116,6 +116,8 @@ export default function EduTechDashboard() {
         return <EventsContent />;
       case "analytics":
         return <AnalyticsContent />;
+      case "upgrade":
+        return <UpgradePlansContent />;
       case "settings":
         return <SettingsContent profile={profile} />;
       default:
