@@ -31,6 +31,7 @@ import {
   TrendingUp,
   Eye,
 } from "lucide-react";
+import { StageResultsModal } from "@/components/employer/StageResultsModal";
 
 interface InterviewStage {
   id: string;
