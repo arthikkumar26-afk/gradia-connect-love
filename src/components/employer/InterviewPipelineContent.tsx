@@ -1685,14 +1685,16 @@ const ClickableStagesList = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700">
                         <Calendar className="h-3 w-3" />
-                        Slot Booked
+                        {hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 
+                          ? `Candidate's Preferred Timings (${hrSlotBooking.preferred_slots.length})`
+                          : 'Slot Booked'}
                         {isHrSlotEdited && (
                           <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-400 text-amber-600 bg-amber-50">
                             Edited
                           </Badge>
                         )}
                       </div>
-                      {!isEditingHrSlot && (
+                      {!isEditingHrSlot && !(hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 && hrSlotBooking.status !== 'confirmed') && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1742,21 +1744,99 @@ const ClickableStagesList = ({
                       </div>
                     ) : (
                       <>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
-                            📅 {new Date(hrSlotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                          </Badge>
-                          <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
-                            🕐 {hrSlotBooking.booking_time}
-                          </Badge>
-                          <Badge className={`text-[10px] py-0 ${
-                            hrSlotBooking.status === 'confirmed' 
-                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-                              : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                          }`}>
-                            {hrSlotBooking.status === 'confirmed' ? '✓ Confirmed' : hrSlotBooking.status}
-                          </Badge>
-                        </div>
+                        {/* If preferred_slots exist, show them for employer to pick */}
+                        {hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 && hrSlotBooking.status !== 'confirmed' ? (
+                          <div className="space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                            {/* Show date once since all slots share the same date */}
+                            <div className="flex items-center gap-1.5 text-[10px] text-indigo-600 font-medium">
+                              📅 {new Date(hrSlotBooking.preferred_slots[0].date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            </div>
+                            {hrSlotBooking.preferred_slots.map((slot, i) => {
+                              const hour = parseInt(slot.time.split(':')[0]);
+                              const minute = slot.time.split(':')[1];
+                              const displayHour = hour % 12 || 12;
+                              const ampm = hour < 12 ? 'AM' : 'PM';
+                              const timeLabel = `${displayHour}:${minute} ${ampm}`;
+                              return (
+                                <label key={i} className={`flex items-center gap-2 p-1.5 rounded border cursor-pointer transition-all ${
+                                  selectedHrPreferredSlot === i 
+                                    ? 'border-indigo-400 bg-indigo-100 ring-1 ring-indigo-300' 
+                                    : 'border-indigo-200 hover:bg-indigo-100/50'
+                                }`}>
+                                  <input 
+                                    type="radio" 
+                                    name="hr-preferred-slot" 
+                                    checked={selectedHrPreferredSlot === i} 
+                                    onChange={() => setSelectedHrPreferredSlot(i)}
+                                    className="accent-indigo-600"
+                                  />
+                                  <Badge variant="outline" className="text-[9px] px-1.5 border-indigo-300 text-indigo-600">
+                                    Option {i + 1}
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-[9px] bg-indigo-100 text-indigo-700 border-indigo-200">
+                                    🕐 {timeLabel}
+                                  </Badge>
+                                </label>
+                              );
+                            })}
+                            <Button
+                              size="sm"
+                              className="h-6 text-[10px] px-3 mt-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={handleConfirmHrPreferredSlot}
+                              disabled={selectedHrPreferredSlot === null || isConfirmingHrSlot}
+                            >
+                              {isConfirmingHrSlot ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Check className="h-3 w-3 mr-1" />}
+                              Confirm Selected Slot
+                            </Button>
+                          </div>
+                        ) : hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 && hrSlotBooking.status === 'confirmed' ? (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 text-[10px] text-indigo-600 font-medium">
+                              📅 {new Date(hrSlotBooking.preferred_slots[0].date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                            </div>
+                            {hrSlotBooking.preferred_slots.map((slot, i) => {
+                              const hour = parseInt(slot.time.split(':')[0]);
+                              const minute = slot.time.split(':')[1];
+                              const displayHour = hour % 12 || 12;
+                              const ampm = hour < 12 ? 'AM' : 'PM';
+                              const timeLabel = `${displayHour}:${minute} ${ampm}`;
+                              const isConfirmed = slot.date === hrSlotBooking.booking_date && slot.time === hrSlotBooking.booking_time;
+                              return (
+                                <div key={i} className={`flex items-center gap-2 p-1.5 rounded border ${
+                                  isConfirmed ? 'border-emerald-300 bg-emerald-50' : 'border-indigo-200 opacity-50'
+                                }`}>
+                                  <Badge variant="outline" className="text-[9px] px-1.5 border-indigo-300 text-indigo-600">
+                                    Option {i + 1}
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-[9px] bg-indigo-100 text-indigo-700 border-indigo-200">
+                                    🕐 {timeLabel}
+                                  </Badge>
+                                  {isConfirmed && (
+                                    <Badge className="ml-auto text-[9px] bg-emerald-100 text-emerald-700 border-emerald-300">
+                                      ✓ Confirmed
+                                    </Badge>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
+                              📅 {new Date(hrSlotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                            </Badge>
+                            <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
+                              🕐 {hrSlotBooking.booking_time}
+                            </Badge>
+                            <Badge className={`text-[10px] py-0 ${
+                              hrSlotBooking.status === 'confirmed' 
+                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+                                : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                            }`}>
+                              {hrSlotBooking.status === 'confirmed' ? '✓ Confirmed' : hrSlotBooking.status}
+                            </Badge>
+                          </div>
+                        )}
                         {hrSlotBooking.subject && (
                           <p className="text-[10px] text-muted-foreground">Stage: {hrSlotBooking.subject}</p>
                         )}
