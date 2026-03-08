@@ -70,24 +70,36 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
     setSelectedChapters([]);
     setGeneratedQuestions(null);
 
-    // Read PDF text (basic extraction - send to AI for chapter detection)
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const arrayBuffer = reader.result as ArrayBuffer;
-      // Convert to base64 for sending
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = "";
-      for (let i = 0; i < uint8Array.length; i++) {
-        binary += String.fromCharCode(uint8Array[i]);
-      }
-      const base64 = btoa(binary);
+    // Extract actual text from PDF using pdfjs-dist
+    try {
+      const arrayBuffer = await file.arrayBuffer();
       
-      // We'll extract text content on the server side via AI
-      // For now, store a placeholder and let the edge function handle it
-      setPdfText(base64);
-      toast.success(`PDF "${file.name}" uploaded successfully`);
-    };
-    reader.readAsArrayBuffer(file);
+      // Set worker source
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
+      
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += `\n--- Page ${i} ---\n${pageText}`;
+      }
+      
+      if (fullText.trim().length < 50) {
+        toast.error("Could not extract text from this PDF. It may be scanned/image-based.");
+        return;
+      }
+      
+      setPdfText(fullText);
+      toast.success(`PDF "${file.name}" uploaded — ${pdf.numPages} pages extracted`);
+    } catch (err) {
+      console.error("PDF extraction error:", err);
+      toast.error("Failed to extract text from PDF");
+    }
   };
 
   const handleExtractChapters = async () => {
