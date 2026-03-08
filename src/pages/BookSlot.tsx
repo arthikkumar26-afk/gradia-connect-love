@@ -386,8 +386,7 @@ const BookSlot = () => {
               className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
               onClick={() => {
                 const today = getTodayDate();
-                if (today) {
-                  setSelectedDate(today);
+                setSelectedDate(today);
                   // Set to nearest upcoming slot
                   const now = new Date();
                   const minutes = now.getMinutes();
@@ -396,9 +395,6 @@ const BookSlot = () => {
                   const minute = roundedMinutes.toString().padStart(2, "0");
                   const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
                   setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
-                } else {
-                  toast.info("Today is Sunday. Please select another date.");
-                }
               }}
             >
               🚀 Start Now
