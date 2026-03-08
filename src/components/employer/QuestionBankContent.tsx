@@ -533,6 +533,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             </ScrollArea>
           </DialogContent>
         </Dialog>
+      </CardContent>
     </Card>
   );
 };
