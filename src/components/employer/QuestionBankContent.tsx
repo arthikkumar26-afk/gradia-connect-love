@@ -315,9 +315,20 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                                       {q.source_pdf}
                                     </span>
                                   )}
-                                  <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
-                                </div>
-                              </AccordionTrigger>
+                                   <Input
+                                     type="number"
+                                     value={q.marks}
+                                     min={1}
+                                     onClick={e => e.stopPropagation()}
+                                     onChange={e => {
+                                       e.stopPropagation();
+                                       updateQuestion(section.key, q.id, "marks", parseInt(e.target.value) || 1);
+                                     }}
+                                     className="w-14 h-6 text-[10px] text-center shrink-0"
+                                   />
+                                   <span className="text-[9px] text-muted-foreground shrink-0">mk</span>
+                                 </div>
+                               </AccordionTrigger>
                               <AccordionContent className="px-2.5 pb-2.5">
                                 {editingId === q.id ? (
                                   <div className="space-y-2 pt-1">
