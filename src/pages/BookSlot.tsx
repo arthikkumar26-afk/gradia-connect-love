@@ -143,9 +143,9 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    // For demo, build preferred slots from single date + 3 times
+    // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
     let demoSlots: { date: string; time: string }[] = [];
-    if (isDemoStage) {
+    if (isMultiSlotStage) {
       const times = [demoTime1, demoTime2, demoTime3].filter(Boolean);
       const uniqueTimes = [...new Set(times)];
       if (!demoDate || uniqueTimes.length < 3) {
