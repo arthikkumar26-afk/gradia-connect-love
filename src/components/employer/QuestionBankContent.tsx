@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import {
   Database, Upload, Loader2, Trash2, FileText, CheckCircle2,
-  BookOpen, Edit, Save, Plus, X
+  BookOpen, Edit, Save, Plus, X, ChevronDown, ChevronUp, Calendar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,6 +38,14 @@ interface QuestionBankQuestion {
   source_pdf?: string;
 }
 
+interface UploadedPaper {
+  id: string;
+  fileName: string;
+  uploadedAt: Date;
+  questions: QuestionBankQuestion[];
+  isEnabled: boolean;
+}
+
 interface QuestionBankProps {
   jobId: string;
   jobTitle: string;
@@ -45,20 +53,12 @@ interface QuestionBankProps {
 
 export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const [isEnabled, setIsEnabled] = useState(true);
-  const [questions, setQuestions] = useState<QuestionBankQuestion[]>([]);
+  const [papers, setPapers] = useState<UploadedPaper[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
-  const [filterType, setFilterType] = useState<string>("all");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedPapers, setExpandedPapers] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const questionTypes = [
-    { value: "all", label: "All Types" },
-    { value: "multiple_choice", label: "MCQ" },
-    { value: "true_false", label: "True/False" },
-    { value: "text", label: "Text Answer" },
-    { value: "fill_blank", label: "Fill in the Blank" },
-  ];
 
   const typeLabel = (t: string) => {
     switch (t) {
@@ -85,7 +85,6 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        // Remove data URL prefix (e.g. "data:application/pdf;base64,")
         const base64 = result.split(",")[1];
         resolve(base64);
       };
@@ -129,7 +128,30 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
       if (error) throw error;
 
       if (data?.questions?.length) {
-        addParsedQuestions(data.questions, file.name);
+        const newQuestions: QuestionBankQuestion[] = data.questions.map((q: any, idx: number) => ({
+          id: `qb-${Date.now()}-${idx}`,
+          question_number: idx + 1,
+          question_text: q.question_text,
+          question_type: q.question_type || "text",
+          options: q.options || undefined,
+          correct_answer: q.options?.[0] || "",
+          category: "General",
+          marks: 1,
+          source_pdf: file.name,
+        }));
+
+        const newPaper: UploadedPaper = {
+          id: `paper-${Date.now()}`,
+          fileName: file.name,
+          uploadedAt: new Date(),
+          questions: newQuestions,
+          isEnabled: true,
+        };
+
+        // Add new paper at the TOP (newest first)
+        setPapers(prev => [newPaper, ...prev]);
+        setExpandedPapers(prev => new Set([...prev, newPaper.id]));
+        toast.success(`${newQuestions.length} questions detected from ${file.name}`);
       } else {
         toast.error("No questions detected in the file");
       }
@@ -143,66 +165,69 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     }
   };
 
-  const addParsedQuestions = (parsed: any[], sourcePdf: string) => {
-    const newQuestions: QuestionBankQuestion[] = parsed.map((q, idx) => ({
-      id: `qb-${Date.now()}-${idx}`,
-      question_number: questions.length + idx + 1,
-      question_text: q.question_text,
-      question_type: q.question_type || "text",
-      options: q.options || undefined,
-      correct_answer: q.options?.[0] || "",
-      category: "General",
-      marks: 1,
-      source_pdf: sourcePdf,
+  const togglePaperExpand = (paperId: string) => {
+    setExpandedPapers(prev => {
+      const next = new Set(prev);
+      if (next.has(paperId)) next.delete(paperId);
+      else next.add(paperId);
+      return next;
+    });
+  };
+
+  const togglePaperEnabled = (paperId: string) => {
+    setPapers(prev => prev.map(p =>
+      p.id === paperId ? { ...p, isEnabled: !p.isEnabled } : p
+    ));
+  };
+
+  const removePaper = (paperId: string) => {
+    setPapers(prev => prev.filter(p => p.id !== paperId));
+    toast.success("Paper removed");
+  };
+
+  const updateQuestion = (paperId: string, qId: string, field: string, value: any) => {
+    setPapers(prev => prev.map(p => {
+      if (p.id !== paperId) return p;
+      return {
+        ...p,
+        questions: p.questions.map(q => q.id === qId ? { ...q, [field]: value } : q),
+      };
     }));
-    setQuestions(prev => [...prev, ...newQuestions]);
-    toast.success(`${newQuestions.length} questions added from ${sourcePdf}`);
   };
 
-  const addManualQuestion = () => {
-    const newQ: QuestionBankQuestion = {
-      id: `qb-manual-${Date.now()}`,
-      question_number: questions.length + 1,
-      question_text: "",
-      question_type: "multiple_choice",
-      options: ["", "", "", ""],
-      correct_answer: "",
-      category: "General",
-      marks: 1,
-    };
-    setQuestions(prev => [...prev, newQ]);
-    setEditingId(newQ.id);
+  const updateOption = (paperId: string, qId: string, optIdx: number, value: string) => {
+    setPapers(prev => prev.map(p => {
+      if (p.id !== paperId) return p;
+      return {
+        ...p,
+        questions: p.questions.map(q => {
+          if (q.id !== qId) return q;
+          const opts = [...(q.options || [])];
+          opts[optIdx] = value;
+          return { ...q, options: opts };
+        }),
+      };
+    }));
   };
 
-  const updateQuestion = (id: string, field: string, value: any) => {
-    setQuestions(prev =>
-      prev.map(q => (q.id === id ? { ...q, [field]: value } : q))
-    );
-  };
-
-  const updateOption = (id: string, optIdx: number, value: string) => {
-    setQuestions(prev =>
-      prev.map(q => {
-        if (q.id !== id) return q;
-        const opts = [...(q.options || [])];
-        opts[optIdx] = value;
-        return { ...q, options: opts };
-      })
-    );
-  };
-
-  const removeQuestion = (id: string) => {
-    setQuestions(prev => prev.filter(q => q.id !== id));
+  const removeQuestion = (paperId: string, qId: string) => {
+    setPapers(prev => prev.map(p => {
+      if (p.id !== paperId) return p;
+      return { ...p, questions: p.questions.filter(q => q.id !== qId) };
+    }));
     toast.success("Question removed");
   };
 
-  const filtered = filterType === "all" ? questions : questions.filter(q => q.question_type === filterType);
+  const totalQuestions = papers.reduce((sum, p) => sum + p.questions.length, 0);
 
-  const typeCounts = {
-    multiple_choice: questions.filter(q => q.question_type === "multiple_choice").length,
-    true_false: questions.filter(q => q.question_type === "true_false").length,
-    text: questions.filter(q => q.question_type === "text").length,
-    fill_blank: questions.filter(q => q.question_type === "fill_blank").length,
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -217,7 +242,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             <div>
               <p className="text-sm font-semibold text-foreground">Question Bank</p>
               <p className="text-xs text-muted-foreground">
-                Upload PDFs — AI auto-detects questions & answers — Show to candidates
+                Upload PDF/Word — AI auto-detects questions & answers
               </p>
             </div>
           </div>
@@ -229,7 +254,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
               checked={isEnabled}
               onCheckedChange={(checked) => {
                 setIsEnabled(checked);
-                toast.success(checked ? "Question Bank enabled" : "Question Bank disabled — hidden from candidates");
+                toast.success(checked ? "Question Bank enabled" : "Question Bank disabled");
               }}
             />
           </div>
@@ -243,7 +268,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
 
         {isEnabled && (
           <div className="space-y-3">
-            {/* Upload & Add Actions */}
+            {/* Upload Action */}
             <div className="flex items-center gap-2 flex-wrap">
               <input
                 ref={fileInputRef}
@@ -266,185 +291,194 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                 )}
                 {isParsing ? "Detecting Questions..." : "Upload PDF/Word"}
               </Button>
-              <Button variant="outline" size="sm" className="text-xs h-8" onClick={addManualQuestion}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Manually
-              </Button>
 
-              {/* Filter */}
-              <div className="ml-auto">
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="h-8 text-xs w-[130px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {questionTypes.map(t => (
-                      <SelectItem key={t.value} value={t.value} className="text-xs">
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {papers.length > 0 && (
+                <span className="text-[10px] text-muted-foreground ml-auto">
+                  {papers.length} paper(s) · {totalQuestions} questions total
+                </span>
+              )}
             </div>
 
-            {/* Type summary chips */}
-            {questions.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] text-muted-foreground font-medium">Total: {questions.length}</span>
-                {Object.entries(typeCounts).map(([type, count]) =>
-                  count > 0 ? (
-                    <Badge key={type} variant="outline" className={`text-[9px] px-1.5 py-0 ${typeBadgeColor(type)}`}>
-                      {typeLabel(type)}: {count}
-                    </Badge>
-                  ) : null
-                )}
-              </div>
-            )}
-
-            {/* Questions List */}
-            {filtered.length === 0 ? (
+            {/* No papers */}
+            {papers.length === 0 && (
               <div className="text-center py-6 border-2 border-dashed rounded-lg">
                 <Database className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
-                <p className="text-xs text-muted-foreground">No questions yet. Upload a PDF or add manually.</p>
+                <p className="text-xs text-muted-foreground">No papers uploaded yet. Upload a PDF or Word file to auto-detect questions.</p>
               </div>
-            ) : (
-              <Accordion type="multiple" className="space-y-1.5">
-                {filtered.map((q, idx) => (
-                  <AccordionItem key={q.id} value={q.id} className="border rounded-lg overflow-hidden">
-                    <AccordionTrigger className="px-3 py-2 hover:no-underline hover:bg-muted/30 text-left">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <Badge variant="outline" className="text-[10px] shrink-0">Q{idx + 1}</Badge>
-                        <Badge variant="outline" className={`text-[9px] shrink-0 ${typeBadgeColor(q.question_type)}`}>
-                          {typeLabel(q.question_type)}
-                        </Badge>
-                        <p className="text-xs truncate flex-1">{q.question_text || "New question..."}</p>
-                        <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-3 pb-3">
-                      {editingId === q.id ? (
-                        /* Edit mode */
-                        <div className="space-y-2 pt-1">
-                          <div>
-                            <Label className="text-[10px]">Question</Label>
-                            <Input
-                              value={q.question_text}
-                              onChange={e => updateQuestion(q.id, "question_text", e.target.value)}
-                              placeholder="Enter the question..."
-                              className="text-xs h-8"
-                            />
-                          </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            <div>
-                              <Label className="text-[10px]">Type</Label>
-                              <Select value={q.question_type} onValueChange={v => updateQuestion(q.id, "question_type", v)}>
-                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="multiple_choice" className="text-xs">MCQ</SelectItem>
-                                  <SelectItem value="true_false" className="text-xs">True/False</SelectItem>
-                                  <SelectItem value="text" className="text-xs">Text</SelectItem>
-                                  <SelectItem value="fill_blank" className="text-xs">Fill Blank</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Marks</Label>
-                              <Input type="number" value={q.marks} onChange={e => updateQuestion(q.id, "marks", parseInt(e.target.value) || 1)} className="h-8 text-xs" min={1} />
-                            </div>
-                            <div>
-                              <Label className="text-[10px]">Category</Label>
-                              <Input value={q.category} onChange={e => updateQuestion(q.id, "category", e.target.value)} className="h-8 text-xs" />
-                            </div>
-                          </div>
-
-                          {q.question_type === "multiple_choice" && (
-                            <div className="grid grid-cols-2 gap-1.5">
-                              {(q.options || ["", "", "", ""]).map((opt, oIdx) => (
-                                <div key={oIdx} className="flex items-center gap-1">
-                                  <Badge variant="outline" className="text-[9px] w-5 h-5 flex items-center justify-center p-0 shrink-0">
-                                    {String.fromCharCode(65 + oIdx)}
-                                  </Badge>
-                                  <Input
-                                    value={opt}
-                                    onChange={e => updateOption(q.id, oIdx, e.target.value)}
-                                    placeholder={`Option ${String.fromCharCode(65 + oIdx)}`}
-                                    className="text-xs h-7"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div>
-                            <Label className="text-[10px] text-primary font-semibold">✅ Correct Answer</Label>
-                            <Input
-                              value={q.correct_answer}
-                              onChange={e => updateQuestion(q.id, "correct_answer", e.target.value)}
-                              placeholder={q.question_type === "multiple_choice" ? "e.g. A" : "Enter answer..."}
-                              className="text-xs h-8"
-                            />
-                          </div>
-
-                          <div className="flex gap-1.5 pt-1">
-                            <Button size="sm" className="text-[10px] h-6" onClick={() => setEditingId(null)}>
-                              <Save className="h-3 w-3 mr-0.5" /> Done
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-[10px] h-6 text-destructive" onClick={() => removeQuestion(q.id)}>
-                              <Trash2 className="h-3 w-3 mr-0.5" /> Delete
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        /* View mode */
-                        <div className="space-y-2 pt-1">
-                          <p className="text-xs font-medium">{q.question_text}</p>
-
-                          {q.question_type === "multiple_choice" && q.options && (
-                            <div className="grid grid-cols-2 gap-1 ml-1">
-                              {q.options.map((opt, oIdx) => (
-                                <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
-                                  q.correct_answer.toUpperCase().startsWith(String.fromCharCode(65 + oIdx))
-                                    ? "bg-accent/10 border-accent/40 font-medium"
-                                    : "bg-muted/30 border-border"
-                                }`}>
-                                  {String.fromCharCode(65 + oIdx)}) {opt}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {q.question_type === "true_false" && (
-                            <div className="flex gap-2 ml-1">
-                              <span className={`text-[10px] px-2 py-0.5 rounded border ${q.correct_answer.toLowerCase().includes("true") ? "bg-accent/10 border-accent/40 font-medium" : "bg-muted/30"}`}>True</span>
-                              <span className={`text-[10px] px-2 py-0.5 rounded border ${q.correct_answer.toLowerCase().includes("false") ? "bg-accent/10 border-accent/40 font-medium" : "bg-muted/30"}`}>False</span>
-                            </div>
-                          )}
-
-                          <div className="p-1.5 bg-primary/5 rounded border border-primary/15">
-                            <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.correct_answer || "Not set"}</p>
-                          </div>
-
-                          {q.source_pdf && (
-                            <p className="text-[9px] text-muted-foreground flex items-center gap-1">
-                              <FileText className="h-3 w-3" /> Source: {q.source_pdf}
-                            </p>
-                          )}
-
-                          <div className="flex gap-1.5 pt-1">
-                            <Button size="sm" variant="outline" className="text-[10px] h-6" onClick={() => setEditingId(q.id)}>
-                              <Edit className="h-3 w-3 mr-0.5" /> Edit
-                            </Button>
-                            <Button size="sm" variant="ghost" className="text-[10px] h-6 text-destructive" onClick={() => removeQuestion(q.id)}>
-                              <Trash2 className="h-3 w-3 mr-0.5" /> Delete
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
             )}
+
+            {/* Individual Papers - newest first (already sorted) */}
+            {papers.map((paper) => {
+              const isExpanded = expandedPapers.has(paper.id);
+              const mcqCount = paper.questions.filter(q => q.question_type === "multiple_choice").length;
+              const tfCount = paper.questions.filter(q => q.question_type === "true_false").length;
+              const textCount = paper.questions.filter(q => q.question_type === "text").length;
+              const fbCount = paper.questions.filter(q => q.question_type === "fill_blank").length;
+
+              return (
+                <div key={paper.id} className={`border rounded-lg overflow-hidden ${paper.isEnabled ? "border-border" : "border-dashed border-muted-foreground/30 opacity-60"}`}>
+                  {/* Paper Header */}
+                  <div
+                    className="flex items-center gap-2 px-3 py-2 bg-secondary cursor-pointer hover:bg-secondary/80 transition-colors"
+                    onClick={() => togglePaperExpand(paper.id)}
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{paper.fileName}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                          <Calendar className="h-2.5 w-2.5" />
+                          {formatDate(paper.uploadedAt)}
+                        </span>
+                        <Badge variant="outline" className="text-[9px] px-1 py-0">{paper.questions.length} Q</Badge>
+                        {mcqCount > 0 && <Badge variant="outline" className={`text-[8px] px-1 py-0 ${typeBadgeColor("multiple_choice")}`}>MCQ:{mcqCount}</Badge>}
+                        {tfCount > 0 && <Badge variant="outline" className={`text-[8px] px-1 py-0 ${typeBadgeColor("true_false")}`}>T/F:{tfCount}</Badge>}
+                        {textCount > 0 && <Badge variant="outline" className={`text-[8px] px-1 py-0 ${typeBadgeColor("text")}`}>Text:{textCount}</Badge>}
+                        {fbCount > 0 && <Badge variant="outline" className={`text-[8px] px-1 py-0 ${typeBadgeColor("fill_blank")}`}>Fill:{fbCount}</Badge>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+                      <Switch
+                        checked={paper.isEnabled}
+                        onCheckedChange={() => togglePaperEnabled(paper.id)}
+                        className="scale-75"
+                      />
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => removePaper(paper.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    {isExpanded ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                  </div>
+
+                  {/* Paper Questions */}
+                  {isExpanded && (
+                    <div className="px-3 py-2 space-y-1.5">
+                      <Accordion type="multiple" className="space-y-1">
+                        {paper.questions.map((q, idx) => (
+                          <AccordionItem key={q.id} value={q.id} className="border rounded overflow-hidden">
+                            <AccordionTrigger className="px-2.5 py-1.5 hover:no-underline hover:bg-muted/30 text-left">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <Badge variant="outline" className="text-[10px] shrink-0">Q{idx + 1}</Badge>
+                                <Badge variant="outline" className={`text-[9px] shrink-0 ${typeBadgeColor(q.question_type)}`}>
+                                  {typeLabel(q.question_type)}
+                                </Badge>
+                                <p className="text-xs truncate flex-1">{q.question_text || "New question..."}</p>
+                                <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="px-2.5 pb-2.5">
+                              {editingId === q.id ? (
+                                <div className="space-y-2 pt-1">
+                                  <div>
+                                    <Label className="text-[10px]">Question</Label>
+                                    <Input
+                                      value={q.question_text}
+                                      onChange={e => updateQuestion(paper.id, q.id, "question_text", e.target.value)}
+                                      placeholder="Enter the question..."
+                                      className="text-xs h-8"
+                                    />
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <div>
+                                      <Label className="text-[10px]">Type</Label>
+                                      <Select value={q.question_type} onValueChange={v => updateQuestion(paper.id, q.id, "question_type", v)}>
+                                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="multiple_choice" className="text-xs">MCQ</SelectItem>
+                                          <SelectItem value="true_false" className="text-xs">True/False</SelectItem>
+                                          <SelectItem value="text" className="text-xs">Text</SelectItem>
+                                          <SelectItem value="fill_blank" className="text-xs">Fill Blank</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <Label className="text-[10px]">Marks</Label>
+                                      <Input type="number" value={q.marks} onChange={e => updateQuestion(paper.id, q.id, "marks", parseInt(e.target.value) || 1)} className="h-8 text-xs" min={1} />
+                                    </div>
+                                    <div>
+                                      <Label className="text-[10px]">Category</Label>
+                                      <Input value={q.category} onChange={e => updateQuestion(paper.id, q.id, "category", e.target.value)} className="h-8 text-xs" />
+                                    </div>
+                                  </div>
+                                  {q.question_type === "multiple_choice" && (
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                      {(q.options || ["", "", "", ""]).map((opt, oIdx) => (
+                                        <div key={oIdx} className="flex items-center gap-1">
+                                          <Badge variant="outline" className="text-[9px] w-5 h-5 flex items-center justify-center p-0 shrink-0">
+                                            {String.fromCharCode(65 + oIdx)}
+                                          </Badge>
+                                          <Input
+                                            value={opt}
+                                            onChange={e => updateOption(paper.id, q.id, oIdx, e.target.value)}
+                                            placeholder={`Option ${String.fromCharCode(65 + oIdx)}`}
+                                            className="text-xs h-7"
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <Label className="text-[10px] text-primary font-semibold">✅ Correct Answer</Label>
+                                    <Input
+                                      value={q.correct_answer}
+                                      onChange={e => updateQuestion(paper.id, q.id, "correct_answer", e.target.value)}
+                                      placeholder={q.question_type === "multiple_choice" ? "e.g. A" : "Enter answer..."}
+                                      className="text-xs h-8"
+                                    />
+                                  </div>
+                                  <div className="flex gap-1.5 pt-1">
+                                    <Button size="sm" className="text-[10px] h-6" onClick={() => setEditingId(null)}>
+                                      <Save className="h-3 w-3 mr-0.5" /> Done
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="text-[10px] h-6 text-destructive" onClick={() => removeQuestion(paper.id, q.id)}>
+                                      <Trash2 className="h-3 w-3 mr-0.5" /> Delete
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-2 pt-1">
+                                  <p className="text-xs font-medium">{q.question_text}</p>
+                                  {q.question_type === "multiple_choice" && q.options && (
+                                    <div className="grid grid-cols-2 gap-1 ml-1">
+                                      {q.options.map((opt, oIdx) => (
+                                        <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
+                                          q.correct_answer.toUpperCase().startsWith(String.fromCharCode(65 + oIdx))
+                                            ? "bg-accent/10 border-accent/40 font-medium"
+                                            : "bg-muted/30 border-border"
+                                        }`}>
+                                          {String.fromCharCode(65 + oIdx)}) {opt}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {q.question_type === "true_false" && (
+                                    <div className="flex gap-2 ml-1">
+                                      <span className={`text-[10px] px-2 py-0.5 rounded border ${q.correct_answer.toLowerCase().includes("true") ? "bg-accent/10 border-accent/40 font-medium" : "bg-muted/30"}`}>True</span>
+                                      <span className={`text-[10px] px-2 py-0.5 rounded border ${q.correct_answer.toLowerCase().includes("false") ? "bg-accent/10 border-accent/40 font-medium" : "bg-muted/30"}`}>False</span>
+                                    </div>
+                                  )}
+                                  <div className="p-1.5 bg-primary/5 rounded border border-primary/15">
+                                    <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.correct_answer || "Not set"}</p>
+                                  </div>
+                                  <div className="flex gap-1.5 pt-1">
+                                    <Button size="sm" variant="outline" className="text-[10px] h-6" onClick={() => setEditingId(q.id)}>
+                                      <Edit className="h-3 w-3 mr-0.5" /> Edit
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="text-[10px] h-6 text-destructive" onClick={() => removeQuestion(paper.id, q.id)}>
+                                      <Trash2 className="h-3 w-3 mr-0.5" /> Delete
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </CardContent>
