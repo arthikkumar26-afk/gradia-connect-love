@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AIPaperDetection } from "./AIPaperDetection";
 import { ChapterWiseQA } from "./ChapterWiseQA";
+import { QuestionBankContent } from "./QuestionBankContent";
 import {
   Select,
   SelectContent,
