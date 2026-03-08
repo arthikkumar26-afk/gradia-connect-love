@@ -227,6 +227,81 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const formatDate = (date: Date) =>
     date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
+  const formatDateShort = (date: Date) =>
+    date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+
+  // Build the current preview sections (reusable for save)
+  const buildPreviewSections = () => {
+    const shuffle = <T,>(arr: T[]): T[] => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+    const availableSections = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
+    const totalAvailable = availableSections.reduce((s, sec) => s + (sectionQuestions[sec.key] || []).length, 0);
+    const targetCount = Math.min(previewCount, totalAvailable);
+    const pickCounts: Record<string, number> = {};
+    let assigned = 0;
+    availableSections.forEach((sec, i) => {
+      const secQs = (sectionQuestions[sec.key] || []).length;
+      if (i === availableSections.length - 1) {
+        pickCounts[sec.key] = Math.min(secQs, targetCount - assigned);
+      } else {
+        const proportion = Math.max(1, Math.round((secQs / totalAvailable) * targetCount));
+        pickCounts[sec.key] = Math.min(secQs, proportion);
+        assigned += pickCounts[sec.key];
+      }
+    });
+    const sections: SavedPaper["sections"] = [];
+    SECTIONS.forEach((section) => {
+      const allQs = sectionQuestions[section.key] || [];
+      if (allQs.length === 0) return;
+      const pick = Math.min(pickCounts[section.key] || 3, allQs.length);
+      const selected = shuffle(allQs).slice(0, pick);
+      sections.push({ key: section.key, label: section.label, questions: selected });
+    });
+    return sections;
+  };
+
+  const [currentPreviewSections, setCurrentPreviewSections] = useState<SavedPaper["sections"]>([]);
+
+  const handleOpenPreview = () => {
+    const sections = buildPreviewSections();
+    setCurrentPreviewSections(sections);
+    setShowPreview(true);
+  };
+
+  const handleSavePaper = () => {
+    const sections = currentPreviewSections.length > 0 ? currentPreviewSections : buildPreviewSections();
+    const allQs = sections.flatMap(s => s.questions);
+    const paper: SavedPaper = {
+      id: `paper-${Date.now()}`,
+      savedAt: new Date(),
+      questionCount: allQs.length,
+      totalMarks: allQs.reduce((s, q) => s + (q.marks || 0), 0),
+      sections,
+    };
+    setSavedPapers(prev => [paper, ...prev]);
+    toast.success(`Paper saved with ${paper.questionCount} questions`);
+    setShowPreview(false);
+  };
+
+  const deleteSavedPaper = (paperId: string) => {
+    setSavedPapers(prev => prev.filter(p => p.id !== paperId));
+    toast.success("Saved paper deleted");
+  };
+
+  // Group saved papers by date
+  const groupedPapers = savedPapers.reduce<Record<string, SavedPaper[]>>((acc, paper) => {
+    const dateKey = formatDateShort(paper.savedAt);
+    if (!acc[dateKey]) acc[dateKey] = [];
+    acc[dateKey].push(paper);
+    return acc;
+  }, {});
+
   return (
     <Card className={`border-2 transition-colors ${isEnabled ? "border-primary/30 bg-primary/5" : "border-dashed border-muted-foreground/30"}`}>
       <CardContent className="py-4 px-5 space-y-3">
