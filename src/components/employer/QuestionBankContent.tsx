@@ -87,6 +87,81 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const [previewCount, setPreviewCount] = useState<number>(10);
   const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);
   const [viewingSavedPaper, setViewingSavedPaper] = useState<SavedPaper | null>(null);
+  const [loadingPapers, setLoadingPapers] = useState(false);
+
+  // Load saved papers from database on mount
+  useEffect(() => {
+    const loadSavedPapers = async () => {
+      setLoadingPapers(true);
+      try {
+        const { data: papers, error } = await supabase
+          .from('interview_question_papers')
+          .select(`
+            *,
+            interview_questions(
+              *,
+              interview_answer_keys(*)
+            )
+          `)
+          .eq('job_id', jobId)
+          .eq('stage_type', 'question_bank')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (papers && papers.length > 0) {
+          const loaded: SavedPaper[] = papers.map((paper: any) => {
+            const questions: QuestionBankQuestion[] = (paper.interview_questions || [])
+              .sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
+              .map((q: any) => ({
+                id: q.id,
+                question_number: q.question_number,
+                question_text: q.question_text,
+                question_type: q.question_type === 'multiple_choice' ? 'mcq' : q.question_type,
+                options: q.options?.options || q.options || [],
+                correct_answer: q.interview_answer_keys?.[0]?.answer_text || '',
+                marks: q.marks || 1,
+                source_pdf: 'Saved Paper',
+                uploadedAt: new Date(q.created_at),
+              }));
+
+            // Group questions by section
+            const sectionMap: Record<string, QuestionBankQuestion[]> = {};
+            (paper.interview_questions || []).forEach((q: any, idx: number) => {
+              const sectionLabel = q.section || 'General';
+              const sectionKey = SECTIONS.find(s => s.label === sectionLabel)?.key || 'mcq';
+              if (!sectionMap[sectionKey]) sectionMap[sectionKey] = [];
+              sectionMap[sectionKey].push(questions[idx]);
+            });
+
+            const sections = Object.entries(sectionMap).map(([key, qs]) => ({
+              key,
+              label: SECTIONS.find(s => s.key === key)?.label || key,
+              questions: qs,
+            }));
+
+            return {
+              id: paper.id,
+              dbPaperId: paper.id,
+              savedAt: new Date(paper.created_at),
+              questionCount: questions.length,
+              totalMarks: questions.reduce((s, q) => s + (q.marks || 0), 0),
+              sections,
+              isActiveForTest: paper.is_active,
+            };
+          });
+
+          setSavedPapers(loaded);
+        }
+      } catch (err) {
+        console.error('Error loading saved papers:', err);
+      } finally {
+        setLoadingPapers(false);
+      }
+    };
+
+    loadSavedPapers();
+  }, [jobId]);
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
