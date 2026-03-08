@@ -68,9 +68,39 @@ export const StageResultsModal = ({
   const [response, setResponse] = useState<InterviewResponse | null>(null);
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [slotBookingData, setSlotBookingData] = useState<{ booking_date: string; booking_time: string; status: string; preferred_slots: { date: string; time: string }[] | null; subject: string | null; created_at: string; observer_email: string | null } | null>(null);
+  const [slotBookingData, setSlotBookingData] = useState<{ id: string; booking_date: string; booking_time: string; status: string; preferred_slots: { date: string; time: string }[] | null; subject: string | null; created_at: string; observer_email: string | null } | null>(null);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const isSlotBookingStage = stageName.includes('Slot Booking');
+
+  const handleConfirmSlot = async () => {
+    if (!slotBookingData || selectedSlotIndex === null || !slotBookingData.preferred_slots) return;
+    const chosen = slotBookingData.preferred_slots[selectedSlotIndex];
+    if (!chosen) return;
+    
+    setIsConfirming(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('slot_bookings')
+        .update({ 
+          booking_date: chosen.date, 
+          booking_time: chosen.time, 
+          status: 'confirmed', 
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', slotBookingData.id);
+      
+      if (!updateError) {
+        setSlotBookingData({ ...slotBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
+        setSelectedSlotIndex(null);
+      }
+    } catch (err) {
+      console.error('Error confirming slot:', err);
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,12 +125,12 @@ export const StageResultsModal = ({
 
             const { data: bookings } = await supabase
               .from('slot_bookings')
-              .select('booking_date, booking_time, status, preferred_slots, subject, created_at, observer_email')
+              .select('id, booking_date, booking_time, status, preferred_slots, subject, created_at, observer_email, booking_type')
               .eq('candidate_id', icData.candidate_id)
               .order('created_at', { ascending: false });
 
             const booking = bookings?.find(b => 
-              b.subject?.toLowerCase().includes(bookingType)
+              b.subject?.toLowerCase().includes(bookingType) || b.booking_type?.includes(bookingType)
             ) || null;
 
             setSlotBookingData(booking ? { ...booking, preferred_slots: (booking.preferred_slots as any) || null } : null);
@@ -314,29 +344,62 @@ export const StageResultsModal = ({
                           </p>
                           <div className="space-y-2">
                             {slotBookingData.preferred_slots.map((slot, i) => {
-                              const isSelected = slotBookingData.status === 'confirmed' && 
+                              const isConfirmed = slotBookingData.status === 'confirmed' && 
                                 slot.date === slotBookingData.booking_date && 
                                 slot.time === slotBookingData.booking_time;
+                              const hour = parseInt(slot.time.split(':')[0]);
+                              const minute = slot.time.split(':')[1];
+                              const displayHour = hour % 12 || 12;
+                              const ampm = hour < 12 ? 'AM' : 'PM';
+                              const timeLabel = `${displayHour}:${minute} ${ampm}`;
                               return (
-                                <div key={i} className={`flex items-center gap-3 p-2 rounded-md border ${
-                                  isSelected ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200'
+                                <label key={i} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all ${
+                                  isConfirmed ? 'border-emerald-300 bg-emerald-50' 
+                                  : selectedSlotIndex === i ? 'border-purple-400 bg-purple-50 ring-1 ring-purple-300' 
+                                  : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
                                 }`}>
+                                  {slotBookingData.status !== 'confirmed' && (
+                                    <input 
+                                      type="radio" 
+                                      name="preferred-slot" 
+                                      checked={selectedSlotIndex === i} 
+                                      onChange={() => setSelectedSlotIndex(i)}
+                                      className="accent-purple-600"
+                                    />
+                                  )}
                                   <Badge variant="outline" className="text-xs px-2 border-purple-300 text-purple-600">
                                     Option {i + 1}
                                   </Badge>
                                   <span className="text-sm">
-                                    📅 {new Date(slot.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                                    📅 {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                                   </span>
-                                  <span className="text-sm">🕐 {slot.time}</span>
-                                  {isSelected && (
+                                  <span className="text-sm">🕐 {timeLabel}</span>
+                                  {isConfirmed && (
                                     <Badge className="ml-auto text-xs bg-emerald-100 text-emerald-700 border-emerald-300">
-                                      ✓ Selected
+                                      ✓ Confirmed
                                     </Badge>
                                   )}
-                                </div>
+                                </label>
                               );
                             })}
                           </div>
+                          {/* Confirm button */}
+                          {slotBookingData.status !== 'confirmed' && (
+                            <div className="mt-4 flex justify-end">
+                              <Button 
+                                onClick={handleConfirmSlot} 
+                                disabled={selectedSlotIndex === null || isConfirming}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                size="sm"
+                              >
+                                {isConfirming ? (
+                                  <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Confirming...</>
+                                ) : (
+                                  <><CheckCircle className="h-3 w-3 mr-1" /> Confirm Selected Slot</>
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       )}
 
