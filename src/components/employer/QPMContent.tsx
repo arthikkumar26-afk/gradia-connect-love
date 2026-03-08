@@ -1061,6 +1061,9 @@ export const QPMContent = () => {
           </Card>
         ))}
       </div>
+          )}
+        </CardContent>
+      </Card>
       )}
 
       {/* Review Question Papers - Show all created sets inline (only when AI mode is off) */}
