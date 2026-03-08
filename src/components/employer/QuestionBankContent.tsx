@@ -44,10 +44,12 @@ interface QuestionBankQuestion {
 
 interface SavedPaper {
   id: string;
+  dbPaperId?: string; // ID in interview_question_papers table
   savedAt: Date;
   questionCount: number;
   totalMarks: number;
   sections: { key: string; label: string; questions: QuestionBankQuestion[] }[];
+  isActiveForTest?: boolean;
 }
 
 interface SectionConfig {
@@ -274,22 +276,100 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     setShowPreview(true);
   };
 
-  const handleSavePaper = () => {
+  const [savingPaper, setSavingPaper] = useState(false);
+
+  const handleSavePaper = async () => {
     const sections = currentPreviewSections.length > 0 ? currentPreviewSections : buildPreviewSections();
     const allQs = sections.flatMap(s => s.questions);
-    const paper: SavedPaper = {
-      id: `paper-${Date.now()}`,
-      savedAt: new Date(),
-      questionCount: allQs.length,
-      totalMarks: allQs.reduce((s, q) => s + (q.marks || 0), 0),
-      sections,
-    };
-    setSavedPapers(prev => [paper, ...prev]);
-    toast.success(`Paper saved with ${paper.questionCount} questions`);
+    
+    setSavingPaper(true);
+    try {
+      // 1. Deactivate any existing Question Bank papers for this job
+      await supabase
+        .from('interview_question_papers')
+        .update({ is_active: false })
+        .eq('job_id', jobId)
+        .eq('stage_type', 'question_bank');
+
+      // 2. Create the question paper in DB
+      const { data: paperData, error: paperError } = await supabase
+        .from('interview_question_papers')
+        .insert({
+          title: `Question Bank Paper — ${allQs.length} Questions`,
+          stage_type: 'question_bank',
+          job_id: jobId,
+          is_active: true,
+          set_number: savedPapers.length + 1,
+        })
+        .select()
+        .single();
+
+      if (paperError || !paperData) throw paperError || new Error('Failed to create paper');
+
+      // 3. Insert questions
+      const questionsToInsert = allQs.map((q, idx) => ({
+        paper_id: paperData.id,
+        question_number: idx + 1,
+        question_text: q.question_text,
+        question_type: q.question_type === 'mcq' ? 'multiple_choice' : q.question_type,
+        options: q.options && q.options.length > 0 ? { options: q.options } : null,
+        marks: q.marks || 1,
+        section: sections.find(s => s.questions.includes(q))?.label || 'General',
+        display_order: idx + 1,
+      }));
+
+      const { data: insertedQuestions, error: qError } = await supabase
+        .from('interview_questions')
+        .insert(questionsToInsert)
+        .select();
+
+      if (qError) throw qError;
+
+      // 4. Insert answer keys for questions that have correct answers
+      if (insertedQuestions) {
+        const answerKeys = insertedQuestions
+          .map((iq, idx) => {
+            const originalQ = allQs[idx];
+            if (!originalQ.correct_answer) return null;
+            return {
+              question_id: iq.id,
+              answer_text: originalQ.correct_answer,
+              keywords: [originalQ.correct_answer],
+            };
+          })
+          .filter(Boolean);
+
+        if (answerKeys.length > 0) {
+          await supabase.from('interview_answer_keys').insert(answerKeys);
+        }
+      }
+
+      const paper: SavedPaper = {
+        id: `paper-${Date.now()}`,
+        dbPaperId: paperData.id,
+        savedAt: new Date(),
+        questionCount: allQs.length,
+        totalMarks: allQs.reduce((s, q) => s + (q.marks || 0), 0),
+        sections,
+        isActiveForTest: true,
+      };
+      // Mark all previous papers as inactive
+      setSavedPapers(prev => [paper, ...prev.map(p => ({ ...p, isActiveForTest: false }))]);
+      toast.success(`Paper saved with ${paper.questionCount} questions — will be used in Written Test`);
+    } catch (err: any) {
+      console.error('Error saving paper to DB:', err);
+      toast.error('Failed to save paper: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSavingPaper(false);
+    }
     setShowPreview(false);
   };
 
-  const deleteSavedPaper = (paperId: string) => {
+  const deleteSavedPaper = async (paperId: string) => {
+    const paper = savedPapers.find(p => p.id === paperId);
+    if (paper?.dbPaperId) {
+      await supabase.from('interview_question_papers').update({ is_active: false }).eq('id', paper.dbPaperId);
+    }
     setSavedPapers(prev => prev.filter(p => p.id !== paperId));
     toast.success("Saved paper deleted");
   };
@@ -659,8 +739,9 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             </ScrollArea>
             <div className="px-6 py-3 border-t flex justify-end gap-2">
               <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowPreview(false)}>Close</Button>
-              <Button size="sm" className="text-xs gap-1.5" onClick={handleSavePaper}>
-                <Save className="h-3.5 w-3.5" /> Save Paper
+              <Button size="sm" className="text-xs gap-1.5" onClick={handleSavePaper} disabled={savingPaper}>
+                {savingPaper ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                {savingPaper ? "Saving to Written Test..." : "Save & Use for Written Test"}
               </Button>
             </div>
           </DialogContent>
@@ -758,12 +839,17 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                 </div>
                 <div className="space-y-1 pl-5">
                   {papers.map((paper, idx) => (
-                    <div key={paper.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div key={paper.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${paper.isActiveForTest ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 hover:bg-muted/50'}`}>
                       <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">
-                          Paper #{savedPapers.length - savedPapers.indexOf(paper)} — {paper.questionCount} Questions
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium text-foreground truncate">
+                            Paper #{savedPapers.length - savedPapers.indexOf(paper)} — {paper.questionCount} Questions
+                          </p>
+                          {paper.isActiveForTest && (
+                            <Badge className="text-[8px] px-1.5 py-0 bg-primary text-primary-foreground">Active for Written Test</Badge>
+                          )}
+                        </div>
                         <p className="text-[10px] text-muted-foreground">
                           {paper.totalMarks} Marks · {paper.sections.map(s => s.label).join(", ")}
                         </p>

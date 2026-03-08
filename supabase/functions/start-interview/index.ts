@@ -485,9 +485,12 @@ serve(async (req) => {
         const papersWithQuestions = jobPapers.filter((p: any) => p.interview_questions && p.interview_questions.length > 0);
         
         if (papersWithQuestions.length > 0) {
-          // Randomly select one paper set from this job
-          const selectedPaper = papersWithQuestions[Math.floor(Math.random() * papersWithQuestions.length)];
-          console.log(`Using job-specific paper: "${selectedPaper.title}" (Set ${selectedPaper.set_number}, ${selectedPaper.interview_questions.length} questions)`);
+          // Prioritize Question Bank papers over manual sets
+          const questionBankPapers = papersWithQuestions.filter((p: any) => p.stage_type === 'question_bank');
+          const selectedPaper = questionBankPapers.length > 0
+            ? questionBankPapers[Math.floor(Math.random() * questionBankPapers.length)]
+            : papersWithQuestions[Math.floor(Math.random() * papersWithQuestions.length)];
+          console.log(`Using job-specific paper: "${selectedPaper.title}" (type: ${selectedPaper.stage_type}, ${selectedPaper.interview_questions.length} questions)`);
           
           questions = transformPaperQuestions(selectedPaper.interview_questions);
           usingAdminQuestions = true;
