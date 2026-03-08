@@ -44,10 +44,12 @@ interface QuestionBankQuestion {
 
 interface SavedPaper {
   id: string;
+  dbPaperId?: string; // ID in interview_question_papers table
   savedAt: Date;
   questionCount: number;
   totalMarks: number;
   sections: { key: string; label: string; questions: QuestionBankQuestion[] }[];
+  isActiveForTest?: boolean;
 }
 
 interface SectionConfig {
