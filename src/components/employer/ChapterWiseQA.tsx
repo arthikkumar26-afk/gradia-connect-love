@@ -39,6 +39,7 @@ interface ChapterWiseQAProps {
 
 export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isChapterEnabled, setIsChapterEnabled] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfText, setPdfText] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);

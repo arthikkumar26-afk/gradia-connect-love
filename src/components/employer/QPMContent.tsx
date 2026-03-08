@@ -85,6 +85,7 @@ export const QPMContent = () => {
   const [viewingPaper, setViewingPaper] = useState<QuestionPaper | null>(null);
   const [useAiQuestions, setUseAiQuestions] = useState(false);
   const [isTogglingAi, setIsTogglingAi] = useState(false);
+  const [isManualSetsEnabled, setIsManualSetsEnabled] = useState(true);
 
   // Fetch jobs - with auth state listener for reliability
   useEffect(() => {
