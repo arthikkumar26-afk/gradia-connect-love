@@ -68,6 +68,9 @@ export const StageResultsModal = ({
   const [response, setResponse] = useState<InterviewResponse | null>(null);
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [slotBookingData, setSlotBookingData] = useState<{ booking_date: string; booking_time: string; status: string; preferred_slots: { date: string; time: string }[] | null; subject: string | null; created_at: string; observer_email: string | null } | null>(null);
+
+  const isSlotBookingStage = stageName.includes('Slot Booking');
 
   useEffect(() => {
     const fetchData = async () => {
