@@ -15,7 +15,8 @@ import {
 import {
   Database, Upload, Loader2, Trash2, FileText, Calendar,
   Edit, Save, ChevronDown, ChevronUp, ListChecks, ToggleLeft,
-  ArrowLeftRight, HelpCircle, FileQuestion, Image, Map, AlignLeft, AlignJustify, Eye
+  ArrowLeftRight, HelpCircle, FileQuestion, Image, Map, AlignLeft, AlignJustify, Eye,
+  FolderOpen, Download, Clock
 } from "lucide-react";
 import {
   Dialog,
