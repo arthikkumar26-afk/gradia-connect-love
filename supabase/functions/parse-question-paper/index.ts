@@ -82,30 +82,37 @@ serve(async (req) => {
     console.log('Parsing PDF text for questions, length:', textContent.length);
     console.log('First 500 chars of extracted text:', textContent.substring(0, 500));
 
-    const systemPrompt = `You are a multilingual question extraction expert. Extract all questions from the given PDF text content.
-IMPORTANT: The content may be in ANY language including Telugu, Hindi, Tamil, or other Indian languages. 
-Preserve the ORIGINAL language of the questions - do NOT translate them to English.
+    const systemPrompt = `You are a STRICT multilingual question extraction expert. Your ONLY job is to extract questions that ALREADY EXIST in the document text. You must NEVER create, generate, or invent any questions on your own.
+
+CRITICAL RULES:
+- ONLY extract questions that are explicitly written in the document
+- Do NOT create new questions, do NOT rephrase, do NOT generate your own content
+- Detect questions by looking for: question marks (?), numbered items (1., 2., Q1, Q2, i., ii., a., b.), commas separating options, periods ending sentences that are clearly questions, fill-in-the-blank patterns (___), true/false patterns
+- Punctuation like (,) (.) (?) (;) (:) should be used to identify question boundaries and option separators
+- The content may be in ANY language including Telugu, Hindi, Tamil, or other Indian languages
+- Preserve the ORIGINAL language of the questions - do NOT translate them to English
 
 For each question found:
 1. Extract the question number (if present)
-2. Extract the FULL question text in its ORIGINAL language
+2. Extract the FULL question text EXACTLY as written in the document
 3. Determine if it's multiple choice, true/false, or text answer
-4. If multiple choice, extract all options in their ORIGINAL language
+4. If multiple choice, extract all options EXACTLY as written
 
 Return a JSON array of questions with this structure:
 {
   "questions": [
     {
       "question_number": 1,
-      "question_text": "The full question text here in ORIGINAL language",
+      "question_text": "The EXACT question text from the document",
       "question_type": "text" | "multiple_choice" | "true_false",
-      "options": ["A) Option 1", "B) Option 2"] // only for multiple_choice, in original language
+      "options": ["A) Option 1", "B) Option 2"] // only for multiple_choice, exactly as in document
     }
   ]
 }
 
-Be thorough and extract ALL questions from the document. Ignore headers, footers, and instructions that are not actual questions.
-If the text appears corrupted or unreadable, try to identify question patterns like numbered items (1., 2., Q1, Q2, etc.) and extract them.`;
+Be thorough and extract ALL questions from the document. Ignore headers, footers, and general instructions.
+If text has question-like patterns separated by commas, periods or semicolons, treat each as a separate question.
+NEVER fabricate or make up questions that don't exist in the source text.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
