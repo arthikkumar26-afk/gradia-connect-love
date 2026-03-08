@@ -162,9 +162,17 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    if (!selectedDate || !selectedTime) {
-      toast.error("Please select both date and time");
-      return;
+    // For demo, require 3 preferred slots
+    if (isDemoStage) {
+      if (preferredSlots.length < 1) {
+        toast.error("Please add at least 1 preferred timing (up to 3)");
+        return;
+      }
+    } else {
+      if (!selectedDate || !selectedTime) {
+        toast.error("Please select both date and time");
+        return;
+      }
     }
     if (!candidateId) {
       toast.error("Invalid booking link - missing candidate information");
@@ -173,8 +181,6 @@ const BookSlot = () => {
 
     setIsBooking(true);
     try {
-      const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-
       // Create slot booking record
       const { data: interviewCandidate } = await supabase
         .from("interview_candidates")
@@ -184,36 +190,51 @@ const BookSlot = () => {
 
       // Determine booking type based on stage name
       const isWrittenTestSlotBooking = stageName.toLowerCase().includes("written");
-      const isDemoSlotBooking = stageName.toLowerCase().includes("demo");
       const isHrSlotBooking = stageName.toLowerCase().includes("hr");
 
-      const bookingType = isDemoSlotBooking ? "demo_round" 
+      const bookingType = isDemoStage ? "demo_round" 
         : isHrSlotBooking ? "hr_round" 
         : isWrittenTestSlotBooking ? "written_test" 
         : "technical_assessment";
 
       if (interviewCandidate?.candidate_id) {
-        await supabase.from("slot_bookings").insert({
-          candidate_id: interviewCandidate.candidate_id,
-          booking_date: selectedDate,
-          booking_time: selectedTime,
-          booking_type: bookingType,
-          status: "confirmed",
-          subject: stageName,
-        });
+        if (isDemoStage) {
+          // For demo: save first preferred slot as booking_date/time, all 3 in preferred_slots
+          await supabase.from("slot_bookings").insert({
+            candidate_id: interviewCandidate.candidate_id,
+            booking_date: preferredSlots[0].date,
+            booking_time: preferredSlots[0].time,
+            booking_type: bookingType,
+            status: "pending",
+            subject: stageName,
+            preferred_slots: preferredSlots as any,
+          });
+        } else {
+          await supabase.from("slot_bookings").insert({
+            candidate_id: interviewCandidate.candidate_id,
+            booking_date: selectedDate,
+            booking_time: selectedTime,
+            booking_type: bookingType,
+            status: "confirmed",
+            subject: stageName,
+          });
+        }
       }
 
-      // Send interview invitation with the scheduled time
-      const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
-        body: {
-          interviewCandidateId: candidateId,
-          stageName,
-          scheduledDate: scheduledDateTime,
-        },
-      });
+      if (!isDemoStage) {
+        const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+        // Send interview invitation with the scheduled time
+        const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
+          body: {
+            interviewCandidateId: candidateId,
+            stageName,
+            scheduledDate: scheduledDateTime,
+          },
+        });
 
-      if (inviteError) {
-        console.error("Error sending invitation:", inviteError);
+        if (inviteError) {
+          console.error("Error sending invitation:", inviteError);
+        }
       }
 
       // Auto-advance to Written Test and send invitation when Written Test slot is booked
@@ -231,23 +252,8 @@ const BookSlot = () => {
         }
       }
 
-      // Auto-advance to Demo Round and send dual emails
-      if (isDemoSlotBooking) {
-        try {
-          await supabase.functions.invoke("process-interview-stage", {
-            body: {
-              interviewCandidateId: candidateId,
-              action: "advance",
-              feedback: "Slot booked by candidate, auto-advancing to Demo Round",
-            },
-          });
-          await supabase.functions.invoke("send-demo-round-emails", {
-            body: { interviewCandidateId: candidateId },
-          });
-        } catch (advanceErr) {
-          console.error("Error auto-advancing to Demo Round:", advanceErr);
-        }
-      }
+      // For Demo: DON'T auto-advance, employer will select timing and send link
+      // Just mark booking as pending for employer review
 
       // Auto-advance to HR Round and send dual emails
       if (isHrSlotBooking) {
@@ -268,7 +274,11 @@ const BookSlot = () => {
       }
 
       setIsBooked(true);
-      toast.success("Slot booked successfully! Check your email for details.");
+      if (isDemoStage) {
+        toast.success("Preferred timings submitted! The employer will confirm your slot.");
+      } else {
+        toast.success("Slot booked successfully! Check your email for details.");
+      }
     } catch (err) {
       console.error("Error booking slot:", err);
       toast.error("Failed to book slot. Please try again.");
