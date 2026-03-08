@@ -276,12 +276,22 @@ Return ONLY valid JSON in this format:
               marks: s.marksPerQuestion,
               answer: "Please regenerate questions",
               chapter: chapterNames,
-              ...(s.questionType === "mcq" || s.questionType === "fill_in_the_blanks" ? {
+              ...(s.questionType === "mcq" || s.questionType === "fill_in_the_blanks" || s.questionType === "match_the_following" ? {
                 options: ["Option A", "Option B", "Option C", "Option D"],
                 correct_option: "A",
               } : {}),
               ...(s.questionType === "fill_in_the_blanks" ? {
                 sentence_with_blank: "The ______ needs to be regenerated.",
+              } : {}),
+              ...(s.questionType === "match_the_following" ? {
+                column_a: ["Item 1", "Item 2", "Item 3"],
+                column_b: ["Match A", "Match B", "Match C"],
+              } : {}),
+              ...(s.questionType === "assertion_reasoning" ? {
+                assertion: "Assertion placeholder",
+                reason: "Reason placeholder",
+                options: ["(A) is true but (R) is false", "Both (A) and (R) are false", "Both (A) and (R) are true and (R) is the correct explanation of (A)", "Both (A) and (R) are true but (R) is not the correct explanation of (A)"],
+                correct_option: "3",
               } : {}),
             })),
           })),
