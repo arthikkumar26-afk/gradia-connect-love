@@ -1012,7 +1012,7 @@ const ClickableStagesList = ({
         if (icData?.candidate_id) {
           const { data: bookings } = await supabase
             .from('slot_bookings')
-            .select('id, booking_date, booking_time, status, subject, updated_at, created_at, observer_email, demo_meet_link, demo_meet_type, preferred_slots')
+            .select('id, booking_date, booking_time, status, subject, updated_at, created_at, observer_email, demo_meet_link, demo_meet_type, preferred_slots, booking_type')
             .eq('candidate_id', icData.candidate_id)
             .order('created_at', { ascending: false });
 
