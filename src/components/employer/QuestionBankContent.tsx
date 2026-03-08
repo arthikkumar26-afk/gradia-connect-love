@@ -73,6 +73,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [previewCount, setPreviewCount] = useState<number>(10);
 
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -462,13 +463,24 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
 
           {/* Preview Button */}
           {totalQuestions > 0 && (
-            <div className="flex items-center justify-between pt-2 border-t">
+            <div className="flex items-center justify-between pt-2 border-t gap-3">
               <p className="text-xs text-muted-foreground">
                 Total: <span className="font-semibold text-foreground">{totalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{grandTotalMarks} Marks</span>
               </p>
-              <Button size="sm" className="text-xs h-8 gap-1.5" onClick={() => setShowPreview(true)}>
-                <Eye className="h-3.5 w-3.5" /> Preview Question Paper
-              </Button>
+              <div className="flex items-center gap-2">
+                <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Paper Questions:</Label>
+                <Input
+                  type="number"
+                  value={previewCount}
+                  min={1}
+                  max={totalQuestions}
+                  onChange={e => setPreviewCount(Math.max(1, Math.min(totalQuestions, parseInt(e.target.value) || 1)))}
+                  className="w-16 h-7 text-xs text-center"
+                />
+                <Button size="sm" className="text-xs h-8 gap-1.5" onClick={() => setShowPreview(true)}>
+                  <Eye className="h-3.5 w-3.5" /> Preview Question Paper
+                </Button>
+              </div>
             </div>
           )}
         </>
@@ -482,7 +494,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>{jobTitle}</span>
                 <Separator orientation="vertical" className="h-3" />
-                <span className="font-medium text-foreground">{totalQuestions} Questions</span>
+                <span className="font-medium text-foreground">{Math.min(previewCount, totalQuestions)} of {totalQuestions} Questions</span>
                 <Separator orientation="vertical" className="h-3" />
                 <span className="font-medium text-amber-600">{grandTotalMarks} Marks</span>
               </div>
@@ -490,13 +502,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             <ScrollArea className="max-h-[70vh] px-6 py-4">
               <div className="space-y-6">
                 {(() => {
-                  // Build exam sections from available question types
                   const sectionLetters = "ABCDEFGHIJ".split("");
-                  const pickCounts: Record<string, number> = {
-                    mcq: 5, fill_blank: 5, true_false: 5, match: 3,
-                    assertion: 3, short_answer: 4, long_answer: 2,
-                    image_base: 2, map_base: 2,
-                  };
 
                   // Shuffle helper
                   const shuffle = <T,>(arr: T[]): T[] => {
@@ -507,6 +513,26 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                     }
                     return a;
                   };
+
+                  // Distribute previewCount proportionally across available sections
+                  const availableSections = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
+                  const totalAvailable = availableSections.reduce((s, sec) => s + (sectionQuestions[sec.key] || []).length, 0);
+                  const targetCount = Math.min(previewCount, totalAvailable);
+
+                  // Proportional distribution
+                  const pickCounts: Record<string, number> = {};
+                  let assigned = 0;
+                  availableSections.forEach((sec, i) => {
+                    const secQs = (sectionQuestions[sec.key] || []).length;
+                    if (i === availableSections.length - 1) {
+                      pickCounts[sec.key] = Math.min(secQs, targetCount - assigned);
+                    } else {
+                      const proportion = Math.max(1, Math.round((secQs / totalAvailable) * targetCount));
+                      pickCounts[sec.key] = Math.min(secQs, proportion);
+                      assigned += pickCounts[sec.key];
+                    }
+                  });
+
 
                   let globalQ = 0;
                   let sectionIdx = 0;
