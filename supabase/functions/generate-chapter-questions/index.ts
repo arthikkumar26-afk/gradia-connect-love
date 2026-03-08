@@ -353,6 +353,65 @@ Return ONLY valid JSON in this format:
         };
       }
 
+      // Generate images for image_based questions
+      const imageQuestions: { sectionIdx: number; questionIdx: number; prompt: string }[] = [];
+      generatedData.sections?.forEach((s: any, sIdx: number) => {
+        s.questions?.forEach((q: any, qIdx: number) => {
+          if (q.type === "image_based" && q.image_prompt) {
+            imageQuestions.push({ sectionIdx: sIdx, questionIdx: qIdx, prompt: q.image_prompt });
+          }
+        });
+      });
+
+      // Generate images in parallel (max 3 at a time to avoid rate limits)
+      if (imageQuestions.length > 0) {
+        console.log(`Generating ${imageQuestions.length} images for image-based questions...`);
+        const batchSize = 3;
+        for (let i = 0; i < imageQuestions.length; i += batchSize) {
+          const batch = imageQuestions.slice(i, i + batchSize);
+          const imageResults = await Promise.allSettled(
+            batch.map(async (iq) => {
+              try {
+                const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${lovableApiKey}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    model: "google/gemini-2.5-flash-image",
+                    messages: [
+                      {
+                        role: "user",
+                        content: `Generate a clean, educational diagram: ${iq.prompt}. Style: simple, labeled, black and white line drawing suitable for an exam paper, on a clean white background.`
+                      }
+                    ],
+                    modalities: ["image", "text"],
+                  }),
+                });
+                if (!imgResponse.ok) {
+                  console.error(`Image generation failed for question: ${imgResponse.status}`);
+                  return { ...iq, image_url: null };
+                }
+                const imgData = await imgResponse.json();
+                const imageUrl = imgData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+                return { ...iq, image_url: imageUrl || null };
+              } catch (err) {
+                console.error("Image generation error:", err);
+                return { ...iq, image_url: null };
+              }
+            })
+          );
+
+          for (const result of imageResults) {
+            if (result.status === "fulfilled" && result.value.image_url) {
+              const { sectionIdx, questionIdx, image_url } = result.value;
+              generatedData.sections[sectionIdx].questions[questionIdx].image_url = image_url;
+            }
+          }
+        }
+      }
+
       const totalMarks = generatedData.sections?.reduce((sum: number, s: any) => 
         sum + s.questions.reduce((qSum: number, q: any) => qSum + (q.marks || 0), 0), 0) || 0;
       const totalQs = generatedData.sections?.reduce((sum: number, s: any) => sum + s.questions.length, 0) || 0;
