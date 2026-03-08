@@ -466,6 +466,8 @@ export const AIPaperDetection = ({ jobId, jobTitle, existingSets, onSaved }: AIP
             </p>
           </div>
         )}
+        </>
+        )}
       </CardContent>
     </Card>
   );
