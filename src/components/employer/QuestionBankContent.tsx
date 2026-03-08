@@ -839,12 +839,17 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                 </div>
                 <div className="space-y-1 pl-5">
                   {papers.map((paper, idx) => (
-                    <div key={paper.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div key={paper.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${paper.isActiveForTest ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 hover:bg-muted/50'}`}>
                       <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">
-                          Paper #{savedPapers.length - savedPapers.indexOf(paper)} — {paper.questionCount} Questions
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium text-foreground truncate">
+                            Paper #{savedPapers.length - savedPapers.indexOf(paper)} — {paper.questionCount} Questions
+                          </p>
+                          {paper.isActiveForTest && (
+                            <Badge className="text-[8px] px-1.5 py-0 bg-primary text-primary-foreground">Active for Written Test</Badge>
+                          )}
+                        </div>
                         <p className="text-[10px] text-muted-foreground">
                           {paper.totalMarks} Marks · {paper.sections.map(s => s.label).join(", ")}
                         </p>
