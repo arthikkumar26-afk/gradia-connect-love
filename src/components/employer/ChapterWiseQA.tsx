@@ -21,6 +21,7 @@ interface SectionConfig {
   marksPerQuestion: number;
   questionCount: number;
   questionType: "mcq" | "short_answer" | "long_answer" | "fill_in_the_blanks";
+  difficulty: "easy" | "medium" | "hard";
 }
 
 interface Chapter {
@@ -42,14 +43,16 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [sections, setSections] = useState<SectionConfig[]>([
-    { id: "1", name: "A", marksPerQuestion: 10, questionCount: 3, questionType: "long_answer" },
-    { id: "2", name: "B", marksPerQuestion: 5, questionCount: 5, questionType: "short_answer" },
-    { id: "3", name: "C", marksPerQuestion: 1, questionCount: 10, questionType: "mcq" },
+    { id: "1", name: "A", marksPerQuestion: 10, questionCount: 3, questionType: "long_answer", difficulty: "medium" },
+    { id: "2", name: "B", marksPerQuestion: 5, questionCount: 5, questionType: "short_answer", difficulty: "medium" },
+    { id: "3", name: "C", marksPerQuestion: 1, questionCount: 10, questionType: "mcq", difficulty: "easy" },
   ]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<any>(null);
   const [paperId, setPaperId] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [showAnswers, setShowAnswers] = useState(true);
+  const [paperTotalMarks, setPaperTotalMarks] = useState<number>(100);
 
   const totalMarks = sections.reduce((sum, s) => sum + (s.marksPerQuestion * s.questionCount), 0);
   const totalQuestions = sections.reduce((sum, s) => sum + s.questionCount, 0);
@@ -150,6 +153,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
       marksPerQuestion: 2,
       questionCount: 5,
       questionType: "short_answer",
+      difficulty: "medium",
     }]);
   };
 
@@ -333,6 +337,26 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
               </div>
             )}
 
+            {/* Total Marks Input */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+              <Label className="text-sm font-semibold whitespace-nowrap">Total Marks for Paper:</Label>
+              <Input
+                type="number"
+                min={1}
+                value={paperTotalMarks}
+                onChange={(e) => setPaperTotalMarks(parseInt(e.target.value) || 0)}
+                className="h-8 w-28 text-sm font-bold"
+              />
+              {totalMarks !== paperTotalMarks && (
+                <Badge variant="destructive" className="text-[10px]">
+                  Section total: {totalMarks} ≠ {paperTotalMarks}
+                </Badge>
+              )}
+              {totalMarks === paperTotalMarks && (
+                <Badge className="text-[10px] bg-green-600">✓ Matched</Badge>
+              )}
+            </div>
+
             {/* Step 3: Configure Sections */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -358,7 +382,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                             <div>
                               <Label className="text-[10px] text-muted-foreground">Section Name</Label>
                               <Input
@@ -404,6 +428,22 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <SelectItem value="short_answer">Short Answer</SelectItem>
                                   <SelectItem value="mcq">MCQ</SelectItem>
                                   <SelectItem value="fill_in_the_blanks">Fill in the Blanks</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground">Difficulty</Label>
+                              <Select
+                                value={section.difficulty}
+                                onValueChange={(v) => updateSection(section.id, "difficulty", v)}
+                              >
+                                <SelectTrigger className="h-7 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="easy">Easy</SelectItem>
+                                  <SelectItem value="medium">Medium</SelectItem>
+                                  <SelectItem value="hard">Hard</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -458,9 +498,14 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                             </p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-[10px]">
-                          {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : "Long Answer"}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="outline" className="text-[10px]">
+                            {section.questionType === "mcq" ? "MCQ" : section.questionType === "short_answer" ? "Short Answer" : section.questionType === "fill_in_the_blanks" ? "Fill in the Blanks" : "Long Answer"}
+                          </Badge>
+                          <Badge className={`text-[10px] ${section.difficulty === "hard" ? "bg-destructive" : section.difficulty === "easy" ? "bg-green-600" : "bg-yellow-500"}`}>
+                            {section.difficulty.charAt(0).toUpperCase() + section.difficulty.slice(1)}
+                          </Badge>
+                        </div>
                       </div>
                       {/* Placeholder question slots */}
                       <div className="mt-2 space-y-1">
@@ -516,9 +561,19 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                       <Eye className="h-4 w-4 text-primary" />
                       Generated Question Paper Preview
                     </h3>
-                    <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
-                      {showPreview ? "Hide" : "Show"}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={showAnswers ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => setShowAnswers(!showAnswers)}
+                      >
+                        {showAnswers ? "📝 With Answers" : "📄 Without Answers"}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowPreview(!showPreview)}>
+                        {showPreview ? "Hide" : "Show"}
+                      </Button>
+                    </div>
                   </div>
 
                   {generatedQuestions.sections?.map((section: any, sIdx: number) => (
@@ -550,7 +605,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                   <div className="grid grid-cols-2 gap-1 ml-1 mt-1">
                                     {q.options.map((opt: string, oIdx: number) => (
                                       <div key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
-                                        q.correct_option === String.fromCharCode(65 + oIdx)
+                                        showAnswers && q.correct_option === String.fromCharCode(65 + oIdx)
                                           ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
                                           : "bg-muted/30 border-border"
                                       }`}>
@@ -568,7 +623,7 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                       <div className="flex flex-wrap gap-1 ml-1">
                                         {q.options.map((opt: string, oIdx: number) => (
                                           <span key={oIdx} className={`text-[10px] px-2 py-0.5 rounded border ${
-                                            q.correct_option === String.fromCharCode(65 + oIdx)
+                                            showAnswers && q.correct_option === String.fromCharCode(65 + oIdx)
                                               ? "bg-green-50 border-green-300 text-green-800 dark:bg-green-950 dark:border-green-700 dark:text-green-300 font-medium"
                                               : "bg-muted/30 border-border"
                                           }`}>
@@ -579,9 +634,11 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
                                     )}
                                   </div>
                                 )}
-                                <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
-                                  <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.answer}</p>
-                                </div>
+                                {showAnswers && (
+                                  <div className="p-2 bg-primary/5 rounded border border-primary/15 mt-1">
+                                    <p className="text-[10px] text-primary font-semibold">✅ Answer: {q.answer}</p>
+                                  </div>
+                                )}
                               </div>
                               <Badge variant="outline" className="text-[9px] shrink-0">{q.marks} mk</Badge>
                             </div>
