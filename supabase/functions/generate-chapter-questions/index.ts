@@ -343,6 +343,11 @@ Return ONLY valid JSON in this format:
                 options: ["I is true but II is false", "I is false but II is true", "Both I and II are true", "Both I and II are false"],
                 correct_option: "3",
               } : {}),
+              ...(s.questionType === "image_based" ? {
+                image_prompt: "A simple educational diagram",
+                options: ["Option A", "Option B", "Option C", "Option D"],
+                correct_option: "A",
+              } : {}),
             })),
           })),
         };
