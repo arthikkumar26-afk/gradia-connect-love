@@ -1548,8 +1548,11 @@ const ClickableStagesList = ({
                   </div>
                 )}
 
-                {/* Demo Round Options - Show AI Video Call or Manual Meet Link */}
-                {step.title === 'Demo Round' && (step.status === 'current' || step.status === 'in_progress') && (
+                {/* Demo Round Options - Show after Demo Slot Booking is done or during Demo Round */}
+                {(
+                  (step.title === 'Demo Slot Booking' && step.status === 'completed') ||
+                  (step.title === 'Demo Round' && (step.status === 'current' || step.status === 'in_progress'))
+                ) && (
                   <DemoRoundOptions
                     interviewCandidateId={interviewCandidateId}
                     candidateName={candidateName}
