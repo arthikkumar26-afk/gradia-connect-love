@@ -365,7 +365,11 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     setShowPreview(false);
   };
 
-  const deleteSavedPaper = (paperId: string) => {
+  const deleteSavedPaper = async (paperId: string) => {
+    const paper = savedPapers.find(p => p.id === paperId);
+    if (paper?.dbPaperId) {
+      await supabase.from('interview_question_papers').update({ is_active: false }).eq('id', paper.dbPaperId);
+    }
     setSavedPapers(prev => prev.filter(p => p.id !== paperId));
     toast.success("Saved paper deleted");
   };
