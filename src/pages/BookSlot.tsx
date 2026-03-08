@@ -341,7 +341,7 @@ const BookSlot = () => {
             <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            {isDemoStage ? (
+            {isMultiSlotStage ? (
               <>
                 <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
                 <p className="text-muted-foreground">
