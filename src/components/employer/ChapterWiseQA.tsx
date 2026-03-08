@@ -55,6 +55,23 @@ export const ChapterWiseQA = ({ jobId, jobTitle }: ChapterWiseQAProps) => {
   const [showPreview, setShowPreview] = useState(false);
   const [showAnswers, setShowAnswers] = useState(true);
   const [paperTotalMarks, setPaperTotalMarks] = useState<number>(100);
+  const [isPaperActive, setIsPaperActive] = useState(true);
+
+  const handleToggleActive = async (checked: boolean) => {
+    setIsPaperActive(checked);
+    if (paperId) {
+      const { error } = await supabase
+        .from("chapter_wise_papers")
+        .update({ is_active: checked })
+        .eq("id", paperId);
+      if (error) {
+        toast.error("Failed to update paper status");
+        setIsPaperActive(!checked);
+      } else {
+        toast.success(checked ? "Paper enabled — candidates will see this paper" : "Paper disabled — hidden from candidates");
+      }
+    }
+  };
 
   const totalMarks = sections.reduce((sum, s) => sum + (s.marksPerQuestion * s.questionCount), 0);
   const totalQuestions = sections.reduce((sum, s) => sum + s.questionCount, 0);
