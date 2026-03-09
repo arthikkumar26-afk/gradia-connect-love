@@ -504,6 +504,7 @@ serve(async (req) => {
       if (!jobPaperError && jobPapers && jobPapers.length > 0) {
         // Filter to papers that actually have questions
         const papersWithQuestions = jobPapers.filter((p: any) => p.interview_questions && p.interview_questions.length > 0);
+        console.log(`Found ${jobPapers.length} papers for job, ${papersWithQuestions.length} have questions`);
         
         if (papersWithQuestions.length > 0) {
           // Prioritize Question Bank papers over manual sets
@@ -515,8 +516,10 @@ serve(async (req) => {
           
           questions = transformPaperQuestions(selectedPaper.interview_questions);
           usingAdminQuestions = true;
-          console.log(`Loaded ${questions.length} questions from job-specific question paper`);
+          console.log(`Loaded ${questions.length} questions from job-specific question paper. Sample correctAnswer: ${questions[0]?.correctAnswer}`);
         }
+      } else {
+        console.log(`No question papers found for job_id: ${job.id}. Error: ${jobPaperError?.message || 'none'}. Papers count: ${jobPapers?.length || 0}`);
       }
     }
 
