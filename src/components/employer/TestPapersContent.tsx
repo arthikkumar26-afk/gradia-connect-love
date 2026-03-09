@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,7 +34,7 @@ interface QuestionPaper {
   created_at: string;
   description: string | null;
   question_count: number;
-  job_title?: string;
+  assigned_jobs: { job_id: string; job_title: string }[];
 }
 
 interface Job {
@@ -75,34 +75,6 @@ export const TestPapersContent = () => {
 
       if (papersError) throw papersError;
 
-      // Get question counts for each paper
-      const papersWithCounts: QuestionPaper[] = [];
-      for (const paper of (papersData || [])) {
-        const { count } = await supabase
-          .from("interview_questions")
-          .select("id", { count: "exact", head: true })
-          .eq("paper_id", paper.id);
-
-        // Get job title if assigned
-        let jobTitle: string | undefined;
-        if (paper.job_id) {
-          const { data: jobData } = await supabase
-            .from("jobs")
-            .select("job_title")
-            .eq("id", paper.job_id)
-            .single();
-          jobTitle = jobData?.job_title;
-        }
-
-        papersWithCounts.push({
-          ...paper,
-          question_count: count || 0,
-          job_title: jobTitle,
-        });
-      }
-
-      setPapers(papersWithCounts);
-
       // Fetch employer's jobs
       const { data: jobsData, error: jobsError } = await supabase
         .from("jobs")
@@ -111,7 +83,47 @@ export const TestPapersContent = () => {
         .order("created_at", { ascending: false });
 
       if (jobsError) throw jobsError;
-      setJobs((jobsData as any[]) || []);
+      const allJobs = (jobsData as any[]) || [];
+      setJobs(allJobs);
+
+      // Build papers with counts and assignments
+      const papersWithData: QuestionPaper[] = [];
+      for (const paper of (papersData || [])) {
+        const { count } = await supabase
+          .from("interview_questions")
+          .select("id", { count: "exact", head: true })
+          .eq("paper_id", paper.id);
+
+        // Get assignments from junction table
+        const { data: assignmentsData } = await supabase
+          .from("test_paper_assignments")
+          .select("job_id")
+          .eq("paper_id", paper.id);
+
+        const assignedJobs: { job_id: string; job_title: string }[] = [];
+
+        // Add legacy direct job_id assignment
+        if (paper.job_id) {
+          const job = allJobs.find(j => j.id === paper.job_id);
+          if (job) assignedJobs.push({ job_id: job.id, job_title: job.job_title });
+        }
+
+        // Add junction table assignments
+        for (const assignment of (assignmentsData || [])) {
+          if (!assignedJobs.some(a => a.job_id === assignment.job_id)) {
+            const job = allJobs.find(j => j.id === assignment.job_id);
+            if (job) assignedJobs.push({ job_id: job.id, job_title: job.job_title });
+          }
+        }
+
+        papersWithData.push({
+          ...paper,
+          question_count: count || 0,
+          assigned_jobs: assignedJobs,
+        });
+      }
+
+      setPapers(papersWithData);
     } catch (err) {
       console.error("Error fetching test papers:", err);
       toast.error("Failed to load test papers");
@@ -123,17 +135,27 @@ export const TestPapersContent = () => {
   const handleAssignToJob = async () => {
     if (!assignDialogPaper || !selectedJobForAssign) return;
 
+    // Check if already assigned
+    if (assignDialogPaper.assigned_jobs.some(a => a.job_id === selectedJobForAssign)) {
+      toast.error("This paper is already assigned to that vacancy");
+      return;
+    }
+
     setAssigning(assignDialogPaper.id);
     try {
-      // Update the paper's job_id
+      // Insert into junction table
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
-        .from("interview_question_papers")
-        .update({ job_id: selectedJobForAssign } as any)
-        .eq("id", assignDialogPaper.id);
+        .from("test_paper_assignments")
+        .insert({
+          paper_id: assignDialogPaper.id,
+          job_id: selectedJobForAssign,
+          assigned_by: user?.id,
+        } as any);
 
       if (error) throw error;
 
-      // If the target job has AI questions enabled, disable it since manual paper is now assigned
+      // Disable AI questions for this job
       const targetJob = jobs.find(j => j.id === selectedJobForAssign);
       if (targetJob?.use_ai_questions) {
         await supabase
@@ -146,22 +168,38 @@ export const TestPapersContent = () => {
       setAssignDialogPaper(null);
       setSelectedJobForAssign("");
       fetchData();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error assigning paper:", err);
-      toast.error("Failed to assign paper");
+      if (err?.code === '23505') {
+        toast.error("This paper is already assigned to that vacancy");
+      } else {
+        toast.error("Failed to assign paper");
+      }
     } finally {
       setAssigning(null);
     }
   };
 
-  const handleUnassign = async (paperId: string) => {
+  const handleUnassignFromJob = async (paperId: string, jobId: string) => {
     try {
+      // Remove from junction table
       const { error } = await supabase
-        .from("interview_question_papers")
-        .update({ job_id: null } as any)
-        .eq("id", paperId);
+        .from("test_paper_assignments")
+        .delete()
+        .eq("paper_id", paperId)
+        .eq("job_id", jobId);
 
       if (error) throw error;
+
+      // Also clear legacy direct job_id if it matches
+      const paper = papers.find(p => p.id === paperId);
+      if (paper?.job_id === jobId) {
+        await supabase
+          .from("interview_question_papers")
+          .update({ job_id: null } as any)
+          .eq("id", paperId);
+      }
+
       toast.success("Paper unassigned from vacancy");
       fetchData();
     } catch (err) {
@@ -211,14 +249,13 @@ export const TestPapersContent = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
           Test Papers
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          View all question papers created in Smart Assessment and assign them to vacancy positions for the Written Test.
+          View all question papers created in Smart Assessment and assign them to vacancy positions for the Written Test. You can assign the same paper to multiple vacancies.
         </p>
       </div>
 
@@ -239,7 +276,7 @@ export const TestPapersContent = () => {
           {papers.map((paper) => (
             <Card key={paper.id} className="border-border hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   {/* Paper Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -277,12 +314,25 @@ export const TestPapersContent = () => {
                     </div>
 
                     {/* Assignment Status */}
-                    {paper.job_id && paper.job_title ? (
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                        <span className="text-xs font-medium text-emerald-600">
-                          Assigned to: {paper.job_title}
-                        </span>
+                    {paper.assigned_jobs.length > 0 ? (
+                      <div className="mt-2 space-y-1">
+                        {paper.assigned_jobs.map((aj) => (
+                          <div key={aj.job_id} className="flex items-center gap-2">
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                            <span className="text-xs font-medium text-emerald-600">
+                              Assigned to: {aj.job_title}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 px-1.5 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleUnassignFromJob(paper.id, aj.job_id)}
+                            >
+                              <Unlink className="h-3 w-3 mr-0.5" />
+                              Unassign
+                            </Button>
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 mt-2">
@@ -304,28 +354,16 @@ export const TestPapersContent = () => {
                       Preview
                     </Button>
 
-                    {paper.job_id ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-                        onClick={() => handleUnassign(paper.id)}
-                      >
-                        <Unlink className="h-3.5 w-3.5 mr-1" />
-                        Unassign
-                      </Button>
-                    ) : null}
-
                     <Button
                       size="sm"
                       className="text-xs"
                       onClick={() => {
                         setAssignDialogPaper(paper);
-                        setSelectedJobForAssign(paper.job_id || "");
+                        setSelectedJobForAssign("");
                       }}
                     >
                       <Link2 className="h-3.5 w-3.5 mr-1" />
-                      {paper.job_id ? "Reassign" : "Assign to Vacancy"}
+                      Assign to Vacancy
                     </Button>
                   </div>
                 </div>
@@ -350,6 +388,16 @@ export const TestPapersContent = () => {
               <p className="text-sm text-muted-foreground mb-1">Paper:</p>
               <p className="text-sm font-medium text-foreground">{assignDialogPaper?.title}</p>
               <p className="text-xs text-muted-foreground">{assignDialogPaper?.question_count} questions</p>
+              {assignDialogPaper && assignDialogPaper.assigned_jobs.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">Already assigned to:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {assignDialogPaper.assigned_jobs.map(aj => (
+                      <Badge key={aj.job_id} variant="secondary" className="text-[10px]">{aj.job_title}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <Separator />
@@ -361,16 +409,18 @@ export const TestPapersContent = () => {
                   <SelectValue placeholder="Choose a vacancy..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {jobs.map((job) => (
-                    <SelectItem key={job.id} value={job.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{job.job_title}</span>
-                        {job.use_ai_questions && (
-                          <Badge variant="outline" className="text-[10px] ml-1">AI</Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {jobs
+                    .filter(job => !assignDialogPaper?.assigned_jobs.some(a => a.job_id === job.id))
+                    .map((job) => (
+                      <SelectItem key={job.id} value={job.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{job.job_title}</span>
+                          {job.use_ai_questions && (
+                            <Badge variant="outline" className="text-[10px] ml-1">AI</Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               {selectedJobForAssign && jobs.find(j => j.id === selectedJobForAssign)?.use_ai_questions && (

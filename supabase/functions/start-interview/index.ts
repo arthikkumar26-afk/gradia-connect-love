@@ -487,7 +487,19 @@ serve(async (req) => {
     // If AI questions is enabled, skip manual paper lookup entirely
     if (!useAiQuestions) {
       // PRIORITY 1: Try to fetch question papers linked to THIS specific job
+      // Check both direct job_id assignment AND test_paper_assignments junction table
       console.log(`Searching for question papers linked to job_id: ${job.id}`);
+      
+      // First check the junction table for assignments
+      const { data: assignments } = await supabase
+        .from('test_paper_assignments')
+        .select('paper_id')
+        .eq('job_id', job.id);
+      
+      const assignedPaperIds = (assignments || []).map((a: any) => a.paper_id);
+      console.log(`Found ${assignedPaperIds.length} papers via test_paper_assignments for job`);
+
+      // Fetch papers either directly linked OR via junction table
       const { data: jobPapers, error: jobPaperError } = await supabase
         .from('interview_question_papers')
         .select(`
@@ -497,8 +509,8 @@ serve(async (req) => {
             interview_answer_keys(*)
           )
         `)
-        .eq('job_id', job.id)
         .eq('is_active', true)
+        .or(`job_id.eq.${job.id}${assignedPaperIds.length > 0 ? `,id.in.(${assignedPaperIds.join(',')})` : ''}`)
         .limit(10);
 
       if (!jobPaperError && jobPapers && jobPapers.length > 0) {
