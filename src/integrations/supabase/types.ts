@@ -3037,6 +3037,45 @@ export type Database = {
         }
         Relationships: []
       }
+      test_paper_assignments: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          id: string
+          job_id: string
+          paper_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          job_id: string
+          paper_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          paper_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_paper_assignments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_paper_assignments_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "interview_question_papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trending_jobs: {
         Row: {
           created_at: string | null
