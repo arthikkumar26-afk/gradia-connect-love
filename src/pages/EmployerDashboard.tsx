@@ -66,6 +66,7 @@ import { FeedbackMatrixContent } from "@/components/employer/FeedbackMatrixConte
 import { ConfirmationContent } from "@/components/employer/ConfirmationContent";
 import { OfferLetterContent } from "@/components/employer/OfferLetterContent";
 import { QPMContent } from "@/components/employer/QPMContent";
+import { TestPapersContent } from "@/components/employer/TestPapersContent";
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
