@@ -444,18 +444,39 @@ serve(async (req) => {
     const useAiQuestions = job.use_ai_questions === true;
     console.log(`Job use_ai_questions setting: ${useAiQuestions}`);
 
+    // Helper to map letter answers (A, B, C, D) to array indices
+    const letterToIndex = (letter: string): number => {
+      const map: Record<string, number> = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5 };
+      const cleaned = letter.trim().toLowerCase().charAt(0);
+      return map[cleaned] ?? 0;
+    };
+
     // Helper to transform question paper questions into interview format
     const transformPaperQuestions = (paperQuestions: any[]) => {
       return paperQuestions.map((q: any) => {
         const answerKey = q.interview_answer_keys?.[0];
+        const options = q.options?.options || q.options || [];
+        
+        let correctAnswer = 0;
+        if (answerKey?.answer_text) {
+          const ansText = answerKey.answer_text.trim();
+          // Check if answer is a single letter (A, B, C, D)
+          if (/^[A-Fa-f]$/.test(ansText)) {
+            correctAnswer = letterToIndex(ansText);
+          } else {
+            // Try to find the option that exactly matches the answer text
+            const exactIdx = options.findIndex((opt: string) => 
+              opt.trim().toLowerCase() === ansText.toLowerCase()
+            );
+            correctAnswer = exactIdx >= 0 ? exactIdx : 0;
+          }
+        }
+
         return {
           question: q.question_text,
           type: q.question_type === 'multiple_choice' ? 'mcq' : q.question_type,
-          options: q.options?.options || q.options || [],
-          correctAnswer: answerKey?.answer_text ? 
-            (q.options?.options || q.options || []).findIndex(
-              (opt: string) => opt.toLowerCase().includes(answerKey.answer_text.toLowerCase().charAt(0))
-            ) : 0,
+          options,
+          correctAnswer,
           explanation: answerKey?.answer_text || 'Correct answer based on the answer key.',
           questionId: q.id,
           marks: q.marks || 1
