@@ -901,16 +901,13 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                             {sectionMarks} Marks
                           </Badge>
                         </div>
+                        {/* List the question types in this section */}
                         <p className="text-[10px] text-muted-foreground italic mb-2">
-                          {sec.key === "mcq" && "Choose the correct option for each question."}
-                          {sec.key === "fill_blank" && "Fill in the blanks with appropriate words."}
-                          {sec.key === "true_false" && "State whether the following statements are True or False."}
-                          {sec.key === "match" && "Match the items in Column A with Column B."}
-                          {sec.key === "assertion" && "Read the Assertion and Reason, then choose the correct option."}
-                          {sec.key === "short_answer" && "Answer the following questions briefly."}
-                          {sec.key === "long_answer" && "Answer the following questions in detail."}
-                          {sec.key === "image_base" && "Observe the image and answer the questions."}
-                          {sec.key === "map_base" && "Study the map and answer the questions."}
+                          {(() => {
+                            const types = [...new Set(sec.questions.map(q => q.question_type))];
+                            const typeLabels = types.map(t => SECTIONS.find(s => s.key === t)?.label || t).join(', ');
+                            return `Contains: ${typeLabels}`;
+                          })()}
                         </p>
                         <div className="space-y-3">
                           {sec.questions.map((q) => {
