@@ -1,0 +1,1 @@
+ALTER TABLE public.test_paper_assignments ADD COLUMN section_config jsonb DEFAULT NULL;
