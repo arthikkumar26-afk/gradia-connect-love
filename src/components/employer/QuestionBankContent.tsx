@@ -367,7 +367,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const formatDateShort = (date: Date) =>
     date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
-  // Build the current preview sections (reusable for save)
+  // Build preview sections from the section configurator
   const buildPreviewSections = () => {
     const shuffle = <T,>(arr: T[]): T[] => {
       const a = [...arr];
@@ -377,28 +377,26 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
       }
       return a;
     };
-    const availableSections = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
-    const totalAvailable = availableSections.reduce((s, sec) => s + (sectionQuestions[sec.key] || []).length, 0);
-    const targetCount = Math.min(previewCount, totalAvailable);
-    const pickCounts: Record<string, number> = {};
-    let assigned = 0;
-    availableSections.forEach((sec, i) => {
-      const secQs = (sectionQuestions[sec.key] || []).length;
-      if (i === availableSections.length - 1) {
-        pickCounts[sec.key] = Math.min(secQs, targetCount - assigned);
-      } else {
-        const proportion = Math.max(1, Math.round((secQs / totalAvailable) * targetCount));
-        pickCounts[sec.key] = Math.min(secQs, proportion);
-        assigned += pickCounts[sec.key];
-      }
-    });
+
     const sections: SavedPaper["sections"] = [];
-    SECTIONS.forEach((section) => {
-      const allQs = sectionQuestions[section.key] || [];
-      if (allQs.length === 0) return;
-      const pick = Math.min(pickCounts[section.key] || 3, allQs.length);
-      const selected = shuffle(allQs).slice(0, pick);
-      sections.push({ key: section.key, label: section.label, questions: selected });
+    paperSections.forEach((ps) => {
+      const sectionQuestionsList: QuestionBankQuestion[] = [];
+      ps.entries.forEach(entry => {
+        if (!entry.questionType || entry.count <= 0) return;
+        const allQs = sectionQuestions[entry.questionType] || [];
+        const selected = shuffle(allQs).slice(0, entry.count).map(q => ({
+          ...q,
+          marks: entry.marksPerQuestion,
+        }));
+        sectionQuestionsList.push(...selected);
+      });
+      if (sectionQuestionsList.length > 0) {
+        sections.push({
+          key: ps.id,
+          label: ps.label,
+          questions: sectionQuestionsList,
+        });
+      }
     });
     return sections;
   };
@@ -406,6 +404,10 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const [currentPreviewSections, setCurrentPreviewSections] = useState<SavedPaper["sections"]>([]);
 
   const handleOpenPreview = () => {
+    if (configTotalQuestions === 0) {
+      toast.error("Please configure at least one question in a section");
+      return;
+    }
     const sections = buildPreviewSections();
     setCurrentPreviewSections(sections);
     setShowPreview(true);
