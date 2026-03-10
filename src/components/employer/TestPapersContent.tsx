@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,7 +21,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText, Briefcase, Link2, CheckCircle2, Loader2,
-  Eye, BookOpen, Hash, Award, Unlink, AlertCircle
+  Eye, BookOpen, Hash, Award, Unlink, AlertCircle,
+  ListChecks, AlignLeft, ToggleLeft, ArrowLeftRight,
+  HelpCircle, AlignJustify, Image, Map, Settings2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,7 +38,7 @@ interface QuestionPaper {
   created_at: string;
   description: string | null;
   question_count: number;
-  assigned_jobs: { job_id: string; job_title: string }[];
+  assigned_jobs: { job_id: string; job_title: string; section_config?: Record<string, number> }[];
 }
 
 interface Job {
@@ -44,6 +48,27 @@ interface Job {
   department: string | null;
   use_ai_questions: boolean;
 }
+
+interface SectionCount {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  total: number;
+  selected: number;
+}
+
+const SECTION_META: { key: string; label: string; icon: React.ReactNode; color: string }[] = [
+  { key: "MCQ", label: "MCQ", icon: <ListChecks className="h-3.5 w-3.5" />, color: "text-blue-600" },
+  { key: "Fill in the Blanks", label: "Fill in the Blanks", icon: <AlignLeft className="h-3.5 w-3.5" />, color: "text-emerald-600" },
+  { key: "True or False", label: "True or False", icon: <ToggleLeft className="h-3.5 w-3.5" />, color: "text-purple-600" },
+  { key: "Match the Following", label: "Match the Following", icon: <ArrowLeftRight className="h-3.5 w-3.5" />, color: "text-orange-600" },
+  { key: "Assertion & Reasoning", label: "Assertion & Reasoning", icon: <HelpCircle className="h-3.5 w-3.5" />, color: "text-rose-600" },
+  { key: "Short Answers", label: "Short Answers", icon: <AlignLeft className="h-3.5 w-3.5" />, color: "text-cyan-600" },
+  { key: "Long Answers", label: "Long Answers", icon: <AlignJustify className="h-3.5 w-3.5" />, color: "text-amber-600" },
+  { key: "Image Based", label: "Image Based", icon: <Image className="h-3.5 w-3.5" />, color: "text-pink-600" },
+  { key: "Map Based", label: "Map Based", icon: <Map className="h-3.5 w-3.5" />, color: "text-teal-600" },
+];
 
 export const TestPapersContent = () => {
   const [papers, setPapers] = useState<QuestionPaper[]>([]);
@@ -55,6 +80,8 @@ export const TestPapersContent = () => {
   const [previewPaper, setPreviewPaper] = useState<QuestionPaper | null>(null);
   const [previewQuestions, setPreviewQuestions] = useState<any[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [sectionCounts, setSectionCounts] = useState<SectionCount[]>([]);
+  const [loadingSections, setLoadingSections] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -66,7 +93,6 @@ export const TestPapersContent = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch all question papers created by this employer
       const { data: papersData, error: papersError } = await supabase
         .from("interview_question_papers")
         .select("id, title, stage_type, is_active, job_id, set_number, created_at, description")
@@ -75,7 +101,6 @@ export const TestPapersContent = () => {
 
       if (papersError) throw papersError;
 
-      // Fetch employer's jobs
       const { data: jobsData, error: jobsError } = await supabase
         .from("jobs")
         .select("id, job_title, status, department, use_ai_questions")
@@ -86,7 +111,6 @@ export const TestPapersContent = () => {
       const allJobs = (jobsData as any[]) || [];
       setJobs(allJobs);
 
-      // Build papers with counts and assignments
       const papersWithData: QuestionPaper[] = [];
       for (const paper of (papersData || [])) {
         const { count } = await supabase
@@ -94,25 +118,26 @@ export const TestPapersContent = () => {
           .select("id", { count: "exact", head: true })
           .eq("paper_id", paper.id);
 
-        // Get assignments from junction table
         const { data: assignmentsData } = await supabase
           .from("test_paper_assignments")
-          .select("job_id")
+          .select("job_id, section_config")
           .eq("paper_id", paper.id);
 
-        const assignedJobs: { job_id: string; job_title: string }[] = [];
+        const assignedJobs: { job_id: string; job_title: string; section_config?: Record<string, number> }[] = [];
 
-        // Add legacy direct job_id assignment
         if (paper.job_id) {
           const job = allJobs.find(j => j.id === paper.job_id);
           if (job) assignedJobs.push({ job_id: job.id, job_title: job.job_title });
         }
 
-        // Add junction table assignments
         for (const assignment of (assignmentsData || [])) {
           if (!assignedJobs.some(a => a.job_id === assignment.job_id)) {
             const job = allJobs.find(j => j.id === assignment.job_id);
-            if (job) assignedJobs.push({ job_id: job.id, job_title: job.job_title });
+            if (job) assignedJobs.push({
+              job_id: job.id,
+              job_title: job.job_title,
+              section_config: assignment.section_config as Record<string, number> | undefined,
+            });
           }
         }
 
@@ -132,30 +157,104 @@ export const TestPapersContent = () => {
     }
   };
 
+  const fetchSectionCounts = async (paperId: string) => {
+    setLoadingSections(true);
+    try {
+      const { data: questions, error } = await supabase
+        .from("interview_questions")
+        .select("section")
+        .eq("paper_id", paperId);
+
+      if (error) throw error;
+
+      const countMap: Record<string, number> = {};
+      (questions || []).forEach(q => {
+        const sec = q.section || "General";
+        countMap[sec] = (countMap[sec] || 0) + 1;
+      });
+
+      const sections: SectionCount[] = SECTION_META
+        .filter(s => (countMap[s.key] || 0) > 0)
+        .map(s => ({
+          key: s.key,
+          label: s.label,
+          icon: s.icon,
+          color: s.color,
+          total: countMap[s.key] || 0,
+          selected: countMap[s.key] || 0, // default: all questions selected
+        }));
+
+      // Add any sections not in SECTION_META (like "General")
+      Object.keys(countMap).forEach(key => {
+        if (!sections.find(s => s.key === key)) {
+          sections.push({
+            key,
+            label: key,
+            icon: <FileText className="h-3.5 w-3.5" />,
+            color: "text-muted-foreground",
+            total: countMap[key],
+            selected: countMap[key],
+          });
+        }
+      });
+
+      setSectionCounts(sections);
+    } catch (err) {
+      console.error("Error fetching section counts:", err);
+    } finally {
+      setLoadingSections(false);
+    }
+  };
+
+  const handleOpenAssignDialog = (paper: QuestionPaper) => {
+    setAssignDialogPaper(paper);
+    setSelectedJobForAssign("");
+    fetchSectionCounts(paper.id);
+  };
+
+  const handleSectionCountChange = (sectionKey: string, value: string) => {
+    const num = parseInt(value) || 0;
+    setSectionCounts(prev =>
+      prev.map(s => s.key === sectionKey ? { ...s, selected: Math.min(Math.max(0, num), s.total) } : s)
+    );
+  };
+
+  const totalSelectedQuestions = sectionCounts.reduce((sum, s) => sum + s.selected, 0);
+
   const handleAssignToJob = async () => {
     if (!assignDialogPaper || !selectedJobForAssign) return;
 
-    // Check if already assigned
     if (assignDialogPaper.assigned_jobs.some(a => a.job_id === selectedJobForAssign)) {
       toast.error("This paper is already assigned to that vacancy");
       return;
     }
 
+    if (totalSelectedQuestions === 0) {
+      toast.error("Please select at least 1 question from any section");
+      return;
+    }
+
     setAssigning(assignDialogPaper.id);
     try {
-      // Insert into junction table
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Build section_config
+      const sectionConfig: Record<string, number> = {};
+      sectionCounts.forEach(s => {
+        if (s.selected > 0) sectionConfig[s.key] = s.selected;
+      });
+
       const { error } = await supabase
         .from("test_paper_assignments")
         .insert({
           paper_id: assignDialogPaper.id,
           job_id: selectedJobForAssign,
           assigned_by: user?.id,
+          section_config: sectionConfig,
         } as any);
 
       if (error) throw error;
 
-      // Disable AI questions for this job
       const targetJob = jobs.find(j => j.id === selectedJobForAssign);
       if (targetJob?.use_ai_questions) {
         await supabase
@@ -164,9 +263,10 @@ export const TestPapersContent = () => {
           .eq("id", selectedJobForAssign);
       }
 
-      toast.success(`Paper assigned to "${targetJob?.job_title}" successfully!`);
+      toast.success(`Paper assigned to "${targetJob?.job_title}" with ${totalSelectedQuestions} questions!`);
       setAssignDialogPaper(null);
       setSelectedJobForAssign("");
+      setSectionCounts([]);
       fetchData();
     } catch (err: any) {
       console.error("Error assigning paper:", err);
@@ -182,7 +282,6 @@ export const TestPapersContent = () => {
 
   const handleUnassignFromJob = async (paperId: string, jobId: string) => {
     try {
-      // Remove from junction table
       const { error } = await supabase
         .from("test_paper_assignments")
         .delete()
@@ -191,7 +290,6 @@ export const TestPapersContent = () => {
 
       if (error) throw error;
 
-      // Also clear legacy direct job_id if it matches
       const paper = papers.find(p => p.id === paperId);
       if (paper?.job_id === jobId) {
         await supabase
@@ -238,6 +336,14 @@ export const TestPapersContent = () => {
     return map[type] || type;
   };
 
+  const formatSectionConfig = (config?: Record<string, number>) => {
+    if (!config) return null;
+    return Object.entries(config)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => `${k}: ${v}Q`)
+      .join(", ");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -277,7 +383,6 @@ export const TestPapersContent = () => {
             <Card key={paper.id} className="border-border hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  {/* Paper Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-sm font-semibold text-foreground truncate">
@@ -313,15 +418,19 @@ export const TestPapersContent = () => {
                       </span>
                     </div>
 
-                    {/* Assignment Status */}
                     {paper.assigned_jobs.length > 0 ? (
                       <div className="mt-2 space-y-1">
                         {paper.assigned_jobs.map((aj) => (
-                          <div key={aj.job_id} className="flex items-center gap-2">
+                          <div key={aj.job_id} className="flex items-center gap-2 flex-wrap">
                             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                             <span className="text-xs font-medium text-emerald-600">
                               Assigned to: {aj.job_title}
                             </span>
+                            {aj.section_config && (
+                              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                {formatSectionConfig(aj.section_config)}
+                              </span>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
@@ -342,7 +451,6 @@ export const TestPapersContent = () => {
                     )}
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0">
                     <Button
                       variant="outline"
@@ -357,10 +465,7 @@ export const TestPapersContent = () => {
                     <Button
                       size="sm"
                       className="text-xs"
-                      onClick={() => {
-                        setAssignDialogPaper(paper);
-                        setSelectedJobForAssign("");
-                      }}
+                      onClick={() => handleOpenAssignDialog(paper)}
                     >
                       <Link2 className="h-3.5 w-3.5 mr-1" />
                       Assign to Vacancy
@@ -373,9 +478,9 @@ export const TestPapersContent = () => {
         </div>
       )}
 
-      {/* Assign Dialog */}
-      <Dialog open={!!assignDialogPaper} onOpenChange={(open) => { if (!open) { setAssignDialogPaper(null); setSelectedJobForAssign(""); } }}>
-        <DialogContent className="sm:max-w-md">
+      {/* Assign Dialog with Section Config */}
+      <Dialog open={!!assignDialogPaper} onOpenChange={(open) => { if (!open) { setAssignDialogPaper(null); setSelectedJobForAssign(""); setSectionCounts([]); } }}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <Briefcase className="h-4 w-4 text-primary" />
@@ -387,7 +492,7 @@ export const TestPapersContent = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Paper:</p>
               <p className="text-sm font-medium text-foreground">{assignDialogPaper?.title}</p>
-              <p className="text-xs text-muted-foreground">{assignDialogPaper?.question_count} questions</p>
+              <p className="text-xs text-muted-foreground">{assignDialogPaper?.question_count} total questions</p>
               {assignDialogPaper && assignDialogPaper.assigned_jobs.length > 0 && (
                 <div className="mt-2">
                   <p className="text-xs text-muted-foreground mb-1">Already assigned to:</p>
@@ -395,6 +500,59 @@ export const TestPapersContent = () => {
                     {assignDialogPaper.assigned_jobs.map(aj => (
                       <Badge key={aj.job_id} variant="secondary" className="text-[10px]">{aj.job_title}</Badge>
                     ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Section-wise Question Selection */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Settings2 className="h-4 w-4 text-primary" />
+                <p className="text-sm font-medium text-foreground">Choose Questions per Section</p>
+              </div>
+
+              {loadingSections ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              ) : sectionCounts.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">No questions found in this paper.</p>
+              ) : (
+                <div className="space-y-2">
+                  {sectionCounts.map((section) => (
+                    <div
+                      key={section.key}
+                      className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border bg-muted/30"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={section.color}>{section.icon}</span>
+                        <span className="text-sm font-medium text-foreground truncate">{section.label}</span>
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {section.total} available
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={section.total}
+                          value={section.selected}
+                          onChange={(e) => handleSectionCountChange(section.key, e.target.value)}
+                          className="w-16 h-8 text-center text-sm"
+                        />
+                        <span className="text-xs text-muted-foreground">Q</span>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex items-center justify-between pt-2 px-1">
+                    <span className="text-sm font-semibold text-foreground">Total Selected</span>
+                    <Badge className="text-xs">
+                      {totalSelectedQuestions} questions
+                    </Badge>
                   </div>
                 </div>
               )}
@@ -432,16 +590,16 @@ export const TestPapersContent = () => {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={() => { setAssignDialogPaper(null); setSelectedJobForAssign(""); }}>
+              <Button variant="outline" size="sm" onClick={() => { setAssignDialogPaper(null); setSelectedJobForAssign(""); setSectionCounts([]); }}>
                 Cancel
               </Button>
               <Button
                 size="sm"
-                disabled={!selectedJobForAssign || !!assigning}
+                disabled={!selectedJobForAssign || !!assigning || totalSelectedQuestions === 0}
                 onClick={handleAssignToJob}
               >
                 {assigning ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-                Assign
+                Assign ({totalSelectedQuestions}Q)
               </Button>
             </div>
           </div>
@@ -491,7 +649,7 @@ export const TestPapersContent = () => {
                           </Badge>
                           {q.section && (
                             <Badge variant="secondary" className="text-[10px]">
-                              Section {q.section}
+                              {q.section}
                             </Badge>
                           )}
                         </div>

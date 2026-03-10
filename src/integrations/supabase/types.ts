@@ -3044,6 +3044,7 @@ export type Database = {
           id: string
           job_id: string
           paper_id: string
+          section_config: Json | null
         }
         Insert: {
           assigned_by?: string | null
@@ -3051,6 +3052,7 @@ export type Database = {
           id?: string
           job_id: string
           paper_id: string
+          section_config?: Json | null
         }
         Update: {
           assigned_by?: string | null
@@ -3058,6 +3060,7 @@ export type Database = {
           id?: string
           job_id?: string
           paper_id?: string
+          section_config?: Json | null
         }
         Relationships: [
           {
