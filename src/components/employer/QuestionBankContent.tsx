@@ -763,26 +763,109 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             })}
           </div>
 
-          {/* Preview Button */}
+          {/* Section-wise Paper Configurator */}
           {totalQuestions > 0 && (
-            <div className="flex items-center justify-between pt-2 border-t gap-3">
-              <p className="text-xs text-muted-foreground">
-                Total: <span className="font-semibold text-foreground">{totalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{grandTotalMarks} Marks</span>
-              </p>
-              <div className="flex items-center gap-2">
-                <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Paper Questions:</Label>
-                <Input
-                  type="number"
-                  value={previewCount}
-                  min={1}
-                  max={totalQuestions}
-                  onChange={e => setPreviewCount(Math.max(1, Math.min(totalQuestions, parseInt(e.target.value) || 1)))}
-                  className="w-16 h-7 text-xs text-center"
-                />
-                <Button size="sm" className="text-xs h-8 gap-1.5" onClick={handleOpenPreview}>
-                  <Eye className="h-3.5 w-3.5" /> Preview Question Paper
+            <div className="pt-2 border-t space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Total Bank: <span className="font-semibold text-foreground">{totalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{grandTotalMarks} Marks</span>
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  onClick={() => setShowSectionConfig(!showSectionConfig)}
+                >
+                  {showSectionConfig ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  {showSectionConfig ? "Hide" : "Configure"} Paper Sections
                 </Button>
               </div>
+
+              {showSectionConfig && (
+                <div className="space-y-3 p-3 border rounded-lg bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-foreground">Paper Sections</p>
+                    <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1" onClick={addPaperSection}>
+                      <Plus className="h-3 w-3" /> Add Section
+                    </Button>
+                  </div>
+
+                  {paperSections.map((ps, psIdx) => (
+                    <div key={ps.id} className="border rounded-lg bg-background overflow-hidden">
+                      <div className="flex items-center justify-between px-3 py-2 bg-muted/60 border-b">
+                        <p className="text-xs font-bold text-foreground">{ps.label}</p>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="text-[9px]">
+                            {ps.entries.reduce((s, e) => s + e.count, 0)} Q · {ps.entries.reduce((s, e) => s + (e.count * e.marksPerQuestion), 0)} Marks
+                          </Badge>
+                          {paperSections.length > 1 && (
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => removePaperSection(ps.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="px-3 py-2 space-y-2">
+                        {ps.entries.map((entry, eIdx) => (
+                          <div key={eIdx} className="flex items-center gap-2 flex-wrap">
+                            <select
+                              value={entry.questionType}
+                              onChange={e => updateEntry(ps.id, eIdx, 'questionType', e.target.value)}
+                              className="h-7 text-xs rounded-md border border-input bg-background px-2 min-w-[140px]"
+                            >
+                              <option value="">Select Type</option>
+                              {availableTypes.map(at => (
+                                <option key={at.key} value={at.key}>
+                                  {at.label} ({(sectionQuestions[at.key] || []).length} available)
+                                </option>
+                              ))}
+                            </select>
+                            <div className="flex items-center gap-1">
+                              <Label className="text-[10px] text-muted-foreground">Qty:</Label>
+                              <Input
+                                type="number"
+                                value={entry.count}
+                                min={0}
+                                max={entry.questionType ? getAvailableCount(entry.questionType) : 99}
+                                onChange={e => updateEntry(ps.id, eIdx, 'count', Math.max(0, parseInt(e.target.value) || 0))}
+                                className="w-14 h-7 text-xs text-center"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Label className="text-[10px] text-muted-foreground">Marks each:</Label>
+                              <Input
+                                type="number"
+                                value={entry.marksPerQuestion}
+                                min={1}
+                                onChange={e => updateEntry(ps.id, eIdx, 'marksPerQuestion', Math.max(1, parseInt(e.target.value) || 1))}
+                                className="w-14 h-7 text-xs text-center"
+                              />
+                            </div>
+                            {ps.entries.length > 1 && (
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" onClick={() => removeEntryFromSection(ps.id, eIdx)}>
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        <Button variant="ghost" size="sm" className="text-[10px] h-6 gap-1 text-primary" onClick={() => addEntryToSection(ps.id)}>
+                          <Plus className="h-3 w-3" /> Add Question Type
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Config summary + Preview */}
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      Paper: <span className="font-semibold text-foreground">{configTotalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{configTotalMarks} Marks</span>
+                    </p>
+                    <Button size="sm" className="text-xs h-8 gap-1.5" onClick={handleOpenPreview}>
+                      <Eye className="h-3.5 w-3.5" /> Preview Question Paper
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
