@@ -86,6 +86,66 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [previewCount, setPreviewCount] = useState<number>(10);
   const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);
+
+  // Section-wise paper configurator
+  interface PaperSectionEntry {
+    questionType: string;
+    count: number;
+    marksPerQuestion: number;
+  }
+  interface PaperSection {
+    id: string;
+    label: string;
+    entries: PaperSectionEntry[];
+  }
+  const [paperSections, setPaperSections] = useState<PaperSection[]>([
+    { id: 'sec-1', label: 'Section A', entries: [{ questionType: '', count: 0, marksPerQuestion: 1 }] }
+  ]);
+  const [showSectionConfig, setShowSectionConfig] = useState(false);
+
+  const addPaperSection = () => {
+    const nextLetter = String.fromCharCode(65 + paperSections.length);
+    setPaperSections(prev => [...prev, {
+      id: `sec-${Date.now()}`,
+      label: `Section ${nextLetter}`,
+      entries: [{ questionType: '', count: 0, marksPerQuestion: 1 }]
+    }]);
+  };
+
+  const removePaperSection = (sectionId: string) => {
+    setPaperSections(prev => prev.filter(s => s.id !== sectionId));
+  };
+
+  const addEntryToSection = (sectionId: string) => {
+    setPaperSections(prev => prev.map(s =>
+      s.id === sectionId ? { ...s, entries: [...s.entries, { questionType: '', count: 0, marksPerQuestion: 1 }] } : s
+    ));
+  };
+
+  const removeEntryFromSection = (sectionId: string, entryIdx: number) => {
+    setPaperSections(prev => prev.map(s =>
+      s.id === sectionId ? { ...s, entries: s.entries.filter((_, i) => i !== entryIdx) } : s
+    ));
+  };
+
+  const updateEntry = (sectionId: string, entryIdx: number, field: keyof PaperSectionEntry, value: any) => {
+    setPaperSections(prev => prev.map(s =>
+      s.id === sectionId ? {
+        ...s,
+        entries: s.entries.map((e, i) => i === entryIdx ? { ...e, [field]: value } : e)
+      } : s
+    ));
+  };
+
+  const getAvailableCount = (questionType: string) => {
+    return (sectionQuestions[questionType] || []).length;
+  };
+
+  // Available question types that have questions
+  const availableTypes = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
+
+  const configTotalQuestions = paperSections.reduce((sum, s) => sum + s.entries.reduce((es, e) => es + e.count, 0), 0);
+  const configTotalMarks = paperSections.reduce((sum, s) => sum + s.entries.reduce((es, e) => es + (e.count * e.marksPerQuestion), 0), 0);
   const [viewingSavedPaper, setViewingSavedPaper] = useState<SavedPaper | null>(null);
   const [loadingPapers, setLoadingPapers] = useState(false);
 
