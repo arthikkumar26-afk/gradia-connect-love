@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
+import { Plus, Minus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +86,66 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [previewCount, setPreviewCount] = useState<number>(10);
   const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);
+
+  // Section-wise paper configurator
+  interface PaperSectionEntry {
+    questionType: string;
+    count: number;
+    marksPerQuestion: number;
+  }
+  interface PaperSection {
+    id: string;
+    label: string;
+    entries: PaperSectionEntry[];
+  }
+  const [paperSections, setPaperSections] = useState<PaperSection[]>([
+    { id: 'sec-1', label: 'Section A', entries: [{ questionType: '', count: 0, marksPerQuestion: 1 }] }
+  ]);
+  const [showSectionConfig, setShowSectionConfig] = useState(false);
+
+  const addPaperSection = () => {
+    const nextLetter = String.fromCharCode(65 + paperSections.length);
+    setPaperSections(prev => [...prev, {
+      id: `sec-${Date.now()}`,
+      label: `Section ${nextLetter}`,
+      entries: [{ questionType: '', count: 0, marksPerQuestion: 1 }]
+    }]);
+  };
+
+  const removePaperSection = (sectionId: string) => {
+    setPaperSections(prev => prev.filter(s => s.id !== sectionId));
+  };
+
+  const addEntryToSection = (sectionId: string) => {
+    setPaperSections(prev => prev.map(s =>
+      s.id === sectionId ? { ...s, entries: [...s.entries, { questionType: '', count: 0, marksPerQuestion: 1 }] } : s
+    ));
+  };
+
+  const removeEntryFromSection = (sectionId: string, entryIdx: number) => {
+    setPaperSections(prev => prev.map(s =>
+      s.id === sectionId ? { ...s, entries: s.entries.filter((_, i) => i !== entryIdx) } : s
+    ));
+  };
+
+  const updateEntry = (sectionId: string, entryIdx: number, field: keyof PaperSectionEntry, value: any) => {
+    setPaperSections(prev => prev.map(s =>
+      s.id === sectionId ? {
+        ...s,
+        entries: s.entries.map((e, i) => i === entryIdx ? { ...e, [field]: value } : e)
+      } : s
+    ));
+  };
+
+  const getAvailableCount = (questionType: string) => {
+    return (sectionQuestions[questionType] || []).length;
+  };
+
+  // Available question types that have questions
+  const availableTypes = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
+
+  const configTotalQuestions = paperSections.reduce((sum, s) => sum + s.entries.reduce((es, e) => es + e.count, 0), 0);
+  const configTotalMarks = paperSections.reduce((sum, s) => sum + s.entries.reduce((es, e) => es + (e.count * e.marksPerQuestion), 0), 0);
   const [viewingSavedPaper, setViewingSavedPaper] = useState<SavedPaper | null>(null);
   const [loadingPapers, setLoadingPapers] = useState(false);
 
@@ -307,7 +367,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const formatDateShort = (date: Date) =>
     date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
-  // Build the current preview sections (reusable for save)
+  // Build preview sections from the section configurator
   const buildPreviewSections = () => {
     const shuffle = <T,>(arr: T[]): T[] => {
       const a = [...arr];
@@ -317,28 +377,26 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
       }
       return a;
     };
-    const availableSections = SECTIONS.filter(s => (sectionQuestions[s.key] || []).length > 0);
-    const totalAvailable = availableSections.reduce((s, sec) => s + (sectionQuestions[sec.key] || []).length, 0);
-    const targetCount = Math.min(previewCount, totalAvailable);
-    const pickCounts: Record<string, number> = {};
-    let assigned = 0;
-    availableSections.forEach((sec, i) => {
-      const secQs = (sectionQuestions[sec.key] || []).length;
-      if (i === availableSections.length - 1) {
-        pickCounts[sec.key] = Math.min(secQs, targetCount - assigned);
-      } else {
-        const proportion = Math.max(1, Math.round((secQs / totalAvailable) * targetCount));
-        pickCounts[sec.key] = Math.min(secQs, proportion);
-        assigned += pickCounts[sec.key];
-      }
-    });
+
     const sections: SavedPaper["sections"] = [];
-    SECTIONS.forEach((section) => {
-      const allQs = sectionQuestions[section.key] || [];
-      if (allQs.length === 0) return;
-      const pick = Math.min(pickCounts[section.key] || 3, allQs.length);
-      const selected = shuffle(allQs).slice(0, pick);
-      sections.push({ key: section.key, label: section.label, questions: selected });
+    paperSections.forEach((ps) => {
+      const sectionQuestionsList: QuestionBankQuestion[] = [];
+      ps.entries.forEach(entry => {
+        if (!entry.questionType || entry.count <= 0) return;
+        const allQs = sectionQuestions[entry.questionType] || [];
+        const selected = shuffle(allQs).slice(0, entry.count).map(q => ({
+          ...q,
+          marks: entry.marksPerQuestion,
+        }));
+        sectionQuestionsList.push(...selected);
+      });
+      if (sectionQuestionsList.length > 0) {
+        sections.push({
+          key: ps.id,
+          label: ps.label,
+          questions: sectionQuestionsList,
+        });
+      }
     });
     return sections;
   };
@@ -346,6 +404,10 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const [currentPreviewSections, setCurrentPreviewSections] = useState<SavedPaper["sections"]>([]);
 
   const handleOpenPreview = () => {
+    if (configTotalQuestions === 0) {
+      toast.error("Please configure at least one question in a section");
+      return;
+    }
     const sections = buildPreviewSections();
     setCurrentPreviewSections(sections);
     setShowPreview(true);
@@ -701,26 +763,109 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             })}
           </div>
 
-          {/* Preview Button */}
+          {/* Section-wise Paper Configurator */}
           {totalQuestions > 0 && (
-            <div className="flex items-center justify-between pt-2 border-t gap-3">
-              <p className="text-xs text-muted-foreground">
-                Total: <span className="font-semibold text-foreground">{totalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{grandTotalMarks} Marks</span>
-              </p>
-              <div className="flex items-center gap-2">
-                <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Paper Questions:</Label>
-                <Input
-                  type="number"
-                  value={previewCount}
-                  min={1}
-                  max={totalQuestions}
-                  onChange={e => setPreviewCount(Math.max(1, Math.min(totalQuestions, parseInt(e.target.value) || 1)))}
-                  className="w-16 h-7 text-xs text-center"
-                />
-                <Button size="sm" className="text-xs h-8 gap-1.5" onClick={handleOpenPreview}>
-                  <Eye className="h-3.5 w-3.5" /> Preview Question Paper
+            <div className="pt-2 border-t space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Total Bank: <span className="font-semibold text-foreground">{totalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{grandTotalMarks} Marks</span>
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  onClick={() => setShowSectionConfig(!showSectionConfig)}
+                >
+                  {showSectionConfig ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  {showSectionConfig ? "Hide" : "Configure"} Paper Sections
                 </Button>
               </div>
+
+              {showSectionConfig && (
+                <div className="space-y-3 p-3 border rounded-lg bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-foreground">Paper Sections</p>
+                    <Button variant="outline" size="sm" className="text-[10px] h-6 gap-1" onClick={addPaperSection}>
+                      <Plus className="h-3 w-3" /> Add Section
+                    </Button>
+                  </div>
+
+                  {paperSections.map((ps, psIdx) => (
+                    <div key={ps.id} className="border rounded-lg bg-background overflow-hidden">
+                      <div className="flex items-center justify-between px-3 py-2 bg-muted/60 border-b">
+                        <p className="text-xs font-bold text-foreground">{ps.label}</p>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="text-[9px]">
+                            {ps.entries.reduce((s, e) => s + e.count, 0)} Q · {ps.entries.reduce((s, e) => s + (e.count * e.marksPerQuestion), 0)} Marks
+                          </Badge>
+                          {paperSections.length > 1 && (
+                            <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => removePaperSection(ps.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="px-3 py-2 space-y-2">
+                        {ps.entries.map((entry, eIdx) => (
+                          <div key={eIdx} className="flex items-center gap-2 flex-wrap">
+                            <select
+                              value={entry.questionType}
+                              onChange={e => updateEntry(ps.id, eIdx, 'questionType', e.target.value)}
+                              className="h-7 text-xs rounded-md border border-input bg-background px-2 min-w-[140px]"
+                            >
+                              <option value="">Select Type</option>
+                              {availableTypes.map(at => (
+                                <option key={at.key} value={at.key}>
+                                  {at.label} ({(sectionQuestions[at.key] || []).length} available)
+                                </option>
+                              ))}
+                            </select>
+                            <div className="flex items-center gap-1">
+                              <Label className="text-[10px] text-muted-foreground">Qty:</Label>
+                              <Input
+                                type="number"
+                                value={entry.count}
+                                min={0}
+                                max={entry.questionType ? getAvailableCount(entry.questionType) : 99}
+                                onChange={e => updateEntry(ps.id, eIdx, 'count', Math.max(0, parseInt(e.target.value) || 0))}
+                                className="w-14 h-7 text-xs text-center"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Label className="text-[10px] text-muted-foreground">Marks each:</Label>
+                              <Input
+                                type="number"
+                                value={entry.marksPerQuestion}
+                                min={1}
+                                onChange={e => updateEntry(ps.id, eIdx, 'marksPerQuestion', Math.max(1, parseInt(e.target.value) || 1))}
+                                className="w-14 h-7 text-xs text-center"
+                              />
+                            </div>
+                            {ps.entries.length > 1 && (
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" onClick={() => removeEntryFromSection(ps.id, eIdx)}>
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        <Button variant="ghost" size="sm" className="text-[10px] h-6 gap-1 text-primary" onClick={() => addEntryToSection(ps.id)}>
+                          <Plus className="h-3 w-3" /> Add Question Type
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Config summary + Preview */}
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <p className="text-xs text-muted-foreground">
+                      Paper: <span className="font-semibold text-foreground">{configTotalQuestions} Questions</span> · <span className="font-semibold text-amber-600">{configTotalMarks} Marks</span>
+                    </p>
+                    <Button size="sm" className="text-xs h-8 gap-1.5" onClick={handleOpenPreview}>
+                      <Eye className="h-3.5 w-3.5" /> Preview Question Paper
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
@@ -756,16 +901,13 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                             {sectionMarks} Marks
                           </Badge>
                         </div>
+                        {/* List the question types in this section */}
                         <p className="text-[10px] text-muted-foreground italic mb-2">
-                          {sec.key === "mcq" && "Choose the correct option for each question."}
-                          {sec.key === "fill_blank" && "Fill in the blanks with appropriate words."}
-                          {sec.key === "true_false" && "State whether the following statements are True or False."}
-                          {sec.key === "match" && "Match the items in Column A with Column B."}
-                          {sec.key === "assertion" && "Read the Assertion and Reason, then choose the correct option."}
-                          {sec.key === "short_answer" && "Answer the following questions briefly."}
-                          {sec.key === "long_answer" && "Answer the following questions in detail."}
-                          {sec.key === "image_base" && "Observe the image and answer the questions."}
-                          {sec.key === "map_base" && "Study the map and answer the questions."}
+                          {(() => {
+                            const types = [...new Set(sec.questions.map(q => q.question_type))];
+                            const typeLabels = types.map(t => SECTIONS.find(s => s.key === t)?.label || t).join(', ');
+                            return `Contains: ${typeLabels}`;
+                          })()}
                         </p>
                         <div className="space-y-3">
                           {sec.questions.map((q) => {
@@ -788,16 +930,16 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                                         ))}
                                       </div>
                                     )}
-                                    {sec.key === "true_false" && (
+                                    {q.question_type === "true_false" && (
                                       <div className="flex gap-3 ml-1">
                                         <span className="text-[11px] text-muted-foreground">A) True</span>
                                         <span className="text-[11px] text-muted-foreground">B) False</span>
                                       </div>
                                     )}
-                                    {(sec.key === "short_answer" || sec.key === "long_answer") && (
-                                      <div className={`border border-dashed rounded mt-1 ${sec.key === "long_answer" ? "h-20" : "h-10"}`} />
+                                    {(q.question_type === "short_answer" || q.question_type === "long_answer") && (
+                                      <div className={`border border-dashed rounded mt-1 ${q.question_type === "long_answer" ? "h-20" : "h-10"}`} />
                                     )}
-                                    {sec.key === "fill_blank" && (
+                                    {q.question_type === "fill_blank" && (
                                       <div className="border-b border-dashed w-40 mt-1" />
                                     )}
                                   </div>
@@ -877,10 +1019,10 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                                         ))}
                                       </div>
                                     )}
-                                    {(sec.key === "short_answer" || sec.key === "long_answer") && (
-                                      <div className={`border border-dashed rounded mt-1 ${sec.key === "long_answer" ? "h-20" : "h-10"}`} />
+                                    {(q.question_type === "short_answer" || q.question_type === "long_answer") && (
+                                      <div className={`border border-dashed rounded mt-1 ${q.question_type === "long_answer" ? "h-20" : "h-10"}`} />
                                     )}
-                                    {sec.key === "fill_blank" && (
+                                    {q.question_type === "fill_blank" && (
                                       <div className="border-b border-dashed w-40 mt-1" />
                                     )}
                                   </div>
