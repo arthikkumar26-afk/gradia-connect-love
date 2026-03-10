@@ -1019,10 +1019,10 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
                                         ))}
                                       </div>
                                     )}
-                                    {(sec.key === "short_answer" || sec.key === "long_answer") && (
-                                      <div className={`border border-dashed rounded mt-1 ${sec.key === "long_answer" ? "h-20" : "h-10"}`} />
+                                    {(q.question_type === "short_answer" || q.question_type === "long_answer") && (
+                                      <div className={`border border-dashed rounded mt-1 ${q.question_type === "long_answer" ? "h-20" : "h-10"}`} />
                                     )}
-                                    {sec.key === "fill_blank" && (
+                                    {q.question_type === "fill_blank" && (
                                       <div className="border-b border-dashed w-40 mt-1" />
                                     )}
                                   </div>
