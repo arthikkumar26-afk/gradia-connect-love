@@ -1039,6 +1039,36 @@ function CampaignsContent() {
                 />
                 <Button size="sm" variant="outline" onClick={addEmails}>Add</Button>
               </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full"
+                onClick={async () => {
+                  try {
+                    const { data, error } = await supabase
+                      .from("profiles")
+                      .select("email")
+                      .eq("role", "candidate")
+                      .not("email", "is", null);
+                    if (error) throw error;
+                    if (data && data.length > 0) {
+                      const candidateEmails = data
+                        .map((p: any) => p.email?.trim())
+                        .filter((e: string) => e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e));
+                      const unique = [...new Set([...emailList, ...candidateEmails])];
+                      setEmailList(unique);
+                      toast.success(`${candidateEmails.length} candidate emails loaded`);
+                    } else {
+                      toast.info("No registered candidates found");
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    toast.error("Failed to load candidate emails");
+                  }
+                }}
+              >
+                <Users className="h-4 w-4 mr-2" /> Load All Registered Candidates
+              </Button>
               {emailList.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2 max-h-32 overflow-y-auto p-2 rounded-md border border-border bg-muted/30">
                   {emailList.map((email) => (
