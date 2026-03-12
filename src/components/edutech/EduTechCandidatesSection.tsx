@@ -50,10 +50,17 @@ export default function EduTechCandidatesSection() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [expFilter, setExpFilter] = useState("all");
+  const [genderFilter, setGenderFilter] = useState("all");
+  const [qualificationFilter, setQualificationFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
+  const [skillSearch, setSkillSearch] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(true);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [categories, setCategories] = useState<string[]>([]);
+  const [states, setStates] = useState<string[]>([]);
+  const [qualifications, setQualifications] = useState<string[]>([]);
 
   useEffect(() => {
     fetchCandidates();
