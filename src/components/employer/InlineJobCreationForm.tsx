@@ -670,8 +670,66 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
+            {/* AI Create with Requirements */}
+            <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Wand2 className="h-5 w-5 text-primary" />
+                <h4 className="text-sm font-semibold text-foreground">AI Create with Requirements</h4>
+                <Badge variant="secondary" className="text-[10px]">Smart Fill</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Paste requirement text or upload a document (PDF/Word/Excel) — AI will auto-fill the entire vacancy form.
+              </p>
+              
+              <Textarea
+                placeholder="Paste your job requirement text here... (e.g., 'Looking for a Senior React Developer with 5+ years experience in Bangalore...')"
+                className="min-h-[100px] bg-background"
+                value={requirementText}
+                onChange={(e) => setRequirementText(e.target.value)}
+              />
 
-            {/* Education-specific fields: Sector, Category, Function, Board, Segment, etc. */}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-1.5"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Upload Document
+                </Button>
+                {uploadedFileName && (
+                  <Badge variant="outline" className="gap-1 text-xs">
+                    <FileText className="h-3 w-3" />
+                    {uploadedFileName}
+                  </Badge>
+                )}
+                <div className="flex-1" />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleParseRequirements}
+                  disabled={isParsingRequirements || !requirementText.trim()}
+                  className="gap-1.5"
+                >
+                  {isParsingRequirements ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing...</>
+                  ) : (
+                    <><Sparkles className="h-3.5 w-3.5" /> AI Create Vacancy</>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+
             {watchedInterviewType === 'education' && (
             <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
