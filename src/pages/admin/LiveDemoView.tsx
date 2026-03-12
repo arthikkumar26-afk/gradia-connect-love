@@ -54,8 +54,8 @@ export default function LiveDemoView() {
   const [hasVideoStream, setHasVideoStream] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
