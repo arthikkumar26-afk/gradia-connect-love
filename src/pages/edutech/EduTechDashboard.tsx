@@ -20,8 +20,9 @@ import {
   TrendingUp, Eye, MousePointerClick, UserPlus,
   Plus, Send, LayoutDashboard, ChevronRight,
   Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote, Trash2,
-  Paperclip, Loader2, XCircle, Crown, Check, Zap, Star
+  Paperclip, Loader2, XCircle, Crown, Check, Zap, Star, UserSearch
 } from "lucide-react";
+import EduTechCandidatesSection from "@/components/edutech/EduTechCandidatesSection";
 
 const statsData = [
   { label: "Total Candidates", value: "1,248", change: "+12%", icon: Users, gradient: "from-primary/20 to-primary/5" },
@@ -95,6 +96,7 @@ export default function EduTechDashboard() {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "courses", label: "Courses", icon: BookOpen },
     { id: "candidates", label: "Candidate Data", icon: Users },
+    { id: "all-candidates", label: "Candidates", icon: UserSearch },
     { id: "campaigns", label: "Campaigns", icon: Megaphone },
     { id: "events", label: "Job Mela & Events", icon: CalendarCheck },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -110,6 +112,8 @@ export default function EduTechDashboard() {
         return <CoursesContent />;
       case "candidates":
         return <CandidatesContent />;
+      case "all-candidates":
+        return <EduTechCandidatesSection />;
       case "campaigns":
         return <CampaignsContent />;
       case "events":
