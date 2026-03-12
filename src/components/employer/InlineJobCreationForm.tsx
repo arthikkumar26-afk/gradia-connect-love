@@ -460,23 +460,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const applyPreviewData = () => {
     if (!previewData) return;
 
-    // Auto-select interview type from AI detection
-    if (previewData.detected_interview_type) {
-      form.setValue("interview_type", previewData.detected_interview_type);
-    }
-
-    // Auto-select pipeline type and role after a short delay to let pipeline options populate
-    setTimeout(() => {
-      if (previewData.detected_pipeline_type) {
-        setSelectedPipelineType(previewData.detected_pipeline_type);
-      }
-      setTimeout(() => {
-        if (previewData.detected_role) {
-          setSelectedRole(previewData.detected_role);
-        }
-      }, 150);
-    }, 150);
-
+    // Fill all text fields first
     if (previewData.job_title) form.setValue("job_title", previewData.job_title);
     if (previewData.department) form.setValue("department", previewData.department);
     if (previewData.job_type) form.setValue("job_type", previewData.job_type);
@@ -487,6 +471,25 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     if (previewData.description) form.setValue("description", previewData.description);
     if (previewData.requirements) form.setValue("requirements", previewData.requirements);
     if (previewData.skills) form.setValue("skills", previewData.skills);
+
+    // Auto-select interview type from AI detection
+    // The useEffect on watchedInterviewType resets pipeline/role, so we must
+    // set pipeline & role AFTER that effect fires (needs longer delay)
+    if (previewData.detected_interview_type) {
+      form.setValue("interview_type", previewData.detected_interview_type);
+    }
+
+    // Wait for the useEffect reset to complete before setting pipeline & role
+    setTimeout(() => {
+      if (previewData.detected_pipeline_type) {
+        setSelectedPipelineType(previewData.detected_pipeline_type);
+      }
+      setTimeout(() => {
+        if (previewData.detected_role) {
+          setSelectedRole(previewData.detected_role);
+        }
+      }, 300);
+    }, 500);
 
     setHasGenerated(true);
     setHasGeneratedReq(true);
