@@ -299,6 +299,23 @@ export const JobManagementContent = () => {
     }
   };
 
+  const toggleJobStatus = async (job: Job, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus = job.status === "Open" ? "closed" : "active";
+    const newLabel = newStatus === "active" ? "Open" : "Closed";
+    try {
+      const { error } = await supabase
+        .from("jobs")
+        .update({ status: newStatus })
+        .eq("id", job.id);
+      if (error) throw error;
+      setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: newLabel as Job["status"], published: newStatus === "active" } : j));
+      toast({ title: `Job marked as ${newLabel}` });
+    } catch (error: any) {
+      toast({ title: "Update failed", description: error.message, variant: "destructive" });
+    }
+  };
+
   const filteredJobs = jobs.filter((job) => {
     const q = searchQuery.toLowerCase();
     return (
