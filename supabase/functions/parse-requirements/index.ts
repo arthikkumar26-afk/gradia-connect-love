@@ -65,9 +65,9 @@ serve(async (req) => {
     const prompt = `You are an expert HR professional. Analyze the following job requirement text and create a complete, professional job vacancy posting.
 
 Context:
-- Interview Type: ${interviewType || "Not specified"}
-- Job Title: ${jobTitle || "Detect from requirements"}
-- Role/Designation: ${jobRole || "Detect from requirements"}
+- Interview Type (if pre-selected): ${interviewType || "Not specified - detect from requirements"}
+- Job Title (if pre-selected): ${jobTitle || "Detect from requirements"}
+- Role/Designation (if pre-selected): ${jobRole || "Detect from requirements"}
 
 REQUIREMENT TEXT:
 ---
@@ -75,6 +75,20 @@ ${requirementText.slice(0, 8000)}
 ---
 
 Based on the above requirement text, generate a complete job vacancy with ALL of the following fields. If a field is not mentioned in the requirements, intelligently infer it from context.
+
+IMPORTANT - For detected_interview_type, choose EXACTLY one of these values based on the job domain:
+- "education" — for teaching, school, college, academic roles
+- "it_corporate" — for software, IT, tech, coding, data science, cybersecurity, cloud roles
+- "non_it_corporate" — for non-tech corporate roles like HR, marketing, finance, sales, operations
+- "legal" — for legal, law, advocate roles
+- "standard" — for general/other roles
+
+For detected_pipeline_type, match the pipeline category within the interview type. Examples:
+- For it_corporate: "software_engineer", "data_ai", "cybersecurity", "cloud_infrastructure", "qa_testing", "product_project", "uiux_design", "business_consulting", "it_support"
+- For education: "academic", "non_academic"
+- For non_it_corporate: "hr", "marketing", "finance", "sales", "operations", "management"
+- For legal: "advocate", "legal_advisor"
+- For standard: "general"
 
 Return ONLY valid JSON with these fields:
 {
@@ -88,7 +102,8 @@ Return ONLY valid JSON with these fields:
   "requirements": "string - comprehensive list of requirements",
   "skills": "string - comma-separated list of 5-10 skills",
   "organisation": "string - organization name if mentioned",
-  "detected_interview_type": "education|it_corporate|standard|non_it_corporate|sales|management|legal",
+  "detected_interview_type": "education|it_corporate|non_it_corporate|legal|standard",
+  "detected_pipeline_type": "string - pipeline category as described above",
   "detected_role": "string - specific role/designation detected"
 }`;
 
