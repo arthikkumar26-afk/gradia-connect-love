@@ -124,17 +124,38 @@ export default function EduTechCandidatesSection() {
     }
   };
 
-  const filtered = search.trim()
-    ? candidates.filter(c =>
-        c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        c.email.toLowerCase().includes(search.toLowerCase()) ||
-        (c.mobile && c.mobile.includes(search)) ||
-        (c.preferred_role && c.preferred_role.toLowerCase().includes(search.toLowerCase())) ||
-        (c.location && c.location.toLowerCase().includes(search.toLowerCase()))
-      )
-    : candidates;
+  const filtered = candidates.filter(c => {
+    const q = search.trim().toLowerCase();
+    const sk = skillSearch.trim().toLowerCase();
+    const matchesSearch = !q || 
+      c.full_name.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      (c.mobile && c.mobile.includes(q)) ||
+      (c.preferred_role && c.preferred_role.toLowerCase().includes(q)) ||
+      (c.location && c.location.toLowerCase().includes(q)) ||
+      (c.primary_subject && c.primary_subject.toLowerCase().includes(q));
+    const matchesSkill = !sk || 
+      (c.primary_subject && c.primary_subject.toLowerCase().includes(sk)) ||
+      (c.preferred_role && c.preferred_role.toLowerCase().includes(sk)) ||
+      (c.segment && c.segment.toLowerCase().includes(sk));
+    return matchesSearch && matchesSkill;
+  });
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const activeFilterCount = [categoryFilter, expFilter, genderFilter, qualificationFilter, stateFilter]
+    .filter(f => f !== "all").length + (skillSearch.trim() ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setCategoryFilter("all");
+    setExpFilter("all");
+    setGenderFilter("all");
+    setQualificationFilter("all");
+    setStateFilter("all");
+    setSkillSearch("");
+    setSearch("");
+    setPage(0);
+  };
 
   return (
     <div className="space-y-4">
@@ -143,41 +164,139 @@ export default function EduTechCandidatesSection() {
         <Badge variant="secondary">{totalCount} total</Badge>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search name, email, role, location..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={categoryFilter} onValueChange={v => { setCategoryFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {categories.map(c => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={expFilter} onValueChange={v => { setExpFilter(v); setPage(0); }}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Experience" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Levels</SelectItem>
-            <SelectItem value="fresher">Fresher</SelectItem>
-            <SelectItem value="1-3 years">1-3 Years</SelectItem>
-            <SelectItem value="3-5 years">3-5 Years</SelectItem>
-            <SelectItem value="5+ years">5+ Years</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search name, email, role, location..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
+
+      {/* Collapsible Filters Panel */}
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <Card className="border-border/60">
+          <CollapsibleTrigger asChild>
+            <div className="flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-sm text-foreground">Filters</span>
+                {activeFilterCount > 0 && (
+                  <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">{activeFilterCount}</Badge>
+                )}
+              </div>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0 pb-4 px-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {/* Category */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Category</label>
+                  <Select value={categoryFilter} onValueChange={v => { setCategoryFilter(v); setPage(0); }}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Experience */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Experience</label>
+                  <Select value={expFilter} onValueChange={v => { setExpFilter(v); setPage(0); }}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="fresher">Fresher</SelectItem>
+                      <SelectItem value="1-3 years">1-3 Years</SelectItem>
+                      <SelectItem value="3-5 years">3-5 Years</SelectItem>
+                      <SelectItem value="5+ years">5+ Years</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Gender */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Gender</label>
+                  <Select value={genderFilter} onValueChange={v => { setGenderFilter(v); setPage(0); }}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Qualification */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Qualification</label>
+                  <Select value={qualificationFilter} onValueChange={v => { setQualificationFilter(v); setPage(0); }}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {qualifications.map(q => (
+                        <SelectItem key={q} value={q}>{q}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* State */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">State</label>
+                  <Select value={stateFilter} onValueChange={v => { setStateFilter(v); setPage(0); }}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue placeholder="All" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All States</SelectItem>
+                      {states.map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Skill Search */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Skill</label>
+                  <Input
+                    placeholder="e.g. React, Java..."
+                    value={skillSearch}
+                    onChange={e => setSkillSearch(e.target.value)}
+                    className="h-9 text-xs"
+                  />
+                </div>
+              </div>
+
+              {activeFilterCount > 0 && (
+                <div className="flex justify-end mt-3">
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters} className="text-xs h-7">
+                    <X className="h-3 w-3 mr-1" /> Clear All Filters
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Candidates Grid */}
       {isLoading ? (
