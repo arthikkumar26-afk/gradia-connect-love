@@ -1676,7 +1676,98 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             </div>
           </form>
         </Form>
+
+        {/* AI Preview Dialog */}
+        <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" />
+                AI-Generated Vacancy Preview
+              </DialogTitle>
+              <DialogDescription>
+                Review the vacancy created from your requirements. Click "Apply & Fill Form" to populate the form.
+              </DialogDescription>
+            </DialogHeader>
+
+            {previewData && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Job Title</label>
+                    <p className="text-sm font-semibold">{previewData.job_title || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Department</label>
+                    <p className="text-sm">{previewData.department || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Job Type</label>
+                    <p className="text-sm">{previewData.job_type || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Location</label>
+                    <p className="text-sm">{previewData.location || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Experience</label>
+                    <p className="text-sm">{previewData.experience_required || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Salary</label>
+                    <p className="text-sm">{previewData.salary_range || "—"}</p>
+                  </div>
+                  {previewData.detected_interview_type && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Detected Type</label>
+                      <Badge variant="secondary">{previewData.detected_interview_type}</Badge>
+                    </div>
+                  )}
+                  {previewData.detected_role && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Detected Role</label>
+                      <Badge variant="outline">{previewData.detected_role}</Badge>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Skills</label>
+                  <div className="flex flex-wrap gap-1">
+                    {(previewData.skills || "").split(",").map((skill, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{skill.trim()}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Description</label>
+                  <div className="text-sm bg-muted/30 rounded-md p-3 max-h-40 overflow-y-auto whitespace-pre-wrap">
+                    {previewData.description || "—"}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Requirements</label>
+                  <div className="text-sm bg-muted/30 rounded-md p-3 max-h-40 overflow-y-auto whitespace-pre-wrap">
+                    {previewData.requirements || "—"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>Cancel</Button>
+              <Button onClick={applyPreviewData} className="gap-1.5">
+                <CheckCircle2 className="h-4 w-4" />
+                Apply & Fill Form
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
 };
+
+export default InlineJobCreationForm;
