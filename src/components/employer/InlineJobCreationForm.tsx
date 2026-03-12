@@ -481,7 +481,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     toast({ title: "Vacancy applied!", description: "Fields have been filled. Review and submit." });
   };
 
-
+  const onSubmit = async (values: JobFormValues) => {
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
