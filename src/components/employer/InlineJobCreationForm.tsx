@@ -460,6 +460,23 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const applyPreviewData = () => {
     if (!previewData) return;
 
+    // Auto-select interview type from AI detection
+    if (previewData.detected_interview_type) {
+      form.setValue("interview_type", previewData.detected_interview_type);
+    }
+
+    // Auto-select pipeline type and role after a short delay to let pipeline options populate
+    setTimeout(() => {
+      if (previewData.detected_pipeline_type) {
+        setSelectedPipelineType(previewData.detected_pipeline_type);
+      }
+      setTimeout(() => {
+        if (previewData.detected_role) {
+          setSelectedRole(previewData.detected_role);
+        }
+      }, 150);
+    }, 150);
+
     if (previewData.job_title) form.setValue("job_title", previewData.job_title);
     if (previewData.department) form.setValue("department", previewData.department);
     if (previewData.job_type) form.setValue("job_type", previewData.job_type);
@@ -471,14 +488,10 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     if (previewData.requirements) form.setValue("requirements", previewData.requirements);
     if (previewData.skills) form.setValue("skills", previewData.skills);
 
-    if (previewData.detected_interview_type && !watchedInterviewType) {
-      form.setValue("interview_type", previewData.detected_interview_type);
-    }
-
     setHasGenerated(true);
     setHasGeneratedReq(true);
     setShowPreviewDialog(false);
-    toast({ title: "Vacancy applied!", description: "Fields have been filled. Review and submit." });
+    toast({ title: "Vacancy applied!", description: "Interview type, role & fields auto-filled. Review and submit." });
   };
 
   const onSubmit = async (values: JobFormValues) => {
