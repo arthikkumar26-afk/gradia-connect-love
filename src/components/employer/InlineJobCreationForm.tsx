@@ -53,6 +53,12 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [isTemplate, setIsTemplate] = useState(false);
+  const [requirementText, setRequirementText] = useState("");
+  const [isParsingRequirements, setIsParsingRequirements] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [previewData, setPreviewData] = useState<Record<string, string> | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
