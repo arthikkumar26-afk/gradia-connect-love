@@ -81,6 +81,15 @@ export default function EduTechCandidatesSection() {
       if (expFilter !== "all") {
         query = query.eq("experience_level", expFilter);
       }
+      if (genderFilter !== "all") {
+        query = query.eq("gender", genderFilter);
+      }
+      if (qualificationFilter !== "all") {
+        query = query.eq("highest_qualification", qualificationFilter);
+      }
+      if (stateFilter !== "all") {
+        query = query.eq("current_state", stateFilter);
+      }
 
       const from = page * PAGE_SIZE;
       query = query.range(from, from + PAGE_SIZE - 1);
@@ -91,16 +100,21 @@ export default function EduTechCandidatesSection() {
       setCandidates(data || []);
       setTotalCount(count || 0);
 
-      // Fetch distinct categories for filter
+      // Fetch distinct filter values once
       if (categories.length === 0) {
-        const { data: catData } = await supabase
-          .from("profiles")
-          .select("category")
-          .eq("role", "candidate")
-          .not("category", "is", null);
-        if (catData) {
-          const unique = [...new Set(catData.map(c => c.category).filter(Boolean))] as string[];
-          setCategories(unique.sort());
+        const [catRes, stateRes, qualRes] = await Promise.all([
+          supabase.from("profiles").select("category").eq("role", "candidate").not("category", "is", null),
+          supabase.from("profiles").select("current_state").eq("role", "candidate").not("current_state", "is", null),
+          supabase.from("profiles").select("highest_qualification").eq("role", "candidate").not("highest_qualification", "is", null),
+        ]);
+        if (catRes.data) {
+          setCategories([...new Set(catRes.data.map(c => c.category).filter(Boolean) as string[])].sort());
+        }
+        if (stateRes.data) {
+          setStates([...new Set(stateRes.data.map(c => c.current_state).filter(Boolean) as string[])].sort());
+        }
+        if (qualRes.data) {
+          setQualifications([...new Set(qualRes.data.map(c => c.highest_qualification).filter(Boolean) as string[])].sort());
         }
       }
     } catch (err) {
