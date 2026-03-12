@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,8 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User } from "lucide-react";
+import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User, FileText, Upload, Eye, Wand2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline } from "@/data/interviewPipelineConfig";
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 import { indiaLocationData } from "@/data/indiaLocations";
@@ -52,6 +53,12 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [isTemplate, setIsTemplate] = useState(false);
+  const [requirementText, setRequirementText] = useState("");
+  const [isParsingRequirements, setIsParsingRequirements] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [previewData, setPreviewData] = useState<Record<string, string> | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
@@ -345,6 +352,135 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/plain',
+    ];
+
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|docx?|xlsx?|txt)$/i)) {
+      toast({ title: "Unsupported file", description: "Please upload PDF, Word, Excel, or Text files.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum file size is 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setUploadedFileName(file.name);
+
+    // For text files, read directly
+    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+      const text = await file.text();
+      setRequirementText(text);
+      toast({ title: "File loaded", description: `${file.name} content extracted.` });
+      return;
+    }
+
+    // For other files, upload to storage and parse
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const filePath = `requirements/${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        // If storage bucket doesn't exist, try reading file as text
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const text = ev.target?.result as string;
+          if (text) {
+            setRequirementText(text.slice(0, 8000));
+            toast({ title: "File loaded", description: `${file.name} content extracted.` });
+          }
+        };
+        reader.readAsText(file);
+        return;
+      }
+
+      // For now, extract text client-side for documents
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = ev.target?.result as string;
+        if (content) {
+          setRequirementText(content.slice(0, 8000));
+          toast({ title: "File loaded", description: `${file.name} content loaded. Click 'AI Create Vacancy' to process.` });
+        }
+      };
+      reader.readAsText(file);
+    } catch (err) {
+      console.error("File upload error:", err);
+      toast({ title: "Upload failed", description: "Could not process file.", variant: "destructive" });
+    }
+  };
+
+  const handleParseRequirements = async () => {
+    if (!requirementText || requirementText.trim().length < 10) {
+      toast({ title: "Requirements needed", description: "Please paste requirement text or upload a document first.", variant: "destructive" });
+      return;
+    }
+
+    setIsParsingRequirements(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-requirements", {
+        body: {
+          requirementText: requirementText.trim(),
+          interviewType: watchedInterviewType || undefined,
+          jobTitle: form.getValues("job_title") || undefined,
+          role: selectedRole || undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setPreviewData(data);
+      setShowPreviewDialog(true);
+
+      toast({ title: "Vacancy generated!", description: "Review the AI-generated vacancy below." });
+    } catch (error: any) {
+      console.error("Error parsing requirements:", error);
+      toast({ title: "Failed to create vacancy", description: error.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setIsParsingRequirements(false);
+    }
+  };
+
+  const applyPreviewData = () => {
+    if (!previewData) return;
+
+    if (previewData.job_title) form.setValue("job_title", previewData.job_title);
+    if (previewData.department) form.setValue("department", previewData.department);
+    if (previewData.job_type) form.setValue("job_type", previewData.job_type);
+    if (previewData.location) form.setValue("location", previewData.location);
+    if (previewData.experience_required) form.setValue("experience_required", previewData.experience_required);
+    if (previewData.salary_range) form.setValue("salary_range", previewData.salary_range);
+    if (previewData.organisation) form.setValue("organisation", previewData.organisation);
+    if (previewData.description) form.setValue("description", previewData.description);
+    if (previewData.requirements) form.setValue("requirements", previewData.requirements);
+    if (previewData.skills) form.setValue("skills", previewData.skills);
+
+    if (previewData.detected_interview_type && !watchedInterviewType) {
+      form.setValue("interview_type", previewData.detected_interview_type);
+    }
+
+    setHasGenerated(true);
+    setHasGeneratedReq(true);
+    setShowPreviewDialog(false);
+    toast({ title: "Vacancy applied!", description: "Fields have been filled. Review and submit." });
+  };
+
   const onSubmit = async (values: JobFormValues) => {
     setIsSubmitting(true);
     try {
@@ -534,8 +670,66 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
+            {/* AI Create with Requirements */}
+            <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Wand2 className="h-5 w-5 text-primary" />
+                <h4 className="text-sm font-semibold text-foreground">AI Create with Requirements</h4>
+                <Badge variant="secondary" className="text-[10px]">Smart Fill</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Paste requirement text or upload a document (PDF/Word/Excel) — AI will auto-fill the entire vacancy form.
+              </p>
+              
+              <Textarea
+                placeholder="Paste your job requirement text here... (e.g., 'Looking for a Senior React Developer with 5+ years experience in Bangalore...')"
+                className="min-h-[100px] bg-background"
+                value={requirementText}
+                onChange={(e) => setRequirementText(e.target.value)}
+              />
 
-            {/* Education-specific fields: Sector, Category, Function, Board, Segment, etc. */}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-1.5"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Upload Document
+                </Button>
+                {uploadedFileName && (
+                  <Badge variant="outline" className="gap-1 text-xs">
+                    <FileText className="h-3 w-3" />
+                    {uploadedFileName}
+                  </Badge>
+                )}
+                <div className="flex-1" />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleParseRequirements}
+                  disabled={isParsingRequirements || !requirementText.trim()}
+                  className="gap-1.5"
+                >
+                  {isParsingRequirements ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing...</>
+                  ) : (
+                    <><Sparkles className="h-3.5 w-3.5" /> AI Create Vacancy</>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+
             {watchedInterviewType === 'education' && (
             <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1482,6 +1676,95 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             </div>
           </form>
         </Form>
+
+        {/* AI Preview Dialog */}
+        <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" />
+                AI-Generated Vacancy Preview
+              </DialogTitle>
+              <DialogDescription>
+                Review the vacancy created from your requirements. Click "Apply & Fill Form" to populate the form.
+              </DialogDescription>
+            </DialogHeader>
+
+            {previewData && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Job Title</label>
+                    <p className="text-sm font-semibold">{previewData.job_title || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Department</label>
+                    <p className="text-sm">{previewData.department || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Job Type</label>
+                    <p className="text-sm">{previewData.job_type || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Location</label>
+                    <p className="text-sm">{previewData.location || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Experience</label>
+                    <p className="text-sm">{previewData.experience_required || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Salary</label>
+                    <p className="text-sm">{previewData.salary_range || "—"}</p>
+                  </div>
+                  {previewData.detected_interview_type && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Detected Type</label>
+                      <Badge variant="secondary">{previewData.detected_interview_type}</Badge>
+                    </div>
+                  )}
+                  {previewData.detected_role && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Detected Role</label>
+                      <Badge variant="outline">{previewData.detected_role}</Badge>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Skills</label>
+                  <div className="flex flex-wrap gap-1">
+                    {(previewData.skills || "").split(",").map((skill, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{skill.trim()}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Description</label>
+                  <div className="text-sm bg-muted/30 rounded-md p-3 max-h-40 overflow-y-auto whitespace-pre-wrap">
+                    {previewData.description || "—"}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Requirements</label>
+                  <div className="text-sm bg-muted/30 rounded-md p-3 max-h-40 overflow-y-auto whitespace-pre-wrap">
+                    {previewData.requirements || "—"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>Cancel</Button>
+              <Button onClick={applyPreviewData} className="gap-1.5">
+                <CheckCircle2 className="h-4 w-4" />
+                Apply & Fill Form
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
