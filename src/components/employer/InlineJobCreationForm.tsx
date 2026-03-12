@@ -1736,6 +1736,12 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                       <Badge variant="secondary">{previewData.detected_interview_type}</Badge>
                     </div>
                   )}
+                  {previewData.detected_pipeline_type && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Detected Pipeline</label>
+                      <Badge variant="secondary">{previewData.detected_pipeline_type.replace(/_/g, ' ')}</Badge>
+                    </div>
+                  )}
                   {previewData.detected_role && (
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Detected Role</label>
