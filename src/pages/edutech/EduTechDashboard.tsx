@@ -96,6 +96,7 @@ export default function EduTechDashboard() {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "courses", label: "Courses", icon: BookOpen },
     { id: "candidates", label: "Candidate Data", icon: Users },
+    { id: "all-candidates", label: "Candidates", icon: UserSearch },
     { id: "campaigns", label: "Campaigns", icon: Megaphone },
     { id: "events", label: "Job Mela & Events", icon: CalendarCheck },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
