@@ -64,7 +64,7 @@ export default function EduTechCandidatesSection() {
 
   useEffect(() => {
     fetchCandidates();
-  }, [page, categoryFilter, expFilter]);
+  }, [page, categoryFilter, expFilter, genderFilter, qualificationFilter, stateFilter]);
 
   const fetchCandidates = async () => {
     setIsLoading(true);
