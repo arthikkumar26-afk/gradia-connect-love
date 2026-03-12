@@ -62,7 +62,7 @@ const MockTest = () => {
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
   const [webcamStream, setWebcamStream] = useState<MediaStream | null>(null);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const webcamVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

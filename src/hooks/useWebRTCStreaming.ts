@@ -56,7 +56,7 @@ export function useWebRTCStreaming(options: WebRTCStreamingOptions) {
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
   const clientIdRef = useRef<string>(crypto.randomUUID());
-  const broadcastReadyIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const broadcastReadyIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isChannelInitializedRef = useRef(false);
 
   // Create peer connection

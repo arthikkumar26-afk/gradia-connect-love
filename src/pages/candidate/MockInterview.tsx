@@ -124,8 +124,8 @@ const MockInterview = () => {
     classLevel: ''
   });
   
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoPreviewRef = useRef<HTMLVideoElement>(null);
 
   const {
