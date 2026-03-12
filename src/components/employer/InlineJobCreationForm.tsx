@@ -352,7 +352,136 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     }
   };
 
-  const onSubmit = async (values: JobFormValues) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel',
+      'text/plain',
+    ];
+
+    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|docx?|xlsx?|txt)$/i)) {
+      toast({ title: "Unsupported file", description: "Please upload PDF, Word, Excel, or Text files.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Maximum file size is 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setUploadedFileName(file.name);
+
+    // For text files, read directly
+    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+      const text = await file.text();
+      setRequirementText(text);
+      toast({ title: "File loaded", description: `${file.name} content extracted.` });
+      return;
+    }
+
+    // For other files, upload to storage and parse
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const filePath = `requirements/${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        // If storage bucket doesn't exist, try reading file as text
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const text = ev.target?.result as string;
+          if (text) {
+            setRequirementText(text.slice(0, 8000));
+            toast({ title: "File loaded", description: `${file.name} content extracted.` });
+          }
+        };
+        reader.readAsText(file);
+        return;
+      }
+
+      // For now, extract text client-side for documents
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const content = ev.target?.result as string;
+        if (content) {
+          setRequirementText(content.slice(0, 8000));
+          toast({ title: "File loaded", description: `${file.name} content loaded. Click 'AI Create Vacancy' to process.` });
+        }
+      };
+      reader.readAsText(file);
+    } catch (err) {
+      console.error("File upload error:", err);
+      toast({ title: "Upload failed", description: "Could not process file.", variant: "destructive" });
+    }
+  };
+
+  const handleParseRequirements = async () => {
+    if (!requirementText || requirementText.trim().length < 10) {
+      toast({ title: "Requirements needed", description: "Please paste requirement text or upload a document first.", variant: "destructive" });
+      return;
+    }
+
+    setIsParsingRequirements(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-requirements", {
+        body: {
+          requirementText: requirementText.trim(),
+          interviewType: watchedInterviewType || undefined,
+          jobTitle: form.getValues("job_title") || undefined,
+          role: selectedRole || undefined,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setPreviewData(data);
+      setShowPreviewDialog(true);
+
+      toast({ title: "Vacancy generated!", description: "Review the AI-generated vacancy below." });
+    } catch (error: any) {
+      console.error("Error parsing requirements:", error);
+      toast({ title: "Failed to create vacancy", description: error.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setIsParsingRequirements(false);
+    }
+  };
+
+  const applyPreviewData = () => {
+    if (!previewData) return;
+
+    if (previewData.job_title) form.setValue("job_title", previewData.job_title);
+    if (previewData.department) form.setValue("department", previewData.department);
+    if (previewData.job_type) form.setValue("job_type", previewData.job_type);
+    if (previewData.location) form.setValue("location", previewData.location);
+    if (previewData.experience_required) form.setValue("experience_required", previewData.experience_required);
+    if (previewData.salary_range) form.setValue("salary_range", previewData.salary_range);
+    if (previewData.organisation) form.setValue("organisation", previewData.organisation);
+    if (previewData.description) form.setValue("description", previewData.description);
+    if (previewData.requirements) form.setValue("requirements", previewData.requirements);
+    if (previewData.skills) form.setValue("skills", previewData.skills);
+
+    if (previewData.detected_interview_type && !watchedInterviewType) {
+      form.setValue("interview_type", previewData.detected_interview_type);
+    }
+
+    setHasGenerated(true);
+    setHasGeneratedReq(true);
+    setShowPreviewDialog(false);
+    toast({ title: "Vacancy applied!", description: "Fields have been filled. Review and submit." });
+  };
+
+
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
