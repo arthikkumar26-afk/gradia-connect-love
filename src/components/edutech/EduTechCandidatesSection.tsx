@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Search, Loader2, User, Mail, Phone, MapPin, Calendar, Briefcase,
-  GraduationCap, Star, Globe, Download, ExternalLink, ChevronLeft, ChevronRight
+  GraduationCap, Star, Globe, Download, ExternalLink, ChevronLeft, ChevronRight,
+  Filter, ChevronDown, X
 } from "lucide-react";
 
 interface CandidateProfile {
