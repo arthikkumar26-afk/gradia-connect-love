@@ -565,8 +565,13 @@ export const JobManagementContent = () => {
                               </PopoverContent>
                             </Popover>
                           </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(job.status)} className="whitespace-nowrap">
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Badge
+                              variant={getStatusVariant(job.status)}
+                              className="whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={(e) => toggleJobStatus(job, e)}
+                              title="Click to toggle Open/Closed"
+                            >
                               {job.status}
                             </Badge>
                           </TableCell>
