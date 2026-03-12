@@ -1769,5 +1769,3 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     </div>
   );
 };
-
-export default InlineJobCreationForm;
