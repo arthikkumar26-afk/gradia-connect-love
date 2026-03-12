@@ -112,6 +112,8 @@ export default function EduTechDashboard() {
         return <CoursesContent />;
       case "candidates":
         return <CandidatesContent />;
+      case "all-candidates":
+        return <EduTechCandidatesSection />;
       case "campaigns":
         return <CampaignsContent />;
       case "events":
