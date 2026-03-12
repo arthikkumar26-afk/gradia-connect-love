@@ -20,8 +20,9 @@ import {
   TrendingUp, Eye, MousePointerClick, UserPlus,
   Plus, Send, LayoutDashboard, ChevronRight,
   Mail, Phone, MapPin, Calendar, IndianRupee, CreditCard, Clock, Award, Pencil, Banknote, Trash2,
-  Paperclip, Loader2, XCircle, Crown, Check, Zap, Star
+  Paperclip, Loader2, XCircle, Crown, Check, Zap, Star, UserSearch
 } from "lucide-react";
+import EduTechCandidatesSection from "@/components/edutech/EduTechCandidatesSection";
 
 const statsData = [
   { label: "Total Candidates", value: "1,248", change: "+12%", icon: Users, gradient: "from-primary/20 to-primary/5" },
