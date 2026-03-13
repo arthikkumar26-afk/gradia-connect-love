@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Send, Mail, Users, Megaphone,
-  Paperclip, Loader2, XCircle,
+  Paperclip, Loader2, XCircle, RefreshCw,
 } from "lucide-react";
 
 interface AttachmentFile {
