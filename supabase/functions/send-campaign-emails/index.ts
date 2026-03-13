@@ -147,26 +147,15 @@ serve(async (req) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f6f9fc;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f6f9fc;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#222222;font-size:14px;line-height:1.6;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#ffffff;">
     <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+      <td style="padding:20px 24px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;">
           <tr>
-            <td style="background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);padding:28px 40px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">${senderName || "Gradia EduTech"}</h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:32px 40px;">
+            <td style="padding:0 0 16px;">
               ${htmlBody}
               ${inlineMediaHtml}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:20px 40px;background-color:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;">
-              <p style="margin:0;color:#9ca3af;font-size:12px;">This email was sent by ${senderName || "Gradia EduTech"} via Gradia Platform.</p>
-              <p style="margin:4px 0 0;color:#9ca3af;font-size:11px;">© ${new Date().getFullYear()} Gradia. All rights reserved.</p>
             </td>
           </tr>
         </table>
