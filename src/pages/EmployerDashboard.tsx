@@ -75,6 +75,7 @@ import { UpgradePlanContent } from "@/components/employer/UpgradePlanContent";
 import { EmployerSettingsContent } from "@/components/employer/EmployerSettingsContent";
 import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent";
 import { OutsourceProjectsContent } from "@/components/employer/OutsourceProjectsContent";
+import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
