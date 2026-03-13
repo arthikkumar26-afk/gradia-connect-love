@@ -233,6 +233,7 @@ export function EmployerCampaignContent() {
                     <th className="text-left p-3 font-medium text-muted-foreground">Delivered</th>
                     <th className="text-left p-3 font-medium text-muted-foreground">Failed</th>
                     <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
+                    <th className="text-left p-3 font-medium text-muted-foreground">Action</th>
                   </tr>
                 </thead>
                 <tbody>
