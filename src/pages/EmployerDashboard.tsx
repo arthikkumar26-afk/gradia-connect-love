@@ -354,6 +354,7 @@ const EmployerDashboard = () => {
     { id: "offer-letter", label: "Offer Letter", icon: FileText, path: "/employer/offer-letter" },
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "all-candidates", label: "Candidates", icon: ClipboardList, path: "/employer/candidates" },
+    { id: "campaigns", label: "Campaigns", icon: Megaphone, path: "/employer/campaigns" },
     { id: "outsource-projects", label: "Outsource Projects", icon: Briefcase, path: "/employer/outsource-projects" },
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
