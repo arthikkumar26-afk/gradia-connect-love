@@ -721,6 +721,7 @@ const EmployerDashboard = () => {
             {activeMenu === "offer-letter" && <OfferLetterContent />}
             {activeMenu === "approvals" && <ConfirmationContent />}
             {activeMenu === "all-candidates" && <AllCandidatesContent />}
+            {activeMenu === "campaigns" && <EmployerCampaignContent />}
             {activeMenu === "outsource-projects" && <OutsourceProjectsContent />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
