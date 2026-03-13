@@ -238,14 +238,31 @@ export function EmployerCampaignContent() {
                 </thead>
                 <tbody>
                   {campaignSummaries.map((c, i) => (
-                    <tr key={i} className="border-b border-border/30 hover:bg-muted/30 cursor-pointer" onClick={() => { setSelectedCampaignName(c.name); setDetailTab("all"); }}>
-                      <td className="p-3 font-medium text-primary hover:underline">{c.name}</td>
+                    <tr key={i} className="border-b border-border/30 hover:bg-muted/30">
+                      <td className="p-3 font-medium text-primary hover:underline cursor-pointer" onClick={() => { setSelectedCampaignName(c.name); setDetailTab("all"); }}>{c.name}</td>
                       <td className="p-3"><Badge variant="outline" className="text-xs">{c.type}</Badge></td>
                       <td className="p-3 text-muted-foreground">{c.sent.toLocaleString()}</td>
                       <td className="p-3 text-muted-foreground">{c.delivered.toLocaleString()}</td>
                       <td className="p-3 text-muted-foreground">{c.failed}</td>
                       <td className="p-3">
                         <Badge variant={c.status === "Completed" ? "secondary" : "outline"} className="text-xs">{c.status}</Badge>
+                      </td>
+                      <td className="p-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const emails = c.emails.map((em: any) => em.recipient_email).filter(Boolean);
+                            setCampaignName(c.name);
+                            setSubject(c.emails[0]?.subject || "");
+                            setEmailList([...new Set(emails)]);
+                            setShowNewCampaign(true);
+                          }}
+                        >
+                          <RefreshCw className="h-3 w-3" /> Resend
+                        </Button>
                       </td>
                     </tr>
                   ))}
