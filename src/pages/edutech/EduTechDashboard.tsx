@@ -591,32 +591,15 @@ function CoursesContent() {
         <h3 className="text-lg font-semibold text-foreground">Your Courses</h3>
         <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Course</Button>
       </div>
-      <div className="grid md:grid-cols-2 gap-4">
-        {[].map((course: any, i: number) => (
-          <Card key={i} className="border-border/50">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h4 className="font-semibold text-foreground">{course.title}</h4>
-                  <p className="text-xs text-muted-foreground">Duration: {course.duration}</p>
-                </div>
-                <Badge variant="secondary">⭐ {course.rating}</Badge>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Completion Rate</span>
-                  <span className="font-medium text-foreground">{Math.round((course.completed / course.enrolled) * 100)}%</span>
-                </div>
-                <Progress value={(course.completed / course.enrolled) * 100} className="h-2" />
-                <div className="flex justify-between text-xs text-muted-foreground pt-1">
-                  <span>{course.enrolled} enrolled</span>
-                  <span>{course.completed} completed</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Card className="border-border/50">
+        <CardContent className="p-6">
+          <div className="text-center py-12 text-muted-foreground">
+            <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-medium">No courses created yet</p>
+            <p className="text-xs mt-1">Click "Add Course" to list your training programs</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
