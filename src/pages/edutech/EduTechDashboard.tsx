@@ -165,7 +165,38 @@ export default function EduTechDashboard() {
 /* ─── Sub-components ─── */
 
 function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => void }) {
-  const [selectedCandidate, setSelectedCandidate] = useState<typeof recentCandidates[0] | null>(null);
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ candidates: 0, campaigns: 0, coursesCount: 0, placements: 0 });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.id) return;
+      setLoadingStats(true);
+      try {
+        const [campaignRes] = await Promise.all([
+          supabase.from("campaign_emails").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        ]);
+        setStats({
+          candidates: 0,
+          campaigns: campaignRes.count || 0,
+          coursesCount: 0,
+          placements: 0,
+        });
+      } catch (err) {
+        console.error("Stats fetch error:", err);
+      }
+      setLoadingStats(false);
+    };
+    fetchStats();
+  }, [user?.id]);
+
+  const statsData = [
+    { label: "Total Candidates", value: stats.candidates.toLocaleString(), icon: Users, gradient: "from-primary/20 to-primary/5" },
+    { label: "Campaigns Sent", value: stats.campaigns.toLocaleString(), icon: Megaphone, gradient: "from-accent/20 to-accent/5" },
+    { label: "Active Courses", value: stats.coursesCount.toLocaleString(), icon: BookOpen, gradient: "from-primary/20 to-primary/5" },
+    { label: "Placements", value: stats.placements.toLocaleString(), icon: TrendingUp, gradient: "from-accent/20 to-accent/5" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -174,16 +205,13 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
         {statsData.map((stat) => (
           <Card key={stat.label} className="border-border/50">
             <CardContent className="p-4">
-              <div className={`flex items-center gap-3 mb-2`}>
+              <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.gradient}`}>
                   <stat.icon className="h-4 w-4 text-foreground" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <Badge variant="secondary" className="text-xs">{stat.change}</Badge>
-              </div>
+              <p className="text-2xl font-bold text-foreground">{loadingStats ? "..." : stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
@@ -208,43 +236,53 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
         ))}
       </div>
 
-      {/* Recent Candidates */}
+      {/* Getting Started */}
       <Card className="border-border/50">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div>
-            <CardTitle className="text-lg">Recent Candidates</CardTitle>
-            <CardDescription>Latest candidates from your training programs</CardDescription>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setActiveMenu("candidates")} className="text-primary">
-            View All <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Getting Started</CardTitle>
+          <CardDescription>Start building your EduTech dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentCandidates.map((c, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0 cursor-pointer hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors" onClick={() => setSelectedCandidate(c)}>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs bg-muted">{c.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-primary hover:underline">{c.name}</p>
-                    <p className="text-xs text-muted-foreground">{c.course}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <Badge variant={c.status === "Placed" ? "default" : c.status === "Interviewing" ? "secondary" : "outline"} className="text-xs">
-                    {c.status}
-                  </Badge>
-                  {c.company !== "-" && <p className="text-xs text-muted-foreground mt-1">{c.company}</p>}
-                </div>
+            <div className="flex items-center gap-3 py-3 px-3 rounded-lg bg-muted/30">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Send className="h-4 w-4 text-primary" />
               </div>
-            ))}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Send your first campaign</p>
+                <p className="text-xs text-muted-foreground">Reach out to candidates with email campaigns</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveMenu("campaigns")} className="text-primary">
+                Go <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-3 py-3 px-3 rounded-lg bg-muted/30">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Browse candidate directory</p>
+                <p className="text-xs text-muted-foreground">View all registered candidates on the platform</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveMenu("all-candidates")} className="text-primary">
+                Go <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-3 py-3 px-3 rounded-lg bg-muted/30">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <CalendarCheck className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Check upcoming Job Melas</p>
+                <p className="text-xs text-muted-foreground">See events and reserve your stall</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveMenu("events")} className="text-primary">
+                Go <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      <CandidateDetailModal candidate={selectedCandidate} isOpen={!!selectedCandidate} onClose={() => setSelectedCandidate(null)} />
     </div>
   );
 }
