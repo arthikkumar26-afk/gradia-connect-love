@@ -614,6 +614,7 @@ interface AttachmentFile {
 }
 
 function CampaignsContent() {
+  const { user } = useAuth();
   const [selectedCampaignName, setSelectedCampaignName] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<"all" | "delivered" | "failed">("all");
   const [showNewCampaign, setShowNewCampaign] = useState(false);
@@ -631,13 +632,14 @@ function CampaignsContent() {
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   const fetchCampaignHistory = async () => {
+    if (!user?.id) return;
     setLoadingHistory(true);
-    const { data, error } = await supabase.from("campaign_emails").select("*").order("sent_at", { ascending: false });
+    const { data, error } = await supabase.from("campaign_emails").select("*").eq("user_id", user.id).order("sent_at", { ascending: false });
     if (!error && data) setCampaignHistory(data);
     setLoadingHistory(false);
   };
 
-  useEffect(() => { fetchCampaignHistory(); }, []);
+  useEffect(() => { fetchCampaignHistory(); }, [user?.id]);
 
   // Group campaigns by campaign_name
   const groupedCampaigns = campaignHistory.reduce((acc: Record<string, any[]>, row) => {
