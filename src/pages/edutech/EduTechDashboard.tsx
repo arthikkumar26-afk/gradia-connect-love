@@ -565,8 +565,6 @@ function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: Candi
 }
 
 function CandidatesContent() {
-  const [selectedCandidate, setSelectedCandidate] = useState<typeof recentCandidates[0] | null>(null);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -574,51 +572,14 @@ function CandidatesContent() {
         <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Candidate</Button>
       </div>
       <Card className="border-border/50">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Course</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Company</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Fee</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Pending</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentCandidates.map((c, i) => {
-                  const pending = c.totalFee - c.paidAmount;
-                  return (
-                    <tr key={i} className="border-b border-border/30">
-                      <td className="p-3 font-medium text-primary cursor-pointer hover:underline" onClick={() => setSelectedCandidate(c)}>{c.name}</td>
-                      <td className="p-3 text-muted-foreground">{c.course}</td>
-                      <td className="p-3"><Badge variant={c.status === "Placed" ? "default" : "outline"} className="text-xs">{c.status}</Badge></td>
-                      <td className="p-3 text-muted-foreground">{c.company}</td>
-                      <td className="p-3 text-foreground">₹{c.totalFee.toLocaleString("en-IN")}</td>
-                      <td className="p-3">
-                        <span className={pending > 0 ? "text-red-600 dark:text-red-400 font-medium" : "text-green-600 dark:text-green-400"}>
-                          {pending > 0 ? `₹${pending.toLocaleString("en-IN")}` : "Paid ✓"}
-                        </span>
-                      </td>
-                      <td className="p-3 flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); toast.success(`${c.name} has been removed`); }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <CardContent className="p-6">
+          <div className="text-center py-12 text-muted-foreground">
+            <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-medium">No candidates added yet</p>
+            <p className="text-xs mt-1">Click "Add Candidate" to start tracking your trained students</p>
           </div>
         </CardContent>
       </Card>
-
-      <CandidateDetailModal candidate={selectedCandidate} isOpen={!!selectedCandidate} onClose={() => setSelectedCandidate(null)} />
     </div>
   );
 }
