@@ -287,7 +287,13 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
   );
 }
 
-function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeof recentCandidates[0] | null; isOpen: boolean; onClose: () => void }) {
+interface CandidateRecord {
+  name: string; course: string; status: string; company: string; email: string; phone: string;
+  enrollDate: string; completionDate: string | null; totalFee: number; paidAmount: number;
+  courseDuration: string; batchId: string; qualification: string; location: string;
+}
+
+function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: CandidateRecord | null; isOpen: boolean; onClose: () => void }) {
   const [editMode, setEditMode] = useState(false);
   const [paymentMode, setPaymentMode] = useState(false);
   const [editData, setEditData] = useState({ name: "", email: "", phone: "", location: "", qualification: "", course: "", batchId: "", status: "", company: "", totalFee: "", paidAmount: "" });
