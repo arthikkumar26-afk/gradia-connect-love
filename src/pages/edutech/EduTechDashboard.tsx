@@ -24,61 +24,11 @@ import {
 } from "lucide-react";
 import EduTechCandidatesSection from "@/components/edutech/EduTechCandidatesSection";
 
-const statsData = [
-  { label: "Total Candidates", value: "1,248", change: "+12%", icon: Users, gradient: "from-primary/20 to-primary/5" },
-  { label: "Active Courses", value: "18", change: "+3", icon: BookOpen, gradient: "from-success/20 to-success/5" },
-  { label: "Impressions", value: "45.2K", change: "+28%", icon: Eye, gradient: "from-warning/20 to-warning/5" },
-  { label: "Placements", value: "342", change: "+8%", icon: TrendingUp, gradient: "from-accent/20 to-accent/5" },
-];
-
 const quickActions = [
   { label: "Add Course", icon: Plus, description: "List a new course or workshop", section: "courses" },
   { label: "New Campaign", icon: Send, description: "Launch email/SMS campaign", section: "campaigns" },
   { label: "View Candidates", icon: Users, description: "Track trained candidates", section: "candidates" },
   { label: "Book Stall", icon: CalendarCheck, description: "Reserve a Job Mela stall", section: "events" },
-];
-
-const recentCandidates = [
-  { name: "Priya Sharma", course: "Full Stack Development", status: "Placed", company: "TCS", email: "priya.sharma@email.com", phone: "+91 98765 43210", enrollDate: "2025-06-15", completionDate: "2025-12-10", totalFee: 45000, paidAmount: 45000, courseDuration: "6 months", batchId: "FSB-2025-03", qualification: "B.Tech (CSE)", location: "Hyderabad" },
-  { name: "Rahul Verma", course: "Data Science", status: "Interviewing", company: "Infosys", email: "rahul.verma@email.com", phone: "+91 87654 32109", enrollDate: "2025-08-01", completionDate: null, totalFee: 55000, paidAmount: 35000, courseDuration: "4 months", batchId: "DSB-2025-05", qualification: "M.Sc (Statistics)", location: "Bangalore" },
-  { name: "Anjali Patel", course: "Digital Marketing", status: "Training", company: "-", email: "anjali.patel@email.com", phone: "+91 76543 21098", enrollDate: "2025-11-10", completionDate: null, totalFee: 25000, paidAmount: 15000, courseDuration: "3 months", batchId: "DMB-2025-08", qualification: "BBA", location: "Pune" },
-  { name: "Kiran Reddy", course: "Cloud Computing", status: "Placed", company: "Wipro", email: "kiran.reddy@email.com", phone: "+91 65432 10987", enrollDate: "2025-07-20", completionDate: "2025-10-18", totalFee: 35000, paidAmount: 35000, courseDuration: "3 months", batchId: "CCB-2025-04", qualification: "B.Tech (IT)", location: "Chennai" },
-  { name: "Sneha Gupta", course: "UI/UX Design", status: "Job Seeking", company: "-", email: "sneha.gupta@email.com", phone: "+91 54321 09876", enrollDate: "2025-09-01", completionDate: "2025-12-28", totalFee: 30000, paidAmount: 20000, courseDuration: "4 months", batchId: "UXB-2025-06", qualification: "B.Des", location: "Mumbai" },
-];
-
-const campaignsList = [
-  {
-    name: "Summer Batch 2026", type: "Email", sent: 2400, opened: 1680, ctr: "18%", status: "Completed",
-    emails: [
-      { to: "priya@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:30", status: "delivered" },
-      { to: "rahul@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "delivered" },
-      { to: "anjali@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "opened" },
-      { to: "kiran@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:32", status: "bounced" },
-    ]
-  },
-  {
-    name: "Free Webinar Invite", type: "SMS", sent: 5000, opened: 3200, ctr: "22%", status: "Active",
-    emails: [
-      { to: "sneha@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:00", status: "delivered" },
-      { to: "amit@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:01", status: "opened" },
-      { to: "neha@email.com", subject: "Free Webinar - Data Science", sentAt: null, status: "scheduled", scheduledAt: "2026-03-10 09:00" },
-    ]
-  },
-  {
-    name: "Placement Drive Alert", type: "Email", sent: 1800, opened: 1100, ctr: "15%", status: "Draft",
-    emails: [
-      { to: "ravi@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
-      { to: "meena@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
-      { to: "suresh@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "scheduled", scheduledAt: "2026-03-15 08:00" },
-    ]
-  },
-];
-
-const courses = [
-  { title: "Full Stack Development", enrolled: 120, completed: 85, rating: 4.6, duration: "6 months" },
-  { title: "Data Science & ML", enrolled: 95, completed: 42, rating: 4.8, duration: "4 months" },
-  { title: "Digital Marketing", enrolled: 78, completed: 65, rating: 4.3, duration: "3 months" },
-  { title: "Cloud Computing (AWS)", enrolled: 56, completed: 30, rating: 4.5, duration: "3 months" },
 ];
 
 export default function EduTechDashboard() {
@@ -215,7 +165,38 @@ export default function EduTechDashboard() {
 /* ─── Sub-components ─── */
 
 function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => void }) {
-  const [selectedCandidate, setSelectedCandidate] = useState<typeof recentCandidates[0] | null>(null);
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ candidates: 0, campaigns: 0, coursesCount: 0, placements: 0 });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.id) return;
+      setLoadingStats(true);
+      try {
+        const [campaignRes] = await Promise.all([
+          supabase.from("campaign_emails").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        ]);
+        setStats({
+          candidates: 0,
+          campaigns: campaignRes.count || 0,
+          coursesCount: 0,
+          placements: 0,
+        });
+      } catch (err) {
+        console.error("Stats fetch error:", err);
+      }
+      setLoadingStats(false);
+    };
+    fetchStats();
+  }, [user?.id]);
+
+  const statsData = [
+    { label: "Total Candidates", value: stats.candidates.toLocaleString(), icon: Users, gradient: "from-primary/20 to-primary/5" },
+    { label: "Campaigns Sent", value: stats.campaigns.toLocaleString(), icon: Megaphone, gradient: "from-accent/20 to-accent/5" },
+    { label: "Active Courses", value: stats.coursesCount.toLocaleString(), icon: BookOpen, gradient: "from-primary/20 to-primary/5" },
+    { label: "Placements", value: stats.placements.toLocaleString(), icon: TrendingUp, gradient: "from-accent/20 to-accent/5" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -224,16 +205,13 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
         {statsData.map((stat) => (
           <Card key={stat.label} className="border-border/50">
             <CardContent className="p-4">
-              <div className={`flex items-center gap-3 mb-2`}>
+              <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.gradient}`}>
                   <stat.icon className="h-4 w-4 text-foreground" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-                <Badge variant="secondary" className="text-xs">{stat.change}</Badge>
-              </div>
+              <p className="text-2xl font-bold text-foreground">{loadingStats ? "..." : stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </CardContent>
           </Card>
         ))}
@@ -258,48 +236,64 @@ function DashboardContent({ setActiveMenu }: { setActiveMenu: (id: string) => vo
         ))}
       </div>
 
-      {/* Recent Candidates */}
+      {/* Getting Started */}
       <Card className="border-border/50">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div>
-            <CardTitle className="text-lg">Recent Candidates</CardTitle>
-            <CardDescription>Latest candidates from your training programs</CardDescription>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setActiveMenu("candidates")} className="text-primary">
-            View All <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Getting Started</CardTitle>
+          <CardDescription>Start building your EduTech dashboard</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentCandidates.map((c, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0 cursor-pointer hover:bg-muted/30 rounded-lg px-2 -mx-2 transition-colors" onClick={() => setSelectedCandidate(c)}>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs bg-muted">{c.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-primary hover:underline">{c.name}</p>
-                    <p className="text-xs text-muted-foreground">{c.course}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <Badge variant={c.status === "Placed" ? "default" : c.status === "Interviewing" ? "secondary" : "outline"} className="text-xs">
-                    {c.status}
-                  </Badge>
-                  {c.company !== "-" && <p className="text-xs text-muted-foreground mt-1">{c.company}</p>}
-                </div>
+            <div className="flex items-center gap-3 py-3 px-3 rounded-lg bg-muted/30">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Send className="h-4 w-4 text-primary" />
               </div>
-            ))}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Send your first campaign</p>
+                <p className="text-xs text-muted-foreground">Reach out to candidates with email campaigns</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveMenu("campaigns")} className="text-primary">
+                Go <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-3 py-3 px-3 rounded-lg bg-muted/30">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Browse candidate directory</p>
+                <p className="text-xs text-muted-foreground">View all registered candidates on the platform</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveMenu("all-candidates")} className="text-primary">
+                Go <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-3 py-3 px-3 rounded-lg bg-muted/30">
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <CalendarCheck className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Check upcoming Job Melas</p>
+                <p className="text-xs text-muted-foreground">See events and reserve your stall</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveMenu("events")} className="text-primary">
+                Go <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      <CandidateDetailModal candidate={selectedCandidate} isOpen={!!selectedCandidate} onClose={() => setSelectedCandidate(null)} />
     </div>
   );
 }
 
-function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeof recentCandidates[0] | null; isOpen: boolean; onClose: () => void }) {
+interface CandidateRecord {
+  name: string; course: string; status: string; company: string; email: string; phone: string;
+  enrollDate: string; completionDate: string | null; totalFee: number; paidAmount: number;
+  courseDuration: string; batchId: string; qualification: string; location: string;
+}
+
+function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: CandidateRecord | null; isOpen: boolean; onClose: () => void }) {
   const [editMode, setEditMode] = useState(false);
   const [paymentMode, setPaymentMode] = useState(false);
   const [editData, setEditData] = useState({ name: "", email: "", phone: "", location: "", qualification: "", course: "", batchId: "", status: "", company: "", totalFee: "", paidAmount: "" });
@@ -571,8 +565,6 @@ function CandidateDetailModal({ candidate, isOpen, onClose }: { candidate: typeo
 }
 
 function CandidatesContent() {
-  const [selectedCandidate, setSelectedCandidate] = useState<typeof recentCandidates[0] | null>(null);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -580,51 +572,14 @@ function CandidatesContent() {
         <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Candidate</Button>
       </div>
       <Card className="border-border/50">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Course</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Company</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Fee</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Pending</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentCandidates.map((c, i) => {
-                  const pending = c.totalFee - c.paidAmount;
-                  return (
-                    <tr key={i} className="border-b border-border/30">
-                      <td className="p-3 font-medium text-primary cursor-pointer hover:underline" onClick={() => setSelectedCandidate(c)}>{c.name}</td>
-                      <td className="p-3 text-muted-foreground">{c.course}</td>
-                      <td className="p-3"><Badge variant={c.status === "Placed" ? "default" : "outline"} className="text-xs">{c.status}</Badge></td>
-                      <td className="p-3 text-muted-foreground">{c.company}</td>
-                      <td className="p-3 text-foreground">₹{c.totalFee.toLocaleString("en-IN")}</td>
-                      <td className="p-3">
-                        <span className={pending > 0 ? "text-red-600 dark:text-red-400 font-medium" : "text-green-600 dark:text-green-400"}>
-                          {pending > 0 ? `₹${pending.toLocaleString("en-IN")}` : "Paid ✓"}
-                        </span>
-                      </td>
-                      <td className="p-3 flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)}>View</Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); toast.success(`${c.name} has been removed`); }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <CardContent className="p-6">
+          <div className="text-center py-12 text-muted-foreground">
+            <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-medium">No candidates added yet</p>
+            <p className="text-xs mt-1">Click "Add Candidate" to start tracking your trained students</p>
           </div>
         </CardContent>
       </Card>
-
-      <CandidateDetailModal candidate={selectedCandidate} isOpen={!!selectedCandidate} onClose={() => setSelectedCandidate(null)} />
     </div>
   );
 }
@@ -636,32 +591,15 @@ function CoursesContent() {
         <h3 className="text-lg font-semibold text-foreground">Your Courses</h3>
         <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Course</Button>
       </div>
-      <div className="grid md:grid-cols-2 gap-4">
-        {courses.map((course, i) => (
-          <Card key={i} className="border-border/50">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h4 className="font-semibold text-foreground">{course.title}</h4>
-                  <p className="text-xs text-muted-foreground">Duration: {course.duration}</p>
-                </div>
-                <Badge variant="secondary">⭐ {course.rating}</Badge>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Completion Rate</span>
-                  <span className="font-medium text-foreground">{Math.round((course.completed / course.enrolled) * 100)}%</span>
-                </div>
-                <Progress value={(course.completed / course.enrolled) * 100} className="h-2" />
-                <div className="flex justify-between text-xs text-muted-foreground pt-1">
-                  <span>{course.enrolled} enrolled</span>
-                  <span>{course.completed} completed</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Card className="border-border/50">
+        <CardContent className="p-6">
+          <div className="text-center py-12 text-muted-foreground">
+            <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-medium">No courses created yet</p>
+            <p className="text-xs mt-1">Click "Add Course" to list your training programs</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -676,6 +614,7 @@ interface AttachmentFile {
 }
 
 function CampaignsContent() {
+  const { user } = useAuth();
   const [selectedCampaignName, setSelectedCampaignName] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<"all" | "delivered" | "failed">("all");
   const [showNewCampaign, setShowNewCampaign] = useState(false);
@@ -693,13 +632,14 @@ function CampaignsContent() {
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   const fetchCampaignHistory = async () => {
+    if (!user?.id) return;
     setLoadingHistory(true);
-    const { data, error } = await supabase.from("campaign_emails").select("*").order("sent_at", { ascending: false });
+    const { data, error } = await supabase.from("campaign_emails").select("*").eq("user_id", user.id).order("sent_at", { ascending: false });
     if (!error && data) setCampaignHistory(data);
     setLoadingHistory(false);
   };
 
-  useEffect(() => { fetchCampaignHistory(); }, []);
+  useEffect(() => { fetchCampaignHistory(); }, [user?.id]);
 
   // Group campaigns by campaign_name
   const groupedCampaigns = campaignHistory.reduce((acc: Record<string, any[]>, row) => {
