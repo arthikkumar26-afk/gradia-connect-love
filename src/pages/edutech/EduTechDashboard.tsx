@@ -592,7 +592,7 @@ function CoursesContent() {
         <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Add Course</Button>
       </div>
       <div className="grid md:grid-cols-2 gap-4">
-        {courses.map((course, i) => (
+        {[].map((course: any, i: number) => (
           <Card key={i} className="border-border/50">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
