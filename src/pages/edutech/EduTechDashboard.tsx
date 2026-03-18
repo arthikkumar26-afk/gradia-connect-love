@@ -24,61 +24,11 @@ import {
 } from "lucide-react";
 import EduTechCandidatesSection from "@/components/edutech/EduTechCandidatesSection";
 
-const statsData = [
-  { label: "Total Candidates", value: "1,248", change: "+12%", icon: Users, gradient: "from-primary/20 to-primary/5" },
-  { label: "Active Courses", value: "18", change: "+3", icon: BookOpen, gradient: "from-success/20 to-success/5" },
-  { label: "Impressions", value: "45.2K", change: "+28%", icon: Eye, gradient: "from-warning/20 to-warning/5" },
-  { label: "Placements", value: "342", change: "+8%", icon: TrendingUp, gradient: "from-accent/20 to-accent/5" },
-];
-
 const quickActions = [
   { label: "Add Course", icon: Plus, description: "List a new course or workshop", section: "courses" },
   { label: "New Campaign", icon: Send, description: "Launch email/SMS campaign", section: "campaigns" },
   { label: "View Candidates", icon: Users, description: "Track trained candidates", section: "candidates" },
   { label: "Book Stall", icon: CalendarCheck, description: "Reserve a Job Mela stall", section: "events" },
-];
-
-const recentCandidates = [
-  { name: "Priya Sharma", course: "Full Stack Development", status: "Placed", company: "TCS", email: "priya.sharma@email.com", phone: "+91 98765 43210", enrollDate: "2025-06-15", completionDate: "2025-12-10", totalFee: 45000, paidAmount: 45000, courseDuration: "6 months", batchId: "FSB-2025-03", qualification: "B.Tech (CSE)", location: "Hyderabad" },
-  { name: "Rahul Verma", course: "Data Science", status: "Interviewing", company: "Infosys", email: "rahul.verma@email.com", phone: "+91 87654 32109", enrollDate: "2025-08-01", completionDate: null, totalFee: 55000, paidAmount: 35000, courseDuration: "4 months", batchId: "DSB-2025-05", qualification: "M.Sc (Statistics)", location: "Bangalore" },
-  { name: "Anjali Patel", course: "Digital Marketing", status: "Training", company: "-", email: "anjali.patel@email.com", phone: "+91 76543 21098", enrollDate: "2025-11-10", completionDate: null, totalFee: 25000, paidAmount: 15000, courseDuration: "3 months", batchId: "DMB-2025-08", qualification: "BBA", location: "Pune" },
-  { name: "Kiran Reddy", course: "Cloud Computing", status: "Placed", company: "Wipro", email: "kiran.reddy@email.com", phone: "+91 65432 10987", enrollDate: "2025-07-20", completionDate: "2025-10-18", totalFee: 35000, paidAmount: 35000, courseDuration: "3 months", batchId: "CCB-2025-04", qualification: "B.Tech (IT)", location: "Chennai" },
-  { name: "Sneha Gupta", course: "UI/UX Design", status: "Job Seeking", company: "-", email: "sneha.gupta@email.com", phone: "+91 54321 09876", enrollDate: "2025-09-01", completionDate: "2025-12-28", totalFee: 30000, paidAmount: 20000, courseDuration: "4 months", batchId: "UXB-2025-06", qualification: "B.Des", location: "Mumbai" },
-];
-
-const campaignsList = [
-  {
-    name: "Summer Batch 2026", type: "Email", sent: 2400, opened: 1680, ctr: "18%", status: "Completed",
-    emails: [
-      { to: "priya@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:30", status: "delivered" },
-      { to: "rahul@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "delivered" },
-      { to: "anjali@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:31", status: "opened" },
-      { to: "kiran@email.com", subject: "Summer Batch 2026 Registration", sentAt: "2026-01-15 10:32", status: "bounced" },
-    ]
-  },
-  {
-    name: "Free Webinar Invite", type: "SMS", sent: 5000, opened: 3200, ctr: "22%", status: "Active",
-    emails: [
-      { to: "sneha@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:00", status: "delivered" },
-      { to: "amit@email.com", subject: "Free Webinar - Data Science", sentAt: "2026-02-20 09:01", status: "opened" },
-      { to: "neha@email.com", subject: "Free Webinar - Data Science", sentAt: null, status: "scheduled", scheduledAt: "2026-03-10 09:00" },
-    ]
-  },
-  {
-    name: "Placement Drive Alert", type: "Email", sent: 1800, opened: 1100, ctr: "15%", status: "Draft",
-    emails: [
-      { to: "ravi@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
-      { to: "meena@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "draft" },
-      { to: "suresh@email.com", subject: "Placement Drive - March 2026", sentAt: null, status: "scheduled", scheduledAt: "2026-03-15 08:00" },
-    ]
-  },
-];
-
-const courses = [
-  { title: "Full Stack Development", enrolled: 120, completed: 85, rating: 4.6, duration: "6 months" },
-  { title: "Data Science & ML", enrolled: 95, completed: 42, rating: 4.8, duration: "4 months" },
-  { title: "Digital Marketing", enrolled: 78, completed: 65, rating: 4.3, duration: "3 months" },
-  { title: "Cloud Computing (AWS)", enrolled: 56, completed: 30, rating: 4.5, duration: "3 months" },
 ];
 
 export default function EduTechDashboard() {
