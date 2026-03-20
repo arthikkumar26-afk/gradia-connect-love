@@ -7,12 +7,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles, Link2, Copy, Check, ExternalLink, QrCode, Download } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Briefcase, MapPin, Clock, Users, Calendar, Trash2, Loader2, Sparkles, Link2, Copy, Check, ExternalLink, QrCode, Download, Mail, Phone, User } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { JobApplicantsModal } from "./JobApplicantsModal";
+
+interface ApplicantProfile {
+  id: string;
+  candidateId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  profilePicture?: string;
+  appliedDate: string;
+  status: string;
+  source: 'pipeline' | 'application';
+}
+
 interface Job {
   id: string;
   jobTitle: string;
@@ -604,29 +619,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
 
           <Separator />
           {!isEditMode && (
-            <>
-              <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
-                <h4 className="font-semibold text-sm">Additional Information</h4>
-                <div className="grid gap-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Applications Received</span>
-                    <span className="font-medium">24</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Candidates Shortlisted</span>
-                    <span className="font-medium">8</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Posted On</span>
-                    <span className="font-medium">Jan 15, 2025</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Closing Date</span>
-                    <span className="font-medium">Feb 28, 2025</span>
-                  </div>
-                </div>
-              </div>
-            </>
+            <JobApplicantsList jobId={job.id} />
           )}
 
           {/* Action Buttons */}
@@ -693,5 +686,128 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
         />
       )}
     </Sheet>
+  );
+};
+
+// Sub-component to show applicant profiles inline in job view
+const JobApplicantsList = ({ jobId }: { jobId: string }) => {
+  const [applicants, setApplicants] = useState<ApplicantProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApplicants = async () => {
+      setIsLoading(true);
+      try {
+        const { data: icData } = await supabase
+          .from("interview_candidates")
+          .select(`
+            id, candidate_id, status, applied_at,
+            profiles:candidate_id (full_name, email, mobile, location, profile_picture)
+          `)
+          .eq("job_id", jobId);
+
+        const { data: appData } = await supabase
+          .from("applications")
+          .select(`
+            id, candidate_id, status, applied_date,
+            profiles:candidate_id (full_name, email, mobile, location, profile_picture)
+          `)
+          .eq("job_id", jobId);
+
+        const results: ApplicantProfile[] = [];
+        const seenCandidates = new Set<string>();
+
+        (icData || []).forEach((ic: any) => {
+          const p = ic.profiles;
+          if (p && !seenCandidates.has(ic.candidate_id)) {
+            seenCandidates.add(ic.candidate_id);
+            results.push({
+              id: ic.id, candidateId: ic.candidate_id,
+              name: p.full_name || "Unknown", email: p.email || "",
+              phone: p.mobile, location: p.location, profilePicture: p.profile_picture,
+              appliedDate: ic.applied_at ? new Date(ic.applied_at).toLocaleDateString() : "N/A",
+              status: ic.status || "in_pipeline", source: 'pipeline',
+            });
+          }
+        });
+
+        (appData || []).forEach((app: any) => {
+          const p = app.profiles;
+          if (p && !seenCandidates.has(app.candidate_id)) {
+            seenCandidates.add(app.candidate_id);
+            results.push({
+              id: app.id, candidateId: app.candidate_id,
+              name: p.full_name || "Unknown", email: p.email || "",
+              phone: p.mobile, location: p.location, profilePicture: p.profile_picture,
+              appliedDate: app.applied_date ? new Date(app.applied_date).toLocaleDateString() : "N/A",
+              status: app.status || "applied", source: 'application',
+            });
+          }
+        });
+
+        setApplicants(results);
+      } catch (err) {
+        console.error("Error fetching applicants:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchApplicants();
+  }, [jobId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Loading applicants...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="font-semibold text-sm flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          Applied Candidates ({applicants.length})
+        </h4>
+      </div>
+      {applicants.length === 0 ? (
+        <div className="text-center py-6 bg-muted/30 rounded-lg border border-border">
+          <User className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No candidates have applied yet</p>
+        </div>
+      ) : (
+        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
+          {applicants.map((applicant) => (
+            <div key={applicant.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition-colors">
+              <Avatar className="h-10 w-10 shrink-0">
+                <AvatarImage src={applicant.profilePicture} alt={applicant.name} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {applicant.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm text-foreground truncate">{applicant.name}</p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                  {applicant.email && (
+                    <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3 shrink-0" />{applicant.email}</span>
+                  )}
+                  {applicant.phone && (
+                    <span className="flex items-center gap-1"><Phone className="h-3 w-3 shrink-0" />{applicant.phone}</span>
+                  )}
+                  {applicant.location && (
+                    <span className="flex items-center gap-1 truncate"><MapPin className="h-3 w-3 shrink-0" />{applicant.location}</span>
+                  )}
+                </div>
+              </div>
+              <Badge variant={applicant.source === 'pipeline' ? 'default' : 'secondary'} className="shrink-0 text-[10px]">
+                {applicant.source === 'pipeline' ? 'In Pipeline' : 'Applied'}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
