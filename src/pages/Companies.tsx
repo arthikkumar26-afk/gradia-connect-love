@@ -38,7 +38,7 @@ const Companies = () => {
 
       // Get job counts for each employer
       const employersWithCounts = await Promise.all(
-        (profilesData || []).map(async (profile) => {
+        ((profilesData as any[]) || []).map(async (profile: any) => {
           const { count } = await supabase
             .from("jobs")
             .select("*", { count: "exact", head: true })
@@ -48,7 +48,7 @@ const Companies = () => {
           return {
             ...profile,
             job_count: count || 0,
-          };
+          } as EmployerWithJobs;
         })
       );
 
