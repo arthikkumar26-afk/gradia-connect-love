@@ -212,6 +212,13 @@ export type Database = {
             foreignKeyName: "applications_candidate_id_fkey"
             columns: ["candidate_id"]
             isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1009,6 +1016,13 @@ export type Database = {
             foreignKeyName: "hr_negotiations_candidate_id_fkey"
             columns: ["candidate_id"]
             isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hr_negotiations_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1100,6 +1114,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "interview_candidates_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "interview_candidates_candidate_id_fkey"
             columns: ["candidate_id"]
@@ -1280,6 +1301,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "interview_question_papers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "interview_question_papers_created_by_fkey"
             columns: ["created_by"]
@@ -1610,6 +1638,13 @@ export type Database = {
           use_ai_questions?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "jobs_employer_id_fkey"
+            columns: ["employer_id"]
+            isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "jobs_employer_id_fkey"
             columns: ["employer_id"]
@@ -2095,6 +2130,13 @@ export type Database = {
             foreignKeyName: "mock_interview_sessions_candidate_id_fkey"
             columns: ["candidate_id"]
             isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mock_interview_sessions_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2218,6 +2260,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "mock_test_sessions_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mock_test_sessions_candidate_id_fkey"
             columns: ["candidate_id"]
@@ -2662,6 +2711,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "slot_bookings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "slot_bookings_candidate_id_fkey"
             columns: ["candidate_id"]
@@ -3329,7 +3385,33 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      employer_public_profiles: {
+        Row: {
+          company_description: string | null
+          company_name: string | null
+          full_name: string | null
+          id: string | null
+          location: string | null
+          profile_picture: string | null
+        }
+        Insert: {
+          company_description?: string | null
+          company_name?: string | null
+          full_name?: string | null
+          id?: string | null
+          location?: string | null
+          profile_picture?: string | null
+        }
+        Update: {
+          company_description?: string | null
+          company_name?: string | null
+          full_name?: string | null
+          id?: string | null
+          location?: string | null
+          profile_picture?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_demo_candidate_profile: {
