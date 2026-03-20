@@ -36,6 +36,14 @@ export const useDevLogin = (role: Role) => {
   const { toast } = useToast();
 
   const handleDevLogin = async () => {
+    if (!IS_DEV) {
+      toast({
+        title: "Unavailable",
+        description: "Dev login is only available in development mode.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
       const config = roleConfig[role];
