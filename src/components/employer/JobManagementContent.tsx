@@ -693,11 +693,11 @@ export const JobManagementContent = () => {
           </div>
 
           <h2 className="text-2xl font-bold text-foreground mb-2">
-            Education Positions
+            Job Templates
           </h2>
 
           <p className="text-muted-foreground text-sm max-w-md mb-5">
-            Manage all your education sector positions, track applications, and create new openings for quick and consistent hiring
+            Manage all your job templates, track applications, and create new vacancies for quick and consistent hiring
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
