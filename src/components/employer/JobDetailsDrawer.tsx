@@ -619,29 +619,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
 
           <Separator />
           {!isEditMode && (
-            <>
-              <div className="space-y-3 bg-muted/30 p-4 rounded-lg">
-                <h4 className="font-semibold text-sm">Additional Information</h4>
-                <div className="grid gap-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Applications Received</span>
-                    <span className="font-medium">24</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Candidates Shortlisted</span>
-                    <span className="font-medium">8</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Posted On</span>
-                    <span className="font-medium">Jan 15, 2025</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Closing Date</span>
-                    <span className="font-medium">Feb 28, 2025</span>
-                  </div>
-                </div>
-              </div>
-            </>
+            <JobApplicantsList jobId={job.id} />
           )}
 
           {/* Action Buttons */}
