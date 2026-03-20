@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 type Role = 'candidate' | 'employer' | 'admin' | 'owner';
 
+const IS_DEV = import.meta.env.DEV;
+
 const roleConfig = {
   candidate: {
     email: "candidate@test.com",
