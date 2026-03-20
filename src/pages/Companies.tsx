@@ -31,15 +31,14 @@ const Companies = () => {
     try {
       // Fetch employers with their active job counts
       const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, company_name, company_description, location, profile_picture")
-        .eq("role", "employer");
+        .from("employer_public_profiles" as any)
+        .select("id, full_name, company_name, company_description, location, profile_picture");
 
       if (profilesError) throw profilesError;
 
       // Get job counts for each employer
       const employersWithCounts = await Promise.all(
-        (profilesData || []).map(async (profile) => {
+        ((profilesData as any[]) || []).map(async (profile: any) => {
           const { count } = await supabase
             .from("jobs")
             .select("*", { count: "exact", head: true })
@@ -49,7 +48,7 @@ const Companies = () => {
           return {
             ...profile,
             job_count: count || 0,
-          };
+          } as EmployerWithJobs;
         })
       );
 

@@ -264,7 +264,51 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { candidateId, jobId, status, additionalInfo }: StatusNotificationRequest = await req.json();
 
-    console.log('Sending status notification:', { candidateId, jobId, status });
+    // Input validation
+    if (!candidateId || typeof candidateId !== 'string' || candidateId.length > 100) {
+      return new Response(JSON.stringify({ error: 'Invalid candidateId' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    if (!jobId || typeof jobId !== 'string' || jobId.length > 100) {
+      return new Response(JSON.stringify({ error: 'Invalid jobId' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    const validStatuses = ['applied', 'shortlisted', 'interview_scheduled', 'offer_received', 'rejected', 'hired'];
+    if (!status || !validStatuses.includes(status)) {
+      return new Response(JSON.stringify({ error: 'Invalid status' }), {
+        status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Validate meeting link if provided
+    if (additionalInfo?.meetingLink) {
+      try {
+        const url = new URL(additionalInfo.meetingLink);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          return new Response(JSON.stringify({ error: 'Meeting link must use http or https' }), {
+            status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+        // Block private/local IPs
+        const hostname = url.hostname.toLowerCase();
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('172.16.')) {
+          return new Response(JSON.stringify({ error: 'Invalid meeting link' }), {
+            status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+      } catch {
+        return new Response(JSON.stringify({ error: 'Invalid meeting link URL format' }), {
+          status: 400, headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+    }
+
+    // Truncate text fields to prevent abuse
+    if (additionalInfo?.rejectionReason && additionalInfo.rejectionReason.length > 2000) {
+      additionalInfo.rejectionReason = additionalInfo.rejectionReason.substring(0, 2000);
+    }
 
     // Fetch candidate details
     const { data: candidate, error: candidateError } = await supabase
