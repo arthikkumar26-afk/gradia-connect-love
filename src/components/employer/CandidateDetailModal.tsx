@@ -259,7 +259,7 @@ export default function CandidateDetailModal({
                         <ExternalLink className="h-4 w-4 mr-2" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1" onClick={() => { import('@/utils/resumeUrl').then(m => m.downloadResume(candidate.resume_url!, candidate.name)); }}>
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => { import('@/utils/resumeUrl').then(m => m.downloadResume(candidate.resume_url!, candidate.candidate?.full_name || 'resume')); }}>
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </Button>
