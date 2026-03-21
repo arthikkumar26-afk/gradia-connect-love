@@ -112,8 +112,12 @@ export const TestPapersContent = () => {
       const allJobs = (jobsData as any[]) || [];
       setJobs(allJobs);
 
+      const employerJobIds = new Set(allJobs.map(j => j.id));
+      
       const papersWithData: QuestionPaper[] = [];
       for (const paper of (papersData || [])) {
+        // Skip question_bank papers that don't belong to this employer's jobs
+        if (paper.stage_type === 'question_bank' && paper.job_id && !employerJobIds.has(paper.job_id)) continue;
         const { count } = await supabase
           .from("interview_questions")
           .select("id", { count: "exact", head: true })
