@@ -78,7 +78,8 @@ const SECTIONS: SectionConfig[] = [
 ];
 
 export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
-  const [isEnabled, setIsEnabled] = useState(true);
+  const [isEnabled, setIsEnabled] = useState(false);
+  const [enableLoaded, setEnableLoaded] = useState(false);
   const [sectionQuestions, setSectionQuestions] = useState<Record<string, QuestionBankQuestion[]>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
