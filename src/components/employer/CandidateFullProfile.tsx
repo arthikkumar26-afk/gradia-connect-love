@@ -722,15 +722,13 @@ export const CandidateFullProfile = () => {
                 {candidate.resumeUrl && (
                   <div className="flex items-center gap-3 text-sm">
                     <FileText className="h-4 w-4 text-muted-foreground" />
-                    <a 
-                      href={candidate.resumeUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                    <button 
+                      onClick={() => import('@/utils/resumeUrl').then(m => m.openResume(candidate.resumeUrl!))}
                       className="text-primary hover:underline flex items-center gap-1"
                     >
                       View Resume
                       <ExternalLink className="h-3 w-3" />
-                    </a>
+                    </button>
                   </div>
                 )}
                 {candidate.email && (

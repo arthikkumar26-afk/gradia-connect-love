@@ -453,8 +453,8 @@ function CandidateProfileModal({
             </Button>
           )}
           {candidate.resume_url && (
-            <Button size="sm" variant="outline" asChild>
-              <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer"><Download className="h-3.5 w-3.5 mr-1.5" /> Resume</a>
+            <Button size="sm" variant="outline" onClick={() => import('@/utils/resumeUrl').then(m => m.openResume(candidate.resume_url!))}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> Resume
             </Button>
           )}
         </div>
