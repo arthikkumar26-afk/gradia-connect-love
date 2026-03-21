@@ -565,9 +565,28 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             <Badge variant={isEnabled ? "default" : "secondary"} className="text-[10px]">
               {isEnabled ? "Enabled" : "Disabled"}
             </Badge>
-            <Switch checked={isEnabled} onCheckedChange={(checked) => {
+            <Switch checked={isEnabled} onCheckedChange={async (checked) => {
               setIsEnabled(checked);
-              toast.success(checked ? "Question Bank enabled" : "Question Bank disabled");
+              // Persist enable state to all question_bank papers for this job
+              try {
+                await supabase
+                  .from('interview_question_papers')
+                  .update({ is_active: checked })
+                  .eq('job_id', jobId)
+                  .eq('stage_type', 'question_bank');
+                
+                // Also update use_ai_questions on the job (disable AI when manual papers enabled)
+                if (checked) {
+                  await supabase.from('jobs').update({ use_ai_questions: false }).eq('id', jobId);
+                }
+                
+                setSavedPapers(prev => prev.map(p => ({ ...p, isActiveForTest: checked })));
+                toast.success(checked ? "Question Bank enabled — questions will be shown to candidates" : "Question Bank disabled");
+              } catch (err) {
+                console.error('Error updating enable state:', err);
+                setIsEnabled(!checked); // revert
+                toast.error("Failed to update status");
+              }
             }} />
           </div>
         </div>
