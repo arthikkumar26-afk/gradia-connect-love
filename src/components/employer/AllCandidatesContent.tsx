@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { openResume } from "@/utils/resumeUrl";
 
 
 interface CandidateProfile {
@@ -380,10 +381,8 @@ function CandidateDetailDialog({
             </a>
           </Button>
           {candidate.resume_url && (
-            <Button size="sm" variant="outline" asChild>
-              <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4 mr-1.5" /> Resume
-              </a>
+            <Button size="sm" variant="outline" onClick={() => openResume(candidate.resume_url!)}>
+              <Download className="h-4 w-4 mr-1.5" /> Resume
             </Button>
           )}
           {candidate.linkedin && (

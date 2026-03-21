@@ -766,7 +766,7 @@ export default function TalentPoolContent() {
                               className="h-7 px-2"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(candidate.resume_url!, '_blank');
+                                import('@/utils/resumeUrl').then(m => m.openResume(candidate.resume_url!));
                               }}
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
@@ -775,12 +775,12 @@ export default function TalentPoolContent() {
                               variant="ghost" 
                               size="sm" 
                               className="h-7 px-2"
-                              asChild
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                import('@/utils/resumeUrl').then(m => m.downloadResume(candidate.resume_url!));
+                              }}
                             >
-                              <a href={candidate.resume_url} download>
-                                <Download className="h-3.5 w-3.5" />
-                              </a>
+                              <Download className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </div>
