@@ -78,7 +78,8 @@ const SECTIONS: SectionConfig[] = [
 ];
 
 export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
-  const [isEnabled, setIsEnabled] = useState(true);
+  const [isEnabled, setIsEnabled] = useState(false);
+  const [enableLoaded, setEnableLoaded] = useState(false);
   const [sectionQuestions, setSectionQuestions] = useState<Record<string, QuestionBankQuestion[]>>({});
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [uploadingSection, setUploadingSection] = useState<string | null>(null);
@@ -148,6 +149,30 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const configTotalMarks = paperSections.reduce((sum, s) => sum + s.entries.reduce((es, e) => es + (e.count * e.marksPerQuestion), 0), 0);
   const [viewingSavedPaper, setViewingSavedPaper] = useState<SavedPaper | null>(null);
   const [loadingPapers, setLoadingPapers] = useState(false);
+
+  // Load enabled state from the latest active paper
+  useEffect(() => {
+    const loadEnabledState = async () => {
+      try {
+        const { data: activePapers } = await supabase
+          .from('interview_question_papers')
+          .select('is_active')
+          .eq('job_id', jobId)
+          .eq('stage_type', 'question_bank')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (activePapers && activePapers.length > 0) {
+          setIsEnabled(activePapers[0].is_active);
+        }
+      } catch (err) {
+        console.error('Error loading enabled state:', err);
+      } finally {
+        setEnableLoaded(true);
+      }
+    };
+    loadEnabledState();
+  }, [jobId]);
 
   // Load saved papers from database on mount
   useEffect(() => {
@@ -421,6 +446,9 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     
     setSavingPaper(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       // 1. Deactivate any existing Question Bank papers for this job
       await supabase
         .from('interview_question_papers')
@@ -428,7 +456,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
         .eq('job_id', jobId)
         .eq('stage_type', 'question_bank');
 
-      // 2. Create the question paper in DB
+      // 2. Create the question paper in DB with created_by so it shows in Test Papers
       const { data: paperData, error: paperError } = await supabase
         .from('interview_question_papers')
         .insert({
@@ -437,11 +465,15 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
           job_id: jobId,
           is_active: true,
           set_number: savedPapers.length + 1,
+          created_by: user.id,
         })
         .select()
         .single();
 
       if (paperError || !paperData) throw paperError || new Error('Failed to create paper');
+
+      // 3. Also disable AI questions for this job since manual paper is now active
+      await supabase.from('jobs').update({ use_ai_questions: false }).eq('id', jobId);
 
       // 3. Insert questions
       const questionsToInsert = allQs.map((q, idx) => ({
@@ -540,9 +572,28 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
             <Badge variant={isEnabled ? "default" : "secondary"} className="text-[10px]">
               {isEnabled ? "Enabled" : "Disabled"}
             </Badge>
-            <Switch checked={isEnabled} onCheckedChange={(checked) => {
+            <Switch checked={isEnabled} onCheckedChange={async (checked) => {
               setIsEnabled(checked);
-              toast.success(checked ? "Question Bank enabled" : "Question Bank disabled");
+              // Persist enable state to all question_bank papers for this job
+              try {
+                await supabase
+                  .from('interview_question_papers')
+                  .update({ is_active: checked })
+                  .eq('job_id', jobId)
+                  .eq('stage_type', 'question_bank');
+                
+                // Also update use_ai_questions on the job (disable AI when manual papers enabled)
+                if (checked) {
+                  await supabase.from('jobs').update({ use_ai_questions: false }).eq('id', jobId);
+                }
+                
+                setSavedPapers(prev => prev.map(p => ({ ...p, isActiveForTest: checked })));
+                toast.success(checked ? "Question Bank enabled — questions will be shown to candidates" : "Question Bank disabled");
+              } catch (err) {
+                console.error('Error updating enable state:', err);
+                setIsEnabled(!checked); // revert
+                toast.error("Failed to update status");
+              }
             }} />
           </div>
         </div>
