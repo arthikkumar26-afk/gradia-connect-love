@@ -93,10 +93,11 @@ export const TestPapersContent = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Fetch papers created by this user OR question_bank papers linked to their jobs
       const { data: papersData, error: papersError } = await supabase
         .from("interview_question_papers")
         .select("id, title, stage_type, is_active, job_id, set_number, created_at, description")
-        .eq("created_by", user.id)
+        .or(`created_by.eq.${user.id},stage_type.eq.question_bank`)
         .order("created_at", { ascending: false });
 
       if (papersError) throw papersError;
