@@ -150,6 +150,30 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
   const [viewingSavedPaper, setViewingSavedPaper] = useState<SavedPaper | null>(null);
   const [loadingPapers, setLoadingPapers] = useState(false);
 
+  // Load enabled state from the latest active paper
+  useEffect(() => {
+    const loadEnabledState = async () => {
+      try {
+        const { data: activePapers } = await supabase
+          .from('interview_question_papers')
+          .select('is_active')
+          .eq('job_id', jobId)
+          .eq('stage_type', 'question_bank')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (activePapers && activePapers.length > 0) {
+          setIsEnabled(activePapers[0].is_active);
+        }
+      } catch (err) {
+        console.error('Error loading enabled state:', err);
+      } finally {
+        setEnableLoaded(true);
+      }
+    };
+    loadEnabledState();
+  }, [jobId]);
+
   // Load saved papers from database on mount
   useEffect(() => {
     const loadSavedPapers = async () => {
