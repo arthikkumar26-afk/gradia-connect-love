@@ -381,10 +381,8 @@ function CandidateDetailDialog({
             </a>
           </Button>
           {candidate.resume_url && (
-            <Button size="sm" variant="outline" asChild>
-              <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4 mr-1.5" /> Resume
-              </a>
+            <Button size="sm" variant="outline" onClick={() => openResume(candidate.resume_url!)}>
+              <Download className="h-4 w-4 mr-1.5" /> Resume
             </Button>
           )}
           {candidate.linkedin && (

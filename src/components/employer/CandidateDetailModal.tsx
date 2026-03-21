@@ -255,17 +255,13 @@ export default function CandidateDetailModal({
                       Resume
                     </h3>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <a href={candidate.resume_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          View
-                        </a>
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => { import('@/utils/resumeUrl').then(m => m.openResume(candidate.resume_url!)); }}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <a href={candidate.resume_url} download>
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </a>
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => { import('@/utils/resumeUrl').then(m => m.downloadResume(candidate.resume_url!, candidate.name)); }}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
                       </Button>
                     </div>
                   </Card>
