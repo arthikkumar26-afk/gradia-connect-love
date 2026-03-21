@@ -446,6 +446,9 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
     
     setSavingPaper(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       // 1. Deactivate any existing Question Bank papers for this job
       await supabase
         .from('interview_question_papers')
@@ -453,7 +456,7 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
         .eq('job_id', jobId)
         .eq('stage_type', 'question_bank');
 
-      // 2. Create the question paper in DB
+      // 2. Create the question paper in DB with created_by so it shows in Test Papers
       const { data: paperData, error: paperError } = await supabase
         .from('interview_question_papers')
         .insert({
@@ -462,11 +465,15 @@ export const QuestionBankContent = ({ jobId, jobTitle }: QuestionBankProps) => {
           job_id: jobId,
           is_active: true,
           set_number: savedPapers.length + 1,
+          created_by: user.id,
         })
         .select()
         .single();
 
       if (paperError || !paperData) throw paperError || new Error('Failed to create paper');
+
+      // 3. Also disable AI questions for this job since manual paper is now active
+      await supabase.from('jobs').update({ use_ai_questions: false }).eq('id', jobId);
 
       // 3. Insert questions
       const questionsToInsert = allQs.map((q, idx) => ({
