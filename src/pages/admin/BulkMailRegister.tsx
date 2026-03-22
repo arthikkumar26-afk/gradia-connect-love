@@ -6,7 +6,7 @@ import {
   Home, Users, CreditCard, UserCheck, UserX, Briefcase, Building2,
   ClipboardList, UserCog, MessageSquare, Ticket, Bell, BarChart3,
   FileText, Settings, ShieldCheck, Upload, Mail, UserPlus, Eye,
-  Send, Loader2, X, FileUp, ChevronDown
+  Send, Loader2, X, FileUp, ChevronDown, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
