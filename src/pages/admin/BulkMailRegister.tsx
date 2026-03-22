@@ -237,11 +237,12 @@ const BulkMailRegister = () => {
 
     setSending(true);
     try {
+      const fullBody = emailBody.replace(/\n/g, "<br/>") + signupButtonHtml;
       const { data, error } = await supabase.functions.invoke("send-campaign-emails", {
         body: {
           recipients: emails,
           subject,
-          htmlBody: emailBody.replace(/\n/g, "<br/>"),
+          htmlBody: fullBody,
           senderName,
           campaignName: `Bulk Mail - ${subject}`,
         },
