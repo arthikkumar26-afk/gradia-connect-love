@@ -112,6 +112,7 @@ const UnsubscribedCandidates = lazy(() => import("./pages/admin/UnsubscribedCand
 const ExternalJobs = lazy(() => import("./pages/admin/ExternalJobs"));
 const EventAlerts = lazy(() => import("./pages/admin/EventAlerts"));
 const PopupAds = lazy(() => import("./pages/admin/PopupAds"));
+const BulkMailRegister = lazy(() => import("./pages/admin/BulkMailRegister"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
