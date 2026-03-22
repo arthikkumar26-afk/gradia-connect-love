@@ -77,6 +77,14 @@ const BulkMailRegister = () => {
   // Preview
   const [showPreview, setShowPreview] = useState(false);
 
+  // AI Generate
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+
+  // Signup link in email
+  const [includeSignupLink, setIncludeSignupLink] = useState(true);
+  const [signupRole, setSignupRole] = useState<string>("candidate");
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
