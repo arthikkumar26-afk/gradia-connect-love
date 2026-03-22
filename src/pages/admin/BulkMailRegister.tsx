@@ -483,6 +483,25 @@ const BulkMailRegister = () => {
                     </TabsList>
 
                     <TabsContent value="email" className="space-y-4 mt-4">
+                      {/* AI Generate */}
+                      <div className="p-4 border rounded-lg bg-muted/20 space-y-3">
+                        <Label className="flex items-center gap-2 font-medium">
+                          <Sparkles className="h-4 w-4 text-primary" /> Generate Email with AI
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={aiPrompt}
+                            onChange={(e) => setAiPrompt(e.target.value)}
+                            placeholder="e.g. Job vacancies for software engineers, invitation for campus recruitment drive..."
+                            className="flex-1"
+                          />
+                          <Button onClick={handleGenerateWithAI} disabled={generatingAI || !aiPrompt.trim()} variant="secondary">
+                            {generatingAI ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                            Generate
+                          </Button>
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label>Sender Name</Label>
@@ -505,6 +524,33 @@ const BulkMailRegister = () => {
                           placeholder="Write your email message here... (supports plain text, line breaks will be converted to HTML)"
                           rows={8}
                         />
+                      </div>
+
+                      {/* Include Signup Link Toggle */}
+                      <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/20">
+                        <div className="flex items-center gap-2 flex-1">
+                          <Switch
+                            checked={includeSignupLink}
+                            onCheckedChange={setIncludeSignupLink}
+                          />
+                          <Label className="cursor-pointer">Include Signup Button in Email</Label>
+                        </div>
+                        {includeSignupLink && (
+                          <div className="flex items-center gap-2">
+                            <Label className="text-sm whitespace-nowrap">Signup as:</Label>
+                            <Select value={signupRole} onValueChange={setSignupRole}>
+                              <SelectTrigger className="w-36">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="candidate">Candidate</SelectItem>
+                                <SelectItem value="employer">Employer</SelectItem>
+                                <SelectItem value="freelancer">Freelancer</SelectItem>
+                                <SelectItem value="edutech">EduTech</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-3">
                         <Button
