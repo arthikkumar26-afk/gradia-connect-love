@@ -280,6 +280,7 @@ const MainRoutes = () => (
         <Route path="/admin/external-jobs" element={<ExternalJobs />} />
         <Route path="/admin/event-alerts" element={<EventAlerts />} />
         <Route path="/admin/popup-ads" element={<PopupAds />} />
+        <Route path="/admin/bulk-mail-register" element={<BulkMailRegister />} />
         <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
         <Route path="/admin" element={<AdminDashboard />} />
 
