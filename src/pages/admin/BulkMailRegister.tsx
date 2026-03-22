@@ -340,6 +340,7 @@ const BulkMailRegister = () => {
       <div style="color:#222;font-size:14px;line-height:1.6;">
         ${emailBody.replace(/\n/g, "<br/>")}
       </div>
+      ${signupButtonHtml}
     </div>
   `;
 
