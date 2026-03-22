@@ -112,6 +112,7 @@ const UnsubscribedCandidates = lazy(() => import("./pages/admin/UnsubscribedCand
 const ExternalJobs = lazy(() => import("./pages/admin/ExternalJobs"));
 const EventAlerts = lazy(() => import("./pages/admin/EventAlerts"));
 const PopupAds = lazy(() => import("./pages/admin/PopupAds"));
+const BulkMailRegister = lazy(() => import("./pages/admin/BulkMailRegister"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -279,6 +280,7 @@ const MainRoutes = () => (
         <Route path="/admin/external-jobs" element={<ExternalJobs />} />
         <Route path="/admin/event-alerts" element={<EventAlerts />} />
         <Route path="/admin/popup-ads" element={<PopupAds />} />
+        <Route path="/admin/bulk-mail-register" element={<BulkMailRegister />} />
         <Route path="/admin/crm" element={<PlaceholderPage title="CRM Integrations" />} />
         <Route path="/admin" element={<AdminDashboard />} />
 

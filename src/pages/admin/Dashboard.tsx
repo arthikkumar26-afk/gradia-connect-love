@@ -222,6 +222,7 @@ const AdminDashboard = () => {
     { title: "Coupons", icon: Ticket, path: "/admin/coupons" },
     { title: "Popup Ads", icon: Bell, path: "/admin/popup-ads" },
     { title: "Event Alerts", icon: Bell, path: "/admin/event-alerts" },
+    { title: "Bulk Mail & Register", icon: FileText, path: "/admin/bulk-mail-register" },
     { title: "Reports", icon: BarChart3, path: "/admin/reports" },
     { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
     { title: "Settings", icon: Settings, path: "/admin/settings" },
