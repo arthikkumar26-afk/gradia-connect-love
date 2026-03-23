@@ -434,7 +434,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
           const isSkipped = review.status === 'skipped';
           const isExpanded = expandedStage === review.stageName;
-          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'HR Round'].includes(review.stageName);
+          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'HR Round', 'HR Feedback'].includes(review.stageName);
 
           return (
             <div
