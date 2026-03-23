@@ -11,6 +11,7 @@ interface ProcessStageRequest {
   action: 'advance' | 'reject' | 'evaluate';
   feedback?: string;
   score?: number;
+  expectedStageName?: string;
 }
 
 serve(async (req) => {
