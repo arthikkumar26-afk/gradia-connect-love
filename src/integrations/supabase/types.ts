@@ -822,6 +822,80 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_form_templates: {
+        Row: {
+          created_at: string
+          employer_id: string
+          id: string
+          is_default: boolean | null
+          rating_scale: number
+          stage_type: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employer_id: string
+          id?: string
+          is_default?: boolean | null
+          rating_scale?: number
+          stage_type?: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employer_id?: string
+          id?: string
+          is_default?: boolean | null
+          rating_scale?: number
+          stage_type?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feedback_template_fields: {
+        Row: {
+          created_at: string
+          display_order: number
+          field_label: string
+          field_options: Json | null
+          field_type: string
+          id: string
+          is_required: boolean | null
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          field_label: string
+          field_options?: Json | null
+          field_type?: string
+          id?: string
+          is_required?: boolean | null
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          field_label?: string
+          field_options?: Json | null
+          field_type?: string
+          id?: string
+          is_required?: boolean | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_template_fields_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       freelancer_portfolio_projects: {
         Row: {
           created_at: string
