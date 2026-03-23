@@ -75,6 +75,7 @@ export const StageResultsModal = ({
 
   const isSlotBookingStage = stageName.includes('Slot Booking');
   const isDemoFeedbackStage = stageName === 'Demo Feedback';
+  const isHrFeedbackStage = stageName === 'HR Feedback';
   const handleConfirmSlot = async () => {
     if (!slotBookingData || selectedSlotIndex === null || !slotBookingData.preferred_slots) return;
     const chosen = slotBookingData.preferred_slots[selectedSlotIndex];
@@ -120,8 +121,8 @@ export const StageResultsModal = ({
     const fetchData = async () => {
       if (!isOpen || !interviewCandidateId || !stageId) return;
       
-      // Demo Feedback doesn't need interview_events, it uses management_reviews
-      if (isDemoFeedbackStage) {
+      // Demo Feedback and HR Feedback don't need interview_events, they use management_reviews
+      if (isDemoFeedbackStage || isHrFeedbackStage) {
         setLoading(false);
         return;
       }
@@ -321,8 +322,9 @@ export const StageResultsModal = ({
                   The candidate may not have completed this stage yet.
                 </p>
               </div>
-            ) : isDemoFeedbackStage ? (
+            ) : isDemoFeedbackStage || isHrFeedbackStage ? (
               <div className="space-y-4">
+                <h3 className="text-sm font-semibold">{isHrFeedbackStage ? 'HR Round' : 'Demo Round'} Feedback</h3>
                 <DemoFeedbackResults interviewCandidateId={interviewCandidateId} />
               </div>
             ) : isSlotBookingStage ? (

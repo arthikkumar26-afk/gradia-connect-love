@@ -93,6 +93,7 @@ const stageIcons: Record<string, React.ElementType> = {
   'Demo Feedback': MessageSquare,
   'HR Round Slot Booking': Calendar,
   'HR Round': UserCheck,
+  'HR Feedback': MessageSquare,
   'Final Review': FileCheck,
   'Offer Stage': FileText,
 };
@@ -107,6 +108,7 @@ const stageColors: Record<string, string> = {
   'Demo Feedback': 'bg-amber-500',
   'HR Round Slot Booking': 'bg-teal-500',
   'HR Round': 'bg-green-500',
+  'HR Feedback': 'bg-blue-400',
   'Final Review': 'bg-cyan-500',
   'Offer Stage': 'bg-emerald-500',
 };
@@ -448,6 +450,28 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
+      } else if (step.title === 'HR Round') {
+        // HR Round → HR Feedback: auto-send feedback request to observers
+        try {
+          await supabase.functions.invoke('send-hr-feedback-email', {
+            body: { interviewCandidateId }
+          });
+          toast.success(`✓ HR Round cleared! HR Feedback request sent to observers`, {
+            description: `Observers will receive an email with a feedback link`,
+            duration: 5000,
+          });
+        } catch (feedbackError) {
+          console.error('Error sending HR feedback emails:', feedbackError);
+          toast.success(`✓ HR Round cleared! Moved to HR Feedback`, {
+            description: 'Note: Feedback email failed to send. You can resend manually.',
+            duration: 5000,
+          });
+        }
+      } else if (step.title === 'HR Feedback') {
+        // HR Feedback → Final Review
+        toast.success(`✓ HR Feedback cleared! Moved to Final Review`, {
+          duration: 5000,
+        });
       } else {
         // Show clear success message with current stage cleared and next stage info
         const clearedMessage = `✓ ${step.title} cleared!`;
@@ -1421,6 +1445,28 @@ const ClickableStagesList = ({
         } catch (emailErr) {
           console.error('Error sending HR slot confirmed email:', emailErr);
         }
+
+        // Auto-advance to HR Feedback after 10 seconds (simulating HR round completion)
+        setTimeout(async () => {
+          try {
+            toast.info('HR Round finishing... advancing to HR Feedback');
+            await supabase.functions.invoke('process-interview-stage', {
+              body: {
+                interviewCandidateId,
+                action: 'advance',
+                feedback: 'HR Round completed, advancing to HR Feedback',
+              }
+            });
+
+            // Send HR feedback email to observers
+            await supabase.functions.invoke('send-hr-feedback-email', {
+              body: { interviewCandidateId }
+            });
+            toast.success('HR Feedback request sent to observers!');
+          } catch (feedbackErr) {
+            console.error('Error auto-advancing to HR Feedback:', feedbackErr);
+          }
+        }, 10000);
       }
     } catch (err) {
       console.error('Error confirming HR slot:', err);
