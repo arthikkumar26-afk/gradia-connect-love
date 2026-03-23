@@ -1864,7 +1864,7 @@ const ClickableStagesList = ({
 
                 {/* HR Feedback - Show feedback results */}
                 {step.title === 'HR Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="hr" />
+                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="hr" onAllSubmitted={onRefresh} />
                 )}
 
                 {/* HR Round Slot Booking Details */}
