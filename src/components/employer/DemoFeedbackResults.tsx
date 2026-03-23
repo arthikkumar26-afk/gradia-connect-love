@@ -21,7 +21,7 @@ interface FeedbackReview {
   submitted_at: string | null;
 }
 
-export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandidateId: string }) => {
+export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo' }: { interviewCandidateId: string; feedbackType?: 'demo' | 'hr' }) => {
   const [reviews, setReviews] = useState<FeedbackReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isResending, setIsResending] = useState(false);
