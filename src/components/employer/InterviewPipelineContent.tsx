@@ -2891,6 +2891,8 @@ const CandidateCard = ({
   isSelected?: boolean;
   onToggleSelect?: () => void;
 }) => {
+  const visibleInterviewSteps = getVisibleInterviewSteps(candidate.interviewSteps);
+
   return (
     <Card 
       className={`mb-3 bg-card border transition-all cursor-pointer group ${
