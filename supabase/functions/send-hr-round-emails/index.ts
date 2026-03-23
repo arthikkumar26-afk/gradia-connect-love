@@ -28,8 +28,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId, observerEmail, meetLink, meetType }: HRRoundEmailRequest = await req.json();
-    console.log('Sending HR round emails:', { interviewCandidateId, observerEmail, meetType });
+    const { interviewCandidateId, observerEmail, meetLink, meetType, confirmedDate, confirmedTime }: HRRoundEmailRequest = await req.json();
+    console.log('Sending HR round emails:', { interviewCandidateId, observerEmail, meetType, meetLink });
 
     // Get candidate and job details
     const { data: interviewCandidate, error: candidateError } = await supabase
