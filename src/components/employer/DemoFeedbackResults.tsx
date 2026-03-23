@@ -35,8 +35,9 @@ export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo
         const [reviewsResult, recordingResult] = await Promise.all([
           supabase
             .from('management_reviews')
-            .select('id, reviewer_email, reviewer_name, status, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, strengths, areas_for_improvement, submitted_at')
+            .select('id, reviewer_email, reviewer_name, status, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, strengths, areas_for_improvement, submitted_at, feedback_type')
             .eq('interview_candidate_id', interviewCandidateId)
+            .eq('feedback_type', feedbackType)
             .order('created_at', { ascending: true }),
           supabase
             .from('interview_events')
