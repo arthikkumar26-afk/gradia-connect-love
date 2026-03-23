@@ -121,8 +121,8 @@ export const StageResultsModal = ({
     const fetchData = async () => {
       if (!isOpen || !interviewCandidateId || !stageId) return;
       
-      // Demo Feedback doesn't need interview_events, it uses management_reviews
-      if (isDemoFeedbackStage) {
+      // Demo Feedback and HR Feedback don't need interview_events, they use management_reviews
+      if (isDemoFeedbackStage || isHrFeedbackStage) {
         setLoading(false);
         return;
       }
