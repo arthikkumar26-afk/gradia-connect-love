@@ -1000,6 +1000,9 @@ const ClickableStagesList = ({
   const [isSavingHrObserver, setIsSavingHrObserver] = useState(false);
   const [selectedHrPreferredSlot, setSelectedHrPreferredSlot] = useState<number | null>(null);
   const [isConfirmingHrSlot, setIsConfirmingHrSlot] = useState(false);
+  // Demo meeting options state
+  const [demoMeetType, setDemoMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>('google_meet');
+  const [demoMeetLink, setDemoMeetLink] = useState('');
   // Fetch slot booking details for this candidate
   useEffect(() => {
     const fetchSlotBooking = async () => {
@@ -1086,21 +1089,30 @@ const ClickableStagesList = ({
     const chosen = slotBooking.preferred_slots[selectedPreferredSlot];
     if (!chosen) return;
 
+    // Validate meeting link for Google Meet / Zoom
+    if ((demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && !demoMeetLink.trim()) {
+      toast.error('Please enter a meeting link before confirming');
+      return;
+    }
+
     setIsConfirmingSlot(true);
     try {
+      // Save confirmed slot + meeting link + type
       const { error } = await supabase
         .from('slot_bookings')
         .update({ 
           booking_date: chosen.date, 
           booking_time: chosen.time, 
           status: 'confirmed',
+          demo_meet_link: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : null,
+          demo_meet_type: demoMeetType,
           updated_at: new Date().toISOString() 
         })
         .eq('id', slotBooking.id);
 
       if (error) throw error;
 
-      setSlotBooking({ ...slotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
+      setSlotBooking({ ...slotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType });
 
       // Auto-advance to Demo Round
       try {
@@ -1108,26 +1120,52 @@ const ClickableStagesList = ({
           body: {
             interviewCandidateId,
             action: 'advance',
-            feedback: `Employer confirmed demo slot: ${chosen.date} at ${chosen.time}`,
+            feedback: `Employer confirmed demo slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
           }
         });
       } catch (advanceErr) {
         console.error('Error auto-advancing:', advanceErr);
       }
 
-      // Send demo round emails
+      // Send demo round emails with meeting link to candidate AND observers
       try {
         await supabase.functions.invoke('send-demo-round-emails', {
-          body: { interviewCandidateId }
+          body: { 
+            interviewCandidateId,
+            observerEmail: observerEmails.length > 0 ? observerEmails.join(',') : undefined,
+            meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
+            meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+          }
         });
       } catch (emailErr) {
         console.error('Error sending demo emails:', emailErr);
       }
 
-      toast.success(`Demo slot confirmed! Moved to Demo Round`, {
-        description: `Scheduled for ${new Date(chosen.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })} at ${chosen.time}`,
+      toast.success(`Demo slot confirmed! Invitations sent`, {
+        description: `Meeting link sent to candidate${observerEmails.length > 0 ? ` and ${observerEmails.length} observer(s)` : ''}. Feedback email will follow shortly.`,
         duration: 5000,
       });
+
+      // Auto-advance to Demo Feedback and send feedback email after a short delay
+      setTimeout(async () => {
+        try {
+          // Advance to Demo Feedback
+          await supabase.functions.invoke('process-interview-stage', {
+            body: {
+              interviewCandidateId,
+              action: 'advance',
+              feedback: 'Auto-advanced to Demo Feedback after demo round invitations sent',
+            }
+          });
+          // Send demo feedback email to observers
+          await supabase.functions.invoke('send-demo-feedback-email', {
+            body: { interviewCandidateId }
+          });
+          console.log('Demo feedback email sent to observers');
+        } catch (feedbackErr) {
+          console.error('Error sending feedback email:', feedbackErr);
+        }
+      }, 10000); // 10 seconds delay before sending feedback email
 
       // Trigger pipeline refresh
       window.location.reload();
@@ -1572,11 +1610,69 @@ const ClickableStagesList = ({
                           );
                         })}
                         
+                        {/* Meeting Type Selection */}
+                        <div className="mt-2 pt-2 border-t border-purple-200 space-y-1.5">
+                          <label className="text-[10px] font-medium text-purple-700 flex items-center gap-1">
+                            <Video className="h-3 w-3" />
+                            Meeting Type
+                          </label>
+                          <div className="grid grid-cols-3 gap-1">
+                            <Button
+                              size="sm"
+                              variant={demoMeetType === 'ai_video' ? 'default' : 'outline'}
+                              className={`h-6 text-[9px] px-1 ${
+                                demoMeetType === 'ai_video'
+                                  ? 'bg-pink-600 hover:bg-pink-700 text-white'
+                                  : 'border-pink-300 text-pink-600 hover:bg-pink-50'
+                              }`}
+                              onClick={() => setDemoMeetType('ai_video')}
+                            >
+                              AI Video
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={demoMeetType === 'google_meet' ? 'default' : 'outline'}
+                              className={`h-6 text-[9px] px-1 ${
+                                demoMeetType === 'google_meet'
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'border-blue-300 text-blue-600 hover:bg-blue-50'
+                              }`}
+                              onClick={() => setDemoMeetType('google_meet')}
+                            >
+                              Google Meet
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={demoMeetType === 'zoom_meet' ? 'default' : 'outline'}
+                              className={`h-6 text-[9px] px-1 ${
+                                demoMeetType === 'zoom_meet'
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                  : 'border-purple-300 text-purple-600 hover:bg-purple-50'
+                              }`}
+                              onClick={() => setDemoMeetType('zoom_meet')}
+                            >
+                              Zoom
+                            </Button>
+                          </div>
+                          {(demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && (
+                            <Input
+                              type="url"
+                              placeholder={demoMeetType === 'google_meet' ? 'Paste Google Meet link' : 'Paste Zoom link'}
+                              value={demoMeetLink}
+                              onChange={(e) => setDemoMeetLink(e.target.value)}
+                              className="h-6 text-[10px] border-purple-200"
+                            />
+                          )}
+                          {demoMeetType === 'ai_video' && (
+                            <p className="text-[9px] text-pink-600">Candidate will record demo via AI video platform</p>
+                          )}
+                        </div>
+
                         <Button
                           size="sm"
                           className="w-full h-7 text-[10px] bg-purple-600 hover:bg-purple-700 mt-1"
                           onClick={handleConfirmPreferredSlot}
-                          disabled={selectedPreferredSlot === null || isConfirmingSlot}
+                          disabled={selectedPreferredSlot === null || isConfirmingSlot || ((demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && !demoMeetLink.trim())}
                         >
                           {isConfirmingSlot ? (
                             <>
@@ -1586,7 +1682,7 @@ const ClickableStagesList = ({
                           ) : (
                             <>
                               <Check className="h-3 w-3 mr-1" />
-                              Confirm Timing & Send Link
+                              Confirm & Send Invitations
                             </>
                           )}
                         </Button>
