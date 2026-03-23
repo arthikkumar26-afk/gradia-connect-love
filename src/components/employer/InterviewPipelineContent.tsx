@@ -1861,12 +1861,22 @@ const ClickableStagesList = ({
 
                 {/* Demo Feedback - Show feedback results */}
                 {step.title === 'Demo Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="demo" onAllSubmitted={onRefresh} />
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="demo"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
                 )}
 
                 {/* HR Feedback - Show feedback results */}
                 {step.title === 'HR Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="hr" onAllSubmitted={onRefresh} />
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="hr"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
                 )}
 
                 {/* HR Round Slot Booking Details */}
