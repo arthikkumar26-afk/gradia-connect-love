@@ -2073,8 +2073,8 @@ const CandidateProfileInline = ({
       if (pipelineError) throw pipelineError;
 
       toast.success(`Interview started! Full pipeline triggered for ${candidate.name}`, {
-        description: `Instruction email → CV Results → Slot Booking emails will be sent automatically`,
-        duration: 6000,
+        description: `All stage emails will be sent automatically: Instruction → CV Results → Written Test → Demo → HR → Final Review → Offer`,
+        duration: 8000,
       });
 
       // Refresh data to show updated stages
