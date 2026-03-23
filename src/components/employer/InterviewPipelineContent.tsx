@@ -1089,21 +1089,30 @@ const ClickableStagesList = ({
     const chosen = slotBooking.preferred_slots[selectedPreferredSlot];
     if (!chosen) return;
 
+    // Validate meeting link for Google Meet / Zoom
+    if ((demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && !demoMeetLink.trim()) {
+      toast.error('Please enter a meeting link before confirming');
+      return;
+    }
+
     setIsConfirmingSlot(true);
     try {
+      // Save confirmed slot + meeting link + type
       const { error } = await supabase
         .from('slot_bookings')
         .update({ 
           booking_date: chosen.date, 
           booking_time: chosen.time, 
           status: 'confirmed',
+          demo_meet_link: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : null,
+          demo_meet_type: demoMeetType,
           updated_at: new Date().toISOString() 
         })
         .eq('id', slotBooking.id);
 
       if (error) throw error;
 
-      setSlotBooking({ ...slotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
+      setSlotBooking({ ...slotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType });
 
       // Auto-advance to Demo Round
       try {
@@ -1111,26 +1120,52 @@ const ClickableStagesList = ({
           body: {
             interviewCandidateId,
             action: 'advance',
-            feedback: `Employer confirmed demo slot: ${chosen.date} at ${chosen.time}`,
+            feedback: `Employer confirmed demo slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
           }
         });
       } catch (advanceErr) {
         console.error('Error auto-advancing:', advanceErr);
       }
 
-      // Send demo round emails
+      // Send demo round emails with meeting link to candidate AND observers
       try {
         await supabase.functions.invoke('send-demo-round-emails', {
-          body: { interviewCandidateId }
+          body: { 
+            interviewCandidateId,
+            observerEmail: observerEmails.length > 0 ? observerEmails.join(',') : undefined,
+            meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
+            meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+          }
         });
       } catch (emailErr) {
         console.error('Error sending demo emails:', emailErr);
       }
 
-      toast.success(`Demo slot confirmed! Moved to Demo Round`, {
-        description: `Scheduled for ${new Date(chosen.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })} at ${chosen.time}`,
+      toast.success(`Demo slot confirmed! Invitations sent`, {
+        description: `Meeting link sent to candidate${observerEmails.length > 0 ? ` and ${observerEmails.length} observer(s)` : ''}. Feedback email will follow shortly.`,
         duration: 5000,
       });
+
+      // Auto-advance to Demo Feedback and send feedback email after a short delay
+      setTimeout(async () => {
+        try {
+          // Advance to Demo Feedback
+          await supabase.functions.invoke('process-interview-stage', {
+            body: {
+              interviewCandidateId,
+              action: 'advance',
+              feedback: 'Auto-advanced to Demo Feedback after demo round invitations sent',
+            }
+          });
+          // Send demo feedback email to observers
+          await supabase.functions.invoke('send-demo-feedback-email', {
+            body: { interviewCandidateId }
+          });
+          console.log('Demo feedback email sent to observers');
+        } catch (feedbackErr) {
+          console.error('Error sending feedback email:', feedbackErr);
+        }
+      }, 10000); // 10 seconds delay before sending feedback email
 
       // Trigger pipeline refresh
       window.location.reload();
