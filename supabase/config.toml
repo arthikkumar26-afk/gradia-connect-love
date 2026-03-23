@@ -113,3 +113,12 @@ verify_jwt = false
 
 [functions.parse-requirements]
 verify_jwt = true
+
+[functions.send-demo-round-emails]
+verify_jwt = false
+
+[functions.send-hr-round-emails]
+verify_jwt = false
+
+[functions.send-demo-feedback-email]
+verify_jwt = false
