@@ -450,6 +450,28 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
+      } else if (step.title === 'HR Round') {
+        // HR Round → HR Feedback: auto-send feedback request to observers
+        try {
+          await supabase.functions.invoke('send-hr-feedback-email', {
+            body: { interviewCandidateId }
+          });
+          toast.success(`✓ HR Round cleared! HR Feedback request sent to observers`, {
+            description: `Observers will receive an email with a feedback link`,
+            duration: 5000,
+          });
+        } catch (feedbackError) {
+          console.error('Error sending HR feedback emails:', feedbackError);
+          toast.success(`✓ HR Round cleared! Moved to HR Feedback`, {
+            description: 'Note: Feedback email failed to send. You can resend manually.',
+            duration: 5000,
+          });
+        }
+      } else if (step.title === 'HR Feedback') {
+        // HR Feedback → Final Review
+        toast.success(`✓ HR Feedback cleared! Moved to Final Review`, {
+          duration: 5000,
+        });
       } else {
         // Show clear success message with current stage cleared and next stage info
         const clearedMessage = `✓ ${step.title} cleared!`;

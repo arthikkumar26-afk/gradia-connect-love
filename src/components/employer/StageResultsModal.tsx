@@ -75,6 +75,7 @@ export const StageResultsModal = ({
 
   const isSlotBookingStage = stageName.includes('Slot Booking');
   const isDemoFeedbackStage = stageName === 'Demo Feedback';
+  const isHrFeedbackStage = stageName === 'HR Feedback';
   const handleConfirmSlot = async () => {
     if (!slotBookingData || selectedSlotIndex === null || !slotBookingData.preferred_slots) return;
     const chosen = slotBookingData.preferred_slots[selectedSlotIndex];
