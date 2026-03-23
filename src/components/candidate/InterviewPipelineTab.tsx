@@ -613,7 +613,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       }
 
       case 'Demo Feedback': {
-        const submittedReviews = reviews.filter(r => r.status === 'submitted');
+        const submittedReviews = reviews.filter(r => r.status === 'submitted' && (r.feedback_type === 'demo' || !r.feedback_type));
         if (submittedReviews.length === 0) {
           return (
             <p className="text-sm text-muted-foreground">Feedback collected from observers.</p>
