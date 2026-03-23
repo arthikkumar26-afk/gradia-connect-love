@@ -299,7 +299,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       // Fetch management reviews (demo feedback)
       const { data: reviewsData } = await supabase
         .from('management_reviews')
-        .select('id, interview_candidate_id, reviewer_name, overall_rating, feedback_text, recommendation, strengths, areas_for_improvement, teaching_skills_rating, communication_rating, subject_knowledge_rating, status, submitted_at')
+        .select('id, interview_candidate_id, reviewer_name, overall_rating, feedback_text, recommendation, strengths, areas_for_improvement, teaching_skills_rating, communication_rating, subject_knowledge_rating, status, submitted_at, feedback_type')
         .eq('interview_candidate_id', interview.id)
         .eq('status', 'submitted');
       setReviews(reviewsData || []);
