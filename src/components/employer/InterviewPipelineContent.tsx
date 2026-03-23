@@ -978,7 +978,8 @@ const ClickableStagesList = ({
   jobTitle,
   onUpdateStep,
   getStepIcon,
-  getStatusBadge
+  getStatusBadge,
+  onRefresh
 }: {
   interviewSteps: InterviewStep[];
   interviewCandidateId: string;
@@ -988,6 +989,7 @@ const ClickableStagesList = ({
   onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   getStepIcon: (step: InterviewStep) => React.ReactNode;
   getStatusBadge: (step: InterviewStep) => React.ReactNode;
+  onRefresh?: () => void;
 }) => {
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
@@ -1859,12 +1861,12 @@ const ClickableStagesList = ({
 
                 {/* Demo Feedback - Show feedback results */}
                 {step.title === 'Demo Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="demo" />
+                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="demo" onAllSubmitted={onRefresh} />
                 )}
 
                 {/* HR Feedback - Show feedback results */}
                 {step.title === 'HR Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="hr" />
+                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="hr" onAllSubmitted={onRefresh} />
                 )}
 
                 {/* HR Round Slot Booking Details */}
@@ -2805,6 +2807,7 @@ const CandidateProfileInline = ({
                     onUpdateStep={onUpdateStep}
                     getStepIcon={getStepIcon}
                     getStatusBadge={getStatusBadge}
+                    onRefresh={onRefresh}
                   />
                 </CardContent>
               </Card>

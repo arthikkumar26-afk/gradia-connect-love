@@ -21,7 +21,7 @@ interface FeedbackReview {
   submitted_at: string | null;
 }
 
-export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo' }: { interviewCandidateId: string; feedbackType?: 'demo' | 'hr' }) => {
+export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo', onAllSubmitted }: { interviewCandidateId: string; feedbackType?: 'demo' | 'hr'; onAllSubmitted?: () => void }) => {
   const [reviews, setReviews] = useState<FeedbackReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isResending, setIsResending] = useState(false);
@@ -105,7 +105,54 @@ export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo
     };
 
     fetchData();
-  }, [interviewCandidateId]);
+
+    // Realtime subscription for review updates
+    const channel = supabase
+      .channel(`feedback-reviews-${interviewCandidateId}-${feedbackType}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'management_reviews',
+          filter: `interview_candidate_id=eq.${interviewCandidateId}`,
+        },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [interviewCandidateId, feedbackType]);
+
+  // Auto-advance when all reviews are submitted
+  const [hasAutoAdvanced, setHasAutoAdvanced] = useState(false);
+  useEffect(() => {
+    if (hasAutoAdvanced || reviews.length === 0) return;
+    const allSubmitted = reviews.every(r => r.status === 'submitted');
+    if (allSubmitted) {
+      setHasAutoAdvanced(true);
+      const advancePipeline = async () => {
+        try {
+          await supabase.functions.invoke('process-interview-stage', {
+            body: {
+              interviewCandidateId,
+              action: 'advance',
+              feedback: `All ${feedbackType} feedback submitted, auto-advancing`,
+            }
+          });
+          toast.success(`All ${feedbackType === 'hr' ? 'HR' : 'Demo'} feedback received! Stage completed.`);
+          onAllSubmitted?.();
+        } catch (err) {
+          console.error('Error auto-advancing after feedback:', err);
+        }
+      };
+      advancePipeline();
+    }
+  }, [reviews, hasAutoAdvanced, interviewCandidateId, feedbackType, onAllSubmitted]);
 
   const handleResendFeedback = async () => {
     setIsResending(true);
