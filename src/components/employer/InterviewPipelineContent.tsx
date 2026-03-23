@@ -1859,7 +1859,7 @@ const ClickableStagesList = ({
 
                 {/* Demo Feedback - Show feedback results */}
                 {step.title === 'Demo Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="demo" />
+                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="demo" onAllSubmitted={onRefresh} />
                 )}
 
                 {/* HR Feedback - Show feedback results */}
