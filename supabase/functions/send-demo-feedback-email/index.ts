@@ -101,7 +101,8 @@ serve(async (req) => {
           feedback_token: feedbackToken,
           feedback_token_expires_at: expiresAt.toISOString(),
           status: 'pending',
-          sent_at: new Date().toISOString()
+          sent_at: new Date().toISOString(),
+          feedback_type: 'demo'
         });
 
       if (reviewError) {
