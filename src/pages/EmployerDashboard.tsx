@@ -55,6 +55,8 @@ import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
 import { InterviewPipelineContent } from "@/components/employer/InterviewPipelineContent";
 import { EmailTemplatesEditor } from "@/components/employer/EmailTemplatesEditor";
+import { FeedbackTemplatesContent } from "@/components/employer/FeedbackTemplatesContent";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { RegistrationContent } from "@/components/employer/RegistrationContent";
 import { SubscriptionsContent } from "@/components/employer/SubscriptionsContent";
