@@ -85,6 +85,7 @@ interface ManagementReview {
   subject_knowledge_rating: number | null;
   status: string | null;
   submitted_at: string | null;
+  feedback_type: string | null;
 }
 
 interface InterviewCandidate {
