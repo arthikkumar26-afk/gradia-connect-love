@@ -46,6 +46,8 @@ interface SlotBooking {
   booking_time: string;
   booking_type: string;
   status: string;
+  demo_meet_link: string | null;
+  demo_meet_type: string | null;
 }
 
 interface InterviewEvent {
