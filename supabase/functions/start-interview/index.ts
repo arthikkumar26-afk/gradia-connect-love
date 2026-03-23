@@ -311,6 +311,19 @@ serve(async (req) => {
     }
 
     // Get stage-specific config
+    const normalizedStageName = stageName.toLowerCase();
+    const isDemoRoundStage = type === 'demo' || stageName === 'Demo Video' || normalizedStageName.includes('demo round');
+    const isHrRoundStage = type === 'hr' || normalizedStageName.includes('hr round');
+    const assessmentStageKeywords = [
+      'written test',
+      'technical assessment',
+      'resume screening',
+      'ai phone interview',
+      'mcq',
+      'coding',
+      'assessment',
+    ];
+    const canUseQuestionPapers = !isDemoRoundStage && !isHrRoundStage && assessmentStageKeywords.some((keyword) => normalizedStageName.includes(keyword));
     const stageConfig = stageConfigs[stageName] || stageConfigs['Technical Assessment'];
 
     // Get candidate's segment, category, class_level, and designation from slot booking (primary) or profile (fallback)
@@ -369,9 +382,8 @@ serve(async (req) => {
       });
     }
 
-    // Handle Demo Video stage - no questions needed
-    if (stageName === 'Demo Video') {
-      // Create response record for video submission if not exists
+    // Handle Demo stages as video/demo submission rounds - no written test questions
+    if (isDemoRoundStage) {
       let responseRecord = existingResponse;
       if (!responseRecord) {
         const { data: newResponse, error: insertError } = await supabase
@@ -388,7 +400,6 @@ serve(async (req) => {
         responseRecord = newResponse;
       }
 
-      // Update interview event status
       await supabase
         .from('interview_events')
         .update({ status: 'in_progress' })
@@ -406,14 +417,14 @@ serve(async (req) => {
         totalQuestions: 0,
         isVideoStage: true,
         videoInstructions: {
-          title: 'Teaching Demo Video',
-          description: 'Record a 5-10 minute teaching demonstration video',
+          title: stageName,
+          description: 'Record a 5-10 minute teaching or subject demonstration video',
           guidelines: [
             'Choose a topic from your subject area',
-            'Demonstrate your teaching methodology',
-            'Show engagement techniques you use in the classroom',
+            'Demonstrate your teaching methodology clearly',
+            'Show engagement techniques you use in the classroom or role',
             'Speak clearly and maintain good audio quality',
-            'Ensure good lighting for visibility'
+            'Ensure good lighting and camera visibility'
           ]
         }
       }), {
@@ -443,6 +454,9 @@ serve(async (req) => {
     // Check if the job has AI question generation enabled
     const useAiQuestions = job.use_ai_questions === true;
     console.log(`Job use_ai_questions setting: ${useAiQuestions}`);
+    if (!canUseQuestionPapers) {
+      console.log(`Skipping manual question paper lookup for stage: ${stageName}`);
+    }
 
     // Helper to map letter answers (A, B, C, D) to array indices
     const letterToIndex = (letter: string): number => {
@@ -485,7 +499,7 @@ serve(async (req) => {
     };
 
     // If AI questions is enabled, skip manual paper lookup entirely
-    if (!useAiQuestions) {
+    if (canUseQuestionPapers && !useAiQuestions) {
       // PRIORITY 1: Try to fetch question papers linked to THIS specific job
       // Check both direct job_id assignment AND test_paper_assignments junction table
       console.log(`Searching for question papers linked to job_id: ${job.id}`);
@@ -536,7 +550,7 @@ serve(async (req) => {
     }
 
     // PRIORITY 2: Fall back to segment/category/designation matching (only if AI mode is off)
-    if (!useAiQuestions && !usingAdminQuestions && (candidateSegment || candidateCategory || candidateDesignation || candidateClassLevel)) {
+    if (canUseQuestionPapers && !useAiQuestions && !usingAdminQuestions && (candidateSegment || candidateCategory || candidateDesignation || candidateClassLevel)) {
       console.log('No job-specific papers found. Searching by candidate profile match...');
       
       let query = supabase
