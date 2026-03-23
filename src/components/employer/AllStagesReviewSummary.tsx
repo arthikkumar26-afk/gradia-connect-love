@@ -46,6 +46,7 @@ const stageIcons: Record<string, React.ElementType> = {
   'Demo Feedback': MessageSquare,
   'HR Round Slot Booking': Clock,
   'HR Round': UserCheck,
+  'HR Feedback': MessageSquare,
   'Final Review': FileCheck,
 };
 
@@ -112,10 +113,10 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           responses = respData || [];
         }
 
-        // Fetch management reviews (for Demo Feedback)
+        // Fetch management reviews (for Demo Feedback and HR Feedback)
         const { data: mgmtReviews } = await supabase
           .from('management_reviews')
-          .select('reviewer_name, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, status')
+          .select('reviewer_name, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, status, feedback_type')
           .eq('interview_candidate_id', interviewCandidateId);
 
         // Determine the candidate's current stage order
@@ -159,7 +160,24 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             }
 
             if (stage.name === 'Demo Feedback') {
-              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted');
+              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted' && (r.feedback_type === 'demo' || !r.feedback_type));
+              if (submittedReviews.length > 0) {
+                review.reviews = submittedReviews.map(r => ({
+                  reviewerName: r.reviewer_name,
+                  overallRating: r.overall_rating,
+                  teachingRating: r.teaching_skills_rating,
+                  communicationRating: r.communication_rating,
+                  knowledgeRating: r.subject_knowledge_rating,
+                  recommendation: r.recommendation,
+                  feedbackText: r.feedback_text,
+                }));
+                const avgRating = submittedReviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / submittedReviews.length;
+                review.score = Math.round((avgRating / 5) * 100);
+              }
+            }
+
+            if (stage.name === 'HR Feedback') {
+              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted' && r.feedback_type === 'hr');
               if (submittedReviews.length > 0) {
                 review.reviews = submittedReviews.map(r => ({
                   reviewerName: r.reviewer_name,
@@ -280,8 +298,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             y += 5;
           }
 
-          // Demo Feedback Reviews
-          if (review.stageName === 'Demo Feedback' && review.reviews) {
+          // Demo/HR Feedback Reviews
+          if ((review.stageName === 'Demo Feedback' || review.stageName === 'HR Feedback') && review.reviews) {
             for (const r of review.reviews) {
               if (y > 260) { doc.addPage(); y = 20; }
               doc.setFont('helvetica', 'bold');
@@ -304,7 +322,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           }
 
           // General notes/feedback
-          if (!['CV/Resume', 'Written Test', 'Demo Feedback'].includes(review.stageName) && review.notes) {
+          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
             const noteLines = doc.splitTextToSize(review.notes, pageWidth - 34);
             doc.text(noteLines, 20, y);
             y += noteLines.length * 4 + 2;
@@ -416,7 +434,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
           const isSkipped = review.status === 'skipped';
           const isExpanded = expandedStage === review.stageName;
-          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'HR Round'].includes(review.stageName);
+          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'HR Round', 'HR Feedback'].includes(review.stageName);
 
           return (
             <div
@@ -522,8 +540,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                     </div>
                   )}
 
-                  {/* Demo Feedback - Observer Reviews */}
-                  {review.stageName === 'Demo Feedback' && review.reviews && review.reviews.length > 0 && (
+                  {/* Demo/HR Feedback - Observer Reviews */}
+                  {(review.stageName === 'Demo Feedback' || review.stageName === 'HR Feedback') && review.reviews && review.reviews.length > 0 && (
                     <div className="space-y-2">
                       {review.reviews.map((r, i) => (
                         <div key={i} className="bg-background rounded-md p-2 border space-y-1.5">
@@ -567,7 +585,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   )}
 
                   {/* HR Round & other stages - AI Feedback / Notes */}
-                  {!['CV/Resume', 'Written Test', 'Demo Feedback'].includes(review.stageName) && (
+                  {!['CV/Resume', 'Written Test', 'Demo Feedback', 'HR Feedback'].includes(review.stageName) && (
                     <div className="space-y-1.5">
                       {review.aiFeedback && typeof review.aiFeedback === 'object' && review.aiFeedback.feedback && (
                         <p className="text-xs text-muted-foreground">{review.aiFeedback.feedback}</p>
