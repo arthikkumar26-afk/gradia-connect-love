@@ -60,10 +60,12 @@ serve(async (req) => {
 
     const slotBooking = slotBookings?.find(b => b.subject?.toLowerCase().includes('hr')) || slotBookings?.[0] || null;
 
-    const bookingDate = slotBooking?.booking_date 
-      ? new Date(slotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    const rawDate = confirmedDate || slotBooking?.booking_date;
+    const bookingDate = rawDate
+      ? new Date(rawDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       : 'To be confirmed';
-    const bookingTime = slotBooking?.booking_time || 'To be confirmed';
+    const bookingTime = confirmedTime || slotBooking?.booking_time || 'To be confirmed';
+    const meetTypeLabel = meetType === 'zoom_meet' ? 'Zoom Meeting' : 'Google Meet';
 
     const baseUrl = "https://gradia-link-shine.lovable.app";
 
