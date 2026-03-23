@@ -710,7 +710,20 @@ const EmployerDashboard = () => {
             {activeMenu === "talent-pool" && <TalentPoolContent />}
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
-            {activeMenu === "interview-pipeline" && <InterviewPipelineContent />}
+            {activeMenu === "interview-pipeline" && (
+              <Tabs defaultValue="pipeline" className="w-full">
+                <TabsList className="mb-4">
+                  <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+                  <TabsTrigger value="feedback-templates">Feedback Templates</TabsTrigger>
+                </TabsList>
+                <TabsContent value="pipeline">
+                  <InterviewPipelineContent />
+                </TabsContent>
+                <TabsContent value="feedback-templates">
+                  <FeedbackTemplatesContent />
+                </TabsContent>
+              </Tabs>
+            )}
             {activeMenu === "mock-interview-pipeline" && <EmployerInterviewPipelineTracker />}
             {activeMenu === "live-interviews" && <LiveInterviewMonitor />}
             
