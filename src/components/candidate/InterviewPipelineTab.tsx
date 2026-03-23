@@ -136,6 +136,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           filter: `candidate_id=eq.${candidateId}`,
         },
         () => {
+          console.log('Realtime: interview_candidates updated');
           fetchData();
         }
       )
@@ -152,14 +153,58 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           table: 'interview_events',
         },
         () => {
+          console.log('Realtime: interview_events updated');
           fetchData();
         }
       )
       .subscribe();
 
+    // Realtime: listen for management_reviews (feedback submissions)
+    const reviewsChannel = supabase
+      .channel(`pipeline-reviews-${candidateId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'management_reviews',
+        },
+        () => {
+          console.log('Realtime: management_reviews updated');
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Realtime: listen for slot_bookings changes
+    const bookingsChannel = supabase
+      .channel(`pipeline-bookings-${candidateId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'slot_bookings',
+          filter: `candidate_id=eq.${candidateId}`,
+        },
+        () => {
+          console.log('Realtime: slot_bookings updated');
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Also poll every 30 seconds as fallback for realtime issues
+    const pollInterval = setInterval(() => {
+      fetchData();
+    }, 30000);
+
     return () => {
       supabase.removeChannel(candidateChannel);
       supabase.removeChannel(eventsChannel);
+      supabase.removeChannel(reviewsChannel);
+      supabase.removeChannel(bookingsChannel);
+      clearInterval(pollInterval);
     };
   }, [candidateId]);
 
