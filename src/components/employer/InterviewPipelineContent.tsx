@@ -108,6 +108,7 @@ const stageColors: Record<string, string> = {
   'Demo Feedback': 'bg-amber-500',
   'HR Round Slot Booking': 'bg-teal-500',
   'HR Round': 'bg-green-500',
+  'HR Feedback': 'bg-blue-400',
   'Final Review': 'bg-cyan-500',
   'Offer Stage': 'bg-emerald-500',
 };
