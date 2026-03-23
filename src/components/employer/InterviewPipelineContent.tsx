@@ -113,6 +113,11 @@ const stageColors: Record<string, string> = {
   'Offer Stage': 'bg-emerald-500',
 };
 
+const hiddenPipelineStages = new Set(['AI Phone Interview', 'HR Round']);
+
+const getVisibleInterviewSteps = (steps: InterviewStep[]) =>
+  steps.filter((step) => !hiddenPipelineStages.has(step.title));
+
 type Candidate = PipelineCandidate;
 
 const getInitials = (name: string) => {
@@ -1476,7 +1481,7 @@ const ClickableStagesList = ({
     }
   };
 
-  const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview" && step.title !== "HR Round");
+  const filteredSteps = getVisibleInterviewSteps(interviewSteps);
   const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
 
   const handleStageClick = (step: InterviewStep) => {
@@ -2277,10 +2282,11 @@ const CandidateProfileInline = ({
     }
   }, [candidate?.jobId]);
 
-  const completedSteps = candidate.interviewSteps.filter(s => s.status === "completed").length;
-  const progress = (completedSteps / candidate.interviewSteps.length) * 100;
-  const allStagesCompleted = completedSteps === candidate.interviewSteps.length;
-  const hasStarted = completedSteps > 0 || candidate.interviewSteps.some(s => s.status === "current" || s.status === "in_progress");
+  const visibleInterviewSteps = getVisibleInterviewSteps(candidate.interviewSteps);
+  const completedSteps = visibleInterviewSteps.filter(s => s.status === "completed").length;
+  const progress = visibleInterviewSteps.length > 0 ? (completedSteps / visibleInterviewSteps.length) * 100 : 0;
+  const allStagesCompleted = completedSteps === visibleInterviewSteps.length;
+  const hasStarted = completedSteps > 0 || visibleInterviewSteps.some(s => s.status === "current" || s.status === "in_progress");
 
    // Start Interview - triggers full auto pipeline: instruction email → CV results → slot booking
   const handleStartInterview = async () => {
@@ -2726,7 +2732,7 @@ const CandidateProfileInline = ({
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {completedSteps} of {candidate.interviewSteps.length} steps completed
+                      {completedSteps} of {visibleInterviewSteps.length} steps completed
                     </p>
                   </div>
                 </CardContent>
@@ -2885,6 +2891,8 @@ const CandidateCard = ({
   isSelected?: boolean;
   onToggleSelect?: () => void;
 }) => {
+  const visibleInterviewSteps = getVisibleInterviewSteps(candidate.interviewSteps);
+
   return (
     <Card 
       className={`mb-3 bg-card border transition-all cursor-pointer group ${
@@ -2967,9 +2975,7 @@ const CandidateCard = ({
             {/* Progress indicator with live status */}
             <div className="mt-2">
               <div className="flex gap-0.5">
-                {candidate.interviewSteps
-                  .filter(step => step.title !== "AI Phone Interview")
-                  .map((step) => (
+                {visibleInterviewSteps.map((step) => (
                   <div 
                     key={step.id}
                     className={`h-1.5 flex-1 rounded-full transition-all ${
