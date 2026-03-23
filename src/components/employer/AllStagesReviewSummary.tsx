@@ -540,8 +540,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                     </div>
                   )}
 
-                  {/* Demo Feedback - Observer Reviews */}
-                  {review.stageName === 'Demo Feedback' && review.reviews && review.reviews.length > 0 && (
+                  {/* Demo/HR Feedback - Observer Reviews */}
+                  {(review.stageName === 'Demo Feedback' || review.stageName === 'HR Feedback') && review.reviews && review.reviews.length > 0 && (
                     <div className="space-y-2">
                       {review.reviews.map((r, i) => (
                         <div key={i} className="bg-background rounded-md p-2 border space-y-1.5">
