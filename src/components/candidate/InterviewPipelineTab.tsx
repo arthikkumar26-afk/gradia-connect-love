@@ -136,6 +136,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           filter: `candidate_id=eq.${candidateId}`,
         },
         () => {
+          console.log('Realtime: interview_candidates updated');
           fetchData();
         }
       )
@@ -152,14 +153,58 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           table: 'interview_events',
         },
         () => {
+          console.log('Realtime: interview_events updated');
           fetchData();
         }
       )
       .subscribe();
 
+    // Realtime: listen for management_reviews (feedback submissions)
+    const reviewsChannel = supabase
+      .channel(`pipeline-reviews-${candidateId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'management_reviews',
+        },
+        () => {
+          console.log('Realtime: management_reviews updated');
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Realtime: listen for slot_bookings changes
+    const bookingsChannel = supabase
+      .channel(`pipeline-bookings-${candidateId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'slot_bookings',
+          filter: `candidate_id=eq.${candidateId}`,
+        },
+        () => {
+          console.log('Realtime: slot_bookings updated');
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Also poll every 30 seconds as fallback for realtime issues
+    const pollInterval = setInterval(() => {
+      fetchData();
+    }, 30000);
+
     return () => {
       supabase.removeChannel(candidateChannel);
       supabase.removeChannel(eventsChannel);
+      supabase.removeChannel(reviewsChannel);
+      supabase.removeChannel(bookingsChannel);
+      clearInterval(pollInterval);
     };
   }, [candidateId]);
 
@@ -669,6 +714,46 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       }
 
       default: {
+        // Handle slot booking stages
+        if (stage.name.toLowerCase().includes('slot booking')) {
+          const isWritten = stage.name.toLowerCase().includes('written');
+          const isDemo = stage.name.toLowerCase().includes('demo');
+          const isHr = stage.name.toLowerCase().includes('hr');
+          const bookingType = isDemo ? 'demo_round' : isHr ? 'hr_round' : isWritten ? 'written_test' : 'technical_assessment';
+          const stageLabel = isDemo ? 'Demo Round' : isHr ? 'HR Round' : isWritten ? 'Written Test' : stage.name;
+          
+          const booking = slotBookings.find(b => 
+            b.booking_type === bookingType || b.booking_type === stageLabel
+          );
+          
+          if (booking) {
+            return (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium text-green-600">Slot Booked Successfully</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-xs text-muted-foreground">Date</p>
+                    <p className="font-semibold text-foreground">{formatDate(booking.booking_date)}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-2 text-center">
+                    <p className="text-xs text-muted-foreground">Time</p>
+                    <p className="font-semibold text-foreground">{booking.booking_time}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className={`text-xs ${
+                  booking.status === 'confirmed' ? 'border-green-500/30 text-green-600' : 'border-yellow-500/30 text-yellow-600'
+                }`}>
+                  {booking.status === 'confirmed' ? '✅ Confirmed' : '⏳ ' + (booking.status || 'Pending')}
+                </Badge>
+              </div>
+            );
+          }
+          return <p className="text-sm text-muted-foreground">Slot booking completed.</p>;
+        }
+
         if (event?.ai_score) {
           return (
             <div className="flex items-center gap-2">
