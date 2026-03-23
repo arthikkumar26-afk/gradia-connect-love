@@ -655,11 +655,12 @@ export const StageResultsModal = ({
                     </div>
                     <div className="rounded-lg overflow-hidden bg-black">
                       <video 
-                        src={videoUrl} 
                         controls 
                         className="w-full aspect-video"
                         preload="metadata"
                       >
+                        <source src={videoUrl} type="video/webm" />
+                        <source src={videoUrl} type="video/mp4" />
                         Your browser does not support video playback.
                       </video>
                     </div>

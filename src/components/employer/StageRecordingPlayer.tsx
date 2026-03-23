@@ -266,11 +266,12 @@ export const StageRecordingPlayer = ({
       {showVideo && videoUrl && (
         <div className="space-y-2 border rounded-lg p-2 bg-background">
           <video 
-            src={videoUrl} 
             controls 
             className="w-full rounded-lg bg-black aspect-video max-h-48"
             preload="metadata"
           >
+            <source src={videoUrl} type="video/webm" />
+            <source src={videoUrl} type="video/mp4" />
             Your browser does not support video playback.
           </video>
           <div className="flex gap-2">
