@@ -11,6 +11,7 @@ interface ProcessStageRequest {
   action: 'advance' | 'reject' | 'evaluate';
   feedback?: string;
   score?: number;
+  expectedStageName?: string;
 }
 
 serve(async (req) => {
@@ -28,9 +29,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId, action, feedback, score }: ProcessStageRequest = await req.json();
+    const { interviewCandidateId, action, feedback, score, expectedStageName }: ProcessStageRequest = await req.json();
 
-    console.log('Processing interview stage:', { interviewCandidateId, action });
+    console.log('Processing interview stage:', { interviewCandidateId, action, expectedStageName });
 
     // Get current interview candidate with stage info
     const { data: interviewCandidate, error: candidateError } = await supabase
@@ -91,7 +92,17 @@ serve(async (req) => {
     }
 
     if (action === 'advance') {
-      // For CV/Resume stage, use the candidate's AI analysis data for the event
+      if (expectedStageName && currentStage?.name !== expectedStageName) {
+        return new Response(JSON.stringify({
+          success: true,
+          action: 'ignored',
+          message: `Candidate already moved past ${expectedStageName}`,
+          currentStage: currentStage?.name || null,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       let eventAiScore = score || interviewCandidate.ai_score;
       let eventAiFeedback: any = null;
 
