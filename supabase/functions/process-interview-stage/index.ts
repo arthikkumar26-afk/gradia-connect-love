@@ -160,16 +160,15 @@ serve(async (req) => {
         }
 
         // Auto-send slot booking email when advancing to a Slot Booking stage
-        const isSlotBookingStage = nextStage.name.toLowerCase().includes('slot booking');
+        const isSlotBookingStage = targetStage.name.toLowerCase().includes('slot booking');
         if (isSlotBookingStage) {
           try {
-            console.log(`Sending slot booking email for stage: ${nextStage.name}`);
+            console.log(`Sending slot booking email for stage: ${targetStage.name}`);
             const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
             if (RESEND_API_KEY) {
               const candidate = interviewCandidate.candidate;
               const job = interviewCandidate.job;
               
-              // Get employer info for branding
               let companyName = 'Gradia';
               if (job?.employer_id) {
                 const { data: employer } = await supabase
@@ -180,10 +179,9 @@ serve(async (req) => {
                 companyName = employer?.company_name || 'Gradia';
               }
 
-              // Determine what round this slot booking is for
-              const roundName = nextStage.name.replace(' Slot Booking', '');
+              const roundName = targetStage.name.replace(' Slot Booking', '');
               const baseUrl = Deno.env.get('APP_DOMAIN') || "https://gradia-link-shine.lovable.app";
-              const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${nextStage.id}&stageName=${encodeURIComponent(nextStage.name)}`;
+              const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${targetStage.id}&stageName=${encodeURIComponent(targetStage.name)}`;
 
               const emailResponse = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -246,7 +244,7 @@ serve(async (req) => {
                 }),
               });
               const emailResult = await emailResponse.json();
-              console.log(`Slot booking email sent for ${nextStage.name}:`, emailResult);
+              console.log(`Slot booking email sent for ${targetStage.name}:`, emailResult);
             }
           } catch (emailErr) {
             console.error('Failed to send slot booking email (non-blocking):', emailErr);
@@ -257,8 +255,8 @@ serve(async (req) => {
           success: true,
           action: 'advanced',
           previousStage: currentStage?.name,
-          currentStage: nextStage.name,
-          message: `Candidate advanced to ${nextStage.name}`
+          currentStage: targetStage.name,
+          message: `Candidate advanced to ${targetStage.name}`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
