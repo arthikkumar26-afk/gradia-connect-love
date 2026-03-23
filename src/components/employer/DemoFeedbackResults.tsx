@@ -105,7 +105,28 @@ export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo
     };
 
     fetchData();
-  }, [interviewCandidateId]);
+
+    // Realtime subscription for review updates
+    const channel = supabase
+      .channel(`feedback-reviews-${interviewCandidateId}-${feedbackType}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'management_reviews',
+          filter: `interview_candidate_id=eq.${interviewCandidateId}`,
+        },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [interviewCandidateId, feedbackType]);
 
   const handleResendFeedback = async () => {
     setIsResending(true);
