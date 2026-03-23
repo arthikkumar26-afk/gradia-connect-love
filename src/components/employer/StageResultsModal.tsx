@@ -325,7 +325,7 @@ export const StageResultsModal = ({
             ) : isDemoFeedbackStage || isHrFeedbackStage ? (
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold">{isHrFeedbackStage ? 'HR Round' : 'Demo Round'} Feedback</h3>
-                <DemoFeedbackResults interviewCandidateId={interviewCandidateId} />
+                <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType={isHrFeedbackStage ? 'hr' : 'demo'} />
               </div>
             ) : isSlotBookingStage ? (
               <>
