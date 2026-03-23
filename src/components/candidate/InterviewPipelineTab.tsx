@@ -272,7 +272,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       // Fetch slot bookings for this candidate
       const { data: bookingsData } = await supabase
         .from('slot_bookings')
-        .select('id, booking_date, booking_time, booking_type, status')
+        .select('id, booking_date, booking_time, booking_type, status, demo_meet_link, demo_meet_type')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false });
 
