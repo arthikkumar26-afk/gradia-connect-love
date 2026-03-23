@@ -120,104 +120,35 @@ serve(async (req) => {
 
     const { data: interviewCandidate, error: candidateError } = await supabase
       .from('interview_candidates')
-      .select('*, candidate:profiles(*), job:jobs(*, employer:profiles!jobs_employer_id_fkey(*))')
+      .select(`
+        *,
+        candidate:profiles(*),
+        job:jobs(*, employer:profiles!jobs_employer_id_fkey(*)),
+        current_stage:interview_stages(id, name, stage_order)
+      `)
       .eq('id', interviewCandidateId)
       .single();
-
-    if (candidateError || !interviewCandidate) throw new Error('Interview candidate not found');
-
-    const candidate = interviewCandidate.candidate;
-    const job = interviewCandidate.job;
-    const companyName = job?.employer?.company_name || 'Gradia';
-
-    // Resolve AI analysis from multiple sources
-    let aiAnalysis: Record<string, any> = {};
-    let aiScore = 0;
-
-    if (passedAnalysisData?.overall_score) {
-      aiAnalysis = passedAnalysisData;
-      aiScore = passedAnalysisData.overall_score;
-    } else {
-      const { data: cvStageId } = await supabase
-        .from('interview_stages').select('id').eq('name', 'CV/Resume').single();
-
-      if (cvStageId) {
-        const { data: cvEvent } = await supabase
-          .from('interview_events')
-          .select('ai_feedback, ai_score')
-          .eq('interview_candidate_id', interviewCandidateId)
-          .eq('stage_id', cvStageId.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const fb = (cvEvent?.ai_feedback as Record<string, any>) || {};
-        if (fb.overall_score) { aiAnalysis = fb; aiScore = fb.overall_score; }
-        else if (cvEvent?.ai_score) { aiScore = cvEvent.ai_score; }
-      }
-
-      if (!aiAnalysis.overall_score) {
-        const ca = (interviewCandidate.ai_analysis as Record<string, any>) || {};
-        if (ca.overall_score) { aiAnalysis = ca; aiScore = ca.overall_score; }
-        else if (interviewCandidate.ai_score) { aiScore = interviewCandidate.ai_score; }
-      }
-    }
-
-    const overallScore = aiAnalysis.overall_score || aiScore;
-
-    const html = buildEmailHtml({
-      candidateName: candidate.full_name,
-      jobTitle: job.job_title,
-      companyName,
-      overallScore,
-      skillMatchScore: aiAnalysis.skill_match_score || 0,
-      experienceMatchScore: aiAnalysis.experience_match_score || 0,
-      locationMatchScore: aiAnalysis.location_match_score || 0,
-      recommendation: aiAnalysis.recommendation || 'pending',
-      strengths: Array.isArray(aiAnalysis.strengths) ? aiAnalysis.strengths : [],
-      summary: aiAnalysis.summary || 'Your resume has been reviewed.',
-      suggestedFocus: Array.isArray(aiAnalysis.suggested_interview_focus) ? aiAnalysis.suggested_interview_focus : [],
-    });
-
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: `${companyName} Hiring <noreply@gradia.co.in>`,
-        to: [candidate.email],
-        reply_to: 'support@gradia.co.in',
-        subject: `📄 CV/Resume Analysis Results - ${job.job_title} at ${companyName}`,
-        html,
-      }),
-    });
-
-    const emailResult = await emailResponse.json();
-    console.log('CV results email sent:', emailResult);
-
-    // Mark CV/Resume stage as completed
-    const { data: cvStage } = await supabase
-      .from('interview_stages').select('id').eq('name', 'CV/Resume').single();
-
-    if (cvStage) {
-      await supabase.from('interview_events').upsert({
-        interview_candidate_id: interviewCandidateId,
-        stage_id: cvStage.id,
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        notes: 'CV/Resume ATS analysis email sent',
-        ai_score: overallScore || null,
-        ai_feedback: Object.keys(aiAnalysis).length > 0 ? aiAnalysis : null,
-      }, { onConflict: 'interview_candidate_id,stage_id', ignoreDuplicates: false });
-    }
-
-    // Advance to Written Test Slot Booking stage
+...
+    // Advance to Written Test Slot Booking stage only if the candidate hasn't already moved beyond it
     const { data: nextStage } = await supabase
-      .from('interview_stages').select('id').eq('name', 'Written Test Slot Booking').single();
+      .from('interview_stages')
+      .select('id, stage_order')
+      .eq('name', 'Written Test Slot Booking')
+      .single();
 
-    if (nextStage) {
+    const currentStageOrder = interviewCandidate.current_stage?.stage_order ?? -1;
+    const nextStageOrder = nextStage?.stage_order ?? -1;
+
+    if (nextStage && currentStageOrder < nextStageOrder) {
       await supabase.from('interview_candidates')
         .update({ current_stage_id: nextStage.id })
         .eq('id', interviewCandidateId);
+    } else {
+      console.log('Skipping stage rollback after CV results email', {
+        currentStage: interviewCandidate.current_stage?.name,
+        currentStageOrder,
+        nextStageOrder,
+      });
     }
 
     return new Response(JSON.stringify({ success: true, emailResult }), {

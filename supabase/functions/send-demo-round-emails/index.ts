@@ -64,12 +64,19 @@ serve(async (req) => {
     const bookingTime = slotBooking?.booking_time || 'To be confirmed';
 
     const baseUrl = "https://gradia-link-shine.lovable.app";
-    
+
+    const { data: demoStage } = await supabase
+      .from('interview_stages')
+      .select('id')
+      .eq('name', 'Demo Round')
+      .single();
+
     // Determine interview link based on meet type
     const isManualMeet = meetType === 'manual_link' && meetLink;
+    const demoStageId = demoStage?.id || interviewCandidate.current_stage_id;
     const interviewLink = isManualMeet 
       ? meetLink 
-      : `${baseUrl}/interview?candidateId=${interviewCandidateId}&type=demo`;
+      : `${baseUrl}/interview?candidateId=${interviewCandidateId}&stageId=${demoStageId}&type=demo`;
 
     const emailResults = [];
 

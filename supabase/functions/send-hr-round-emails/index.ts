@@ -64,9 +64,16 @@ serve(async (req) => {
     const bookingTime = slotBooking?.booking_time || 'To be confirmed';
 
     const baseUrl = "https://gradia-link-shine.lovable.app";
-    
+
+    const { data: hrStage } = await supabase
+      .from('interview_stages')
+      .select('id')
+      .eq('name', 'HR Round')
+      .single();
+
     // HR Round is always a live meeting, not an assessment
-    const interviewLink = meetLink || `${baseUrl}/interview?candidateId=${interviewCandidateId}&type=hr`;
+    const hrStageId = hrStage?.id || interviewCandidate.current_stage_id;
+    const interviewLink = meetLink || `${baseUrl}/interview?candidateId=${interviewCandidateId}&stageId=${hrStageId}&type=hr`;
 
     const emailResults = [];
 
