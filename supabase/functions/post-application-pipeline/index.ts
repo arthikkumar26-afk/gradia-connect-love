@@ -9,106 +9,192 @@ const corsHeaders = {
 /**
  * Post-Application Pipeline
  * 
- * This function handles the full automated email + stage advancement sequence:
+ * This function handles the full automated email + stage advancement sequence
+ * for ALL interview stages:
  * 1. Send Instruction email → advance to CV/Resume
- * 2. Wait 5s → Send CV/Resume ATS results email → advance to Written Test Slot Booking
- * 3. Wait 5s → Send Written Test Slot Booking email
+ * 2. Send CV/Resume ATS results email → advance to Written Test Slot Booking
+ * 3. Send Written Test Slot Booking email
+ * 4. Advance to Written Test → Send Written Test invitation email
+ * 5. Advance to Demo Slot Booking → Send Demo Slot Booking email
+ * 6. Advance to Demo Round → Send Demo Round invitation emails
+ * 7. Advance to Demo Feedback → Send Demo Feedback request email
+ * 8. Advance to HR Round Slot Booking → Send HR Slot Booking email
+ * 9. Advance to HR Round → Send HR Round invitation emails
+ * 10. Advance to Final Review
+ * 11. Advance to Offer Stage
  */
+
+async function advanceCandidateToStage(supabase: any, interviewCandidateId: string, stageName: string) {
+  const { data: stage } = await supabase
+    .from('interview_stages')
+    .select('id, stage_order')
+    .eq('name', stageName)
+    .single();
+
+  if (!stage) {
+    console.log(`Stage "${stageName}" not found, skipping`);
+    return null;
+  }
+
+  // Check current stage order to avoid rollback
+  const { data: ic } = await supabase
+    .from('interview_candidates')
+    .select('current_stage_id, current_stage:interview_stages!interview_candidates_current_stage_id_fkey(stage_order)')
+    .eq('id', interviewCandidateId)
+    .single();
+
+  const currentOrder = (ic?.current_stage as any)?.stage_order ?? -1;
+  if (currentOrder < stage.stage_order) {
+    await supabase
+      .from('interview_candidates')
+      .update({ current_stage_id: stage.id })
+      .eq('id', interviewCandidateId);
+    console.log(`Advanced candidate to "${stageName}" (order ${stage.stage_order})`);
+  } else {
+    console.log(`Candidate already at or past "${stageName}", skipping advancement`);
+  }
+
+  // Create interview event for tracking
+  await supabase
+    .from('interview_events')
+    .insert({
+      interview_candidate_id: interviewCandidateId,
+      stage_id: stage.id,
+      status: 'pending',
+      notes: `Auto-advanced via pipeline`,
+    });
+
+  return stage;
+}
+
+async function callEdgeFunction(supabaseUrl: string, serviceKey: string, functionName: string, body: any) {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json();
+    console.log(`${functionName} result:`, result);
+    return result;
+  } catch (err) {
+    console.error(`Failed to call ${functionName}:`, err);
+    return null;
+  }
+}
+
 async function processEmailPipeline(interviewCandidateId: string, analysisData: any) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const DELAY = 5000; // 5 seconds between steps
 
-  // Step 1: Send Instruction Email (also advances Interview Guidelines → CV/Resume internally)
+  // Step 1: Send Instruction Email (advances Interview Guidelines → CV/Resume)
   console.log('Step 1: Sending instruction email...');
-  try {
-    const instructionResponse = await fetch(`${supabaseUrl}/functions/v1/send-instruction-email`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ interviewCandidateId }),
-    });
-    const instructionResult = await instructionResponse.json();
-    console.log('Instruction email result:', instructionResult);
-  } catch (err) {
-    console.error('Failed to send instruction email:', err);
-  }
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-instruction-email', {
+    interviewCandidateId,
+  });
 
-  // Step 2: Wait 5 seconds, then send CV/Resume ATS results email
-  // The send-cv-results-email function also advances to Written Test Slot Booking
-  console.log('Waiting 5 seconds before CV results email...');
-  await new Promise(resolve => setTimeout(resolve, 5000));
-
+  // Step 2: Send CV/Resume ATS results email
+  console.log('Waiting before CV results email...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
   console.log('Step 2: Sending CV/Resume ATS results email...');
-  try {
-    const cvResponse = await fetch(`${supabaseUrl}/functions/v1/send-cv-results-email`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        interviewCandidateId,
-        analysisData: analysisData || null,
-      }),
-    });
-    const cvResult = await cvResponse.json();
-    console.log('CV results email result:', cvResult);
-  } catch (err) {
-    console.error('Failed to send CV results email:', err);
-  }
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-cv-results-email', {
+    interviewCandidateId,
+    analysisData: analysisData || null,
+  });
 
-  // Step 3: Wait 5 seconds, then send Written Test Slot Booking email
-  console.log('Waiting 5 seconds before Written Test slot booking email...');
-  await new Promise(resolve => setTimeout(resolve, 5000));
-
-  // Ensure candidate is on Written Test Slot Booking stage before sending
-  const { data: slotStage } = await supabase
-    .from('interview_stages')
-    .select('id, stage_order')
-    .eq('name', 'Written Test Slot Booking')
-    .single();
-
-  if (slotStage) {
-    // Verify candidate stage and advance if needed
-    const { data: ic } = await supabase
-      .from('interview_candidates')
-      .select('current_stage_id, current_stage:interview_stages!interview_candidates_current_stage_id_fkey(stage_order)')
-      .eq('id', interviewCandidateId)
-      .single();
-
-    const currentOrder = (ic?.current_stage as any)?.stage_order ?? -1;
-    if (currentOrder < slotStage.stage_order) {
-      await supabase
-        .from('interview_candidates')
-        .update({ current_stage_id: slotStage.id })
-        .eq('id', interviewCandidateId);
-      console.log('Advanced candidate to Written Test Slot Booking stage');
-    }
-  }
-
+  // Step 3: Advance to Written Test Slot Booking + send slot booking email
+  console.log('Waiting before Written Test slot booking...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'Written Test Slot Booking');
   console.log('Step 3: Sending Written Test slot booking email...');
-  try {
-    const slotResponse = await fetch(`${supabaseUrl}/functions/v1/send-slot-booking-email`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        interviewCandidateId,
-        stageName: 'Written Test',
-      }),
-    });
-    const slotResult = await slotResponse.json();
-    console.log('Slot booking email result:', slotResult);
-  } catch (err) {
-    console.error('Failed to send slot booking email:', err);
-  }
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-slot-booking-email', {
+    interviewCandidateId,
+    stageName: 'Written Test',
+  });
 
-  console.log('Post-application pipeline completed for:', interviewCandidateId);
+  // Step 4: Advance to Written Test + send invitation
+  console.log('Waiting before Written Test...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'Written Test');
+  console.log('Step 4: Sending Written Test invitation email...');
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-interview-invitation', {
+    interviewCandidateId,
+    stageName: 'Written Test',
+    scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  // Step 5: Advance to Demo Slot Booking + send slot booking email
+  console.log('Waiting before Demo Slot Booking...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'Demo Slot Booking');
+  console.log('Step 5: Sending Demo Slot Booking email...');
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-slot-booking-email', {
+    interviewCandidateId,
+    stageName: 'Demo Round',
+  });
+
+  // Step 6: Advance to Demo Round + send demo round emails
+  console.log('Waiting before Demo Round...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'Demo Round');
+  console.log('Step 6: Sending Demo Round invitation emails...');
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-demo-round-emails', {
+    interviewCandidateId,
+  });
+
+  // Step 7: Advance to Demo Feedback + send feedback request
+  console.log('Waiting before Demo Feedback...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'Demo Feedback');
+  console.log('Step 7: Sending Demo Feedback request email...');
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-demo-feedback-email', {
+    interviewCandidateId,
+  });
+
+  // Step 8: Advance to HR Round Slot Booking + send slot booking email
+  console.log('Waiting before HR Round Slot Booking...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'HR Round Slot Booking');
+  console.log('Step 8: Sending HR Round Slot Booking email...');
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-slot-booking-email', {
+    interviewCandidateId,
+    stageName: 'HR Round',
+  });
+
+  // Step 9: Advance to HR Round + send HR round emails
+  console.log('Waiting before HR Round...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'HR Round');
+  console.log('Step 9: Sending HR Round invitation emails...');
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-hr-round-emails', {
+    interviewCandidateId,
+  });
+
+  // Step 10: Advance to Final Review
+  console.log('Waiting before Final Review...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'Final Review');
+  console.log('Step 10: Final Review stage set');
+
+  // Step 11: Advance to Offer Stage
+  console.log('Waiting before Offer Stage...');
+  await new Promise(resolve => setTimeout(resolve, DELAY));
+  await advanceCandidateToStage(supabase, interviewCandidateId, 'Offer Stage');
+  console.log('Step 11: Offer Stage set');
+
+  // Send status notification for pipeline completion
+  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-status-notification', {
+    interviewCandidateId,
+    status: 'pipeline_completed',
+    message: 'Full interview pipeline has been completed',
+  });
+
+  console.log('Full post-application pipeline completed for:', interviewCandidateId);
 }
 
 serve(async (req) => {
@@ -123,7 +209,7 @@ serve(async (req) => {
       throw new Error('interviewCandidateId is required');
     }
 
-    console.log('Starting post-application pipeline for:', interviewCandidateId);
+    console.log('Starting FULL post-application pipeline for:', interviewCandidateId);
     console.log('Analysis data received:', analysisData ? 'yes' : 'no');
 
     // MUST await the full pipeline - if we return early, the runtime kills pending setTimeout promises
@@ -131,7 +217,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Post-application pipeline completed',
+      message: 'Full post-application pipeline completed (all stages)',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
