@@ -10,7 +10,9 @@ interface HRRoundEmailRequest {
   interviewCandidateId: string;
   observerEmail?: string;
   meetLink?: string;
-  meetType?: 'ai_video' | 'manual_link';
+  meetType?: string;
+  confirmedDate?: string;
+  confirmedTime?: string;
 }
 
 serve(async (req) => {
