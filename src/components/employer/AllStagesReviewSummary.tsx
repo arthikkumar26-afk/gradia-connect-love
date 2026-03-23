@@ -585,7 +585,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   )}
 
                   {/* HR Round & other stages - AI Feedback / Notes */}
-                  {!['CV/Resume', 'Written Test', 'Demo Feedback'].includes(review.stageName) && (
+                  {!['CV/Resume', 'Written Test', 'Demo Feedback', 'HR Feedback'].includes(review.stageName) && (
                     <div className="space-y-1.5">
                       {review.aiFeedback && typeof review.aiFeedback === 'object' && review.aiFeedback.feedback && (
                         <p className="text-xs text-muted-foreground">{review.aiFeedback.feedback}</p>
