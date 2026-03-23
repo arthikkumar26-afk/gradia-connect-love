@@ -156,6 +156,7 @@ export default function ManagementFeedback() {
             ...reviewData,
             candidate_name: icData.candidate?.full_name,
             candidate_email: icData.candidate?.email,
+            job_title: icData.job?.job_title,
           });
         } else {
           setReview(reviewData);
