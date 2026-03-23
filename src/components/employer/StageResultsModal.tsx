@@ -193,8 +193,8 @@ export const StageResultsModal = ({
           event = fallbackEvent;
         }
 
-        // For CV/Resume stage: if event has no AI analysis, fallback to interview_candidates data
-        if (event && stageName === 'CV/Resume' && (!event.ai_score || event.ai_score === 0) && !event.ai_feedback) {
+        // For CV/Resume stage: ALWAYS prefer interview_candidates data (actual resume analysis)
+        if (stageName === 'CV/Resume') {
           const { data: candidateData } = await supabase
             .from('interview_candidates')
             .select('ai_score, ai_analysis')
@@ -203,11 +203,13 @@ export const StageResultsModal = ({
 
           if (candidateData && (candidateData.ai_score || candidateData.ai_analysis)) {
             // Override the event data with the candidate's actual analysis
-            event = {
-              ...event,
-              ai_score: candidateData.ai_score || event.ai_score,
-              ai_feedback: candidateData.ai_analysis || event.ai_feedback,
-            };
+            if (event) {
+              event = {
+                ...event,
+                ai_score: candidateData.ai_score || event.ai_score,
+                ai_feedback: candidateData.ai_analysis || event.ai_feedback,
+              };
+            }
           }
         }
 
