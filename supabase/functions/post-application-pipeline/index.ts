@@ -99,15 +99,12 @@ serve(async (req) => {
     console.log('Starting post-application pipeline for:', interviewCandidateId);
     console.log('Analysis data received:', analysisData ? 'yes' : 'no');
 
-    // Start background processing (don't await - let it run after response)
-    processEmailPipeline(interviewCandidateId, analysisData).catch(err => {
-      console.error('Pipeline background processing error:', err);
-    });
+    // MUST await the full pipeline - if we return early, the runtime kills pending setTimeout promises
+    await processEmailPipeline(interviewCandidateId, analysisData);
 
-    // Return immediately so the calling function doesn't timeout
     return new Response(JSON.stringify({
       success: true,
-      message: 'Post-application pipeline started',
+      message: 'Post-application pipeline completed',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
