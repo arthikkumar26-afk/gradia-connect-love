@@ -340,6 +340,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         return Calendar;
       case 'HR Round':
         return UserCheck;
+      case 'HR Feedback':
+        return MessageSquare;
       case 'Final Review':
         return FileCheck;
       case 'Offer Stage':
