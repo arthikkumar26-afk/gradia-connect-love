@@ -218,56 +218,88 @@ export default function ManagementFeedback() {
 
       if (error) throw error;
 
-      // Check if all management reviews for this session are now submitted
-      const { data: allReviews } = await supabase
-        .from('management_reviews')
-        .select('id, status')
-        .eq('session_id', review.session_id);
+      // Check if all reviews are submitted - handle both mock interview and employer pipeline flows
+      if (review.session_id) {
+        // Mock interview flow
+        const { data: allReviews } = await supabase
+          .from('management_reviews')
+          .select('id, status')
+          .eq('session_id', review.session_id);
 
-      const allSubmitted = allReviews?.every(r => r.status === 'submitted' || r.id === review.id);
+        const allSubmitted = allReviews?.every(r => r.status === 'submitted' || r.id === review.id);
 
-      // If all reviews are submitted, advance the session stage
-      if (allSubmitted) {
-        // Get current session to check stage
-        const { data: session } = await supabase
-          .from('mock_interview_sessions')
-          .select('current_stage_order')
-          .eq('id', review.session_id)
-          .maybeSingle();
-
-        // Only advance if currently at Demo Feedback stage (6)
-        if (session && session.current_stage_order === 6) {
-          // Check if stage result already exists
-          const { data: existingResult } = await supabase
-            .from('mock_interview_stage_results')
-            .select('id')
-            .eq('session_id', review.session_id)
-            .eq('stage_order', 6)
+        if (allSubmitted) {
+          const { data: session } = await supabase
+            .from('mock_interview_sessions')
+            .select('current_stage_order')
+            .eq('id', review.session_id)
             .maybeSingle();
 
-          if (!existingResult) {
-            // Create stage result for Demo Feedback
-            await supabase
+          if (session && session.current_stage_order === 6) {
+            const { data: existingResult } = await supabase
               .from('mock_interview_stage_results')
-              .insert({
-                session_id: review.session_id,
-                stage_name: 'Demo Feedback',
-                stage_order: 6,
-                ai_score: formData.overall_rating * 20, // Convert 1-5 to 0-100
-                ai_feedback: `Management feedback received. Recommendation: ${formData.recommendation}. ${formData.feedback_text || ''}`,
-                passed: formData.recommendation === 'strongly_recommend' || formData.recommendation === 'recommend',
-                completed_at: new Date().toISOString()
-              });
-          }
+              .select('id')
+              .eq('session_id', review.session_id)
+              .eq('stage_order', 6)
+              .maybeSingle();
 
-          // Update session to next stage (HR Documents - stage 7)
-          await supabase
-            .from('mock_interview_sessions')
-            .update({ 
-              current_stage_order: 7,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', review.session_id);
+            if (!existingResult) {
+              await supabase
+                .from('mock_interview_stage_results')
+                .insert({
+                  session_id: review.session_id,
+                  stage_name: 'Demo Feedback',
+                  stage_order: 6,
+                  ai_score: formData.overall_rating * 20,
+                  ai_feedback: `Management feedback received. Recommendation: ${formData.recommendation}. ${formData.feedback_text || ''}`,
+                  passed: formData.recommendation === 'strongly_recommend' || formData.recommendation === 'recommend',
+                  completed_at: new Date().toISOString()
+                });
+            }
+
+            await supabase
+              .from('mock_interview_sessions')
+              .update({ current_stage_order: 7, updated_at: new Date().toISOString() })
+              .eq('id', review.session_id);
+          }
+        }
+      } else if (review.interview_candidate_id) {
+        // Employer pipeline flow - advance candidate to next stage after all feedback is submitted
+        const { data: allReviews } = await supabase
+          .from('management_reviews')
+          .select('id, status')
+          .eq('interview_candidate_id', review.interview_candidate_id);
+
+        const allSubmitted = allReviews?.every(r => r.status === 'submitted' || r.id === review.id);
+
+        if (allSubmitted) {
+          // Get current candidate stage
+          const { data: icData } = await supabase
+            .from('interview_candidates')
+            .select('current_stage_id, current_stage:interview_stages(id, name, stage_order)')
+            .eq('id', review.interview_candidate_id)
+            .single();
+
+          if (icData?.current_stage) {
+            const currentOrder = (icData.current_stage as any).stage_order;
+            // Find the next stage after the current one
+            const { data: nextStage } = await supabase
+              .from('interview_stages')
+              .select('id, name, stage_order')
+              .gt('stage_order', currentOrder)
+              .order('stage_order', { ascending: true })
+              .limit(1)
+              .maybeSingle();
+
+            if (nextStage) {
+              await supabase
+                .from('interview_candidates')
+                .update({ current_stage_id: nextStage.id, updated_at: new Date().toISOString() })
+                .eq('id', review.interview_candidate_id);
+
+              console.log(`Advanced candidate to stage: ${nextStage.name}`);
+            }
+          }
         }
       }
 
