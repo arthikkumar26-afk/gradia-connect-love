@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic } from "lucide-react";
@@ -21,13 +21,27 @@ interface FeedbackReview {
   submitted_at: string | null;
 }
 
-export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo', onAllSubmitted }: { interviewCandidateId: string; feedbackType?: 'demo' | 'hr'; onAllSubmitted?: () => void }) => {
+type FeedbackStageStatus = "pending" | "current" | "completed" | "failed" | "in_progress";
+
+export const DemoFeedbackResults = ({
+  interviewCandidateId,
+  feedbackType = 'demo',
+  onAllSubmitted,
+  stageStatus,
+}: {
+  interviewCandidateId: string;
+  feedbackType?: 'demo' | 'hr';
+  onAllSubmitted?: () => void;
+  stageStatus?: FeedbackStageStatus;
+}) => {
   const [reviews, setReviews] = useState<FeedbackReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isResending, setIsResending] = useState(false);
   const [demoRecordingUrl, setDemoRecordingUrl] = useState<string | null>(null);
   const [showRecording, setShowRecording] = useState(false);
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
+  const autoAdvanceInFlightRef = useRef(false);
+  const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,7 +120,6 @@ export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo
 
     fetchData();
 
-    // Realtime subscription for review updates
     const channel = supabase
       .channel(`feedback-reviews-${interviewCandidateId}-${feedbackType}`)
       .on(
@@ -126,33 +139,49 @@ export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [interviewCandidateId, feedbackType]);
+  }, [interviewCandidateId, feedbackType, demoRecordingUrl]);
 
-  // Auto-advance when all reviews are submitted
-  const [hasAutoAdvanced, setHasAutoAdvanced] = useState(false);
   useEffect(() => {
-    if (hasAutoAdvanced || reviews.length === 0) return;
-    const allSubmitted = reviews.every(r => r.status === 'submitted');
-    if (allSubmitted) {
-      setHasAutoAdvanced(true);
-      const advancePipeline = async () => {
-        try {
-          await supabase.functions.invoke('process-interview-stage', {
-            body: {
-              interviewCandidateId,
-              action: 'advance',
-              feedback: `All ${feedbackType} feedback submitted, auto-advancing`,
-            }
-          });
-          toast.success(`All ${feedbackType === 'hr' ? 'HR' : 'Demo'} feedback received! Stage completed.`);
-          onAllSubmitted?.();
-        } catch (err) {
-          console.error('Error auto-advancing after feedback:', err);
-        }
-      };
-      advancePipeline();
+    if (!isActiveStage || reviews.length === 0) {
+      autoAdvanceInFlightRef.current = false;
+      return;
     }
-  }, [reviews, hasAutoAdvanced, interviewCandidateId, feedbackType, onAllSubmitted]);
+
+    const allSubmitted = reviews.every((review) => review.status === 'submitted');
+    if (!allSubmitted || autoAdvanceInFlightRef.current) {
+      if (!allSubmitted) autoAdvanceInFlightRef.current = false;
+      return;
+    }
+
+    autoAdvanceInFlightRef.current = true;
+    let cancelled = false;
+
+    const advancePipeline = async () => {
+      try {
+        await supabase.functions.invoke('process-interview-stage', {
+          body: {
+            interviewCandidateId,
+            action: 'advance',
+            feedback: `All ${feedbackType} feedback submitted, auto-advancing`,
+          }
+        });
+
+        if (cancelled) return;
+
+        toast.success(`All ${feedbackType === 'hr' ? 'HR' : 'Demo'} feedback received! Stage completed.`);
+        onAllSubmitted?.();
+      } catch (err) {
+        autoAdvanceInFlightRef.current = false;
+        console.error('Error auto-advancing after feedback:', err);
+      }
+    };
+
+    advancePipeline();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [reviews, interviewCandidateId, feedbackType, onAllSubmitted, isActiveStage]);
 
   const handleResendFeedback = async () => {
     setIsResending(true);
