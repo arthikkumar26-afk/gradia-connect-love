@@ -47,17 +47,28 @@ serve(async (req) => {
     const employer = job?.employer;
     const companyName = employer?.company_name || 'Gradia';
 
-    // Get stage ID for the link
+    // Get stage ID for the link and determine previous stage name
     const { data: stageData } = await supabase
       .from('interview_stages')
-      .select('id')
+      .select('id, stage_order')
       .eq('name', stageName)
       .single();
+
+    // Determine the previous stage name dynamically
+    let previousStageName = 'the previous round';
+    if (stageData?.stage_order) {
+      const { data: prevStage } = await supabase
+        .from('interview_stages')
+        .select('name')
+        .eq('stage_order', stageData.stage_order - 1)
+        .single();
+      if (prevStage?.name) previousStageName = prevStage.name;
+    }
 
     const stageId = stageData?.id || interviewCandidate.current_stage_id;
 
     // Build the slot booking link
-    const baseUrl = "https://gradia-link-shine.lovable.app";
+    const baseUrl = Deno.env.get('APP_DOMAIN') || "https://gradia-link-shine.lovable.app";
     const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${stageId}&stageName=${encodeURIComponent(stageName)}`;
 
     // Send the email
