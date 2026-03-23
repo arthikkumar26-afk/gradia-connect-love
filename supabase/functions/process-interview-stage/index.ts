@@ -92,7 +92,17 @@ serve(async (req) => {
     }
 
     if (action === 'advance') {
-      // For CV/Resume stage, use the candidate's AI analysis data for the event
+      if (expectedStageName && currentStage?.name !== expectedStageName) {
+        return new Response(JSON.stringify({
+          success: true,
+          action: 'ignored',
+          message: `Candidate already moved past ${expectedStageName}`,
+          currentStage: currentStage?.name || null,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       let eventAiScore = score || interviewCandidate.ai_score;
       let eventAiFeedback: any = null;
 

@@ -167,10 +167,12 @@ export const DemoFeedbackResults = ({
 
     const advancePipeline = async () => {
       try {
+        const expectedStageName = feedbackType === 'hr' ? 'HR Feedback' : 'Demo Feedback';
         const { error } = await supabase.functions.invoke('process-interview-stage', {
           body: {
             interviewCandidateId,
             action: 'advance',
+            expectedStageName,
             feedback: `All ${feedbackType} feedback submitted, auto-advancing`,
           }
         });
