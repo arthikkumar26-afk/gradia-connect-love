@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic } from "lucide-react";
@@ -23,6 +23,9 @@ interface FeedbackReview {
 
 type FeedbackStageStatus = "pending" | "current" | "completed" | "failed" | "in_progress";
 
+const feedbackAutoAdvanceInFlight = new Set<string>();
+const feedbackAutoAdvanceProcessed = new Set<string>();
+
 export const DemoFeedbackResults = ({
   interviewCandidateId,
   feedbackType = 'demo',
@@ -40,7 +43,6 @@ export const DemoFeedbackResults = ({
   const [demoRecordingUrl, setDemoRecordingUrl] = useState<string | null>(null);
   const [showRecording, setShowRecording] = useState(false);
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
-  const autoAdvanceInFlightRef = useRef(false);
   const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress';
 
   useEffect(() => {
@@ -139,26 +141,33 @@ export const DemoFeedbackResults = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [interviewCandidateId, feedbackType, demoRecordingUrl]);
+  }, [interviewCandidateId, feedbackType]);
 
   useEffect(() => {
-    if (!isActiveStage || reviews.length === 0) {
-      autoAdvanceInFlightRef.current = false;
+    if (!isActiveStage || reviews.length === 0) return;
+
+    const submittedReviews = reviews.filter((review) => review.status === 'submitted');
+    const allSubmitted = submittedReviews.length === reviews.length;
+    if (!allSubmitted) return;
+
+    const submissionSignature = submittedReviews
+      .map((review) => `${review.id}:${review.submitted_at ?? 'none'}`)
+      .sort()
+      .join('|');
+
+    if (!submissionSignature) return;
+
+    const autoAdvanceKey = `${interviewCandidateId}:${feedbackType}:${submissionSignature}`;
+    if (feedbackAutoAdvanceInFlight.has(autoAdvanceKey) || feedbackAutoAdvanceProcessed.has(autoAdvanceKey)) {
       return;
     }
 
-    const allSubmitted = reviews.every((review) => review.status === 'submitted');
-    if (!allSubmitted || autoAdvanceInFlightRef.current) {
-      if (!allSubmitted) autoAdvanceInFlightRef.current = false;
-      return;
-    }
-
-    autoAdvanceInFlightRef.current = true;
+    feedbackAutoAdvanceInFlight.add(autoAdvanceKey);
     let cancelled = false;
 
     const advancePipeline = async () => {
       try {
-        await supabase.functions.invoke('process-interview-stage', {
+        const { error } = await supabase.functions.invoke('process-interview-stage', {
           body: {
             interviewCandidateId,
             action: 'advance',
@@ -166,14 +175,19 @@ export const DemoFeedbackResults = ({
           }
         });
 
+        if (error) throw error;
         if (cancelled) return;
 
+        feedbackAutoAdvanceProcessed.add(autoAdvanceKey);
         toast.success(`All ${feedbackType === 'hr' ? 'HR' : 'Demo'} feedback received! Stage completed.`);
         onAllSubmitted?.();
       } catch (err) {
-        autoAdvanceInFlightRef.current = false;
+        feedbackAutoAdvanceInFlight.delete(autoAdvanceKey);
         console.error('Error auto-advancing after feedback:', err);
+        return;
       }
+
+      feedbackAutoAdvanceInFlight.delete(autoAdvanceKey);
     };
 
     advancePipeline();
