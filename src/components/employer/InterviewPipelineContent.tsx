@@ -432,21 +432,19 @@ const StageActionButtons = ({
           });
         }
       } else if (step.title === 'HR Round Slot Booking') {
-        // Send dual emails when advancing from HR Round Slot Booking to HR Round
+        // HR Round is skipped — go directly to HR Feedback and send feedback emails
         try {
-          await supabase.functions.invoke('send-hr-round-emails', {
-            body: {
-              interviewCandidateId,
-            }
+          await supabase.functions.invoke('send-hr-feedback-email', {
+            body: { interviewCandidateId }
           });
-          toast.success(`✓ HR Round Slot Booking cleared! HR round invitations sent`, {
-            description: `Emails sent to candidate and observer`,
+          toast.success(`✓ HR Round Slot Booking cleared! HR Feedback request sent`, {
+            description: `Observers will receive an email with a feedback evaluation link`,
             duration: 5000,
           });
         } catch (hrError) {
-          console.error('Error sending HR round emails:', hrError);
-          toast.success(`✓ HR Round Slot Booking cleared! Moved to HR Round`, {
-            description: 'Note: HR emails failed to send. You can send manually from HR Round.',
+          console.error('Error sending HR feedback emails:', hrError);
+          toast.success(`✓ HR Round Slot Booking cleared! Moved to HR Feedback`, {
+            description: 'Note: HR feedback email failed to send. You can resend manually.',
             duration: 5000,
           });
         }

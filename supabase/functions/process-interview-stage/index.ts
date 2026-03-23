@@ -127,28 +127,48 @@ serve(async (req) => {
         });
 
       if (nextStage) {
-        // Move to next stage
+        let targetStage = nextStage;
+
+        // Skip HR Round stage — go directly from HR Round Slot Booking to HR Feedback
+        if (currentStage?.name === 'HR Round Slot Booking' && nextStage.name === 'HR Round') {
+          const hrFeedbackStage = stages.find(s => s.stage_order === nextStage.stage_order + 1);
+          if (hrFeedbackStage) {
+            // Mark HR Round as auto-passed
+            await supabase
+              .from('interview_events')
+              .insert({
+                interview_candidate_id: interviewCandidateId,
+                stage_id: nextStage.id,
+                status: 'passed',
+                completed_at: new Date().toISOString(),
+                notes: 'HR Round auto-completed — meeting confirmed during slot booking',
+              });
+            targetStage = hrFeedbackStage;
+            console.log('Skipping HR Round, advancing directly to', targetStage.name);
+          }
+        }
+
+        // Move to target stage
         await supabase
           .from('interview_candidates')
-          .update({ current_stage_id: nextStage.id })
+          .update({ current_stage_id: targetStage.id })
           .eq('id', interviewCandidateId);
 
-        // Check if next stage is offer stage
-        if (nextStage.name === 'Offer Stage') {
+        // Check if target stage is offer stage
+        if (targetStage.name === 'Offer Stage') {
           console.log('Candidate ready for offer letter generation');
         }
 
         // Auto-send slot booking email when advancing to a Slot Booking stage
-        const isSlotBookingStage = nextStage.name.toLowerCase().includes('slot booking');
+        const isSlotBookingStage = targetStage.name.toLowerCase().includes('slot booking');
         if (isSlotBookingStage) {
           try {
-            console.log(`Sending slot booking email for stage: ${nextStage.name}`);
+            console.log(`Sending slot booking email for stage: ${targetStage.name}`);
             const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
             if (RESEND_API_KEY) {
               const candidate = interviewCandidate.candidate;
               const job = interviewCandidate.job;
               
-              // Get employer info for branding
               let companyName = 'Gradia';
               if (job?.employer_id) {
                 const { data: employer } = await supabase
@@ -159,10 +179,9 @@ serve(async (req) => {
                 companyName = employer?.company_name || 'Gradia';
               }
 
-              // Determine what round this slot booking is for
-              const roundName = nextStage.name.replace(' Slot Booking', '');
+              const roundName = targetStage.name.replace(' Slot Booking', '');
               const baseUrl = Deno.env.get('APP_DOMAIN') || "https://gradia-link-shine.lovable.app";
-              const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${nextStage.id}&stageName=${encodeURIComponent(nextStage.name)}`;
+              const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${targetStage.id}&stageName=${encodeURIComponent(targetStage.name)}`;
 
               const emailResponse = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -225,7 +244,7 @@ serve(async (req) => {
                 }),
               });
               const emailResult = await emailResponse.json();
-              console.log(`Slot booking email sent for ${nextStage.name}:`, emailResult);
+              console.log(`Slot booking email sent for ${targetStage.name}:`, emailResult);
             }
           } catch (emailErr) {
             console.error('Failed to send slot booking email (non-blocking):', emailErr);
@@ -236,8 +255,8 @@ serve(async (req) => {
           success: true,
           action: 'advanced',
           previousStage: currentStage?.name,
-          currentStage: nextStage.name,
-          message: `Candidate advanced to ${nextStage.name}`
+          currentStage: targetStage.name,
+          message: `Candidate advanced to ${targetStage.name}`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
