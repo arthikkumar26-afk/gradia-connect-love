@@ -978,7 +978,8 @@ const ClickableStagesList = ({
   jobTitle,
   onUpdateStep,
   getStepIcon,
-  getStatusBadge
+  getStatusBadge,
+  onRefresh
 }: {
   interviewSteps: InterviewStep[];
   interviewCandidateId: string;
@@ -988,6 +989,7 @@ const ClickableStagesList = ({
   onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   getStepIcon: (step: InterviewStep) => React.ReactNode;
   getStatusBadge: (step: InterviewStep) => React.ReactNode;
+  onRefresh?: () => void;
 }) => {
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
