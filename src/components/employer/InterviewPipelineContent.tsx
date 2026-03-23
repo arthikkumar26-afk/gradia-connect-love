@@ -2042,15 +2042,13 @@ const CandidateProfileInline = ({
   const allStagesCompleted = completedSteps === candidate.interviewSteps.length;
   const hasStarted = completedSteps > 0 || candidate.interviewSteps.some(s => s.status === "current" || s.status === "in_progress");
 
-   // Start Interview - sends instruction email with suggestions & account creation link, then auto-advances to CV/Resume
+   // Start Interview - triggers full auto pipeline: instruction email → CV results → slot booking
   const handleStartInterview = async () => {
     setIsStartingInterview(true);
     try {
-      // Find the Interview Guidelines stage (first stage)
       const instructionStep = candidate.interviewSteps.find(s => s.title === 'Interview Guidelines');
       
       if (!instructionStep) {
-        // Fallback: if no instruction round, use old behavior
         const firstStep = candidate.interviewSteps.find(s => s.status === "current" || s.status === "pending");
         if (!firstStep) {
           toast.error("No pending stages to start");
@@ -2061,41 +2059,29 @@ const CandidateProfileInline = ({
         return;
       }
 
-      // 1. Send instruction email with suggestions and account creation link
-      const { error: instrError } = await supabase.functions.invoke('send-instruction-email', {
+      // Mark Interview Guidelines as completed
+      onUpdateStep(instructionStep.id, "completed", true);
+
+      // Trigger the full post-application pipeline (instruction email → CV results → slot booking)
+      // This runs sequentially in the edge function: each email + stage advancement
+      const { error: pipelineError } = await supabase.functions.invoke('post-application-pipeline', {
         body: {
           interviewCandidateId: candidate.interviewCandidateId,
         },
       });
 
-      if (instrError) throw instrError;
+      if (pipelineError) throw pipelineError;
 
-      // 2. Mark Interview Guidelines as completed and advance to CV/Resume
-      onUpdateStep(instructionStep.id, "completed", true);
-
-      // 3. Find CV/Resume stage and advance candidate to it
-      const { data, error: advanceError } = await supabase.functions.invoke('process-interview-stage', {
-        body: {
-          interviewCandidateId: candidate.interviewCandidateId,
-          action: 'advance',
-          feedback: 'Instruction email sent, advancing to CV/Resume',
-        }
+      toast.success(`Interview started! Full pipeline triggered for ${candidate.name}`, {
+        description: `Instruction email → CV Results → Slot Booking emails will be sent automatically`,
+        duration: 6000,
       });
 
-      if (advanceError) {
-        console.error('Error advancing past instruction round:', advanceError);
-      }
-
-      toast.success(`Interview started! Instruction email sent to ${candidate.name}`, {
-        description: `Instructions, tips & account creation link sent to ${candidate.email}`,
-        duration: 5000,
-      });
-
-      // Refresh data
+      // Refresh data to show updated stages
       onRefresh?.();
     } catch (error) {
       console.error('Error starting interview:', error);
-      toast.error('Failed to start interview');
+      toast.error('Failed to start interview pipeline');
     } finally {
       setIsStartingInterview(false);
     }
