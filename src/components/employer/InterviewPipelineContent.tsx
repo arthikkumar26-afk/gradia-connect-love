@@ -1423,6 +1423,28 @@ const ClickableStagesList = ({
         } catch (emailErr) {
           console.error('Error sending HR slot confirmed email:', emailErr);
         }
+
+        // Auto-advance to HR Feedback after 10 seconds (simulating HR round completion)
+        setTimeout(async () => {
+          try {
+            toast.info('HR Round finishing... advancing to HR Feedback');
+            await supabase.functions.invoke('process-interview-stage', {
+              body: {
+                interviewCandidateId,
+                action: 'advance',
+                feedback: 'HR Round completed, advancing to HR Feedback',
+              }
+            });
+
+            // Send HR feedback email to observers
+            await supabase.functions.invoke('send-hr-feedback-email', {
+              body: { interviewCandidateId }
+            });
+            toast.success('HR Feedback request sent to observers!');
+          } catch (feedbackErr) {
+            console.error('Error auto-advancing to HR Feedback:', feedbackErr);
+          }
+        }, 10000);
       }
     } catch (err) {
       console.error('Error confirming HR slot:', err);
