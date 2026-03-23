@@ -28,7 +28,8 @@ import {
 
 interface ReviewData {
   id: string;
-  session_id: string;
+  session_id: string | null;
+  interview_candidate_id: string | null;
   reviewer_email: string;
   reviewer_name: string | null;
   status: string;
@@ -38,6 +39,7 @@ interface ReviewData {
   demo_score?: number;
   demo_feedback?: string;
   demo_recording_url?: string;
+  job_title?: string;
 }
 
 export default function ManagementFeedback() {
