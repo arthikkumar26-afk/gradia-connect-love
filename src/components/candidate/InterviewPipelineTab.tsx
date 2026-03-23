@@ -46,6 +46,8 @@ interface SlotBooking {
   booking_time: string;
   booking_type: string;
   status: string;
+  demo_meet_link: string | null;
+  demo_meet_type: string | null;
 }
 
 interface InterviewEvent {
@@ -270,7 +272,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       // Fetch slot bookings for this candidate
       const { data: bookingsData } = await supabase
         .from('slot_bookings')
-        .select('id, booking_date, booking_time, booking_type, status')
+        .select('id, booking_date, booking_time, booking_type, status, demo_meet_link, demo_meet_type')
         .eq('candidate_id', candidateId)
         .order('created_at', { ascending: false });
 
@@ -549,8 +551,49 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
       case 'Demo Round': {
         const score = event?.ai_score;
+        // Find demo slot booking to get meeting info
+        const demoBooking = slotBookings.find(b => 
+          b.booking_type === 'demo_round' || b.booking_type === 'Demo Round'
+        );
+        const meetType = demoBooking?.demo_meet_type;
+        const meetLink = demoBooking?.demo_meet_link;
+        
         return (
           <div className="space-y-3">
+            {/* Meeting Info */}
+            {meetType && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">
+                    {meetType === 'ai_video' ? 'AI Video Interview' : 
+                     meetType === 'google_meet' || meetType === 'manual_link' ? 'Google Meet / Zoom' : 
+                     meetType === 'zoom_meet' ? 'Zoom Meeting' : 'Live Demo Session'}
+                  </span>
+                </div>
+                {meetLink && (
+                  <a
+                    href={meetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    <Video className="h-4 w-4" />
+                    Join Meeting
+                  </a>
+                )}
+                {meetType === 'ai_video' && !meetLink && (
+                  <p className="text-sm text-muted-foreground">
+                    AI-powered demo session. Check your email for the session link.
+                  </p>
+                )}
+              </div>
+            )}
+            {!meetType && (
+              <p className="text-sm text-muted-foreground">
+                Live demo session. Check your email for meeting details.
+              </p>
+            )}
             {score != null && (
               <div className="flex items-center gap-2">
                 <Award className="h-4 w-4 text-primary" />
