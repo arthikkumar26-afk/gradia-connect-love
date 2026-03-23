@@ -1003,6 +1003,9 @@ const ClickableStagesList = ({
   // Demo meeting options state
   const [demoMeetType, setDemoMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>('google_meet');
   const [demoMeetLink, setDemoMeetLink] = useState('');
+  // HR meeting options state
+  const [hrMeetType, setHrMeetType] = useState<'google_meet' | 'zoom_meet'>('google_meet');
+  const [hrMeetLink, setHrMeetLink] = useState('');
   // Fetch slot booking details for this candidate
   useEffect(() => {
     const fetchSlotBooking = async () => {
