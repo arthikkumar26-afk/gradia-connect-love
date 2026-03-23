@@ -256,16 +256,17 @@ export const StageResultsModal = ({
   const videoUrl = response?.demo_video_url || response?.recording_url;
   const hasMCQResults = response && response.total_questions > 0 && response.questions?.length > 0;
   
-  // Use response score if available, otherwise use event AI score
-  // For CV/Resume: prefer the overall_score from ai_feedback (actual analysis) over event score
-  const cvAnalysisScore = stageName === 'CV/Resume' && aiFeedback?.overall_score ? aiFeedback.overall_score : null;
-  const scorePercentage = response?.score || cvAnalysisScore || eventData?.ai_score || 0;
-  const isPassed = scorePercentage >= 50;
   const hasEventData = eventData && (eventData.ai_score !== null || eventData.ai_feedback || eventData.notes);
 
   // Parse AI feedback from event - handle both CV/Resume analysis format and generic AI feedback
   const aiFeedback = eventData?.ai_feedback;
   const isCVAnalysis = aiFeedback && (aiFeedback?.skill_match_score !== undefined || aiFeedback?.recommendation !== undefined || aiFeedback?.overall_score !== undefined);
+  
+  // Use response score if available, otherwise use event AI score
+  // For CV/Resume: prefer the overall_score from ai_feedback (actual analysis) over event score
+  const cvAnalysisScore = stageName === 'CV/Resume' && isCVAnalysis && aiFeedback?.overall_score ? aiFeedback.overall_score : null;
+  const scorePercentage = response?.score || cvAnalysisScore || eventData?.ai_score || 0;
+  const isPassed = scorePercentage >= 50;
   
   const feedbackText = typeof aiFeedback === 'string' 
     ? aiFeedback 
