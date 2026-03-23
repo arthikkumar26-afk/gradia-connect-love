@@ -46,6 +46,7 @@ const stageIcons: Record<string, React.ElementType> = {
   'Demo Feedback': MessageSquare,
   'HR Round Slot Booking': Clock,
   'HR Round': UserCheck,
+  'HR Feedback': MessageSquare,
   'Final Review': FileCheck,
 };
 
