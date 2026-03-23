@@ -205,7 +205,7 @@ serve(async (req) => {
         expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
         
         const invitationToken = crypto.randomUUID();
-        const appDomain = Deno.env.get('APP_DOMAIN') || 'https://gradia.co.in';
+        const appDomain = Deno.env.get('APP_DOMAIN') || 'https://gradia-link-shine.lovable.app';
         const interviewLink = `${appDomain}/interview?token=${invitationToken}`;
         
         const { data: invitationData } = await supabase

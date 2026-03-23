@@ -65,7 +65,7 @@ serve(async (req) => {
         </div>
         
         <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-          <p>We Are live Now: <a href="https://www.gradia.co.in" style="color: #1a73e8;">www.gradia.co.in</a></p>
+          <p>We Are live Now: <a href="https://gradia-link-shine.lovable.app" style="color: #1a73e8;">gradia-link-shine.lovable.app</a></p>
           <p>© 2026 Gradia. All rights reserved.</p>
         </div>
       </div>
