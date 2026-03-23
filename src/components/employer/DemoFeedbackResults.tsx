@@ -21,7 +21,7 @@ interface FeedbackReview {
   submitted_at: string | null;
 }
 
-export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandidateId: string }) => {
+export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo' }: { interviewCandidateId: string; feedbackType?: 'demo' | 'hr' }) => {
   const [reviews, setReviews] = useState<FeedbackReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isResending, setIsResending] = useState(false);
@@ -35,8 +35,9 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
         const [reviewsResult, recordingResult] = await Promise.all([
           supabase
             .from('management_reviews')
-            .select('id, reviewer_email, reviewer_name, status, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, strengths, areas_for_improvement, submitted_at')
+            .select('id, reviewer_email, reviewer_name, status, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, strengths, areas_for_improvement, submitted_at, feedback_type')
             .eq('interview_candidate_id', interviewCandidateId)
+            .eq('feedback_type', feedbackType)
             .order('created_at', { ascending: true }),
           supabase
             .from('interview_events')
@@ -109,7 +110,8 @@ export const DemoFeedbackResults = ({ interviewCandidateId }: { interviewCandida
   const handleResendFeedback = async () => {
     setIsResending(true);
     try {
-      await supabase.functions.invoke('send-demo-feedback-email', {
+      const functionName = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
+      await supabase.functions.invoke(functionName, {
         body: { interviewCandidateId }
       });
       toast.success('Feedback request resent to observers');

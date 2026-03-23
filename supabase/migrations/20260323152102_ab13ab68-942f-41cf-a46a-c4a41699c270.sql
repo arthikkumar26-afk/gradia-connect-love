@@ -1,0 +1,1 @@
+ALTER TABLE public.management_reviews ADD COLUMN feedback_type text DEFAULT 'demo';

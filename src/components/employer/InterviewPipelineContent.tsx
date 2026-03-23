@@ -1859,7 +1859,12 @@ const ClickableStagesList = ({
 
                 {/* Demo Feedback - Show feedback results */}
                 {step.title === 'Demo Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} />
+                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="demo" />
+                )}
+
+                {/* HR Feedback - Show feedback results */}
+                {step.title === 'HR Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType="hr" />
                 )}
 
                 {/* HR Round Slot Booking Details */}

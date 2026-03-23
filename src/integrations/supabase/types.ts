@@ -1662,6 +1662,7 @@ export type Database = {
           feedback_text: string | null
           feedback_token: string | null
           feedback_token_expires_at: string | null
+          feedback_type: string | null
           id: string
           interview_candidate_id: string | null
           overall_rating: number | null
@@ -1685,6 +1686,7 @@ export type Database = {
           feedback_text?: string | null
           feedback_token?: string | null
           feedback_token_expires_at?: string | null
+          feedback_type?: string | null
           id?: string
           interview_candidate_id?: string | null
           overall_rating?: number | null
@@ -1708,6 +1710,7 @@ export type Database = {
           feedback_text?: string | null
           feedback_token?: string | null
           feedback_token_expires_at?: string | null
+          feedback_type?: string | null
           id?: string
           interview_candidate_id?: string | null
           overall_rating?: number | null
