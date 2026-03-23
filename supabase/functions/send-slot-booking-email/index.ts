@@ -106,7 +106,7 @@ serve(async (req) => {
       <td style="padding: 24px;">
         <p style="margin: 0 0 16px;">Dear <strong>${candidate.full_name}</strong>,</p>
         
-        <p style="margin: 0 0 16px;">Congratulations on clearing the <strong>Resume Screening</strong> round! 🎉</p>
+        <p style="margin: 0 0 16px;">Congratulations on clearing the <strong>${previousStageName}</strong> round! 🎉</p>
         
         <p style="margin: 0 0 16px;">You have been selected for the <strong style="color: #1d4ed8;">${stageName}</strong> round for the position of <strong>${job.job_title}</strong> at <strong>${companyName}</strong>.</p>
         
