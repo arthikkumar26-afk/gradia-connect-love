@@ -698,6 +698,72 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         );
       }
 
+      case 'HR Feedback': {
+        const hrReviews = reviews.filter(r => r.status === 'submitted' && r.feedback_type === 'hr');
+        if (hrReviews.length === 0) {
+          return (
+            <p className="text-sm text-muted-foreground">HR Feedback collected from observers.</p>
+          );
+        }
+        return (
+          <div className="space-y-3">
+            {hrReviews.map((review, idx) => (
+              <div key={review.id} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground">
+                    {review.reviewer_name || `Reviewer ${idx + 1}`}
+                  </span>
+                  {review.recommendation && (
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${
+                        review.recommendation === 'strongly_recommend' || review.recommendation === 'recommend' 
+                          ? 'border-green-500/30 text-green-600' 
+                          : review.recommendation === 'not_recommend' 
+                          ? 'border-red-500/30 text-red-600' 
+                          : 'border-yellow-500/30 text-yellow-600'
+                      }`}
+                    >
+                      {review.recommendation === 'strongly_recommend' ? '✅ Strongly Recommended' :
+                       review.recommendation === 'recommend' ? '✅ Recommended' :
+                       review.recommendation === 'needs_improvement' ? '⚠️ Needs Improvement' :
+                       review.recommendation === 'not_recommend' ? '❌ Not Recommended' :
+                       review.recommendation}
+                    </Badge>
+                  )}
+                </div>
+                
+                {review.overall_rating && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Overall:</span>
+                    {renderStarRating(review.overall_rating)}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-3 gap-2">
+                  {review.communication_rating && (
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">Communication</p>
+                      {renderStarRating(review.communication_rating)}
+                    </div>
+                  )}
+                  {review.subject_knowledge_rating && (
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">Cultural Fit</p>
+                      {renderStarRating(review.subject_knowledge_rating)}
+                    </div>
+                  )}
+                </div>
+
+                {review.feedback_text && (
+                  <p className="text-xs text-muted-foreground italic">"{review.feedback_text}"</p>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+
       case 'HR Round': {
         const score = event?.ai_score;
         return (
