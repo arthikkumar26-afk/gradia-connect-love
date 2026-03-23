@@ -127,14 +127,35 @@ serve(async (req) => {
         });
 
       if (nextStage) {
-        // Move to next stage
+        let targetStage = nextStage;
+
+        // Skip HR Round stage — go directly from HR Round Slot Booking to HR Feedback
+        if (currentStage?.name === 'HR Round Slot Booking' && nextStage.name === 'HR Round') {
+          const hrFeedbackStage = stages.find(s => s.stage_order === nextStage.stage_order + 1);
+          if (hrFeedbackStage) {
+            // Mark HR Round as auto-passed
+            await supabase
+              .from('interview_events')
+              .insert({
+                interview_candidate_id: interviewCandidateId,
+                stage_id: nextStage.id,
+                status: 'passed',
+                completed_at: new Date().toISOString(),
+                notes: 'HR Round auto-completed — meeting confirmed during slot booking',
+              });
+            targetStage = hrFeedbackStage;
+            console.log('Skipping HR Round, advancing directly to', targetStage.name);
+          }
+        }
+
+        // Move to target stage
         await supabase
           .from('interview_candidates')
-          .update({ current_stage_id: nextStage.id })
+          .update({ current_stage_id: targetStage.id })
           .eq('id', interviewCandidateId);
 
-        // Check if next stage is offer stage
-        if (nextStage.name === 'Offer Stage') {
+        // Check if target stage is offer stage
+        if (targetStage.name === 'Offer Stage') {
           console.log('Candidate ready for offer letter generation');
         }
 
