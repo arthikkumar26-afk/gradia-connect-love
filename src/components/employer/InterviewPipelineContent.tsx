@@ -1355,6 +1355,12 @@ const ClickableStagesList = ({
     const chosen = hrSlotBooking.preferred_slots[selectedHrPreferredSlot];
     if (!chosen) return;
 
+    // Validate meeting link
+    if (!hrMeetLink.trim()) {
+      toast.error('Please enter a meeting link before confirming');
+      return;
+    }
+
     setIsConfirmingHrSlot(true);
     try {
       const { error } = await supabase
@@ -1362,16 +1368,48 @@ const ClickableStagesList = ({
         .update({ 
           booking_date: chosen.date, 
           booking_time: chosen.time, 
-          status: 'confirmed', 
+          status: 'confirmed',
+          demo_meet_link: hrMeetLink.trim(),
+          demo_meet_type: hrMeetType,
           updated_at: new Date().toISOString() 
         })
         .eq('id', hrSlotBooking.id);
       if (!error) {
         setHrSlotBooking({ ...hrSlotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed' });
         setSelectedHrPreferredSlot(null);
-        toast.success('HR slot confirmed!');
+        toast.success('HR slot confirmed with meeting link!');
 
-        // Send confirmation email
+        // Auto-advance to HR Round stage
+        try {
+          await supabase.functions.invoke('process-interview-stage', {
+            body: {
+              interviewCandidateId,
+              action: 'advance',
+              feedback: `Employer confirmed HR slot: ${chosen.date} at ${chosen.time} via ${hrMeetType}`,
+            }
+          });
+        } catch (advErr) {
+          console.error('Error advancing to HR Round:', advErr);
+        }
+
+        // Send HR round invitation emails to candidate and observers
+        try {
+          await supabase.functions.invoke('send-hr-round-emails', {
+            body: {
+              interviewCandidateId,
+              observerEmail: hrObserverEmails.length > 0 ? hrObserverEmails.join(',') : undefined,
+              meetLink: hrMeetLink.trim(),
+              meetType: hrMeetType,
+              confirmedDate: chosen.date,
+              confirmedTime: chosen.time,
+            }
+          });
+          toast.success('HR Round invitation emails sent!');
+        } catch (emailErr) {
+          console.error('Error sending HR round emails:', emailErr);
+        }
+
+        // Send slot confirmation email
         try {
           await supabase.functions.invoke('send-demo-slot-confirmed', {
             body: {
