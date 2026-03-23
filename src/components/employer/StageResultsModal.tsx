@@ -321,6 +321,10 @@ export const StageResultsModal = ({
                   The candidate may not have completed this stage yet.
                 </p>
               </div>
+            ) : isDemoFeedbackStage ? (
+              <div className="space-y-4">
+                <DemoFeedbackResults interviewCandidateId={interviewCandidateId} />
+              </div>
             ) : isSlotBookingStage ? (
               <>
                 {slotBookingData ? (
