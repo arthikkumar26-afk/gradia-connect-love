@@ -2807,6 +2807,7 @@ const CandidateProfileInline = ({
                     onUpdateStep={onUpdateStep}
                     getStepIcon={getStepIcon}
                     getStatusBadge={getStatusBadge}
+                    onRefresh={onRefresh}
                   />
                 </CardContent>
               </Card>
