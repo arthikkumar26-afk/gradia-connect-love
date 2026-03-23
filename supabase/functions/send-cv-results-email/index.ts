@@ -128,7 +128,60 @@ serve(async (req) => {
       `)
       .eq('id', interviewCandidateId)
       .single();
-...
+
+    if (candidateError || !interviewCandidate) {
+      throw new Error(`Failed to fetch interview candidate: ${candidateError?.message || 'Not found'}`);
+    }
+
+    const candidate = interviewCandidate.candidate;
+    const job = interviewCandidate.job;
+    if (!candidate || !job) throw new Error('Candidate or job data missing');
+
+    const candidateEmail = candidate.email || candidate.full_name;
+    if (!candidateEmail) throw new Error('Candidate email not found');
+
+    const analysisData = passedAnalysisData || interviewCandidate.ai_analysis || {};
+    const overallScore = analysisData.overall_score ?? interviewCandidate.ai_score ?? 0;
+    const skillMatchScore = analysisData.skill_match_score ?? analysisData.skillMatchScore ?? 0;
+    const experienceMatchScore = analysisData.experience_match_score ?? analysisData.experienceMatchScore ?? 0;
+    const locationMatchScore = analysisData.location_match_score ?? analysisData.locationMatchScore ?? 0;
+    const recommendation = analysisData.recommendation ?? 'maybe';
+    const strengths = analysisData.strengths ?? [];
+    const summary = analysisData.summary ?? 'Your resume has been reviewed by our AI system.';
+    const suggestedFocus = analysisData.suggested_focus ?? analysisData.suggestedFocus ?? [];
+
+    const companyName = job.employer?.company_name || job.employer?.full_name || 'the Company';
+
+    const html = buildEmailHtml({
+      candidateName: candidate.full_name || 'Candidate',
+      jobTitle: job.job_title,
+      companyName,
+      overallScore,
+      skillMatchScore,
+      experienceMatchScore,
+      locationMatchScore,
+      recommendation,
+      strengths,
+      summary,
+      suggestedFocus,
+    });
+
+    const emailResult = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: 'Gradia <no-reply@gradia.co.in>',
+        to: [candidateEmail],
+        subject: `CV Analysis Results - ${job.job_title} at ${companyName}`,
+        html,
+      }),
+    }).then(r => r.json());
+
+    console.log('CV results email sent:', emailResult);
+
     // Advance to Written Test Slot Booking stage only if the candidate hasn't already moved beyond it
     const { data: nextStage } = await supabase
       .from('interview_stages')
