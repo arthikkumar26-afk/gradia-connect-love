@@ -146,11 +146,12 @@ export const InterviewRecordingPlayer = ({ interviewCandidateId }: InterviewReco
                   Screen Recording
                 </p>
                 <video 
-                  src={selectedResponse.recording_url} 
                   controls 
                   className="w-full rounded-lg bg-black aspect-video"
                   preload="metadata"
                 >
+                  <source src={selectedResponse.recording_url} type="video/webm" />
+                  <source src={selectedResponse.recording_url} type="video/mp4" />
                   Your browser does not support video playback.
                 </video>
                 <Button 

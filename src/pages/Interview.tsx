@@ -465,7 +465,10 @@ const Interview = () => {
       const fileName = `${responseId}/${Date.now()}.webm`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('interview-recordings')
-        .upload(fileName, blob);
+        .upload(fileName, blob, {
+          contentType: 'video/webm',
+          upsert: false,
+        });
 
       console.log('Upload result:', uploadData, 'error:', uploadError);
 
