@@ -9,16 +9,17 @@ const corsHeaders = {
 /**
  * Post-Application Pipeline
  * 
- * This function handles the timed email sequence after a job application:
- * 1. Send Instruction email immediately (marks Interview Guidelines as completed)
- * 2. Wait 5 seconds → Send CV/Resume ATS results email (marks CV/Resume as completed)
- * 3. Wait 5 seconds → Send Written Test Slot Booking email
+ * This function handles the full automated email + stage advancement sequence:
+ * 1. Send Instruction email → advance to CV/Resume
+ * 2. Wait 5s → Send CV/Resume ATS results email → advance to Written Test Slot Booking
+ * 3. Wait 5s → Send Written Test Slot Booking email
  */
 async function processEmailPipeline(interviewCandidateId: string, analysisData: any) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-  // Step 1: Send Instruction Email immediately
+  // Step 1: Send Instruction Email (also advances Interview Guidelines → CV/Resume internally)
   console.log('Step 1: Sending instruction email...');
   try {
     const instructionResponse = await fetch(`${supabaseUrl}/functions/v1/send-instruction-email`, {
@@ -36,6 +37,7 @@ async function processEmailPipeline(interviewCandidateId: string, analysisData: 
   }
 
   // Step 2: Wait 5 seconds, then send CV/Resume ATS results email
+  // The send-cv-results-email function also advances to Written Test Slot Booking
   console.log('Waiting 5 seconds before CV results email...');
   await new Promise(resolve => setTimeout(resolve, 5000));
 
@@ -61,6 +63,31 @@ async function processEmailPipeline(interviewCandidateId: string, analysisData: 
   // Step 3: Wait 5 seconds, then send Written Test Slot Booking email
   console.log('Waiting 5 seconds before Written Test slot booking email...');
   await new Promise(resolve => setTimeout(resolve, 5000));
+
+  // Ensure candidate is on Written Test Slot Booking stage before sending
+  const { data: slotStage } = await supabase
+    .from('interview_stages')
+    .select('id, stage_order')
+    .eq('name', 'Written Test Slot Booking')
+    .single();
+
+  if (slotStage) {
+    // Verify candidate stage and advance if needed
+    const { data: ic } = await supabase
+      .from('interview_candidates')
+      .select('current_stage_id, current_stage:interview_stages!interview_candidates_current_stage_id_fkey(stage_order)')
+      .eq('id', interviewCandidateId)
+      .single();
+
+    const currentOrder = (ic?.current_stage as any)?.stage_order ?? -1;
+    if (currentOrder < slotStage.stage_order) {
+      await supabase
+        .from('interview_candidates')
+        .update({ current_stage_id: slotStage.id })
+        .eq('id', interviewCandidateId);
+      console.log('Advanced candidate to Written Test Slot Booking stage');
+    }
+  }
 
   console.log('Step 3: Sending Written Test slot booking email...');
   try {
