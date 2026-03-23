@@ -113,10 +113,10 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           responses = respData || [];
         }
 
-        // Fetch management reviews (for Demo Feedback)
+        // Fetch management reviews (for Demo Feedback and HR Feedback)
         const { data: mgmtReviews } = await supabase
           .from('management_reviews')
-          .select('reviewer_name, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, status')
+          .select('reviewer_name, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, status, feedback_type')
           .eq('interview_candidate_id', interviewCandidateId);
 
         // Determine the candidate's current stage order
