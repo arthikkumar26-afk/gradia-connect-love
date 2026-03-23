@@ -166,8 +166,8 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    // Auto-progress to next stage if score >= 50%
-    const shouldProgress = score >= 50 && nextStage;
+    // Always auto-progress to next stage after completing a test
+    const shouldProgress = !!nextStage;
     
     await supabase
       .from('interview_candidates')
