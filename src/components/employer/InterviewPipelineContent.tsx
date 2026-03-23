@@ -1476,7 +1476,7 @@ const ClickableStagesList = ({
     }
   };
 
-  const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview");
+  const filteredSteps = interviewSteps.filter(step => step.title !== "AI Phone Interview" && step.title !== "HR Round");
   const firstPendingIndex = filteredSteps.findIndex(s => s.status === "pending");
 
   const handleStageClick = (step: InterviewStep) => {
