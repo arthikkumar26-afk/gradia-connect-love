@@ -1610,11 +1610,69 @@ const ClickableStagesList = ({
                           );
                         })}
                         
+                        {/* Meeting Type Selection */}
+                        <div className="mt-2 pt-2 border-t border-purple-200 space-y-1.5">
+                          <label className="text-[10px] font-medium text-purple-700 flex items-center gap-1">
+                            <Video className="h-3 w-3" />
+                            Meeting Type
+                          </label>
+                          <div className="grid grid-cols-3 gap-1">
+                            <Button
+                              size="sm"
+                              variant={demoMeetType === 'ai_video' ? 'default' : 'outline'}
+                              className={`h-6 text-[9px] px-1 ${
+                                demoMeetType === 'ai_video'
+                                  ? 'bg-pink-600 hover:bg-pink-700 text-white'
+                                  : 'border-pink-300 text-pink-600 hover:bg-pink-50'
+                              }`}
+                              onClick={() => setDemoMeetType('ai_video')}
+                            >
+                              AI Video
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={demoMeetType === 'google_meet' ? 'default' : 'outline'}
+                              className={`h-6 text-[9px] px-1 ${
+                                demoMeetType === 'google_meet'
+                                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  : 'border-blue-300 text-blue-600 hover:bg-blue-50'
+                              }`}
+                              onClick={() => setDemoMeetType('google_meet')}
+                            >
+                              Google Meet
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={demoMeetType === 'zoom_meet' ? 'default' : 'outline'}
+                              className={`h-6 text-[9px] px-1 ${
+                                demoMeetType === 'zoom_meet'
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                  : 'border-purple-300 text-purple-600 hover:bg-purple-50'
+                              }`}
+                              onClick={() => setDemoMeetType('zoom_meet')}
+                            >
+                              Zoom
+                            </Button>
+                          </div>
+                          {(demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && (
+                            <Input
+                              type="url"
+                              placeholder={demoMeetType === 'google_meet' ? 'Paste Google Meet link' : 'Paste Zoom link'}
+                              value={demoMeetLink}
+                              onChange={(e) => setDemoMeetLink(e.target.value)}
+                              className="h-6 text-[10px] border-purple-200"
+                            />
+                          )}
+                          {demoMeetType === 'ai_video' && (
+                            <p className="text-[9px] text-pink-600">Candidate will record demo via AI video platform</p>
+                          )}
+                        </div>
+
                         <Button
                           size="sm"
                           className="w-full h-7 text-[10px] bg-purple-600 hover:bg-purple-700 mt-1"
                           onClick={handleConfirmPreferredSlot}
-                          disabled={selectedPreferredSlot === null || isConfirmingSlot}
+                          disabled={selectedPreferredSlot === null || isConfirmingSlot || ((demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && !demoMeetLink.trim())}
                         >
                           {isConfirmingSlot ? (
                             <>
@@ -1624,7 +1682,7 @@ const ClickableStagesList = ({
                           ) : (
                             <>
                               <Check className="h-3 w-3 mr-1" />
-                              Confirm Timing & Send Link
+                              Confirm & Send Invitations
                             </>
                           )}
                         </Button>
