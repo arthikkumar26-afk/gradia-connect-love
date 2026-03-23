@@ -298,8 +298,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             y += 5;
           }
 
-          // Demo Feedback Reviews
-          if (review.stageName === 'Demo Feedback' && review.reviews) {
+          // Demo/HR Feedback Reviews
+          if ((review.stageName === 'Demo Feedback' || review.stageName === 'HR Feedback') && review.reviews) {
             for (const r of review.reviews) {
               if (y > 260) { doc.addPage(); y = 20; }
               doc.setFont('helvetica', 'bold');
