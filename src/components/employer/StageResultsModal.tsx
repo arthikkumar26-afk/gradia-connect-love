@@ -257,7 +257,9 @@ export const StageResultsModal = ({
   const hasMCQResults = response && response.total_questions > 0 && response.questions?.length > 0;
   
   // Use response score if available, otherwise use event AI score
-  const scorePercentage = response?.score || eventData?.ai_score || 0;
+  // For CV/Resume: prefer the overall_score from ai_feedback (actual analysis) over event score
+  const cvAnalysisScore = stageName === 'CV/Resume' && aiFeedback?.overall_score ? aiFeedback.overall_score : null;
+  const scorePercentage = response?.score || cvAnalysisScore || eventData?.ai_score || 0;
   const isPassed = scorePercentage >= 50;
   const hasEventData = eventData && (eventData.ai_score !== null || eventData.ai_feedback || eventData.notes);
 
