@@ -1916,14 +1916,56 @@ const ClickableStagesList = ({
                                 </label>
                               );
                             })}
+                            
+                            {/* HR Meeting Type Selection */}
+                            <div className="mt-2 pt-2 border-t border-indigo-200 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                              <label className="text-[10px] font-medium text-indigo-700 flex items-center gap-1">
+                                <Video className="h-3 w-3" />
+                                Meeting Type
+                              </label>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant={hrMeetType === 'google_meet' ? 'default' : 'outline'}
+                                  className={`h-6 text-[9px] px-1.5 ${
+                                    hrMeetType === 'google_meet'
+                                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                      : 'border-blue-300 text-blue-600 hover:bg-blue-50'
+                                  }`}
+                                  onClick={() => setHrMeetType('google_meet')}
+                                >
+                                  Google Meet
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={hrMeetType === 'zoom_meet' ? 'default' : 'outline'}
+                                  className={`h-6 text-[9px] px-1.5 ${
+                                    hrMeetType === 'zoom_meet'
+                                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                      : 'border-purple-300 text-purple-600 hover:bg-purple-50'
+                                  }`}
+                                  onClick={() => setHrMeetType('zoom_meet')}
+                                >
+                                  Zoom
+                                </Button>
+                              </div>
+                              <Input
+                                type="url"
+                                placeholder={hrMeetType === 'google_meet' ? 'Paste Google Meet link' : 'Paste Zoom link'}
+                                value={hrMeetLink}
+                                onChange={(e) => setHrMeetLink(e.target.value)}
+                                className="h-6 text-[10px] border-indigo-200"
+                              />
+                            </div>
+
                             <Button
                               size="sm"
                               className="h-6 text-[10px] px-3 mt-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                               onClick={handleConfirmHrPreferredSlot}
-                              disabled={selectedHrPreferredSlot === null || isConfirmingHrSlot}
+                              disabled={selectedHrPreferredSlot === null || isConfirmingHrSlot || !hrMeetLink.trim()}
                             >
                               {isConfirmingHrSlot ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Check className="h-3 w-3 mr-1" />}
-                              Confirm Selected Slot
+                              Confirm Slot & Send Invitations
                             </Button>
                           </div>
                         ) : hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 && hrSlotBooking.status === 'confirmed' ? (
