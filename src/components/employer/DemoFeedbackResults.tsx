@@ -128,6 +128,32 @@ export const DemoFeedbackResults = ({ interviewCandidateId, feedbackType = 'demo
     };
   }, [interviewCandidateId, feedbackType]);
 
+  // Auto-advance when all reviews are submitted
+  const [hasAutoAdvanced, setHasAutoAdvanced] = useState(false);
+  useEffect(() => {
+    if (hasAutoAdvanced || reviews.length === 0) return;
+    const allSubmitted = reviews.every(r => r.status === 'submitted');
+    if (allSubmitted) {
+      setHasAutoAdvanced(true);
+      const advancePipeline = async () => {
+        try {
+          await supabase.functions.invoke('process-interview-stage', {
+            body: {
+              interviewCandidateId,
+              action: 'advance',
+              feedback: `All ${feedbackType} feedback submitted, auto-advancing`,
+            }
+          });
+          toast.success(`All ${feedbackType === 'hr' ? 'HR' : 'Demo'} feedback received! Stage completed.`);
+          onAllSubmitted?.();
+        } catch (err) {
+          console.error('Error auto-advancing after feedback:', err);
+        }
+      };
+      advancePipeline();
+    }
+  }, [reviews, hasAutoAdvanced, interviewCandidateId, feedbackType, onAllSubmitted]);
+
   const handleResendFeedback = async () => {
     setIsResending(true);
     try {
