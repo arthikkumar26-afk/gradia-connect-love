@@ -160,7 +160,24 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             }
 
             if (stage.name === 'Demo Feedback') {
-              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted');
+              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted' && (r.feedback_type === 'demo' || !r.feedback_type));
+              if (submittedReviews.length > 0) {
+                review.reviews = submittedReviews.map(r => ({
+                  reviewerName: r.reviewer_name,
+                  overallRating: r.overall_rating,
+                  teachingRating: r.teaching_skills_rating,
+                  communicationRating: r.communication_rating,
+                  knowledgeRating: r.subject_knowledge_rating,
+                  recommendation: r.recommendation,
+                  feedbackText: r.feedback_text,
+                }));
+                const avgRating = submittedReviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / submittedReviews.length;
+                review.score = Math.round((avgRating / 5) * 100);
+              }
+            }
+
+            if (stage.name === 'HR Feedback') {
+              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted' && r.feedback_type === 'hr');
               if (submittedReviews.length > 0) {
                 review.reviews = submittedReviews.map(r => ({
                   reviewerName: r.reviewer_name,
