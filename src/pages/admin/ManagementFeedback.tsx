@@ -449,6 +449,12 @@ export default function ManagementFeedback() {
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">{review.candidate_email || "N/A"}</span>
                 </div>
+                {review.job_title && (
+                  <div className="flex items-center gap-2 md:col-span-2">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Position: <span className="font-medium text-foreground">{review.job_title}</span></span>
+                  </div>
+                )}
               </div>
               
               {review.demo_score !== undefined && (
