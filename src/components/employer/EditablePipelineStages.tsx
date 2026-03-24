@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { CheckCircle2, Bot, User, X, Plus, GripVertical, Pencil, RotateCcw } from "lucide-react";
+import { CheckCircle2, Bot, User, X, Plus, GripVertical, Pencil, Sparkles, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { PipelineStage } from "@/data/interviewPipelineConfig";
 
 interface EditablePipelineStagesProps {
@@ -19,6 +22,10 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
   const [newStageDesc, setNewStageDesc] = useState("");
   const [newStageType, setNewStageType] = useState<"manual" | "ai">("manual");
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [showAiPrompt, setShowAiPrompt] = useState(false);
+  const [automationConfig, setAutomationConfig] = useState<any>(null);
 
   const handleRemoveStage = (index: number) => {
     const updated = stages.filter((_, i) => i !== index).map((s, i) => ({ ...s, order: i + 1 }));
@@ -32,6 +39,7 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
       name: newStageName.trim(),
       description: newStageDesc.trim() || "Custom stage",
       isAutomated: newStageType === "ai",
+      ...(automationConfig ? { automationConfig } : {}),
     };
     onStagesChange([...stages, newStage]);
     resetForm();
@@ -42,7 +50,7 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
     if (editingIndex === null || !newStageName.trim()) return;
     const updated = stages.map((s, i) =>
       i === editingIndex
-        ? { ...s, name: newStageName.trim(), description: newStageDesc.trim() || s.description, isAutomated: newStageType === "ai" }
+        ? { ...s, name: newStageName.trim(), description: newStageDesc.trim() || s.description, isAutomated: newStageType === "ai", ...(automationConfig ? { automationConfig } : {}) }
         : s
     );
     onStagesChange(updated);
@@ -57,6 +65,9 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
     setNewStageName(stage.name);
     setNewStageDesc(stage.description);
     setNewStageType(stage.isAutomated ? "ai" : "manual");
+    setShowAiPrompt(false);
+    setAiPrompt("");
+    setAutomationConfig(null);
     setShowAddDialog(true);
   };
 
@@ -70,6 +81,41 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
     setNewStageName("");
     setNewStageDesc("");
     setNewStageType("manual");
+    setAiPrompt("");
+    setShowAiPrompt(false);
+    setAutomationConfig(null);
+    setIsAiLoading(false);
+  };
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error("Please describe what this stage should do");
+      return;
+    }
+    
+    setIsAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-stage-config', {
+        body: {
+          prompt: aiPrompt.trim(),
+          existingStages: stages.map(s => ({ name: s.name, description: s.description })),
+        }
+      });
+
+      if (error) throw error;
+
+      setNewStageName(data.name || "");
+      setNewStageDesc(data.description || "");
+      setNewStageType(data.isAutomated ? "ai" : "manual");
+      if (data.automationConfig) {
+        setAutomationConfig(data.automationConfig);
+      }
+      toast.success("AI configured the stage! Review and adjust if needed.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate stage config");
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   const handleDragStart = (index: number) => setDraggedIndex(index);
@@ -133,11 +179,56 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
 
       {/* Add / Edit Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>{editingIndex !== null ? "Edit Stage" : "Add Custom Stage"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* AI Prompt Section */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowAiPrompt(!showAiPrompt)}
+                className="flex items-center gap-2 text-sm font-medium text-primary w-full"
+              >
+                <Sparkles className="h-4 w-4" />
+                <span>AI Auto-Configure Stage</span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {showAiPrompt ? "Hide" : "Click to expand"}
+                </span>
+              </button>
+              {showAiPrompt && (
+                <div className="space-y-2 pt-1">
+                  <Textarea
+                    placeholder="Describe what this stage should do... e.g., 'Conduct a 30-minute live coding test where candidate solves 2 DSA problems with screen sharing' or 'Group discussion round with 5 candidates discussing a business case study'"
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    rows={3}
+                    className="text-sm"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAiGenerate}
+                    disabled={isAiLoading || !aiPrompt.trim()}
+                    className="gap-1.5 w-full"
+                  >
+                    {isAiLoading ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        AI is configuring...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Generate Stage Config
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Stage Name *</label>
               <Input
@@ -166,6 +257,38 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Show automation config summary if AI generated it */}
+            {automationConfig && (
+              <div className="rounded-md border bg-muted/50 p-3 space-y-1.5">
+                <p className="text-xs font-semibold text-primary flex items-center gap-1">
+                  <Bot className="h-3 w-3" /> Backend Automation Config
+                </p>
+                <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
+                  <span>Trigger:</span>
+                  <span className="font-medium text-foreground capitalize">{automationConfig.triggerType?.replace('_', ' ')}</span>
+                  <span>Evaluation:</span>
+                  <span className="font-medium text-foreground capitalize">{automationConfig.evaluationType?.replace('_', ' ')}</span>
+                  {automationConfig.duration && (
+                    <>
+                      <span>Duration:</span>
+                      <span className="font-medium text-foreground">{automationConfig.duration} min</span>
+                    </>
+                  )}
+                  {automationConfig.emailTemplate && (
+                    <>
+                      <span>Email:</span>
+                      <span className="font-medium text-foreground capitalize">{automationConfig.emailTemplate}</span>
+                    </>
+                  )}
+                </div>
+                {automationConfig.instructions && (
+                  <p className="text-xs text-muted-foreground mt-1 border-t pt-1.5">
+                    <span className="font-medium">Instructions:</span> {automationConfig.instructions}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
