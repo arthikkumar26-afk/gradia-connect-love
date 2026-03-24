@@ -13,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User, FileText, Upload, Eye, Wand2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline } from "@/data/interviewPipelineConfig";
+import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline, type PipelineStage } from "@/data/interviewPipelineConfig";
+import EditablePipelineStages from "@/components/employer/EditablePipelineStages";
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 import { indiaLocationData } from "@/data/indiaLocations";
 
