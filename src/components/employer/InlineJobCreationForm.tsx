@@ -13,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User, FileText, Upload, Eye, Wand2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline } from "@/data/interviewPipelineConfig";
+import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline, type PipelineStage } from "@/data/interviewPipelineConfig";
+import EditablePipelineStages from "@/components/employer/EditablePipelineStages";
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 import { indiaLocationData } from "@/data/indiaLocations";
 
@@ -49,6 +50,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [isRefiningReq, setIsRefiningReq] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+  const [customStages, setCustomStages] = useState<PipelineStage[]>([]);
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string>>({});
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -80,7 +82,14 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
 
   const watchedInterviewType = form.watch("interview_type");
   const pipelineTypes = getPipelineTypesForInterviewType(watchedInterviewType);
-  const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType, selectedRole) : [];
+  const defaultPipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType, selectedRole) : [];
+  
+  const pipelineStagesKey = defaultPipelineStages.map(s => s.name).join(',');
+  const [prevInlineStagesKey, setPrevInlineStagesKey] = useState("");
+  if (pipelineStagesKey && pipelineStagesKey !== prevInlineStagesKey) {
+    setCustomStages([...defaultPipelineStages]);
+    setPrevInlineStagesKey(pipelineStagesKey);
+  }
 
   // Get dynamic form config based on interview type
   const formConfig = getFormConfigForInterviewType(watchedInterviewType);
@@ -657,34 +666,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
-            {/* Pipeline Stages Preview */}
-            {pipelineStages.length > 0 && (
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  <h4 className="text-sm font-semibold">
-                    Interview Pipeline Stages ({pipelineStages.length} stages)
-                  </h4>
-                </div>
-                <div className="space-y-2">
-                  {pipelineStages.map((stage, index) => (
-                    <div key={index} className="flex items-center gap-3 rounded-md border bg-background p-3">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{stage.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{stage.description}</p>
-                      </div>
-                      <Badge variant={stage.isAutomated ? "default" : "outline"} className="shrink-0 text-[10px] gap-1">
-                        {stage.isAutomated ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                        {stage.isAutomated ? 'AI' : 'Manual'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Editable Pipeline Stages */}
+            <EditablePipelineStages
+              stages={customStages}
+              onStagesChange={setCustomStages}
+            />
 
             {/* AI Create with Requirements */}
             <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
