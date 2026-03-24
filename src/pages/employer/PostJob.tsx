@@ -269,6 +269,7 @@ const PostJob = () => {
         programme: dynamicFieldValues["program"] || null,
         category: dynamicFieldValues["category"] || null,
         function_type: dynamicFieldValues["function"] || null,
+        pipeline_stages: customStages.length > 0 ? customStages : null,
       };
 
       const { error } = await supabase.from("jobs").insert([jobData] as any);

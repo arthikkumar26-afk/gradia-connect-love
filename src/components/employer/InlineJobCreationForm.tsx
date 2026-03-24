@@ -542,6 +542,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         board: dynamicFieldValues["board"] || null,
         designation: selectedRole || dynamicFieldValues["designation"] || null,
         subjects: dynamicFieldValues["subjects"] || dynamicFieldValues["specialized_subjects"] || null,
+        pipeline_stages: customStages.length > 0 ? customStages : null,
       } as any]);
 
       if (error) throw error;
