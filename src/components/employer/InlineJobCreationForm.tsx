@@ -50,6 +50,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
   const [isRefiningReq, setIsRefiningReq] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+  const [customStages, setCustomStages] = useState<PipelineStage[]>([]);
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string>>({});
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
