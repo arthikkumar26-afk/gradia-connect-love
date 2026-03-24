@@ -520,37 +520,11 @@ const PostJob = () => {
                   </div>
                 )}
 
-                {/* Pipeline Stages Preview */}
-                {pipelineStages.length > 0 && (
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <h4 className="text-sm font-semibold">
-                        Interview Pipeline Stages ({pipelineStages.length} stages)
-                      </h4>
-                    </div>
-                    <div className="space-y-2">
-                      {pipelineStages.map((stage, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 rounded-md border bg-background p-3"
-                        >
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{stage.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{stage.description}</p>
-                          </div>
-                          <Badge variant={stage.isAutomated ? "default" : "outline"} className="shrink-0 text-[10px] gap-1">
-                            {stage.isAutomated ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
-                            {stage.isAutomated ? 'AI' : 'Manual'}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Editable Pipeline Stages */}
+                <EditablePipelineStages
+                  stages={customStages}
+                  onStagesChange={setCustomStages}
+                />
 
                 {/* Salary Range & Closing Date */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
