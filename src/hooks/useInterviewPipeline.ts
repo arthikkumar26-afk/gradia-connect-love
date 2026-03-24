@@ -101,6 +101,7 @@ interface DbJob {
   id: string;
   job_title: string;
   skills: string[] | null;
+  pipeline_stages: any | null;
 }
 
 interface DbInterviewEvent {
