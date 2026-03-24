@@ -1635,6 +1635,7 @@ export type Database = {
           location: string | null
           moderation_status: string | null
           organisation: string | null
+          pipeline_stages: Json | null
           posted_date: string | null
           program: string | null
           requirements: string | null
@@ -1667,6 +1668,7 @@ export type Database = {
           location?: string | null
           moderation_status?: string | null
           organisation?: string | null
+          pipeline_stages?: Json | null
           posted_date?: string | null
           program?: string | null
           requirements?: string | null
@@ -1699,6 +1701,7 @@ export type Database = {
           location?: string | null
           moderation_status?: string | null
           organisation?: string | null
+          pipeline_stages?: Json | null
           posted_date?: string | null
           program?: string | null
           requirements?: string | null
