@@ -65,7 +65,15 @@ const PostJob = () => {
 
   const watchedInterviewType = form.watch("interview_type");
   const pipelineTypes = getPipelineTypesForInterviewType(watchedInterviewType);
-  const pipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType, selectedRole) : [];
+  const defaultPipelineStages = selectedPipelineType ? getPipelineStages(watchedInterviewType, selectedPipelineType, selectedRole) : [];
+  
+  // Sync customStages when default stages change
+  const pipelineStagesKey = defaultPipelineStages.map(s => s.name).join(',');
+  const [prevStagesKey, setPrevStagesKey] = useState("");
+  if (pipelineStagesKey && pipelineStagesKey !== prevStagesKey) {
+    setCustomStages([...defaultPipelineStages]);
+    setPrevStagesKey(pipelineStagesKey);
+  }
 
 
   const handleRefineWithAI = async () => {
