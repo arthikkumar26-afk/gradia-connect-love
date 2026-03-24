@@ -220,6 +220,9 @@ export const useInterviewPipeline = () => {
             // Get the current stage order
             const currentStageOrder = dbStages.find(st => st.id === c.current_stage_id)?.stage_order ?? 0;
             
+            // Use job-specific custom pipeline stages for display names if available
+            const jobCustomStages = c.jobs?.pipeline_stages as Array<{ order: number; name: string; description: string; isAutomated: boolean }> | null;
+            
             const interviewSteps: InterviewStep[] = dbStages.map((s) => {
               // Find the most relevant event for this stage (completed > in_progress > pending)
               const stageEvents = events.filter((e) => e.stage_id === s.id);
@@ -233,14 +236,11 @@ export const useInterviewPipeline = () => {
               
               // First, determine status based on stage order relative to current stage
               if (s.stage_order < currentStageOrder) {
-                // All stages before current stage should be marked as completed
                 status = "completed";
               } else if (s.stage_order === currentStageOrder) {
-                // Current stage
                 status = "current";
                 liveStatus = "waiting";
               } else {
-                // Future stages
                 status = "pending";
               }
               
@@ -255,7 +255,6 @@ export const useInterviewPipeline = () => {
                   isLive = true;
                   liveStatus = "in_interview";
                 } else if (event.status === "scheduled" || event.status === "pending") {
-                  // Only show as current if it's the current stage
                   if (s.stage_order === currentStageOrder) {
                     status = "current";
                     liveStatus = "waiting";
@@ -263,9 +262,13 @@ export const useInterviewPipeline = () => {
                 }
               }
 
+              // Use custom stage name if available for this order
+              const customStage = jobCustomStages?.find(cs => cs.order === s.stage_order);
+              const displayTitle = customStage?.name || s.name;
+
               return {
                 id: s.id,
-                title: s.name,
+                title: displayTitle,
                 status,
                 isLive,
                 liveStatus,
