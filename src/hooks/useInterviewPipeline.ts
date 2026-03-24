@@ -179,7 +179,8 @@ export const useInterviewPipeline = () => {
           jobs:job_id (
             id,
             job_title,
-            skills
+            skills,
+            pipeline_stages
           )
         `)
         .eq('status', 'active')
