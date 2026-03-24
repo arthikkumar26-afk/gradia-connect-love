@@ -44,6 +44,7 @@ const PostJob = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [selectedPipelineType, setSelectedPipelineType] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+  const [customStages, setCustomStages] = useState<PipelineStage[]>([]);
 
   const form = useForm<JobFormValues>({
     resolver: zodResolver(jobFormSchema),
