@@ -445,7 +445,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
           const isSkipped = review.status === 'skipped';
           const isExpanded = expandedStage === review.stageName;
-          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'Segment Round', 'Admin & Academic Round', 'HR Round', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName);
+          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round', 'HR Round', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName);
 
           return (
             <div
