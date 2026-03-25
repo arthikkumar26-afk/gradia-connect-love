@@ -223,6 +223,21 @@ export const useInterviewPipeline = () => {
             // Use job-specific custom pipeline stages for display names if available
             const jobCustomStages = c.jobs?.pipeline_stages as Array<{ order: number; name: string; description: string; isAutomated: boolean }> | null;
             
+            // Build a mapping from stage_order to custom pipeline position
+            // This handles reordered pipelines (e.g., Principal: Segment before HR)
+            let pipelinePositionMap: Map<number, number> | null = null;
+            if (jobCustomStages && jobCustomStages.length > 0) {
+              pipelinePositionMap = new Map();
+              jobCustomStages.forEach((cs, index) => {
+                pipelinePositionMap!.set(cs.order, index);
+              });
+            }
+            
+            // Get the current stage's position in the custom pipeline (or fallback to stage_order)
+            const currentPipelinePosition = pipelinePositionMap 
+              ? (pipelinePositionMap.get(currentStageOrder) ?? currentStageOrder)
+              : currentStageOrder;
+            
             const interviewSteps: InterviewStep[] = dbStages.map((s) => {
               // Find the most relevant event for this stage (completed > in_progress > pending)
               const stageEvents = events.filter((e) => e.stage_id === s.id);
@@ -234,8 +249,13 @@ export const useInterviewPipeline = () => {
               let isLive = false;
               let liveStatus: InterviewStep["liveStatus"] = undefined;
               
-              // First, determine status based on stage order relative to current stage
-              if (s.stage_order < currentStageOrder) {
+              // Use custom pipeline position if available, otherwise use raw stage_order
+              const stagePipelinePosition = pipelinePositionMap
+                ? (pipelinePositionMap.get(s.stage_order) ?? s.stage_order)
+                : s.stage_order;
+              
+              // Determine status based on pipeline position relative to current stage
+              if (stagePipelinePosition < currentPipelinePosition) {
                 status = "completed";
               } else if (s.stage_order === currentStageOrder) {
                 status = "current";
