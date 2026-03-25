@@ -448,8 +448,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   const getCurrentStageOrder = (currentStageId: string | null) => {
     if (!currentStageId) return 1;
-    const stage = stages.find(s => s.id === currentStageId);
-    return stage?.stage_order || 1;
+    const idx = stages.findIndex(s => s.id === currentStageId);
+    return idx !== -1 ? idx + 1 : 1;
   };
 
   const renderStarRating = (rating: number | null, max: number = 5) => {
