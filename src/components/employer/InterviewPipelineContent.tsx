@@ -481,7 +481,7 @@ const StageActionButtons = ({
         // HR Round Slot Booking → HR Round (not skipped for Principal pipeline)
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: { interviewCandidateId }
+            body: { interviewCandidateId, roundName: 'HR Round' }
           });
           toast.success(`✓ HR Round Slot Booking cleared! HR Round invitations sent`, {
             description: `Emails sent to candidate and observer`,
