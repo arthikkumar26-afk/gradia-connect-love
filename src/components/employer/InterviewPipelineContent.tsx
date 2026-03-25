@@ -433,9 +433,9 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'HR Round') {
+      } else if (step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'Core Team Round' || step.title === 'Management Round' || step.title === 'HR Round') {
         // Any round → its feedback stage: auto-send feedback request
-        const feedbackType = step.title === 'HR Round' ? 'hr' : step.title === 'Segment Round' ? 'segment' : step.title === 'Admin & Academic Round' ? 'admin_academic' : 'demo';
+        const feedbackType = step.title === 'HR Round' ? 'hr' : step.title === 'Core Team Round' ? 'core_team' : step.title === 'Management Round' ? 'management' : step.title === 'Segment Round' ? 'segment' : step.title === 'Admin & Academic Round' ? 'admin_academic' : 'demo';
         const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
         try {
           await supabase.functions.invoke(feedbackFn, {
