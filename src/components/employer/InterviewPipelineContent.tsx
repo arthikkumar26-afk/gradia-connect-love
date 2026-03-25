@@ -1711,8 +1711,8 @@ const ClickableStagesList = ({
                   <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
                       <Calendar className="h-3 w-3" />
-                      {slotBooking.preferred_slots && slotBooking.preferred_slots.length > 0 
-                        ? `Candidate's Preferred Timings (${slotBooking.preferred_slots.length})`
+                      {activeBooking.preferred_slots && activeBooking.preferred_slots.length > 0 
+                        ? `Candidate's Preferred Timings (${activeBooking.preferred_slots.length})`
                         : 'Slot Booked'}
                     </div>
 
