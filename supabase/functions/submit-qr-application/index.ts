@@ -93,25 +93,26 @@ serve(async (req) => {
       } else {
         userId = newUser.user.id;
 
-      // Create profile
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: userId,
-        full_name: candidateName,
-        email: candidateEmail,
-        mobile: candidatePhone || null,
-        role: "candidate",
-        resume_url: resumeUrl,
-      });
+        // Create profile
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: userId,
+          full_name: candidateName,
+          email: candidateEmail,
+          mobile: candidatePhone || null,
+          role: "candidate",
+          resume_url: resumeUrl,
+        });
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+        }
+
+        // Create user role
+        await supabase.from("user_roles").insert({
+          user_id: userId,
+          role: "candidate",
+        });
       }
-
-      // Create user role
-      await supabase.from("user_roles").insert({
-        user_id: userId,
-        role: "candidate",
-      });
     }
 
     // 2. Check for duplicate application
