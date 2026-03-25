@@ -204,7 +204,7 @@ export const DemoFeedbackResults = ({
     try {
       const functionName = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
       await supabase.functions.invoke(functionName, {
-        body: { interviewCandidateId }
+        body: { interviewCandidateId, feedbackType }
       });
       toast.success('Feedback request resent to observers');
     } catch (err) {
