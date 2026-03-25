@@ -2010,7 +2010,7 @@ const ClickableStagesList = ({
                 })()}
 
                 {/* Meeting Round Options - Show for Demo, Segment, Admin & Academic, and HR Rounds */}
-                {(step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'HR Round') && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
+                {(step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'Core Team Round' || step.title === 'Management Round' || step.title === 'HR Round') && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
                   <DemoRoundOptions
                     interviewCandidateId={interviewCandidateId}
                     candidateName={candidateName}
