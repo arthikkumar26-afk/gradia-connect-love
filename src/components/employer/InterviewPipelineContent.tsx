@@ -1094,6 +1094,26 @@ const ClickableStagesList = ({
           ) || null;
           setWrittenTestSlotBooking(writtenTestBooking);
 
+          // Find Segment Round slot booking
+          const segmentBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('segment') || b.booking_type === 'segment_round'
+          ) || null;
+          setSegmentSlotBooking(segmentBooking ? { ...segmentBooking, preferred_slots: (segmentBooking.preferred_slots as any) || null } : null);
+          if (segmentBooking?.observer_email) {
+            const emails = segmentBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setSegmentObserverEmails(emails);
+          }
+
+          // Find Admin & Academic Round slot booking
+          const adminBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('admin') || b.booking_type === 'admin_academic_round'
+          ) || null;
+          setAdminSlotBooking(adminBooking ? { ...adminBooking, preferred_slots: (adminBooking.preferred_slots as any) || null } : null);
+          if (adminBooking?.observer_email) {
+            const emails = adminBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setAdminObserverEmails(emails);
+          }
+
           // Find HR Round slot booking
           const hrBooking = bookings?.find(b => 
             b.subject?.toLowerCase().includes('hr') || b.booking_type === 'hr_round'
