@@ -674,19 +674,20 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                   <Briefcase className="h-4 w-4 text-primary" />
                   Interview Stages ({customStages.length} steps)
                 </h4>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {customStages.map((stage, index) => (
-                    <div key={stage.order} className="flex items-center gap-1">
-                      <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border bg-accent text-accent-foreground border-border">
-                        <span className="font-semibold">{index + 1}.</span>
-                        {stage.name}
-                        {stage.isAutomated && <span className="text-[10px] opacity-70">⚡</span>}
-                      </span>
-                      {index < customStages.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
+                    <div key={stage.order} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">{index + 1}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                          {stage.name}
+                          {stage.isAutomated && <span className="text-[10px] opacity-70">⚡</span>}
+                        </p>
+                        {stage.description && <p className="text-xs text-muted-foreground truncate">{stage.description}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>
-                <p className="text-[11px] text-muted-foreground">⚡ = AI Automated Stage</p>
               </div>
             )}
 
