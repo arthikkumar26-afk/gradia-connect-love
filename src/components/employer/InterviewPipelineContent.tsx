@@ -1350,12 +1350,16 @@ const ClickableStagesList = ({
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
+      else if (isManagement) setManagementObserverEmails(updatedEmails);
+      else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
       
       const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() };
-      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      else if (isManagement) setManagementSlotBooking(updatedBooking);
+      else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
       
