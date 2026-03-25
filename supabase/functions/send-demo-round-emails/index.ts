@@ -143,7 +143,7 @@ serve(async (req) => {
     <tr>
       <td style="padding: 32px 24px; background: ${colors.gradient}; border-radius: 8px 8px 0 0;">
         <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">🎥 ${actualRoundName}</h1>
-        <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">Present Your Subject Expertise - ${job.job_title}</p>
+        <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">${actualRoundName} - ${job.job_title}</p>
       </td>
     </tr>
     <tr>
