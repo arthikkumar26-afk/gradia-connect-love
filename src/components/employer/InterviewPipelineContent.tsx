@@ -1206,6 +1206,13 @@ const ClickableStagesList = ({
       return;
     }
 
+    // Validate observer email is provided
+    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    if (!activeEmails || activeEmails.length === 0 || activeEmails.every(e => !e.trim())) {
+      toast.error('Please add at least one observer email before confirming the slot');
+      return;
+    }
+
     setIsConfirmingSlot(true);
     try {
       // Save confirmed slot + meeting link + type
