@@ -150,21 +150,33 @@ serve(async (req) => {
     const interviewCandidate = response.interview_event.interview_candidate;
     const currentStageId = response.interview_event.stage_id;
     
-    // Get current stage order
+    // Get current stage order and name
     const { data: currentStage } = await supabase
       .from('interview_stages')
-      .select('stage_order')
+      .select('stage_order, name')
       .eq('id', currentStageId)
       .single();
 
-    // Get next stage
-    const { data: nextStage } = await supabase
+    // Get all stages for pipeline-aware advancement
+    const { data: allStages } = await supabase
       .from('interview_stages')
       .select('*')
-      .gt('stage_order', currentStage?.stage_order || 0)
-      .order('stage_order', { ascending: true })
-      .limit(1)
-      .single();
+      .order('stage_order', { ascending: true });
+
+    // Determine next stage: use job-specific pipeline if available, otherwise global order
+    let nextStage: any = null;
+    const pipelineStages = interviewCandidate.job?.pipeline_stages as any[] | null;
+    if (pipelineStages && pipelineStages.length > 0 && currentStage?.name) {
+      const currentPipelineIndex = pipelineStages.findIndex((ps: any) => ps.name === currentStage.name);
+      if (currentPipelineIndex >= 0 && currentPipelineIndex < pipelineStages.length - 1) {
+        const nextPipelineStageName = pipelineStages[currentPipelineIndex + 1].name;
+        nextStage = allStages?.find((s: any) => s.name === nextPipelineStageName) || null;
+        console.log(`Job-specific pipeline: next stage after "${currentStage.name}" is "${nextPipelineStageName}"`);
+      }
+    }
+    if (!nextStage) {
+      nextStage = allStages?.find((s: any) => s.stage_order > (currentStage?.stage_order || 0)) || null;
+    }
 
     // Always auto-progress to next stage after completing a test
     const shouldProgress = !!nextStage;
