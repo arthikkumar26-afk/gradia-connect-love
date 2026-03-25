@@ -259,11 +259,18 @@ export const useInterviewPipeline = () => {
             
             // Filter stages: if job has custom pipeline, use full DB stages to find matching ones;
             // otherwise, dbStages is already filtered to Offer Stage.
-            // If custom pipeline names don't match any DB stages, fall back to default filtered stages.
+            // Sort by the custom pipeline order, not the DB stage_order.
             let relevantStages = dbStages;
             if (jobCustomStages && jobCustomStages.length > 0) {
               const customFiltered = dbStagesAll2.filter(s => jobCustomStages.some(cs => cs.name === s.name));
-              relevantStages = customFiltered.length > 0 ? customFiltered : dbStages;
+              if (customFiltered.length > 0) {
+                // Sort by the job's custom pipeline order
+                relevantStages = customFiltered.sort((a, b) => {
+                  const aOrder = jobCustomStages.findIndex(cs => cs.name === a.name);
+                  const bOrder = jobCustomStages.findIndex(cs => cs.name === b.name);
+                  return aOrder - bOrder;
+                });
+              }
             }
 
             const interviewSteps: InterviewStep[] = relevantStages.map((s) => {
