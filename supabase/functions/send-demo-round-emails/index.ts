@@ -167,11 +167,10 @@ serve(async (req) => {
 
         <p style="margin: 16px 0 8px; font-weight: 600; color: #374151;">What you need to do:</p>
         <ul style="margin: 0 0 24px; padding-left: 20px; color: #6b7280;">
-          <li style="margin-bottom: 6px;">Prepare a 5-10 minute teaching/subject demonstration</li>
-          <li style="margin-bottom: 6px;">Choose a topic relevant to the position you applied for</li>
+          <li style="margin-bottom: 6px;">Be prepared for the ${actualRoundName} session</li>
           <li style="margin-bottom: 6px;">Ensure good lighting, clear audio, and a quiet environment</li>
-          <li style="margin-bottom: 6px;">Showcase your teaching methodology and subject expertise</li>
-          ${isManualMeet ? '<li style="margin-bottom: 6px;">Join the meeting link at the scheduled time</li>' : '<li style="margin-bottom: 6px;">Click the button below to start your demo recording</li>'}
+          <li style="margin-bottom: 6px;">Have your documents and credentials ready</li>
+          ${isManualMeet ? '<li style="margin-bottom: 6px;">Join the meeting link at the scheduled time</li>' : '<li style="margin-bottom: 6px;">Click the button below to start your session</li>'}
         </ul>
         
         <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
