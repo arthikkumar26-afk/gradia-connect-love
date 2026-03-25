@@ -104,7 +104,15 @@ Return ONLY valid JSON with these fields:
   "organisation": "string - organization name if mentioned",
   "detected_interview_type": "education|it_corporate|non_it_corporate|legal|standard",
   "detected_pipeline_type": "string - pipeline category as described above",
-  "detected_role": "string - specific role/designation detected"
+  "detected_role": "string - specific role/designation detected",
+  "detected_sector_division": "school|college|coaching_center or null - only for education type",
+  "detected_category": "academic|non_academic|research or null - only for education type",
+  "detected_function": "teaching|admin|support|coaching_center or null - only for education type",
+  "detected_board": "CBSE|ICSE|State Board|IB|Cambridge|Montessori|Play School|Other or null - only for education type",
+  "detected_segment": "Pre-Primary|Primary|High School or null - only for education type",
+  "detected_designation": "string or null - designation value for education (e.g. teacher, principal, vice_principal, cluster, dean, hod, coordinator etc.)",
+  "detected_subjects": "string or null - subject like english, maths, science, social, hindi, etc.",
+  "detected_classes": "string or null - class level like classes_1_2, classes_3_4_5, class_6_7_8, class_9_10 etc."
 }`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
