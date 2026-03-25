@@ -398,26 +398,26 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
 
-    const stage = stages.find(s => s.id === stageId);
-    const currentStage = stages.find(s => s.id === currentStageId);
+    // Use pipeline position (index in visible stages array) instead of DB stage_order
+    // This ensures correct ordering for custom pipelines (e.g., Principal)
+    const stageIndex = stages.findIndex(s => s.id === stageId);
+    const currentStageIndex = stages.findIndex(s => s.id === currentStageId);
 
     // If current_stage_id has advanced past this stage, it's completed regardless of event status
-    // This handles cases where a 'scheduled' event exists but the test was actually completed
-    if (stage && currentStage && stage.stage_order < currentStage.stage_order) {
+    if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex < currentStageIndex) {
       return 'completed';
     }
 
     // Check for any event for this stage
     const event = events.find(e => e.stage_id === stageId);
     if (event) {
-      // If stage_order matches current, treat as current (in-progress)
-      if (stage && currentStage && stage.stage_order === currentStage.stage_order) {
+      if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex === currentStageIndex) {
         return 'current';
       }
       return event.status;
     }
 
-    if (stage && currentStage && stage.stage_order === currentStage.stage_order) {
+    if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex === currentStageIndex) {
       return 'current';
     }
     return 'upcoming';
