@@ -331,8 +331,10 @@ export const DemoFeedbackResults = ({
                 onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
               >
                 <div className="flex items-center gap-1 text-[10px]">
-                  <User className="h-2.5 w-2.5 text-muted-foreground" />
-                  <span className="font-medium truncate max-w-[120px]">{review.reviewer_name || review.reviewer_email}</span>
+                  <Mail className="h-2.5 w-2.5 text-muted-foreground" />
+                  <span className="font-medium truncate max-w-[180px]" title={review.reviewer_email || ''}>
+                    {review.reviewer_email || review.reviewer_name || 'Unknown'}
+                  </span>
                 </div>
                 {review.status === 'submitted' ? (
                   <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[8px] py-0 px-1">
