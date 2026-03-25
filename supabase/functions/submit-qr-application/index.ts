@@ -36,11 +36,22 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Check if a user with this email already exists
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.email?.toLowerCase() === candidateEmail.toLowerCase()
-    );
+    // 1. Check if a user with this email already exists (using profile lookup first, then fallback)
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", candidateEmail.toLowerCase())
+      .maybeSingle();
+
+    // Also try auth lookup by email
+    const { data: usersByEmail } = await supabase.auth.admin.listUsers({
+      filter: `email.eq.${candidateEmail.toLowerCase()}`,
+      page: 1,
+      perPage: 1,
+    });
+    const existingUser = existingProfile
+      ? { id: existingProfile.id }
+      : usersByEmail?.users?.[0] || null;
 
     let userId: string;
 
