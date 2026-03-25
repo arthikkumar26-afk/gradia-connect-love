@@ -423,9 +423,10 @@ export const DemoFeedbackResults = ({
                     <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[8px] py-0 px-1">
                       <Clock className="h-2 w-2 mr-0.5" />
                       Pending
-                  </Badge>
-                )}
-              </div>
+                    </Badge>
+                  )}
+                </div>
+              )}
 
               {review.status === 'submitted' && (
                 <>
