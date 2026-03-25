@@ -33,7 +33,7 @@ export const DemoFeedbackResults = ({
   stageStatus,
 }: {
   interviewCandidateId: string;
-  feedbackType?: 'demo' | 'hr';
+  feedbackType?: 'demo' | 'hr' | 'segment' | 'admin_academic';
   onAllSubmitted?: () => void;
   stageStatus?: FeedbackStageStatus;
 }) => {

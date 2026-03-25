@@ -44,6 +44,12 @@ const stageIcons: Record<string, React.ElementType> = {
   'Demo Slot Booking': Clock,
   'Demo Round': Video,
   'Demo Feedback': MessageSquare,
+  'Segment Round Slot Booking': Clock,
+  'Segment Round': Video,
+  'Segment Feedback': MessageSquare,
+  'Admin & Academic Round Slot Booking': Clock,
+  'Admin & Academic Round': Video,
+  'Admin & Academic Feedback': MessageSquare,
   'HR Round Slot Booking': Clock,
   'HR Round': UserCheck,
   'HR Feedback': MessageSquare,
@@ -159,25 +165,21 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
               }
             }
 
-            if (stage.name === 'Demo Feedback') {
-              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted' && (r.feedback_type === 'demo' || !r.feedback_type));
-              if (submittedReviews.length > 0) {
-                review.reviews = submittedReviews.map(r => ({
-                  reviewerName: r.reviewer_name,
-                  overallRating: r.overall_rating,
-                  teachingRating: r.teaching_skills_rating,
-                  communicationRating: r.communication_rating,
-                  knowledgeRating: r.subject_knowledge_rating,
-                  recommendation: r.recommendation,
-                  feedbackText: r.feedback_text,
-                }));
-                const avgRating = submittedReviews.reduce((sum, r) => sum + (r.overall_rating || 0), 0) / submittedReviews.length;
-                review.score = Math.round((avgRating / 5) * 100);
-              }
-            }
-
-            if (stage.name === 'HR Feedback') {
-              const submittedReviews = (mgmtReviews || []).filter(r => r.status === 'submitted' && r.feedback_type === 'hr');
+            // Map feedback stages to their feedback_type
+            const feedbackTypeMap: Record<string, string> = {
+              'Demo Feedback': 'demo',
+              'Segment Feedback': 'segment',
+              'Admin & Academic Feedback': 'admin_academic',
+              'HR Feedback': 'hr',
+            };
+            const feedbackTypeForStage = feedbackTypeMap[stage.name];
+            if (feedbackTypeForStage) {
+              const submittedReviews = (mgmtReviews || []).filter(r => 
+                r.status === 'submitted' && (
+                  r.feedback_type === feedbackTypeForStage || 
+                  (feedbackTypeForStage === 'demo' && !r.feedback_type)
+                )
+              );
               if (submittedReviews.length > 0) {
                 review.reviews = submittedReviews.map(r => ({
                   reviewerName: r.reviewer_name,
@@ -298,8 +300,9 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             y += 5;
           }
 
-          // Demo/HR Feedback Reviews
-          if ((review.stageName === 'Demo Feedback' || review.stageName === 'HR Feedback') && review.reviews) {
+          // Feedback Reviews (Demo, Segment, Admin & Academic, HR)
+          const feedbackStages = ['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'];
+          if (feedbackStages.includes(review.stageName) && review.reviews) {
             for (const r of review.reviews) {
               if (y > 260) { doc.addPage(); y = 20; }
               doc.setFont('helvetica', 'bold');
@@ -322,7 +325,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           }
 
           // General notes/feedback
-          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
+          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
             const noteLines = doc.splitTextToSize(review.notes, pageWidth - 34);
             doc.text(noteLines, 20, y);
             y += noteLines.length * 4 + 2;
@@ -434,7 +437,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
           const isSkipped = review.status === 'skipped';
           const isExpanded = expandedStage === review.stageName;
-          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'HR Round', 'HR Feedback'].includes(review.stageName);
+          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'Segment Round', 'Admin & Academic Round', 'HR Round', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName);
 
           return (
             <div
@@ -541,7 +544,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   )}
 
                   {/* Demo/HR Feedback - Observer Reviews */}
-                  {(review.stageName === 'Demo Feedback' || review.stageName === 'HR Feedback') && review.reviews && review.reviews.length > 0 && (
+                  {['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && review.reviews && review.reviews.length > 0 && (
                     <div className="space-y-2">
                       {review.reviews.map((r, i) => (
                         <div key={i} className="bg-background rounded-md p-2 border space-y-1.5">
@@ -585,7 +588,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   )}
 
                   {/* HR Round & other stages - AI Feedback / Notes */}
-                  {!['CV/Resume', 'Written Test', 'Demo Feedback', 'HR Feedback'].includes(review.stageName) && (
+                  {!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && (
                     <div className="space-y-1.5">
                       {review.aiFeedback && typeof review.aiFeedback === 'object' && review.aiFeedback.feedback && (
                         <p className="text-xs text-muted-foreground">{review.aiFeedback.feedback}</p>
