@@ -1891,7 +1891,7 @@ const ClickableStagesList = ({
                         </div>
                       )}
                       <p className="text-[9px] text-muted-foreground">
-                        These emails will receive notifications when the Demo Round starts
+                        These emails will receive notifications when the round starts
                       </p>
                     </div>
                   </div>
