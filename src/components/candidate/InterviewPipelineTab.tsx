@@ -99,6 +99,7 @@ interface InterviewCandidate {
   job: {
     job_title: string;
     location: string | null;
+    pipeline_stages: any | null;
     employer: {
       company_name: string | null;
       profile_picture: string | null;
