@@ -44,6 +44,9 @@ export const DemoFeedbackResults = ({
   const [demoRecordingUrl, setDemoRecordingUrl] = useState<string | null>(null);
   const [showRecording, setShowRecording] = useState(false);
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+  const [editEmailValue, setEditEmailValue] = useState("");
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
   const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress';
 
   useEffect(() => {
