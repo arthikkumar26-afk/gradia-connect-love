@@ -1294,28 +1294,40 @@ const ClickableStagesList = ({
   };
 
   const handleAddObserverEmail = async () => {
-    if (!slotBooking || !observerEmail.trim()) return;
+    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
+    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
+    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
+    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    
+    if (!activeBookingData || !observerEmail.trim()) return;
     const email = observerEmail.trim().toLowerCase();
-    // Basic email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       toast.error('Please enter a valid email address');
       return;
     }
-    if (observerEmails.includes(email)) {
+    if (activeEmails.includes(email)) {
       toast.error('This email is already added');
       return;
     }
     setIsSavingObserver(true);
     try {
-      const updatedEmails = [...observerEmails, email];
+      const updatedEmails = [...activeEmails, email];
       const { error } = await supabase
         .from('slot_bookings')
         .update({ observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() })
-        .eq('id', slotBooking.id);
+        .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      setObserverEmails(updatedEmails);
-      setSlotBooking({ ...slotBooking, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() });
+      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      else if (isAdmin) setAdminObserverEmails(updatedEmails);
+      else setObserverEmails(updatedEmails);
+      
+      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() };
+      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      else if (isAdmin) setAdminSlotBooking(updatedBooking);
+      else setSlotBooking(updatedBooking);
+      
       setObserverEmail('');
       toast.success('Observer email added');
     } catch (err) {
@@ -1327,18 +1339,31 @@ const ClickableStagesList = ({
   };
 
   const handleRemoveObserverEmail = async (emailToRemove: string) => {
-    if (!slotBooking) return;
+    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
+    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
+    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
+    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    
+    if (!activeBookingData) return;
     setIsSavingObserver(true);
     try {
-      const updatedEmails = observerEmails.filter(e => e !== emailToRemove);
+      const updatedEmails = activeEmails.filter(e => e !== emailToRemove);
       const { error } = await supabase
         .from('slot_bookings')
         .update({ observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() })
-        .eq('id', slotBooking.id);
+        .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      setObserverEmails(updatedEmails);
-      setSlotBooking({ ...slotBooking, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() });
+      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      else if (isAdmin) setAdminObserverEmails(updatedEmails);
+      else setObserverEmails(updatedEmails);
+      
+      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() };
+      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      else if (isAdmin) setAdminSlotBooking(updatedBooking);
+      else setSlotBooking(updatedBooking);
+      
       toast.success('Observer email removed');
     } catch (err) {
       console.error('Error removing observer email:', err);
