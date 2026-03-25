@@ -1838,10 +1838,10 @@ const ClickableStagesList = ({
                         {/* Confirmed slot display */}
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                            📅 {new Date(slotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                            📅 {new Date(activeBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                           </Badge>
                           <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                            🕐 {slotBooking.booking_time}
+                            🕐 {activeBooking.booking_time}
                           </Badge>
                           <Badge className="text-[10px] py-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                             ✓ Confirmed
