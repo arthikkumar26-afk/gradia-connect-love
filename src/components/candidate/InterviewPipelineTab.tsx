@@ -654,8 +654,22 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         );
       }
 
-      case 'Demo Feedback': {
-        const submittedReviews = reviews.filter(r => r.status === 'submitted' && (r.feedback_type === 'demo' || !r.feedback_type));
+      case 'Demo Feedback':
+      case 'Segment Feedback':
+      case 'Admin & Academic Feedback':
+      case 'Core Team Feedback':
+      case 'Management Round Feedback': {
+        const feedbackTypeMap: Record<string, string> = {
+          'Demo Feedback': 'demo',
+          'Segment Feedback': 'segment',
+          'Admin & Academic Feedback': 'admin_academic',
+          'Core Team Feedback': 'core_team',
+          'Management Round Feedback': 'management',
+        };
+        const fbType = feedbackTypeMap[stage.name] || 'demo';
+        const submittedReviews = reviews.filter(r => r.status === 'submitted' && (
+          r.feedback_type === fbType || (fbType === 'demo' && !r.feedback_type)
+        ));
         if (submittedReviews.length === 0) {
           return (
             <p className="text-sm text-muted-foreground">Feedback collected from observers.</p>
