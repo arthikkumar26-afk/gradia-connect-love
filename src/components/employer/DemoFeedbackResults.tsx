@@ -359,25 +359,70 @@ export const DemoFeedbackResults = ({
 
           {reviews.map((review) => (
             <div key={review.id} className="bg-white rounded border border-amber-100 p-1.5 space-y-1">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
-              >
-                <div className="flex items-center gap-1 text-[10px]">
-                  <Mail className="h-2.5 w-2.5 text-muted-foreground" />
-                  <span className="font-medium truncate max-w-[180px]" title={review.reviewer_email || ''}>
-                    {review.reviewer_email || review.reviewer_name || 'Unknown'}
-                  </span>
+              {editingEmailId === review.id ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={editEmailValue}
+                    onChange={(e) => setEditEmailValue(e.target.value)}
+                    className="h-6 text-[10px] px-1.5 flex-1"
+                    placeholder="Enter observer email"
+                    type="email"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveEmail(review.id);
+                      if (e.key === 'Escape') setEditingEmailId(null);
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => handleSaveEmail(review.id)}
+                    disabled={isSavingEmail}
+                  >
+                    {isSavingEmail ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => setEditingEmailId(null)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
-                {review.status === 'submitted' ? (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[8px] py-0 px-1">
-                    <CheckCircle2 className="h-2 w-2 mr-0.5" />
-                    Submitted
-                  </Badge>
-                ) : (
-                  <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[8px] py-0 px-1">
-                    <Clock className="h-2 w-2 mr-0.5" />
-                    Pending
+              ) : (
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
+                >
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <Mail className="h-2.5 w-2.5 text-muted-foreground" />
+                    <span className="font-medium truncate max-w-[150px]" title={review.reviewer_email || ''}>
+                      {review.reviewer_email || review.reviewer_name || 'Unknown'}
+                    </span>
+                    {review.status !== 'submitted' && (
+                      <button
+                        className="ml-0.5 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditEmail(review.id, review.reviewer_email || '');
+                        }}
+                        title="Edit observer email"
+                      >
+                        <Pencil className="h-2.5 w-2.5" />
+                      </button>
+                    )}
+                  </div>
+                  {review.status === 'submitted' ? (
+                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[8px] py-0 px-1">
+                      <CheckCircle2 className="h-2 w-2 mr-0.5" />
+                      Submitted
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[8px] py-0 px-1">
+                      <Clock className="h-2 w-2 mr-0.5" />
+                      Pending
                   </Badge>
                 )}
               </div>
