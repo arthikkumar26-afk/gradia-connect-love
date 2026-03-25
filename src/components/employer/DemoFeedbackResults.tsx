@@ -208,10 +208,24 @@ export const DemoFeedbackResults = ({
     setIsResending(true);
     try {
       const functionName = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
-      await supabase.functions.invoke(functionName, {
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: { interviewCandidateId, feedbackType }
       });
-      toast.success('Feedback request resent to observers');
+
+      if (error) throw error;
+
+      const observerTargets = Array.isArray(data?.observerEmails) && data.observerEmails.length > 0
+        ? data.observerEmails
+        : reviews.map((review) => review.reviewer_email).filter(Boolean);
+      const candidateTarget = data?.candidateEmailSent && data?.candidateEmail ? data.candidateEmail : null;
+      const roundLabel = data?.roundLabel || 'Feedback';
+
+      toast.success(`${roundLabel} request sent`, {
+        description: [
+          observerTargets.length > 0 ? `Observers: ${observerTargets.join(', ')}` : null,
+          candidateTarget ? `Candidate: ${candidateTarget}` : null,
+        ].filter(Boolean).join(' • ') || 'Emails have been triggered successfully.',
+      });
     } catch (err) {
       console.error('Error resending:', err);
       toast.error('Failed to resend feedback request');
@@ -226,20 +240,68 @@ export const DemoFeedbackResults = ({
   };
 
   const handleSaveEmail = async (reviewId: string) => {
-    if (!editEmailValue || !editEmailValue.includes("@")) {
+    const normalizedEmail = editEmailValue.trim().toLowerCase();
+
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
       toast.error("Please enter a valid email address");
       return;
     }
+
     setIsSavingEmail(true);
     try {
+      const bookingTypeMap: Record<string, string[]> = {
+        demo: ['demo_round', 'demo_slot_booking', 'Demo Round'],
+        hr: ['hr_round', 'hr_slot_booking', 'HR Round'],
+        segment: ['segment_round', 'segment_slot_booking', 'Segment Round'],
+        admin_academic: ['admin_academic_round', 'admin_academic_slot_booking', 'Admin & Academic Round'],
+        core_team: ['core_team_round', 'core_team_slot_booking', 'Core Team Round'],
+        management: ['management_round', 'management_slot_booking', 'Management Round'],
+      };
+
+      const { data: candidateRecord, error: candidateError } = await supabase
+        .from('interview_candidates')
+        .select('candidate_id')
+        .eq('id', interviewCandidateId)
+        .single();
+
+      if (candidateError) throw candidateError;
+
+      const bookingTypes = bookingTypeMap[feedbackType] || bookingTypeMap.demo;
+
+      if (candidateRecord?.candidate_id) {
+        const { data: slotBooking, error: slotBookingError } = await supabase
+          .from('slot_bookings')
+          .select('id')
+          .eq('candidate_id', candidateRecord.candidate_id)
+          .in('booking_type', bookingTypes)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (slotBookingError) throw slotBookingError;
+
+        if (slotBooking?.id) {
+          const { error: slotUpdateError } = await supabase
+            .from('slot_bookings')
+            .update({ observer_email: normalizedEmail })
+            .eq('id', slotBooking.id);
+
+          if (slotUpdateError) throw slotUpdateError;
+        }
+      }
+
       const { error } = await supabase
         .from('management_reviews')
-        .update({ reviewer_email: editEmailValue, reviewer_name: editEmailValue.split('@')[0] })
+        .update({ reviewer_email: normalizedEmail, reviewer_name: normalizedEmail.split('@')[0] })
         .eq('id', reviewId);
+
       if (error) throw error;
-      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, reviewer_email: editEmailValue, reviewer_name: editEmailValue.split('@')[0] } : r));
+
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, reviewer_email: normalizedEmail, reviewer_name: normalizedEmail.split('@')[0] } : r));
       setEditingEmailId(null);
-      toast.success("Observer email updated successfully");
+      toast.success("Observer email updated successfully", {
+        description: `Next resend will go to ${normalizedEmail}`,
+      });
     } catch (err) {
       console.error('Error updating email:', err);
       toast.error("Failed to update observer email");
