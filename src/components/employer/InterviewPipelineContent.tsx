@@ -1282,7 +1282,14 @@ const ClickableStagesList = ({
         duration: 5000,
       });
 
-      // Auto-advance to Feedback and send feedback email after a short delay
+      // Auto-advance to Feedback and send feedback email after a delay
+      // Segment/Admin/Core Team/Management rounds: 5 minutes delay for the round to happen
+      // Demo: 10 seconds delay
+      const feedbackDelay = (isSegment || isAdmin || isCoreTeam || isManagement) ? 300000 : 10000;
+      const delayLabel = feedbackDelay >= 60000 ? `${Math.round(feedbackDelay / 60000)} minutes` : `${feedbackDelay / 1000} seconds`;
+      
+      toast.info(`${roundLabel} Feedback email will be sent to observers in ~${delayLabel}`, { duration: 8000 });
+
       setTimeout(async () => {
         try {
           await supabase.functions.invoke('process-interview-stage', {
@@ -1292,8 +1299,8 @@ const ClickableStagesList = ({
               feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
             }
           });
-          // For segment/admin, skip the round stage (advance again)
-          if (isSegment || isAdmin) {
+          // For segment/admin/core team/management, skip the round stage (advance again)
+          if (isSegment || isAdmin || isCoreTeam || isManagement) {
             await supabase.functions.invoke('process-interview-stage', {
               body: {
                 interviewCandidateId,
@@ -1302,15 +1309,16 @@ const ClickableStagesList = ({
               }
             });
           }
-          // Send feedback email to observers
+          // Send feedback email to observers (NOT to candidate)
           await supabase.functions.invoke('send-demo-feedback-email', {
             body: { interviewCandidateId, feedbackType }
           });
-          console.log(`${roundLabel} feedback email sent to observers`);
+          console.log(`${roundLabel} feedback email sent to observers after ${delayLabel}`);
+          toast.success(`${roundLabel} Feedback request sent to observers!`);
         } catch (feedbackErr) {
           console.error('Error sending feedback email:', feedbackErr);
         }
-      }, 10000);
+      }, feedbackDelay);
 
       // Trigger pipeline refresh
       window.location.reload();
