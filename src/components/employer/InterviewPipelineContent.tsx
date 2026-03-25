@@ -433,9 +433,9 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'HR Round') {
+      } else if (step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'Core Team Round' || step.title === 'Management Round' || step.title === 'HR Round') {
         // Any round → its feedback stage: auto-send feedback request
-        const feedbackType = step.title === 'HR Round' ? 'hr' : step.title === 'Segment Round' ? 'segment' : step.title === 'Admin & Academic Round' ? 'admin_academic' : 'demo';
+        const feedbackType = step.title === 'HR Round' ? 'hr' : step.title === 'Core Team Round' ? 'core_team' : step.title === 'Management Round' ? 'management' : step.title === 'Segment Round' ? 'segment' : step.title === 'Admin & Academic Round' ? 'admin_academic' : 'demo';
         const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
         try {
           await supabase.functions.invoke(feedbackFn, {
@@ -1054,6 +1054,12 @@ const ClickableStagesList = ({
   // Admin & Academic Round Slot Booking states
   const [adminSlotBooking, setAdminSlotBooking] = useState<typeof slotBooking>(null);
   const [adminObserverEmails, setAdminObserverEmails] = useState<string[]>([]);
+  // Core Team Round Slot Booking states
+  const [coreTeamSlotBooking, setCoreTeamSlotBooking] = useState<typeof slotBooking>(null);
+  const [coreTeamObserverEmails, setCoreTeamObserverEmails] = useState<string[]>([]);
+  // Management Round Slot Booking states
+  const [managementSlotBooking, setManagementSlotBooking] = useState<typeof slotBooking>(null);
+  const [managementObserverEmails, setManagementObserverEmails] = useState<string[]>([]);
   // Demo meeting options state
   const [demoMeetType, setDemoMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>('google_meet');
   const [demoMeetLink, setDemoMeetLink] = useState('');
@@ -1113,6 +1119,26 @@ const ClickableStagesList = ({
             setAdminObserverEmails(emails);
           }
 
+          // Find Core Team Round slot booking
+          const coreTeamBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('core team') || b.booking_type === 'core_team_round'
+          ) || null;
+          setCoreTeamSlotBooking(coreTeamBooking ? { ...coreTeamBooking, preferred_slots: (coreTeamBooking.preferred_slots as any) || null } : null);
+          if (coreTeamBooking?.observer_email) {
+            const emails = coreTeamBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setCoreTeamObserverEmails(emails);
+          }
+
+          // Find Management Round slot booking
+          const managementBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('management') || b.booking_type === 'management_round'
+          ) || null;
+          setManagementSlotBooking(managementBooking ? { ...managementBooking, preferred_slots: (managementBooking.preferred_slots as any) || null } : null);
+          if (managementBooking?.observer_email) {
+            const emails = managementBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setManagementObserverEmails(emails);
+          }
+
           // Find HR Round slot booking
           const hrBooking = bookings?.find(b => 
             b.subject?.toLowerCase().includes('hr') || b.booking_type === 'hr_round'
@@ -1166,7 +1192,9 @@ const ClickableStagesList = ({
     const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
     const isSegment = currentStep?.title === 'Segment Round Slot Booking';
     const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
+    const isManagement = currentStep?.title === 'Management Round Slot Booking';
+    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
     
     if (!activeBookingData || selectedPreferredSlot === null || !activeBookingData.preferred_slots) return;
     const chosen = activeBookingData.preferred_slots[selectedPreferredSlot];
@@ -1196,13 +1224,15 @@ const ClickableStagesList = ({
       if (error) throw error;
 
       const updatedBooking = { ...activeBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType };
-      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      else if (isManagement) setManagementSlotBooking(updatedBooking);
+      else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
 
-      const roundLabel = isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
-      const feedbackType = isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
-      const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+      const roundLabel = isCoreTeam ? 'Core Team Round' : isManagement ? 'Management Round' : isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
+      const feedbackType = isCoreTeam ? 'core_team' : isManagement ? 'management' : isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
+      const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
 
       // Auto-advance stage
       try {
@@ -1296,8 +1326,10 @@ const ClickableStagesList = ({
     const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
     const isSegment = currentStep?.title === 'Segment Round Slot Booking';
     const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
-    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
+    const isManagement = currentStep?.title === 'Management Round Slot Booking';
+    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
     
     if (!activeBookingData || !observerEmail.trim()) return;
     const email = observerEmail.trim().toLowerCase();
@@ -1318,12 +1350,16 @@ const ClickableStagesList = ({
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
+      else if (isManagement) setManagementObserverEmails(updatedEmails);
+      else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
       
       const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() };
-      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      else if (isManagement) setManagementSlotBooking(updatedBooking);
+      else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
       
@@ -1341,8 +1377,10 @@ const ClickableStagesList = ({
     const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
     const isSegment = currentStep?.title === 'Segment Round Slot Booking';
     const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
-    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
+    const isManagement = currentStep?.title === 'Management Round Slot Booking';
+    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
     
     if (!activeBookingData) return;
     setIsSavingObserver(true);
@@ -1354,12 +1392,16 @@ const ClickableStagesList = ({
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
+      else if (isManagement) setManagementObserverEmails(updatedEmails);
+      else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
       
       const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() };
-      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      else if (isManagement) setManagementSlotBooking(updatedBooking);
+      else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
       
@@ -1968,7 +2010,7 @@ const ClickableStagesList = ({
                 })()}
 
                 {/* Meeting Round Options - Show for Demo, Segment, Admin & Academic, and HR Rounds */}
-                {(step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'HR Round') && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
+                {(step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'Core Team Round' || step.title === 'Management Round' || step.title === 'HR Round') && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
                   <DemoRoundOptions
                     interviewCandidateId={interviewCandidateId}
                     candidateName={candidateName}
@@ -2000,6 +2042,22 @@ const ClickableStagesList = ({
                   <DemoFeedbackResults
                     interviewCandidateId={interviewCandidateId}
                     feedbackType="admin_academic"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
+                )}
+                {step.title === 'Core Team Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="core_team"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
+                )}
+                {step.title === 'Management Round Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="management"
                     onAllSubmitted={onRefresh}
                     stageStatus={step.status}
                   />

@@ -35,7 +35,9 @@ const BookSlot = () => {
   const isHrStage = stageName.toLowerCase().includes("hr") && !isFeedbackStage;
   const isSegmentStage = stageName.toLowerCase().includes("segment") && !isFeedbackStage;
   const isAdminAcademicStage = stageName.toLowerCase().includes("admin") && stageName.toLowerCase().includes("academic") && !isFeedbackStage;
-  const isMultiSlotStage = isDemoStage || isHrStage || isSegmentStage || isAdminAcademicStage;
+  const isCoreTeamStage = stageName.toLowerCase().includes("core team") && !isFeedbackStage;
+  const isManagementStage = stageName.toLowerCase().includes("management") && !isFeedbackStage;
+  const isMultiSlotStage = isDemoStage || isHrStage || isSegmentStage || isAdminAcademicStage || isCoreTeamStage || isManagementStage;
   const [preferredSlots, setPreferredSlots] = useState<{ date: string; time: string }[]>([]);
   const [demoDate, setDemoDate] = useState("");
   const [demoTime1, setDemoTime1] = useState("");
@@ -182,11 +184,15 @@ const BookSlot = () => {
       const isHrSlotBooking = stageName.toLowerCase().includes("hr") && !isFeedbackStage;
       const isSegmentSlotBooking = stageName.toLowerCase().includes("segment") && !isFeedbackStage;
       const isAdminAcademicSlotBooking = stageName.toLowerCase().includes("admin") && stageName.toLowerCase().includes("academic") && !isFeedbackStage;
+      const isCoreTeamSlotBooking = stageName.toLowerCase().includes("core team") && !isFeedbackStage;
+      const isManagementSlotBooking = stageName.toLowerCase().includes("management") && !isFeedbackStage;
 
       const bookingType = isDemoStage ? "demo_round" 
         : isHrSlotBooking ? "hr_round"
         : isSegmentSlotBooking ? "segment_round"
         : isAdminAcademicSlotBooking ? "admin_academic_round"
+        : isCoreTeamSlotBooking ? "core_team_round"
+        : isManagementSlotBooking ? "management_round"
         : isWrittenTestSlotBooking ? "written_test" 
         : "technical_assessment";
 

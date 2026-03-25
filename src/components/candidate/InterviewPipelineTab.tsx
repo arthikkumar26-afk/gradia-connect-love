@@ -833,8 +833,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           const isHr = stage.name.toLowerCase().includes('hr');
           const isSegment = stage.name.toLowerCase().includes('segment');
           const isAdminAcademic = stage.name.toLowerCase().includes('admin') && stage.name.toLowerCase().includes('academic');
-          const bookingType = isDemo ? 'demo_round' : isHr ? 'hr_round' : isSegment ? 'segment_round' : isAdminAcademic ? 'admin_academic_round' : isWritten ? 'written_test' : 'technical_assessment';
-          const stageLabel = isDemo ? 'Demo Round' : isHr ? 'HR Round' : isSegment ? 'Segment Round' : isAdminAcademic ? 'Admin & Academic Round' : isWritten ? 'Written Test' : stage.name;
+          const isCoreTeam = stage.name.toLowerCase().includes('core team');
+          const isManagement = stage.name.toLowerCase().includes('management');
+          const bookingType = isDemo ? 'demo_round' : isHr ? 'hr_round' : isSegment ? 'segment_round' : isAdminAcademic ? 'admin_academic_round' : isCoreTeam ? 'core_team_round' : isManagement ? 'management_round' : isWritten ? 'written_test' : 'technical_assessment';
+          const stageLabel = isDemo ? 'Demo Round' : isHr ? 'HR Round' : isSegment ? 'Segment Round' : isAdminAcademic ? 'Admin & Academic Round' : isCoreTeam ? 'Core Team Round' : isManagement ? 'Management Round' : isWritten ? 'Written Test' : stage.name;
           
           const booking = slotBookings.find(b => 
             b.booking_type === bookingType || b.booking_type === stageLabel
@@ -1112,8 +1114,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         const isHr = stage.name.toLowerCase().includes('hr');
                         const isSegment = stage.name.toLowerCase().includes('segment');
                         const isAdminAcademic = stage.name.toLowerCase().includes('admin') && stage.name.toLowerCase().includes('academic');
-                        const bookingType = isDemo ? 'demo_round' : isHr ? 'hr_round' : isSegment ? 'segment_round' : isAdminAcademic ? 'admin_academic_round' : isWritten ? 'written_test' : 'technical_assessment';
-                        const stageLabel = isDemo ? 'Demo Round' : isHr ? 'HR Round' : isSegment ? 'Segment Round' : isAdminAcademic ? 'Admin & Academic Round' : isWritten ? 'Written Test' : stage.name;
+                        const isCoreTeam = stage.name.toLowerCase().includes('core team');
+                        const isManagement = stage.name.toLowerCase().includes('management');
+                        const bookingType = isDemo ? 'demo_round' : isHr ? 'hr_round' : isSegment ? 'segment_round' : isAdminAcademic ? 'admin_academic_round' : isCoreTeam ? 'core_team_round' : isManagement ? 'management_round' : isWritten ? 'written_test' : 'technical_assessment';
+                        const stageLabel = isDemo ? 'Demo Round' : isHr ? 'HR Round' : isSegment ? 'Segment Round' : isAdminAcademic ? 'Admin & Academic Round' : isCoreTeam ? 'Core Team Round' : isManagement ? 'Management Round' : isWritten ? 'Written Test' : stage.name;
                         
                         const booking = slotBookings.find(b => 
                           b.booking_type === bookingType || b.booking_type === stageLabel

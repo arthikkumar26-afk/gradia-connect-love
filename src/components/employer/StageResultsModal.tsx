@@ -76,6 +76,11 @@ export const StageResultsModal = ({
   const isSlotBookingStage = stageName.includes('Slot Booking');
   const isDemoFeedbackStage = stageName === 'Demo Feedback';
   const isHrFeedbackStage = stageName === 'HR Feedback';
+  const isSegmentFeedbackStage = stageName === 'Segment Feedback';
+  const isAdminAcademicFeedbackStage = stageName === 'Admin & Academic Feedback';
+  const isCoreTeamFeedbackStage = stageName === 'Core Team Feedback';
+  const isManagementFeedbackStage = stageName === 'Management Round Feedback';
+  const isAnyFeedbackStage = isDemoFeedbackStage || isHrFeedbackStage || isSegmentFeedbackStage || isAdminAcademicFeedbackStage || isCoreTeamFeedbackStage || isManagementFeedbackStage;
   const handleConfirmSlot = async () => {
     if (!slotBookingData || selectedSlotIndex === null || !slotBookingData.preferred_slots) return;
     const chosen = slotBookingData.preferred_slots[selectedSlotIndex];
@@ -121,8 +126,8 @@ export const StageResultsModal = ({
     const fetchData = async () => {
       if (!isOpen || !interviewCandidateId || !stageId) return;
       
-      // Demo Feedback and HR Feedback don't need interview_events, they use management_reviews
-      if (isDemoFeedbackStage || isHrFeedbackStage) {
+      // Feedback stages don't need interview_events, they use management_reviews
+      if (isAnyFeedbackStage) {
         setLoading(false);
         return;
       }
@@ -142,6 +147,10 @@ export const StageResultsModal = ({
           if (icData?.candidate_id) {
             const bookingType = stageName.toLowerCase().includes('demo') ? 'demo' 
               : stageName.toLowerCase().includes('hr') ? 'hr' 
+              : stageName.toLowerCase().includes('core team') ? 'core_team'
+              : stageName.toLowerCase().includes('management') ? 'management'
+              : stageName.toLowerCase().includes('segment') ? 'segment'
+              : stageName.toLowerCase().includes('admin') ? 'admin'
               : 'written';
 
             const { data: bookings } = await supabase
@@ -332,10 +341,15 @@ export const StageResultsModal = ({
                   The candidate may not have completed this stage yet.
                 </p>
               </div>
-            ) : isDemoFeedbackStage || isHrFeedbackStage ? (
+            ) : isAnyFeedbackStage ? (
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold">{isHrFeedbackStage ? 'HR Round' : 'Demo Round'} Feedback</h3>
-                <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType={isHrFeedbackStage ? 'hr' : 'demo'} />
+                <h3 className="text-sm font-semibold">
+                  {isHrFeedbackStage ? 'HR Round' : isCoreTeamFeedbackStage ? 'Core Team Round' : isManagementFeedbackStage ? 'Management Round' : isSegmentFeedbackStage ? 'Segment Round' : isAdminAcademicFeedbackStage ? 'Admin & Academic Round' : 'Demo Round'} Feedback
+                </h3>
+                <DemoFeedbackResults 
+                  interviewCandidateId={interviewCandidateId} 
+                  feedbackType={isHrFeedbackStage ? 'hr' : isCoreTeamFeedbackStage ? 'core_team' : isManagementFeedbackStage ? 'management' : isSegmentFeedbackStage ? 'segment' : isAdminAcademicFeedbackStage ? 'admin_academic' : 'demo'} 
+                />
               </div>
             ) : isSlotBookingStage ? (
               <>
