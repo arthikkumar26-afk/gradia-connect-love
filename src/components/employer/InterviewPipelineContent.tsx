@@ -97,6 +97,9 @@ const stageIcons: Record<string, React.ElementType> = {
   'Admin & Academic Round Slot Booking': Calendar,
   'Admin & Academic Round': Video,
   'Admin & Academic Feedback': MessageSquare,
+  'Core Team Round Slot Booking': Calendar,
+  'Core Team Round': Video,
+  'Core Team Feedback': MessageSquare,
   'HR Round Slot Booking': Calendar,
   'HR Round': UserCheck,
   'HR Feedback': MessageSquare,
@@ -118,6 +121,9 @@ const stageColors: Record<string, string> = {
   'Admin & Academic Round Slot Booking': 'bg-sky-500',
   'Admin & Academic Round': 'bg-cyan-600',
   'Admin & Academic Feedback': 'bg-lime-600',
+  'Core Team Round Slot Booking': 'bg-violet-500',
+  'Core Team Round': 'bg-fuchsia-500',
+  'Core Team Feedback': 'bg-rose-500',
   'HR Round Slot Booking': 'bg-teal-500',
   'HR Round': 'bg-green-500',
   'HR Feedback': 'bg-blue-400',
@@ -125,7 +131,7 @@ const stageColors: Record<string, string> = {
   'Offer Stage': 'bg-emerald-500',
 };
 
-const hiddenPipelineStages = new Set(['AI Phone Interview', 'Segment Round', 'Admin & Academic Round']);
+const hiddenPipelineStages = new Set(['AI Phone Interview', 'Segment Round', 'Admin & Academic Round', 'Core Team Round']);
 
 const getVisibleInterviewSteps = (steps: InterviewStep[]) =>
   steps.filter((step) => !hiddenPipelineStages.has(step.title));
