@@ -11,6 +11,11 @@ interface DemoFeedbackRequest {
   feedbackType?: string;
 }
 
+interface PendingReviewRecord {
+  id: string;
+  reviewer_email: string | null;
+}
+
 const roundLabelMap: Record<string, string> = {
   demo: 'Demo Round',
   segment: 'Segment Round',
@@ -35,6 +40,57 @@ const bookingTypeMap: Record<string, string[]> = {
   management: ['management_round', 'management_slot_booking', 'Management Round'],
 };
 
+const isValidEmail = (email: string | null | undefined) => Boolean(email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()));
+
+const normalizeEmailList = (raw: string | null | undefined) => {
+  if (!raw) return [] as string[];
+
+  return Array.from(
+    new Set(
+      raw
+        .split(',')
+        .map((email) => email.trim().toLowerCase())
+        .filter((email) => isValidEmail(email))
+    )
+  );
+};
+
+const sendEmail = async ({
+  resendApiKey,
+  to,
+  subject,
+  html,
+  from,
+}: {
+  resendApiKey: string;
+  to: string;
+  subject: string;
+  html: string;
+  from: string;
+}) => {
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject,
+      html,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result?.message || `Resend request failed with status ${response.status}`);
+  }
+
+  return result;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -52,9 +108,10 @@ serve(async (req) => {
     const actualFeedbackType = feedbackType || 'demo';
     const roundLabel = roundLabelMap[actualFeedbackType] || 'Demo Round';
     const colors = roundColorMap[actualFeedbackType] || roundColorMap.demo;
+    const baseUrl = Deno.env.get('APP_DOMAIN') || 'https://gradia-link-shine.lovable.app';
+
     console.log('Sending feedback emails for:', interviewCandidateId, 'type:', actualFeedbackType, 'round:', roundLabel);
 
-    // Get candidate and job details
     const { data: interviewCandidate, error: candidateError } = await supabase
       .from('interview_candidates')
       .select(`
@@ -74,44 +131,60 @@ serve(async (req) => {
     const employer = job?.employer;
     const companyName = employer?.company_name || 'Gradia';
     const candidateName = candidate?.full_name || 'Candidate';
-    const candidateEmail = candidate?.email || '';
+    const candidateEmail = isValidEmail(candidate?.email) ? candidate.email.trim().toLowerCase() : null;
+    const fromAddress = `${companyName} <noreply@gradia.co.in>`;
 
-    // Get observer emails from the correct booking type
-    const bookingTypes = bookingTypeMap[actualFeedbackType] || bookingTypeMap.demo;
-    const { data: roundBooking } = await supabase
-      .from('slot_bookings')
-      .select('observer_email')
-      .eq('candidate_id', interviewCandidate.candidate_id)
-      .in('booking_type', bookingTypes)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: existingPendingReviews } = await supabase
+      .from('management_reviews')
+      .select('id, reviewer_email')
+      .eq('interview_candidate_id', interviewCandidateId)
+      .eq('feedback_type', actualFeedbackType)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true });
 
-    console.log('Round booking found:', roundBooking, 'for booking types:', bookingTypes);
+    let observerEmails = Array.from(
+      new Set(
+        ((existingPendingReviews || []) as PendingReviewRecord[])
+          .map((review) => review.reviewer_email?.trim().toLowerCase() || '')
+          .filter((email) => isValidEmail(email))
+      )
+    );
 
-    // Collect observer emails - try booking first, then employer
-    let observerEmailsRaw = roundBooking?.observer_email || '';
-    if (!observerEmailsRaw && employer?.email) {
-      observerEmailsRaw = employer.email;
-      console.log('Using employer email as fallback:', employer.email);
+    if (observerEmails.length === 0) {
+      const bookingTypes = bookingTypeMap[actualFeedbackType] || bookingTypeMap.demo;
+      const { data: roundBooking } = await supabase
+        .from('slot_bookings')
+        .select('observer_email')
+        .eq('candidate_id', interviewCandidate.candidate_id)
+        .in('booking_type', bookingTypes)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      observerEmails = normalizeEmailList(roundBooking?.observer_email);
+
+      if (observerEmails.length === 0 && isValidEmail(employer?.email)) {
+        observerEmails = [employer.email.trim().toLowerCase()];
+      }
     }
-
-    const observerEmails = observerEmailsRaw
-      .split(',')
-      .map((e: string) => e.trim())
-      .filter((e: string) => e.length > 0 && e.includes('@'));
 
     if (observerEmails.length === 0) {
       console.log('No observer emails found for feedback type:', actualFeedbackType);
       return new Response(
-        JSON.stringify({ message: 'No observer emails found', count: 0 }),
+        JSON.stringify({
+          success: true,
+          message: 'No observer emails found',
+          emailsSent: 0,
+          totalObservers: 0,
+          roundLabel,
+          observerEmails: [],
+          candidateEmail,
+          candidateEmailSent: false,
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Sending ${roundLabel} feedback requests to ${observerEmails.length} observers:`, observerEmails);
-
-    const baseUrl = Deno.env.get('APP_DOMAIN') || "https://gradia-link-shine.lovable.app";
     let emailsSent = 0;
 
     for (const email of observerEmails) {
@@ -119,27 +192,49 @@ serve(async (req) => {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
-      const { error: reviewError } = await supabase
-        .from('management_reviews')
-        .insert({
-          interview_candidate_id: interviewCandidateId,
-          reviewer_email: email,
-          reviewer_name: email.split('@')[0],
-          feedback_token: feedbackToken,
-          feedback_token_expires_at: expiresAt.toISOString(),
-          status: 'pending',
-          sent_at: new Date().toISOString(),
-          feedback_type: actualFeedbackType
-        });
+      const existingReview = (existingPendingReviews || []).find(
+        (review) => review.reviewer_email?.trim().toLowerCase() === email
+      );
 
-      if (reviewError) {
-        console.error('Error creating review record for', email, ':', reviewError);
-        continue;
+      if (existingReview) {
+        const { error: reviewError } = await supabase
+          .from('management_reviews')
+          .update({
+            reviewer_email: email,
+            reviewer_name: email.split('@')[0],
+            feedback_token: feedbackToken,
+            feedback_token_expires_at: expiresAt.toISOString(),
+            sent_at: new Date().toISOString(),
+          })
+          .eq('id', existingReview.id);
+
+        if (reviewError) {
+          console.error('Error updating review record for', email, ':', reviewError);
+          continue;
+        }
+      } else {
+        const { error: reviewError } = await supabase
+          .from('management_reviews')
+          .insert({
+            interview_candidate_id: interviewCandidateId,
+            reviewer_email: email,
+            reviewer_name: email.split('@')[0],
+            feedback_token: feedbackToken,
+            feedback_token_expires_at: expiresAt.toISOString(),
+            status: 'pending',
+            sent_at: new Date().toISOString(),
+            feedback_type: actualFeedbackType,
+          });
+
+        if (reviewError) {
+          console.error('Error creating review record for', email, ':', reviewError);
+          continue;
+        }
       }
 
       const feedbackLink = `${baseUrl}/admin/feedback?token=${feedbackToken}`;
 
-      const htmlContent = `<!DOCTYPE html>
+      const observerHtml = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
@@ -154,12 +249,11 @@ serve(async (req) => {
       <td style="padding: 24px;">
         <p style="margin: 0 0 16px;">Hello,</p>
         <p style="margin: 0 0 16px;">A candidate has completed their <strong style="color: ${colors.primary};">${roundLabel}</strong> and requires your feedback evaluation:</p>
-        
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0fdf4; border-radius: 8px; margin: 16px 0; border: 1px solid ${colors.border};">
           <tr>
             <td style="padding: 20px;">
               <table width="100%" cellpadding="0" cellspacing="0">
-                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><span style="color: #6b7280; font-size: 12px; text-transform: uppercase;">Candidate</span><br><strong style="font-size: 16px;">${candidateName}</strong><br><span style="color: #6b7280; font-size: 13px;">${candidateEmail}</span></td></tr>
+                <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><span style="color: #6b7280; font-size: 12px; text-transform: uppercase;">Candidate</span><br><strong style="font-size: 16px;">${candidateName}</strong><br><span style="color: #6b7280; font-size: 13px;">${candidateEmail || 'N/A'}</span></td></tr>
                 <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><span style="color: #6b7280; font-size: 12px; text-transform: uppercase;">Position</span><br><strong>${job?.job_title || 'N/A'}</strong></td></tr>
                 <tr><td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;"><span style="color: #6b7280; font-size: 12px; text-transform: uppercase;">Company</span><br><strong>${companyName}</strong></td></tr>
                 <tr><td style="padding: 8px 0;"><span style="color: #6b7280; font-size: 12px; text-transform: uppercase;">Round</span><br><strong style="color: ${colors.primary};">${roundLabel}</strong></td></tr>
@@ -167,16 +261,14 @@ serve(async (req) => {
             </td>
           </tr>
         </table>
-
         <p style="margin: 16px 0 8px; font-weight: 600; color: #374151;">📋 You will evaluate the candidate on:</p>
         <ul style="margin: 0 0 24px; padding-left: 20px; color: #6b7280;">
           <li style="margin-bottom: 6px;">Overall performance rating (1-5 stars)</li>
           <li style="margin-bottom: 6px;">Communication & presentation skills</li>
           <li style="margin-bottom: 6px;">Subject knowledge & expertise</li>
-          <li style="margin-bottom: 6px;">Your recommendation (Recommend / Needs Improvement / Do Not Recommend)</li>
+          <li style="margin-bottom: 6px;">Your recommendation</li>
           <li style="margin-bottom: 6px;">Strengths & areas for improvement</li>
         </ul>
-        
         <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
           <tr>
             <td align="center">
@@ -186,23 +278,15 @@ serve(async (req) => {
             </td>
           </tr>
         </table>
-        
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; margin: 16px 0;">
           <tr><td style="padding: 12px; font-size: 13px; color: #92400e;">⏰ This feedback link will expire in <strong>7 days</strong>. Please submit your evaluation before then.</td></tr>
         </table>
-        
-        <p style="color: #6b7280; font-size: 13px;">
-          If the button doesn't work, copy and paste this link:<br>
-          <span style="color: #3b82f6; word-break: break-all;">${feedbackLink}</span>
-        </p>
+        <p style="color: #6b7280; font-size: 13px;">If the button doesn't work, copy and paste this link:<br><span style="color: #3b82f6; word-break: break-all;">${feedbackLink}</span></p>
       </td>
     </tr>
     <tr>
       <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
-        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-          ${companyName} - Powered by Gradia<br>
-          <a href="mailto:support@gradia.co.in" style="color: ${colors.border};">Contact Support</a>
-        </p>
+        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">${companyName} - Powered by Gradia</p>
       </td>
     </tr>
   </table>
@@ -210,40 +294,83 @@ serve(async (req) => {
 </html>`;
 
       try {
-        const emailResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: `${companyName} <noreply@gradia.co.in>`,
-            to: [email],
-            subject: `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
-            html: htmlContent,
-          }),
+        await sendEmail({
+          resendApiKey: RESEND_API_KEY,
+          from: fromAddress,
+          to: email,
+          subject: `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
+          html: observerHtml,
         });
-        const emailResult = await emailResponse.json();
-        if (emailResponse.ok) {
-          emailsSent++;
-          console.log(`${roundLabel} feedback email sent to ${email}:`, emailResult);
-        } else {
-          console.error(`Failed to send feedback email to ${email}:`, emailResult);
-        }
+        emailsSent++;
+        console.log(`${roundLabel} feedback email sent to ${email}`);
       } catch (emailError) {
-        console.error(`Failed to send email to ${email}:`, emailError);
+        console.error(`Failed to send feedback email to ${email}:`, emailError);
+      }
+    }
+
+    let candidateEmailSent = false;
+
+    if (candidateEmail) {
+      const candidateHtml = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="padding: 32px 24px; background: ${colors.gradient}; border-radius: 8px 8px 0 0; text-align: center;">
+        <h1 style="margin: 0; font-size: 24px; color: #ffffff;">${roundLabel} Update</h1>
+        <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9);">Your evaluation stage is now in feedback review</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 24px;">
+        <p>Hello ${candidateName},</p>
+        <p>Your <strong>${roundLabel}</strong> for <strong>${job?.job_title || 'the role'}</strong> is now under feedback review by the employer team.</p>
+        <p>We have sent evaluation requests to the assigned observer(s), and we will notify you once the process moves to the next stage.</p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin: 20px 0;">
+          <tr>
+            <td style="padding: 16px;">
+              <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Position</div>
+              <div style="font-weight: 700; margin-bottom: 12px;">${job?.job_title || 'N/A'}</div>
+              <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Company</div>
+              <div style="font-weight: 700;">${companyName}</div>
+            </td>
+          </tr>
+        </table>
+        <p style="margin-bottom: 0; color: #6b7280;">Thanks,<br>${companyName}</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+      try {
+        await sendEmail({
+          resendApiKey: RESEND_API_KEY,
+          from: fromAddress,
+          to: candidateEmail,
+          subject: `${roundLabel} update - ${job?.job_title || 'Application Progress'}`,
+          html: candidateHtml,
+        });
+        candidateEmailSent = true;
+        console.log(`${roundLabel} candidate update sent to ${candidateEmail}`);
+      } catch (candidateMailError) {
+        console.error(`Failed to send candidate update to ${candidateEmail}:`, candidateMailError);
       }
     }
 
     console.log(`${roundLabel} feedback emails sent: ${emailsSent}/${observerEmails.length}`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         emailsSent,
         totalObservers: observerEmails.length,
         roundLabel,
-        message: `${roundLabel} feedback request sent to ${emailsSent} observer(s)`
+        observerEmails,
+        candidateEmail,
+        candidateEmailSent,
+        message: `${roundLabel} feedback request sent to ${emailsSent} observer(s)`,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
