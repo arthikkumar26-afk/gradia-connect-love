@@ -1224,13 +1224,15 @@ const ClickableStagesList = ({
       if (error) throw error;
 
       const updatedBooking = { ...activeBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType };
-      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      else if (isManagement) setManagementSlotBooking(updatedBooking);
+      else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
 
-      const roundLabel = isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
-      const feedbackType = isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
-      const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+      const roundLabel = isCoreTeam ? 'Core Team Round' : isManagement ? 'Management Round' : isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
+      const feedbackType = isCoreTeam ? 'core_team' : isManagement ? 'management' : isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
+      const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
 
       // Auto-advance stage
       try {
