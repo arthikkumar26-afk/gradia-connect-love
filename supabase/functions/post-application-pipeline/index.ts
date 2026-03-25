@@ -93,9 +93,33 @@ async function processInitialPipeline(interviewCandidateId: string, analysisData
     interviewCandidateId,
   });
 
-  // Step 2: Send CV/Resume ATS results email
+  // Step 2: Create CV/Resume event with analysis data, then send results email
   console.log('Waiting before CV results email...');
   await new Promise(resolve => setTimeout(resolve, DELAY));
+
+  // Create a completed CV/Resume interview_event so results are visible in the modal
+  const { data: cvStage } = await supabase
+    .from('interview_stages')
+    .select('id')
+    .eq('name', 'CV/Resume')
+    .single();
+
+  if (cvStage) {
+    const overallScore = analysisData?.overall_score ?? null;
+    await supabase
+      .from('interview_events')
+      .insert({
+        interview_candidate_id: interviewCandidateId,
+        stage_id: cvStage.id,
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        ai_score: overallScore,
+        ai_feedback: analysisData || null,
+        notes: 'AI-powered CV/Resume analysis completed',
+      });
+    console.log('Created CV/Resume interview event with analysis data');
+  }
+
   console.log('Step 2: Sending CV/Resume ATS results email...');
   await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-cv-results-email', {
     interviewCandidateId,
