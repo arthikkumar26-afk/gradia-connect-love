@@ -188,6 +188,7 @@ serve(async (req) => {
               'Admin & Academic Feedback': 'admin_academic',
               'Core Team Feedback': 'core_team',
               'Management Feedback': 'management',
+              'Management Round Feedback': 'management',
             };
             const feedbackType = feedbackTypeMap[targetStage.name] || 'demo';
             const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
