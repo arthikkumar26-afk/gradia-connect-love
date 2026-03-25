@@ -137,8 +137,9 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
         const currentStageOrder = currentStage?.stage_order ?? -1;
 
         // Build stage reviews
+        const allowedStages = ['Written Test', 'Segment Feedback', 'Admin & Academic Feedback', 'Management Round Feedback', 'HR Feedback'];
         const reviews: StageReview[] = stages
-          .filter(s => s.name !== 'Offer Stage')
+          .filter(s => allowedStages.includes(s.name))
           .map(stage => {
             const stageEvents = (events || []).filter(e => e.stage_id === stage.id);
             const event = stageEvents.find(e => e.status === 'completed' || e.status === 'passed')
@@ -260,8 +261,9 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
       doc.line(14, y, pageWidth - 14, y);
       y += 8;
 
-      // Stage-by-stage details
-      for (const review of stageReviews) {
+      // Stage-by-stage details (only allowed stages)
+      const pdfAllowedStages = ['Written Test', 'Segment Feedback', 'Admin & Academic Feedback', 'Management Round Feedback', 'HR Feedback'];
+      for (const review of stageReviews.filter(r => pdfAllowedStages.includes(r.stageName))) {
         const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
         
         // Check if we need a new page
