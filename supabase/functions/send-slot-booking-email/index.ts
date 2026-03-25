@@ -130,12 +130,12 @@ serve(async (req) => {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #bfdbfe;">
-                    <strong style="color: #374151;">Format:</strong> ${stageName === 'HR Round' ? 'Live Video Meeting / Interview' : stageName === 'Demo Round' ? 'Live Teaching Demo' : 'Technical MCQ Assessment (10 questions)'}
+                    <strong style="color: #374151;">Format:</strong> ${['HR Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round'].some(r => stageName.includes(r.replace(' Round', '')) || stageName === r) ? 'Live Video Meeting / Interview' : stageName === 'Demo Round' ? 'Live Teaching Demo' : 'Technical MCQ Assessment (10 questions)'}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0;">
-                    <strong style="color: #374151;">Duration:</strong> ${stageName === 'HR Round' ? '15-30 minutes' : stageName === 'Demo Round' ? '20-30 minutes' : '15-20 minutes'}
+                    <strong style="color: #374151;">Duration:</strong> ${['HR Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round'].some(r => stageName.includes(r.replace(' Round', '')) || stageName === r) ? '15-30 minutes' : stageName === 'Demo Round' ? '20-30 minutes' : '15-20 minutes'}
                   </td>
                 </tr>
               </table>
