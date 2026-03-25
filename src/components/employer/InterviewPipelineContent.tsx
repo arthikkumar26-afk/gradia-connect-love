@@ -1874,7 +1874,7 @@ const ClickableStagesList = ({
                           {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                         </Button>
                       </div>
-                      {observerEmails.length > 0 && (
+                      {activeObserverEmails.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {observerEmails.map((email) => (
                             <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
