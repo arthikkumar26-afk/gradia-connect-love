@@ -178,43 +178,6 @@ serve(async (req) => {
       }
     }
 
-    // Trigger analyze-resume to create events and start pipeline automation
-    if (interviewCandidateId) {
-      console.log('Triggering analyze-resume for pipeline automation...');
-      try {
-        const { data: jobDetails } = await supabase
-          .from("jobs")
-          .select("job_title, description, requirements, skills, experience_required, location")
-          .eq("id", jobId)
-          .single();
-
-        const { data: candidateProfile } = await supabase
-          .from("profiles")
-          .select("full_name, email, experience_level, preferred_role, location, mobile")
-          .eq("id", userId)
-          .single();
-
-        const analyzeResponse = await fetch(`${supabaseUrl}/functions/v1/analyze-resume`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${supabaseServiceKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            candidateId: userId,
-            jobId,
-            resumeUrl,
-            candidateProfile: candidateProfile || { full_name: candidateName, email: candidateEmail },
-            jobDetails: jobDetails || {},
-          }),
-        });
-        const analyzeResult = await analyzeResponse.json();
-        console.log('Analyze-resume pipeline result:', analyzeResult);
-      } catch (pipelineErr) {
-        console.error('Failed to trigger pipeline:', pipelineErr);
-      }
-    }
-
     // 6. Get job and company details for email
     const { data: jobData } = await supabase
       .from("jobs")
@@ -231,7 +194,7 @@ serve(async (req) => {
     const companyName = companyData?.company_name || companyData?.full_name || "the company";
     const jobTitle = jobData?.job_title || "Job Opening";
 
-    // 7. Send confirmation email
+    // 7. Send confirmation email FIRST before pipeline starts
     try {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
       if (RESEND_API_KEY) {
@@ -246,11 +209,6 @@ serve(async (req) => {
               .header h1 { margin: 0 0 10px; font-size: 28px; }
               .content { background: #ffffff; padding: 30px; }
               .info-card { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9; }
-              ${aiScore ? `
-              .score-card { background: linear-gradient(135deg, #f0f4ff 0%, #e8f5e9 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #e0e7ff; }
-              .score { font-size: 48px; font-weight: bold; color: #0ea5e9; }
-              .score-label { color: #666; font-size: 14px; margin-top: 5px; }
-              ` : ""}
               .next-steps { background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; }
               .next-steps h3 { color: #16a34a; margin-top: 0; }
               .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f9fafb; border-radius: 0 0 12px 12px; }
@@ -266,13 +224,6 @@ serve(async (req) => {
                 <p>Dear ${candidateName},</p>
                 <p>Thank you for applying for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong>. We have received your application!</p>
                 
-                ${aiScore ? `
-                <div class="score-card">
-                  <div class="score">${aiScore}%</div>
-                  <div class="score-label">AI Match Score</div>
-                </div>
-                ` : ""}
-                
                 <div class="info-card">
                   <h3 style="margin-top: 0; color: #0ea5e9;">📋 Application Details</h3>
                   <p><strong>Position:</strong> ${jobTitle}</p>
@@ -285,14 +236,14 @@ serve(async (req) => {
                 <div class="next-steps">
                   <h3>🚀 What Happens Next?</h3>
                   <ol style="margin: 0; padding-left: 20px;">
-                    <li>Our AI system has analyzed your profile</li>
-                    <li>Your skills have been matched with job requirements</li>
-                    <li>Our hiring team will review your application</li>
+                    <li>Our AI system will analyze your profile</li>
+                    <li>Your skills will be matched with job requirements</li>
+                    <li>You will receive your CV/Resume score via email</li>
                     <li>If shortlisted, we'll contact you for an interview</li>
                   </ol>
                 </div>
                 
-                <p style="color: #666;">Keep an eye on your inbox for updates. We aim to review applications within 2-3 business days.</p>
+                <p style="color: #666;">Keep an eye on your inbox for updates. Your CV analysis results will follow shortly.</p>
               </div>
               <div class="footer">
                 <p>Best regards,<br><strong>The ${companyName} Hiring Team</strong></p>
@@ -318,11 +269,47 @@ serve(async (req) => {
         });
 
         const emailResult = await response.json();
-        console.log("Email send result:", emailResult);
+        console.log("Confirmation email sent:", emailResult);
       }
     } catch (emailError) {
-      console.error("Email sending failed:", emailError);
-      // Don't fail the application if email fails
+      console.error("Confirmation email failed:", emailError);
+    }
+
+    // 8. Trigger analyze-resume for AI scoring and pipeline automation AFTER confirmation email
+    if (interviewCandidateId) {
+      console.log('Triggering analyze-resume for pipeline automation...');
+      try {
+        const { data: jobDetailsForAnalysis } = await supabase
+          .from("jobs")
+          .select("job_title, description, requirements, skills, experience_required, location")
+          .eq("id", jobId)
+          .single();
+
+        const { data: candidateProfile } = await supabase
+          .from("profiles")
+          .select("full_name, email, experience_level, preferred_role, location, mobile")
+          .eq("id", userId)
+          .single();
+
+        const analyzeResponse = await fetch(`${supabaseUrl}/functions/v1/analyze-resume`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            candidateId: userId,
+            jobId,
+            resumeUrl,
+            candidateProfile: candidateProfile || { full_name: candidateName, email: candidateEmail },
+            jobDetails: jobDetailsForAnalysis || {},
+          }),
+        });
+        const analyzeResult = await analyzeResponse.json();
+        console.log('Analyze-resume pipeline result:', analyzeResult);
+      } catch (pipelineErr) {
+        console.error('Failed to trigger pipeline:', pipelineErr);
+      }
     }
 
     return new Response(
