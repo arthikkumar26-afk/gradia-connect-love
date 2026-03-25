@@ -236,6 +236,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           job:jobs (
             job_title,
             location,
+            pipeline_stages,
             employer:profiles!jobs_employer_id_fkey (
               company_name,
               profile_picture
