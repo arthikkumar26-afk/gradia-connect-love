@@ -140,7 +140,44 @@ serve(async (req) => {
     const candidateEmail = candidate.email || candidate.full_name;
     if (!candidateEmail) throw new Error('Candidate email not found');
 
-    const analysisData = passedAnalysisData || interviewCandidate.ai_analysis || {};
+    let analysisData = passedAnalysisData || interviewCandidate.ai_analysis || null;
+    
+    // Fallback: if no analysis data on interview_candidates, check resume_analyses table
+    if (!analysisData || (!analysisData.overall_score && !interviewCandidate.ai_score)) {
+      console.log('No analysis on interview_candidates, checking resume_analyses table...');
+      const { data: resumeAnalysis } = await supabase
+        .from('resume_analyses')
+        .select('*')
+        .eq('user_id', candidate.id)
+        .maybeSingle();
+      
+      if (resumeAnalysis) {
+        console.log('Found resume_analyses data, score:', resumeAnalysis.overall_score);
+        analysisData = {
+          overall_score: resumeAnalysis.overall_score,
+          strengths: resumeAnalysis.strengths || [],
+          summary: resumeAnalysis.experience_summary || 'Your resume has been reviewed by our AI system.',
+          skill_highlights: resumeAnalysis.skill_highlights || [],
+          career_level: resumeAnalysis.career_level,
+          improvements: resumeAnalysis.improvements || [],
+          skill_match_score: resumeAnalysis.overall_score, // approximate from overall
+          experience_match_score: resumeAnalysis.overall_score,
+          location_match_score: 50,
+          recommendation: resumeAnalysis.overall_score >= 75 ? 'yes' : resumeAnalysis.overall_score >= 50 ? 'maybe' : 'no',
+          suggested_focus: resumeAnalysis.improvements || [],
+        };
+        
+        // Also update interview_candidates with this data so it's available elsewhere
+        await supabase
+          .from('interview_candidates')
+          .update({ ai_score: resumeAnalysis.overall_score, ai_analysis: analysisData })
+          .eq('id', interviewCandidateId);
+        console.log('Updated interview_candidates with resume_analyses data');
+      }
+    }
+    
+    if (!analysisData) analysisData = {};
+    
     const overallScore = analysisData.overall_score ?? interviewCandidate.ai_score ?? 0;
     const skillMatchScore = analysisData.skill_match_score ?? analysisData.skillMatchScore ?? 0;
     const experienceMatchScore = analysisData.experience_match_score ?? analysisData.experienceMatchScore ?? 0;
