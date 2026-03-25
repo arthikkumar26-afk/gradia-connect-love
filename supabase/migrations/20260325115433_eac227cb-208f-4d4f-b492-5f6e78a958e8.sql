@@ -1,0 +1,1 @@
+ALTER TABLE public.employer_notifications ADD COLUMN recipient_email text;
