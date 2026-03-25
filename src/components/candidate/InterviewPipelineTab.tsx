@@ -222,6 +222,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         .order('stage_order', { ascending: true });
 
       const allStages = stagesData || [];
+      setAllDbStages(allStages);
 
       // Fetch interview candidates for this user
       const { data: interviewsData, error } = await supabase
