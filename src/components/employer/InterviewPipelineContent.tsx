@@ -131,7 +131,7 @@ const stageColors: Record<string, string> = {
   'Offer Stage': 'bg-emerald-500',
 };
 
-const hiddenPipelineStages = new Set(['AI Phone Interview', 'Segment Round', 'Admin & Academic Round']);
+const hiddenPipelineStages = new Set(['AI Phone Interview', 'Segment Round', 'Admin & Academic Round', 'Core Team Round']);
 
 const getVisibleInterviewSteps = (steps: InterviewStep[]) =>
   steps.filter((step) => !hiddenPipelineStages.has(step.title));
