@@ -82,7 +82,7 @@ serve(async (req) => {
       .maybeSingle();
 
     // Collect observer emails
-    const observerEmailsRaw = demoBooking?.observer_email || employer?.email || '';
+    const observerEmailsRaw = roundBooking?.observer_email || employer?.email || '';
     const observerEmails = observerEmailsRaw
       .split(',')
       .map((e: string) => e.trim())
