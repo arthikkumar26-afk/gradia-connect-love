@@ -14,7 +14,7 @@ import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User, FileT
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline, type PipelineStage } from "@/data/interviewPipelineConfig";
-import EditablePipelineStages from "@/components/employer/EditablePipelineStages";
+
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 import { indiaLocationData } from "@/data/indiaLocations";
 
@@ -667,11 +667,6 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
-            {/* Editable Pipeline Stages */}
-            <EditablePipelineStages
-              stages={customStages}
-              onStagesChange={setCustomStages}
-            />
 
             {/* AI Create with Requirements */}
             <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
