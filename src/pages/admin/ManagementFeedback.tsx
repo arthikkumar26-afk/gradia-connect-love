@@ -34,6 +34,7 @@ interface ReviewData {
   reviewer_name: string | null;
   status: string;
   feedback_token_expires_at: string;
+  feedback_type?: string | null;
   candidate_name?: string;
   candidate_email?: string;
   demo_score?: number;
@@ -41,6 +42,17 @@ interface ReviewData {
   demo_recording_url?: string;
   job_title?: string;
 }
+
+const getRoundLabel = (feedbackType?: string | null) => {
+  switch (feedbackType) {
+    case 'segment': return { title: 'Segment Round Feedback', description: 'Please provide your feedback for the candidate\'s segment round evaluation' };
+    case 'admin_academic': return { title: 'Admin & Academic Round Feedback', description: 'Please provide your feedback for the candidate\'s admin & academic round evaluation' };
+    case 'core_team': return { title: 'Core Team Round Feedback', description: 'Please provide your feedback for the candidate\'s core team round evaluation' };
+    case 'management': return { title: 'Management Round Feedback', description: 'Please provide your feedback for the candidate\'s management round evaluation' };
+    case 'hr': return { title: 'HR Round Feedback', description: 'Please provide your feedback for the candidate\'s HR round evaluation' };
+    default: return { title: 'Demo Round Feedback', description: 'Please provide your feedback for the candidate\'s teaching demonstration' };
+  }
+};
 
 export default function ManagementFeedback() {
   const [searchParams] = useSearchParams();
