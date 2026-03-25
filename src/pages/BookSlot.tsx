@@ -184,11 +184,15 @@ const BookSlot = () => {
       const isHrSlotBooking = stageName.toLowerCase().includes("hr") && !isFeedbackStage;
       const isSegmentSlotBooking = stageName.toLowerCase().includes("segment") && !isFeedbackStage;
       const isAdminAcademicSlotBooking = stageName.toLowerCase().includes("admin") && stageName.toLowerCase().includes("academic") && !isFeedbackStage;
+      const isCoreTeamSlotBooking = stageName.toLowerCase().includes("core team") && !isFeedbackStage;
+      const isManagementSlotBooking = stageName.toLowerCase().includes("management") && !isFeedbackStage;
 
       const bookingType = isDemoStage ? "demo_round" 
         : isHrSlotBooking ? "hr_round"
         : isSegmentSlotBooking ? "segment_round"
         : isAdminAcademicSlotBooking ? "admin_academic_round"
+        : isCoreTeamSlotBooking ? "core_team_round"
+        : isManagementSlotBooking ? "management_round"
         : isWrittenTestSlotBooking ? "written_test" 
         : "technical_assessment";
 
