@@ -1256,6 +1256,7 @@ const ClickableStagesList = ({
               observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
               meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
               meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+              roundName: 'Demo Round',
             }
           });
         } catch (emailErr) {
