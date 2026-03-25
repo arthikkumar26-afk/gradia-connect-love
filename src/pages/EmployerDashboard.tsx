@@ -504,6 +504,7 @@ const EmployerDashboard = () => {
               </Button>
             </div>
           )}
+          {user?.id && <EmployerNotifications employerId={user.id} />}
         </header>
 
 
