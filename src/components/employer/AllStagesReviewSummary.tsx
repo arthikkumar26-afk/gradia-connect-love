@@ -546,7 +546,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   )}
 
                   {/* Demo/HR Feedback - Observer Reviews */}
-                  {['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && review.reviews && review.reviews.length > 0 && (
+                  {['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName) && review.reviews && review.reviews.length > 0 && (
                     <div className="space-y-2">
                       {review.reviews.map((r, i) => (
                         <div key={i} className="bg-background rounded-md p-2 border space-y-1.5">
