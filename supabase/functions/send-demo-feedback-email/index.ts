@@ -167,7 +167,7 @@ serve(async (req) => {
             </div>
             <div class="content">
               <p>Hello,</p>
-              <p>A candidate has completed their <strong>Demo Round</strong> and requires your feedback:</p>
+              <p>A candidate has completed their <strong>${roundLabel}</strong> and requires your feedback:</p>
               
               <div class="info-card">
                 <div style="margin-bottom: 15px;">
