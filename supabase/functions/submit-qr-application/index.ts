@@ -66,11 +66,32 @@ serve(async (req) => {
       });
 
       if (authError) {
-        console.error("Auth error:", authError);
-        throw new Error("Failed to create user account: " + authError.message);
-      }
-
-      userId = newUser.user.id;
+        // If user already exists in auth but not in profiles, retrieve them
+        if (authError.message?.includes('already been registered')) {
+          console.log("User exists in auth but not profiles, looking up...");
+          const { data: allUsers } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          const found = allUsers?.users?.find(u => u.email?.toLowerCase() === candidateEmail.toLowerCase().trim());
+          if (found) {
+            userId = found.id;
+            // Ensure profile exists
+            await supabase.from("profiles").upsert({
+              id: userId,
+              full_name: candidateName,
+              email: candidateEmail,
+              mobile: candidatePhone || null,
+              role: "candidate",
+              resume_url: resumeUrl,
+            }, { onConflict: 'id' });
+            await supabase.from("user_roles").upsert({ user_id: userId, role: "candidate" }, { onConflict: 'user_id,role' });
+          } else {
+            throw new Error("Failed to find existing user account");
+          }
+        } else {
+          console.error("Auth error:", authError);
+          throw new Error("Failed to create user account: " + authError.message);
+        }
+      } else {
+        userId = newUser.user.id;
 
       // Create profile
       const { error: profileError } = await supabase.from("profiles").insert({
