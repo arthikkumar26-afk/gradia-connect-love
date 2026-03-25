@@ -150,8 +150,10 @@ export const useInterviewPipeline = () => {
 
       // If employer has no jobs, return empty pipeline
       if (employerJobIds.length === 0) {
-        const dbStages = stagesData as DbInterviewStage[];
-        setStages(dbStages.map(stage => ({
+        const dbStagesAll = stagesData as DbInterviewStage[];
+        const offerStageOrderEmpty = dbStagesAll.find(s => s.name === 'Offer Stage')?.stage_order;
+        const filteredEmptyStages = dbStagesAll.filter(s => offerStageOrderEmpty != null ? s.stage_order <= offerStageOrderEmpty : true);
+        setStages(filteredEmptyStages.map(stage => ({
           id: stage.id,
           title: stage.name,
           stageOrder: stage.stage_order,
