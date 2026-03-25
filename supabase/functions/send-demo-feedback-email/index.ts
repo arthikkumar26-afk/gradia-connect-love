@@ -163,7 +163,7 @@ serve(async (req) => {
           <div class="container">
             <div class="header">
               <h1 style="margin: 0;">🎯 Feedback Required</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">Demo Round Evaluation - ${companyName}</p>
+              <p style="margin: 10px 0 0 0; opacity: 0.9;">${roundLabel} Evaluation - ${companyName}</p>
             </div>
             <div class="content">
               <p>Hello,</p>
