@@ -1119,6 +1119,26 @@ const ClickableStagesList = ({
             setAdminObserverEmails(emails);
           }
 
+          // Find Core Team Round slot booking
+          const coreTeamBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('core team') || b.booking_type === 'core_team_round'
+          ) || null;
+          setCoreTeamSlotBooking(coreTeamBooking ? { ...coreTeamBooking, preferred_slots: (coreTeamBooking.preferred_slots as any) || null } : null);
+          if (coreTeamBooking?.observer_email) {
+            const emails = coreTeamBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setCoreTeamObserverEmails(emails);
+          }
+
+          // Find Management Round slot booking
+          const managementBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('management') || b.booking_type === 'management_round'
+          ) || null;
+          setManagementSlotBooking(managementBooking ? { ...managementBooking, preferred_slots: (managementBooking.preferred_slots as any) || null } : null);
+          if (managementBooking?.observer_email) {
+            const emails = managementBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setManagementObserverEmails(emails);
+          }
+
           // Find HR Round slot booking
           const hrBooking = bookings?.find(b => 
             b.subject?.toLowerCase().includes('hr') || b.booking_type === 'hr_round'
