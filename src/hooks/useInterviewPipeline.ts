@@ -212,8 +212,23 @@ export const useInterviewPipeline = () => {
       })[];
 
       // Filter out stages after Offer Stage for the pipeline columns
+      // BUT also include any stages referenced by custom job pipelines (e.g., Segment, Admin & Academic for Principal)
       const offerStageOrderMain = dbStagesAll2.find(s => s.name === 'Offer Stage')?.stage_order;
-      const dbStages = dbStagesAll2.filter(s => offerStageOrderMain != null ? s.stage_order <= offerStageOrderMain : true);
+      const defaultDbStages = dbStagesAll2.filter(s => offerStageOrderMain != null ? s.stage_order <= offerStageOrderMain : true);
+      
+      // Collect all stage names used by any candidate's custom job pipeline
+      const customPipelineStageNames = new Set<string>();
+      (candidatesData as (DbInterviewCandidate & { profiles: DbProfile; jobs: DbJob })[]).forEach(c => {
+        const jobPipeline = c.jobs?.pipeline_stages as Array<{ name: string }> | null;
+        if (jobPipeline && jobPipeline.length > 0) {
+          jobPipeline.forEach(ps => customPipelineStageNames.add(ps.name));
+        }
+      });
+      
+      // Merge: include default stages + any custom pipeline stages not already included
+      const dbStages = customPipelineStageNames.size > 0
+        ? dbStagesAll2.filter(s => defaultDbStages.some(d => d.id === s.id) || customPipelineStageNames.has(s.name))
+        : defaultDbStages;
 
       const pipelineStages: PipelineStage[] = dbStages.map((stage) => {
         // Find candidates in this stage
