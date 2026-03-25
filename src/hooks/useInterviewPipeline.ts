@@ -217,25 +217,38 @@ export const useInterviewPipeline = () => {
             const events = eventsByCandidate.get(c.id) || [];
             
             // Build interview steps from stages and events
-            // Get the current stage order
-            const currentStageOrder = dbStages.find(st => st.id === c.current_stage_id)?.stage_order ?? 0;
+            // Get the current stage order/name
+            const currentStage = dbStages.find(st => st.id === c.current_stage_id);
+            const currentStageOrder = currentStage?.stage_order ?? 0;
+            const currentStageName = currentStage?.name ?? null;
             
             // Use job-specific custom pipeline stages for display names if available
             const jobCustomStages = c.jobs?.pipeline_stages as Array<{ order: number; name: string; description: string; isAutomated: boolean }> | null;
-            
-            // Build a mapping from stage_order to custom pipeline position
-            // This handles reordered pipelines (e.g., Principal: Segment before HR)
-            let pipelinePositionMap: Map<number, number> | null = null;
-            if (jobCustomStages && jobCustomStages.length > 0) {
-              pipelinePositionMap = new Map();
-              jobCustomStages.forEach((cs, index) => {
-                pipelinePositionMap!.set(cs.order, index);
-              });
-            }
-            
-            // Get the current stage's position in the custom pipeline (or fallback to stage_order)
-            const currentPipelinePosition = pipelinePositionMap 
-              ? (pipelinePositionMap.get(currentStageOrder) ?? currentStageOrder)
+
+            // Principal/advanced pipelines store local step order in jobs.pipeline_stages,
+            // which does NOT match the global interview_stages.stage_order values.
+            // So we must derive position by stage NAME, not by stage_order.
+            const customStagePositionMap = jobCustomStages && jobCustomStages.length > 0
+              ? new Map(jobCustomStages.map((stage, index) => [stage.name, index]))
+              : null;
+
+            const hiddenStageToVisibleStageMap: Record<string, string> = {
+              'Demo Round': 'Demo Feedback',
+              'Segment Round': 'Segment Feedback',
+              'Admin & Academic Round': 'Admin & Academic Feedback',
+              'Core Team Round': 'Core Team Feedback',
+              'Management Round': 'Management Feedback',
+              'HR Round': 'HR Feedback',
+            };
+
+            const resolvedCurrentVisibleStageName = currentStageName
+              ? (customStagePositionMap?.has(currentStageName)
+                  ? currentStageName
+                  : hiddenStageToVisibleStageMap[currentStageName] || currentStageName)
+              : null;
+
+            const currentPipelinePosition = customStagePositionMap && resolvedCurrentVisibleStageName
+              ? (customStagePositionMap.get(resolvedCurrentVisibleStageName) ?? 0)
               : currentStageOrder;
             
             const interviewSteps: InterviewStep[] = dbStages.map((s) => {
@@ -245,17 +258,34 @@ export const useInterviewPipeline = () => {
                 || stageEvents.find((e) => e.status === 'in_progress')
                 || stageEvents.find((e) => e.status === 'failed')
                 || stageEvents[0] || null;
+
+              const customStage = jobCustomStages?.find(cs => cs.name === s.name) || jobCustomStages?.find(cs => cs.order === s.stage_order);
+              const displayTitle = customStage?.name || s.name;
+
               let status: InterviewStep["status"] = "pending";
               let isLive = false;
               let liveStatus: InterviewStep["liveStatus"] = undefined;
+
+              const resolvedVisibleStageName = customStagePositionMap?.has(displayTitle)
+                ? displayTitle
+                : hiddenStageToVisibleStageMap[s.name] || displayTitle;
+
+              const stagePipelinePosition = customStagePositionMap && resolvedVisibleStageName
+                ? customStagePositionMap.get(resolvedVisibleStageName)
+                : undefined;
               
-              // Use custom pipeline position if available, otherwise use raw stage_order
-              const stagePipelinePosition = pipelinePositionMap
-                ? (pipelinePositionMap.get(s.stage_order) ?? s.stage_order)
-                : s.stage_order;
-              
-              // Determine status based on pipeline position relative to current stage
-              if (stagePipelinePosition < currentPipelinePosition) {
+              // Determine status based on job-specific visible pipeline sequence when available.
+              // Fallback to global stage_order only for older jobs without custom pipeline config.
+              if (customStagePositionMap && stagePipelinePosition !== undefined) {
+                if (stagePipelinePosition < currentPipelinePosition) {
+                  status = "completed";
+                } else if (resolvedVisibleStageName === resolvedCurrentVisibleStageName) {
+                  status = "current";
+                  liveStatus = "waiting";
+                } else {
+                  status = "pending";
+                }
+              } else if (s.stage_order < currentStageOrder) {
                 status = "completed";
               } else if (s.stage_order === currentStageOrder) {
                 status = "current";
@@ -275,17 +305,16 @@ export const useInterviewPipeline = () => {
                   isLive = true;
                   liveStatus = "in_interview";
                 } else if (event.status === "scheduled" || event.status === "pending") {
-                  if (s.stage_order === currentStageOrder) {
+                  if (
+                    (customStagePositionMap && resolvedVisibleStageName === resolvedCurrentVisibleStageName) ||
+                    (!customStagePositionMap && s.stage_order === currentStageOrder)
+                  ) {
                     status = "current";
                     liveStatus = "waiting";
                   }
                 }
               }
-
-              // Use custom stage name if available for this order
-              const customStage = jobCustomStages?.find(cs => cs.order === s.stage_order);
-              const displayTitle = customStage?.name || s.name;
-
+ 
               return {
                 id: s.id,
                 title: displayTitle,
