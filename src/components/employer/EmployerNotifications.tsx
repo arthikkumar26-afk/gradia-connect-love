@@ -19,6 +19,7 @@ interface Notification {
   candidate_name: string | null;
   job_title: string | null;
   booking_type: string | null;
+  recipient_email: string | null;
   is_read: boolean;
   created_at: string;
 }

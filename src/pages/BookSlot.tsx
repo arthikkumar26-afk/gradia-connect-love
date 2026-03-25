@@ -244,6 +244,7 @@ const BookSlot = () => {
           const jTitle = (icData.job as any)?.job_title || "a position";
           const empId = (icData.job as any)?.employer_id;
           if (empId) {
+            const cEmail = (icData.candidate as any)?.email || null;
             await supabase.from("employer_notifications").insert({
               employer_id: empId,
               type: "slot_booking",
@@ -252,6 +253,7 @@ const BookSlot = () => {
               candidate_name: cName,
               job_title: jTitle,
               booking_type: bookingType,
+              recipient_email: cEmail,
             });
           }
         }
