@@ -439,7 +439,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking') {
+      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking' || step.title === 'Management Round Slot Booking') {
         // Segment/Admin Slot Booking → Round: Send round invitations (meeting link) to candidate and observers
         const roundName = step.title.replace(' Slot Booking', '');
         try {
