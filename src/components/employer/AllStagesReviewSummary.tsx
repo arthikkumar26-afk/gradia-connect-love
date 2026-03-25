@@ -261,8 +261,9 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
       doc.line(14, y, pageWidth - 14, y);
       y += 8;
 
-      // Stage-by-stage details
-      for (const review of stageReviews) {
+      // Stage-by-stage details (only allowed stages)
+      const pdfAllowedStages = ['Written Test', 'Segment Feedback', 'Admin & Academic Feedback', 'Management Round Feedback', 'HR Feedback'];
+      for (const review of stageReviews.filter(r => pdfAllowedStages.includes(r.stageName))) {
         const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
         
         // Check if we need a new page
