@@ -1212,26 +1212,50 @@ const ClickableStagesList = ({
 
   // Confirm a preferred slot for demo/segment/admin booking
   const handleConfirmPreferredSlot = async () => {
-    // Determine which booking is active based on current candidate stage
-    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
-    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
-    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
-    const isManagement = currentStep?.title === 'Management Round Slot Booking';
-    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
-    
+  const getSlotBookingContext = (stepTitle: string) => {
+    const isSegment = stepTitle === 'Segment Round Slot Booking';
+    const isAdmin = stepTitle === 'Admin & Academic Round Slot Booking';
+    const isCoreTeam = stepTitle === 'Core Team Round Slot Booking';
+    const isManagement = stepTitle === 'Management Round Slot Booking';
+
+    return {
+      isSegment,
+      isAdmin,
+      isCoreTeam,
+      isManagement,
+      activeBookingData: isCoreTeam
+        ? coreTeamSlotBooking
+        : isManagement
+          ? managementSlotBooking
+          : isSegment
+            ? segmentSlotBooking
+            : isAdmin
+              ? adminSlotBooking
+              : slotBooking,
+      activeEmails: isCoreTeam
+        ? coreTeamObserverEmails
+        : isManagement
+          ? managementObserverEmails
+          : isSegment
+            ? segmentObserverEmails
+            : isAdmin
+              ? adminObserverEmails
+              : observerEmails,
+    };
+  };
+
+  const handleConfirmPreferredSlot = async (stepTitle: string) => {
+    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+
     if (!activeBookingData || selectedPreferredSlot === null || !activeBookingData.preferred_slots) return;
     const chosen = activeBookingData.preferred_slots[selectedPreferredSlot];
     if (!chosen) return;
 
-    // Validate meeting link for Google Meet / Zoom
     if ((demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && !demoMeetLink.trim()) {
       toast.error('Please enter a meeting link before confirming');
       return;
     }
 
-    // Validate observer email is provided
-    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
     if (!activeEmails || activeEmails.length === 0 || activeEmails.every(e => !e.trim())) {
       toast.error('Please add at least one observer email before confirming the slot');
       return;
@@ -1239,22 +1263,29 @@ const ClickableStagesList = ({
 
     setIsConfirmingSlot(true);
     try {
-      // Save confirmed slot + meeting link + type
       const { error } = await supabase
         .from('slot_bookings')
-        .update({ 
-          booking_date: chosen.date, 
-          booking_time: chosen.time, 
+        .update({
+          booking_date: chosen.date,
+          booking_time: chosen.time,
           status: 'confirmed',
           demo_meet_link: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : null,
           demo_meet_type: demoMeetType,
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString()
         })
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
 
-      const updatedBooking = { ...activeBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType };
+      const updatedBooking = {
+        ...activeBookingData,
+        booking_date: chosen.date,
+        booking_time: chosen.time,
+        status: 'confirmed',
+        demo_meet_link: demoMeetLink.trim(),
+        demo_meet_type: demoMeetType,
+      };
+
       if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
@@ -1263,9 +1294,7 @@ const ClickableStagesList = ({
 
       const roundLabel = isCoreTeam ? 'Core Team Round' : isManagement ? 'Management Round' : isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
       const feedbackType = isCoreTeam ? 'core_team' : isManagement ? 'management' : isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
-      const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
 
-      // Auto-advance stage
       try {
         await supabase.functions.invoke('process-interview-stage', {
           body: {
@@ -1278,11 +1307,10 @@ const ClickableStagesList = ({
         console.error('Error auto-advancing:', advanceErr);
       }
 
-      if (!isSegment && !isAdmin) {
-        // Demo: Send demo round emails with meeting link
+      if (!isSegment && !isAdmin && !isCoreTeam && !isManagement) {
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: { 
+            body: {
               interviewCandidateId,
               observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
               meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
@@ -1294,10 +1322,9 @@ const ClickableStagesList = ({
           console.error('Error sending demo emails:', emailErr);
         }
       } else {
-        // Segment/Admin: Send round emails with meeting link
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: { 
+            body: {
               interviewCandidateId,
               observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
               meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
@@ -1315,12 +1342,9 @@ const ClickableStagesList = ({
         duration: 5000,
       });
 
-      // Auto-advance to Feedback and send feedback email after a delay
-      // Segment/Admin/Core Team/Management rounds: 5 minutes delay for the round to happen
-      // Demo: 10 seconds delay
       const feedbackDelay = (isSegment || isAdmin || isCoreTeam || isManagement) ? 300000 : 10000;
       const delayLabel = feedbackDelay >= 60000 ? `${Math.round(feedbackDelay / 60000)} minutes` : `${feedbackDelay / 1000} seconds`;
-      
+
       toast.info(`${roundLabel} Feedback email will be sent to observers in ~${delayLabel}`, { duration: 8000 });
 
       setTimeout(async () => {
@@ -1332,7 +1356,7 @@ const ClickableStagesList = ({
               feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
             }
           });
-          // For segment/admin/core team/management, skip the round stage (advance again)
+
           if (isSegment || isAdmin || isCoreTeam || isManagement) {
             await supabase.functions.invoke('process-interview-stage', {
               body: {
@@ -1342,7 +1366,7 @@ const ClickableStagesList = ({
               }
             });
           }
-          // Send feedback email to observers (NOT to candidate)
+
           await supabase.functions.invoke('send-demo-feedback-email', {
             body: { interviewCandidateId, feedbackType }
           });
@@ -1353,7 +1377,6 @@ const ClickableStagesList = ({
         }
       }, feedbackDelay);
 
-      // Trigger pipeline refresh
       window.location.reload();
     } catch (err) {
       console.error('Error confirming slot:', err);
@@ -1363,15 +1386,9 @@ const ClickableStagesList = ({
     }
   };
 
-  const handleAddObserverEmail = async () => {
-    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
-    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
-    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
-    const isManagement = currentStep?.title === 'Management Round Slot Booking';
-    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
-    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
-    
+  const handleAddObserverEmail = async (stepTitle: string) => {
+    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+
     if (!activeBookingData || !observerEmail.trim()) return;
     const email = observerEmail.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -1382,6 +1399,7 @@ const ClickableStagesList = ({
       toast.error('This email is already added');
       return;
     }
+
     setIsSavingObserver(true);
     try {
       const updatedEmails = [...activeEmails, email];
@@ -1396,14 +1414,14 @@ const ClickableStagesList = ({
       else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
-      
+
       const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() };
       if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
-      
+
       setObserverEmail('');
       toast.success('Observer email added');
     } catch (err) {
@@ -1414,15 +1432,9 @@ const ClickableStagesList = ({
     }
   };
 
-  const handleRemoveObserverEmail = async (emailToRemove: string) => {
-    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
-    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
-    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
-    const isManagement = currentStep?.title === 'Management Round Slot Booking';
-    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
-    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
-    
+  const handleRemoveObserverEmail = async (stepTitle: string, emailToRemove: string) => {
+    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+
     if (!activeBookingData) return;
     setIsSavingObserver(true);
     try {
@@ -1438,14 +1450,14 @@ const ClickableStagesList = ({
       else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
-      
+
       const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() };
       if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
-      
+
       toast.success('Observer email removed');
     } catch (err) {
       console.error('Error removing observer email:', err);
