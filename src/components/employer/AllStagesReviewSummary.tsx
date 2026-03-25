@@ -222,147 +222,191 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
     setIsDownloading(true);
     try {
       const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      let y = 20;
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      const margin = 16;
+      const contentW = pw - margin * 2;
+      let y = 0;
 
-      // Title
-      doc.setFontSize(18);
+      const checkPage = (need: number) => {
+        if (y + need > ph - 20) { doc.addPage(); y = 20; }
+      };
+
+      // Header bar
+      doc.setFillColor(30, 58, 95);
+      doc.rect(0, 0, pw, 38, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text('Interview Review Report', pageWidth / 2, y, { align: 'center' });
-      y += 10;
-
-      doc.setFontSize(11);
+      doc.text('INTERVIEW REVIEW REPORT', pw / 2, 18, { align: 'center' });
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Candidate: ${candidateName}`, 14, y);
-      y += 6;
-      doc.text(`Position: ${jobTitle}`, 14, y);
-      y += 6;
-      doc.text(`Date: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, 14, y);
-      y += 10;
+      doc.text('Gradia Job Portal', pw / 2, 28, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      y = 48;
+
+      // Candidate info box
+      doc.setFillColor(245, 247, 250);
+      doc.roundedRect(margin, y, contentW, 28, 3, 3, 'F');
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Candidate:', margin + 6, y + 10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(candidateName, margin + 36, y + 10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Position:', margin + 6, y + 20);
+      doc.setFont('helvetica', 'normal');
+      doc.text(jobTitle, margin + 32, y + 20);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(`Date: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, pw - margin - 6, y + 10, { align: 'right' });
+      y += 36;
 
       // Overall Score
-      const completedReviewsForPdf = stageReviews.filter(r => r.status === 'completed' || r.status === 'passed' || r.completedAt);
-      const overallScoreForPdf = completedReviewsForPdf.length > 0
-        ? Math.round(completedReviewsForPdf.reduce((sum, r) => sum + (r.score || 0), 0) / completedReviewsForPdf.filter(r => r.score).length)
+      const pdfAllowedStages = ['Written Test', 'Segment Feedback', 'Admin & Academic Feedback', 'Management Round Feedback', 'HR Feedback'];
+      const pdfReviews = stageReviews.filter(r => pdfAllowedStages.includes(r.stageName));
+      const completedForPdf = pdfReviews.filter(r => r.score !== null && r.score !== undefined && (r.status === 'completed' || r.status === 'passed' || r.completedAt));
+      const overallScorePdf = completedForPdf.length > 0
+        ? Math.round(completedForPdf.reduce((sum, r) => sum + (r.score || 0), 0) / completedForPdf.length)
         : null;
 
-      if (overallScoreForPdf !== null) {
-        doc.setFillColor(240, 253, 244);
-        doc.rect(14, y, pageWidth - 28, 12, 'F');
-        doc.setFontSize(12);
+      if (overallScorePdf !== null) {
+        const scoreColor = overallScorePdf >= 70 ? [34, 139, 34] : overallScorePdf >= 50 ? [200, 150, 0] : [200, 50, 50];
+        doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
+        doc.roundedRect(margin, y, contentW, 16, 3, 3, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Overall Score: ${overallScoreForPdf}%`, 20, y + 8);
-        doc.text(`${completedReviewsForPdf.filter(r => r.score).length} stages evaluated`, pageWidth - 20, y + 8, { align: 'right' });
-        y += 18;
+        doc.text(`Overall Score: ${overallScorePdf}%`, margin + 8, y + 11);
+        doc.setFontSize(10);
+        doc.text(`${completedForPdf.length} stage(s) evaluated`, pw - margin - 8, y + 11, { align: 'right' });
+        doc.setTextColor(0, 0, 0);
+        y += 24;
       }
 
-      // Separator
-      doc.setDrawColor(200, 200, 200);
-      doc.line(14, y, pageWidth - 14, y);
-      y += 8;
-
-      // Stage-by-stage details (only allowed stages)
-      const pdfAllowedStages = ['Written Test', 'Segment Feedback', 'Admin & Academic Feedback', 'Management Round Feedback', 'HR Feedback'];
-      for (const review of stageReviews.filter(r => pdfAllowedStages.includes(r.stageName))) {
+      // Stage details
+      let stageNum = 0;
+      for (const review of pdfReviews) {
+        stageNum++;
         const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
-        
-        // Check if we need a new page
-        if (y > 260) {
-          doc.addPage();
-          y = 20;
-        }
+        const isPending = !isCompleted && review.status !== 'skipped';
 
-        // Stage header
+        checkPage(35);
+
+        // Stage header with colored left border
+        const stageHeaderH = 10;
+        const borderColor = isCompleted ? [34, 139, 34] : isPending ? [180, 180, 180] : [220, 160, 40];
+        doc.setFillColor(borderColor[0], borderColor[1], borderColor[2]);
+        doc.rect(margin, y, 3, stageHeaderH, 'F');
+        doc.setFillColor(248, 249, 251);
+        doc.rect(margin + 3, y, contentW - 3, stageHeaderH, 'F');
+
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        const statusText = isCompleted ? '✓' : review.status === 'skipped' ? '⊘' : '○';
-        doc.text(`${statusText} ${review.stageName}`, 14, y);
-        if (review.score !== null && review.score !== undefined) {
-          doc.setFont('helvetica', 'normal');
-          doc.text(`Score: ${review.score}%`, pageWidth - 20, y, { align: 'right' });
-        } else if (review.status === 'skipped') {
-          doc.setFont('helvetica', 'normal');
-          doc.text('Skipped', pageWidth - 20, y, { align: 'right' });
-        }
-        y += 6;
+        doc.setTextColor(30, 58, 95);
+        doc.text(`${stageNum}. ${review.stageName}`, margin + 8, y + 7);
 
-        if (review.status === 'skipped') {
+        if (review.score !== null && review.score !== undefined) {
+          doc.setFont('helvetica', 'bold');
+          const sc = review.score >= 70 ? [34, 139, 34] : review.score >= 50 ? [180, 130, 0] : [200, 50, 50];
+          doc.setTextColor(sc[0], sc[1], sc[2]);
+          doc.text(`${review.score}%`, pw - margin - 6, y + 7, { align: 'right' });
+        } else if (isPending) {
           doc.setFontSize(9);
           doc.setFont('helvetica', 'italic');
-          doc.text('This stage was skipped', 20, y);
-          y += 5;
-        } else if (isCompleted) {
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(150, 150, 150);
+          doc.text('Pending', pw - margin - 6, y + 7, { align: 'right' });
+        }
+        doc.setTextColor(0, 0, 0);
+        y += stageHeaderH + 4;
 
-          // CV/Resume AI Feedback
-          if (review.stageName === 'CV/Resume' && review.aiFeedback) {
-            if (typeof review.aiFeedback === 'object' && review.aiFeedback.feedback) {
-              const lines = doc.splitTextToSize(review.aiFeedback.feedback, pageWidth - 34);
-              doc.text(lines, 20, y);
-              y += lines.length * 4 + 2;
-            }
-          }
-
-          // Written Test Results
+        if (isCompleted) {
+          // Written Test
           if (review.stageName === 'Written Test' && review.totalQuestions) {
-            doc.text(`Correct: ${review.correctAnswers}/${review.totalQuestions}  |  Time: ${review.timeTaken ? `${Math.floor(review.timeTaken / 60)}m ${review.timeTaken % 60}s` : 'N/A'}`, 20, y);
-            y += 5;
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Correct Answers: ${review.correctAnswers} / ${review.totalQuestions}`, margin + 10, y);
+            const timeStr = review.timeTaken ? `${Math.floor(review.timeTaken / 60)}m ${review.timeTaken % 60}s` : 'N/A';
+            doc.text(`Time Taken: ${timeStr}`, pw / 2, y);
+            y += 6;
           }
 
-          // Feedback Reviews (Demo, Segment, Admin & Academic, HR)
-          const feedbackStages = ['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'];
-          if (feedbackStages.includes(review.stageName) && review.reviews) {
+          // Feedback Reviews
+          if (review.reviews && review.reviews.length > 0) {
             for (const r of review.reviews) {
-              if (y > 260) { doc.addPage(); y = 20; }
+              checkPage(30);
+              // Observer name
+              doc.setFontSize(9);
               doc.setFont('helvetica', 'bold');
-              doc.text(`${r.reviewerName || 'Observer'}:`, 20, y);
-              y += 4;
+              doc.text(`Observer: ${r.reviewerName || 'Anonymous'}`, margin + 10, y);
+              y += 5;
+
+              // Ratings table
               doc.setFont('helvetica', 'normal');
-              doc.text(`Teaching: ${r.teachingRating || 0}/5  |  Communication: ${r.communicationRating || 0}/5  |  Knowledge: ${r.knowledgeRating || 0}/5`, 24, y);
-              y += 4;
+              doc.setFontSize(8);
+              const ratings = [
+                ['Teaching', `${r.teachingRating || 0}/5`],
+                ['Communication', `${r.communicationRating || 0}/5`],
+                ['Knowledge', `${r.knowledgeRating || 0}/5`],
+              ];
+              const colW = 50;
+              ratings.forEach((pair, idx) => {
+                const xPos = margin + 10 + idx * colW;
+                doc.setFont('helvetica', 'normal');
+                doc.text(`${pair[0]}:`, xPos, y);
+                doc.setFont('helvetica', 'bold');
+                doc.text(pair[1], xPos + 32, y);
+              });
+              y += 5;
+
               if (r.recommendation) {
-                doc.text(`Recommendation: ${r.recommendation.replace(/_/g, ' ')}`, 24, y);
-                y += 4;
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Recommendation: ${r.recommendation.replace(/_/g, ' ').toUpperCase()}`, margin + 10, y);
+                y += 5;
               }
               if (r.feedbackText) {
-                const fbLines = doc.splitTextToSize(`"${r.feedbackText}"`, pageWidth - 50);
-                doc.text(fbLines, 24, y);
-                y += fbLines.length * 4;
+                doc.setFont('helvetica', 'italic');
+                const fbLines = doc.splitTextToSize(`"${r.feedbackText}"`, contentW - 24);
+                doc.text(fbLines, margin + 10, y);
+                y += fbLines.length * 4 + 2;
               }
               y += 2;
             }
           }
 
-          // General notes/feedback
-          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
-            const noteLines = doc.splitTextToSize(review.notes, pageWidth - 34);
-            doc.text(noteLines, 20, y);
-            y += noteLines.length * 4 + 2;
-          }
-
+          // Completed date
           if (review.completedAt) {
             doc.setFontSize(8);
-            doc.text(`Completed: ${new Date(review.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`, 20, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(120, 120, 120);
+            doc.text(`Completed: ${new Date(review.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`, margin + 10, y);
+            doc.setTextColor(0, 0, 0);
             y += 5;
           }
-        } else {
+        } else if (isPending) {
           doc.setFontSize(9);
           doc.setFont('helvetica', 'italic');
-          doc.text('Pending', 20, y);
+          doc.setTextColor(150, 150, 150);
+          doc.text('This stage has not been completed yet.', margin + 10, y);
+          doc.setTextColor(0, 0, 0);
           y += 5;
         }
 
-        // Stage separator
-        doc.setDrawColor(230, 230, 230);
-        doc.line(14, y, pageWidth - 14, y);
-        y += 6;
+        // Separator line
+        doc.setDrawColor(220, 220, 220);
+        doc.line(margin, y + 2, pw - margin, y + 2);
+        y += 8;
       }
 
       // Footer
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'italic');
-      doc.text(`Generated by Gradia Job Portal on ${new Date().toLocaleString('en-IN')}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+      const footerY = ph - 12;
+      doc.setDrawColor(30, 58, 95);
+      doc.line(margin, footerY - 4, pw - margin, footerY - 4);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(120, 120, 120);
+      doc.text(`Generated by Gradia Job Portal on ${new Date().toLocaleString('en-IN')}`, pw / 2, footerY, { align: 'center' });
+      doc.text('Confidential', pw - margin, footerY, { align: 'right' });
 
       doc.save(`${candidateName.replace(/\s+/g, '_')}_Interview_Review.pdf`);
       toast.success('Review report downloaded successfully');
