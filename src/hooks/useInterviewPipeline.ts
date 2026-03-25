@@ -262,12 +262,18 @@ export const useInterviewPipeline = () => {
             // Sort by the custom pipeline order, not the DB stage_order.
             let relevantStages = dbStages;
             if (jobCustomStages && jobCustomStages.length > 0) {
-              const customFiltered = dbStagesAll2.filter(s => jobCustomStages.some(cs => cs.name === s.name));
+              // Ensure Interview Guidelines is always included as the first stage
+              const hasGuidelines = jobCustomStages.some(cs => cs.name === 'Interview Guidelines');
+              const effectiveCustomStages = hasGuidelines
+                ? jobCustomStages
+                : [{ order: 0, name: 'Interview Guidelines', description: 'Automated interview guidelines sent to candidate', isAutomated: true }, ...jobCustomStages];
+
+              const customFiltered = dbStagesAll2.filter(s => effectiveCustomStages.some(cs => cs.name === s.name));
               if (customFiltered.length > 0) {
                 // Sort by the job's custom pipeline order
                 relevantStages = customFiltered.sort((a, b) => {
-                  const aOrder = jobCustomStages.findIndex(cs => cs.name === a.name);
-                  const bOrder = jobCustomStages.findIndex(cs => cs.name === b.name);
+                  const aOrder = effectiveCustomStages.findIndex(cs => cs.name === a.name);
+                  const bOrder = effectiveCustomStages.findIndex(cs => cs.name === b.name);
                   return aOrder - bOrder;
                 });
               }
