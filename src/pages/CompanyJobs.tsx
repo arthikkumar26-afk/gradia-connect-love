@@ -171,31 +171,9 @@ const CompanyJobs = () => {
 
       setAnalysisStep("analyzing");
 
-      // Call AI analysis function
+      // AI analysis runs inside submit-qr-application with the full candidate + job payload.
       let score: number | null = null;
       let analysis: any = null;
-
-      try {
-        const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
-          "analyze-resume",
-          {
-            body: {
-              resumeUrl,
-              jobTitle: selectedJob.job_title,
-              jobDescription: selectedJob.description,
-              requirements: selectedJob.requirements,
-              skills: selectedJob.skills,
-            },
-          }
-        );
-
-        if (!analysisError && analysisData) {
-          score = analysisData.score;
-          analysis = analysisData.analysis;
-        }
-      } catch (err) {
-        console.error("AI analysis error:", err);
-      }
 
       setAiScore(score);
       setAiAnalysis(analysis);

@@ -125,8 +125,8 @@ serve(async (req) => {
 
     if (existingApp) {
       return new Response(
-        JSON.stringify({ error: "You have already applied for this job", alreadyApplied: true }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, alreadyApplied: true, message: "You have already applied for this job" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
