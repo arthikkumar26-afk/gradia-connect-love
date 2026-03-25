@@ -306,7 +306,7 @@ const BookSlot = () => {
       // For Demo: DON'T auto-advance, employer will select timing and send link
       // Just mark booking as pending for employer review
 
-      // Auto-advance to HR Round and send dual emails
+      // Auto-advance HR Round — employer will send meeting details after confirming slot
       if (isHrSlotBooking) {
         try {
           await supabase.functions.invoke("process-interview-stage", {
@@ -316,9 +316,7 @@ const BookSlot = () => {
               feedback: "Slot booked by candidate, auto-advancing to HR Round",
             },
           });
-          await supabase.functions.invoke("send-hr-round-emails", {
-            body: { interviewCandidateId: candidateId },
-          });
+          // Do NOT send send-hr-round-emails here — employer confirms slot and sends meeting link later
         } catch (advanceErr) {
           console.error("Error auto-advancing to HR Round:", advanceErr);
         }
