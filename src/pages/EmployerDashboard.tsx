@@ -494,16 +494,6 @@ const EmployerDashboard = () => {
             </h1>
           </div>
 
-          {activeMenu === "dashboard" && (
-            <div className="flex items-center gap-3">
-              <Button variant="cta" size="lg" className="rounded-xl" asChild>
-                <Link to="/employer/post-job">
-                  <Briefcase className="h-5 w-5 mr-2" />
-                  Post New Job
-                </Link>
-              </Button>
-            </div>
-          )}
           {user?.id && <EmployerNotifications employerId={user.id} />}
         </header>
 
