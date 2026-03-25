@@ -436,9 +436,9 @@ export default function ManagementFeedback() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
             <Award className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Demo Round Feedback</h1>
+          <h1 className="text-3xl font-bold mb-2">{getRoundLabel(review?.feedback_type).title}</h1>
           <p className="text-muted-foreground">
-            Please provide your feedback for the candidate's teaching demonstration
+            {getRoundLabel(review?.feedback_type).description}
           </p>
         </div>
 
