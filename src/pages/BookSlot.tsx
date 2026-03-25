@@ -235,7 +235,7 @@ const BookSlot = () => {
       try {
         const { data: icData } = await supabase
           .from("interview_candidates")
-          .select("job_id, candidate_id, candidate:profiles(full_name), job:jobs(job_title, employer_id)")
+          .select("job_id, candidate_id, candidate:profiles(full_name, email), job:jobs(job_title, employer_id)")
           .eq("id", candidateId)
           .single();
         
