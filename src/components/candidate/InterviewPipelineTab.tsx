@@ -219,7 +219,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         .select('*')
         .order('stage_order', { ascending: true });
 
-      setStages(stagesData || []);
+      const allStages = stagesData || [];
 
       // Fetch interview candidates for this user
       const { data: interviewsData, error } = await supabase
