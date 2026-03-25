@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic } from "lucide-react";
+import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 interface FeedbackReview {
@@ -43,6 +44,9 @@ export const DemoFeedbackResults = ({
   const [demoRecordingUrl, setDemoRecordingUrl] = useState<string | null>(null);
   const [showRecording, setShowRecording] = useState(false);
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
+  const [editEmailValue, setEditEmailValue] = useState("");
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
   const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress';
 
   useEffect(() => {
@@ -216,6 +220,34 @@ export const DemoFeedbackResults = ({
     }
   };
 
+  const handleEditEmail = (reviewId: string, currentEmail: string) => {
+    setEditingEmailId(reviewId);
+    setEditEmailValue(currentEmail || "");
+  };
+
+  const handleSaveEmail = async (reviewId: string) => {
+    if (!editEmailValue || !editEmailValue.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    setIsSavingEmail(true);
+    try {
+      const { error } = await supabase
+        .from('management_reviews')
+        .update({ reviewer_email: editEmailValue, reviewer_name: editEmailValue.split('@')[0] })
+        .eq('id', reviewId);
+      if (error) throw error;
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, reviewer_email: editEmailValue, reviewer_name: editEmailValue.split('@')[0] } : r));
+      setEditingEmailId(null);
+      toast.success("Observer email updated successfully");
+    } catch (err) {
+      console.error('Error updating email:', err);
+      toast.error("Failed to update observer email");
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
   const getRecommendationLabel = (rec: string | null) => {
     switch (rec) {
       case 'strongly_recommend': return { label: 'Strongly Recommend', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
@@ -327,28 +359,74 @@ export const DemoFeedbackResults = ({
 
           {reviews.map((review) => (
             <div key={review.id} className="bg-white rounded border border-amber-100 p-1.5 space-y-1">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
-              >
-                <div className="flex items-center gap-1 text-[10px]">
-                  <Mail className="h-2.5 w-2.5 text-muted-foreground" />
-                  <span className="font-medium truncate max-w-[180px]" title={review.reviewer_email || ''}>
-                    {review.reviewer_email || review.reviewer_name || 'Unknown'}
-                  </span>
+              {editingEmailId === review.id ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={editEmailValue}
+                    onChange={(e) => setEditEmailValue(e.target.value)}
+                    className="h-6 text-[10px] px-1.5 flex-1"
+                    placeholder="Enter observer email"
+                    type="email"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveEmail(review.id);
+                      if (e.key === 'Escape') setEditingEmailId(null);
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => handleSaveEmail(review.id)}
+                    disabled={isSavingEmail}
+                  >
+                    {isSavingEmail ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => setEditingEmailId(null)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
-                {review.status === 'submitted' ? (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[8px] py-0 px-1">
-                    <CheckCircle2 className="h-2 w-2 mr-0.5" />
-                    Submitted
-                  </Badge>
-                ) : (
-                  <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[8px] py-0 px-1">
-                    <Clock className="h-2 w-2 mr-0.5" />
-                    Pending
-                  </Badge>
-                )}
-              </div>
+              ) : (
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
+                >
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <Mail className="h-2.5 w-2.5 text-muted-foreground" />
+                    <span className="font-medium truncate max-w-[150px]" title={review.reviewer_email || ''}>
+                      {review.reviewer_email || review.reviewer_name || 'Unknown'}
+                    </span>
+                    {review.status !== 'submitted' && (
+                      <button
+                        className="ml-0.5 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditEmail(review.id, review.reviewer_email || '');
+                        }}
+                        title="Edit observer email"
+                      >
+                        <Pencil className="h-2.5 w-2.5" />
+                      </button>
+                    )}
+                  </div>
+                  {review.status === 'submitted' ? (
+                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[8px] py-0 px-1">
+                      <CheckCircle2 className="h-2 w-2 mr-0.5" />
+                      Submitted
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[8px] py-0 px-1">
+                      <Clock className="h-2 w-2 mr-0.5" />
+                      Pending
+                    </Badge>
+                  )}
+                </div>
+              )}
 
               {review.status === 'submitted' && (
                 <>
