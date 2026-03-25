@@ -115,7 +115,8 @@ interface InterviewPipelineTabProps {
 export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps) => {
   const navigate = useNavigate();
   const [interviews, setInterviews] = useState<InterviewCandidate[]>([]);
-  const [stages, setStages] = useState<InterviewStage[]>([]);
+  const [stages, setStages] = useState<InterviewStage[]>([]); // visible stages only
+  const [allDbStages, setAllDbStages] = useState<InterviewStage[]>([]); // all DB stages for lookups
   const [isLoading, setIsLoading] = useState(true);
   const [slotBookings, setSlotBookings] = useState<SlotBooking[]>([]);
   const [selectedInterview, setSelectedInterview] = useState<string | null>(null);
@@ -221,6 +222,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         .order('stage_order', { ascending: true });
 
       const allStages = stagesData || [];
+      setAllDbStages(allStages);
 
       // Fetch interview candidates for this user
       const { data: interviewsData, error } = await supabase
@@ -393,31 +395,57 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     }
   };
 
+  // Map hidden round stage names to their visible feedback counterpart
+  const hiddenToVisibleName: Record<string, string> = {
+    'Demo Round': 'Demo Feedback',
+    'Segment Round': 'Segment Feedback',
+    'Admin & Academic Round': 'Admin & Academic Feedback',
+    'Core Team Round': 'Core Team Feedback',
+    'Management Round': 'Management Round Feedback',
+    'HR Round': 'HR Feedback',
+  };
+
+  // Resolve a stageId (possibly hidden) to an index in the visible `stages` array
+  const resolveVisibleIndex = (stageId: string | null): number => {
+    if (!stageId) return -1;
+    // Direct match in visible stages
+    const directIdx = stages.findIndex(s => s.id === stageId);
+    if (directIdx !== -1) return directIdx;
+
+    // stageId is a hidden round — find its name from allDbStages, then map to visible
+    const dbStage = allDbStages.find(s => s.id === stageId);
+    if (dbStage) {
+      const visibleName = hiddenToVisibleName[dbStage.name];
+      if (visibleName) {
+        return stages.findIndex(s => s.name === visibleName);
+      }
+    }
+    return -1;
+  };
+
   const getStageStatus = (stageId: string, events: InterviewEvent[], currentStageId: string | null) => {
     // Check for completed or passed events first
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
 
-    const stage = stages.find(s => s.id === stageId);
-    const currentStage = stages.find(s => s.id === currentStageId);
+    const stageIndex = stages.findIndex(s => s.id === stageId);
+    const currentStageIndex = resolveVisibleIndex(currentStageId);
 
-    // If current_stage_id has advanced past this stage, it's completed regardless of event status
-    // This handles cases where a 'scheduled' event exists but the test was actually completed
-    if (stage && currentStage && stage.stage_order < currentStage.stage_order) {
+    // If current stage has advanced past this stage, it's completed
+    if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex < currentStageIndex) {
       return 'completed';
     }
 
     // Check for any event for this stage
     const event = events.find(e => e.stage_id === stageId);
     if (event) {
-      // If stage_order matches current, treat as current (in-progress)
-      if (stage && currentStage && stage.stage_order === currentStage.stage_order) {
+      if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex === currentStageIndex) {
         return 'current';
       }
       return event.status;
     }
 
-    if (stage && currentStage && stage.stage_order === currentStage.stage_order) {
+    if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex === currentStageIndex) {
       return 'current';
     }
     return 'upcoming';
@@ -448,8 +476,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   const getCurrentStageOrder = (currentStageId: string | null) => {
     if (!currentStageId) return 1;
-    const stage = stages.find(s => s.id === currentStageId);
-    return stage?.stage_order || 1;
+    const idx = stages.findIndex(s => s.id === currentStageId);
+    return idx !== -1 ? idx + 1 : 1;
   };
 
   const renderStarRating = (rating: number | null, max: number = 5) => {
