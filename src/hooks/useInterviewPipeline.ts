@@ -150,8 +150,10 @@ export const useInterviewPipeline = () => {
 
       // If employer has no jobs, return empty pipeline
       if (employerJobIds.length === 0) {
-        const dbStages = stagesData as DbInterviewStage[];
-        setStages(dbStages.map(stage => ({
+        const dbStagesAll = stagesData as DbInterviewStage[];
+        const offerStageOrderEmpty = dbStagesAll.find(s => s.name === 'Offer Stage')?.stage_order;
+        const filteredEmptyStages = dbStagesAll.filter(s => offerStageOrderEmpty != null ? s.stage_order <= offerStageOrderEmpty : true);
+        setStages(filteredEmptyStages.map(stage => ({
           id: stage.id,
           title: stage.name,
           stageOrder: stage.stage_order,
@@ -203,11 +205,15 @@ export const useInterviewPipeline = () => {
       });
 
       // Build pipeline stages with candidates
-      const dbStages = stagesData as DbInterviewStage[];
+      const dbStagesAll2 = stagesData as DbInterviewStage[];
       const dbCandidates = candidatesData as (DbInterviewCandidate & {
         profiles: DbProfile;
         jobs: DbJob;
       })[];
+
+      // Filter out stages after Offer Stage for the pipeline columns
+      const offerStageOrderMain = dbStagesAll2.find(s => s.name === 'Offer Stage')?.stage_order;
+      const dbStages = dbStagesAll2.filter(s => offerStageOrderMain != null ? s.stage_order <= offerStageOrderMain : true);
 
       const pipelineStages: PipelineStage[] = dbStages.map((stage) => {
         // Find candidates in this stage
@@ -251,14 +257,11 @@ export const useInterviewPipeline = () => {
               ? (customStagePositionMap.get(resolvedCurrentVisibleStageName) ?? 0)
               : currentStageOrder;
             
-            // Filter stages: if job has custom pipeline, only show those stages;
-            // otherwise, only show stages up to and including Offer Stage
+            // Filter stages: if job has custom pipeline, use full DB stages to find matching ones;
+            // otherwise, dbStages is already filtered to Offer Stage
             const relevantStages = jobCustomStages && jobCustomStages.length > 0
-              ? dbStages.filter(s => jobCustomStages.some(cs => cs.name === s.name))
-              : dbStages.filter(s => {
-                  const offerStage = dbStages.find(os => os.name === 'Offer Stage');
-                  return offerStage ? s.stage_order <= offerStage.stage_order : true;
-                });
+              ? dbStagesAll2.filter(s => jobCustomStages.some(cs => cs.name === s.name))
+              : dbStages;
 
             const interviewSteps: InterviewStep[] = relevantStages.map((s) => {
               // Find the most relevant event for this stage (completed > in_progress > pending)
