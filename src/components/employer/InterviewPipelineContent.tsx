@@ -416,21 +416,20 @@ const StageActionButtons = ({
           });
         }
       } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') {
-        // Segment/Admin Slot Booking → skip round, go directly to feedback
-        const feedbackType = step.title === 'Segment Round Slot Booking' ? 'segment' : 'admin_academic';
+        // Segment/Admin Slot Booking → Round: Send round invitations (meeting link) to candidate and observers
         const roundName = step.title.replace(' Slot Booking', '');
         try {
-          await supabase.functions.invoke('send-demo-feedback-email', {
-            body: { interviewCandidateId, feedbackType }
+          await supabase.functions.invoke('send-demo-round-emails', {
+            body: { interviewCandidateId }
           });
-          toast.success(`✓ ${step.title} cleared! Feedback request sent to observers`, {
-            description: `Observers will receive an email with a feedback link`,
+          toast.success(`✓ ${step.title} cleared! ${roundName} invitations sent`, {
+            description: `Emails sent to candidate and observer with meeting link`,
             duration: 5000,
           });
-        } catch (feedbackError) {
-          console.error(`Error sending ${roundName} feedback emails:`, feedbackError);
-          toast.success(`✓ ${step.title} cleared! Moved to Feedback`, {
-            description: 'Note: Feedback email failed to send. You can resend manually.',
+        } catch (roundError) {
+          console.error(`Error sending ${roundName} emails:`, roundError);
+          toast.success(`✓ ${step.title} cleared! Moved to ${roundName}`, {
+            description: 'Note: Round invitation emails failed to send. You can resend manually.',
             duration: 5000,
           });
         }
