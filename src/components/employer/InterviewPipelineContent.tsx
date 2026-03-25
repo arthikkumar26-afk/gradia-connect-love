@@ -248,7 +248,7 @@ const StageActionButtons = ({
           body: { interviewCandidateId },
         });
         if (error) throw error;
-        toast.success('CV/Resume ATS results email resent');
+        toast.success('CV/Resume ATS results email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'Written Test Slot Booking') {
         // For Written Test Slot Booking, send slot booking email
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
@@ -258,31 +258,31 @@ const StageActionButtons = ({
           },
         });
         if (error) throw error;
-        toast.success('Written Test slot booking email resent');
+        toast.success('Written Test slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'Demo Slot Booking') {
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
           body: { interviewCandidateId, stageName: 'Demo Round' },
         });
         if (error) throw error;
-        toast.success('Demo slot booking email resent');
+        toast.success('Demo slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'Segment Round Slot Booking') {
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
           body: { interviewCandidateId, stageName: 'Segment Round' },
         });
         if (error) throw error;
-        toast.success('Segment Round slot booking email resent');
+        toast.success('Segment Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'Admin & Academic Round Slot Booking') {
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
           body: { interviewCandidateId, stageName: 'Admin & Academic Round' },
         });
         if (error) throw error;
-        toast.success('Admin & Academic Round slot booking email resent');
+        toast.success('Admin & Academic Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'HR Round Slot Booking') {
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
           body: { interviewCandidateId, stageName: 'HR Round' },
         });
         if (error) throw error;
-        toast.success('HR slot booking email resent');
+        toast.success('HR slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else {
         const { error } = await supabase.functions.invoke('send-notification-email', {
           body: {
@@ -296,7 +296,7 @@ const StageActionButtons = ({
           },
         });
         if (error) throw error;
-        toast.success(`Invitation resent for ${step.title}`);
+        toast.success(`Invitation resent for ${step.title}`, { description: `📧 Sent to: ${candidateEmail}` });
       }
     } catch (error) {
       console.error('Error resending invitation:', error);
