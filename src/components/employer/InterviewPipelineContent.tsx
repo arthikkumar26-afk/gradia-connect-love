@@ -1206,6 +1206,13 @@ const ClickableStagesList = ({
       return;
     }
 
+    // Validate observer email is provided
+    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    if (!activeEmails || activeEmails.length === 0 || activeEmails.every(e => !e.trim())) {
+      toast.error('Please add at least one observer email before confirming the slot');
+      return;
+    }
+
     setIsConfirmingSlot(true);
     try {
       // Save confirmed slot + meeting link + type
@@ -1547,6 +1554,12 @@ const ClickableStagesList = ({
     // Validate meeting link
     if (!hrMeetLink.trim()) {
       toast.error('Please enter a meeting link before confirming');
+      return;
+    }
+
+    // Validate observer email is provided
+    if (!hrObserverEmails || hrObserverEmails.length === 0 || hrObserverEmails.every(e => !e.trim())) {
+      toast.error('Please add at least one observer email before confirming the HR slot');
       return;
     }
 
