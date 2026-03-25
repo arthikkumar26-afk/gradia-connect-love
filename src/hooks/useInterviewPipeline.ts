@@ -390,7 +390,9 @@ export const useInterviewPipeline = () => {
       const candidatesWithoutStage = dbCandidates
         .filter((c) => !c.current_stage_id)
         .map((c): PipelineCandidate => {
-          const interviewSteps: InterviewStep[] = dbStages.map((s, index) => ({
+          const offerStageOrder = dbStages.find(os => os.name === 'Offer Stage')?.stage_order;
+          const defaultStages = dbStages.filter(s => offerStageOrder != null ? s.stage_order <= offerStageOrder : true);
+          const interviewSteps: InterviewStep[] = defaultStages.map((s, index) => ({
             id: s.id,
             title: s.name,
             status: index === 0 ? "current" as const : "pending" as const,
