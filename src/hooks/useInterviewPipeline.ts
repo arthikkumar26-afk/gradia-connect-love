@@ -288,7 +288,7 @@ export const useInterviewPipeline = () => {
                 || stageEvents.find((e) => e.status === 'failed')
                 || stageEvents[0] || null;
 
-              const customStage = jobCustomStages?.find(cs => cs.name === s.name) || jobCustomStages?.find(cs => cs.order === s.stage_order);
+              const customStage = effectiveCustomStages?.find(cs => cs.name === s.name) || effectiveCustomStages?.find(cs => cs.order === s.stage_order);
               const displayTitle = customStage?.name || s.name;
 
               let status: InterviewStep["status"] = "pending";
