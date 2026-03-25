@@ -2046,6 +2046,22 @@ const ClickableStagesList = ({
                     stageStatus={step.status}
                   />
                 )}
+                {step.title === 'Core Team Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="core_team"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
+                )}
+                {step.title === 'Management Round Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="management"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
+                )}
                 {step.title === 'HR Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
                   <DemoFeedbackResults
                     interviewCandidateId={interviewCandidateId}
