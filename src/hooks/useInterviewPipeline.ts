@@ -251,7 +251,21 @@ export const useInterviewPipeline = () => {
               ? (customStagePositionMap.get(resolvedCurrentVisibleStageName) ?? 0)
               : currentStageOrder;
             
-            const interviewSteps: InterviewStep[] = dbStages.map((s) => {
+            // When a job has custom pipeline stages, only show global stages that match
+            // a custom stage by name. This prevents duplicates from order-based fallback matching.
+            const relevantDbStages = jobCustomStages && jobCustomStages.length > 0
+              ? dbStages.filter(s => {
+                  // Include if a custom stage matches by name (exact or via hidden mapping)
+                  const directMatch = jobCustomStages.some(cs => cs.name === s.name);
+                  if (directMatch) return true;
+                  // Also include hidden backend stages that map to a visible custom stage
+                  const visibleName = hiddenStageToVisibleStageMap[s.name];
+                  if (visibleName && jobCustomStages.some(cs => cs.name === visibleName)) return true;
+                  return false;
+                })
+              : dbStages;
+
+            const interviewSteps: InterviewStep[] = relevantDbStages.map((s) => {
               // Find the most relevant event for this stage (completed > in_progress > pending)
               const stageEvents = events.filter((e) => e.stage_id === s.id);
               const event = stageEvents.find((e) => e.status === 'completed' || e.status === 'passed')
@@ -259,7 +273,8 @@ export const useInterviewPipeline = () => {
                 || stageEvents.find((e) => e.status === 'failed')
                 || stageEvents[0] || null;
 
-              const customStage = jobCustomStages?.find(cs => cs.name === s.name) || jobCustomStages?.find(cs => cs.order === s.stage_order);
+              // Only match custom stage by name, never by order (order mismatch causes duplicates)
+              const customStage = jobCustomStages?.find(cs => cs.name === s.name);
               const displayTitle = customStage?.name || s.name;
 
               let status: InterviewStep["status"] = "pending";
