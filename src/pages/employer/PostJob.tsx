@@ -384,8 +384,6 @@ const PostJob = () => {
                   </div>
                 )}
 
-                {/* Editable Pipeline Stages */}
-                <EditablePipelineStages stages={customStages} onStagesChange={setCustomStages} />
 
                 {/* Education-specific cascading fields */}
                 {watchedInterviewType === 'education' && (

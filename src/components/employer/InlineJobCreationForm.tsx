@@ -667,11 +667,6 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               </div>
             )}
 
-            {/* Editable Pipeline Stages */}
-            <EditablePipelineStages
-              stages={customStages}
-              onStagesChange={setCustomStages}
-            />
 
             {/* AI Create with Requirements */}
             <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
