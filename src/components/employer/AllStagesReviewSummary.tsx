@@ -303,7 +303,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           }
 
           // Feedback Reviews (Demo, Segment, Admin & Academic, HR)
-          const feedbackStages = ['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'];
+          const feedbackStages = ['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'];
           if (feedbackStages.includes(review.stageName) && review.reviews) {
             for (const r of review.reviews) {
               if (y > 260) { doc.addPage(); y = 20; }
