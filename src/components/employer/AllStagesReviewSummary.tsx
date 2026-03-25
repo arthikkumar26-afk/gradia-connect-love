@@ -300,8 +300,9 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             y += 5;
           }
 
-          // Demo/HR Feedback Reviews
-          if ((review.stageName === 'Demo Feedback' || review.stageName === 'HR Feedback') && review.reviews) {
+          // Feedback Reviews (Demo, Segment, Admin & Academic, HR)
+          const feedbackStages = ['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'];
+          if (feedbackStages.includes(review.stageName) && review.reviews) {
             for (const r of review.reviews) {
               if (y > 260) { doc.addPage(); y = 20; }
               doc.setFont('helvetica', 'bold');
