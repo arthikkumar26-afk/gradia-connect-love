@@ -395,41 +395,31 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     }
   };
 
-  // Map hidden round stage IDs to their visible feedback/next counterpart
-  const resolveVisibleStageIndex = (stageId: string | null): number => {
+  // Map hidden round stage names to their visible feedback counterpart
+  const hiddenToVisibleName: Record<string, string> = {
+    'Demo Round': 'Demo Feedback',
+    'Segment Round': 'Segment Feedback',
+    'Admin & Academic Round': 'Admin & Academic Feedback',
+    'Core Team Round': 'Core Team Feedback',
+    'Management Round': 'Management Round Feedback',
+    'HR Round': 'HR Feedback',
+  };
+
+  // Resolve a stageId (possibly hidden) to an index in the visible `stages` array
+  const resolveVisibleIndex = (stageId: string | null): number => {
     if (!stageId) return -1;
-    const idx = stages.findIndex(s => s.id === stageId);
-    if (idx !== -1) return idx;
+    // Direct match in visible stages
+    const directIdx = stages.findIndex(s => s.id === stageId);
+    if (directIdx !== -1) return directIdx;
 
-    // Stage is hidden (e.g., "HR Round") — find its feedback counterpart in allStages
-    // by looking up the hidden stage name and mapping to feedback
-    const hiddenToVisible: Record<string, string> = {
-      'Demo Round': 'Demo Feedback',
-      'Segment Round': 'Segment Feedback',
-      'Admin & Academic Round': 'Admin & Academic Feedback',
-      'Core Team Round': 'Core Team Feedback',
-      'Management Round': 'Management Round Feedback',
-      'HR Round': 'HR Feedback',
-    };
-
-    // We need to find the hidden stage's name from the full DB stages
-    // Since we only have filtered stages in state, query by ID from events
-    // Use a simple approach: find the stage in allStages is not available here,
-    // so check if any stage in our list matches the mapped name
-    for (const [hiddenName, visibleName] of Object.entries(hiddenToVisible)) {
-      const visibleIdx = stages.findIndex(s => s.name === visibleName);
-      if (visibleIdx !== -1) {
-        // Check if the stageId could be this hidden stage by comparing with DB
-        // We can't directly, so return the feedback stage index as best guess
-        // This works because if currentStageId is not in our filtered list,
-        // it must be a hidden round stage
+    // stageId is a hidden round — find its name from allDbStages, then map to visible
+    const dbStage = allDbStages.find(s => s.id === stageId);
+    if (dbStage) {
+      const visibleName = hiddenToVisibleName[dbStage.name];
+      if (visibleName) {
+        return stages.findIndex(s => s.name === visibleName);
       }
     }
-
-    // Fallback: find the closest visible stage by checking all visible stages
-    // and returning the one whose DB stage_order is closest but <= the hidden stage's order
-    // Since we don't have the hidden stage's order here, use a simpler approach:
-    // just return -1 and let the event-based logic handle it
     return -1;
   };
 
@@ -438,29 +428,15 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
 
-    // Use pipeline position (index in visible stages array) instead of DB stage_order
     const stageIndex = stages.findIndex(s => s.id === stageId);
-    let currentStageIndex = stages.findIndex(s => s.id === currentStageId);
+    const currentStageIndex = resolveVisibleIndex(currentStageId);
 
-    // If currentStageId is a hidden round stage, map to its feedback counterpart
-    if (currentStageIndex === -1 && currentStageId) {
-      // Find which hidden round this might be by checking allStages DB order
-      // Use the stage's DB stage_order to find position relative to visible stages
-      const currentDbStage = stages.find(s => s.id === currentStageId);
-      if (!currentDbStage) {
-        // currentStageId is a hidden stage - find visible stages and compare by DB order
-        // Check events: if this visible stage has a completed event, it's done
-        // Otherwise check if there's an event for it
-        const event = events.find(e => e.stage_id === stageId);
-        if (event) return event.status;
-        return 'upcoming';
-      }
-    }
-
+    // If current stage has advanced past this stage, it's completed
     if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex < currentStageIndex) {
       return 'completed';
     }
 
+    // Check for any event for this stage
     const event = events.find(e => e.stage_id === stageId);
     if (event) {
       if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex === currentStageIndex) {
