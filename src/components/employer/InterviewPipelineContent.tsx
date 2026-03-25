@@ -402,7 +402,7 @@ const StageActionButtons = ({
         // Demo Slot Booking → Demo Round (keep existing flow)
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: { interviewCandidateId }
+            body: { interviewCandidateId, roundName: 'Demo Round' }
           });
           toast.success(`✓ Demo Slot Booking cleared! Demo Round invitations sent`, {
             description: `Emails sent to candidate and observer`,
@@ -420,7 +420,7 @@ const StageActionButtons = ({
         const roundName = step.title.replace(' Slot Booking', '');
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: { interviewCandidateId }
+            body: { interviewCandidateId, roundName }
           });
           toast.success(`✓ ${step.title} cleared! ${roundName} invitations sent`, {
             description: `Emails sent to candidate and observer with meeting link`,
@@ -481,7 +481,7 @@ const StageActionButtons = ({
         // HR Round Slot Booking → HR Round (not skipped for Principal pipeline)
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: { interviewCandidateId }
+            body: { interviewCandidateId, roundName: 'HR Round' }
           });
           toast.success(`✓ HR Round Slot Booking cleared! HR Round invitations sent`, {
             description: `Emails sent to candidate and observer`,
@@ -1256,6 +1256,7 @@ const ClickableStagesList = ({
               observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
               meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
               meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+              roundName: 'Demo Round',
             }
           });
         } catch (emailErr) {
@@ -1270,6 +1271,7 @@ const ClickableStagesList = ({
               observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
               meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
               meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+              roundName: roundLabel,
             }
           });
         } catch (emailErr) {
