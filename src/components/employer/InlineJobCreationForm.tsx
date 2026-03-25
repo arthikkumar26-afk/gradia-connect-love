@@ -493,6 +493,23 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
       if (previewData.detected_pipeline_type) {
         setSelectedPipelineType(previewData.detected_pipeline_type);
       }
+
+      // Auto-fill education cascading fields if detected
+      if (previewData.detected_interview_type === 'education') {
+        const educationFields: Record<string, string> = {};
+        if (previewData.detected_sector_division) educationFields["sector_division"] = previewData.detected_sector_division;
+        if (previewData.detected_category) educationFields["category"] = previewData.detected_category;
+        if (previewData.detected_function) educationFields["function"] = previewData.detected_function;
+        if (previewData.detected_board) educationFields["board"] = previewData.detected_board;
+        if (previewData.detected_segment) educationFields["segment"] = previewData.detected_segment;
+        if (previewData.detected_designation) educationFields["designation"] = previewData.detected_designation;
+        if (previewData.detected_subjects) educationFields["subjects"] = previewData.detected_subjects;
+        if (previewData.detected_classes) educationFields["hs_classes"] = previewData.detected_classes;
+        if (Object.keys(educationFields).length > 0) {
+          setDynamicFieldValues(prev => ({ ...prev, ...educationFields }));
+        }
+      }
+
       setTimeout(() => {
         if (previewData.detected_role) {
           setSelectedRole(previewData.detected_role);
