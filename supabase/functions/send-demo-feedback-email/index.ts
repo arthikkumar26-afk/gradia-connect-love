@@ -9,6 +9,7 @@ const corsHeaders = {
 
 interface DemoFeedbackRequest {
   interviewCandidateId: string;
+  feedbackType?: string;
 }
 
 serve(async (req) => {
@@ -25,8 +26,26 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId }: DemoFeedbackRequest = await req.json();
-    console.log('Sending demo feedback emails for:', interviewCandidateId);
+    const { interviewCandidateId, feedbackType }: DemoFeedbackRequest = await req.json();
+    const actualFeedbackType = feedbackType || 'demo';
+    console.log('Sending feedback emails for:', interviewCandidateId, 'type:', actualFeedbackType);
+
+    // Map feedbackType to booking_type values
+    const bookingTypeMap: Record<string, string[]> = {
+      demo: ['demo_round', 'demo_slot_booking', 'Demo Round'],
+      segment: ['segment_round', 'segment_slot_booking', 'Segment Round'],
+      admin_academic: ['admin_academic_round', 'admin_academic_slot_booking', 'Admin & Academic Round'],
+      core_team: ['core_team_round', 'core_team_slot_booking', 'Core Team Round'],
+      management: ['management_round', 'management_slot_booking', 'Management Round'],
+    };
+
+    const roundLabelMap: Record<string, string> = {
+      demo: 'Demo Round',
+      segment: 'Segment Round',
+      admin_academic: 'Admin & Academic Round',
+      core_team: 'Core Team Round',
+      management: 'Management Round',
+    };
 
     // Get candidate and job details
     const { data: interviewCandidate, error: candidateError } = await supabase
@@ -49,19 +68,21 @@ serve(async (req) => {
     const companyName = employer?.company_name || 'Gradia';
     const candidateName = candidate?.full_name || 'Candidate';
     const candidateEmail = candidate?.email || '';
+    const roundLabel = roundLabelMap[actualFeedbackType] || 'Demo Round';
 
-    // Get observer emails from demo slot booking
-    const { data: demoBooking } = await supabase
+    // Get observer emails from the correct booking type
+    const bookingTypes = bookingTypeMap[actualFeedbackType] || bookingTypeMap.demo;
+    const { data: roundBooking } = await supabase
       .from('slot_bookings')
       .select('observer_email')
       .eq('candidate_id', interviewCandidate.candidate_id)
-      .in('booking_type', ['demo_round', 'demo_slot_booking', 'Demo Round'])
+      .in('booking_type', bookingTypes)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     // Collect observer emails
-    const observerEmailsRaw = demoBooking?.observer_email || employer?.email || '';
+    const observerEmailsRaw = roundBooking?.observer_email || employer?.email || '';
     const observerEmails = observerEmailsRaw
       .split(',')
       .map((e: string) => e.trim())
@@ -102,7 +123,7 @@ serve(async (req) => {
           feedback_token_expires_at: expiresAt.toISOString(),
           status: 'pending',
           sent_at: new Date().toISOString(),
-          feedback_type: 'demo'
+          feedback_type: actualFeedbackType
         });
 
       if (reviewError) {
@@ -142,11 +163,11 @@ serve(async (req) => {
           <div class="container">
             <div class="header">
               <h1 style="margin: 0;">🎯 Feedback Required</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">Demo Round Evaluation - ${companyName}</p>
+              <p style="margin: 10px 0 0 0; opacity: 0.9;">${roundLabel} Evaluation - ${companyName}</p>
             </div>
             <div class="content">
               <p>Hello,</p>
-              <p>A candidate has completed their <strong>Demo Round</strong> and requires your feedback:</p>
+              <p>A candidate has completed their <strong>${roundLabel}</strong> and requires your feedback:</p>
               
               <div class="info-card">
                 <div style="margin-bottom: 15px;">
@@ -240,7 +261,7 @@ serve(async (req) => {
         await resend.emails.send({
           from: `${companyName} <noreply@gradia.co.in>`,
           to: [email],
-          subject: `📝 Demo Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
+          subject: `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
           html: htmlContent,
         });
         emailsSent++;
