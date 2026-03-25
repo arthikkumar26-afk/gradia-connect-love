@@ -170,6 +170,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
               'Demo Feedback': 'demo',
               'Segment Feedback': 'segment',
               'Admin & Academic Feedback': 'admin_academic',
+              'Core Team Feedback': 'core_team',
+              'Management Round Feedback': 'management',
               'HR Feedback': 'hr',
             };
             const feedbackTypeForStage = feedbackTypeMap[stage.name];
