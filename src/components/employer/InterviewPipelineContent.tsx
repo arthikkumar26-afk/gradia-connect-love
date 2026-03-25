@@ -377,120 +377,106 @@ const StageActionButtons = ({
           duration: 5000,
         });
       } else if (step.title === 'Written Test') {
-        // Auto-send Demo Slot Booking email when advancing from Written Test
+        // Determine the next stage dynamically based on what follows Written Test in the pipeline
+        const nextStageName = data?.currentStage || 'Demo Round';
+        const slotStageName = nextStageName.replace(' Slot Booking', '').replace('Slot Booking', '');
         try {
           await supabase.functions.invoke('send-slot-booking-email', {
             body: {
               interviewCandidateId,
-              stageName: 'Demo Round',
+              stageName: slotStageName,
             }
           });
-          toast.success(`✓ Written Test cleared! Demo slot booking email sent`, {
-            description: `Candidate will receive a Demo Round slot booking link`,
+          toast.success(`✓ Written Test cleared! ${slotStageName} slot booking email sent`, {
+            description: `Candidate will receive a ${slotStageName} slot booking link`,
             duration: 5000,
           });
         } catch (slotError) {
-          console.error('Error sending demo slot booking email:', slotError);
-          toast.success(`✓ Written Test cleared! Moved to Demo Slot Booking`, {
+          console.error('Error sending slot booking email:', slotError);
+          toast.success(`✓ Written Test cleared! Moved to next stage`, {
             description: 'Note: Slot booking email failed to send. You can resend manually.',
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Slot Booking') {
-        // Send dual emails when advancing from Demo Slot Booking to Demo Round
+      } else if (step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') {
+        // Send round emails when advancing from any slot booking to the round
+        const roundName = step.title.replace(' Slot Booking', '');
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: {
-              interviewCandidateId,
-            }
+            body: { interviewCandidateId }
           });
-          toast.success(`✓ Demo Slot Booking cleared! Demo round invitations sent`, {
+          toast.success(`✓ ${step.title} cleared! ${roundName} invitations sent`, {
             description: `Emails sent to candidate and observer`,
             duration: 5000,
           });
         } catch (demoError) {
-          console.error('Error sending demo round emails:', demoError);
-          toast.success(`✓ Demo Slot Booking cleared! Moved to Demo Round`, {
-            description: 'Note: Demo emails failed to send. You can send manually from Demo Round.',
+          console.error(`Error sending ${roundName} emails:`, demoError);
+          toast.success(`✓ ${step.title} cleared! Moved to ${roundName}`, {
+            description: `Note: Emails failed to send. You can send manually from ${roundName}.`,
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Round') {
-        // Demo Round → Demo Feedback: auto-send feedback request to observers
+      } else if (step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'HR Round') {
+        // Any round → its feedback stage: auto-send feedback request
+        const feedbackType = step.title === 'HR Round' ? 'hr' : step.title === 'Segment Round' ? 'segment' : step.title === 'Admin & Academic Round' ? 'admin_academic' : 'demo';
+        const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
         try {
-          await supabase.functions.invoke('send-demo-feedback-email', {
-            body: { interviewCandidateId }
+          await supabase.functions.invoke(feedbackFn, {
+            body: { interviewCandidateId, feedbackType }
           });
-          toast.success(`✓ Demo Round cleared! Feedback request sent to observers`, {
+          toast.success(`✓ ${step.title} cleared! Feedback request sent to observers`, {
             description: `Observers will receive an email with a feedback link`,
             duration: 5000,
           });
         } catch (feedbackError) {
-          console.error('Error sending demo feedback emails:', feedbackError);
-          toast.success(`✓ Demo Round cleared! Moved to Demo Feedback`, {
+          console.error(`Error sending ${step.title} feedback emails:`, feedbackError);
+          toast.success(`✓ ${step.title} cleared! Moved to Feedback`, {
             description: 'Note: Feedback email failed to send. You can resend manually.',
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Feedback') {
-        // Demo Feedback → HR Round Slot Booking
-        try {
-          await supabase.functions.invoke('send-slot-booking-email', {
-            body: {
-              interviewCandidateId,
-              stageName: 'HR Round',
-            }
-          });
-          toast.success(`✓ Demo Feedback cleared! HR slot booking email sent`, {
-            description: `Candidate will receive an HR Round slot booking link`,
-            duration: 5000,
-          });
-        } catch (slotError) {
-          console.error('Error sending HR slot booking email:', slotError);
-          toast.success(`✓ Demo Feedback cleared! Moved to HR Round Slot Booking`, {
-            description: 'Note: Slot booking email failed to send. You can resend manually.',
+      } else if (step.title === 'Demo Feedback' || step.title === 'Segment Feedback' || step.title === 'Admin & Academic Feedback' || step.title === 'HR Feedback') {
+        // Feedback → next slot booking or Final Review
+        const nextStage = data?.currentStage || 'Final Review';
+        if (nextStage.includes('Slot Booking')) {
+          const slotRound = nextStage.replace(' Slot Booking', '');
+          try {
+            await supabase.functions.invoke('send-slot-booking-email', {
+              body: { interviewCandidateId, stageName: slotRound }
+            });
+            toast.success(`✓ ${step.title} cleared! ${slotRound} slot booking email sent`, {
+              description: `Candidate will receive a ${slotRound} slot booking link`,
+              duration: 5000,
+            });
+          } catch (slotError) {
+            console.error(`Error sending ${slotRound} slot booking email:`, slotError);
+            toast.success(`✓ ${step.title} cleared! Moved to ${nextStage}`, {
+              description: 'Note: Slot booking email failed to send. You can resend manually.',
+              duration: 5000,
+            });
+          }
+        } else {
+          toast.success(`✓ ${step.title} cleared! Moved to ${nextStage}`, {
             duration: 5000,
           });
         }
       } else if (step.title === 'HR Round Slot Booking') {
-        // HR Round is skipped — go directly to HR Feedback and send feedback emails
+        // HR Round Slot Booking → HR Round (not skipped for Principal pipeline)
         try {
-          await supabase.functions.invoke('send-hr-feedback-email', {
+          await supabase.functions.invoke('send-demo-round-emails', {
             body: { interviewCandidateId }
           });
-          toast.success(`✓ HR Round Slot Booking cleared! HR Feedback request sent`, {
-            description: `Observers will receive an email with a feedback evaluation link`,
+          toast.success(`✓ HR Round Slot Booking cleared! HR Round invitations sent`, {
+            description: `Emails sent to candidate and observer`,
             duration: 5000,
           });
         } catch (hrError) {
-          console.error('Error sending HR feedback emails:', hrError);
-          toast.success(`✓ HR Round Slot Booking cleared! Moved to HR Feedback`, {
-            description: 'Note: HR feedback email failed to send. You can resend manually.',
+          console.error('Error sending HR round emails:', hrError);
+          toast.success(`✓ HR Round Slot Booking cleared! Moved to HR Round`, {
+            description: 'Note: HR round email failed to send. You can resend manually.',
             duration: 5000,
           });
         }
-      } else if (step.title === 'HR Round') {
-        // HR Round → HR Feedback: auto-send feedback request to observers
-        try {
-          await supabase.functions.invoke('send-hr-feedback-email', {
-            body: { interviewCandidateId }
-          });
-          toast.success(`✓ HR Round cleared! HR Feedback request sent to observers`, {
-            description: `Observers will receive an email with a feedback link`,
-            duration: 5000,
-          });
-        } catch (feedbackError) {
-          console.error('Error sending HR feedback emails:', feedbackError);
-          toast.success(`✓ HR Round cleared! Moved to HR Feedback`, {
-            description: 'Note: Feedback email failed to send. You can resend manually.',
-            duration: 5000,
-          });
-        }
-      } else if (step.title === 'HR Feedback') {
-        // HR Feedback → Final Review
-        toast.success(`✓ HR Feedback cleared! Moved to Final Review`, {
-          duration: 5000,
-        });
       } else {
         // Show clear success message with current stage cleared and next stage info
         const clearedMessage = `✓ ${step.title} cleared!`;
