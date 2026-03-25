@@ -283,6 +283,12 @@ const StageActionButtons = ({
         });
         if (error) throw error;
         toast.success('Admin & Academic Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
+      } else if (step.title === 'Core Team Round Slot Booking') {
+        const { error } = await supabase.functions.invoke('send-slot-booking-email', {
+          body: { interviewCandidateId, stageName: 'Core Team Round' },
+        });
+        if (error) throw error;
+        toast.success('Core Team Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'HR Round Slot Booking') {
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
           body: { interviewCandidateId, stageName: 'HR Round' },
