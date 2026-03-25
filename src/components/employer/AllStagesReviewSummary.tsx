@@ -327,7 +327,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           }
 
           // General notes/feedback
-          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
+          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
             const noteLines = doc.splitTextToSize(review.notes, pageWidth - 34);
             doc.text(noteLines, 20, y);
             y += noteLines.length * 4 + 2;
