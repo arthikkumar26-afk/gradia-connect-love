@@ -171,6 +171,10 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
+      {/* Animated sweeping color overlay */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="hero-color-sweep absolute inset-0" />
+      </div>
       <div className="relative z-10 container mx-auto px-4 py-6 lg:py-8">
         <div className="max-w-4xl mx-auto">
           {/* Headline - Centered, above search */}
