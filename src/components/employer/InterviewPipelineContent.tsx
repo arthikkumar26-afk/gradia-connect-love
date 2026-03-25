@@ -1210,8 +1210,7 @@ const ClickableStagesList = ({
     }
   };
 
-  // Confirm a preferred slot for demo/segment/admin booking
-  const handleConfirmPreferredSlot = async () => {
+  // Confirm a preferred slot for demo/segment/admin/core team/management booking
   const getSlotBookingContext = (stepTitle: string) => {
     const isSegment = stepTitle === 'Segment Round Slot Booking';
     const isAdmin = stepTitle === 'Admin & Academic Round Slot Booking';
@@ -1256,7 +1255,7 @@ const ClickableStagesList = ({
       return;
     }
 
-    if (!activeEmails || activeEmails.length === 0 || activeEmails.every(e => !e.trim())) {
+    if (!activeEmails || activeEmails.length === 0 || activeEmails.every((e) => !e.trim())) {
       toast.error('Please add at least one observer email before confirming the slot');
       return;
     }
@@ -1271,7 +1270,7 @@ const ClickableStagesList = ({
           status: 'confirmed',
           demo_meet_link: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : null,
           demo_meet_type: demoMeetType,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', activeBookingData.id);
 
@@ -1292,8 +1291,24 @@ const ClickableStagesList = ({
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
 
-      const roundLabel = isCoreTeam ? 'Core Team Round' : isManagement ? 'Management Round' : isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
-      const feedbackType = isCoreTeam ? 'core_team' : isManagement ? 'management' : isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
+      const roundLabel = isCoreTeam
+        ? 'Core Team Round'
+        : isManagement
+          ? 'Management Round'
+          : isSegment
+            ? 'Segment Round'
+            : isAdmin
+              ? 'Admin & Academic Round'
+              : 'Demo';
+      const feedbackType = isCoreTeam
+        ? 'core_team'
+        : isManagement
+          ? 'management'
+          : isSegment
+            ? 'segment'
+            : isAdmin
+              ? 'admin_academic'
+              : 'demo';
 
       try {
         await supabase.functions.invoke('process-interview-stage', {
@@ -1301,7 +1316,7 @@ const ClickableStagesList = ({
             interviewCandidateId,
             action: 'advance',
             feedback: `Employer confirmed ${roundLabel} slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
-          }
+          },
         });
       } catch (advanceErr) {
         console.error('Error auto-advancing:', advanceErr);
@@ -1316,7 +1331,7 @@ const ClickableStagesList = ({
               meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
               meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
               roundName: 'Demo Round',
-            }
+            },
           });
         } catch (emailErr) {
           console.error('Error sending demo emails:', emailErr);
@@ -1330,7 +1345,7 @@ const ClickableStagesList = ({
               meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
               meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
               roundName: roundLabel,
-            }
+            },
           });
         } catch (emailErr) {
           console.error(`Error sending ${roundLabel} emails:`, emailErr);
@@ -1354,7 +1369,7 @@ const ClickableStagesList = ({
               interviewCandidateId,
               action: 'advance',
               feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
-            }
+            },
           });
 
           if (isSegment || isAdmin || isCoreTeam || isManagement) {
@@ -1363,12 +1378,12 @@ const ClickableStagesList = ({
                 interviewCandidateId,
                 action: 'advance',
                 feedback: `Auto-skipped ${roundLabel} stage, advancing to feedback`,
-              }
+              },
             });
           }
 
           await supabase.functions.invoke('send-demo-feedback-email', {
-            body: { interviewCandidateId, feedbackType }
+            body: { interviewCandidateId, feedbackType },
           });
           console.log(`${roundLabel} feedback email sent to observers after ${delayLabel}`);
           toast.success(`${roundLabel} Feedback request sent to observers!`);
@@ -1438,7 +1453,7 @@ const ClickableStagesList = ({
     if (!activeBookingData) return;
     setIsSavingObserver(true);
     try {
-      const updatedEmails = activeEmails.filter(e => e !== emailToRemove);
+      const updatedEmails = activeEmails.filter((e) => e !== emailToRemove);
       const { error } = await supabase
         .from('slot_bookings')
         .update({ observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() })
