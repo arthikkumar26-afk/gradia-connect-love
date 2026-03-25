@@ -9,6 +9,7 @@ const corsHeaders = {
 
 interface DemoFeedbackRequest {
   interviewCandidateId: string;
+  feedbackType?: string;
 }
 
 serve(async (req) => {
