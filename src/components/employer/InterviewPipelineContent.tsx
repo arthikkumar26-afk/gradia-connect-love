@@ -283,6 +283,12 @@ const StageActionButtons = ({
         });
         if (error) throw error;
         toast.success('Admin & Academic Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
+      } else if (step.title === 'Core Team Round Slot Booking') {
+        const { error } = await supabase.functions.invoke('send-slot-booking-email', {
+          body: { interviewCandidateId, stageName: 'Core Team Round' },
+        });
+        if (error) throw error;
+        toast.success('Core Team Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'HR Round Slot Booking') {
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
           body: { interviewCandidateId, stageName: 'HR Round' },
@@ -421,7 +427,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') {
+      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking') {
         // Segment/Admin Slot Booking → Round: Send round invitations (meeting link) to candidate and observers
         const roundName = step.title.replace(' Slot Booking', '');
         try {
@@ -458,7 +464,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Feedback' || step.title === 'Segment Feedback' || step.title === 'Admin & Academic Feedback' || step.title === 'HR Feedback') {
+      } else if (step.title === 'Demo Feedback' || step.title === 'Segment Feedback' || step.title === 'Admin & Academic Feedback' || step.title === 'Core Team Feedback' || step.title === 'HR Feedback') {
         // Feedback → next slot booking or Final Review
         const nextStage = data?.currentStage || 'Final Review';
         if (nextStage.includes('Slot Booking')) {
@@ -1831,15 +1837,17 @@ const ClickableStagesList = ({
                   </div>
                 )}
 
-                {/* Slot Booking Details for Demo/Segment/Admin Slot Booking stages */}
+                {/* Slot Booking Details for Demo/Segment/Admin/Core Team Slot Booking stages */}
                 {(() => {
                   const activeBooking = step.title === 'Segment Round Slot Booking' ? segmentSlotBooking 
                     : step.title === 'Admin & Academic Round Slot Booking' ? adminSlotBooking 
+                    : step.title === 'Core Team Round Slot Booking' ? coreTeamSlotBooking
                     : step.title === 'Demo Slot Booking' ? slotBooking : null;
                   const activeObserverEmails = step.title === 'Segment Round Slot Booking' ? segmentObserverEmails
                     : step.title === 'Admin & Academic Round Slot Booking' ? adminObserverEmails
+                    : step.title === 'Core Team Round Slot Booking' ? coreTeamObserverEmails
                     : observerEmails;
-                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking')) return null;
+                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking')) return null;
                   return activeBooking ? (
                   <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
