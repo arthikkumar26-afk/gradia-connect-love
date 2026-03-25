@@ -220,6 +220,34 @@ export const DemoFeedbackResults = ({
     }
   };
 
+  const handleEditEmail = (reviewId: string, currentEmail: string) => {
+    setEditingEmailId(reviewId);
+    setEditEmailValue(currentEmail || "");
+  };
+
+  const handleSaveEmail = async (reviewId: string) => {
+    if (!editEmailValue || !editEmailValue.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    setIsSavingEmail(true);
+    try {
+      const { error } = await supabase
+        .from('management_reviews')
+        .update({ reviewer_email: editEmailValue, reviewer_name: editEmailValue.split('@')[0] })
+        .eq('id', reviewId);
+      if (error) throw error;
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, reviewer_email: editEmailValue, reviewer_name: editEmailValue.split('@')[0] } : r));
+      setEditingEmailId(null);
+      toast.success("Observer email updated successfully");
+    } catch (err) {
+      console.error('Error updating email:', err);
+      toast.error("Failed to update observer email");
+    } finally {
+      setIsSavingEmail(false);
+    }
+  };
+
   const getRecommendationLabel = (rec: string | null) => {
     switch (rec) {
       case 'strongly_recommend': return { label: 'Strongly Recommend', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
