@@ -239,15 +239,26 @@ export const useInterviewPipeline = () => {
         }
       });
 
-      const dbStages = (customPipelineStageNames.size > 0
-        ? dbStagesAll2.filter(s => defaultDbStages.some(d => d.id === s.id) || customPipelineStageNames.has(s.name))
-        : defaultDbStages
-      ).sort((a, b) => {
-        // Sort by custom pipeline order if available, otherwise by DB stage_order
-        const aOrder = combinedPipelineOrder.get(a.name) ?? a.stage_order;
-        const bOrder = combinedPipelineOrder.get(b.name) ?? b.stage_order;
-        return aOrder - bOrder;
-      });
+      // If custom pipelines exist, show ONLY stages from custom pipelines (union of all jobs' pipelines)
+      // plus stages that have candidates in them. Otherwise use default (up to Offer Stage).
+      let dbStages: DbInterviewStage[];
+      if (customPipelineStageNames.size > 0) {
+        const candidateStageIds = new Set(
+          (candidatesData as DbInterviewCandidate[]).map(c => c.current_stage_id).filter(Boolean)
+        );
+        dbStages = dbStagesAll2
+          .filter(s => customPipelineStageNames.has(s.name) || candidateStageIds.has(s.id))
+          .sort((a, b) => {
+            const aOrder = combinedPipelineOrder.get(a.name) ?? a.stage_order;
+            const bOrder = combinedPipelineOrder.get(b.name) ?? b.stage_order;
+            return aOrder - bOrder;
+          });
+        // Deduplicate by id
+        const seen = new Set<string>();
+        dbStages = dbStages.filter(s => { if (seen.has(s.id)) return false; seen.add(s.id); return true; });
+      } else {
+        dbStages = defaultDbStages;
+      }
 
       const pipelineStages: PipelineStage[] = dbStages.map((stage) => {
         // Find candidates in this stage
