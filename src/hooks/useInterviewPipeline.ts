@@ -484,6 +484,32 @@ export const useInterviewPipeline = () => {
           if (nextStage.name === 'Offer Stage') {
             console.log('Skipping interview invitation for Offer Stage - offer letter should be sent instead');
             toast.success('Candidate advanced to Offer Stage. Send the offer letter from the Offer Stage panel.');
+          } else if (nextStage.name.toLowerCase().includes('feedback')) {
+            // Feedback stages: send feedback request to observers, NOT interview invitation to candidate
+            try {
+              const feedbackTypeMap: Record<string, string> = {
+                'Demo Feedback': 'demo',
+                'HR Feedback': 'hr',
+                'Segment Feedback': 'segment',
+                'Admin & Academic Feedback': 'admin_academic',
+                'Core Team Feedback': 'core_team',
+                'Management Feedback': 'management',
+              };
+              const feedbackType = feedbackTypeMap[nextStage.name] || 'demo';
+              const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
+              
+              const { error: fbError } = await supabase.functions.invoke(feedbackFn, {
+                body: { interviewCandidateId, feedbackType }
+              });
+
+              if (fbError) {
+                console.error('Failed to send feedback email:', fbError);
+              } else {
+                toast.success(`Feedback request sent to observers for ${nextStage.name}`);
+              }
+            } catch (emailErr) {
+              console.error('Error sending feedback email:', emailErr);
+            }
           } else {
             try {
               const scheduledDate = new Date();
@@ -510,26 +536,32 @@ export const useInterviewPipeline = () => {
       }
 
       // If starting a stage (in_progress), send invitation email for current stage
+      // But NOT for feedback stages — those use observer feedback emails
       if (status === 'in_progress' && !skipEmail) {
-        try {
-          const scheduledDate = new Date();
-          scheduledDate.setHours(scheduledDate.getHours() + 1); // Schedule for 1 hour from now
-          
-          const { error: inviteError } = await supabase.functions.invoke('send-interview-invitation', {
-            body: {
-              interviewCandidateId,
-              stageName: stageData?.name || 'Interview',
-              scheduledDate: scheduledDate.toISOString(),
-            }
-          });
+        const currentStageName = stageData?.name || 'Interview';
+        if (currentStageName.toLowerCase().includes('feedback')) {
+          console.log('Skipping interview invitation for feedback stage — feedback emails handled separately');
+        } else {
+          try {
+            const scheduledDate = new Date();
+            scheduledDate.setHours(scheduledDate.getHours() + 1);
+            
+            const { error: inviteError } = await supabase.functions.invoke('send-interview-invitation', {
+              body: {
+                interviewCandidateId,
+                stageName: currentStageName,
+                scheduledDate: scheduledDate.toISOString(),
+              }
+            });
 
-          if (inviteError) {
-            console.error('Failed to send invitation email:', inviteError);
-          } else {
-            toast.success(`Interview invitation sent for ${stageData?.name}`);
+            if (inviteError) {
+              console.error('Failed to send invitation email:', inviteError);
+            } else {
+              toast.success(`Interview invitation sent for ${currentStageName}`);
+            }
+          } catch (emailErr) {
+            console.error('Error sending stage invitation:', emailErr);
           }
-        } catch (emailErr) {
-          console.error('Error sending stage invitation:', emailErr);
         }
       }
 
