@@ -219,9 +219,27 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
     fetchAllReviews();
   }, [interviewCandidateId]);
 
-  const handleDownloadPDF = useCallback(() => {
+  const handleDownloadPDF = useCallback(async () => {
     setIsDownloading(true);
     try {
+      // Load logo as base64
+      let logoDataUrl: string | null = null;
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject();
+          img.src = gradiaLogo;
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0);
+        logoDataUrl = canvas.toDataURL('image/png');
+      } catch { /* skip logo if load fails */ }
+
       const doc = new jsPDF();
       const pw = doc.internal.pageSize.getWidth();
       const ph = doc.internal.pageSize.getHeight();
@@ -236,13 +254,19 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
       // Header bar
       doc.setFillColor(30, 58, 95);
       doc.rect(0, 0, pw, 38, 'F');
+
+      // Logo on the left side of header
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, 'PNG', 10, 6, 26, 26);
+      }
+
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(20);
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('INTERVIEW REVIEW REPORT', pw / 2, 18, { align: 'center' });
-      doc.setFontSize(10);
+      doc.text('INTERVIEW REVIEW REPORT', pw / 2 + 12, 18, { align: 'center' });
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text('Gradia Job Portal', pw / 2, 28, { align: 'center' });
+      doc.text('Gradia Job Portal', pw / 2 + 12, 28, { align: 'center' });
       doc.setTextColor(0, 0, 0);
       y = 48;
 
