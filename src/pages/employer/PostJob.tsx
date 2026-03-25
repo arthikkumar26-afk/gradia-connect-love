@@ -384,6 +384,28 @@ const PostJob = () => {
                   </div>
                 )}
 
+                {/* Pipeline Stages Preview */}
+                {customStages.length > 0 && (
+                  <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-primary" />
+                      Interview Stages ({customStages.length} steps)
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {customStages.map((stage, index) => (
+                        <div key={stage.order} className="flex items-center gap-1">
+                          <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border ${stage.isAutomated ? 'bg-primary/10 text-primary border-primary/20' : 'bg-accent text-accent-foreground border-border'}`}>
+                            <span className="font-semibold">{index + 1}.</span>
+                            {stage.name}
+                            {stage.isAutomated && <span className="text-[10px] opacity-70">⚡</span>}
+                          </span>
+                          {index < customStages.length - 1 && <span className="text-muted-foreground text-xs">→</span>}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">⚡ = AI Automated Stage</p>
+                  </div>
+                )}
 
                 {/* Education-specific cascading fields */}
                 {watchedInterviewType === 'education' && (
