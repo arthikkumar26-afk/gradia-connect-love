@@ -1999,73 +1999,37 @@ const ClickableStagesList = ({
                         <Button
                           size="sm"
                           className="w-full h-7 text-[10px] bg-purple-600 hover:bg-purple-700 mt-1"
-                          onClick={handleConfirmPreferredSlot}
+                          onClick={() => handleConfirmPreferredSlot(step.title)}
                           disabled={selectedPreferredSlot === null || isConfirmingSlot || ((demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') && !demoMeetLink.trim())}
                         >
-                          {isConfirmingSlot ? (
-                            <>
-                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                              Confirming & Sending...
-                            </>
-                          ) : (
-                            <>
-                              <Check className="h-3 w-3 mr-1" />
-                              Confirm & Send Invitations
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Confirmed slot display */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                            📅 {new Date(activeBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                          </Badge>
-                          <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                            🕐 {activeBooking.booking_time}
-                          </Badge>
-                          <Badge className="text-[10px] py-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                            ✓ Confirmed
-                          </Badge>
+...
+                          <Input
+                            type="email"
+                            placeholder="Add email address"
+                            value={observerEmail}
+                            onChange={(e) => setObserverEmail(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddObserverEmail(step.title); } }}
+                            className="h-6 text-[10px] flex-1 border-purple-200"
+                          />
+                          <Button
+                            size="sm"
+                            className="h-6 text-[9px] px-2 bg-purple-600 hover:bg-purple-700"
+                            onClick={() => handleAddObserverEmail(step.title)}
+                            disabled={isSavingObserver || !observerEmail.trim()}
+                          >
+                            {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                          </Button>
                         </div>
-                      </>
-                    )}
-
-                    {/* Observer Email Input */}
-                    <div className="mt-1.5 pt-1.5 border-t border-purple-200 space-y-1">
-                      <label className="text-[10px] font-medium text-purple-700 flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        Observer/Employer Emails
-                      </label>
-                      <div className="flex gap-1.5">
-                        <Input
-                          type="email"
-                          placeholder="Add email address"
-                          value={observerEmail}
-                          onChange={(e) => setObserverEmail(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddObserverEmail(); }}}
-                          className="h-6 text-[10px] flex-1 border-purple-200"
-                        />
-                        <Button
-                          size="sm"
-                          className="h-6 text-[9px] px-2 bg-purple-600 hover:bg-purple-700"
-                          onClick={handleAddObserverEmail}
-                          disabled={isSavingObserver || !observerEmail.trim()}
-                        >
-                          {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                        </Button>
-                      </div>
-                      {activeObserverEmails.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {activeObserverEmails.map((email) => (
-                            <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
-                              <CheckCircle2 className="h-2.5 w-2.5" />
-                              {email}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleRemoveObserverEmail(email); }}
-                                className="ml-0.5 hover:text-red-500 transition-colors"
-                              >
+                        {activeObserverEmails.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {activeObserverEmails.map((email) => (
+                              <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
+                                <CheckCircle2 className="h-2.5 w-2.5" />
+                                {email}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleRemoveObserverEmail(step.title, email); }}
+                                  className="ml-0.5 hover:text-red-500 transition-colors"
+                                >
                                 <X className="h-2.5 w-2.5" />
                               </button>
                             </Badge>
