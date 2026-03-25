@@ -1557,6 +1557,12 @@ const ClickableStagesList = ({
       return;
     }
 
+    // Validate observer email is provided
+    if (!hrObserverEmails || hrObserverEmails.length === 0 || hrObserverEmails.every(e => !e.trim())) {
+      toast.error('Please add at least one observer email before confirming the HR slot');
+      return;
+    }
+
     setIsConfirmingHrSlot(true);
     try {
       const { error } = await supabase
