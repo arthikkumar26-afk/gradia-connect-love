@@ -176,6 +176,37 @@ serve(async (req) => {
           console.log('Candidate ready for offer letter generation');
         }
 
+        // Auto-send feedback email when advancing to a Feedback stage
+        const isFeedbackStage = targetStage.name.toLowerCase().includes('feedback');
+        if (isFeedbackStage) {
+          try {
+            console.log(`Sending feedback request email for stage: ${targetStage.name}`);
+            const feedbackTypeMap: Record<string, string> = {
+              'Demo Feedback': 'demo',
+              'HR Feedback': 'hr',
+              'Segment Feedback': 'segment',
+              'Admin & Academic Feedback': 'admin_academic',
+              'Core Team Feedback': 'core_team',
+              'Management Feedback': 'management',
+            };
+            const feedbackType = feedbackTypeMap[targetStage.name] || 'demo';
+            const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
+            
+            const feedbackResponse = await fetch(`${supabaseUrl}/functions/v1/${feedbackFn}`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ interviewCandidateId, feedbackType }),
+            });
+            const feedbackResult = await feedbackResponse.json();
+            console.log(`Feedback email sent for ${targetStage.name}:`, feedbackResult);
+          } catch (feedbackErr) {
+            console.error('Failed to send feedback email (non-blocking):', feedbackErr);
+          }
+        }
+
         // Auto-send slot booking email when advancing to a Slot Booking stage
         const isSlotBookingStage = targetStage.name.toLowerCase().includes('slot booking');
         if (isSlotBookingStage) {
