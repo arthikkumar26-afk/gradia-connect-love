@@ -337,10 +337,15 @@ export const StageResultsModal = ({
                   The candidate may not have completed this stage yet.
                 </p>
               </div>
-            ) : isDemoFeedbackStage || isHrFeedbackStage ? (
+            ) : isAnyFeedbackStage ? (
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold">{isHrFeedbackStage ? 'HR Round' : 'Demo Round'} Feedback</h3>
-                <DemoFeedbackResults interviewCandidateId={interviewCandidateId} feedbackType={isHrFeedbackStage ? 'hr' : 'demo'} />
+                <h3 className="text-sm font-semibold">
+                  {isHrFeedbackStage ? 'HR Round' : isCoreTeamFeedbackStage ? 'Core Team Round' : isManagementFeedbackStage ? 'Management Round' : isSegmentFeedbackStage ? 'Segment Round' : isAdminAcademicFeedbackStage ? 'Admin & Academic Round' : 'Demo Round'} Feedback
+                </h3>
+                <DemoFeedbackResults 
+                  interviewCandidateId={interviewCandidateId} 
+                  feedbackType={isHrFeedbackStage ? 'hr' : isCoreTeamFeedbackStage ? 'core_team' : isManagementFeedbackStage ? 'management' : isSegmentFeedbackStage ? 'segment' : isAdminAcademicFeedbackStage ? 'admin_academic' : 'demo'} 
+                />
               </div>
             ) : isSlotBookingStage ? (
               <>
