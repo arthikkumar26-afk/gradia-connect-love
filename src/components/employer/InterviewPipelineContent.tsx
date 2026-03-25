@@ -1326,8 +1326,10 @@ const ClickableStagesList = ({
     const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
     const isSegment = currentStep?.title === 'Segment Round Slot Booking';
     const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
-    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
+    const isManagement = currentStep?.title === 'Management Round Slot Booking';
+    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
     
     if (!activeBookingData || !observerEmail.trim()) return;
     const email = observerEmail.trim().toLowerCase();
