@@ -205,11 +205,15 @@ export const useInterviewPipeline = () => {
       });
 
       // Build pipeline stages with candidates
-      const dbStages = stagesData as DbInterviewStage[];
+      const dbStagesAll2 = stagesData as DbInterviewStage[];
       const dbCandidates = candidatesData as (DbInterviewCandidate & {
         profiles: DbProfile;
         jobs: DbJob;
       })[];
+
+      // Filter out stages after Offer Stage for the pipeline columns
+      const offerStageOrderMain = dbStagesAll2.find(s => s.name === 'Offer Stage')?.stage_order;
+      const dbStages = dbStagesAll2.filter(s => offerStageOrderMain != null ? s.stage_order <= offerStageOrderMain : true);
 
       const pipelineStages: PipelineStage[] = dbStages.map((stage) => {
         // Find candidates in this stage
