@@ -1161,10 +1161,16 @@ const ClickableStagesList = ({
     }
   };
 
-  // Confirm a preferred slot for demo booking
+  // Confirm a preferred slot for demo/segment/admin booking
   const handleConfirmPreferredSlot = async () => {
-    if (!slotBooking || selectedPreferredSlot === null || !slotBooking.preferred_slots) return;
-    const chosen = slotBooking.preferred_slots[selectedPreferredSlot];
+    // Determine which booking is active based on current candidate stage
+    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
+    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
+    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
+    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    
+    if (!activeBookingData || selectedPreferredSlot === null || !activeBookingData.preferred_slots) return;
+    const chosen = activeBookingData.preferred_slots[selectedPreferredSlot];
     if (!chosen) return;
 
     // Validate meeting link for Google Meet / Zoom
@@ -1186,64 +1192,96 @@ const ClickableStagesList = ({
           demo_meet_type: demoMeetType,
           updated_at: new Date().toISOString() 
         })
-        .eq('id', slotBooking.id);
+        .eq('id', activeBookingData.id);
 
       if (error) throw error;
 
-      setSlotBooking({ ...slotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType });
+      const updatedBooking = { ...activeBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType };
+      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      else if (isAdmin) setAdminSlotBooking(updatedBooking);
+      else setSlotBooking(updatedBooking);
 
-      // Auto-advance to Demo Round
+      const roundLabel = isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
+      const feedbackType = isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
+      const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+
+      // Auto-advance stage
       try {
         await supabase.functions.invoke('process-interview-stage', {
           body: {
             interviewCandidateId,
             action: 'advance',
-            feedback: `Employer confirmed demo slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
+            feedback: `Employer confirmed ${roundLabel} slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
           }
         });
       } catch (advanceErr) {
         console.error('Error auto-advancing:', advanceErr);
       }
 
-      // Send demo round emails with meeting link to candidate AND observers
-      try {
-        await supabase.functions.invoke('send-demo-round-emails', {
-          body: { 
-            interviewCandidateId,
-            observerEmail: observerEmails.length > 0 ? observerEmails.join(',') : undefined,
-            meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
-            meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
-          }
-        });
-      } catch (emailErr) {
-        console.error('Error sending demo emails:', emailErr);
+      if (!isSegment && !isAdmin) {
+        // Demo: Send demo round emails with meeting link
+        try {
+          await supabase.functions.invoke('send-demo-round-emails', {
+            body: { 
+              interviewCandidateId,
+              observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
+              meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
+              meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+            }
+          });
+        } catch (emailErr) {
+          console.error('Error sending demo emails:', emailErr);
+        }
+      } else {
+        // Segment/Admin: Send round emails with meeting link
+        try {
+          await supabase.functions.invoke('send-demo-round-emails', {
+            body: { 
+              interviewCandidateId,
+              observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
+              meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
+              meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+            }
+          });
+        } catch (emailErr) {
+          console.error(`Error sending ${roundLabel} emails:`, emailErr);
+        }
       }
 
-      toast.success(`Demo slot confirmed! Invitations sent`, {
-        description: `Meeting link sent to candidate${observerEmails.length > 0 ? ` and ${observerEmails.length} observer(s)` : ''}. Feedback email will follow shortly.`,
+      toast.success(`${roundLabel} slot confirmed! Invitations sent`, {
+        description: `Meeting link sent to candidate${activeEmails.length > 0 ? ` and ${activeEmails.length} observer(s)` : ''}. Feedback email will follow shortly.`,
         duration: 5000,
       });
 
-      // Auto-advance to Demo Feedback and send feedback email after a short delay
+      // Auto-advance to Feedback and send feedback email after a short delay
       setTimeout(async () => {
         try {
-          // Advance to Demo Feedback
           await supabase.functions.invoke('process-interview-stage', {
             body: {
               interviewCandidateId,
               action: 'advance',
-              feedback: 'Auto-advanced to Demo Feedback after demo round invitations sent',
+              feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
             }
           });
-          // Send demo feedback email to observers
+          // For segment/admin, skip the round stage (advance again)
+          if (isSegment || isAdmin) {
+            await supabase.functions.invoke('process-interview-stage', {
+              body: {
+                interviewCandidateId,
+                action: 'advance',
+                feedback: `Auto-skipped ${roundLabel} stage, advancing to feedback`,
+              }
+            });
+          }
+          // Send feedback email to observers
           await supabase.functions.invoke('send-demo-feedback-email', {
-            body: { interviewCandidateId }
+            body: { interviewCandidateId, feedbackType }
           });
-          console.log('Demo feedback email sent to observers');
+          console.log(`${roundLabel} feedback email sent to observers`);
         } catch (feedbackErr) {
           console.error('Error sending feedback email:', feedbackErr);
         }
-      }, 10000); // 10 seconds delay before sending feedback email
+      }, 10000);
 
       // Trigger pipeline refresh
       window.location.reload();
