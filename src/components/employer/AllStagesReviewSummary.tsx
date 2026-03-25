@@ -137,8 +137,9 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
         const currentStageOrder = currentStage?.stage_order ?? -1;
 
         // Build stage reviews
+        const allowedStages = ['Written Test', 'Segment Feedback', 'Admin & Academic Feedback', 'Management Round Feedback', 'HR Feedback'];
         const reviews: StageReview[] = stages
-          .filter(s => s.name !== 'Offer Stage')
+          .filter(s => allowedStages.includes(s.name))
           .map(stage => {
             const stageEvents = (events || []).filter(e => e.stage_id === stage.id);
             const event = stageEvents.find(e => e.status === 'completed' || e.status === 'passed')
