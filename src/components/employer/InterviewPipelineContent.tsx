@@ -1876,7 +1876,7 @@ const ClickableStagesList = ({
                       </div>
                       {activeObserverEmails.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {observerEmails.map((email) => (
+                          {activeObserverEmails.map((email) => (
                             <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
                               <CheckCircle2 className="h-2.5 w-2.5" />
                               {email}
