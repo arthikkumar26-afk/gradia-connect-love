@@ -125,7 +125,7 @@ const stageColors: Record<string, string> = {
   'Offer Stage': 'bg-emerald-500',
 };
 
-const hiddenPipelineStages = new Set(['AI Phone Interview']);
+const hiddenPipelineStages = new Set(['AI Phone Interview', 'Segment Round', 'Admin & Academic Round']);
 
 const getVisibleInterviewSteps = (steps: InterviewStep[]) =>
   steps.filter((step) => !hiddenPipelineStages.has(step.title));
@@ -398,21 +398,39 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') {
-        // Send round emails when advancing from any slot booking to the round
-        const roundName = step.title.replace(' Slot Booking', '');
+      } else if (step.title === 'Demo Slot Booking') {
+        // Demo Slot Booking → Demo Round (keep existing flow)
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
             body: { interviewCandidateId }
           });
-          toast.success(`✓ ${step.title} cleared! ${roundName} invitations sent`, {
+          toast.success(`✓ Demo Slot Booking cleared! Demo Round invitations sent`, {
             description: `Emails sent to candidate and observer`,
             duration: 5000,
           });
         } catch (demoError) {
-          console.error(`Error sending ${roundName} emails:`, demoError);
-          toast.success(`✓ ${step.title} cleared! Moved to ${roundName}`, {
-            description: `Note: Emails failed to send. You can send manually from ${roundName}.`,
+          console.error(`Error sending Demo Round emails:`, demoError);
+          toast.success(`✓ Demo Slot Booking cleared! Moved to Demo Round`, {
+            description: `Note: Emails failed to send. You can send manually.`,
+            duration: 5000,
+          });
+        }
+      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') {
+        // Segment/Admin Slot Booking → skip round, go directly to feedback
+        const feedbackType = step.title === 'Segment Round Slot Booking' ? 'segment' : 'admin_academic';
+        const roundName = step.title.replace(' Slot Booking', '');
+        try {
+          await supabase.functions.invoke('send-demo-feedback-email', {
+            body: { interviewCandidateId, feedbackType }
+          });
+          toast.success(`✓ ${step.title} cleared! Feedback request sent to observers`, {
+            description: `Observers will receive an email with a feedback link`,
+            duration: 5000,
+          });
+        } catch (feedbackError) {
+          console.error(`Error sending ${roundName} feedback emails:`, feedbackError);
+          toast.success(`✓ ${step.title} cleared! Moved to Feedback`, {
+            description: 'Note: Feedback email failed to send. You can resend manually.',
             duration: 5000,
           });
         }
@@ -1031,6 +1049,12 @@ const ClickableStagesList = ({
   const [isSavingHrObserver, setIsSavingHrObserver] = useState(false);
   const [selectedHrPreferredSlot, setSelectedHrPreferredSlot] = useState<number | null>(null);
   const [isConfirmingHrSlot, setIsConfirmingHrSlot] = useState(false);
+  // Segment Round Slot Booking states
+  const [segmentSlotBooking, setSegmentSlotBooking] = useState<typeof slotBooking>(null);
+  const [segmentObserverEmails, setSegmentObserverEmails] = useState<string[]>([]);
+  // Admin & Academic Round Slot Booking states
+  const [adminSlotBooking, setAdminSlotBooking] = useState<typeof slotBooking>(null);
+  const [adminObserverEmails, setAdminObserverEmails] = useState<string[]>([]);
   // Demo meeting options state
   const [demoMeetType, setDemoMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>('google_meet');
   const [demoMeetLink, setDemoMeetLink] = useState('');
@@ -1069,6 +1093,26 @@ const ClickableStagesList = ({
             b.subject?.toLowerCase().includes('written test')
           ) || null;
           setWrittenTestSlotBooking(writtenTestBooking);
+
+          // Find Segment Round slot booking
+          const segmentBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('segment') || b.booking_type === 'segment_round'
+          ) || null;
+          setSegmentSlotBooking(segmentBooking ? { ...segmentBooking, preferred_slots: (segmentBooking.preferred_slots as any) || null } : null);
+          if (segmentBooking?.observer_email) {
+            const emails = segmentBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setSegmentObserverEmails(emails);
+          }
+
+          // Find Admin & Academic Round slot booking
+          const adminBooking = bookings?.find(b => 
+            b.subject?.toLowerCase().includes('admin') || b.booking_type === 'admin_academic_round'
+          ) || null;
+          setAdminSlotBooking(adminBooking ? { ...adminBooking, preferred_slots: (adminBooking.preferred_slots as any) || null } : null);
+          if (adminBooking?.observer_email) {
+            const emails = adminBooking.observer_email.split(',').map((e: string) => e.trim()).filter(Boolean);
+            setAdminObserverEmails(emails);
+          }
 
           // Find HR Round slot booking
           const hrBooking = bookings?.find(b => 
@@ -1117,10 +1161,16 @@ const ClickableStagesList = ({
     }
   };
 
-  // Confirm a preferred slot for demo booking
+  // Confirm a preferred slot for demo/segment/admin booking
   const handleConfirmPreferredSlot = async () => {
-    if (!slotBooking || selectedPreferredSlot === null || !slotBooking.preferred_slots) return;
-    const chosen = slotBooking.preferred_slots[selectedPreferredSlot];
+    // Determine which booking is active based on current candidate stage
+    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
+    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
+    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
+    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    
+    if (!activeBookingData || selectedPreferredSlot === null || !activeBookingData.preferred_slots) return;
+    const chosen = activeBookingData.preferred_slots[selectedPreferredSlot];
     if (!chosen) return;
 
     // Validate meeting link for Google Meet / Zoom
@@ -1142,64 +1192,96 @@ const ClickableStagesList = ({
           demo_meet_type: demoMeetType,
           updated_at: new Date().toISOString() 
         })
-        .eq('id', slotBooking.id);
+        .eq('id', activeBookingData.id);
 
       if (error) throw error;
 
-      setSlotBooking({ ...slotBooking, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType });
+      const updatedBooking = { ...activeBookingData, booking_date: chosen.date, booking_time: chosen.time, status: 'confirmed', demo_meet_link: demoMeetLink.trim(), demo_meet_type: demoMeetType };
+      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      else if (isAdmin) setAdminSlotBooking(updatedBooking);
+      else setSlotBooking(updatedBooking);
 
-      // Auto-advance to Demo Round
+      const roundLabel = isSegment ? 'Segment Round' : isAdmin ? 'Admin & Academic Round' : 'Demo';
+      const feedbackType = isSegment ? 'segment' : isAdmin ? 'admin_academic' : 'demo';
+      const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+
+      // Auto-advance stage
       try {
         await supabase.functions.invoke('process-interview-stage', {
           body: {
             interviewCandidateId,
             action: 'advance',
-            feedback: `Employer confirmed demo slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
+            feedback: `Employer confirmed ${roundLabel} slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
           }
         });
       } catch (advanceErr) {
         console.error('Error auto-advancing:', advanceErr);
       }
 
-      // Send demo round emails with meeting link to candidate AND observers
-      try {
-        await supabase.functions.invoke('send-demo-round-emails', {
-          body: { 
-            interviewCandidateId,
-            observerEmail: observerEmails.length > 0 ? observerEmails.join(',') : undefined,
-            meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
-            meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
-          }
-        });
-      } catch (emailErr) {
-        console.error('Error sending demo emails:', emailErr);
+      if (!isSegment && !isAdmin) {
+        // Demo: Send demo round emails with meeting link
+        try {
+          await supabase.functions.invoke('send-demo-round-emails', {
+            body: { 
+              interviewCandidateId,
+              observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
+              meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
+              meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+            }
+          });
+        } catch (emailErr) {
+          console.error('Error sending demo emails:', emailErr);
+        }
+      } else {
+        // Segment/Admin: Send round emails with meeting link
+        try {
+          await supabase.functions.invoke('send-demo-round-emails', {
+            body: { 
+              interviewCandidateId,
+              observerEmail: activeEmails.length > 0 ? activeEmails.join(',') : undefined,
+              meetLink: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? demoMeetLink.trim() : undefined,
+              meetType: (demoMeetType === 'google_meet' || demoMeetType === 'zoom_meet') ? 'manual_link' : 'ai_video',
+            }
+          });
+        } catch (emailErr) {
+          console.error(`Error sending ${roundLabel} emails:`, emailErr);
+        }
       }
 
-      toast.success(`Demo slot confirmed! Invitations sent`, {
-        description: `Meeting link sent to candidate${observerEmails.length > 0 ? ` and ${observerEmails.length} observer(s)` : ''}. Feedback email will follow shortly.`,
+      toast.success(`${roundLabel} slot confirmed! Invitations sent`, {
+        description: `Meeting link sent to candidate${activeEmails.length > 0 ? ` and ${activeEmails.length} observer(s)` : ''}. Feedback email will follow shortly.`,
         duration: 5000,
       });
 
-      // Auto-advance to Demo Feedback and send feedback email after a short delay
+      // Auto-advance to Feedback and send feedback email after a short delay
       setTimeout(async () => {
         try {
-          // Advance to Demo Feedback
           await supabase.functions.invoke('process-interview-stage', {
             body: {
               interviewCandidateId,
               action: 'advance',
-              feedback: 'Auto-advanced to Demo Feedback after demo round invitations sent',
+              feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
             }
           });
-          // Send demo feedback email to observers
+          // For segment/admin, skip the round stage (advance again)
+          if (isSegment || isAdmin) {
+            await supabase.functions.invoke('process-interview-stage', {
+              body: {
+                interviewCandidateId,
+                action: 'advance',
+                feedback: `Auto-skipped ${roundLabel} stage, advancing to feedback`,
+              }
+            });
+          }
+          // Send feedback email to observers
           await supabase.functions.invoke('send-demo-feedback-email', {
-            body: { interviewCandidateId }
+            body: { interviewCandidateId, feedbackType }
           });
-          console.log('Demo feedback email sent to observers');
+          console.log(`${roundLabel} feedback email sent to observers`);
         } catch (feedbackErr) {
           console.error('Error sending feedback email:', feedbackErr);
         }
-      }, 10000); // 10 seconds delay before sending feedback email
+      }, 10000);
 
       // Trigger pipeline refresh
       window.location.reload();
@@ -1212,28 +1294,40 @@ const ClickableStagesList = ({
   };
 
   const handleAddObserverEmail = async () => {
-    if (!slotBooking || !observerEmail.trim()) return;
+    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
+    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
+    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
+    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    
+    if (!activeBookingData || !observerEmail.trim()) return;
     const email = observerEmail.trim().toLowerCase();
-    // Basic email validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       toast.error('Please enter a valid email address');
       return;
     }
-    if (observerEmails.includes(email)) {
+    if (activeEmails.includes(email)) {
       toast.error('This email is already added');
       return;
     }
     setIsSavingObserver(true);
     try {
-      const updatedEmails = [...observerEmails, email];
+      const updatedEmails = [...activeEmails, email];
       const { error } = await supabase
         .from('slot_bookings')
         .update({ observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() })
-        .eq('id', slotBooking.id);
+        .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      setObserverEmails(updatedEmails);
-      setSlotBooking({ ...slotBooking, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() });
+      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      else if (isAdmin) setAdminObserverEmails(updatedEmails);
+      else setObserverEmails(updatedEmails);
+      
+      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() };
+      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      else if (isAdmin) setAdminSlotBooking(updatedBooking);
+      else setSlotBooking(updatedBooking);
+      
       setObserverEmail('');
       toast.success('Observer email added');
     } catch (err) {
@@ -1245,18 +1339,31 @@ const ClickableStagesList = ({
   };
 
   const handleRemoveObserverEmail = async (emailToRemove: string) => {
-    if (!slotBooking) return;
+    const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
+    const isSegment = currentStep?.title === 'Segment Round Slot Booking';
+    const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
+    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    
+    if (!activeBookingData) return;
     setIsSavingObserver(true);
     try {
-      const updatedEmails = observerEmails.filter(e => e !== emailToRemove);
+      const updatedEmails = activeEmails.filter(e => e !== emailToRemove);
       const { error } = await supabase
         .from('slot_bookings')
         .update({ observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() })
-        .eq('id', slotBooking.id);
+        .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      setObserverEmails(updatedEmails);
-      setSlotBooking({ ...slotBooking, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() });
+      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      else if (isAdmin) setAdminObserverEmails(updatedEmails);
+      else setObserverEmails(updatedEmails);
+      
+      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() };
+      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      else if (isAdmin) setAdminSlotBooking(updatedBooking);
+      else setSlotBooking(updatedBooking);
+      
       toast.success('Observer email removed');
     } catch (err) {
       console.error('Error removing observer email:', err);
@@ -1654,24 +1761,32 @@ const ClickableStagesList = ({
                   </div>
                 )}
 
-                {/* Slot Booking Details for Demo Slot Booking stage */}
-                {step.title === 'Demo Slot Booking' && (slotBooking ? (
+                {/* Slot Booking Details for Demo/Segment/Admin Slot Booking stages */}
+                {(() => {
+                  const activeBooking = step.title === 'Segment Round Slot Booking' ? segmentSlotBooking 
+                    : step.title === 'Admin & Academic Round Slot Booking' ? adminSlotBooking 
+                    : step.title === 'Demo Slot Booking' ? slotBooking : null;
+                  const activeObserverEmails = step.title === 'Segment Round Slot Booking' ? segmentObserverEmails
+                    : step.title === 'Admin & Academic Round Slot Booking' ? adminObserverEmails
+                    : observerEmails;
+                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking')) return null;
+                  return activeBooking ? (
                   <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
                       <Calendar className="h-3 w-3" />
-                      {slotBooking.preferred_slots && slotBooking.preferred_slots.length > 0 
-                        ? `Candidate's Preferred Timings (${slotBooking.preferred_slots.length})`
+                      {activeBooking.preferred_slots && activeBooking.preferred_slots.length > 0 
+                        ? `Candidate's Preferred Timings (${activeBooking.preferred_slots.length})`
                         : 'Slot Booked'}
                     </div>
 
                     {/* If preferred_slots exist, show them for employer to pick */}
-                    {slotBooking.preferred_slots && slotBooking.preferred_slots.length > 0 && slotBooking.status !== 'confirmed' ? (
+                    {activeBooking.preferred_slots && activeBooking.preferred_slots.length > 0 && activeBooking.status !== 'confirmed' ? (
                       <div className="space-y-1.5">
                         {/* Show date once since all slots share the same date */}
                         <div className="flex items-center gap-1.5 text-[10px] text-purple-600 font-medium">
-                          📅 {new Date(slotBooking.preferred_slots[0].date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                          📅 {new Date(activeBooking.preferred_slots[0].date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         </div>
-                        {slotBooking.preferred_slots.map((slot, i) => {
+                        {activeBooking.preferred_slots.map((slot, i) => {
                           const hour = parseInt(slot.time.split(':')[0]);
                           const minute = slot.time.split(':')[1];
                           const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
@@ -1786,10 +1901,10 @@ const ClickableStagesList = ({
                         {/* Confirmed slot display */}
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                            📅 {new Date(slotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                            📅 {new Date(activeBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                           </Badge>
                           <Badge variant="secondary" className="text-[10px] bg-purple-100 text-purple-700 border-purple-200">
-                            🕐 {slotBooking.booking_time}
+                            🕐 {activeBooking.booking_time}
                           </Badge>
                           <Badge className="text-[10px] py-0 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
                             ✓ Confirmed
@@ -1822,9 +1937,9 @@ const ClickableStagesList = ({
                           {isSavingObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                         </Button>
                       </div>
-                      {observerEmails.length > 0 && (
+                      {activeObserverEmails.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {observerEmails.map((email) => (
+                          {activeObserverEmails.map((email) => (
                             <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
                               <CheckCircle2 className="h-2.5 w-2.5" />
                               {email}
@@ -1839,18 +1954,19 @@ const ClickableStagesList = ({
                         </div>
                       )}
                       <p className="text-[9px] text-muted-foreground">
-                        These emails will receive notifications when the Demo Round starts
+                        These emails will receive notifications when the round starts
                       </p>
                     </div>
                   </div>
-                ) : (step.status === 'completed' || step.status === 'current') && (
+                ) : (step.status === 'completed' || step.status === 'current') ? (
                   <div className="mt-2 bg-amber-50 border border-amber-200 rounded-md p-2">
                     <div className="flex items-center gap-1.5 text-xs text-amber-700">
                       <Calendar className="h-3 w-3" />
                       No slot booking found — stage was manually advanced
                     </div>
                   </div>
-                ))}
+                ) : null;
+                })()}
 
                 {/* Meeting Round Options - Show for Demo, Segment, Admin & Academic, and HR Rounds */}
                 {(step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'HR Round') && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (

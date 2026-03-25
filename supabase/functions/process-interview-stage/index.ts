@@ -61,7 +61,24 @@ serve(async (req) => {
 
     const currentStageOrder = interviewCandidate.current_stage?.stage_order ?? 0;
     const currentStage = stages.find(s => s.stage_order === currentStageOrder);
-    const nextStage = stages.find(s => s.stage_order === currentStageOrder + 1);
+    
+    // Determine next stage using job-specific pipeline if available
+    let nextStage = stages.find(s => s.stage_order === currentStageOrder + 1);
+    
+    // Check if the job has a custom pipeline_stages config
+    const pipelineStages = interviewCandidate.job?.pipeline_stages as any[] | null;
+    if (pipelineStages && pipelineStages.length > 0) {
+      const currentStageName = currentStage?.name;
+      const currentPipelineIndex = pipelineStages.findIndex((ps: any) => ps.name === currentStageName);
+      if (currentPipelineIndex >= 0 && currentPipelineIndex < pipelineStages.length - 1) {
+        const nextPipelineStageName = pipelineStages[currentPipelineIndex + 1].name;
+        const nextPipelineStage = stages.find(s => s.name === nextPipelineStageName);
+        if (nextPipelineStage) {
+          nextStage = nextPipelineStage;
+          console.log(`Job-specific pipeline: advancing from "${currentStageName}" to "${nextPipelineStageName}" (order ${nextPipelineStage.stage_order})`);
+        }
+      }
+    }
 
     if (action === 'reject') {
       // Update candidate status to rejected
