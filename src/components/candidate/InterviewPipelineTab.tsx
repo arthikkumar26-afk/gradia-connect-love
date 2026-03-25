@@ -264,12 +264,42 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         })
       );
 
-      setInterviews(interviewsWithEvents);
+      setInterviews(interviewsWithEvents as InterviewCandidate[]);
+
+      // Determine visible stages based on the first interview's job pipeline
+      const firstInterview = interviewsWithEvents[0];
+      const jobPipeline = (firstInterview?.job as any)?.pipeline_stages as Array<{ name: string; order: number }> | null;
+
+      // Hidden "Round" stages that should be skipped in candidate view
+      const hiddenRoundStages = new Set([
+        'Demo Round', 'Segment Round', 'Admin & Academic Round',
+        'Core Team Round', 'Management Round', 'HR Round',
+      ]);
+
+      let filteredStages: InterviewStage[];
+      if (jobPipeline && jobPipeline.length > 0) {
+        // Use job-specific pipeline: map pipeline names to actual stage records
+        const pipelineNames = new Set(jobPipeline.map(ps => ps.name));
+        // Ensure Interview Guidelines is always present
+        pipelineNames.add('Interview Guidelines');
+
+        filteredStages = allStages
+          .filter(s => pipelineNames.has(s.name) && !hiddenRoundStages.has(s.name))
+          .sort((a, b) => {
+            const aOrder = jobPipeline.find(p => p.name === a.name)?.order ?? a.stage_order;
+            const bOrder = jobPipeline.find(p => p.name === b.name)?.order ?? b.stage_order;
+            return aOrder - bOrder;
+          });
+      } else {
+        // Default pipeline: filter out hidden rounds
+        filteredStages = allStages.filter(s => !hiddenRoundStages.has(s.name));
+      }
+
+      setStages(filteredStages);
+
       if (interviewsWithEvents.length > 0) {
         setSelectedInterview(interviewsWithEvents[0].id);
-        
-        // Fetch responses and reviews for the first interview
-        await fetchReviewData(interviewsWithEvents[0]);
+        await fetchReviewData(interviewsWithEvents[0] as InterviewCandidate);
       }
 
       // Fetch slot bookings for this candidate
