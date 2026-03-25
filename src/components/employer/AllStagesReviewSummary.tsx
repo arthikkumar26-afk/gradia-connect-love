@@ -53,6 +53,12 @@ const stageIcons: Record<string, React.ElementType> = {
   'HR Round Slot Booking': Clock,
   'HR Round': UserCheck,
   'HR Feedback': MessageSquare,
+  'Core Team Round Slot Booking': Clock,
+  'Core Team Round': Video,
+  'Core Team Feedback': MessageSquare,
+  'Management Round Slot Booking': Clock,
+  'Management Round': Video,
+  'Management Round Feedback': MessageSquare,
   'Final Review': FileCheck,
 };
 
@@ -303,7 +309,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           }
 
           // Feedback Reviews (Demo, Segment, Admin & Academic, HR)
-          const feedbackStages = ['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'];
+          const feedbackStages = ['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'];
           if (feedbackStages.includes(review.stageName) && review.reviews) {
             for (const r of review.reviews) {
               if (y > 260) { doc.addPage(); y = 20; }
@@ -327,7 +333,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           }
 
           // General notes/feedback
-          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
+          if (!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName) && review.notes) {
             const noteLines = doc.splitTextToSize(review.notes, pageWidth - 34);
             doc.text(noteLines, 20, y);
             y += noteLines.length * 4 + 2;
@@ -439,7 +445,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
           const isCompleted = review.status === 'completed' || review.status === 'passed' || review.completedAt;
           const isSkipped = review.status === 'skipped';
           const isExpanded = expandedStage === review.stageName;
-          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'Segment Round', 'Admin & Academic Round', 'HR Round', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName);
+          const hasDetails = review.score || review.notes || review.aiFeedback || review.reviews || review.totalQuestions || ['Written Test', 'Demo Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round', 'HR Round', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName);
 
           return (
             <div
@@ -546,7 +552,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   )}
 
                   {/* Demo/HR Feedback - Observer Reviews */}
-                  {['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && review.reviews && review.reviews.length > 0 && (
+                  {['Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName) && review.reviews && review.reviews.length > 0 && (
                     <div className="space-y-2">
                       {review.reviews.map((r, i) => (
                         <div key={i} className="bg-background rounded-md p-2 border space-y-1.5">
@@ -590,7 +596,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                   )}
 
                   {/* HR Round & other stages - AI Feedback / Notes */}
-                  {!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'HR Feedback'].includes(review.stageName) && (
+                  {!['CV/Resume', 'Written Test', 'Demo Feedback', 'Segment Feedback', 'Admin & Academic Feedback', 'Core Team Feedback', 'Management Round Feedback', 'HR Feedback'].includes(review.stageName) && (
                     <div className="space-y-1.5">
                       {review.aiFeedback && typeof review.aiFeedback === 'object' && review.aiFeedback.feedback && (
                         <p className="text-xs text-muted-foreground">{review.aiFeedback.feedback}</p>
