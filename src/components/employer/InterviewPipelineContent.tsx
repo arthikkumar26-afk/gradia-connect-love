@@ -464,7 +464,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Feedback' || step.title === 'Segment Feedback' || step.title === 'Admin & Academic Feedback' || step.title === 'HR Feedback') {
+      } else if (step.title === 'Demo Feedback' || step.title === 'Segment Feedback' || step.title === 'Admin & Academic Feedback' || step.title === 'Core Team Feedback' || step.title === 'HR Feedback') {
         // Feedback → next slot booking or Final Review
         const nextStage = data?.currentStage || 'Final Review';
         if (nextStage.includes('Slot Booking')) {
