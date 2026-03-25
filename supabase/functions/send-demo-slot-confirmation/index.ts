@@ -105,7 +105,7 @@ serve(async (req) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: `${companyName} Hiring <noreply@gradia.co.in>`,
+        from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: [candidate.email],
         reply_to: 'support@gradia.co.in',
         subject: `✅ Demo Slot Timings Submitted - ${job?.job_title} at ${companyName}`,

@@ -326,7 +326,7 @@ serve(async (req) => {
 
     // Send email to candidate
     const candidateEmailResponse = await sendEmail(RESEND_API_KEY, {
-      from: `${companyName} Hiring <noreply@gradia.co.in>`,
+      from: 'Gradia Hiring <noreply@gradia.co.in>',
       to: [candidate.email],
       reply_to: 'support@gradia.co.in',
       subject: `${stageFormat.icon} ${isManualInterview ? 'Panel Interview' : stageName} Round - ${job.job_title} at ${companyName}`,
@@ -449,7 +449,7 @@ serve(async (req) => {
     // Send notification to panel attendees if manual interview
     if (isManualInterview && panelAttendeeEmails?.length) {
       const panelEmailResponse = await sendEmail(RESEND_API_KEY, {
-        from: `${companyName} Hiring <noreply@gradia.co.in>`,
+        from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: panelAttendeeEmails,
         reply_to: employer?.email || 'support@gradia.co.in',
         subject: `📅 Panel Interview Scheduled - ${candidate.full_name} for ${job.job_title}`,
@@ -556,7 +556,7 @@ serve(async (req) => {
     // Send notification to assessment members if manual interview
     if (isManualInterview && assessmentMemberEmails?.length) {
       const assessmentEmailResponse = await sendEmail(RESEND_API_KEY, {
-        from: `${companyName} Hiring <noreply@gradia.co.in>`,
+        from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: assessmentMemberEmails,
         reply_to: employer?.email || 'support@gradia.co.in',
         subject: `📋 Assessment Assignment - ${candidate.full_name} for ${job.job_title}`,
