@@ -308,58 +308,7 @@ serve(async (req) => {
       }
     }
 
-    let candidateEmailSent = false;
-
-    if (candidateEmail) {
-      const candidateHtml = `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <tr>
-      <td style="padding: 32px 24px; background: ${colors.gradient}; border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px; color: #ffffff;">${roundLabel} Update</h1>
-        <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9);">Your evaluation stage is now in feedback review</p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px;">
-        <p>Hello ${candidateName},</p>
-        <p>Your <strong>${roundLabel}</strong> for <strong>${job?.job_title || 'the role'}</strong> is now under feedback review by the employer team.</p>
-        <p>We have sent evaluation requests to the assigned observer(s), and we will notify you once the process moves to the next stage.</p>
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin: 20px 0;">
-          <tr>
-            <td style="padding: 16px;">
-              <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Position</div>
-              <div style="font-weight: 700; margin-bottom: 12px;">${job?.job_title || 'N/A'}</div>
-              <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 4px;">Company</div>
-              <div style="font-weight: 700;">${companyName}</div>
-            </td>
-          </tr>
-        </table>
-        <p style="margin-bottom: 0; color: #6b7280;">Thanks,<br>${companyName}</p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-
-      try {
-        await sendEmail({
-          resendApiKey: RESEND_API_KEY,
-          from: fromAddress,
-          to: candidateEmail,
-          subject: `${roundLabel} update - ${job?.job_title || 'Application Progress'}`,
-          html: candidateHtml,
-        });
-        candidateEmailSent = true;
-        console.log(`${roundLabel} candidate update sent to ${candidateEmail}`);
-      } catch (candidateMailError) {
-        console.error(`Failed to send candidate update to ${candidateEmail}:`, candidateMailError);
-      }
-    }
-
-    console.log(`${roundLabel} feedback emails sent: ${emailsSent}/${observerEmails.length}`);
+    console.log(`${roundLabel} feedback emails sent: ${emailsSent}/${observerEmails.length} (observers only, no candidate email)`);
 
     return new Response(
       JSON.stringify({
@@ -368,8 +317,6 @@ serve(async (req) => {
         totalObservers: observerEmails.length,
         roundLabel,
         observerEmails,
-        candidateEmail,
-        candidateEmailSent,
         message: `${roundLabel} feedback request sent to ${emailsSent} observer(s)`,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

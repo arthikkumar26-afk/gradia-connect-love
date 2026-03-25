@@ -217,14 +217,10 @@ export const DemoFeedbackResults = ({
       const observerTargets = Array.isArray(data?.observerEmails) && data.observerEmails.length > 0
         ? data.observerEmails
         : reviews.map((review) => review.reviewer_email).filter(Boolean);
-      const candidateTarget = data?.candidateEmailSent && data?.candidateEmail ? data.candidateEmail : null;
       const roundLabel = data?.roundLabel || 'Feedback';
 
-      toast.success(`${roundLabel} request sent`, {
-        description: [
-          observerTargets.length > 0 ? `Observers: ${observerTargets.join(', ')}` : null,
-          candidateTarget ? `Candidate: ${candidateTarget}` : null,
-        ].filter(Boolean).join(' • ') || 'Emails have been triggered successfully.',
+      toast.success(`${roundLabel} request sent to observers`, {
+        description: observerTargets.length > 0 ? `Sent to: ${observerTargets.join(', ')}` : 'Emails have been triggered successfully.',
       });
     } catch (err) {
       console.error('Error resending:', err);
