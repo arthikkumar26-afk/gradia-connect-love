@@ -667,6 +667,7 @@ export type Database = {
           is_read: boolean
           job_title: string | null
           message: string
+          recipient_email: string | null
           title: string
           type: string
         }
@@ -679,6 +680,7 @@ export type Database = {
           is_read?: boolean
           job_title?: string | null
           message: string
+          recipient_email?: string | null
           title: string
           type?: string
         }
@@ -691,6 +693,7 @@ export type Database = {
           is_read?: boolean
           job_title?: string | null
           message?: string
+          recipient_email?: string | null
           title?: string
           type?: string
         }
