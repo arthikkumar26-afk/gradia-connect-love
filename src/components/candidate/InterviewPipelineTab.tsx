@@ -115,7 +115,8 @@ interface InterviewPipelineTabProps {
 export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps) => {
   const navigate = useNavigate();
   const [interviews, setInterviews] = useState<InterviewCandidate[]>([]);
-  const [stages, setStages] = useState<InterviewStage[]>([]);
+  const [stages, setStages] = useState<InterviewStage[]>([]); // visible stages only
+  const [allDbStages, setAllDbStages] = useState<InterviewStage[]>([]); // all DB stages for lookups
   const [isLoading, setIsLoading] = useState(true);
   const [slotBookings, setSlotBookings] = useState<SlotBooking[]>([]);
   const [selectedInterview, setSelectedInterview] = useState<string | null>(null);
