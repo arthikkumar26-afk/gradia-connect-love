@@ -1377,8 +1377,10 @@ const ClickableStagesList = ({
     const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
     const isSegment = currentStep?.title === 'Segment Round Slot Booking';
     const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
-    const activeEmails = isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
+    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
+    const isManagement = currentStep?.title === 'Management Round Slot Booking';
+    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const activeEmails = isCoreTeam ? coreTeamObserverEmails : isManagement ? managementObserverEmails : isSegment ? segmentObserverEmails : isAdmin ? adminObserverEmails : observerEmails;
     
     if (!activeBookingData) return;
     setIsSavingObserver(true);
@@ -1390,12 +1392,16 @@ const ClickableStagesList = ({
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      if (isSegment) setSegmentObserverEmails(updatedEmails);
+      if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
+      else if (isManagement) setManagementObserverEmails(updatedEmails);
+      else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
       
       const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() };
-      if (isSegment) setSegmentSlotBooking(updatedBooking);
+      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      else if (isManagement) setManagementSlotBooking(updatedBooking);
+      else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
       
