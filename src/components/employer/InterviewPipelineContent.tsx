@@ -1192,7 +1192,9 @@ const ClickableStagesList = ({
     const currentStep = interviewSteps.find(s => s.status === 'current' || s.status === 'in_progress');
     const isSegment = currentStep?.title === 'Segment Round Slot Booking';
     const isAdmin = currentStep?.title === 'Admin & Academic Round Slot Booking';
-    const activeBookingData = isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
+    const isCoreTeam = currentStep?.title === 'Core Team Round Slot Booking';
+    const isManagement = currentStep?.title === 'Management Round Slot Booking';
+    const activeBookingData = isCoreTeam ? coreTeamSlotBooking : isManagement ? managementSlotBooking : isSegment ? segmentSlotBooking : isAdmin ? adminSlotBooking : slotBooking;
     
     if (!activeBookingData || selectedPreferredSlot === null || !activeBookingData.preferred_slots) return;
     const chosen = activeBookingData.preferred_slots[selectedPreferredSlot];
