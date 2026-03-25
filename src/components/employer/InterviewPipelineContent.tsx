@@ -398,21 +398,39 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') {
-        // Send round emails when advancing from any slot booking to the round
-        const roundName = step.title.replace(' Slot Booking', '');
+      } else if (step.title === 'Demo Slot Booking') {
+        // Demo Slot Booking → Demo Round (keep existing flow)
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
             body: { interviewCandidateId }
           });
-          toast.success(`✓ ${step.title} cleared! ${roundName} invitations sent`, {
+          toast.success(`✓ Demo Slot Booking cleared! Demo Round invitations sent`, {
             description: `Emails sent to candidate and observer`,
             duration: 5000,
           });
         } catch (demoError) {
-          console.error(`Error sending ${roundName} emails:`, demoError);
-          toast.success(`✓ ${step.title} cleared! Moved to ${roundName}`, {
-            description: `Note: Emails failed to send. You can send manually from ${roundName}.`,
+          console.error(`Error sending Demo Round emails:`, demoError);
+          toast.success(`✓ Demo Slot Booking cleared! Moved to Demo Round`, {
+            description: `Note: Emails failed to send. You can send manually.`,
+            duration: 5000,
+          });
+        }
+      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') {
+        // Segment/Admin Slot Booking → skip round, go directly to feedback
+        const feedbackType = step.title === 'Segment Round Slot Booking' ? 'segment' : 'admin_academic';
+        const roundName = step.title.replace(' Slot Booking', '');
+        try {
+          await supabase.functions.invoke('send-demo-feedback-email', {
+            body: { interviewCandidateId, feedbackType }
+          });
+          toast.success(`✓ ${step.title} cleared! Feedback request sent to observers`, {
+            description: `Observers will receive an email with a feedback link`,
+            duration: 5000,
+          });
+        } catch (feedbackError) {
+          console.error(`Error sending ${roundName} feedback emails:`, feedbackError);
+          toast.success(`✓ ${step.title} cleared! Moved to Feedback`, {
+            description: 'Note: Feedback email failed to send. You can resend manually.',
             duration: 5000,
           });
         }
