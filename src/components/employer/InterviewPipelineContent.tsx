@@ -100,6 +100,9 @@ const stageIcons: Record<string, React.ElementType> = {
   'Core Team Round Slot Booking': Calendar,
   'Core Team Round': Video,
   'Core Team Feedback': MessageSquare,
+  'Management Round Slot Booking': Calendar,
+  'Management Round': Video,
+  'Management Round Feedback': MessageSquare,
   'HR Round Slot Booking': Calendar,
   'HR Round': UserCheck,
   'HR Feedback': MessageSquare,
@@ -124,6 +127,9 @@ const stageColors: Record<string, string> = {
   'Core Team Round Slot Booking': 'bg-violet-500',
   'Core Team Round': 'bg-fuchsia-500',
   'Core Team Feedback': 'bg-rose-500',
+  'Management Round Slot Booking': 'bg-violet-500',
+  'Management Round': 'bg-fuchsia-500',
+  'Management Round Feedback': 'bg-rose-500',
   'HR Round Slot Booking': 'bg-teal-500',
   'HR Round': 'bg-green-500',
   'HR Feedback': 'bg-blue-400',
@@ -131,7 +137,7 @@ const stageColors: Record<string, string> = {
   'Offer Stage': 'bg-emerald-500',
 };
 
-const hiddenPipelineStages = new Set(['AI Phone Interview', 'Segment Round', 'Admin & Academic Round', 'Core Team Round']);
+const hiddenPipelineStages = new Set(['AI Phone Interview', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round']);
 
 const getVisibleInterviewSteps = (steps: InterviewStep[]) =>
   steps.filter((step) => !hiddenPipelineStages.has(step.title));
@@ -289,6 +295,12 @@ const StageActionButtons = ({
         });
         if (error) throw error;
         toast.success('Core Team Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
+      } else if (step.title === 'Management Round Slot Booking') {
+        const { error } = await supabase.functions.invoke('send-slot-booking-email', {
+          body: { interviewCandidateId, stageName: 'Management Round' },
+        });
+        if (error) throw error;
+        toast.success('Management Round slot booking email resent', { description: `📧 Sent to: ${candidateEmail}` });
       } else if (step.title === 'HR Round Slot Booking') {
         const { error } = await supabase.functions.invoke('send-slot-booking-email', {
           body: { interviewCandidateId, stageName: 'HR Round' },
@@ -427,7 +439,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking') {
+      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking' || step.title === 'Management Round Slot Booking') {
         // Segment/Admin Slot Booking → Round: Send round invitations (meeting link) to candidate and observers
         const roundName = step.title.replace(' Slot Booking', '');
         try {
@@ -464,7 +476,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Demo Feedback' || step.title === 'Segment Feedback' || step.title === 'Admin & Academic Feedback' || step.title === 'Core Team Feedback' || step.title === 'HR Feedback') {
+      } else if (step.title === 'Demo Feedback' || step.title === 'Segment Feedback' || step.title === 'Admin & Academic Feedback' || step.title === 'Core Team Feedback' || step.title === 'Management Round Feedback' || step.title === 'HR Feedback') {
         // Feedback → next slot booking or Final Review
         const nextStage = data?.currentStage || 'Final Review';
         if (nextStage.includes('Slot Booking')) {
@@ -1837,17 +1849,19 @@ const ClickableStagesList = ({
                   </div>
                 )}
 
-                {/* Slot Booking Details for Demo/Segment/Admin/Core Team Slot Booking stages */}
+                {/* Slot Booking Details for Demo/Segment/Admin/Core Team/Management Slot Booking stages */}
                 {(() => {
                   const activeBooking = step.title === 'Segment Round Slot Booking' ? segmentSlotBooking 
                     : step.title === 'Admin & Academic Round Slot Booking' ? adminSlotBooking 
                     : step.title === 'Core Team Round Slot Booking' ? coreTeamSlotBooking
+                    : step.title === 'Management Round Slot Booking' ? managementSlotBooking
                     : step.title === 'Demo Slot Booking' ? slotBooking : null;
                   const activeObserverEmails = step.title === 'Segment Round Slot Booking' ? segmentObserverEmails
                     : step.title === 'Admin & Academic Round Slot Booking' ? adminObserverEmails
                     : step.title === 'Core Team Round Slot Booking' ? coreTeamObserverEmails
+                    : step.title === 'Management Round Slot Booking' ? managementObserverEmails
                     : observerEmails;
-                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking')) return null;
+                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking' || step.title === 'Management Round Slot Booking')) return null;
                   return activeBooking ? (
                   <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
