@@ -394,7 +394,7 @@ const PostJob = () => {
                     <div className="flex flex-wrap gap-2">
                       {customStages.map((stage, index) => (
                         <div key={stage.order} className="flex items-center gap-1">
-                          <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border ${stage.isAutomated ? 'bg-primary/10 text-primary border-primary/20' : 'bg-accent text-accent-foreground border-border'}`}>
+                          <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border ${<span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full border bg-accent text-accent-foreground border-border`}>}`}>
                             <span className="font-semibold">{index + 1}.</span>
                             {stage.name}
                             {stage.isAutomated && <span className="text-[10px] opacity-70">⚡</span>}
