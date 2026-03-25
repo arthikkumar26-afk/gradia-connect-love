@@ -1353,45 +1353,46 @@ const ClickableStagesList = ({
       }
 
       toast.success(`${roundLabel} slot confirmed! Invitations sent`, {
-        description: `Meeting link sent to candidate${activeEmails.length > 0 ? ` and ${activeEmails.length} observer(s)` : ''}. Feedback email will follow shortly.`,
+        description: `Meeting link sent to candidate${activeEmails.length > 0 ? ` and ${activeEmails.length} observer(s)` : ''}. Feedback email will be sent to observers shortly.`,
         duration: 5000,
       });
 
-      const feedbackDelay = (isSegment || isAdmin || isCoreTeam || isManagement) ? 300000 : 10000;
-      const delayLabel = feedbackDelay >= 60000 ? `${Math.round(feedbackDelay / 60000)} minutes` : `${feedbackDelay / 1000} seconds`;
+      // Advance to the Round stage first, then to Feedback stage
+      // The backend process-interview-stage handles sending feedback emails automatically
+      try {
+        await supabase.functions.invoke('process-interview-stage', {
+          body: {
+            interviewCandidateId,
+            action: 'advance',
+            feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
+          },
+        });
 
-      toast.info(`${roundLabel} Feedback email will be sent to observers in ~${delayLabel}`, { duration: 8000 });
-
-      setTimeout(async () => {
-        try {
+        if (isSegment || isAdmin || isCoreTeam || isManagement) {
           await supabase.functions.invoke('process-interview-stage', {
             body: {
               interviewCandidateId,
               action: 'advance',
-              feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
+              feedback: `Auto-skipped ${roundLabel} stage, advancing to feedback`,
             },
           });
-
-          if (isSegment || isAdmin || isCoreTeam || isManagement) {
-            await supabase.functions.invoke('process-interview-stage', {
-              body: {
-                interviewCandidateId,
-                action: 'advance',
-                feedback: `Auto-skipped ${roundLabel} stage, advancing to feedback`,
-              },
-            });
-          }
-
-          await supabase.functions.invoke('send-demo-feedback-email', {
-            body: { interviewCandidateId, feedbackType },
-          });
-          console.log(`${roundLabel} feedback email sent to observers after ${delayLabel}`);
-          toast.success(`${roundLabel} Feedback request sent to observers!`);
-        } catch (feedbackErr) {
-          console.error('Error sending feedback email:', feedbackErr);
         }
-      }, feedbackDelay);
+      } catch (advErr) {
+        console.error('Error advancing to feedback:', advErr);
+      }
 
+      // Send feedback email directly (not in a setTimeout that gets killed by reload)
+      try {
+        await supabase.functions.invoke('send-demo-feedback-email', {
+          body: { interviewCandidateId, feedbackType },
+        });
+        console.log(`${roundLabel} feedback email sent to observers`);
+        toast.success(`${roundLabel} Feedback request sent to observers!`);
+      } catch (feedbackErr) {
+        console.error('Error sending feedback email:', feedbackErr);
+      }
+
+      // Reload after all async operations complete
       window.location.reload();
     } catch (err) {
       console.error('Error confirming slot:', err);

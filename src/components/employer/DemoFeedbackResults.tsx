@@ -186,7 +186,9 @@ export const DemoFeedbackResults = ({
         if (cancelled) return;
 
         feedbackAutoAdvanceProcessed.add(autoAdvanceKey);
-        toast.success(`All ${feedbackType === 'hr' ? 'HR' : 'Demo'} feedback received! Stage completed.`);
+        
+        const roundDisplayName = feedbackType === 'hr' ? 'HR' : feedbackType === 'core_team' ? 'Core Team' : feedbackType === 'management' ? 'Management' : feedbackType === 'segment' ? 'Segment' : feedbackType === 'admin_academic' ? 'Admin & Academic' : 'Demo';
+        toast.success(`All ${roundDisplayName} feedback received! Stage completed. Advancing to next round...`);
         onAllSubmitted?.();
       } catch (err) {
         feedbackAutoAdvanceInFlight.delete(autoAdvanceKey);
