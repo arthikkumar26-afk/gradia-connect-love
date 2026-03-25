@@ -226,9 +226,28 @@ export const useInterviewPipeline = () => {
       });
       
       // Merge: include default stages + any custom pipeline stages not already included
-      const dbStages = customPipelineStageNames.size > 0
+      // Build a combined ordering map from custom pipelines for column sorting
+      const combinedPipelineOrder = new Map<string, number>();
+      (candidatesData as (DbInterviewCandidate & { profiles: DbProfile; jobs: DbJob })[]).forEach(c => {
+        const jobPipeline = c.jobs?.pipeline_stages as Array<{ name: string; order: number }> | null;
+        if (jobPipeline && jobPipeline.length > 0) {
+          jobPipeline.forEach(ps => {
+            if (!combinedPipelineOrder.has(ps.name)) {
+              combinedPipelineOrder.set(ps.name, ps.order);
+            }
+          });
+        }
+      });
+
+      const dbStages = (customPipelineStageNames.size > 0
         ? dbStagesAll2.filter(s => defaultDbStages.some(d => d.id === s.id) || customPipelineStageNames.has(s.name))
-        : defaultDbStages;
+        : defaultDbStages
+      ).sort((a, b) => {
+        // Sort by custom pipeline order if available, otherwise by DB stage_order
+        const aOrder = combinedPipelineOrder.get(a.name) ?? a.stage_order;
+        const bOrder = combinedPipelineOrder.get(b.name) ?? b.stage_order;
+        return aOrder - bOrder;
+      });
 
       const pipelineStages: PipelineStage[] = dbStages.map((stage) => {
         // Find candidates in this stage
