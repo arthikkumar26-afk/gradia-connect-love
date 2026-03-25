@@ -368,7 +368,16 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       case 'Demo Round':
         return Video;
       case 'Demo Feedback':
+      case 'Segment Feedback':
+      case 'Admin & Academic Feedback':
+      case 'Core Team Feedback':
+      case 'Management Round Feedback':
         return MessageSquare;
+      case 'Segment Round Slot Booking':
+      case 'Admin & Academic Round Slot Booking':
+      case 'Core Team Round Slot Booking':
+      case 'Management Round Slot Booking':
+        return Calendar;
       case 'HR Round Slot Booking':
         return Calendar;
       case 'HR Round':
