@@ -99,6 +99,7 @@ interface InterviewCandidate {
   job: {
     job_title: string;
     location: string | null;
+    pipeline_stages: any | null;
     employer: {
       company_name: string | null;
       profile_picture: string | null;
@@ -219,7 +220,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         .select('*')
         .order('stage_order', { ascending: true });
 
-      setStages(stagesData || []);
+      const allStages = stagesData || [];
 
       // Fetch interview candidates for this user
       const { data: interviewsData, error } = await supabase
@@ -235,6 +236,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           job:jobs (
             job_title,
             location,
+            pipeline_stages,
             employer:profiles!jobs_employer_id_fkey (
               company_name,
               profile_picture
@@ -262,12 +264,42 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         })
       );
 
-      setInterviews(interviewsWithEvents);
+      setInterviews(interviewsWithEvents as InterviewCandidate[]);
+
+      // Determine visible stages based on the first interview's job pipeline
+      const firstInterview = interviewsWithEvents[0];
+      const jobPipeline = (firstInterview?.job as any)?.pipeline_stages as Array<{ name: string; order: number }> | null;
+
+      // Hidden "Round" stages that should be skipped in candidate view
+      const hiddenRoundStages = new Set([
+        'Demo Round', 'Segment Round', 'Admin & Academic Round',
+        'Core Team Round', 'Management Round', 'HR Round',
+      ]);
+
+      let filteredStages: InterviewStage[];
+      if (jobPipeline && jobPipeline.length > 0) {
+        // Use job-specific pipeline: map pipeline names to actual stage records
+        const pipelineNames = new Set(jobPipeline.map(ps => ps.name));
+        // Ensure Interview Guidelines is always present
+        pipelineNames.add('Interview Guidelines');
+
+        filteredStages = allStages
+          .filter(s => pipelineNames.has(s.name) && !hiddenRoundStages.has(s.name))
+          .sort((a, b) => {
+            const aOrder = jobPipeline.find(p => p.name === a.name)?.order ?? a.stage_order;
+            const bOrder = jobPipeline.find(p => p.name === b.name)?.order ?? b.stage_order;
+            return aOrder - bOrder;
+          });
+      } else {
+        // Default pipeline: filter out hidden rounds
+        filteredStages = allStages.filter(s => !hiddenRoundStages.has(s.name));
+      }
+
+      setStages(filteredStages);
+
       if (interviewsWithEvents.length > 0) {
         setSelectedInterview(interviewsWithEvents[0].id);
-        
-        // Fetch responses and reviews for the first interview
-        await fetchReviewData(interviewsWithEvents[0]);
+        await fetchReviewData(interviewsWithEvents[0] as InterviewCandidate);
       }
 
       // Fetch slot bookings for this candidate
@@ -336,7 +368,16 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       case 'Demo Round':
         return Video;
       case 'Demo Feedback':
+      case 'Segment Feedback':
+      case 'Admin & Academic Feedback':
+      case 'Core Team Feedback':
+      case 'Management Round Feedback':
         return MessageSquare;
+      case 'Segment Round Slot Booking':
+      case 'Admin & Academic Round Slot Booking':
+      case 'Core Team Round Slot Booking':
+      case 'Management Round Slot Booking':
+        return Calendar;
       case 'HR Round Slot Booking':
         return Calendar;
       case 'HR Round':
@@ -613,8 +654,22 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         );
       }
 
-      case 'Demo Feedback': {
-        const submittedReviews = reviews.filter(r => r.status === 'submitted' && (r.feedback_type === 'demo' || !r.feedback_type));
+      case 'Demo Feedback':
+      case 'Segment Feedback':
+      case 'Admin & Academic Feedback':
+      case 'Core Team Feedback':
+      case 'Management Round Feedback': {
+        const feedbackTypeMap: Record<string, string> = {
+          'Demo Feedback': 'demo',
+          'Segment Feedback': 'segment',
+          'Admin & Academic Feedback': 'admin_academic',
+          'Core Team Feedback': 'core_team',
+          'Management Round Feedback': 'management',
+        };
+        const fbType = feedbackTypeMap[stage.name] || 'demo';
+        const submittedReviews = reviews.filter(r => r.status === 'submitted' && (
+          r.feedback_type === fbType || (fbType === 'demo' && !r.feedback_type)
+        ));
         if (submittedReviews.length === 0) {
           return (
             <p className="text-sm text-muted-foreground">Feedback collected from observers.</p>
