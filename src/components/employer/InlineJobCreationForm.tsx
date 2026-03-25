@@ -14,7 +14,7 @@ import { Loader2, Briefcase, Sparkles, RefreshCw, CheckCircle2, Bot, User, FileT
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline, type PipelineStage } from "@/data/interviewPipelineConfig";
-import EditablePipelineStages from "@/components/employer/EditablePipelineStages";
+
 import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/interviewFormOptions";
 import { indiaLocationData } from "@/data/indiaLocations";
 
