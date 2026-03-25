@@ -218,6 +218,34 @@ const BookSlot = () => {
         }
       }
 
+      // Send notification to employer about slot booking
+      try {
+        const { data: icData } = await supabase
+          .from("interview_candidates")
+          .select("job_id, candidate_id, candidate:profiles(full_name), job:jobs(job_title, employer_id)")
+          .eq("id", candidateId)
+          .single();
+        
+        if (icData) {
+          const cName = (icData.candidate as any)?.full_name || "A candidate";
+          const jTitle = (icData.job as any)?.job_title || "a position";
+          const empId = (icData.job as any)?.employer_id;
+          if (empId) {
+            await supabase.from("employer_notifications").insert({
+              employer_id: empId,
+              type: "slot_booking",
+              title: `📅 Slot Booked: ${stageName}`,
+              message: `${cName} has booked a slot for ${stageName} - ${jTitle}. ${isMultiSlotStage ? "Please review preferred timings and confirm." : `Date: ${selectedDate}, Time: ${selectedTime}`}`,
+              candidate_name: cName,
+              job_title: jTitle,
+              booking_type: bookingType,
+            });
+          }
+        }
+      } catch (notifErr) {
+        console.error("Error creating employer notification:", notifErr);
+      }
+
       if (isMultiSlotStage) {
         try {
           await supabase.functions.invoke("send-demo-slot-confirmation", {
