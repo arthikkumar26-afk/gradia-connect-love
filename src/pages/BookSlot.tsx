@@ -179,9 +179,13 @@ const BookSlot = () => {
       // Determine booking type based on stage name
       const isWrittenTestSlotBooking = stageName.toLowerCase().includes("written");
       const isHrSlotBooking = stageName.toLowerCase().includes("hr");
+      const isSegmentSlotBooking = stageName.toLowerCase().includes("segment");
+      const isAdminAcademicSlotBooking = stageName.toLowerCase().includes("admin") && stageName.toLowerCase().includes("academic");
 
       const bookingType = isDemoStage ? "demo_round" 
-        : isHrSlotBooking ? "hr_round" 
+        : isHrSlotBooking ? "hr_round"
+        : isSegmentSlotBooking ? "segment_round"
+        : isAdminAcademicSlotBooking ? "admin_academic_round"
         : isWrittenTestSlotBooking ? "written_test" 
         : "technical_assessment";
 
