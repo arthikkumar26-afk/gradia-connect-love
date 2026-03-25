@@ -272,17 +272,16 @@ const BookSlot = () => {
         } catch (emailErr) {
           console.error("Error sending slot confirmation email:", emailErr);
         }
-      } else {
+      } else if (isWrittenTestSlotBooking) {
+        // Only send interview invitation for Written Test slot booking — no other stages
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-        // Send interview invitation with the scheduled time
         const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
           body: {
             interviewCandidateId: candidateId,
-            stageName,
+            stageName: "Written Test",
             scheduledDate: scheduledDateTime,
           },
         });
-
         if (inviteError) {
           console.error("Error sending invitation:", inviteError);
         }
