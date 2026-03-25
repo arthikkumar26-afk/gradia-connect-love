@@ -78,6 +78,7 @@ import { EmployerSettingsContent } from "@/components/employer/EmployerSettingsC
 import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent";
 import { OutsourceProjectsContent } from "@/components/employer/OutsourceProjectsContent";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
+import { EmployerNotifications } from "@/components/employer/EmployerNotifications";
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -503,6 +504,7 @@ const EmployerDashboard = () => {
               </Button>
             </div>
           )}
+          {user?.id && <EmployerNotifications employerId={user.id} />}
         </header>
 
 

@@ -657,6 +657,45 @@ export type Database = {
         }
         Relationships: []
       }
+      employer_notifications: {
+        Row: {
+          booking_type: string | null
+          candidate_name: string | null
+          created_at: string
+          employer_id: string
+          id: string
+          is_read: boolean
+          job_title: string | null
+          message: string
+          title: string
+          type: string
+        }
+        Insert: {
+          booking_type?: string | null
+          candidate_name?: string | null
+          created_at?: string
+          employer_id: string
+          id?: string
+          is_read?: boolean
+          job_title?: string | null
+          message: string
+          title: string
+          type?: string
+        }
+        Update: {
+          booking_type?: string | null
+          candidate_name?: string | null
+          created_at?: string
+          employer_id?: string
+          id?: string
+          is_read?: boolean
+          job_title?: string | null
+          message?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       employer_registrations: {
         Row: {
           benefits: string | null
