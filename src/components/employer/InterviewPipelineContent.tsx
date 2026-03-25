@@ -1852,8 +1852,8 @@ const ClickableStagesList = ({
                   </div>
                 ))}
 
-                {/* Demo Round Options - Show only during Demo Round stage */}
-                {step.title === 'Demo Round' && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
+                {/* Meeting Round Options - Show for Demo, Segment, Admin & Academic, and HR Rounds */}
+                {(step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'HR Round') && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
                   <DemoRoundOptions
                     interviewCandidateId={interviewCandidateId}
                     candidateName={candidateName}
@@ -1864,7 +1864,7 @@ const ClickableStagesList = ({
                   />
                 )}
 
-                {/* Demo Feedback - Show feedback results */}
+                {/* Feedback Results - Show for Demo, Segment, Admin & Academic, and HR Feedback */}
                 {step.title === 'Demo Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
                   <DemoFeedbackResults
                     interviewCandidateId={interviewCandidateId}
@@ -1873,8 +1873,22 @@ const ClickableStagesList = ({
                     stageStatus={step.status}
                   />
                 )}
-
-                {/* HR Feedback - Show feedback results */}
+                {step.title === 'Segment Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="segment"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
+                )}
+                {step.title === 'Admin & Academic Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
+                  <DemoFeedbackResults
+                    interviewCandidateId={interviewCandidateId}
+                    feedbackType="admin_academic"
+                    onAllSubmitted={onRefresh}
+                    stageStatus={step.status}
+                  />
+                )}
                 {step.title === 'HR Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
                   <DemoFeedbackResults
                     interviewCandidateId={interviewCandidateId}
