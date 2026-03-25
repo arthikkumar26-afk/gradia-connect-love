@@ -147,6 +147,10 @@ export const StageResultsModal = ({
           if (icData?.candidate_id) {
             const bookingType = stageName.toLowerCase().includes('demo') ? 'demo' 
               : stageName.toLowerCase().includes('hr') ? 'hr' 
+              : stageName.toLowerCase().includes('core team') ? 'core_team'
+              : stageName.toLowerCase().includes('management') ? 'management'
+              : stageName.toLowerCase().includes('segment') ? 'segment'
+              : stageName.toLowerCase().includes('admin') ? 'admin'
               : 'written';
 
             const { data: bookings } = await supabase
