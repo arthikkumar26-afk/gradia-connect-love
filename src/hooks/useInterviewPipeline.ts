@@ -231,11 +231,18 @@ export const useInterviewPipeline = () => {
             // Use job-specific custom pipeline stages for display names if available
             const jobCustomStages = c.jobs?.pipeline_stages as Array<{ order: number; name: string; description: string; isAutomated: boolean }> | null;
 
+            // Ensure Interview Guidelines is always included as the first stage
+            const effectiveCustomStages = jobCustomStages && jobCustomStages.length > 0
+              ? (jobCustomStages.some(cs => cs.name === 'Interview Guidelines')
+                ? jobCustomStages
+                : [{ order: 0, name: 'Interview Guidelines', description: 'Automated interview guidelines sent to candidate', isAutomated: true }, ...jobCustomStages])
+              : null;
+
             // Principal/advanced pipelines store local step order in jobs.pipeline_stages,
             // which does NOT match the global interview_stages.stage_order values.
             // So we must derive position by stage NAME, not by stage_order.
-            const customStagePositionMap = jobCustomStages && jobCustomStages.length > 0
-              ? new Map(jobCustomStages.map((stage, index) => [stage.name, index]))
+            const customStagePositionMap = effectiveCustomStages && effectiveCustomStages.length > 0
+              ? new Map(effectiveCustomStages.map((stage, index) => [stage.name, index]))
               : null;
 
             const hiddenStageToVisibleStageMap: Record<string, string> = {
@@ -261,13 +268,13 @@ export const useInterviewPipeline = () => {
             // otherwise, dbStages is already filtered to Offer Stage.
             // Sort by the custom pipeline order, not the DB stage_order.
             let relevantStages = dbStages;
-            if (jobCustomStages && jobCustomStages.length > 0) {
-              const customFiltered = dbStagesAll2.filter(s => jobCustomStages.some(cs => cs.name === s.name));
+            if (effectiveCustomStages && effectiveCustomStages.length > 0) {
+              const customFiltered = dbStagesAll2.filter(s => effectiveCustomStages.some(cs => cs.name === s.name));
               if (customFiltered.length > 0) {
                 // Sort by the job's custom pipeline order
                 relevantStages = customFiltered.sort((a, b) => {
-                  const aOrder = jobCustomStages.findIndex(cs => cs.name === a.name);
-                  const bOrder = jobCustomStages.findIndex(cs => cs.name === b.name);
+                  const aOrder = effectiveCustomStages.findIndex(cs => cs.name === a.name);
+                  const bOrder = effectiveCustomStages.findIndex(cs => cs.name === b.name);
                   return aOrder - bOrder;
                 });
               }
@@ -281,7 +288,7 @@ export const useInterviewPipeline = () => {
                 || stageEvents.find((e) => e.status === 'failed')
                 || stageEvents[0] || null;
 
-              const customStage = jobCustomStages?.find(cs => cs.name === s.name) || jobCustomStages?.find(cs => cs.order === s.stage_order);
+              const customStage = effectiveCustomStages?.find(cs => cs.name === s.name) || effectiveCustomStages?.find(cs => cs.order === s.stage_order);
               const displayTitle = customStage?.name || s.name;
 
               let status: InterviewStep["status"] = "pending";
