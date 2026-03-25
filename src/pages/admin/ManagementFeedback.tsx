@@ -34,6 +34,7 @@ interface ReviewData {
   reviewer_name: string | null;
   status: string;
   feedback_token_expires_at: string;
+  feedback_type?: string | null;
   candidate_name?: string;
   candidate_email?: string;
   demo_score?: number;
@@ -41,6 +42,17 @@ interface ReviewData {
   demo_recording_url?: string;
   job_title?: string;
 }
+
+const getRoundLabel = (feedbackType?: string | null) => {
+  switch (feedbackType) {
+    case 'segment': return { title: 'Segment Round Feedback', description: 'Please provide your feedback for the candidate\'s segment round evaluation' };
+    case 'admin_academic': return { title: 'Admin & Academic Round Feedback', description: 'Please provide your feedback for the candidate\'s admin & academic round evaluation' };
+    case 'core_team': return { title: 'Core Team Round Feedback', description: 'Please provide your feedback for the candidate\'s core team round evaluation' };
+    case 'management': return { title: 'Management Round Feedback', description: 'Please provide your feedback for the candidate\'s management round evaluation' };
+    case 'hr': return { title: 'HR Round Feedback', description: 'Please provide your feedback for the candidate\'s HR round evaluation' };
+    default: return { title: 'Demo Round Feedback', description: 'Please provide your feedback for the candidate\'s teaching demonstration' };
+  }
+};
 
 export default function ManagementFeedback() {
   const [searchParams] = useSearchParams();
@@ -424,9 +436,9 @@ export default function ManagementFeedback() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
             <Award className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Demo Round Feedback</h1>
+          <h1 className="text-3xl font-bold mb-2">{getRoundLabel(review?.feedback_type).title}</h1>
           <p className="text-muted-foreground">
-            Please provide your feedback for the candidate's teaching demonstration
+            {getRoundLabel(review?.feedback_type).description}
           </p>
         </div>
 
