@@ -167,7 +167,8 @@ export const DemoFeedbackResults = ({
 
     const advancePipeline = async () => {
       try {
-        const expectedStageName = feedbackType === 'hr' ? 'HR Feedback' : 'Demo Feedback';
+        const feedbackStageNames: Record<string, string> = { demo: 'Demo Feedback', hr: 'HR Feedback', segment: 'Segment Feedback', admin_academic: 'Admin & Academic Feedback', core_team: 'Core Team Feedback', management: 'Management Round Feedback' };
+        const expectedStageName = feedbackStageNames[feedbackType] || 'Demo Feedback';
         const { error } = await supabase.functions.invoke('process-interview-stage', {
           body: {
             interviewCandidateId,
@@ -204,7 +205,7 @@ export const DemoFeedbackResults = ({
     try {
       const functionName = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
       await supabase.functions.invoke(functionName, {
-        body: { interviewCandidateId }
+        body: { interviewCandidateId, feedbackType }
       });
       toast.success('Feedback request resent to observers');
     } catch (err) {
@@ -331,8 +332,10 @@ export const DemoFeedbackResults = ({
                 onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
               >
                 <div className="flex items-center gap-1 text-[10px]">
-                  <User className="h-2.5 w-2.5 text-muted-foreground" />
-                  <span className="font-medium truncate max-w-[120px]">{review.reviewer_name || review.reviewer_email}</span>
+                  <Mail className="h-2.5 w-2.5 text-muted-foreground" />
+                  <span className="font-medium truncate max-w-[180px]" title={review.reviewer_email || ''}>
+                    {review.reviewer_email || review.reviewer_name || 'Unknown'}
+                  </span>
                 </div>
                 {review.status === 'submitted' ? (
                   <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[8px] py-0 px-1">
