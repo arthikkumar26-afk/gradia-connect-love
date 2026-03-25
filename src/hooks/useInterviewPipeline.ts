@@ -257,14 +257,11 @@ export const useInterviewPipeline = () => {
               ? (customStagePositionMap.get(resolvedCurrentVisibleStageName) ?? 0)
               : currentStageOrder;
             
-            // Filter stages: if job has custom pipeline, only show those stages;
-            // otherwise, only show stages up to and including Offer Stage
+            // Filter stages: if job has custom pipeline, use full DB stages to find matching ones;
+            // otherwise, dbStages is already filtered to Offer Stage
             const relevantStages = jobCustomStages && jobCustomStages.length > 0
-              ? dbStages.filter(s => jobCustomStages.some(cs => cs.name === s.name))
-              : dbStages.filter(s => {
-                  const offerStage = dbStages.find(os => os.name === 'Offer Stage');
-                  return offerStage ? s.stage_order <= offerStage.stage_order : true;
-                });
+              ? dbStagesAll2.filter(s => jobCustomStages.some(cs => cs.name === s.name))
+              : dbStages;
 
             const interviewSteps: InterviewStep[] = relevantStages.map((s) => {
               // Find the most relevant event for this stage (completed > in_progress > pending)
