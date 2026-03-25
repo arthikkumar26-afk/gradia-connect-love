@@ -261,7 +261,7 @@ serve(async (req) => {
         await resend.emails.send({
           from: `${companyName} <noreply@gradia.co.in>`,
           to: [email],
-          subject: `📝 Demo Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
+          subject: `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
           html: htmlContent,
         });
         emailsSent++;
