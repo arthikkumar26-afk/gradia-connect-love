@@ -1699,7 +1699,15 @@ const ClickableStagesList = ({
                 )}
 
                 {/* Slot Booking Details for Demo/Segment/Admin Slot Booking stages */}
-                {(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking') && (slotBooking ? (
+                {(() => {
+                  const activeBooking = step.title === 'Segment Round Slot Booking' ? segmentSlotBooking 
+                    : step.title === 'Admin & Academic Round Slot Booking' ? adminSlotBooking 
+                    : step.title === 'Demo Slot Booking' ? slotBooking : null;
+                  const activeObserverEmails = step.title === 'Segment Round Slot Booking' ? segmentObserverEmails
+                    : step.title === 'Admin & Academic Round Slot Booking' ? adminObserverEmails
+                    : observerEmails;
+                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking')) return null;
+                  return activeBooking ? (
                   <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
                       <Calendar className="h-3 w-3" />
