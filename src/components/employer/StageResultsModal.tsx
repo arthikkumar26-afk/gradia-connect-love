@@ -210,12 +210,22 @@ export const StageResultsModal = ({
             .single();
 
           if (candidateData && (candidateData.ai_score || candidateData.ai_analysis)) {
-            // Override the event data with the candidate's actual analysis
             if (event) {
+              // Override event data with actual analysis
               event = {
                 ...event,
                 ai_score: candidateData.ai_score || event.ai_score,
                 ai_feedback: candidateData.ai_analysis || event.ai_feedback,
+              };
+            } else {
+              // No event exists but we have analysis data — synthesize an event
+              event = {
+                id: 'cv-analysis',
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+                ai_score: candidateData.ai_score,
+                ai_feedback: candidateData.ai_analysis,
+                notes: null,
               };
             }
           }
