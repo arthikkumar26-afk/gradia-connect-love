@@ -129,6 +129,11 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
                   <span className="text-lg">{getIcon(notif.type)}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">{notif.title}</p>
+                    {notif.recipient_email && (
+                      <p className="text-xs text-primary font-medium mt-0.5">
+                        📧 {notif.recipient_email}
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                       {notif.message}
                     </p>
