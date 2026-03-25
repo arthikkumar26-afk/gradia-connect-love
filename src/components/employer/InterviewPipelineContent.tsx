@@ -1049,6 +1049,12 @@ const ClickableStagesList = ({
   const [isSavingHrObserver, setIsSavingHrObserver] = useState(false);
   const [selectedHrPreferredSlot, setSelectedHrPreferredSlot] = useState<number | null>(null);
   const [isConfirmingHrSlot, setIsConfirmingHrSlot] = useState(false);
+  // Segment Round Slot Booking states
+  const [segmentSlotBooking, setSegmentSlotBooking] = useState<typeof slotBooking>(null);
+  const [segmentObserverEmails, setSegmentObserverEmails] = useState<string[]>([]);
+  // Admin & Academic Round Slot Booking states
+  const [adminSlotBooking, setAdminSlotBooking] = useState<typeof slotBooking>(null);
+  const [adminObserverEmails, setAdminObserverEmails] = useState<string[]>([]);
   // Demo meeting options state
   const [demoMeetType, setDemoMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>('google_meet');
   const [demoMeetLink, setDemoMeetLink] = useState('');
