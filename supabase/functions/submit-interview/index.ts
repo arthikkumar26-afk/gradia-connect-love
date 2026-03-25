@@ -236,7 +236,7 @@ serve(async (req) => {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  from: `${companyName} Hiring <noreply@gradia.co.in>`,
+                  from: 'Gradia Hiring <noreply@gradia.co.in>',
                   to: [candidate.email],
                   reply_to: 'support@gradia.co.in',
                   subject: `🎉 Congratulations! Book your ${nextStage.name.replace(' Slot Booking', '')} slot - ${job?.job_title}`,

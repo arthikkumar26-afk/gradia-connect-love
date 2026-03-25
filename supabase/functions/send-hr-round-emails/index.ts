@@ -89,7 +89,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: `${companyName} Hiring <noreply@gradia.co.in>`,
+        from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: [candidate.email],
         reply_to: 'support@gradia.co.in',
         subject: `📋 HR Round Scheduled - ${job.job_title} at ${companyName}`,
@@ -183,7 +183,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: `${companyName} Hiring <noreply@gradia.co.in>`,
+          from: 'Gradia Hiring <noreply@gradia.co.in>',
           to: [singleObserverEmail],
           reply_to: 'support@gradia.co.in',
           subject: `👁️ HR Round Observer - ${candidate.full_name} for ${job.job_title}`,
