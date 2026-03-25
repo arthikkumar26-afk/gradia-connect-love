@@ -1717,13 +1717,13 @@ const ClickableStagesList = ({
                     </div>
 
                     {/* If preferred_slots exist, show them for employer to pick */}
-                    {slotBooking.preferred_slots && slotBooking.preferred_slots.length > 0 && slotBooking.status !== 'confirmed' ? (
+                    {activeBooking.preferred_slots && activeBooking.preferred_slots.length > 0 && activeBooking.status !== 'confirmed' ? (
                       <div className="space-y-1.5">
                         {/* Show date once since all slots share the same date */}
                         <div className="flex items-center gap-1.5 text-[10px] text-purple-600 font-medium">
-                          📅 {new Date(slotBooking.preferred_slots[0].date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                          📅 {new Date(activeBooking.preferred_slots[0].date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         </div>
-                        {slotBooking.preferred_slots.map((slot, i) => {
+                        {activeBooking.preferred_slots.map((slot, i) => {
                           const hour = parseInt(slot.time.split(':')[0]);
                           const minute = slot.time.split(':')[1];
                           const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
