@@ -402,7 +402,7 @@ const StageActionButtons = ({
         // Demo Slot Booking → Demo Round (keep existing flow)
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
-            body: { interviewCandidateId }
+            body: { interviewCandidateId, roundName: 'Demo Round' }
           });
           toast.success(`✓ Demo Slot Booking cleared! Demo Round invitations sent`, {
             description: `Emails sent to candidate and observer`,
