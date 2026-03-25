@@ -76,6 +76,11 @@ export const StageResultsModal = ({
   const isSlotBookingStage = stageName.includes('Slot Booking');
   const isDemoFeedbackStage = stageName === 'Demo Feedback';
   const isHrFeedbackStage = stageName === 'HR Feedback';
+  const isSegmentFeedbackStage = stageName === 'Segment Feedback';
+  const isAdminAcademicFeedbackStage = stageName === 'Admin & Academic Feedback';
+  const isCoreTeamFeedbackStage = stageName === 'Core Team Feedback';
+  const isManagementFeedbackStage = stageName === 'Management Round Feedback';
+  const isAnyFeedbackStage = isDemoFeedbackStage || isHrFeedbackStage || isSegmentFeedbackStage || isAdminAcademicFeedbackStage || isCoreTeamFeedbackStage || isManagementFeedbackStage;
   const handleConfirmSlot = async () => {
     if (!slotBookingData || selectedSlotIndex === null || !slotBookingData.preferred_slots) return;
     const chosen = slotBookingData.preferred_slots[selectedSlotIndex];
