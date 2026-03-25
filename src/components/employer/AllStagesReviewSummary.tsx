@@ -53,6 +53,12 @@ const stageIcons: Record<string, React.ElementType> = {
   'HR Round Slot Booking': Clock,
   'HR Round': UserCheck,
   'HR Feedback': MessageSquare,
+  'Core Team Round Slot Booking': Clock,
+  'Core Team Round': Video,
+  'Core Team Feedback': MessageSquare,
+  'Management Round Slot Booking': Clock,
+  'Management Round': Video,
+  'Management Round Feedback': MessageSquare,
   'Final Review': FileCheck,
 };
 
