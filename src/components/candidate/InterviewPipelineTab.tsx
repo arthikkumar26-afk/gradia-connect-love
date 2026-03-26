@@ -313,6 +313,17 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         .order('created_at', { ascending: false });
 
       setSlotBookings(bookingsData || []);
+
+      // Fetch resume analysis as fallback for CV/Resume stage score
+      const { data: resumeData } = await supabase
+        .from('resume_analyses')
+        .select('overall_score, strengths, improvements, skill_highlights, experience_summary, career_level')
+        .eq('user_id', candidateId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setResumeAnalysis(resumeData);
     } catch (error) {
       console.error('Error fetching interview data:', error);
     } finally {
