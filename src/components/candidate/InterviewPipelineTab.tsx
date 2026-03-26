@@ -275,8 +275,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
       // Hidden "Round" stages that should be skipped in candidate view
       const hiddenRoundStages = new Set([
-        'Demo Round', 'Admin & Academic Round',
-        'Core Team Round', 'Management Round', 'HR Round',
+        'Demo Round',
       ]);
 
       let filteredStages: InterviewStage[];
