@@ -1252,7 +1252,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
             const isFeedbackStage = stage.name.toLowerCase().includes('feedback');
-            const hasReviewData = status === 'completed' || status === 'passed' || (status === 'current' && isFeedbackStage);
+            const feedbackTypeMap: Record<string, string> = {
+              'Demo Feedback': 'demo',
+              'Segment Feedback': 'segment',
+              'Admin & Academic Feedback': 'admin_academic',
+              'Core Team Feedback': 'core_team',
+              'Management Round Feedback': 'management',
+              'HR Feedback': 'hr',
+            };
+            const feedbackType = feedbackTypeMap[stage.name];
+            const hasSubmittedFeedback = isFeedbackStage
+              ? reviews.some(r => r.status === 'submitted' && (r.feedback_type === feedbackType || (feedbackType === 'demo' && !r.feedback_type)))
+              : false;
+            const hasReviewData = status === 'completed' || status === 'passed' || (status === 'current' && isFeedbackStage && hasSubmittedFeedback);
             const isExpanded = expandedStageId === stage.id;
             
             return (
