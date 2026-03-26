@@ -75,6 +75,7 @@ export const RoundMeetingOptions = ({
           observerEmail: observerEmails.length > 0 ? observerEmails.join(',') : undefined,
           meetLink: (meetType === 'google_meet' || meetType === 'zoom_meet') ? meetLink : undefined,
           meetType: meetType === 'google_meet' || meetType === 'zoom_meet' ? 'manual_link' : meetType,
+          roundName: stageName,
         },
       });
 
