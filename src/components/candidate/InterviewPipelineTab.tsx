@@ -1203,7 +1203,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageId=${stage.id}&stageName=${encodeURIComponent('Written Test')}&type=written_test`);
+                                navigate(`/interview?candidateId=${currentInterview.id}&stageId=${stage.id}&type=technical`);
                               }}
                               className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
                             >
