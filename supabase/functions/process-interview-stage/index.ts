@@ -176,11 +176,13 @@ serve(async (req) => {
           console.log('Candidate ready for offer letter generation');
         }
 
-        // Auto-send feedback email when advancing to a Feedback stage
+        // ─── ROUTE ALL EMAILS THROUGH PIPELINE EMAIL GATEWAY ───
         const isFeedbackStage = targetStage.name.toLowerCase().includes('feedback');
+        const isSlotBookingStage = targetStage.name.toLowerCase().includes('slot booking');
+
         if (isFeedbackStage) {
           try {
-            console.log(`Sending feedback request email for stage: ${targetStage.name}`);
+            console.log(`[GATEWAY] Sending feedback email via pipeline gateway for: ${targetStage.name}`);
             const feedbackTypeMap: Record<string, string> = {
               'Demo Feedback': 'demo',
               'HR Feedback': 'hr',
@@ -191,112 +193,48 @@ serve(async (req) => {
               'Management Round Feedback': 'management',
             };
             const feedbackType = feedbackTypeMap[targetStage.name] || 'demo';
-            const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
             
-            const feedbackResponse = await fetch(`${supabaseUrl}/functions/v1/${feedbackFn}`, {
+            const gatewayResponse = await fetch(`${supabaseUrl}/functions/v1/send-pipeline-email`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${supabaseServiceKey}`,
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ interviewCandidateId, feedbackType }),
+              body: JSON.stringify({
+                interviewCandidateId,
+                stageName: targetStage.name,
+                emailType: 'feedback_request',
+                triggerSource: 'process-interview-stage',
+                feedbackType,
+              }),
             });
-            const feedbackResult = await feedbackResponse.json();
-            console.log(`Feedback email sent for ${targetStage.name}:`, feedbackResult);
+            const gatewayResult = await gatewayResponse.json();
+            console.log(`[GATEWAY] Feedback email result for ${targetStage.name}:`, gatewayResult);
           } catch (feedbackErr) {
-            console.error('Failed to send feedback email (non-blocking):', feedbackErr);
+            console.error('Failed to send feedback email via gateway (non-blocking):', feedbackErr);
           }
         }
 
-        // Auto-send slot booking email when advancing to a Slot Booking stage
-        const isSlotBookingStage = targetStage.name.toLowerCase().includes('slot booking');
         if (isSlotBookingStage) {
           try {
-            console.log(`Sending slot booking email for stage: ${targetStage.name}`);
-            const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-            if (RESEND_API_KEY) {
-              const candidate = interviewCandidate.candidate;
-              const job = interviewCandidate.job;
-              
-              let companyName = 'Gradia';
-              if (job?.employer_id) {
-                const { data: employer } = await supabase
-                  .from('profiles')
-                  .select('company_name')
-                  .eq('id', job.employer_id)
-                  .single();
-                companyName = employer?.company_name || 'Gradia';
-              }
-
-              const roundName = targetStage.name.replace(' Slot Booking', '');
-              const baseUrl = Deno.env.get('APP_DOMAIN') || "https://gradia-link-shine.lovable.app";
-              const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${targetStage.id}&stageName=${encodeURIComponent(targetStage.name)}`;
-
-              const emailResponse = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${RESEND_API_KEY}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  from: 'Gradia Hiring <noreply@gradia.co.in>',
-                  to: [candidate?.email],
-                  reply_to: 'support@gradia.co.in',
-                  subject: `📅 Book Your ${roundName} Slot - ${job?.job_title} at ${companyName}`,
-                  html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #374151; margin: 0; padding: 0; background-color: #f9fafb;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <tr>
-      <td style="padding: 32px 24px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 8px 8px 0 0;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">📅 Book Your ${roundName} Slot</h1>
-        <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">${roundName} for ${job?.job_title}</p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px;">
-        <p>Dear <strong>${candidate?.full_name}</strong>,</p>
-        <p>Congratulations on clearing the previous round! 🎉</p>
-        <p>You have been selected for the <strong style="color: #1d4ed8;">${roundName}</strong> for the position of <strong>${job?.job_title}</strong> at <strong>${companyName}</strong>.</p>
-        <p>Please select a convenient date and time by clicking the button below:</p>
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-          <tr><td align="center">
-            <a href="${bookSlotLink}" style="display: inline-block; background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 700; font-size: 16px;">📅 Book Your Slot Now</a>
-          </td></tr>
-        </table>
-        <p style="font-weight: 600;">Important:</p>
-        <ul style="color: #6b7280;">
-          <li>Choose a date and time convenient for you</li>
-          <li>Ensure stable internet connection</li>
-          <li>Please book within 3 days</li>
-        </ul>
-        <p>Best of luck!<br><strong>The ${companyName} Hiring Team</strong></p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
-        <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
-          Sent by Gradia Job Portal on behalf of ${companyName}.<br>
-          <a href="mailto:support@gradia.co.in" style="color: #3b82f6;">Contact Support</a>
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`,
-                  headers: {
-                    'List-Unsubscribe': '<mailto:unsubscribe@gradia.co.in>',
-                    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-                  },
-                }),
-              });
-              const emailResult = await emailResponse.json();
-              console.log(`Slot booking email sent for ${targetStage.name}:`, emailResult);
-            }
+            console.log(`[GATEWAY] Sending slot booking email via pipeline gateway for: ${targetStage.name}`);
+            const gatewayResponse = await fetch(`${supabaseUrl}/functions/v1/send-pipeline-email`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                interviewCandidateId,
+                stageName: targetStage.name,
+                emailType: 'slot_booking',
+                triggerSource: 'process-interview-stage',
+              }),
+            });
+            const gatewayResult = await gatewayResponse.json();
+            console.log(`[GATEWAY] Slot booking email result for ${targetStage.name}:`, gatewayResult);
           } catch (emailErr) {
-            console.error('Failed to send slot booking email (non-blocking):', emailErr);
+            console.error('Failed to send slot booking email via gateway (non-blocking):', emailErr);
           }
         }
 
