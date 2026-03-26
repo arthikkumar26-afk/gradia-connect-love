@@ -138,7 +138,23 @@ serve(async (req) => {
       });
     }
 
-    // ─── VALIDATION 5: Check previous stage completion (sequential flow) ───
+    // ─── VALIDATION 5: Suppress non-critical candidate-facing emails ───
+    // Candidates now manage everything from their dashboard pipeline tab.
+    // Only keep: instruction (initial welcome), cv_results, feedback_request (observer-facing)
+    const SUPPRESSED_EMAIL_TYPES = ['slot_booking', 'interview_invitation'];
+    if (SUPPRESSED_EMAIL_TYPES.includes(emailType)) {
+      console.log(`[SUPPRESSED] Email type "${emailType}" for stage "${stageName}" - candidates use dashboard pipeline instead`);
+      return jsonResponse({
+        blocked: false,
+        suppressed: true,
+        reason: 'dashboard_driven',
+        message: `Email "${emailType}" suppressed — candidates manage this from their Interview Pipeline dashboard`,
+        emailType,
+        stageName,
+      });
+    }
+
+    // ─── VALIDATION 6: Check previous stage completion (sequential flow) ───
     if (requestedStageIndex > 0) {
       const previousStageName = PIPELINE_STAGES[requestedStageIndex - 1];
       // Check if previous stage has a completed event
