@@ -80,7 +80,7 @@ export const RoundMeetingOptions = ({
 
       if (error) throw error;
 
-      toast.success(`Demo round invitations sent!`, {
+      toast.success(`${stageName} invitations sent!`, {
         description: observerEmails.length > 0
           ? `Emails sent to ${candidateName} and ${observerEmails.length} observer(s)`
           : `Email sent to ${candidateName}`,
