@@ -276,41 +276,40 @@ export default function ManagementFeedback() {
           }
         }
       } else if (review.interview_candidate_id) {
-        // Employer pipeline flow - advance candidate to next stage after all feedback is submitted
+        // Employer pipeline flow - advance candidate through the centralized pipeline function
         const { data: allReviews } = await supabase
           .from('management_reviews')
-          .select('id, status')
-          .eq('interview_candidate_id', review.interview_candidate_id);
+          .select('id, status, feedback_type, submitted_at')
+          .eq('interview_candidate_id', review.interview_candidate_id)
+          .eq('feedback_type', review.feedback_type || 'demo');
 
         const allSubmitted = allReviews?.every(r => r.status === 'submitted' || r.id === review.id);
 
         if (allSubmitted) {
-          // Get current candidate stage
-          const { data: icData } = await supabase
-            .from('interview_candidates')
-            .select('current_stage_id, current_stage:interview_stages(id, name, stage_order)')
-            .eq('id', review.interview_candidate_id)
-            .single();
+          const feedbackStageNames: Record<string, string> = {
+            demo: 'Demo Feedback',
+            segment: 'Segment Feedback',
+            admin_academic: 'Admin & Academic Feedback',
+            core_team: 'Core Team Feedback',
+            management: 'Management Round Feedback',
+            hr: 'HR Feedback',
+          };
 
-          if (icData?.current_stage) {
-            const currentOrder = (icData.current_stage as any).stage_order;
-            // Find the next stage after the current one
-            const { data: nextStage } = await supabase
-              .from('interview_stages')
-              .select('id, name, stage_order')
-              .gt('stage_order', currentOrder)
-              .order('stage_order', { ascending: true })
-              .limit(1)
-              .maybeSingle();
+          const expectedStageName = feedbackStageNames[review.feedback_type || 'demo'] || 'Demo Feedback';
 
-            if (nextStage) {
-              await supabase
-                .from('interview_candidates')
-                .update({ current_stage_id: nextStage.id, updated_at: new Date().toISOString() })
-                .eq('id', review.interview_candidate_id);
-
-              console.log(`Advanced candidate to stage: ${nextStage.name}`);
+          const { data: advanceData, error: advanceError } = await supabase.functions.invoke('process-interview-stage', {
+            body: {
+              interviewCandidateId: review.interview_candidate_id,
+              action: 'advance',
+              expectedStageName,
+              feedback: `All ${(review.feedback_type || 'demo').replace(/_/g, ' ')} feedback submitted`,
             }
+          });
+
+          if (advanceError) {
+            console.error('Error auto-advancing candidate after feedback submission:', advanceError);
+          } else {
+            console.log('Candidate auto-advanced after feedback submission:', advanceData);
           }
         }
       }
