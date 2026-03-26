@@ -146,11 +146,18 @@ serve(async (req) => {
       if (nextStage) {
         let targetStage = nextStage;
 
-        // Skip HR Round stage — go directly from HR Round Slot Booking to HR Feedback
-        if (currentStage?.name === 'HR Round Slot Booking' && nextStage.name === 'HR Round') {
-          const hrFeedbackStage = stages.find(s => s.stage_order === nextStage.stage_order + 1);
-          if (hrFeedbackStage) {
-            // Mark HR Round as auto-passed
+        // Skip intermediate "Round" stages — go directly from Slot Booking to Feedback
+        // This applies to: Segment Round, Admin & Academic Round, Core Team Round, Management Round, HR Round
+        const roundStagesToSkip = [
+          'Segment Round', 'Admin & Academic Round', 'Core Team Round', 
+          'Management Round', 'HR Round', 'Demo Round'
+        ];
+        
+        if (roundStagesToSkip.includes(nextStage.name)) {
+          // Find the feedback stage after the round stage
+          const feedbackStage = stages.find(s => s.stage_order === nextStage.stage_order + 1);
+          if (feedbackStage) {
+            // Mark Round as auto-passed
             await supabase
               .from('interview_events')
               .insert({
@@ -158,10 +165,10 @@ serve(async (req) => {
                 stage_id: nextStage.id,
                 status: 'passed',
                 completed_at: new Date().toISOString(),
-                notes: 'HR Round auto-completed — meeting confirmed during slot booking',
+                notes: `${nextStage.name} auto-completed — slot booking confirmed`,
               });
-            targetStage = hrFeedbackStage;
-            console.log('Skipping HR Round, advancing directly to', targetStage.name);
+            targetStage = feedbackStage;
+            console.log(`Skipping ${nextStage.name}, advancing directly to ${targetStage.name}`);
           }
         }
 
