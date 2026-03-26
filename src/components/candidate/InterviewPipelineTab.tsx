@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -131,8 +132,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await fetchData();
-    setIsRefreshing(false);
+    try {
+      await fetchData();
+      toast.success("Pipeline updated!");
+    } catch (e) {
+      toast.error("Failed to refresh pipeline");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -338,8 +345,12 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       setStages(filteredStages);
 
       if (interviewsWithEvents.length > 0) {
-        setSelectedInterview(interviewsWithEvents[0].id);
-        await fetchReviewData(interviewsWithEvents[0] as InterviewCandidate);
+        const targetId = selectedInterview && interviewsWithEvents.some(i => i.id === selectedInterview)
+          ? selectedInterview
+          : interviewsWithEvents[0].id;
+        setSelectedInterview(targetId);
+        const targetInterview = interviewsWithEvents.find(i => i.id === targetId) || interviewsWithEvents[0];
+        await fetchReviewData(targetInterview as InterviewCandidate);
       }
 
       // Fetch slot bookings for this candidate
