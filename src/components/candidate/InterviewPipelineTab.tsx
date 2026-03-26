@@ -1176,7 +1176,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         </p>
                         {/* Score + threshold inline */}
                         {status === 'completed' && (() => {
-                          const score = event?.ai_score || (stage.name === 'CV/Resume' ? currentInterview.ai_score : null);
+                          const score = event?.ai_score || (stage.name === 'CV/Resume' || stage.name === 'Resume Screening' ? (resumeAnalysis?.overall_score || currentInterview.ai_score) : null);
                           if (score == null) return null;
                           return (
                             <>
