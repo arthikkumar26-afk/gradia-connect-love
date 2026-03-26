@@ -285,6 +285,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         const pipelineNames = new Set(jobPipeline.map(ps => ps.name));
         // Ensure Interview Guidelines is always present
         pipelineNames.add('Interview Guidelines');
+        // Auto-inject 'Segment Round' if pipeline has slot booking + feedback but not the round itself
+        if (pipelineNames.has('Segment Round Slot Booking') && !pipelineNames.has('Segment Round')) {
+          pipelineNames.add('Segment Round');
+        }
 
         filteredStages = allStages
           .filter(s => pipelineNames.has(s.name) && !hiddenRoundStages.has(s.name))
