@@ -289,38 +289,17 @@ const BookSlot = () => {
         }
       }
 
-      // Auto-advance to Written Test and send invitation when Written Test slot is booked
-      if (isWrittenTestSlotBooking) {
-        try {
-          await supabase.functions.invoke("process-interview-stage", {
-            body: {
-              interviewCandidateId: candidateId,
-              action: "advance",
-              feedback: "Written Test slot booked by candidate, auto-advancing to Written Test",
-            },
-          });
-        } catch (advanceErr) {
-          console.error("Error auto-advancing to Written Test:", advanceErr);
-        }
-      }
-
-      // For Demo: DON'T auto-advance, employer will select timing and send link
-      // Just mark booking as pending for employer review
-
-      // Auto-advance HR Round — employer will send meeting details after confirming slot
-      if (isHrSlotBooking) {
-        try {
-          await supabase.functions.invoke("process-interview-stage", {
-            body: {
-              interviewCandidateId: candidateId,
-              action: "advance",
-              feedback: "Slot booked by candidate, auto-advancing to HR Round",
-            },
-          });
-          // Do NOT send send-hr-round-emails here — employer confirms slot and sends meeting link later
-        } catch (advanceErr) {
-          console.error("Error auto-advancing to HR Round:", advanceErr);
-        }
+      // Auto-advance after ANY slot booking — candidates manage everything from dashboard
+      try {
+        await supabase.functions.invoke("process-interview-stage", {
+          body: {
+            interviewCandidateId: candidateId,
+            action: "advance",
+            feedback: `${stageName} slot booked by candidate, auto-advancing to next stage`,
+          },
+        });
+      } catch (advanceErr) {
+        console.error("Error auto-advancing after slot booking:", advanceErr);
       }
 
       setIsBooked(true);
