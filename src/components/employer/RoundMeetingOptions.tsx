@@ -89,8 +89,8 @@ export const RoundMeetingOptions = ({
       setIsSaved(true);
       onUpdate?.();
     } catch (err) {
-      console.error('Error sending demo round emails:', err);
-      toast.error('Failed to send demo round emails');
+      console.error('Error sending round emails:', err);
+      toast.error('Failed to send round emails');
     } finally {
       setIsSending(false);
     }
