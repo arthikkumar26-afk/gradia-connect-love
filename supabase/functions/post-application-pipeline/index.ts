@@ -9,16 +9,10 @@ const corsHeaders = {
 /**
  * Post-Application Pipeline (Event-Driven)
  * 
- * This function handles ONLY the initial automated sequence:
- * 1. Send Instruction email → advance to CV/Resume
- * 2. Send CV/Resume ATS results email → advance to Written Test Slot Booking
- * 3. Send Written Test Slot Booking email
- * 
- * Subsequent stages are triggered by actual completion events:
- * - Written Test completed → submit-interview auto-advances to Demo Slot Booking
- * - Demo Slot booked → advances to Demo Round
- * - Demo Round completed → submit-interview auto-advances to Demo Feedback
- * - And so on...
+ * Routes ALL emails through the pipeline email gateway for:
+ * - Idempotency (no duplicate emails)
+ * - Stage validation (no backward emails)
+ * - Logging (full audit trail)
  */
 
 async function advanceCandidateToStage(supabase: any, interviewCandidateId: string, stageName: string) {
@@ -62,9 +56,9 @@ async function advanceCandidateToStage(supabase: any, interviewCandidateId: stri
   return stage;
 }
 
-async function callEdgeFunction(supabaseUrl: string, serviceKey: string, functionName: string, body: any) {
+async function sendViaGateway(supabaseUrl: string, serviceKey: string, body: any) {
   try {
-    const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-pipeline-email`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${serviceKey}`,
@@ -73,10 +67,10 @@ async function callEdgeFunction(supabaseUrl: string, serviceKey: string, functio
       body: JSON.stringify(body),
     });
     const result = await response.json();
-    console.log(`${functionName} result:`, result);
+    console.log(`[GATEWAY] ${body.emailType} for "${body.stageName}":`, result);
     return result;
   } catch (err) {
-    console.error(`Failed to call ${functionName}:`, err);
+    console.error(`[GATEWAY] Failed ${body.emailType} for "${body.stageName}":`, err);
     return null;
   }
 }
@@ -87,30 +81,39 @@ async function processInitialPipeline(interviewCandidateId: string, analysisData
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const DELAY = 5000;
 
-  // Step 1: Send Instruction Email
-  console.log('Step 1: Sending instruction email...');
-  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-instruction-email', {
+  // Step 1: Send Instruction Email via gateway
+  console.log('Step 1: Sending instruction email via gateway...');
+  await sendViaGateway(supabaseUrl, supabaseServiceKey, {
     interviewCandidateId,
+    stageName: 'Interview Guidelines',
+    emailType: 'instruction',
+    triggerSource: 'post-application-pipeline',
   });
 
-  // Step 2: Send CV/Resume ATS results email (event already created by analyze-resume)
+  // Step 2: Send CV/Resume ATS results email via gateway
   console.log('Waiting before CV results email...');
   await new Promise(resolve => setTimeout(resolve, DELAY));
 
-  console.log('Step 2: Sending CV/Resume ATS results email...');
-  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-cv-results-email', {
+  console.log('Step 2: Sending CV/Resume ATS results email via gateway...');
+  await sendViaGateway(supabaseUrl, supabaseServiceKey, {
     interviewCandidateId,
+    stageName: 'CV/Resume',
+    emailType: 'cv_results',
+    triggerSource: 'post-application-pipeline',
     analysisData: analysisData || null,
   });
 
-  // Step 3: Advance to Written Test Slot Booking + send slot booking email
+  // Step 3: Advance to Written Test Slot Booking + send slot booking email via gateway
   console.log('Waiting before Written Test slot booking...');
   await new Promise(resolve => setTimeout(resolve, DELAY));
   await advanceCandidateToStage(supabase, interviewCandidateId, 'Written Test Slot Booking');
-  console.log('Step 3: Sending Written Test slot booking email...');
-  await callEdgeFunction(supabaseUrl, supabaseServiceKey, 'send-slot-booking-email', {
+  
+  console.log('Step 3: Sending Written Test slot booking email via gateway...');
+  await sendViaGateway(supabaseUrl, supabaseServiceKey, {
     interviewCandidateId,
-    stageName: 'Written Test',
+    stageName: 'Written Test Slot Booking',
+    emailType: 'slot_booking',
+    triggerSource: 'post-application-pipeline',
   });
 
   console.log('Initial pipeline completed. Next stages will trigger on completion events.');

@@ -273,17 +273,19 @@ const BookSlot = () => {
           console.error("Error sending slot confirmation email:", emailErr);
         }
       } else if (isWrittenTestSlotBooking) {
-        // Only send interview invitation for Written Test slot booking — no other stages
+        // Route through pipeline email gateway for idempotency
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-        const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
+        const { error: inviteError } = await supabase.functions.invoke("send-pipeline-email", {
           body: {
             interviewCandidateId: candidateId,
             stageName: "Written Test",
+            emailType: "interview_invitation",
+            triggerSource: "book-slot",
             scheduledDate: scheduledDateTime,
           },
         });
         if (inviteError) {
-          console.error("Error sending invitation:", inviteError);
+          console.error("Error sending invitation via gateway:", inviteError);
         }
       }
 
