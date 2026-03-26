@@ -74,8 +74,8 @@ import { StageRecordingPlayer } from "./StageRecordingPlayer";
 import { StageResultsModal } from "./StageResultsModal";
 import { ManualInterviewScheduleModal } from "./ManualInterviewScheduleModal";
 import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
-import { DemoRoundOptions } from "./DemoRoundOptions";
-import { DemoFeedbackResults } from "./DemoFeedbackResults";
+import { RoundMeetingOptions } from "./RoundMeetingOptions";
+import { RoundFeedbackResults } from "./RoundFeedbackResults";
 import { AllStagesReviewSummary } from "./AllStagesReviewSummary";
 import OfferLetterModal from "./OfferLetterModal";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
@@ -2036,19 +2036,20 @@ const ClickableStagesList = ({
 
                 {/* Meeting Round Options - Show for Demo, Segment, Admin & Academic, and HR Rounds */}
                 {(step.title === 'Demo Round' || step.title === 'Segment Round' || step.title === 'Admin & Academic Round' || step.title === 'Core Team Round' || step.title === 'Management Round' || step.title === 'HR Round') && (step.status === 'current' || step.status === 'in_progress' || step.status === 'completed') && (
-                  <DemoRoundOptions
+                  <RoundMeetingOptions
                     interviewCandidateId={interviewCandidateId}
                     candidateName={candidateName}
                     observerEmail={slotBooking?.observer_email || observerEmails.join(',') || undefined}
                     existingMeetLink={slotBooking?.demo_meet_link || undefined}
                     existingMeetType={slotBooking?.demo_meet_type || undefined}
                     onUpdate={() => {}}
+                    stageName={step.title}
                   />
                 )}
 
                 {/* Feedback Results - Show for Demo, Segment, Admin & Academic, and HR Feedback */}
                 {step.title === 'Demo Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults
+                  <RoundFeedbackResults
                     interviewCandidateId={interviewCandidateId}
                     feedbackType="demo"
                     onAllSubmitted={onRefresh}
@@ -2056,7 +2057,7 @@ const ClickableStagesList = ({
                   />
                 )}
                 {step.title === 'Segment Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults
+                  <RoundFeedbackResults
                     interviewCandidateId={interviewCandidateId}
                     feedbackType="segment"
                     onAllSubmitted={onRefresh}
@@ -2064,7 +2065,7 @@ const ClickableStagesList = ({
                   />
                 )}
                 {step.title === 'Admin & Academic Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults
+                  <RoundFeedbackResults
                     interviewCandidateId={interviewCandidateId}
                     feedbackType="admin_academic"
                     onAllSubmitted={onRefresh}
@@ -2072,7 +2073,7 @@ const ClickableStagesList = ({
                   />
                 )}
                 {step.title === 'Core Team Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults
+                  <RoundFeedbackResults
                     interviewCandidateId={interviewCandidateId}
                     feedbackType="core_team"
                     onAllSubmitted={onRefresh}
@@ -2080,7 +2081,7 @@ const ClickableStagesList = ({
                   />
                 )}
                 {step.title === 'Management Round Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults
+                  <RoundFeedbackResults
                     interviewCandidateId={interviewCandidateId}
                     feedbackType="management"
                     onAllSubmitted={onRefresh}
@@ -2088,7 +2089,7 @@ const ClickableStagesList = ({
                   />
                 )}
                 {step.title === 'HR Feedback' && (step.status === 'current' || step.status === 'completed' || step.status === 'in_progress') && (
-                  <DemoFeedbackResults
+                  <RoundFeedbackResults
                     interviewCandidateId={interviewCandidateId}
                     feedbackType="hr"
                     onAllSubmitted={onRefresh}

@@ -6,23 +6,25 @@ import { Video, Link2, Send, Loader2, Check, Sparkles, Mail, Plus, X, CheckCircl
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface DemoRoundOptionsProps {
+interface RoundMeetingOptionsProps {
   interviewCandidateId: string;
   candidateName: string;
   observerEmail?: string;
   existingMeetLink?: string;
   existingMeetType?: string;
   onUpdate?: () => void;
+  stageName?: string;
 }
 
-export const DemoRoundOptions = ({
+export const RoundMeetingOptions = ({
   interviewCandidateId,
   candidateName,
   observerEmail,
   existingMeetLink,
   existingMeetType,
   onUpdate,
-}: DemoRoundOptionsProps) => {
+  stageName = 'Round',
+}: RoundMeetingOptionsProps) => {
   const [meetType, setMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>(
     (existingMeetType as 'ai_video' | 'google_meet' | 'zoom_meet') || 'ai_video'
   );
@@ -66,19 +68,20 @@ export const DemoRoundOptions = ({
 
     setIsSending(true);
     try {
-      // Send demo round emails (candidate + observers)
+      // Send round emails (candidate + observers)
       const { error } = await supabase.functions.invoke('send-demo-round-emails', {
         body: {
           interviewCandidateId,
           observerEmail: observerEmails.length > 0 ? observerEmails.join(',') : undefined,
           meetLink: (meetType === 'google_meet' || meetType === 'zoom_meet') ? meetLink : undefined,
           meetType: meetType === 'google_meet' || meetType === 'zoom_meet' ? 'manual_link' : meetType,
+          roundName: stageName,
         },
       });
 
       if (error) throw error;
 
-      toast.success(`Demo round invitations sent!`, {
+      toast.success(`${stageName} invitations sent!`, {
         description: observerEmails.length > 0
           ? `Emails sent to ${candidateName} and ${observerEmails.length} observer(s)`
           : `Email sent to ${candidateName}`,
@@ -87,8 +90,8 @@ export const DemoRoundOptions = ({
       setIsSaved(true);
       onUpdate?.();
     } catch (err) {
-      console.error('Error sending demo round emails:', err);
-      toast.error('Failed to send demo round emails');
+      console.error('Error sending round emails:', err);
+      toast.error('Failed to send round emails');
     } finally {
       setIsSending(false);
     }
@@ -98,7 +101,7 @@ export const DemoRoundOptions = ({
     <div className="mt-2 bg-pink-50 border border-pink-200 rounded-md p-2.5 space-y-2">
       <div className="flex items-center gap-1.5 text-xs font-medium text-pink-700">
         <Video className="h-3 w-3" />
-        Demo Round - Meeting Options
+        {stageName} - Meeting Options
       </div>
 
       {/* Three options */}
@@ -258,7 +261,7 @@ export const DemoRoundOptions = ({
         ) : (
           <>
             <Send className="h-3 w-3 mr-1" />
-            Send Demo Invitations
+            Send {stageName} Invitations
           </>
         )}
       </Button>
@@ -266,4 +269,4 @@ export const DemoRoundOptions = ({
   );
 };
 
-export default DemoRoundOptions;
+export default RoundMeetingOptions;

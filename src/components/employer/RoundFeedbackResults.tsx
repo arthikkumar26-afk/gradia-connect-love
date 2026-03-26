@@ -27,7 +27,7 @@ type FeedbackStageStatus = "pending" | "current" | "completed" | "failed" | "in_
 const feedbackAutoAdvanceInFlight = new Set<string>();
 const feedbackAutoAdvanceProcessed = new Set<string>();
 
-export const DemoFeedbackResults = ({
+export const RoundFeedbackResults = ({
   interviewCandidateId,
   feedbackType = 'demo',
   onAllSubmitted,
