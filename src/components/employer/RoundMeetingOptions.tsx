@@ -6,23 +6,25 @@ import { Video, Link2, Send, Loader2, Check, Sparkles, Mail, Plus, X, CheckCircl
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-interface DemoRoundOptionsProps {
+interface RoundMeetingOptionsProps {
   interviewCandidateId: string;
   candidateName: string;
   observerEmail?: string;
   existingMeetLink?: string;
   existingMeetType?: string;
   onUpdate?: () => void;
+  stageName?: string;
 }
 
-export const DemoRoundOptions = ({
+export const RoundMeetingOptions = ({
   interviewCandidateId,
   candidateName,
   observerEmail,
   existingMeetLink,
   existingMeetType,
   onUpdate,
-}: DemoRoundOptionsProps) => {
+  stageName = 'Round',
+}: RoundMeetingOptionsProps) => {
   const [meetType, setMeetType] = useState<'ai_video' | 'google_meet' | 'zoom_meet'>(
     (existingMeetType as 'ai_video' | 'google_meet' | 'zoom_meet') || 'ai_video'
   );
