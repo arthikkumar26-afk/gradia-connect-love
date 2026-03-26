@@ -2307,15 +2307,15 @@ const CandidateDashboard = () => {
                                 stroke="currentColor"
                                 strokeWidth="6"
                                 fill="transparent"
-                                strokeDasharray={201}
-                                strokeDashoffset={201 * (1 - (profile?.resume_url ? 0.78 : 0))}
-                                className="text-accent transition-all duration-1000"
+                            strokeDasharray={201}
+                            strokeDashoffset={201 * (1 - ((resumeAnalysis?.overall_score ?? 0) / 100))}
+                            className="text-accent transition-all duration-1000"
                                 strokeLinecap="round"
                               />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center">
                               <span className="text-xl font-bold text-foreground">
-                                {profile?.resume_url ? '78' : '0'}%
+                                {resumeAnalysis?.overall_score ?? 0}%
                               </span>
                             </div>
                           </div>
