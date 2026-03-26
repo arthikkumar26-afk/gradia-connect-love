@@ -398,7 +398,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         .eq('interview_candidate_id', interview.id)
         .eq('status', 'submitted');
       
-      console.log('[Pipeline] Fetching reviews for interview:', interview.id, 'Result:', reviewsData?.length, 'Error:', reviewsError);
+      if (reviewsError) {
+        console.error('[Pipeline] Error fetching reviews:', reviewsError);
+      }
       setReviews(reviewsData || []);
     } catch (error) {
       console.error('Error fetching review data:', error);
