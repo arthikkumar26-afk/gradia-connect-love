@@ -1251,7 +1251,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const status = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
-            const hasReviewData = status === 'completed' || status === 'passed';
+            const isFeedbackStage = stage.name.toLowerCase().includes('feedback');
+            const hasReviewData = status === 'completed' || status === 'passed' || (status === 'current' && isFeedbackStage);
             const isExpanded = expandedStageId === stage.id;
             
             return (
