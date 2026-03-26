@@ -100,7 +100,7 @@ export const RoundMeetingOptions = ({
     <div className="mt-2 bg-pink-50 border border-pink-200 rounded-md p-2.5 space-y-2">
       <div className="flex items-center gap-1.5 text-xs font-medium text-pink-700">
         <Video className="h-3 w-3" />
-        Demo Round - Meeting Options
+        {stageName} - Meeting Options
       </div>
 
       {/* Three options */}
