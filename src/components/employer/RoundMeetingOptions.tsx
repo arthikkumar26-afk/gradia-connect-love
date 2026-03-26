@@ -260,7 +260,7 @@ export const RoundMeetingOptions = ({
         ) : (
           <>
             <Send className="h-3 w-3 mr-1" />
-            Send Demo Invitations
+            Send {stageName} Invitations
           </>
         )}
       </Button>
