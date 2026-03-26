@@ -64,18 +64,39 @@ serve(async (req) => {
     
     // Determine next stage using job-specific pipeline if available
     let nextStage = stages.find(s => s.stage_order === currentStageOrder + 1);
+    const injectedRoundAfterSlotBooking: Record<string, string> = {
+      'Segment Round Slot Booking': 'Segment Round',
+      'Admin & Academic Round Slot Booking': 'Admin & Academic Round',
+      'Core Team Round Slot Booking': 'Core Team Round',
+      'Management Round Slot Booking': 'Management Round',
+      'HR Round Slot Booking': 'HR Round',
+    };
     
     // Check if the job has a custom pipeline_stages config
     const pipelineStages = interviewCandidate.job?.pipeline_stages as any[] | null;
     if (pipelineStages && pipelineStages.length > 0) {
       const currentStageName = currentStage?.name;
-      const currentPipelineIndex = pipelineStages.findIndex((ps: any) => ps.name === currentStageName);
-      if (currentPipelineIndex >= 0 && currentPipelineIndex < pipelineStages.length - 1) {
-        const nextPipelineStageName = pipelineStages[currentPipelineIndex + 1].name;
-        const nextPipelineStage = stages.find(s => s.name === nextPipelineStageName);
-        if (nextPipelineStage) {
-          nextStage = nextPipelineStage;
-          console.log(`Job-specific pipeline: advancing from "${currentStageName}" to "${nextPipelineStageName}" (order ${nextPipelineStage.stage_order})`);
+      const injectedRoundName = currentStageName ? injectedRoundAfterSlotBooking[currentStageName] : undefined;
+
+      if (injectedRoundName && !pipelineStages.some((ps: any) => ps.name === injectedRoundName)) {
+        const injectedRoundStage = stages.find(s => s.name === injectedRoundName);
+        if (injectedRoundStage) {
+          nextStage = injectedRoundStage;
+          console.log(`Job-specific pipeline: injecting live round "${injectedRoundName}" after "${currentStageName}"`);
+        }
+      } else {
+        const slotStageNameForInjectedRound = Object.entries(injectedRoundAfterSlotBooking)
+          .find(([, roundName]) => roundName === currentStageName)?.[0];
+        const pipelineLookupStageName = slotStageNameForInjectedRound || currentStageName;
+        const currentPipelineIndex = pipelineStages.findIndex((ps: any) => ps.name === pipelineLookupStageName);
+
+        if (currentPipelineIndex >= 0 && currentPipelineIndex < pipelineStages.length - 1) {
+          const nextPipelineStageName = pipelineStages[currentPipelineIndex + 1].name;
+          const nextPipelineStage = stages.find(s => s.name === nextPipelineStageName);
+          if (nextPipelineStage) {
+            nextStage = nextPipelineStage;
+            console.log(`Job-specific pipeline: advancing from "${currentStageName}" via "${pipelineLookupStageName}" to "${nextPipelineStageName}" (order ${nextPipelineStage.stage_order})`);
+          }
         }
       }
     }
