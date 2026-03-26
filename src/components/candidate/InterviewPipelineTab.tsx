@@ -1138,6 +1138,17 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   return (
     <div className="space-y-6">
+      {/* Refresh Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleManualRefresh}
+          disabled={isRefreshing}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border border-border bg-background hover:bg-accent text-foreground transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
       {/* Interview Selector */}
       {interviews.length > 1 && (
         <ScrollArea className="w-full">
