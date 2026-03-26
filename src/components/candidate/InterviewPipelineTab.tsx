@@ -778,6 +778,67 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         );
       }
 
+      case 'Admin & Academic Round':
+      case 'Core Team Round':
+      case 'Management Round':
+      case 'HR Round': {
+        const roundBookingTypeMap: Record<string, string[]> = {
+          'Admin & Academic Round': ['admin_academic_round', 'Admin & Academic Round'],
+          'Core Team Round': ['core_team_round', 'Core Team Round'],
+          'Management Round': ['management_round', 'Management Round'],
+          'HR Round': ['hr_round', 'HR Round'],
+        };
+        const bookingTypes = roundBookingTypeMap[stage.name] || [];
+        const roundBooking = slotBookings.find(b => bookingTypes.includes(b.booking_type));
+        const roundMeetType = roundBooking?.demo_meet_type;
+        const roundMeetLink = roundBooking?.demo_meet_link;
+        
+        return (
+          <div className="space-y-3">
+            {roundMeetType && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">
+                    {roundMeetType === 'ai_video' ? 'AI Video Interview' : 
+                     roundMeetType === 'google_meet' || roundMeetType === 'manual_link' ? 'Google Meet / Zoom' : 
+                     roundMeetType === 'zoom_meet' ? 'Zoom Meeting' : 'Live Interview Session'}
+                  </span>
+                </div>
+                {roundMeetLink && (
+                  <a
+                    href={roundMeetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                  >
+                    <Video className="h-4 w-4" />
+                    Join Meeting
+                  </a>
+                )}
+              </div>
+            )}
+            {!roundMeetType && (
+              <p className="text-sm text-muted-foreground">
+                Live interview session. Awaiting meeting link from employer.
+              </p>
+            )}
+            {event?.ai_score != null && (
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Score:</span>
+                <Badge className={`${event.ai_score >= 70 ? 'bg-green-500' : event.ai_score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+                  {event.ai_score}%
+                </Badge>
+              </div>
+            )}
+            {event?.notes && (
+              <p className="text-sm text-muted-foreground">{event.notes}</p>
+            )}
+          </div>
+        );
+      }
+
       case 'Demo Feedback':
       case 'Segment Feedback':
       case 'Admin & Academic Feedback':
