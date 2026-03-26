@@ -1326,7 +1326,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const hasSubmittedFeedback = isFeedbackStage
               ? reviews.some(r => r.status === 'submitted' && (r.feedback_type === feedbackType || (feedbackType === 'demo' && !r.feedback_type)))
               : false;
-            const hasReviewData = status === 'completed' || status === 'passed' || (status === 'current' && isFeedbackStage && hasSubmittedFeedback);
+            const hasReviewData = status === 'completed' || status === 'passed' || (isFeedbackStage && hasSubmittedFeedback);
             const isExpanded = expandedStageId === stage.id;
             
             return (
@@ -1387,6 +1387,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             : status === 'current' ? 'Currently active'
                             : status === 'scheduled' && event?.scheduled_at 
                             ? `Scheduled for ${formatDate(event.scheduled_at)}`
+                            : isFeedbackStage && hasSubmittedFeedback ? 'Feedback received'
                             : 'Upcoming'
                           }
                         </p>
@@ -1417,6 +1418,12 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       )}
                       {status === 'current' && (
                         <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs animate-pulse" variant="outline">In Progress</Badge>
+                      )}
+                      {status !== 'completed' && status !== 'current' && isFeedbackStage && hasSubmittedFeedback && (
+                        <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/30 text-xs" variant="outline">
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          Feedback Received
+                        </Badge>
                       )}
                       {/* Show slot booking for all Slot Booking stages */}
 
