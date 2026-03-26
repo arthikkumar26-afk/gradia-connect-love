@@ -530,10 +530,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       }
       case 'CV/Resume':
       case 'Resume Screening': {
-        // Get analysis from multiple sources: event ai_feedback > interview ai_analysis
+        // Get analysis from multiple sources: event ai_feedback > interview ai_analysis > resume_analyses table
         const eventFeedback = event?.ai_feedback && typeof event.ai_feedback === 'object' ? event.ai_feedback as any : null;
-        const analysis = eventFeedback?.overall_score ? eventFeedback : currentInterview.ai_analysis;
-        const score = event?.ai_score || currentInterview.ai_score;
+        const interviewAnalysis = currentInterview.ai_analysis && typeof currentInterview.ai_analysis === 'object' && (currentInterview.ai_analysis as any)?.overall_score ? currentInterview.ai_analysis : null;
+        const analysis = eventFeedback?.overall_score ? eventFeedback : interviewAnalysis || resumeAnalysis;
+        const score = event?.ai_score || (analysis?.overall_score) || null;
         
         if (!score && !analysis) {
           return (
