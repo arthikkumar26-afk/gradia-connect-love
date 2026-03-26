@@ -305,9 +305,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const getOrder = (s: InterviewStage) => {
               const pipelineEntry = jobPipeline.find(p => p.name === s.name);
               if (pipelineEntry) return pipelineEntry.order;
-              if (s.name === 'Segment Round') {
-                const slotBookingOrder = jobPipeline.find(p => p.name === 'Segment Round Slot Booking')?.order ?? 5;
-                return slotBookingOrder + 0.5;
+              // For injected round stages, place right after their slot booking
+              const roundToSlotMap: Record<string, string> = {
+                'Segment Round': 'Segment Round Slot Booking',
+                'Admin & Academic Round': 'Admin & Academic Round Slot Booking',
+                'Core Team Round': 'Core Team Round Slot Booking',
+                'Management Round': 'Management Round Slot Booking',
+                'HR Round': 'HR Round Slot Booking',
+              };
+              const slotName = roundToSlotMap[s.name];
+              if (slotName) {
+                const slotOrder = jobPipeline.find(p => p.name === slotName)?.order ?? s.stage_order;
+                return slotOrder + 0.5;
               }
               return s.stage_order;
             };
