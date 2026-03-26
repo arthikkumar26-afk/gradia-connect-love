@@ -295,7 +295,7 @@ export const useInterviewPipeline = () => {
               'Segment Round': 'Segment Feedback',
               'Admin & Academic Round': 'Admin & Academic Feedback',
               'Core Team Round': 'Core Team Feedback',
-              'Management Round': 'Management Feedback',
+              'Management Round': 'Management Round Feedback',
               'HR Round': 'HR Feedback',
             };
 
@@ -618,7 +618,7 @@ export const useInterviewPipeline = () => {
                 'Segment Feedback': 'segment',
                 'Admin & Academic Feedback': 'admin_academic',
                 'Core Team Feedback': 'core_team',
-                'Management Feedback': 'management',
+                'Management Round Feedback': 'management',
               };
               const feedbackType = feedbackTypeMap[nextStage.name] || 'demo';
               const feedbackFn = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';

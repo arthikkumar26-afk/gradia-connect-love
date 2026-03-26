@@ -199,10 +199,9 @@ serve(async (req) => {
 
       switch (emailType) {
         case 'slot_booking': {
-          const roundName = stageName.replace(' Slot Booking', '');
           emailResult = await callFunction(supabaseUrl, supabaseServiceKey, 'send-slot-booking-email', {
             interviewCandidateId,
-            stageName: roundName,
+            stageName,
           });
           break;
         }

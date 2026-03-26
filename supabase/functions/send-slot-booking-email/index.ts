@@ -11,6 +11,19 @@ interface SlotBookingEmailRequest {
   stageName: string;
 }
 
+const getPipelineStageNames = (pipelineStages: unknown): string[] => {
+  if (!Array.isArray(pipelineStages)) return [];
+
+  return pipelineStages
+    .map((stage) => {
+      if (stage && typeof stage === 'object' && 'name' in stage) {
+        return String((stage as { name?: unknown }).name || '').trim();
+      }
+      return '';
+    })
+    .filter(Boolean);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,21 +60,41 @@ serve(async (req) => {
     const employer = job?.employer;
     const companyName = employer?.company_name || 'Gradia';
 
+    const pipelineStageNames = getPipelineStageNames(job?.pipeline_stages);
+    const slotBookingStageName = stageName.includes('Slot Booking')
+      ? stageName
+      : pipelineStageNames.find((name) => name.replace(' Slot Booking', '') === stageName) || `${stageName} Slot Booking`;
+    const displayStageName = slotBookingStageName.replace(/\s*Slot Booking$/, '');
+
     // Get stage ID for the link and determine previous stage name
-    const { data: stageData } = await supabase
+    let { data: stageData } = await supabase
       .from('interview_stages')
       .select('id, stage_order')
-      .eq('name', stageName)
-      .single();
+      .eq('name', slotBookingStageName)
+      .maybeSingle();
+
+    if (!stageData && slotBookingStageName !== stageName) {
+      const { data: fallbackStageData } = await supabase
+        .from('interview_stages')
+        .select('id, stage_order')
+        .eq('name', stageName)
+        .maybeSingle();
+
+      stageData = fallbackStageData;
+    }
 
     // Determine the previous stage name dynamically
     let previousStageName = 'the previous round';
-    if (stageData?.stage_order) {
+    const pipelineStageIndex = pipelineStageNames.findIndex((name) => name === slotBookingStageName || name === stageName);
+
+    if (pipelineStageIndex > 0) {
+      previousStageName = pipelineStageNames[pipelineStageIndex - 1];
+    } else if (stageData?.stage_order) {
       const { data: prevStage } = await supabase
         .from('interview_stages')
         .select('name')
         .eq('stage_order', stageData.stage_order - 1)
-        .single();
+        .maybeSingle();
       if (prevStage?.name) previousStageName = prevStage.name;
     }
 
@@ -69,7 +102,7 @@ serve(async (req) => {
 
     // Build the slot booking link
     const baseUrl = Deno.env.get('APP_DOMAIN') || "https://gradia-link-shine.lovable.app";
-    const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${stageId}&stageName=${encodeURIComponent(stageName)}`;
+    const bookSlotLink = `${baseUrl}/book-slot?candidateId=${interviewCandidateId}&stageId=${stageId}&stageName=${encodeURIComponent(displayStageName)}`;
 
     // Send the email
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -82,7 +115,7 @@ serve(async (req) => {
         from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: [candidate.email],
         reply_to: 'support@gradia.co.in',
-        subject: `📅 Book Your ${stageName} Slot - ${job.job_title} at ${companyName}`,
+        subject: `📅 Book Your ${displayStageName} Slot - ${job.job_title} at ${companyName}`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -95,10 +128,10 @@ serve(async (req) => {
     <tr>
       <td style="padding: 32px 24px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 8px 8px 0 0;">
         <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; text-align: center;">
-          📅 Book Your ${stageName} Slot
+          📅 Book Your ${displayStageName} Slot
         </h1>
         <p style="margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.9); text-align: center;">
-          ${stageName} for ${job.job_title}
+          ${displayStageName} for ${job.job_title}
         </p>
       </td>
     </tr>
@@ -108,9 +141,9 @@ serve(async (req) => {
         
         <p style="margin: 0 0 16px;">Congratulations on clearing the <strong>${previousStageName}</strong> round! 🎉</p>
         
-        <p style="margin: 0 0 16px;">You have been selected for the <strong style="color: #1d4ed8;">${stageName}</strong> round for the position of <strong>${job.job_title}</strong> at <strong>${companyName}</strong>.</p>
+        <p style="margin: 0 0 16px;">You have been selected for the <strong style="color: #1d4ed8;">${displayStageName}</strong> round for the position of <strong>${job.job_title}</strong> at <strong>${companyName}</strong>.</p>
         
-        <p style="margin: 0 0 24px;">Please select a convenient date and time for your ${stageName} by clicking the button below:</p>
+        <p style="margin: 0 0 24px;">Please select a convenient date and time for your ${displayStageName} by clicking the button below:</p>
         
         <!-- Details Card -->
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #eff6ff; border-radius: 8px; margin: 16px 0; border: 1px solid #3b82f6;">
@@ -120,7 +153,7 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #bfdbfe;">
-                    <strong style="color: #374151;">Stage:</strong> <span style="color: #1d4ed8;">${stageName}</span>
+                    <strong style="color: #374151;">Stage:</strong> <span style="color: #1d4ed8;">${displayStageName}</span>
                   </td>
                 </tr>
                 <tr>
@@ -130,12 +163,12 @@ serve(async (req) => {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #bfdbfe;">
-                    <strong style="color: #374151;">Format:</strong> ${['HR Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round'].some(r => stageName.includes(r.replace(' Round', '')) || stageName === r) ? 'Live Video Meeting / Interview' : stageName === 'Demo Round' ? 'Live Teaching Demo' : 'Technical MCQ Assessment (10 questions)'}
+                    <strong style="color: #374151;">Format:</strong> ${['HR Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round'].some(r => displayStageName.includes(r.replace(' Round', '')) || displayStageName === r) ? 'Live Video Meeting / Interview' : displayStageName === 'Demo Round' ? 'Live Teaching Demo' : 'Technical MCQ Assessment (10 questions)'}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding: 8px 0;">
-                    <strong style="color: #374151;">Duration:</strong> ${['HR Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round'].some(r => stageName.includes(r.replace(' Round', '')) || stageName === r) ? '15-30 minutes' : stageName === 'Demo Round' ? '20-30 minutes' : '15-20 minutes'}
+                    <strong style="color: #374151;">Duration:</strong> ${['HR Round', 'Segment Round', 'Admin & Academic Round', 'Core Team Round', 'Management Round'].some(r => displayStageName.includes(r.replace(' Round', '')) || displayStageName === r) ? '15-30 minutes' : displayStageName === 'Demo Round' ? '20-30 minutes' : '15-20 minutes'}
                   </td>
                 </tr>
               </table>

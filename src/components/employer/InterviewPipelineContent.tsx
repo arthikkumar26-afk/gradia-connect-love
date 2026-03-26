@@ -1315,6 +1315,7 @@ const ClickableStagesList = ({
           body: {
             interviewCandidateId,
             action: 'advance',
+              expectedStageName: stepTitle,
             feedback: `Employer confirmed ${roundLabel} slot: ${chosen.date} at ${chosen.time} via ${demoMeetType}`,
           },
         });
@@ -1353,44 +1354,9 @@ const ClickableStagesList = ({
       }
 
       toast.success(`${roundLabel} slot confirmed! Invitations sent`, {
-        description: `Meeting link sent to candidate${activeEmails.length > 0 ? ` and ${activeEmails.length} observer(s)` : ''}. Feedback email will be sent to observers shortly.`,
+        description: `Meeting link sent to candidate${activeEmails.length > 0 ? ` and ${activeEmails.length} observer(s)` : ''}.`,
         duration: 5000,
       });
-
-      // Advance to the Round stage first, then to Feedback stage
-      // The backend process-interview-stage handles sending feedback emails automatically
-      try {
-        await supabase.functions.invoke('process-interview-stage', {
-          body: {
-            interviewCandidateId,
-            action: 'advance',
-            feedback: `Auto-advanced to ${roundLabel} Feedback after round invitations sent`,
-          },
-        });
-
-        if (isSegment || isAdmin || isCoreTeam || isManagement) {
-          await supabase.functions.invoke('process-interview-stage', {
-            body: {
-              interviewCandidateId,
-              action: 'advance',
-              feedback: `Auto-skipped ${roundLabel} stage, advancing to feedback`,
-            },
-          });
-        }
-      } catch (advErr) {
-        console.error('Error advancing to feedback:', advErr);
-      }
-
-      // Send feedback email directly (not in a setTimeout that gets killed by reload)
-      try {
-        await supabase.functions.invoke('send-demo-feedback-email', {
-          body: { interviewCandidateId, feedbackType },
-        });
-        console.log(`${roundLabel} feedback email sent to observers`);
-        toast.success(`${roundLabel} Feedback request sent to observers!`);
-      } catch (feedbackErr) {
-        console.error('Error sending feedback email:', feedbackErr);
-      }
 
       // Reload after all async operations complete
       window.location.reload();
@@ -1639,6 +1605,7 @@ const ClickableStagesList = ({
             body: {
               interviewCandidateId,
               action: 'advance',
+              expectedStageName: 'HR Round Slot Booking',
               feedback: `Employer confirmed HR slot: ${chosen.date} at ${chosen.time} via ${hrMeetType}`,
             }
           });
@@ -1676,27 +1643,6 @@ const ClickableStagesList = ({
           console.error('Error sending HR slot confirmed email:', emailErr);
         }
 
-        // Auto-advance to HR Feedback after 10 seconds (simulating HR round completion)
-        setTimeout(async () => {
-          try {
-            toast.info('HR Round finishing... advancing to HR Feedback');
-            await supabase.functions.invoke('process-interview-stage', {
-              body: {
-                interviewCandidateId,
-                action: 'advance',
-                feedback: 'HR Round completed, advancing to HR Feedback',
-              }
-            });
-
-            // Send HR feedback email to observers
-            await supabase.functions.invoke('send-hr-feedback-email', {
-              body: { interviewCandidateId }
-            });
-            toast.success('HR Feedback request sent to observers!');
-          } catch (feedbackErr) {
-            console.error('Error auto-advancing to HR Feedback:', feedbackErr);
-          }
-        }, 10000);
       }
     } catch (err) {
       console.error('Error confirming HR slot:', err);
