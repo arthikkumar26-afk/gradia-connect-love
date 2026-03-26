@@ -284,9 +284,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         const pipelineNames = new Set(jobPipeline.map(ps => ps.name));
         // Ensure Interview Guidelines is always present
         pipelineNames.add('Interview Guidelines');
-        // Auto-inject 'Segment Round' if pipeline has slot booking + feedback but not the round itself
-        if (pipelineNames.has('Segment Round Slot Booking') && !pipelineNames.has('Segment Round')) {
-          pipelineNames.add('Segment Round');
+        // Auto-inject round stages if pipeline has slot booking but not the round itself
+        const roundInjections: Array<{ slotName: string; roundName: string }> = [
+          { slotName: 'Segment Round Slot Booking', roundName: 'Segment Round' },
+          { slotName: 'Admin & Academic Round Slot Booking', roundName: 'Admin & Academic Round' },
+          { slotName: 'Core Team Round Slot Booking', roundName: 'Core Team Round' },
+          { slotName: 'Management Round Slot Booking', roundName: 'Management Round' },
+          { slotName: 'HR Round Slot Booking', roundName: 'HR Round' },
+        ];
+        for (const { slotName, roundName } of roundInjections) {
+          if (pipelineNames.has(slotName) && !pipelineNames.has(roundName)) {
+            pipelineNames.add(roundName);
+          }
         }
 
         filteredStages = allStages
