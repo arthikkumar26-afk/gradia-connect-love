@@ -556,13 +556,6 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       };
     }
 
-    if (booking.demo_meet_type === 'ai_video') {
-      return {
-        href: `/interview?candidateId=${interviewCandidateId}&stageId=${stageId}&type=demo`,
-        external: false,
-      };
-    }
-
     return null;
   };
 
