@@ -1004,28 +1004,6 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         );
       }
 
-      case 'HR Round': {
-        const score = event?.ai_score;
-        return (
-          <div className="space-y-3">
-            {score != null && (
-              <div className="flex items-center gap-2">
-                <Award className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">HR Score:</span>
-                <Badge className={`${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
-                  {score}%
-                </Badge>
-              </div>
-            )}
-            {event?.notes && (
-              <p className="text-sm text-muted-foreground">{event.notes}</p>
-            )}
-            {!score && !event?.notes && (
-              <p className="text-sm text-muted-foreground">HR Round completed successfully.</p>
-            )}
-          </div>
-        );
-      }
 
       case 'Final Review': {
         const score = event?.ai_score;
