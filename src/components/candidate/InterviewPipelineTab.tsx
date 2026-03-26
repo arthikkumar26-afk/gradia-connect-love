@@ -132,8 +132,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await fetchData();
-    setIsRefreshing(false);
+    try {
+      await fetchData();
+      toast.success("Pipeline updated!");
+    } catch (e) {
+      toast.error("Failed to refresh pipeline");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   useEffect(() => {
