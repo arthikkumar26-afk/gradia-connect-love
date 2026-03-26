@@ -1387,6 +1387,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             : status === 'current' ? 'Currently active'
                             : status === 'scheduled' && event?.scheduled_at 
                             ? `Scheduled for ${formatDate(event.scheduled_at)}`
+                            : isFeedbackStage && hasSubmittedFeedback ? 'Feedback received'
                             : 'Upcoming'
                           }
                         </p>
