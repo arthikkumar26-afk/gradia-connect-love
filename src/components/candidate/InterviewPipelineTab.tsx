@@ -439,10 +439,6 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   // Map hidden round stage names to their visible feedback counterpart
   const hiddenToVisibleName: Record<string, string> = {
     'Demo Round': 'Demo Feedback',
-    'Admin & Academic Round': 'Admin & Academic Feedback',
-    'Core Team Round': 'Core Team Feedback',
-    'Management Round': 'Management Round Feedback',
-    'HR Round': 'HR Feedback',
   };
 
   // Resolve a stageId (possibly hidden) to an index in the visible `stages` array
