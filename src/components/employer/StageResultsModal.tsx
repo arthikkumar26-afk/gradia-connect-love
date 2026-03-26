@@ -346,7 +346,7 @@ export const StageResultsModal = ({
                 <h3 className="text-sm font-semibold">
                   {isHrFeedbackStage ? 'HR Round' : isCoreTeamFeedbackStage ? 'Core Team Round' : isManagementFeedbackStage ? 'Management Round' : isSegmentFeedbackStage ? 'Segment Round' : isAdminAcademicFeedbackStage ? 'Admin & Academic Round' : 'Demo Round'} Feedback
                 </h3>
-                <DemoFeedbackResults 
+                <RoundFeedbackResults 
                   interviewCandidateId={interviewCandidateId} 
                   feedbackType={isHrFeedbackStage ? 'hr' : isCoreTeamFeedbackStage ? 'core_team' : isManagementFeedbackStage ? 'management' : isSegmentFeedbackStage ? 'segment' : isAdminAcademicFeedbackStage ? 'admin_academic' : 'demo'} 
                 />
