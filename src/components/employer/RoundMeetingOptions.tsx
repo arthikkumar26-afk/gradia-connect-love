@@ -268,4 +268,4 @@ export const RoundMeetingOptions = ({
   );
 };
 
-export default DemoRoundOptions;
+export default RoundMeetingOptions;
