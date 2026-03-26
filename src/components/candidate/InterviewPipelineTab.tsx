@@ -518,6 +518,54 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     });
   };
 
+  const liveRoundBookingTypeMap: Record<string, string[]> = {
+    'Demo Round': ['demo_round', 'Demo Round'],
+    'Segment Round': ['segment_round', 'Segment Round'],
+    'Admin & Academic Round': ['admin_academic_round', 'Admin & Academic Round'],
+    'Core Team Round': ['core_team_round', 'Core Team Round'],
+    'Management Round': ['management_round', 'Management Round'],
+    'HR Round': ['hr_round', 'HR Round'],
+  };
+
+  const roundSlotStageNameMap: Record<string, string> = {
+    'Segment Round': 'Segment Round Slot Booking',
+    'Admin & Academic Round': 'Admin & Academic Round Slot Booking',
+    'Core Team Round': 'Core Team Round Slot Booking',
+    'Management Round': 'Management Round Slot Booking',
+    'HR Round': 'HR Round Slot Booking',
+  };
+
+  const getLiveRoundBooking = (stageName: string) => {
+    const bookingTypes = liveRoundBookingTypeMap[stageName] || [];
+    if (!bookingTypes.length) return null;
+
+    return slotBookings.find((booking) => bookingTypes.includes(booking.booking_type)) || null;
+  };
+
+  const getLiveRoundJoinAction = (stageName: string, interviewCandidateId: string, stageId: string) => {
+    const booking = getLiveRoundBooking(stageName);
+
+    if (!booking || booking.status !== 'confirmed') {
+      return null;
+    }
+
+    if (booking.demo_meet_link) {
+      return {
+        href: booking.demo_meet_link,
+        external: true,
+      };
+    }
+
+    if (booking.demo_meet_type === 'ai_video') {
+      return {
+        href: `/interview?candidateId=${interviewCandidateId}&stageId=${stageId}&type=demo`,
+        external: false,
+      };
+    }
+
+    return null;
+  };
+
   const getCurrentStageOrder = (currentStageId: string | null) => {
     if (!currentStageId) return 1;
     const idx = stages.findIndex(s => s.id === currentStageId);
@@ -728,12 +776,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       }
 
       case 'Segment Round': {
-        // Find segment slot booking to get meeting info
-        const segBooking = slotBookings.find(b => 
-          b.booking_type === 'segment_round' || b.booking_type === 'Segment Round'
-        );
+        const segBooking = getLiveRoundBooking(stage.name);
+        const segJoinAction = getLiveRoundJoinAction(stage.name, currentInterview.id, stage.id);
         const segMeetType = segBooking?.demo_meet_type;
-        const segMeetLink = segBooking?.demo_meet_link;
         
         return (
           <div className="space-y-3">
@@ -747,20 +792,31 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                      segMeetType === 'zoom_meet' ? 'Zoom Meeting' : 'Live Interview Session'}
                   </span>
                 </div>
-                {segMeetLink && (
-                  <a
-                    href={segMeetLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-                  >
-                    <Video className="h-4 w-4" />
-                    Join Meeting
-                  </a>
+                {segJoinAction && (
+                  segJoinAction.external ? (
+                    <a
+                      href={segJoinAction.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      <Video className="h-4 w-4" />
+                      Join Meeting
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate(segJoinAction.href)}
+                      className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      <Video className="h-4 w-4" />
+                      Join Meeting
+                    </button>
+                  )
                 )}
-                {segMeetType === 'ai_video' && !segMeetLink && (
+                {segMeetType === 'ai_video' && !segJoinAction && (
                   <p className="text-sm text-muted-foreground">
-                    AI-powered session. The link will be available when the employer confirms.
+                    AI-powered session. Your join button will appear here once the employer confirms the round.
                   </p>
                 )}
               </div>
@@ -790,16 +846,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       case 'Core Team Round':
       case 'Management Round':
       case 'HR Round': {
-        const roundBookingTypeMap: Record<string, string[]> = {
-          'Admin & Academic Round': ['admin_academic_round', 'Admin & Academic Round'],
-          'Core Team Round': ['core_team_round', 'Core Team Round'],
-          'Management Round': ['management_round', 'Management Round'],
-          'HR Round': ['hr_round', 'HR Round'],
-        };
-        const bookingTypes = roundBookingTypeMap[stage.name] || [];
-        const roundBooking = slotBookings.find(b => bookingTypes.includes(b.booking_type));
+        const roundBooking = getLiveRoundBooking(stage.name);
+        const roundJoinAction = getLiveRoundJoinAction(stage.name, currentInterview.id, stage.id);
         const roundMeetType = roundBooking?.demo_meet_type;
-        const roundMeetLink = roundBooking?.demo_meet_link;
         
         return (
           <div className="space-y-3">
@@ -813,16 +862,27 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                      roundMeetType === 'zoom_meet' ? 'Zoom Meeting' : 'Live Interview Session'}
                   </span>
                 </div>
-                {roundMeetLink && (
-                  <a
-                    href={roundMeetLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
-                  >
-                    <Video className="h-4 w-4" />
-                    Join Meeting
-                  </a>
+                {roundJoinAction && (
+                  roundJoinAction.external ? (
+                    <a
+                      href={roundJoinAction.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      <Video className="h-4 w-4" />
+                      Join Meeting
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => navigate(roundJoinAction.href)}
+                      className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
+                    >
+                      <Video className="h-4 w-4" />
+                      Join Meeting
+                    </button>
+                  )
                 )}
               </div>
             )}
@@ -1248,10 +1308,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         {/* Pipeline Stages - Vertical Timeline */}
         <div className="space-y-3">
           {stages.map((stage, index) => {
-            const status = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
+            const rawStatus = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
             const isFeedbackStage = stage.name.toLowerCase().includes('feedback');
+            const liveRoundJoinAction = getLiveRoundJoinAction(stage.name, currentInterview.id, stage.id);
+            const slotStageName = roundSlotStageNameMap[stage.name];
+            const slotStage = slotStageName ? stages.find(s => s.name === slotStageName) : null;
+            const slotStageStatus = slotStage
+              ? getStageStatus(slotStage.id, currentInterview.events, currentInterview.current_stage_id)
+              : null;
+            const status = rawStatus === 'upcoming' && liveRoundJoinAction && slotStageStatus === 'completed'
+              ? 'current'
+              : rawStatus;
             const feedbackTypeMap: Record<string, string> = {
               'Demo Feedback': 'demo',
               'Segment Feedback': 'segment',
@@ -1359,7 +1428,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       {/* Show slot booking for all Slot Booking stages */}
 
                       {/* Join Meeting / Start Test for current non-slot stages */}
-                      {status === 'current' && !stage.name.toLowerCase().includes('slot booking') && (() => {
+                      {(status === 'current' || (!!liveRoundJoinAction && !isFeedbackStage)) && !stage.name.toLowerCase().includes('slot booking') && (() => {
                         const sn = stage.name.toLowerCase();
                         const isWrittenTest = sn.includes('written test') || sn.includes('technical assessment');
                         const isFeedbackStage = sn.includes('feedback');
@@ -1381,44 +1450,47 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         }
 
                         if (isLiveRound) {
-                          // Find meeting link from slot bookings for this round type
-                          const roundTypeMap: Record<string, string[]> = {
-                            'segment': ['segment_round', 'Segment Round'],
-                            'admin': ['admin_academic_round', 'Admin & Academic Round'],
-                            'core team': ['core_team_round', 'Core Team Round'],
-                            'management': ['management_round', 'Management Round'],
-                            'hr': ['hr_round', 'HR Round'],
-                          };
-                          let matchingBooking: SlotBooking | undefined;
-                          for (const [key, types] of Object.entries(roundTypeMap)) {
-                            if (sn.includes(key)) {
-                              matchingBooking = slotBookings.find(b => types.includes(b.booking_type));
-                              break;
+                          if (liveRoundJoinAction) {
+                            if (liveRoundJoinAction.external) {
+                              return (
+                                <a
+                                  href={liveRoundJoinAction.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
+                                >
+                                  <Video className="h-3 w-3" />
+                                  Join Meeting
+                                </a>
+                              );
                             }
-                          }
-                          const meetLink = matchingBooking?.demo_meet_link;
-                          const meetType = matchingBooking?.demo_meet_type;
 
-                          if (meetLink) {
                             return (
-                              <a
-                                href={meetLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 font-medium"
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(liveRoundJoinAction.href);
+                                }}
+                                className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
                               >
                                 <Video className="h-3 w-3" />
                                 Join Meeting
-                              </a>
+                              </button>
                             );
                           }
-                          return (
+
+                          if (status === 'current') {
+                            return (
                             <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-600">
                               <Clock className="h-3 w-3 mr-1" />
                               Awaiting Link
                             </Badge>
                           );
+                          }
+
+                          return null;
                         }
                         return null;
                       })()}
