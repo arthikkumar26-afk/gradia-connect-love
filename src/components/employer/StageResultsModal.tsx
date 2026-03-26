@@ -23,7 +23,7 @@ import {
   Brain,
   Sparkles
 } from "lucide-react";
-import { DemoFeedbackResults } from "./DemoFeedbackResults";
+import { RoundFeedbackResults } from "./RoundFeedbackResults";
 
 interface InterviewResponse {
   id: string;
