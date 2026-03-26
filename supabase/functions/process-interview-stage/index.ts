@@ -146,11 +146,11 @@ serve(async (req) => {
       if (nextStage) {
         let targetStage = nextStage;
 
-        // Skip intermediate "Round" stages — go directly from Slot Booking to Feedback
-        // This applies to: Segment Round, Admin & Academic Round, Core Team Round, Management Round, HR Round
+        // Skip only Demo Round (the meeting happens via the slot booking confirmation)
+        // All other rounds (Segment, Admin & Academic, Core Team, Management, HR) are visible
+        // so candidates can see "Join Meeting" button on the Round stage itself
         const roundStagesToSkip = [
-          'Admin & Academic Round', 'Core Team Round', 
-          'Management Round', 'HR Round', 'Demo Round'
+          'Demo Round'
         ];
         
         if (roundStagesToSkip.includes(nextStage.name)) {
