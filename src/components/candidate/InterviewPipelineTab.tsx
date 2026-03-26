@@ -293,9 +293,17 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         filteredStages = allStages
           .filter(s => pipelineNames.has(s.name) && !hiddenRoundStages.has(s.name))
           .sort((a, b) => {
-            const aOrder = jobPipeline.find(p => p.name === a.name)?.order ?? a.stage_order;
-            const bOrder = jobPipeline.find(p => p.name === b.name)?.order ?? b.stage_order;
-            return aOrder - bOrder;
+            // For injected 'Segment Round', place it right after 'Segment Round Slot Booking'
+            const getOrder = (s: InterviewStage) => {
+              const pipelineEntry = jobPipeline.find(p => p.name === s.name);
+              if (pipelineEntry) return pipelineEntry.order;
+              if (s.name === 'Segment Round') {
+                const slotBookingOrder = jobPipeline.find(p => p.name === 'Segment Round Slot Booking')?.order ?? 5;
+                return slotBookingOrder + 0.5;
+              }
+              return s.stage_order;
+            };
+            return getOrder(a) - getOrder(b);
           });
       } else {
         // Default pipeline: filter out hidden rounds
