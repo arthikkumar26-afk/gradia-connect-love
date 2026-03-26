@@ -422,6 +422,17 @@ serve(async (req) => {
         <ul style="margin: 0 0 24px; padding-left: 20px; color: #6b7280;">
           ${instructions.map(inst => `<li style="margin-bottom: 6px;">${inst}</li>`).join('')}
         </ul>
+
+        <!-- Dashboard Note -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0fdf4; border-radius: 8px; margin: 16px 0; border: 1px solid #86efac;">
+          <tr>
+            <td style="padding: 14px 16px;">
+              <p style="margin: 0; font-size: 13px; color: #166534;">
+                <strong>💡 Tip:</strong> You can also attend your interviews directly from your <strong>Candidate Dashboard → Interview Pipeline</strong> tab. <a href="${baseUrl}/candidate/login" style="color: #10b981; text-decoration: underline;">Log in to your dashboard</a>
+              </p>
+            </td>
+          </tr>
+        </table>
         
         <p style="margin: 0; color: #374151;">
           Best of luck!<br>

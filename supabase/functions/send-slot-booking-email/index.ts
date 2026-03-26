@@ -196,6 +196,17 @@ serve(async (req) => {
           <li style="margin-bottom: 6px;">Once booked, you'll receive a confirmation with your interview link</li>
           <li style="margin-bottom: 6px;">Please book your slot within 3 days</li>
         </ul>
+
+        <!-- Dashboard Note -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0fdf4; border-radius: 8px; margin: 16px 0; border: 1px solid #86efac;">
+          <tr>
+            <td style="padding: 14px 16px;">
+              <p style="margin: 0; font-size: 13px; color: #166534;">
+                <strong>💡 Tip:</strong> You can also book your slot and attend interviews directly from your <strong>Candidate Dashboard → Interview Pipeline</strong> tab. <a href="${baseUrl}/candidate/login" style="color: #1d4ed8; text-decoration: underline;">Log in to your dashboard</a>
+              </p>
+            </td>
+          </tr>
+        </table>
         
         <p style="margin: 0; color: #374151;">
           Best of luck!<br>
