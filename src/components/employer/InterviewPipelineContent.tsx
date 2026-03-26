@@ -2043,6 +2043,7 @@ const ClickableStagesList = ({
                     existingMeetLink={slotBooking?.demo_meet_link || undefined}
                     existingMeetType={slotBooking?.demo_meet_type || undefined}
                     onUpdate={() => {}}
+                    stageName={step.title}
                   />
                 )}
 
