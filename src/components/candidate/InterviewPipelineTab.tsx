@@ -1191,6 +1191,71 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       )}
                       {/* Show slot booking for all Slot Booking stages */}
 
+                      {/* Join Meeting / Start Test for current non-slot stages */}
+                      {status === 'current' && !stage.name.toLowerCase().includes('slot booking') && (() => {
+                        const sn = stage.name.toLowerCase();
+                        const isWrittenTest = sn.includes('written test') || sn.includes('technical assessment');
+                        const isFeedbackRound = sn.includes('feedback');
+                        const isLiveRound = sn.includes('segment') || sn.includes('admin') || sn.includes('core team') || sn.includes('management') || sn.includes('hr');
+
+                        if (isWrittenTest) {
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/book-slot?candidateId=${currentInterview.id}&stageId=${stage.id}&stageName=${encodeURIComponent('Written Test')}&type=written_test`);
+                              }}
+                              className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
+                            >
+                              <Code className="h-3 w-3" />
+                              Start Test
+                            </button>
+                          );
+                        }
+
+                        if (isFeedbackRound || isLiveRound) {
+                          // Find meeting link from slot bookings for this round type
+                          const roundTypeMap: Record<string, string[]> = {
+                            'segment': ['segment_round', 'Segment Round'],
+                            'admin': ['admin_academic_round', 'Admin & Academic Round'],
+                            'core team': ['core_team_round', 'Core Team Round'],
+                            'management': ['management_round', 'Management Round'],
+                            'hr': ['hr_round', 'HR Round'],
+                          };
+                          let matchingBooking: SlotBooking | undefined;
+                          for (const [key, types] of Object.entries(roundTypeMap)) {
+                            if (sn.includes(key)) {
+                              matchingBooking = slotBookings.find(b => types.includes(b.booking_type));
+                              break;
+                            }
+                          }
+                          const meetLink = matchingBooking?.demo_meet_link;
+                          const meetType = matchingBooking?.demo_meet_type;
+
+                          if (meetLink) {
+                            return (
+                              <a
+                                href={meetLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 transition-colors flex items-center gap-1 font-medium"
+                              >
+                                <Video className="h-3 w-3" />
+                                Join Meeting
+                              </a>
+                            );
+                          }
+                          return (
+                            <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-600">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Awaiting Link
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+
                       {stage.name.toLowerCase().includes('slot booking') && (() => {
                         const isWritten = stage.name.toLowerCase().includes('written');
                         const isDemo = stage.name.toLowerCase().includes('demo');
