@@ -338,8 +338,12 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       setStages(filteredStages);
 
       if (interviewsWithEvents.length > 0) {
-        setSelectedInterview(interviewsWithEvents[0].id);
-        await fetchReviewData(interviewsWithEvents[0] as InterviewCandidate);
+        const targetId = selectedInterview && interviewsWithEvents.some(i => i.id === selectedInterview)
+          ? selectedInterview
+          : interviewsWithEvents[0].id;
+        setSelectedInterview(targetId);
+        const targetInterview = interviewsWithEvents.find(i => i.id === targetId) || interviewsWithEvents[0];
+        await fetchReviewData(targetInterview as InterviewCandidate);
       }
 
       // Fetch slot bookings for this candidate
