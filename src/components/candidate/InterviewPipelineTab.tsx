@@ -694,6 +694,65 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         );
       }
 
+      case 'Segment Round': {
+        // Find segment slot booking to get meeting info
+        const segBooking = slotBookings.find(b => 
+          b.booking_type === 'segment_round' || b.booking_type === 'Segment Round'
+        );
+        const segMeetType = segBooking?.demo_meet_type;
+        const segMeetLink = segBooking?.demo_meet_link;
+        
+        return (
+          <div className="space-y-3">
+            {segMeetType && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">
+                    {segMeetType === 'ai_video' ? 'AI Video Interview' : 
+                     segMeetType === 'google_meet' || segMeetType === 'manual_link' ? 'Google Meet / Zoom' : 
+                     segMeetType === 'zoom_meet' ? 'Zoom Meeting' : 'Live Interview Session'}
+                  </span>
+                </div>
+                {segMeetLink && (
+                  <a
+                    href={segMeetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                  >
+                    <Video className="h-4 w-4" />
+                    Join Meeting
+                  </a>
+                )}
+                {segMeetType === 'ai_video' && !segMeetLink && (
+                  <p className="text-sm text-muted-foreground">
+                    AI-powered session. The link will be available when the employer confirms.
+                  </p>
+                )}
+              </div>
+            )}
+            {!segMeetType && (
+              <p className="text-sm text-muted-foreground">
+                Live interview session. Awaiting meeting link from employer.
+              </p>
+            )}
+            {event?.ai_score != null && (
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Score:</span>
+                <Badge className={`${event.ai_score >= 70 ? 'bg-green-500' : event.ai_score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+                  {event.ai_score}%
+                </Badge>
+              </div>
+            )}
+            {event?.notes && (
+              <p className="text-sm text-muted-foreground">{event.notes}</p>
+            )}
+          </div>
+        );
+      }
+
       case 'Demo Feedback':
       case 'Segment Feedback':
       case 'Admin & Academic Feedback':
