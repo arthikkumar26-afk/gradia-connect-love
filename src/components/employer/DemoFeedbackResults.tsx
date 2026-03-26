@@ -189,20 +189,12 @@ export const DemoFeedbackResults = ({
         
         const roundDisplayName = feedbackType === 'hr' ? 'HR' : feedbackType === 'core_team' ? 'Core Team' : feedbackType === 'management' ? 'Management' : feedbackType === 'segment' ? 'Segment' : feedbackType === 'admin_academic' ? 'Admin & Academic' : 'Demo';
         
-        // After auto-advancing from feedback, send slot booking email for the next stage if applicable
+        // After auto-advancing from feedback, the process-interview-stage gateway handles emails
+        // No need to send slot booking email here - the gateway in process-interview-stage already sends it
         const nextStageName = data?.currentStage || '';
         if (nextStageName.toLowerCase().includes('slot booking')) {
           const slotRound = nextStageName.replace(' Slot Booking', '');
-          try {
-            await supabase.functions.invoke('send-slot-booking-email', {
-              body: { interviewCandidateId, stageName: slotRound }
-            });
-            console.log(`Slot booking email sent for ${slotRound} after ${roundDisplayName} feedback auto-advance`);
-            toast.success(`All ${roundDisplayName} feedback received! ${slotRound} slot booking email sent to candidate.`);
-          } catch (slotErr) {
-            console.error(`Error sending slot booking email after feedback auto-advance:`, slotErr);
-            toast.success(`All ${roundDisplayName} feedback received! Stage completed. Advancing to next round...`);
-          }
+          toast.success(`All ${roundDisplayName} feedback received! ${slotRound} slot booking email sent to candidate.`);
         } else {
           toast.success(`All ${roundDisplayName} feedback received! Stage completed. Advancing to next round...`);
         }

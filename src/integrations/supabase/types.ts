@@ -2496,6 +2496,59 @@ export type Database = {
         }
         Relationships: []
       }
+      pipeline_email_log: {
+        Row: {
+          created_at: string
+          email_sent: boolean
+          email_type: string
+          error_message: string | null
+          id: string
+          interview_candidate_id: string
+          resend_event_id: string | null
+          sent_at: string | null
+          stage_locked: boolean
+          stage_name: string
+          stage_order: number
+          trigger_source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_sent?: boolean
+          email_type: string
+          error_message?: string | null
+          id?: string
+          interview_candidate_id: string
+          resend_event_id?: string | null
+          sent_at?: string | null
+          stage_locked?: boolean
+          stage_name: string
+          stage_order: number
+          trigger_source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_sent?: boolean
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          interview_candidate_id?: string
+          resend_event_id?: string | null
+          sent_at?: string | null
+          stage_locked?: boolean
+          stage_name?: string
+          stage_order?: number
+          trigger_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_email_log_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       popup_ads: {
         Row: {
           created_at: string
