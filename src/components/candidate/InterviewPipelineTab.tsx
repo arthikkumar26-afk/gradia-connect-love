@@ -30,6 +30,7 @@ import {
   ThumbsUp,
   TrendingUp,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 import { StageResultsModal } from "@/components/employer/StageResultsModal";
 
