@@ -1350,8 +1350,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       {status === 'current' && !stage.name.toLowerCase().includes('slot booking') && (() => {
                         const sn = stage.name.toLowerCase();
                         const isWrittenTest = sn.includes('written test') || sn.includes('technical assessment');
-                        const isFeedbackRound = sn.includes('feedback');
-                        const isLiveRound = sn.includes('segment') || sn.includes('admin') || sn.includes('core team') || sn.includes('management') || sn.includes('hr');
+                        const isFeedbackStage = sn.includes('feedback');
+                        const isLiveRound = !isFeedbackStage && sn.includes(' round');
 
                         if (isWrittenTest) {
                           return (
@@ -1368,7 +1368,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                           );
                         }
 
-                        if (isFeedbackRound || isLiveRound) {
+                        if (isLiveRound) {
                           // Find meeting link from slot bookings for this round type
                           const roundTypeMap: Record<string, string[]> = {
                             'segment': ['segment_round', 'Segment Round'],
