@@ -1154,7 +1154,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             ? formatDate(event.completed_at)
                             : status === 'completed' ? 'Completed'
                             : status === 'current' && (stage.name === 'Interview Guidelines' || stage.name === 'CV/Resume' || stage.name === 'Resume Screening')
-                            ? 'Email sent to candidate'
+                            ? 'Auto-processing'
                             : status === 'current' ? 'Currently active'
                             : status === 'scheduled' && event?.scheduled_at 
                             ? `Scheduled for ${formatDate(event.scheduled_at)}`
