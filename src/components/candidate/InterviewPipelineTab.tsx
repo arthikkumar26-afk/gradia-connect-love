@@ -123,6 +123,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [responses, setResponses] = useState<InterviewResponse[]>([]);
   const [reviews, setReviews] = useState<ManagementReview[]>([]);
+  const [resumeAnalysis, setResumeAnalysis] = useState<any>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
 
@@ -312,6 +313,17 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         .order('created_at', { ascending: false });
 
       setSlotBookings(bookingsData || []);
+
+      // Fetch resume analysis as fallback for CV/Resume stage score
+      const { data: resumeData } = await supabase
+        .from('resume_analyses')
+        .select('overall_score, strengths, improvements, skill_highlights, experience_summary, career_level')
+        .eq('user_id', candidateId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setResumeAnalysis(resumeData);
     } catch (error) {
       console.error('Error fetching interview data:', error);
     } finally {
@@ -518,10 +530,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       }
       case 'CV/Resume':
       case 'Resume Screening': {
-        // Get analysis from multiple sources: event ai_feedback > interview ai_analysis
+        // Get analysis from multiple sources: event ai_feedback > interview ai_analysis > resume_analyses table
         const eventFeedback = event?.ai_feedback && typeof event.ai_feedback === 'object' ? event.ai_feedback as any : null;
-        const analysis = eventFeedback?.overall_score ? eventFeedback : currentInterview.ai_analysis;
-        const score = event?.ai_score || currentInterview.ai_score;
+        const interviewAnalysis = currentInterview.ai_analysis && typeof currentInterview.ai_analysis === 'object' && (currentInterview.ai_analysis as any)?.overall_score ? currentInterview.ai_analysis : null;
+        const analysis = eventFeedback?.overall_score ? eventFeedback : interviewAnalysis || resumeAnalysis;
+        const score = event?.ai_score || (analysis?.overall_score) || null;
         
         if (!score && !analysis) {
           return (
@@ -1163,7 +1176,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                         </p>
                         {/* Score + threshold inline */}
                         {status === 'completed' && (() => {
-                          const score = event?.ai_score || (stage.name === 'CV/Resume' ? currentInterview.ai_score : null);
+                          const score = event?.ai_score || (stage.name === 'CV/Resume' || stage.name === 'Resume Screening' ? (resumeAnalysis?.overall_score || currentInterview.ai_score) : null);
                           if (score == null) return null;
                           return (
                             <>
