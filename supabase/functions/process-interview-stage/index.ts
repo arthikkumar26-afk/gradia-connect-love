@@ -149,7 +149,7 @@ serve(async (req) => {
         // Skip intermediate "Round" stages — go directly from Slot Booking to Feedback
         // This applies to: Segment Round, Admin & Academic Round, Core Team Round, Management Round, HR Round
         const roundStagesToSkip = [
-          'Segment Round', 'Admin & Academic Round', 'Core Team Round', 
+          'Admin & Academic Round', 'Core Team Round', 
           'Management Round', 'HR Round', 'Demo Round'
         ];
         
