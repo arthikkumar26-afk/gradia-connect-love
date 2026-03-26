@@ -3611,6 +3611,10 @@ export type Database = {
         Args: { coupon_id_input: string }
         Returns: undefined
       }
+      is_candidate_review: {
+        Args: { _interview_candidate_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_edutech_profile: { Args: { _user_id: string }; Returns: boolean }
       is_employer: { Args: { u_id: string }; Returns: boolean }
       is_employer_by_role: { Args: { _user_id: string }; Returns: boolean }
