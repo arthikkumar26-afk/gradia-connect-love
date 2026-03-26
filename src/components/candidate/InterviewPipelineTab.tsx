@@ -1109,11 +1109,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                   }`} />
                 )}
 
-                {/* Email-only current stage: show "Email Sent" banner above */}
+                {/* Auto-processing stage indicator */}
                 {status === 'current' && (stage.name === 'Interview Guidelines' || stage.name === 'CV/Resume' || stage.name === 'Resume Screening') && (
-                  <div className="mb-1 flex items-center gap-2 text-xs text-green-600 bg-green-500/10 border border-green-500/20 rounded-md px-3 py-1.5">
-                    <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span>Email sent — awaiting system to advance to the next stage</span>
+                  <div className="mb-1 flex items-center gap-2 text-xs text-blue-600 bg-blue-500/10 border border-blue-500/20 rounded-md px-3 py-1.5">
+                    <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span>Processing — system will advance to the next stage automatically</span>
                   </div>
                 )}
 
@@ -1154,7 +1154,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                             ? formatDate(event.completed_at)
                             : status === 'completed' ? 'Completed'
                             : status === 'current' && (stage.name === 'Interview Guidelines' || stage.name === 'CV/Resume' || stage.name === 'Resume Screening')
-                            ? 'Email sent to candidate'
+                            ? 'Auto-processing'
                             : status === 'current' ? 'Currently active'
                             : status === 'scheduled' && event?.scheduled_at 
                             ? `Scheduled for ${formatDate(event.scheduled_at)}`
