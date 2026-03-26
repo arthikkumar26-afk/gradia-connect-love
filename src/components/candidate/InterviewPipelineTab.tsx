@@ -482,10 +482,35 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return -1;
   };
 
-  const getStageStatus = (stageId: string, events: InterviewEvent[], currentStageId: string | null) => {
+  const roundFeedbackTypeMap: Record<string, string> = {
+    'Demo Round': 'demo',
+    'Segment Round': 'segment',
+    'Admin & Academic Round': 'admin_academic',
+    'Core Team Round': 'core_team',
+    'Management Round': 'management',
+    'HR Round': 'hr',
+  };
+
+  const hasSubmittedFeedbackForType = (feedbackType?: string) => {
+    if (!feedbackType) return false;
+
+    return reviews.some(
+      (review) =>
+        review.status === 'submitted' &&
+        (review.feedback_type === feedbackType || (feedbackType === 'demo' && !review.feedback_type))
+    );
+  };
+
+  const hasSubmittedFeedbackForRoundStage = (stageName: string) => {
+    return hasSubmittedFeedbackForType(roundFeedbackTypeMap[stageName]);
+  };
+
+  const getStageStatus = (stageId: string, stageName: string, events: InterviewEvent[], currentStageId: string | null) => {
     // Check for completed or passed events first
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
+
+    if (hasSubmittedFeedbackForRoundStage(stageName)) return 'completed';
 
     const stageIndex = stages.findIndex(s => s.id === stageId);
     const currentStageIndex = resolveVisibleIndex(currentStageId);
@@ -558,6 +583,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   };
 
   const getLiveRoundJoinAction = (stageName: string, interviewCandidateId: string, stageId: string) => {
+    if (hasSubmittedFeedbackForRoundStage(stageName)) {
+      return null;
+    }
+
     const booking = getLiveRoundBooking(stageName);
 
     if (!booking || booking.status !== 'confirmed') {
@@ -599,7 +628,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     const currentInterview = interviews.find(i => i.id === selectedInterview);
     if (!currentInterview) return null;
 
-    const status = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
+    const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
     if (status !== 'completed' && status !== 'passed') return null;
 
     switch (stage.name) {
@@ -1316,7 +1345,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         {/* Pipeline Stages - Vertical Timeline */}
         <div className="space-y-3">
           {stages.map((stage, index) => {
-            const rawStatus = getStageStatus(stage.id, currentInterview.events, currentInterview.current_stage_id);
+            const rawStatus = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
             const isFeedbackStage = stage.name.toLowerCase().includes('feedback');
@@ -1324,7 +1353,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const slotStageName = roundSlotStageNameMap[stage.name];
             const slotStage = slotStageName ? stages.find(s => s.name === slotStageName) : null;
             const slotStageStatus = slotStage
-              ? getStageStatus(slotStage.id, currentInterview.events, currentInterview.current_stage_id)
+              ? getStageStatus(slotStage.id, slotStage.name, currentInterview.events, currentInterview.current_stage_id)
               : null;
             const status = rawStatus === 'upcoming' && liveRoundJoinAction && slotStageStatus === 'completed'
               ? 'current'
@@ -1338,9 +1367,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
               'HR Feedback': 'hr',
             };
             const feedbackType = feedbackTypeMap[stage.name];
-            const hasSubmittedFeedback = isFeedbackStage
-              ? reviews.some(r => r.status === 'submitted' && (r.feedback_type === feedbackType || (feedbackType === 'demo' && !r.feedback_type)))
-              : false;
+            const hasSubmittedFeedback = isFeedbackStage ? hasSubmittedFeedbackForType(feedbackType) : false;
             const hasReviewData = status === 'completed' || status === 'passed' || (isFeedbackStage && hasSubmittedFeedback);
             const isExpanded = expandedStageId === stage.id;
             
