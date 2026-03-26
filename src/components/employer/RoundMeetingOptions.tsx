@@ -68,7 +68,7 @@ export const RoundMeetingOptions = ({
 
     setIsSending(true);
     try {
-      // Send demo round emails (candidate + observers)
+      // Send round emails (candidate + observers)
       const { error } = await supabase.functions.invoke('send-demo-round-emails', {
         body: {
           interviewCandidateId,
