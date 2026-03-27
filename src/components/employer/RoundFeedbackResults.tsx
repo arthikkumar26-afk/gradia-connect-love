@@ -230,12 +230,24 @@ export const RoundFeedbackResults = ({
     };
   }, [reviews, interviewCandidateId, feedbackType, onAllSubmitted, isActiveStage]);
 
-  const handleResendFeedback = async () => {
+  const handleOpenEmailPreview = () => {
+    setEmailSubject(`📝 ${roundLabel} Feedback Request`);
+    setEmailBody(`Hello,\n\nA candidate has completed their ${roundLabel} and requires your feedback evaluation.\n\nPlease click the link in the email to submit your evaluation.\n\nThank you.`);
+    setShowEmailPreview(true);
+  };
+
+  const handleSendWithPreview = async () => {
+    setShowEmailPreview(false);
     setIsResending(true);
     try {
       const functionName = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
       const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { interviewCandidateId, feedbackType }
+        body: { 
+          interviewCandidateId, 
+          feedbackType,
+          customSubject: emailSubject,
+          customBody: emailBody,
+        }
       });
 
       if (error) throw error;
@@ -243,9 +255,9 @@ export const RoundFeedbackResults = ({
       const observerTargets = Array.isArray(data?.observerEmails) && data.observerEmails.length > 0
         ? data.observerEmails
         : reviews.map((review) => review.reviewer_email).filter(Boolean);
-      const roundLabel = data?.roundLabel || 'Feedback';
+      const label = data?.roundLabel || roundLabel;
 
-      toast.success(`${roundLabel} request sent to observers`, {
+      toast.success(`${label} request sent to observers`, {
         description: observerTargets.length > 0 ? `Sent to: ${observerTargets.join(', ')}` : 'Emails have been triggered successfully.',
       });
     } catch (err) {
