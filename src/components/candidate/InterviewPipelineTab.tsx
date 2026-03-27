@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   CheckCircle2,
   Clock,
@@ -32,8 +33,10 @@ import {
   TrendingUp,
   Eye,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { StageResultsModal } from "@/components/employer/StageResultsModal";
+import { AllStagesReviewSummary } from "@/components/employer/AllStagesReviewSummary";
 
 interface InterviewStage {
   id: string;
