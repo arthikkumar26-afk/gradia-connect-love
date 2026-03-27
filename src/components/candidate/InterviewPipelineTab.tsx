@@ -1270,8 +1270,16 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   return (
     <div className="space-y-6">
-      {/* Refresh Button */}
-      <div className="flex justify-end">
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowReportModal(true)}
+          disabled={!currentInterview}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border border-primary bg-primary/10 hover:bg-primary/20 text-primary transition-all disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          Download Report
+        </button>
         <button
           onClick={handleManualRefresh}
           disabled={isRefreshing}
