@@ -665,7 +665,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     if (!currentInterview) return null;
 
     const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
-    if (status !== 'completed' && status !== 'passed') return null;
+    const isFinalReview = stage.name === 'Final Review';
+    if (!isFinalReview && status !== 'completed' && status !== 'passed') return null;
 
     switch (stage.name) {
       case 'Interview Guidelines': {
@@ -1431,7 +1432,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             };
             const feedbackType = feedbackTypeMap[stage.name];
             const hasSubmittedFeedback = isFeedbackStage ? hasSubmittedFeedbackForType(feedbackType) : false;
-            const hasReviewData = status === 'completed' || status === 'passed' || (isFeedbackStage && hasSubmittedFeedback);
+            const isFinalReview = stage.name === 'Final Review';
+            const hasReviewData = status === 'completed' || status === 'passed' || (isFeedbackStage && hasSubmittedFeedback) || (isFinalReview && (status === 'current' || status === 'completed' || status === 'passed'));
             const isExpanded = expandedStageId === stage.id;
             
             return (
