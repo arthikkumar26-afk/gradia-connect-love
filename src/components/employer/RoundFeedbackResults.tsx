@@ -52,7 +52,7 @@ export const RoundFeedbackResults = ({
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
-  const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress';
+  const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress' || stageStatus === 'completed';
 
   const roundLabelMap: Record<string, string> = {
     demo: 'Demo Round',
