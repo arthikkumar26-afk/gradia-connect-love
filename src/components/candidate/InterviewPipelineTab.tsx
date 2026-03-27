@@ -1169,26 +1169,23 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
 
       case 'Final Review': {
-        const score = event?.ai_score;
         return (
-          <div className="space-y-3">
-            {score != null && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Award className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">Final Score:</span>
-                <Badge className={`${score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
-                  {score}%
-                </Badge>
+                <FileCheck className="h-5 w-5 text-primary" />
+                <span className="text-sm font-semibold">Complete Interview Summary</span>
               </div>
-            )}
-            {event?.ai_feedback && typeof event.ai_feedback === 'object' && event.ai_feedback.overall_summary && (
-              <p className="text-sm text-muted-foreground">{event.ai_feedback.overall_summary}</p>
-            )}
-            {event?.notes && (
-              <p className="text-sm text-muted-foreground">{event.notes}</p>
-            )}
-            {!score && !event?.notes && (
-              <p className="text-sm text-muted-foreground">Final review completed.</p>
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center gap-1 text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 transition"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download PDF
+              </button>
+            </div>
+            {currentInterview && (
+              <AllStagesReviewSummary interviewCandidateId={currentInterview.id} />
             )}
           </div>
         );
