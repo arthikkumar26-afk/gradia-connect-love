@@ -491,6 +491,16 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     'HR Round': 'hr',
   };
 
+  // Map feedback stage names to their feedback_type
+  const feedbackStageFeedbackTypeMap: Record<string, string> = {
+    'Demo Feedback': 'demo',
+    'Segment Feedback': 'segment',
+    'Admin & Academic Feedback': 'admin_academic',
+    'Core Team Feedback': 'core_team',
+    'Management Round Feedback': 'management',
+    'HR Feedback': 'hr',
+  };
+
   const hasSubmittedFeedbackForType = (feedbackType?: string) => {
     if (!feedbackType) return false;
 
@@ -505,12 +515,28 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return hasSubmittedFeedbackForType(roundFeedbackTypeMap[stageName]);
   };
 
+  const hasSubmittedFeedbackForFeedbackStage = (stageName: string) => {
+    return hasSubmittedFeedbackForType(feedbackStageFeedbackTypeMap[stageName]);
+  };
+
+  // Check if the stage immediately before the given index is a feedback stage with submitted reviews
+  const isPreviousFeedbackStageCompleted = (stageIndex: number) => {
+    if (stageIndex <= 0) return false;
+    const prevStage = stages[stageIndex - 1];
+    if (!prevStage) return false;
+    return hasSubmittedFeedbackForFeedbackStage(prevStage.name);
+  };
+
   const getStageStatus = (stageId: string, stageName: string, events: InterviewEvent[], currentStageId: string | null) => {
     // Check for completed or passed events first
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
 
+    // Round stages completed when feedback is submitted
     if (hasSubmittedFeedbackForRoundStage(stageName)) return 'completed';
+
+    // Feedback stages completed when their reviews are submitted
+    if (hasSubmittedFeedbackForFeedbackStage(stageName)) return 'completed';
 
     const stageIndex = stages.findIndex(s => s.id === stageId);
     const currentStageIndex = resolveVisibleIndex(currentStageId);
@@ -532,6 +558,12 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex === currentStageIndex) {
       return 'current';
     }
+
+    // If previous stage is a feedback stage with submitted reviews, this becomes current
+    if (stageIndex !== -1 && isPreviousFeedbackStageCompleted(stageIndex)) {
+      return 'current';
+    }
+
     return 'upcoming';
   };
 
