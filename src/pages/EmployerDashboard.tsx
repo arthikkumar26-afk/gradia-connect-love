@@ -93,7 +93,7 @@ const EmployerDashboard = () => {
     interviewsScheduled: 0,
     isLoading: true
   });
-  const { user, profile, isAuthenticated, logout } = useAuth();
+  const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
   const [candidateStatusData, setCandidateStatusData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [applicationsPerJob, setApplicationsPerJob] = useState<{ name: string; applications: number }[]>([]);
 
