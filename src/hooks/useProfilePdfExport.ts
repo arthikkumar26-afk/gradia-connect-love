@@ -123,6 +123,35 @@ interface MockInterviewSession {
   started_at?: string;
 }
 
+interface InterviewPipelineReview {
+  stageName: string;
+  stageOrder: number;
+  score: number | null;
+  status: string | null;
+  completedAt: string | null;
+  notes: string | null;
+  totalQuestions?: number;
+  correctAnswers?: number;
+  timeTaken?: number;
+  reviews?: {
+    reviewerName: string | null;
+    overallRating: number | null;
+    teachingRating: number | null;
+    communicationRating: number | null;
+    knowledgeRating: number | null;
+    recommendation: string | null;
+    feedbackText: string | null;
+  }[];
+}
+
+interface InterviewPipelineData {
+  jobTitle: string;
+  companyName: string;
+  appliedAt: string | null;
+  overallStatus: string | null;
+  stageReviews: InterviewPipelineReview[];
+}
+
 interface ProfilePdfExportData {
   profile: Profile;
   resumeAnalysis?: ResumeAnalysis | null;
@@ -133,6 +162,7 @@ interface ProfilePdfExportData {
   mockTestResults?: MockTestResult[];
   mockInterviewSessions?: MockInterviewSession[];
   mockInterviewStageResults?: MockInterviewStageResult[];
+  interviewPipelineResults?: InterviewPipelineData[];
 }
 
 export const useProfilePdfExport = () => {
