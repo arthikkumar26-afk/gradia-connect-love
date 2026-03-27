@@ -1431,7 +1431,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             };
             const feedbackType = feedbackTypeMap[stage.name];
             const hasSubmittedFeedback = isFeedbackStage ? hasSubmittedFeedbackForType(feedbackType) : false;
-            const hasReviewData = status === 'completed' || status === 'passed' || (isFeedbackStage && hasSubmittedFeedback);
+            const isFinalReview = stage.name === 'Final Review';
+            const hasReviewData = status === 'completed' || status === 'passed' || (isFeedbackStage && hasSubmittedFeedback) || (isFinalReview && (status === 'current' || status === 'completed' || status === 'passed'));
             const isExpanded = expandedStageId === stage.id;
             
             return (
