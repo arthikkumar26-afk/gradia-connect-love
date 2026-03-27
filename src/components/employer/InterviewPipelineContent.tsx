@@ -1216,30 +1216,36 @@ const ClickableStagesList = ({
     const isAdmin = stepTitle === 'Admin & Academic Round Slot Booking';
     const isCoreTeam = stepTitle === 'Core Team Round Slot Booking';
     const isManagement = stepTitle === 'Management Round Slot Booking';
+    const isHR = stepTitle === 'HR Round Slot Booking';
 
     return {
       isSegment,
       isAdmin,
       isCoreTeam,
       isManagement,
-      activeBookingData: isCoreTeam
-        ? coreTeamSlotBooking
-        : isManagement
-          ? managementSlotBooking
-          : isSegment
-            ? segmentSlotBooking
-            : isAdmin
-              ? adminSlotBooking
-              : slotBooking,
-      activeEmails: isCoreTeam
-        ? coreTeamObserverEmails
-        : isManagement
-          ? managementObserverEmails
-          : isSegment
-            ? segmentObserverEmails
-            : isAdmin
-              ? adminObserverEmails
-              : observerEmails,
+      isHR,
+      activeBookingData: isHR
+        ? hrSlotBooking
+        : isCoreTeam
+          ? coreTeamSlotBooking
+          : isManagement
+            ? managementSlotBooking
+            : isSegment
+              ? segmentSlotBooking
+              : isAdmin
+                ? adminSlotBooking
+                : slotBooking,
+      activeEmails: isHR
+        ? hrObserverEmails
+        : isCoreTeam
+          ? coreTeamObserverEmails
+          : isManagement
+            ? managementObserverEmails
+            : isSegment
+              ? segmentObserverEmails
+              : isAdmin
+                ? adminObserverEmails
+                : observerEmails,
     };
   };
 
