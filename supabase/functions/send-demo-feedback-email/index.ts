@@ -9,6 +9,8 @@ const corsHeaders = {
 interface DemoFeedbackRequest {
   interviewCandidateId: string;
   feedbackType?: string;
+  customSubject?: string;
+  customBody?: string;
 }
 
 interface PendingReviewRecord {
