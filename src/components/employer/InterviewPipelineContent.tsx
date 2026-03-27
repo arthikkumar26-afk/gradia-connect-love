@@ -1428,7 +1428,7 @@ const ClickableStagesList = ({
   };
 
   const handleRemoveObserverEmail = async (stepTitle: string, emailToRemove: string) => {
-    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+    const { isSegment, isAdmin, isCoreTeam, isManagement, isHR, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
 
     if (!activeBookingData) return;
     setIsSavingObserver(true);
@@ -1440,14 +1440,16 @@ const ClickableStagesList = ({
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
+      if (isHR) setHrObserverEmails(updatedEmails);
+      else if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
       else if (isManagement) setManagementObserverEmails(updatedEmails);
       else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
 
-      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() };
-      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() } as any;
+      if (isHR) setHrSlotBooking(updatedBooking);
+      else if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
