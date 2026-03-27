@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic, Pencil, Check, X } from "lucide-react";
+import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic, Pencil, Check, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface FeedbackReview {
   id: string;
