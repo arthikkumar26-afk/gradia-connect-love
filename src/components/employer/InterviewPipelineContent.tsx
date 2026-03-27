@@ -501,23 +501,6 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'HR Round Slot Booking') {
-        // HR Round Slot Booking → HR Round (not skipped for Principal pipeline)
-        try {
-          await supabase.functions.invoke('send-demo-round-emails', {
-            body: { interviewCandidateId, roundName: 'HR Round' }
-          });
-          toast.success(`✓ HR Round Slot Booking cleared! HR Round invitations sent`, {
-            description: `Emails sent to candidate and observer`,
-            duration: 5000,
-          });
-        } catch (hrError) {
-          console.error('Error sending HR round emails:', hrError);
-          toast.success(`✓ HR Round Slot Booking cleared! Moved to HR Round`, {
-            description: 'Note: HR round email failed to send. You can resend manually.',
-            duration: 5000,
-          });
-        }
       } else {
         // Show clear success message with current stage cleared and next stage info
         const clearedMessage = `✓ ${step.title} cleared!`;
