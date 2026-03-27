@@ -1441,7 +1441,7 @@ const ClickableStagesList = ({
 
   const isSlotEdited = slotBooking && slotBooking.updated_at !== slotBooking.created_at;
   const isWrittenTestSlotEdited = writtenTestSlotBooking && writtenTestSlotBooking.updated_at !== writtenTestSlotBooking.created_at;
-  const isHrSlotEdited = hrSlotBooking && hrSlotBooking.updated_at !== hrSlotBooking.created_at;
+  
 
   // Written Test Slot Booking handlers
   const handleEditWrittenTestSlot = () => {
