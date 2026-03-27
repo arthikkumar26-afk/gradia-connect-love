@@ -1094,112 +1094,119 @@ export const useProfilePdfExport = () => {
 
       // CV SCORE BREAKDOWN - Detailed for Skillory AI Compatibility
       if (resumeAnalysis) {
-        checkPageBreak(60);
-        addSection('CV SCORE BREAKDOWN (Skillory AI Compatible)', [220, 38, 127]);
-        
+        doc.addPage();
+        yPos = 20;
+
+        // CV Analysis banner
+        doc.setFillColor(220, 38, 127);
+        doc.rect(0, 0, pageWidth, 28, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('CV ANALYSIS & SKILL ASSESSMENT', margin, 14);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`For AI-powered course recommendations | ${profile.full_name}`, margin, 22);
+        yPos = 35;
+        doc.setTextColor(0, 0, 0);
+
         const score = resumeAnalysis.overall_score || 0;
         
-        // Score explanation header
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Your CV Score: ${score}/100`, margin, yPos);
-        yPos += 8;
+        // Score card
+        addTableHeader('CV SCORE', [220, 38, 127]);
+        addTableRow('OVERALL SCORE', `${score}/100`, 'CAREER LEVEL', resumeAnalysis.career_level || '-', false);
+        addTableRow('PREFERRED ROLE', profile.preferred_role || '-', 'PRIMARY SUBJECT', profile.primary_subject || '-', true);
+        addTableRow('EXPERIENCE LEVEL', profile.experience_level || '-', 'SEGMENT', profile.segment || '-', false);
+        yPos += 6;
+
+        // Score explanation
+        addTableHeader('SCORE ANALYSIS', [79, 70, 229]);
+        const scoreExplanation = score >= 80 
+          ? 'Excellent CV with strong professional details, comprehensive experience, and well-articulated skills.'
+          : score >= 60 
+            ? 'Good CV with foundational content. Needs quantifiable achievements and detailed descriptions.'
+            : score >= 40
+              ? 'CV needs improvement. Missing detailed work experience and comprehensive skill sets.'
+              : 'CV requires substantial work. Most essential sections are incomplete or missing.';
         
-        // Score breakdown explanation
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(50, 50, 50);
-        
-        // Why this score
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(79, 70, 229);
-        doc.text('WHY THIS SCORE?', margin, yPos);
-        yPos += 6;
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(50, 50, 50);
-        
-        const scoreExplanation = score >= 80 
-          ? 'Your CV demonstrates excellent completeness with strong professional details, comprehensive experience documentation, and well-articulated skills.'
-          : score >= 60 
-            ? 'Your CV shows good foundational content but lacks some key details that could strengthen your profile. Focus on adding quantifiable achievements and detailed project descriptions.'
-            : score >= 40
-              ? 'Your CV needs significant improvement. Missing critical sections like detailed work experience, quantifiable achievements, and comprehensive skill sets.'
-              : 'Your CV requires substantial work. Most essential sections are either incomplete or missing entirely.';
-        
-        const explanationLines = doc.splitTextToSize(scoreExplanation, contentWidth - 5);
+        const explanationLines = doc.splitTextToSize(scoreExplanation, contentWidth - 8);
         doc.text(explanationLines, margin + 3, yPos);
         yPos += explanationLines.length * 4 + 6;
-        
-        // What you have (strengths)
-        if (resumeAnalysis.strengths && resumeAnalysis.strengths.length > 0) {
-          checkPageBreak(25);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(34, 139, 34);
-          doc.text('✓ WHAT YOU HAVE (Contributing to your score):', margin, yPos);
-          yPos += 6;
-          doc.setFont('helvetica', 'normal');
-          resumeAnalysis.strengths.forEach(strength => {
-            checkPageBreak(8);
-            const sLines = doc.splitTextToSize(`• ${strength}`, contentWidth - 10);
+
+        // Skills section for AI parsing
+        if (resumeAnalysis.skill_highlights?.length > 0) {
+          addTableHeader('IDENTIFIED SKILLS', [59, 130, 246]);
+          resumeAnalysis.skill_highlights.forEach((skill, idx) => {
+            checkPageBreak(7);
+            addTableRow(`SKILL ${idx + 1}`, skill, '', '', idx % 2 === 0);
+          });
+          yPos += 4;
+        }
+
+        // Strengths
+        if (resumeAnalysis.strengths?.length > 0) {
+          addTableHeader('STRENGTHS', [16, 185, 129]);
+          resumeAnalysis.strengths.forEach((strength, idx) => {
+            checkPageBreak(10);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(16, 120, 80);
+            const sLines = doc.splitTextToSize(`${idx + 1}. ${strength}`, contentWidth - 10);
             doc.text(sLines, margin + 5, yPos);
-            yPos += sLines.length * 4;
+            yPos += sLines.length * 4 + 1;
           });
           yPos += 4;
         }
-        
-        // What's missing (improvements)
-        if (resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0) {
-          checkPageBreak(25);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(220, 53, 69);
-          doc.text('✗ WHAT\'S MISSING (Areas reducing your score):', margin, yPos);
-          yPos += 6;
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(180, 80, 0);
-          resumeAnalysis.improvements.forEach(improvement => {
-            checkPageBreak(8);
-            const iLines = doc.splitTextToSize(`• ${improvement}`, contentWidth - 10);
+
+        // Areas for improvement (key for AI course suggestions)
+        if (resumeAnalysis.improvements?.length > 0) {
+          addTableHeader('AREAS FOR IMPROVEMENT (Course Recommendations Needed)', [220, 53, 69]);
+          resumeAnalysis.improvements.forEach((item, idx) => {
+            checkPageBreak(10);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(180, 60, 30);
+            const iLines = doc.splitTextToSize(`${idx + 1}. ${item}`, contentWidth - 10);
             doc.text(iLines, margin + 5, yPos);
-            yPos += iLines.length * 4;
+            yPos += iLines.length * 4 + 1;
           });
           yPos += 4;
         }
-        
-        // Actionable recommendations
-        checkPageBreak(40);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(79, 70, 229);
-        doc.text('📋 ACTION ITEMS TO IMPROVE YOUR CV:', margin, yPos);
-        yPos += 6;
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(50, 50, 50);
-        
+
+        // Experience summary for context
+        if (resumeAnalysis.experience_summary) {
+          addTableHeader('EXPERIENCE SUMMARY', [107, 114, 128]);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(50, 50, 50);
+          const expLines = doc.splitTextToSize(resumeAnalysis.experience_summary, contentWidth - 8);
+          doc.text(expLines, margin + 3, yPos);
+          yPos += expLines.length * 4 + 6;
+        }
+
+        // Action items
+        checkPageBreak(50);
+        addTableHeader('ACTION ITEMS TO IMPROVE CV', [168, 85, 247]);
         const recommendations = [
           'Add quantifiable achievements (e.g., "Increased student engagement by 25%")',
           'Include specific project descriptions with outcomes',
           'List certifications, awards, and professional development courses',
           'Add detailed technical skills with proficiency levels',
-          'Include keywords relevant to your target role for ATS optimization',
+          'Include keywords relevant to target role for ATS optimization',
           'Ensure contact information and professional summary are complete',
-          'Add references or testimonials if available'
         ];
-        
-        recommendations.forEach(rec => {
+        recommendations.forEach((rec, idx) => {
           checkPageBreak(8);
-          const recLines = doc.splitTextToSize(`→ ${rec}`, contentWidth - 10);
-          doc.text(recLines, margin + 5, yPos);
-          yPos += recLines.length * 4;
+          addTableRow(`ACTION ${idx + 1}`, rec, '', '', idx % 2 === 0);
         });
-        yPos += 6;
-        
-        // Profile completeness checklist
-        checkPageBreak(50);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(168, 85, 247);
-        doc.text('📊 PROFILE COMPLETENESS CHECKLIST:', margin, yPos);
-        yPos += 6;
-        
+        yPos += 4;
+
+        // Profile completeness
+        checkPageBreak(60);
+        addTableHeader('PROFILE COMPLETENESS', [168, 85, 247]);
         const checklistItems = [
           { item: 'Personal Information', hasData: !!(profile.full_name && profile.email && profile.mobile) },
           { item: 'Educational Qualifications', hasData: educationRecords && educationRecords.length > 0 },
@@ -1213,42 +1220,40 @@ export const useProfilePdfExport = () => {
           { item: 'Family Details', hasData: familyRecords && familyRecords.length > 0 },
         ];
         
-        doc.setFontSize(8);
-        checklistItems.forEach(check => {
-          checkPageBreak(6);
-          doc.setTextColor(check.hasData ? 34 : 180, check.hasData ? 139 : 80, check.hasData ? 34 : 0);
-          doc.text(`${check.hasData ? '✓' : '✗'} ${check.item}`, margin + 5, yPos);
-          yPos += 5;
+        checklistItems.forEach((check, idx) => {
+          checkPageBreak(7);
+          addTableRow(check.item.toUpperCase(), check.hasData ? 'COMPLETE' : 'MISSING', '', '', idx % 2 === 0);
         });
         
         const completedItems = checklistItems.filter(c => c.hasData).length;
         const completionPercent = Math.round((completedItems / checklistItems.length) * 100);
         yPos += 4;
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(completionPercent >= 70 ? 34 : completionPercent >= 50 ? 180 : 220, 
-                         completionPercent >= 70 ? 139 : completionPercent >= 50 ? 80 : 53, 
-                         completionPercent >= 70 ? 34 : completionPercent >= 50 ? 0 : 69);
-        doc.text(`Profile Completion: ${completedItems}/${checklistItems.length} (${completionPercent}%)`, margin + 5, yPos);
-        yPos += 8;
+        addTableRow('TOTAL COMPLETION', `${completedItems}/${checklistItems.length} (${completionPercent}%)`, '', '', false);
+        yPos += 6;
       }
 
-      // Footer
+      // Footer with structured metadata
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.setFontSize(8);
+        // Footer line
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(margin, 285, pageWidth - margin, 285);
+        doc.setFontSize(7);
         doc.setTextColor(150, 150, 150);
         doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, 290, { align: 'center' });
-        doc.text('Gradia - Candidate Profile Report | Skillory AI Compatible', margin, 290);
+        doc.text('Gradia Candidate Report | Skillory AI Compatible', margin, 290);
+        doc.text(`ID: ${profile.registration_number || profile.id.slice(0, 8)}`, pageWidth - margin - 30, 290);
       }
 
       // Save
-      const fileName = `${profile.full_name.replace(/\s+/g, '_')}_Profile_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `${profile.full_name.replace(/\s+/g, '_')}_Gradia_Report_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
       toast({
         title: 'PDF Downloaded!',
-        description: `Your profile has been saved as ${fileName}`,
+        description: `Report saved as ${fileName}`,
       });
 
     } catch (error: any) {
