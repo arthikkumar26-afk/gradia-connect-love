@@ -214,6 +214,11 @@ export const RoundFeedbackResults = ({
           toast.success(`All ${roundDisplayName} feedback received! Stage completed. Advancing to next round...`);
         }
         onAllSubmitted?.();
+        
+        // Force reload to reflect the updated pipeline state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } catch (err) {
         feedbackAutoAdvanceInFlight.delete(autoAdvanceKey);
         console.error('Error auto-advancing after feedback:', err);
