@@ -445,7 +445,7 @@ export const RoundFeedbackResults = ({
               size="sm"
               variant="ghost"
               className="h-5 text-[9px] px-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-              onClick={handleResendFeedback}
+              onClick={handleOpenEmailPreview}
               disabled={isResending}
             >
               {isResending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3 mr-0.5" />}
