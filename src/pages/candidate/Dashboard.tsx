@@ -2193,20 +2193,129 @@ const CandidateDashboard = () => {
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
-                onClick={() => {
-                  if (profile) {
-                    exportProfileToPdf({
-                      profile: profile as any,
-                      resumeAnalysis,
-                      educationRecords,
-                      experienceRecords,
-                      familyRecords,
-                      addressData,
-                      mockTestResults: mockTestSessions,
-                      mockInterviewSessions,
-                      mockInterviewStageResults
-                    });
+                onClick={async () => {
+                  if (!profile) return;
+                  // Fetch interview pipeline data
+                  let interviewPipelineResults: any[] = [];
+                  try {
+                    const { data: icData } = await supabase
+                      .from('interview_candidates')
+                      .select('id, job_id, status, current_stage_id, applied_at, job:jobs(job_title, employer_id, employer:profiles!jobs_employer_id_fkey(company_name))')
+                      .eq('candidate_id', profile.id);
+
+                    if (icData && icData.length > 0) {
+                      const { data: allStages } = await supabase
+                        .from('interview_stages')
+                        .select('id, name, stage_order')
+                        .order('stage_order');
+
+                      interviewPipelineResults = await Promise.all(icData.map(async (ic: any) => {
+                        const { data: events } = await supabase
+                          .from('interview_events')
+                          .select('id, stage_id, status, completed_at, ai_score, notes')
+                          .eq('interview_candidate_id', ic.id);
+
+                        const eventIds = (events || []).map((e: any) => e.id);
+                        let responses: any[] = [];
+                        if (eventIds.length > 0) {
+                          const { data: respData } = await supabase
+                            .from('interview_responses')
+                            .select('interview_event_id, score, total_questions, correct_answers, time_taken_seconds')
+                            .in('interview_event_id', eventIds);
+                          responses = respData || [];
+                        }
+
+                        const { data: mgmtReviews } = await supabase
+                          .from('management_reviews')
+                          .select('reviewer_name, overall_rating, teaching_skills_rating, communication_rating, subject_knowledge_rating, recommendation, feedback_text, status, feedback_type')
+                          .eq('interview_candidate_id', ic.id);
+
+                        const allowedStages = ['Written Test', 'Segment Feedback', 'Admin & Academic Feedback', 'Management Round Feedback', 'HR Feedback'];
+                        const currentStage = (allStages || []).find((s: any) => s.id === ic.current_stage_id);
+                        const currentStageOrder = currentStage?.stage_order ?? -1;
+
+                        const feedbackTypeMap: Record<string, string> = {
+                          'Segment Feedback': 'segment',
+                          'Admin & Academic Feedback': 'admin_academic',
+                          'Core Team Feedback': 'core_team',
+                          'Management Round Feedback': 'management',
+                          'HR Feedback': 'hr',
+                        };
+
+                        const stageReviews = (allStages || [])
+                          .filter((s: any) => allowedStages.includes(s.name))
+                          .map((stage: any) => {
+                            const stageEvents = (events || []).filter((e: any) => e.stage_id === stage.id);
+                            const event = stageEvents.find((e: any) => e.status === 'completed' || e.status === 'passed') || stageEvents[0] || null;
+                            const isCompleted = event?.status === 'completed' || event?.status === 'passed';
+                            const isSkipped = !isCompleted && stage.stage_order < currentStageOrder;
+
+                            const review: any = {
+                              stageName: stage.name,
+                              stageOrder: stage.stage_order,
+                              score: event?.ai_score || null,
+                              status: isSkipped ? 'skipped' : (event?.status || null),
+                              completedAt: event?.completed_at || null,
+                              notes: event?.notes || null,
+                            };
+
+                            if (stage.name === 'Written Test' && event) {
+                              const resp = responses.find((r: any) => r.interview_event_id === event.id);
+                              if (resp) {
+                                review.totalQuestions = resp.total_questions;
+                                review.correctAnswers = resp.correct_answers;
+                                review.timeTaken = resp.time_taken_seconds;
+                                review.score = resp.score || review.score;
+                              }
+                            }
+
+                            const feedbackTypeForStage = feedbackTypeMap[stage.name];
+                            if (feedbackTypeForStage) {
+                              const submittedReviews = (mgmtReviews || []).filter((r: any) =>
+                                r.status === 'submitted' && r.feedback_type === feedbackTypeForStage
+                              );
+                              if (submittedReviews.length > 0) {
+                                review.reviews = submittedReviews.map((r: any) => ({
+                                  reviewerName: r.reviewer_name,
+                                  overallRating: r.overall_rating,
+                                  teachingRating: r.teaching_skills_rating,
+                                  communicationRating: r.communication_rating,
+                                  knowledgeRating: r.subject_knowledge_rating,
+                                  recommendation: r.recommendation,
+                                  feedbackText: r.feedback_text,
+                                }));
+                                const avgRating = submittedReviews.reduce((sum: number, r: any) => sum + (r.overall_rating || 0), 0) / submittedReviews.length;
+                                review.score = Math.round((avgRating / 5) * 100);
+                              }
+                            }
+                            return review;
+                          });
+
+                        return {
+                          jobTitle: (ic.job as any)?.job_title || 'Unknown Job',
+                          companyName: (ic.job as any)?.employer?.company_name || '-',
+                          appliedAt: ic.applied_at,
+                          overallStatus: ic.status,
+                          stageReviews,
+                        };
+                      }));
+                    }
+                  } catch (err) {
+                    console.error('Error fetching pipeline for PDF:', err);
                   }
+
+                  exportProfileToPdf({
+                    profile: profile as any,
+                    resumeAnalysis,
+                    educationRecords,
+                    experienceRecords,
+                    familyRecords,
+                    addressData,
+                    mockTestResults: mockTestSessions,
+                    mockInterviewSessions,
+                    mockInterviewStageResults,
+                    interviewPipelineResults,
+                  });
                 }}
               >
                 <Download className="h-4 w-4 mr-2" />

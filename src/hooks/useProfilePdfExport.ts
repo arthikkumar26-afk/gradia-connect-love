@@ -123,6 +123,35 @@ interface MockInterviewSession {
   started_at?: string;
 }
 
+interface InterviewPipelineReview {
+  stageName: string;
+  stageOrder: number;
+  score: number | null;
+  status: string | null;
+  completedAt: string | null;
+  notes: string | null;
+  totalQuestions?: number;
+  correctAnswers?: number;
+  timeTaken?: number;
+  reviews?: {
+    reviewerName: string | null;
+    overallRating: number | null;
+    teachingRating: number | null;
+    communicationRating: number | null;
+    knowledgeRating: number | null;
+    recommendation: string | null;
+    feedbackText: string | null;
+  }[];
+}
+
+interface InterviewPipelineData {
+  jobTitle: string;
+  companyName: string;
+  appliedAt: string | null;
+  overallStatus: string | null;
+  stageReviews: InterviewPipelineReview[];
+}
+
 interface ProfilePdfExportData {
   profile: Profile;
   resumeAnalysis?: ResumeAnalysis | null;
@@ -133,13 +162,14 @@ interface ProfilePdfExportData {
   mockTestResults?: MockTestResult[];
   mockInterviewSessions?: MockInterviewSession[];
   mockInterviewStageResults?: MockInterviewStageResult[];
+  interviewPipelineResults?: InterviewPipelineData[];
 }
 
 export const useProfilePdfExport = () => {
   const { toast } = useToast();
 
   const exportProfileToPdf = async (data: ProfilePdfExportData) => {
-    const { profile, resumeAnalysis, educationRecords, experienceRecords, familyRecords, addressData, mockTestResults, mockInterviewSessions, mockInterviewStageResults } = data;
+    const { profile, resumeAnalysis, educationRecords, experienceRecords, familyRecords, addressData, mockTestResults, mockInterviewSessions, mockInterviewStageResults, interviewPipelineResults } = data;
     
     try {
       const doc = new jsPDF();
@@ -717,6 +747,109 @@ export const useProfilePdfExport = () => {
           addTableRow('PERMANENT ADDRESS', 'Same as Present Address', '', '', false);
         }
         yPos += 4;
+      }
+
+      // ===== INTERVIEW PIPELINE RESULTS =====
+      if (interviewPipelineResults && interviewPipelineResults.length > 0) {
+        interviewPipelineResults.forEach((pipeline, pIdx) => {
+          checkPageBreak(25);
+          addTableHeader(`INTERVIEW PIPELINE: ${pipeline.jobTitle}`, [16, 185, 129]);
+
+          // Job info row
+          addTableRow('COMPANY', pipeline.companyName || '-', 'STATUS', (pipeline.overallStatus || 'In Progress').toUpperCase(), false);
+          if (pipeline.appliedAt) {
+            addTableRow('APPLIED ON', new Date(pipeline.appliedAt).toLocaleDateString('en-IN'), '', '', true);
+          }
+          yPos += 4;
+
+          // Stage results
+          pipeline.stageReviews.forEach((stage, sIdx) => {
+            if (!stage.status || stage.status === 'pending') return;
+
+            checkPageBreak(30);
+
+            // Stage header
+            const isCompleted = stage.status === 'completed' || stage.status === 'passed';
+            const stageStatusColor: [number, number, number] = isCompleted ? [34, 139, 34] : stage.status === 'skipped' ? [156, 163, 175] : [59, 130, 246];
+            doc.setFillColor(245, 250, 250);
+            doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+            doc.setFillColor(...stageStatusColor);
+            doc.rect(margin, yPos - 1, 3, 7, 'F');
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(...stageStatusColor);
+            const statusIcon = isCompleted ? '[PASS]' : stage.status === 'skipped' ? '[SKIP]' : '[...]';
+            doc.text(`${statusIcon} ${stage.stageName}`, margin + 6, yPos + 4);
+
+            if (stage.score !== null) {
+              doc.setTextColor(0, 0, 0);
+              doc.setFont('helvetica', 'normal');
+              doc.text(`Score: ${stage.score}%`, margin + contentWidth - 30, yPos + 4);
+            }
+            yPos += 9;
+
+            doc.setTextColor(0, 0, 0);
+
+            // Written Test details
+            if (stage.totalQuestions) {
+              addTableRow('CORRECT ANSWERS', `${stage.correctAnswers || 0}/${stage.totalQuestions}`, 'TIME TAKEN', stage.timeTaken ? `${Math.floor(stage.timeTaken / 60)}m ${stage.timeTaken % 60}s` : '-', sIdx % 2 === 0);
+            }
+
+            // Feedback reviews (observer ratings)
+            if (stage.reviews && stage.reviews.length > 0) {
+              stage.reviews.forEach((rev, rIdx) => {
+                checkPageBreak(25);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(100, 100, 100);
+                doc.text(`Observer: ${rev.reviewerName || 'Anonymous'}`, margin + 5, yPos);
+                yPos += 5;
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(50, 50, 50);
+
+                const ratings = [
+                  rev.overallRating ? `Overall: ${rev.overallRating}/5` : null,
+                  rev.teachingRating ? `Teaching: ${rev.teachingRating}/5` : null,
+                  rev.communicationRating ? `Communication: ${rev.communicationRating}/5` : null,
+                  rev.knowledgeRating ? `Knowledge: ${rev.knowledgeRating}/5` : null,
+                ].filter(Boolean).join('  |  ');
+                
+                if (ratings) {
+                  doc.text(ratings, margin + 10, yPos);
+                  yPos += 4;
+                }
+
+                if (rev.recommendation) {
+                  const recColor: [number, number, number] = rev.recommendation === 'strong_yes' || rev.recommendation === 'yes' ? [34, 139, 34] : [220, 53, 69];
+                  doc.setTextColor(...recColor);
+                  doc.text(`Recommendation: ${rev.recommendation.replace(/_/g, ' ').toUpperCase()}`, margin + 10, yPos);
+                  yPos += 4;
+                  doc.setTextColor(50, 50, 50);
+                }
+
+                if (rev.feedbackText) {
+                  const fbLines = doc.splitTextToSize(`"${rev.feedbackText}"`, contentWidth - 20);
+                  checkPageBreak(fbLines.length * 4 + 2);
+                  doc.setFontSize(7);
+                  doc.setTextColor(80, 80, 80);
+                  doc.text(fbLines, margin + 10, yPos);
+                  yPos += fbLines.length * 3.5 + 2;
+                }
+                yPos += 2;
+              });
+            }
+
+            if (stage.completedAt) {
+              doc.setFontSize(7);
+              doc.setTextColor(150, 150, 150);
+              doc.text(`Completed: ${new Date(stage.completedAt).toLocaleDateString('en-IN')}`, margin + 5, yPos);
+              yPos += 5;
+            }
+          });
+          yPos += 6;
+        });
       }
 
       // Mock Test Results
