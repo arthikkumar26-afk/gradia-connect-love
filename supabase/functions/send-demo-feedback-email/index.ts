@@ -104,7 +104,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId, feedbackType }: DemoFeedbackRequest = await req.json();
+    const { interviewCandidateId, feedbackType, customSubject, customBody }: DemoFeedbackRequest = await req.json();
     const actualFeedbackType = feedbackType || 'demo';
     const roundLabel = roundLabelMap[actualFeedbackType] || 'Demo Round';
     const colors = roundColorMap[actualFeedbackType] || roundColorMap.demo;
