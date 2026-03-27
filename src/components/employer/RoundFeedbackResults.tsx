@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic, Pencil, Check, X } from "lucide-react";
+import { Star, CheckCircle2, Clock, Loader2, Mail, User, Video, Play, TrendingUp, TrendingDown, BookOpen, MessageSquare, Mic, Pencil, Check, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 interface FeedbackReview {
   id: string;
@@ -47,7 +49,20 @@ export const RoundFeedbackResults = ({
   const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
   const [editEmailValue, setEditEmailValue] = useState("");
   const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress';
+
+  const roundLabelMap: Record<string, string> = {
+    demo: 'Demo Round',
+    segment: 'Segment Round',
+    admin_academic: 'Admin & Academic Round',
+    core_team: 'Core Team Round',
+    management: 'Management Round',
+    hr: 'HR Round',
+  };
+  const roundLabel = roundLabelMap[feedbackType] || 'Feedback Round';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -215,12 +230,24 @@ export const RoundFeedbackResults = ({
     };
   }, [reviews, interviewCandidateId, feedbackType, onAllSubmitted, isActiveStage]);
 
-  const handleResendFeedback = async () => {
+  const handleOpenEmailPreview = () => {
+    setEmailSubject(`📝 ${roundLabel} Feedback Request`);
+    setEmailBody(`Hello,\n\nA candidate has completed their ${roundLabel} and requires your feedback evaluation.\n\nPlease click the link in the email to submit your evaluation.\n\nThank you.`);
+    setShowEmailPreview(true);
+  };
+
+  const handleSendWithPreview = async () => {
+    setShowEmailPreview(false);
     setIsResending(true);
     try {
       const functionName = feedbackType === 'hr' ? 'send-hr-feedback-email' : 'send-demo-feedback-email';
       const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { interviewCandidateId, feedbackType }
+        body: { 
+          interviewCandidateId, 
+          feedbackType,
+          customSubject: emailSubject,
+          customBody: emailBody,
+        }
       });
 
       if (error) throw error;
@@ -228,9 +255,9 @@ export const RoundFeedbackResults = ({
       const observerTargets = Array.isArray(data?.observerEmails) && data.observerEmails.length > 0
         ? data.observerEmails
         : reviews.map((review) => review.reviewer_email).filter(Boolean);
-      const roundLabel = data?.roundLabel || 'Feedback';
+      const label = data?.roundLabel || roundLabel;
 
-      toast.success(`${roundLabel} request sent to observers`, {
+      toast.success(`${label} request sent to observers`, {
         description: observerTargets.length > 0 ? `Sent to: ${observerTargets.join(', ')}` : 'Emails have been triggered successfully.',
       });
     } catch (err) {
@@ -362,7 +389,7 @@ export const RoundFeedbackResults = ({
           size="sm"
           variant="outline"
           className="h-6 text-[10px] px-2 border-amber-400 text-amber-700 hover:bg-amber-100"
-          onClick={handleResendFeedback}
+          onClick={handleOpenEmailPreview}
           disabled={isResending}
         >
           {isResending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />}
@@ -418,7 +445,7 @@ export const RoundFeedbackResults = ({
               size="sm"
               variant="ghost"
               className="h-5 text-[9px] px-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-100"
-              onClick={handleResendFeedback}
+              onClick={handleOpenEmailPreview}
               disabled={isResending}
             >
               {isResending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3 mr-0.5" />}
@@ -608,13 +635,58 @@ export const RoundFeedbackResults = ({
           size="sm"
           variant="outline"
           className="w-full h-6 text-[10px] px-2 border-amber-400 text-amber-700 hover:bg-amber-100"
-          onClick={handleResendFeedback}
+          onClick={handleOpenEmailPreview}
           disabled={isResending}
         >
           {isResending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />}
           Send Feedback Request to Observers
         </Button>
       )}
+
+      {/* Email Preview Dialog */}
+      <Dialog open={showEmailPreview} onOpenChange={setShowEmailPreview}>
+        <DialogContent className="sm:max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Eye className="h-4 w-4" />
+              Preview & Edit Feedback Email
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Subject</label>
+              <Input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Email Body</label>
+              <Textarea
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                rows={6}
+                className="text-sm"
+              />
+            </div>
+            <div className="bg-muted/50 border rounded-md p-2 text-[10px] text-muted-foreground space-y-1">
+              <p className="font-medium">ℹ️ Note:</p>
+              <p>• Candidate details, evaluation criteria, and feedback link will be automatically included below your message.</p>
+              <p>• The link expires in 7 days.</p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setShowEmailPreview(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSendWithPreview} disabled={isResending}>
+              {isResending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />}
+              Send Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

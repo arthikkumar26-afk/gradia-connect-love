@@ -21,7 +21,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId } = await req.json();
+    const { interviewCandidateId, customSubject, customBody } = await req.json();
     console.log('Sending HR feedback emails for:', interviewCandidateId);
 
     const { data: interviewCandidate, error: candidateError } = await supabase
@@ -124,8 +124,8 @@ serve(async (req) => {
       <p style="margin: 10px 0 0 0; opacity: 0.9;">HR Round Evaluation - ${companyName}</p>
     </div>
     <div class="content">
-      <p>Hello,</p>
-      <p>A candidate has completed their <strong>HR Round</strong> and requires your feedback:</p>
+      ${customBody ? customBody.split('\n').map((line: string) => `<p>${line}</p>`).join('') : `<p>Hello,</p>
+      <p>A candidate has completed their <strong>HR Round</strong> and requires your feedback:</p>`}
       
       <div class="info-card">
         <div style="margin-bottom: 15px;">
@@ -210,7 +210,7 @@ serve(async (req) => {
         await resend.emails.send({
           from: `${companyName} <noreply@gradia.co.in>`,
           to: [email],
-          subject: `📝 HR Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
+          subject: customSubject || `📝 HR Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
           html: htmlContent,
         });
         emailsSent++;

@@ -9,6 +9,8 @@ const corsHeaders = {
 interface DemoFeedbackRequest {
   interviewCandidateId: string;
   feedbackType?: string;
+  customSubject?: string;
+  customBody?: string;
 }
 
 interface PendingReviewRecord {
@@ -104,7 +106,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId, feedbackType }: DemoFeedbackRequest = await req.json();
+    const { interviewCandidateId, feedbackType, customSubject, customBody }: DemoFeedbackRequest = await req.json();
     const actualFeedbackType = feedbackType || 'demo';
     const roundLabel = roundLabelMap[actualFeedbackType] || 'Demo Round';
     const colors = roundColorMap[actualFeedbackType] || roundColorMap.demo;
@@ -247,8 +249,8 @@ serve(async (req) => {
     </tr>
     <tr>
       <td style="padding: 24px;">
-        <p style="margin: 0 0 16px;">Hello,</p>
-        <p style="margin: 0 0 16px;">A candidate has completed their <strong style="color: ${colors.primary};">${roundLabel}</strong> and requires your feedback evaluation:</p>
+        ${customBody ? customBody.split('\n').map((line: string) => `<p style="margin: 0 0 16px;">${line}</p>`).join('') : `<p style="margin: 0 0 16px;">Hello,</p>
+        <p style="margin: 0 0 16px;">A candidate has completed their <strong style="color: ${colors.primary};">${roundLabel}</strong> and requires your feedback evaluation:</p>`}
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0fdf4; border-radius: 8px; margin: 16px 0; border: 1px solid ${colors.border};">
           <tr>
             <td style="padding: 20px;">
@@ -292,13 +294,12 @@ serve(async (req) => {
   </table>
 </body>
 </html>`;
-
       try {
         await sendEmail({
           resendApiKey: RESEND_API_KEY,
           from: fromAddress,
           to: email,
-          subject: `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
+          subject: customSubject || `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
           html: observerHtml,
         });
         emailsSent++;
