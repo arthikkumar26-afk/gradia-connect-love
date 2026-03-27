@@ -169,7 +169,7 @@ export const useProfilePdfExport = () => {
   const { toast } = useToast();
 
   const exportProfileToPdf = async (data: ProfilePdfExportData) => {
-    const { profile, resumeAnalysis, educationRecords, experienceRecords, familyRecords, addressData, mockTestResults, mockInterviewSessions, mockInterviewStageResults } = data;
+    const { profile, resumeAnalysis, educationRecords, experienceRecords, familyRecords, addressData, mockTestResults, mockInterviewSessions, mockInterviewStageResults, interviewPipelineResults } = data;
     
     try {
       const doc = new jsPDF();
