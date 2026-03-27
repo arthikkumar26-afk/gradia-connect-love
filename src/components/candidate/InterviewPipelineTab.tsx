@@ -74,6 +74,7 @@ interface InterviewResponse {
   correct_answers: number | null;
   time_taken_seconds: number | null;
   completed_at: string | null;
+  recording_url: string | null;
 }
 
 interface ManagementReview {
