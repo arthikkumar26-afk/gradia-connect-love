@@ -642,6 +642,51 @@ export const RoundFeedbackResults = ({
           Send Feedback Request to Observers
         </Button>
       )}
+
+      {/* Email Preview Dialog */}
+      <Dialog open={showEmailPreview} onOpenChange={setShowEmailPreview}>
+        <DialogContent className="sm:max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Eye className="h-4 w-4" />
+              Preview & Edit Feedback Email
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Subject</label>
+              <Input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Email Body</label>
+              <Textarea
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                rows={6}
+                className="text-sm"
+              />
+            </div>
+            <div className="bg-muted/50 border rounded-md p-2 text-[10px] text-muted-foreground space-y-1">
+              <p className="font-medium">ℹ️ Note:</p>
+              <p>• Candidate details, evaluation criteria, and feedback link will be automatically included below your message.</p>
+              <p>• The link expires in 7 days.</p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setShowEmailPreview(false)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSendWithPreview} disabled={isResending}>
+              {isResending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />}
+              Send Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
