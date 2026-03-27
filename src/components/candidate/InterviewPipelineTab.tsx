@@ -74,6 +74,7 @@ interface InterviewResponse {
   correct_answers: number | null;
   time_taken_seconds: number | null;
   completed_at: string | null;
+  recording_url: string | null;
 }
 
 interface ManagementReview {
@@ -389,7 +390,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       if (eventIds.length > 0) {
         const { data: responsesData } = await supabase
           .from('interview_responses')
-          .select('id, interview_event_id, score, total_questions, correct_answers, time_taken_seconds, completed_at')
+          .select('id, interview_event_id, score, total_questions, correct_answers, time_taken_seconds, completed_at, recording_url')
           .in('interview_event_id', eventIds);
         setResponses(responsesData || []);
       }
@@ -781,6 +782,28 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             )}
             {event?.ai_feedback && typeof event.ai_feedback === 'string' && (
               <p className="text-sm text-muted-foreground">{event.ai_feedback}</p>
+            )}
+            {response?.recording_url && (
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    const videoWindow = window.open('', '_blank');
+                    if (videoWindow) {
+                      videoWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html><head><title>Written Test Recording</title>
+                        <style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;}
+                        video{max-width:100%;max-height:100%;}</style></head>
+                        <body><video controls autoplay src="${response.recording_url}"></video></body></html>
+                      `);
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/20 transition-colors"
+                >
+                  <Video className="h-4 w-4" />
+                  Watch Test Recording
+                </button>
+              </div>
             )}
           </div>
         );
