@@ -1334,7 +1334,7 @@ const ClickableStagesList = ({
         console.error('Error auto-advancing:', advanceErr);
       }
 
-      if (!isSegment && !isAdmin && !isCoreTeam && !isManagement) {
+      if (!isSegment && !isAdmin && !isCoreTeam && !isManagement && !isHR) {
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
             body: {
