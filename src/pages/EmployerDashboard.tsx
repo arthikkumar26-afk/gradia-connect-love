@@ -93,12 +93,14 @@ const EmployerDashboard = () => {
     interviewsScheduled: 0,
     isLoading: true
   });
-  const { user, profile, isAuthenticated, logout } = useAuth();
+  const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
   const [candidateStatusData, setCandidateStatusData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [applicationsPerJob, setApplicationsPerJob] = useState<{ name: string; applications: number }[]>([]);
 
-  // Role-based access control
+  // Role-based access control - wait for auth to finish loading
   useEffect(() => {
+    if (isLoading) return;
+
     if (!isAuthenticated) {
       navigate("/employer/login");
       return;
@@ -108,7 +110,7 @@ const EmployerDashboard = () => {
       navigate("/candidate/dashboard");
       return;
     }
-  }, [isAuthenticated, profile, navigate]);
+  }, [isAuthenticated, isLoading, profile, navigate]);
 
   // Fetch company name for employer
   useEffect(() => {
