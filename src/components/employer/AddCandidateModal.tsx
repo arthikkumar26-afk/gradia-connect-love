@@ -154,7 +154,7 @@ export const AddCandidateModal = ({
       }
 
       // Use parsed data or fall back to manual input
-      const finalName = parsedData?.name || candidateName || 'Unknown Candidate';
+      const finalName = parsedData?.full_name || candidateName || 'Unknown Candidate';
       const finalEmail = parsedData?.email || candidateEmail;
 
       if (!finalEmail) {

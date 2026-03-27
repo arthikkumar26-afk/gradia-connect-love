@@ -175,9 +175,17 @@ export const JobApplicationFlow = ({
             body: formData,
           });
           
-          if (parseResponse.data && !parseResponse.error) {
+      if (parseResponse.data && !parseResponse.error) {
             parsedResumeData = parseResponse.data;
             console.log('Parsed resume data:', parsedResumeData);
+            
+            // Update profile full_name from resume if extracted
+            if (parsedResumeData.full_name) {
+              await supabase
+                .from('profiles')
+                .update({ full_name: parsedResumeData.full_name })
+                .eq('id', user.id);
+            }
           }
         } catch (parseError) {
           console.error('Resume parsing error:', parseError);
