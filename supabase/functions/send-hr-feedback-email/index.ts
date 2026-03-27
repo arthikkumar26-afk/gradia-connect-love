@@ -124,8 +124,8 @@ serve(async (req) => {
       <p style="margin: 10px 0 0 0; opacity: 0.9;">HR Round Evaluation - ${companyName}</p>
     </div>
     <div class="content">
-      <p>Hello,</p>
-      <p>A candidate has completed their <strong>HR Round</strong> and requires your feedback:</p>
+      ${customBody ? customBody.split('\n').map((line: string) => `<p>${line}</p>`).join('') : `<p>Hello,</p>
+      <p>A candidate has completed their <strong>HR Round</strong> and requires your feedback:</p>`}
       
       <div class="info-card">
         <div style="margin-bottom: 15px;">
