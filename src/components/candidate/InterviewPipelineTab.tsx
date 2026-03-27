@@ -1706,6 +1706,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           candidateName="My Results"
         />
       )}
+      {/* PDF Report Modal */}
+      {currentInterview && (
+        <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Interview Review Report
+              </DialogTitle>
+            </DialogHeader>
+            <AllStagesReviewSummary interviewCandidateId={currentInterview.id} />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
