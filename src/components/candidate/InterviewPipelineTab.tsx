@@ -390,7 +390,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       if (eventIds.length > 0) {
         const { data: responsesData } = await supabase
           .from('interview_responses')
-          .select('id, interview_event_id, score, total_questions, correct_answers, time_taken_seconds, completed_at')
+          .select('id, interview_event_id, score, total_questions, correct_answers, time_taken_seconds, completed_at, recording_url')
           .in('interview_event_id', eventIds);
         setResponses(responsesData || []);
       }
