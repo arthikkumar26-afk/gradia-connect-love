@@ -132,7 +132,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
+  const [showReportModal, setShowReportModal] = useState(false);
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try {
