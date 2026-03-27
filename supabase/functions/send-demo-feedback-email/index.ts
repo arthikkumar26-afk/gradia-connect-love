@@ -249,8 +249,8 @@ serve(async (req) => {
     </tr>
     <tr>
       <td style="padding: 24px;">
-        <p style="margin: 0 0 16px;">Hello,</p>
-        <p style="margin: 0 0 16px;">A candidate has completed their <strong style="color: ${colors.primary};">${roundLabel}</strong> and requires your feedback evaluation:</p>
+        ${customBody ? customBody.split('\n').map((line: string) => `<p style="margin: 0 0 16px;">${line}</p>`).join('') : `<p style="margin: 0 0 16px;">Hello,</p>
+        <p style="margin: 0 0 16px;">A candidate has completed their <strong style="color: ${colors.primary};">${roundLabel}</strong> and requires your feedback evaluation:</p>`}
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0fdf4; border-radius: 8px; margin: 16px 0; border: 1px solid ${colors.border};">
           <tr>
             <td style="padding: 20px;">
@@ -294,7 +294,6 @@ serve(async (req) => {
   </table>
 </body>
 </html>`;
-
       try {
         await sendEmail({
           resendApiKey: RESEND_API_KEY,
