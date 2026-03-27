@@ -2288,9 +2288,9 @@ const CandidateDashboard = () => {
                         </div>
 
                         {/* Resume Score */}
-                        <div className="flex flex-col items-center">
-                          <div className="relative w-20 h-20">
-                            <svg className="w-20 h-20 transform -rotate-90">
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div className="relative w-20 h-20 flex-shrink-0">
+                            <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
                               <circle
                                 cx="40"
                                 cy="40"
