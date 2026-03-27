@@ -299,7 +299,7 @@ serve(async (req) => {
           resendApiKey: RESEND_API_KEY,
           from: fromAddress,
           to: email,
-          subject: `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
+          subject: customSubject || `📝 ${roundLabel} Feedback Request - ${candidateName} | ${job?.job_title || ''}`,
           html: observerHtml,
         });
         emailsSent++;
