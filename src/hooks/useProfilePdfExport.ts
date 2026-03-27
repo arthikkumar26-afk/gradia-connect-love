@@ -749,106 +749,217 @@ export const useProfilePdfExport = () => {
         yPos += 4;
       }
 
-      // ===== INTERVIEW PIPELINE RESULTS =====
+      // ===== INTERVIEW PIPELINE RESULTS (Structured for AI Analysis) =====
       if (interviewPipelineResults && interviewPipelineResults.length > 0) {
         interviewPipelineResults.forEach((pipeline, pIdx) => {
-          checkPageBreak(25);
-          addTableHeader(`INTERVIEW PIPELINE: ${pipeline.jobTitle}`, [16, 185, 129]);
+          // New page for interview pipeline for clean parsing
+          doc.addPage();
+          yPos = 20;
 
-          // Job info row
-          addTableRow('COMPANY', pipeline.companyName || '-', 'STATUS', (pipeline.overallStatus || 'In Progress').toUpperCase(), false);
-          if (pipeline.appliedAt) {
-            addTableRow('APPLIED ON', new Date(pipeline.appliedAt).toLocaleDateString('en-IN'), '', '', true);
-          }
-          yPos += 4;
+          // Pipeline header banner
+          doc.setFillColor(16, 185, 129);
+          doc.rect(0, 0, pageWidth, 28, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.text('INTERVIEW PERFORMANCE REPORT', margin, 14);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Candidate: ${profile.full_name} | Generated: ${new Date().toLocaleDateString('en-IN')}`, margin, 22);
+          yPos = 35;
+          doc.setTextColor(0, 0, 0);
 
-          // Stage results
+          // Structured Job Details Table
+          addTableHeader(`JOB: ${pipeline.jobTitle}`, [16, 185, 129]);
+          addTableRow('COMPANY', pipeline.companyName || '-', 'JOB TITLE', pipeline.jobTitle || '-', false);
+          addTableRow('APPLICATION DATE', pipeline.appliedAt ? new Date(pipeline.appliedAt).toLocaleDateString('en-IN') : '-', 'OVERALL STATUS', (pipeline.overallStatus || 'In Progress').toUpperCase(), true);
+          
+          // Count completed stages
+          const completedStages = pipeline.stageReviews.filter(s => s.status === 'completed' || s.status === 'passed');
+          const totalStages = pipeline.stageReviews.length;
+          addTableRow('STAGES COMPLETED', `${completedStages.length}/${totalStages}`, 'CANDIDATE ID', profile.registration_number || profile.id.slice(0, 8), false);
+          yPos += 8;
+
+          // Stage-by-stage results with structured formatting
           pipeline.stageReviews.forEach((stage, sIdx) => {
             if (!stage.status || stage.status === 'pending') return;
 
-            checkPageBreak(30);
+            checkPageBreak(45);
 
-            // Stage header
+            // Stage header with status badge
             const isCompleted = stage.status === 'completed' || stage.status === 'passed';
-            const stageStatusColor: [number, number, number] = isCompleted ? [34, 139, 34] : stage.status === 'skipped' ? [156, 163, 175] : [59, 130, 246];
-            doc.setFillColor(245, 250, 250);
-            doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
-            doc.setFillColor(...stageStatusColor);
-            doc.rect(margin, yPos - 1, 3, 7, 'F');
-            doc.setFontSize(9);
+            const isSkipped = stage.status === 'skipped';
+            const stageColor: [number, number, number] = isCompleted ? [16, 185, 129] : isSkipped ? [156, 163, 175] : [59, 130, 246];
+            
+            // Stage banner
+            doc.setFillColor(...stageColor);
+            doc.rect(margin, yPos, contentWidth, 9, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...stageStatusColor);
-            const statusIcon = isCompleted ? '[PASS]' : stage.status === 'skipped' ? '[SKIP]' : '[...]';
-            doc.text(`${statusIcon} ${stage.stageName}`, margin + 6, yPos + 4);
-
-            if (stage.score !== null) {
-              doc.setTextColor(0, 0, 0);
-              doc.setFont('helvetica', 'normal');
-              doc.text(`Score: ${stage.score}%`, margin + contentWidth - 30, yPos + 4);
-            }
-            yPos += 9;
-
+            const statusLabel = isCompleted ? 'PASSED' : isSkipped ? 'SKIPPED' : 'IN PROGRESS';
+            doc.text(`STAGE ${sIdx + 1}: ${stage.stageName.toUpperCase()}`, margin + 4, yPos + 6.5);
+            doc.setFontSize(8);
+            doc.text(`[${statusLabel}]`, margin + contentWidth - doc.getTextWidth(`[${statusLabel}]`) - 4, yPos + 6.5);
+            yPos += 12;
             doc.setTextColor(0, 0, 0);
+
+            // Score display
+            if (stage.score !== null) {
+              checkPageBreak(15);
+              doc.setFillColor(stage.score >= 70 ? 220 : stage.score >= 40 ? 255 : 254, stage.score >= 70 ? 252 : stage.score >= 40 ? 251 : 226, stage.score >= 70 ? 231 : stage.score >= 40 ? 235 : 226);
+              doc.rect(margin, yPos - 1, contentWidth, 10, 'F');
+              doc.setFontSize(11);
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(stage.score >= 70 ? 16 : stage.score >= 40 ? 180 : 220, stage.score >= 70 ? 185 : stage.score >= 40 ? 83 : 38, stage.score >= 70 ? 129 : stage.score >= 40 ? 9 : 38);
+              doc.text(`SCORE: ${stage.score}%`, margin + 4, yPos + 6);
+              
+              // Score category
+              const scoreLabel = stage.score >= 80 ? 'Excellent' : stage.score >= 60 ? 'Good' : stage.score >= 40 ? 'Average' : 'Needs Improvement';
+              doc.setFontSize(9);
+              doc.text(`(${scoreLabel})`, margin + 50, yPos + 6);
+              yPos += 13;
+              doc.setTextColor(0, 0, 0);
+            }
 
             // Written Test details
             if (stage.totalQuestions) {
-              addTableRow('CORRECT ANSWERS', `${stage.correctAnswers || 0}/${stage.totalQuestions}`, 'TIME TAKEN', stage.timeTaken ? `${Math.floor(stage.timeTaken / 60)}m ${stage.timeTaken % 60}s` : '-', sIdx % 2 === 0);
+              addTableRow('TOTAL QUESTIONS', stage.totalQuestions.toString(), 'CORRECT ANSWERS', (stage.correctAnswers || 0).toString(), false);
+              const accuracy = stage.totalQuestions > 0 ? Math.round(((stage.correctAnswers || 0) / stage.totalQuestions) * 100) : 0;
+              addTableRow('ACCURACY', `${accuracy}%`, 'TIME TAKEN', stage.timeTaken ? `${Math.floor(stage.timeTaken / 60)}m ${stage.timeTaken % 60}s` : '-', true);
+              yPos += 4;
             }
 
-            // Feedback reviews (observer ratings)
+            // Observer Feedback - detailed structured format
             if (stage.reviews && stage.reviews.length > 0) {
+              checkPageBreak(15);
+              doc.setFillColor(245, 247, 250);
+              doc.rect(margin, yPos - 1, contentWidth, 7, 'F');
+              doc.setFontSize(9);
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(79, 70, 229);
+              doc.text(`EVALUATOR FEEDBACK (${stage.reviews.length} Observer${stage.reviews.length > 1 ? 's' : ''})`, margin + 4, yPos + 4);
+              yPos += 10;
+
               stage.reviews.forEach((rev, rIdx) => {
-                checkPageBreak(25);
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(100, 100, 100);
-                doc.text(`Observer: ${rev.reviewerName || 'Anonymous'}`, margin + 5, yPos);
-                yPos += 5;
-
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8);
-                doc.setTextColor(50, 50, 50);
-
-                const ratings = [
-                  rev.overallRating ? `Overall: ${rev.overallRating}/5` : null,
-                  rev.teachingRating ? `Teaching: ${rev.teachingRating}/5` : null,
-                  rev.communicationRating ? `Communication: ${rev.communicationRating}/5` : null,
-                  rev.knowledgeRating ? `Knowledge: ${rev.knowledgeRating}/5` : null,
-                ].filter(Boolean).join('  |  ');
+                checkPageBreak(35);
                 
-                if (ratings) {
-                  doc.text(ratings, margin + 10, yPos);
-                  yPos += 4;
+                // Observer card
+                doc.setFillColor(rIdx % 2 === 0 ? 248 : 255, rIdx % 2 === 0 ? 250 : 255, rIdx % 2 === 0 ? 252 : 255);
+                const cardStartY = yPos;
+                
+                // Observer name
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 30, 30);
+                doc.text(`Evaluator: ${rev.reviewerName || 'Anonymous'}`, margin + 5, yPos + 1);
+                yPos += 6;
+
+                // Ratings table
+                const ratingItems = [
+                  { label: 'Overall Rating', value: rev.overallRating },
+                  { label: 'Teaching Skills', value: rev.teachingRating },
+                  { label: 'Communication', value: rev.communicationRating },
+                  { label: 'Subject Knowledge', value: rev.knowledgeRating },
+                ];
+                
+                const validRatings = ratingItems.filter(r => r.value !== null && r.value !== undefined);
+                if (validRatings.length > 0) {
+                  // Draw ratings in a structured row
+                  doc.setFontSize(8);
+                  const ratingWidth = (contentWidth - 10) / validRatings.length;
+                  validRatings.forEach((r, ri) => {
+                    const rx = margin + 5 + ri * ratingWidth;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 100, 100);
+                    doc.text(r.label, rx, yPos);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(16, 185, 129);
+                    doc.text(`${r.value}/5`, rx, yPos + 4);
+                  });
+                  yPos += 10;
                 }
 
+                // Recommendation badge
                 if (rev.recommendation) {
-                  const recColor: [number, number, number] = rev.recommendation === 'strong_yes' || rev.recommendation === 'yes' ? [34, 139, 34] : [220, 53, 69];
-                  doc.setTextColor(...recColor);
-                  doc.text(`Recommendation: ${rev.recommendation.replace(/_/g, ' ').toUpperCase()}`, margin + 10, yPos);
-                  yPos += 4;
-                  doc.setTextColor(50, 50, 50);
+                  const isPositive = rev.recommendation === 'strong_yes' || rev.recommendation === 'yes';
+                  doc.setFillColor(isPositive ? 220 : 254, isPositive ? 252 : 226, isPositive ? 231 : 226);
+                  doc.rect(margin + 5, yPos - 2, 60, 7, 'F');
+                  doc.setFontSize(8);
+                  doc.setFont('helvetica', 'bold');
+                  doc.setTextColor(isPositive ? 16 : 220, isPositive ? 185 : 38, isPositive ? 129 : 38);
+                  doc.text(`RECOMMENDATION: ${rev.recommendation.replace(/_/g, ' ').toUpperCase()}`, margin + 7, yPos + 3);
+                  yPos += 9;
                 }
 
+                // Feedback text
                 if (rev.feedbackText) {
-                  const fbLines = doc.splitTextToSize(`"${rev.feedbackText}"`, contentWidth - 20);
-                  checkPageBreak(fbLines.length * 4 + 2);
-                  doc.setFontSize(7);
-                  doc.setTextColor(80, 80, 80);
-                  doc.text(fbLines, margin + 10, yPos);
-                  yPos += fbLines.length * 3.5 + 2;
+                  doc.setFontSize(8);
+                  doc.setFont('helvetica', 'normal');
+                  doc.setTextColor(60, 60, 60);
+                  const fbLines = doc.splitTextToSize(`Feedback: "${rev.feedbackText}"`, contentWidth - 15);
+                  checkPageBreak(fbLines.length * 4 + 4);
+                  doc.text(fbLines, margin + 5, yPos);
+                  yPos += fbLines.length * 3.5 + 4;
                 }
-                yPos += 2;
+
+                // Draw card background
+                doc.setDrawColor(230, 230, 230);
+                doc.setLineWidth(0.2);
+                doc.rect(margin + 2, cardStartY - 3, contentWidth - 4, yPos - cardStartY + 2, 'S');
+                yPos += 4;
               });
             }
 
+            // Completion date
             if (stage.completedAt) {
               doc.setFontSize(7);
               doc.setTextColor(150, 150, 150);
-              doc.text(`Completed: ${new Date(stage.completedAt).toLocaleDateString('en-IN')}`, margin + 5, yPos);
-              yPos += 5;
+              doc.text(`Completed: ${new Date(stage.completedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, margin + 5, yPos);
+              yPos += 6;
             }
+
+            yPos += 4;
           });
-          yPos += 6;
+
+          // Pipeline Summary at end
+          checkPageBreak(40);
+          doc.setFillColor(16, 185, 129);
+          doc.rect(margin, yPos, contentWidth, 8, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text('INTERVIEW SUMMARY', margin + 4, yPos + 5.5);
+          yPos += 12;
+          doc.setTextColor(0, 0, 0);
+
+          // Calculate average score
+          const scoredStages = pipeline.stageReviews.filter(s => s.score !== null);
+          const avgScore = scoredStages.length > 0 ? Math.round(scoredStages.reduce((sum, s) => sum + (s.score || 0), 0) / scoredStages.length) : 0;
+          
+          addTableRow('TOTAL STAGES', totalStages.toString(), 'COMPLETED', completedStages.length.toString(), false);
+          addTableRow('AVERAGE SCORE', scoredStages.length > 0 ? `${avgScore}%` : 'N/A', 'FINAL STATUS', (pipeline.overallStatus || 'In Progress').toUpperCase(), true);
+
+          // Per-stage score summary
+          yPos += 4;
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(79, 70, 229);
+          doc.text('STAGE-WISE SCORES:', margin + 3, yPos);
+          yPos += 5;
+          pipeline.stageReviews.forEach((stage, si) => {
+            if (stage.status === 'pending') return;
+            checkPageBreak(6);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(50, 50, 50);
+            const scoreStr = stage.score !== null ? `${stage.score}%` : 'N/A';
+            const statusStr = (stage.status || 'pending').toUpperCase();
+            doc.text(`  ${si + 1}. ${stage.stageName}: ${scoreStr} [${statusStr}]`, margin + 3, yPos);
+            yPos += 5;
+          });
+
+          yPos += 8;
         });
       }
 
