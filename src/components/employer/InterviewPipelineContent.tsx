@@ -1291,23 +1291,28 @@ const ClickableStagesList = ({
         demo_meet_type: demoMeetType,
       };
 
-      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      if (isHR) setHrSlotBooking({ ...updatedBooking, observer_email: hrObserverEmails.join(',') || null, preferred_slots: hrSlotBooking?.preferred_slots || null } as any);
+      else if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
 
-      const roundLabel = isCoreTeam
-        ? 'Core Team Round'
-        : isManagement
-          ? 'Management Round'
-          : isSegment
-            ? 'Segment Round'
-            : isAdmin
-              ? 'Admin & Academic Round'
-              : 'Demo';
-      const feedbackType = isCoreTeam
-        ? 'core_team'
+      const roundLabel = isHR
+        ? 'HR Round'
+        : isCoreTeam
+          ? 'Core Team Round'
+          : isManagement
+            ? 'Management Round'
+            : isSegment
+              ? 'Segment Round'
+              : isAdmin
+                ? 'Admin & Academic Round'
+                : 'Demo';
+      const feedbackType = isHR
+        ? 'hr'
+        : isCoreTeam
+          ? 'core_team'
         : isManagement
           ? 'management'
           : isSegment
