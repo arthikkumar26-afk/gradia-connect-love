@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   CheckCircle2,
   Clock,
@@ -32,8 +33,10 @@ import {
   TrendingUp,
   Eye,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { StageResultsModal } from "@/components/employer/StageResultsModal";
+import { AllStagesReviewSummary } from "@/components/employer/AllStagesReviewSummary";
 
 interface InterviewStage {
   id: string;
@@ -129,7 +132,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
+  const [showReportModal, setShowReportModal] = useState(false);
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -1267,8 +1270,16 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   return (
     <div className="space-y-6">
-      {/* Refresh Button */}
-      <div className="flex justify-end">
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowReportModal(true)}
+          disabled={!currentInterview}
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border border-primary bg-primary/10 hover:bg-primary/20 text-primary transition-all disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          Download Report
+        </button>
         <button
           onClick={handleManualRefresh}
           disabled={isRefreshing}
@@ -1694,6 +1705,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           stageName={selectedStageForResults.stageName}
           candidateName="My Results"
         />
+      )}
+      {/* PDF Report Modal */}
+      {currentInterview && (
+        <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Interview Review Report
+              </DialogTitle>
+            </DialogHeader>
+            <AllStagesReviewSummary interviewCandidateId={currentInterview.id} />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
