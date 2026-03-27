@@ -49,7 +49,20 @@ export const RoundFeedbackResults = ({
   const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
   const [editEmailValue, setEditEmailValue] = useState("");
   const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress';
+
+  const roundLabelMap: Record<string, string> = {
+    demo: 'Demo Round',
+    segment: 'Segment Round',
+    admin_academic: 'Admin & Academic Round',
+    core_team: 'Core Team Round',
+    management: 'Management Round',
+    hr: 'HR Round',
+  };
+  const roundLabel = roundLabelMap[feedbackType] || 'Feedback Round';
 
   useEffect(() => {
     const fetchData = async () => {
