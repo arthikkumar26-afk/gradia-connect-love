@@ -439,7 +439,7 @@ const StageActionButtons = ({
             duration: 5000,
           });
         }
-      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking' || step.title === 'Management Round Slot Booking') {
+      } else if (step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking' || step.title === 'Management Round Slot Booking' || step.title === 'HR Round Slot Booking') {
         // Segment/Admin Slot Booking → Round: Send round invitations (meeting link) to candidate and observers
         const roundName = step.title.replace(' Slot Booking', '');
         try {
@@ -498,23 +498,6 @@ const StageActionButtons = ({
           }
         } else {
           toast.success(`✓ ${step.title} cleared! Moved to ${nextStage}`, {
-            duration: 5000,
-          });
-        }
-      } else if (step.title === 'HR Round Slot Booking') {
-        // HR Round Slot Booking → HR Round (not skipped for Principal pipeline)
-        try {
-          await supabase.functions.invoke('send-demo-round-emails', {
-            body: { interviewCandidateId, roundName: 'HR Round' }
-          });
-          toast.success(`✓ HR Round Slot Booking cleared! HR Round invitations sent`, {
-            description: `Emails sent to candidate and observer`,
-            duration: 5000,
-          });
-        } catch (hrError) {
-          console.error('Error sending HR round emails:', hrError);
-          toast.success(`✓ HR Round Slot Booking cleared! Moved to HR Round`, {
-            description: 'Note: HR round email failed to send. You can resend manually.',
             duration: 5000,
           });
         }
@@ -1216,35 +1199,41 @@ const ClickableStagesList = ({
     const isAdmin = stepTitle === 'Admin & Academic Round Slot Booking';
     const isCoreTeam = stepTitle === 'Core Team Round Slot Booking';
     const isManagement = stepTitle === 'Management Round Slot Booking';
+    const isHR = stepTitle === 'HR Round Slot Booking';
 
     return {
       isSegment,
       isAdmin,
       isCoreTeam,
       isManagement,
-      activeBookingData: isCoreTeam
-        ? coreTeamSlotBooking
-        : isManagement
-          ? managementSlotBooking
-          : isSegment
-            ? segmentSlotBooking
-            : isAdmin
-              ? adminSlotBooking
-              : slotBooking,
-      activeEmails: isCoreTeam
-        ? coreTeamObserverEmails
-        : isManagement
-          ? managementObserverEmails
-          : isSegment
-            ? segmentObserverEmails
-            : isAdmin
-              ? adminObserverEmails
-              : observerEmails,
+      isHR,
+      activeBookingData: isHR
+        ? hrSlotBooking
+        : isCoreTeam
+          ? coreTeamSlotBooking
+          : isManagement
+            ? managementSlotBooking
+            : isSegment
+              ? segmentSlotBooking
+              : isAdmin
+                ? adminSlotBooking
+                : slotBooking,
+      activeEmails: isHR
+        ? hrObserverEmails
+        : isCoreTeam
+          ? coreTeamObserverEmails
+          : isManagement
+            ? managementObserverEmails
+            : isSegment
+              ? segmentObserverEmails
+              : isAdmin
+                ? adminObserverEmails
+                : observerEmails,
     };
   };
 
   const handleConfirmPreferredSlot = async (stepTitle: string) => {
-    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+    const { isSegment, isAdmin, isCoreTeam, isManagement, isHR, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
 
     if (!activeBookingData || selectedPreferredSlot === null || !activeBookingData.preferred_slots) return;
     const chosen = activeBookingData.preferred_slots[selectedPreferredSlot];
@@ -1285,23 +1274,28 @@ const ClickableStagesList = ({
         demo_meet_type: demoMeetType,
       };
 
-      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      if (isHR) setHrSlotBooking({ ...updatedBooking, observer_email: hrObserverEmails.join(',') || null, preferred_slots: hrSlotBooking?.preferred_slots || null } as any);
+      else if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
       else setSlotBooking(updatedBooking);
 
-      const roundLabel = isCoreTeam
-        ? 'Core Team Round'
-        : isManagement
-          ? 'Management Round'
-          : isSegment
-            ? 'Segment Round'
-            : isAdmin
-              ? 'Admin & Academic Round'
-              : 'Demo';
-      const feedbackType = isCoreTeam
-        ? 'core_team'
+      const roundLabel = isHR
+        ? 'HR Round'
+        : isCoreTeam
+          ? 'Core Team Round'
+          : isManagement
+            ? 'Management Round'
+            : isSegment
+              ? 'Segment Round'
+              : isAdmin
+                ? 'Admin & Academic Round'
+                : 'Demo';
+      const feedbackType = isHR
+        ? 'hr'
+        : isCoreTeam
+          ? 'core_team'
         : isManagement
           ? 'management'
           : isSegment
@@ -1323,7 +1317,7 @@ const ClickableStagesList = ({
         console.error('Error auto-advancing:', advanceErr);
       }
 
-      if (!isSegment && !isAdmin && !isCoreTeam && !isManagement) {
+      if (!isSegment && !isAdmin && !isCoreTeam && !isManagement && !isHR) {
         try {
           await supabase.functions.invoke('send-demo-round-emails', {
             body: {
@@ -1369,7 +1363,7 @@ const ClickableStagesList = ({
   };
 
   const handleAddObserverEmail = async (stepTitle: string) => {
-    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+    const { isSegment, isAdmin, isCoreTeam, isManagement, isHR, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
 
     if (!activeBookingData || !observerEmail.trim()) return;
     const email = observerEmail.trim().toLowerCase();
@@ -1391,14 +1385,16 @@ const ClickableStagesList = ({
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
+      if (isHR) setHrObserverEmails(updatedEmails);
+      else if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
       else if (isManagement) setManagementObserverEmails(updatedEmails);
       else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
 
-      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() };
-      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(','), updated_at: new Date().toISOString() } as any;
+      if (isHR) setHrSlotBooking(updatedBooking);
+      else if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
@@ -1415,7 +1411,7 @@ const ClickableStagesList = ({
   };
 
   const handleRemoveObserverEmail = async (stepTitle: string, emailToRemove: string) => {
-    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+    const { isSegment, isAdmin, isCoreTeam, isManagement, isHR, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
 
     if (!activeBookingData) return;
     setIsSavingObserver(true);
@@ -1427,14 +1423,16 @@ const ClickableStagesList = ({
         .eq('id', activeBookingData.id);
 
       if (error) throw error;
-      if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
+      if (isHR) setHrObserverEmails(updatedEmails);
+      else if (isCoreTeam) setCoreTeamObserverEmails(updatedEmails);
       else if (isManagement) setManagementObserverEmails(updatedEmails);
       else if (isSegment) setSegmentObserverEmails(updatedEmails);
       else if (isAdmin) setAdminObserverEmails(updatedEmails);
       else setObserverEmails(updatedEmails);
 
-      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() };
-      if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
+      const updatedBooking = { ...activeBookingData, observer_email: updatedEmails.join(',') || null, updated_at: new Date().toISOString() } as any;
+      if (isHR) setHrSlotBooking(updatedBooking);
+      else if (isCoreTeam) setCoreTeamSlotBooking(updatedBooking);
       else if (isManagement) setManagementSlotBooking(updatedBooking);
       else if (isSegment) setSegmentSlotBooking(updatedBooking);
       else if (isAdmin) setAdminSlotBooking(updatedBooking);
@@ -1829,13 +1827,15 @@ const ClickableStagesList = ({
                     : step.title === 'Admin & Academic Round Slot Booking' ? adminSlotBooking 
                     : step.title === 'Core Team Round Slot Booking' ? coreTeamSlotBooking
                     : step.title === 'Management Round Slot Booking' ? managementSlotBooking
+                    : step.title === 'HR Round Slot Booking' ? hrSlotBooking
                     : step.title === 'Demo Slot Booking' ? slotBooking : null;
                   const activeObserverEmails = step.title === 'Segment Round Slot Booking' ? segmentObserverEmails
                     : step.title === 'Admin & Academic Round Slot Booking' ? adminObserverEmails
                     : step.title === 'Core Team Round Slot Booking' ? coreTeamObserverEmails
                     : step.title === 'Management Round Slot Booking' ? managementObserverEmails
+                    : step.title === 'HR Round Slot Booking' ? hrObserverEmails
                     : observerEmails;
-                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking' || step.title === 'Management Round Slot Booking')) return null;
+                  if (!(step.title === 'Demo Slot Booking' || step.title === 'Segment Round Slot Booking' || step.title === 'Admin & Academic Round Slot Booking' || step.title === 'Core Team Round Slot Booking' || step.title === 'Management Round Slot Booking' || step.title === 'HR Round Slot Booking')) return null;
                   return activeBooking ? (
                   <div className="mt-2 bg-purple-50 border border-purple-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-1.5 text-xs font-medium text-purple-700">
@@ -2097,258 +2097,7 @@ const ClickableStagesList = ({
                   />
                 )}
 
-                {/* HR Round Slot Booking Details */}
-                {step.title === 'HR Round Slot Booking' && hrSlotBooking && (
-                  <div className="mt-2 bg-indigo-50 border border-indigo-200 rounded-md p-2 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700">
-                        <Calendar className="h-3 w-3" />
-                        {hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 
-                          ? `Candidate's Preferred Timings (${hrSlotBooking.preferred_slots.length})`
-                          : 'Slot Booked'}
-                        {isHrSlotEdited && (
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-400 text-amber-600 bg-amber-50">
-                            Edited
-                          </Badge>
-                        )}
-                      </div>
-                      {!isEditingHrSlot && !(hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 && hrSlotBooking.status !== 'confirmed') && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 text-[10px] px-1.5 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100"
-                          onClick={(e) => { e.stopPropagation(); handleEditHrSlot(); }}
-                        >
-                          ✏️ Edit
-                        </Button>
-                      )}
-                    </div>
-
-                    {isEditingHrSlot ? (
-                      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex gap-2">
-                          <Input
-                            type="date"
-                            value={editHrDate}
-                            onChange={(e) => setEditHrDate(e.target.value)}
-                            className="h-7 text-xs flex-1"
-                          />
-                          <Input
-                            type="time"
-                            value={editHrTime}
-                            onChange={(e) => setEditHrTime(e.target.value)}
-                            className="h-7 text-xs w-28"
-                          />
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            className="h-6 text-[10px] px-2"
-                            onClick={handleSaveHrSlotEdit}
-                            disabled={isSavingHrSlot || !editHrDate || !editHrTime}
-                          >
-                            {isSavingHrSlot ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
-                            Save
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 text-[10px] px-2"
-                            onClick={() => setIsEditingHrSlot(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        {/* If preferred_slots exist, show them for employer to pick */}
-                        {hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 && hrSlotBooking.status !== 'confirmed' ? (
-                          <div className="space-y-1.5" onClick={(e) => e.stopPropagation()}>
-                            {/* Show date once since all slots share the same date */}
-                            <div className="flex items-center gap-1.5 text-[10px] text-indigo-600 font-medium">
-                              📅 {new Date(hrSlotBooking.preferred_slots[0].date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                            </div>
-                            {hrSlotBooking.preferred_slots.map((slot, i) => {
-                              const hour = parseInt(slot.time.split(':')[0]);
-                              const minute = slot.time.split(':')[1];
-                              const displayHour = hour % 12 || 12;
-                              const ampm = hour < 12 ? 'AM' : 'PM';
-                              const timeLabel = `${displayHour}:${minute} ${ampm}`;
-                              return (
-                                <label key={i} className={`flex items-center gap-2 p-1.5 rounded border cursor-pointer transition-all ${
-                                  selectedHrPreferredSlot === i 
-                                    ? 'border-indigo-400 bg-indigo-100 ring-1 ring-indigo-300' 
-                                    : 'border-indigo-200 hover:bg-indigo-100/50'
-                                }`}>
-                                  <input 
-                                    type="radio" 
-                                    name="hr-preferred-slot" 
-                                    checked={selectedHrPreferredSlot === i} 
-                                    onChange={() => setSelectedHrPreferredSlot(i)}
-                                    className="accent-indigo-600"
-                                  />
-                                  <Badge variant="outline" className="text-[9px] px-1.5 border-indigo-300 text-indigo-600">
-                                    Option {i + 1}
-                                  </Badge>
-                                  <Badge variant="secondary" className="text-[9px] bg-indigo-100 text-indigo-700 border-indigo-200">
-                                    🕐 {timeLabel}
-                                  </Badge>
-                                </label>
-                              );
-                            })}
-                            
-                            {/* HR Meeting Type Selection */}
-                            <div className="mt-2 pt-2 border-t border-indigo-200 space-y-1.5" onClick={(e) => e.stopPropagation()}>
-                              <label className="text-[10px] font-medium text-indigo-700 flex items-center gap-1">
-                                <Video className="h-3 w-3" />
-                                Meeting Type
-                              </label>
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  variant={hrMeetType === 'google_meet' ? 'default' : 'outline'}
-                                  className={`h-6 text-[9px] px-1.5 ${
-                                    hrMeetType === 'google_meet'
-                                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                      : 'border-blue-300 text-blue-600 hover:bg-blue-50'
-                                  }`}
-                                  onClick={() => setHrMeetType('google_meet')}
-                                >
-                                  Google Meet
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={hrMeetType === 'zoom_meet' ? 'default' : 'outline'}
-                                  className={`h-6 text-[9px] px-1.5 ${
-                                    hrMeetType === 'zoom_meet'
-                                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                                      : 'border-purple-300 text-purple-600 hover:bg-purple-50'
-                                  }`}
-                                  onClick={() => setHrMeetType('zoom_meet')}
-                                >
-                                  Zoom
-                                </Button>
-                              </div>
-                              <Input
-                                type="url"
-                                placeholder={hrMeetType === 'google_meet' ? 'Paste Google Meet link' : 'Paste Zoom link'}
-                                value={hrMeetLink}
-                                onChange={(e) => setHrMeetLink(e.target.value)}
-                                className="h-6 text-[10px] border-indigo-200"
-                              />
-                            </div>
-
-                            <Button
-                              size="sm"
-                              className="h-6 text-[10px] px-3 mt-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                              onClick={handleConfirmHrPreferredSlot}
-                              disabled={selectedHrPreferredSlot === null || isConfirmingHrSlot || !hrMeetLink.trim()}
-                            >
-                              {isConfirmingHrSlot ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Check className="h-3 w-3 mr-1" />}
-                              Confirm Slot & Send Invitations
-                            </Button>
-                          </div>
-                        ) : hrSlotBooking.preferred_slots && hrSlotBooking.preferred_slots.length > 0 && hrSlotBooking.status === 'confirmed' ? (
-                          <div className="space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-[10px] text-indigo-600 font-medium">
-                              📅 {new Date(hrSlotBooking.preferred_slots[0].date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                            </div>
-                            {hrSlotBooking.preferred_slots.map((slot, i) => {
-                              const hour = parseInt(slot.time.split(':')[0]);
-                              const minute = slot.time.split(':')[1];
-                              const displayHour = hour % 12 || 12;
-                              const ampm = hour < 12 ? 'AM' : 'PM';
-                              const timeLabel = `${displayHour}:${minute} ${ampm}`;
-                              const isConfirmed = slot.date === hrSlotBooking.booking_date && slot.time === hrSlotBooking.booking_time;
-                              return (
-                                <div key={i} className={`flex items-center gap-2 p-1.5 rounded border ${
-                                  isConfirmed ? 'border-emerald-300 bg-emerald-50' : 'border-indigo-200 opacity-50'
-                                }`}>
-                                  <Badge variant="outline" className="text-[9px] px-1.5 border-indigo-300 text-indigo-600">
-                                    Option {i + 1}
-                                  </Badge>
-                                  <Badge variant="secondary" className="text-[9px] bg-indigo-100 text-indigo-700 border-indigo-200">
-                                    🕐 {timeLabel}
-                                  </Badge>
-                                  {isConfirmed && (
-                                    <Badge className="ml-auto text-[9px] bg-emerald-100 text-emerald-700 border-emerald-300">
-                                      ✓ Confirmed
-                                    </Badge>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
-                              📅 {new Date(hrSlotBooking.booking_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                            </Badge>
-                            <Badge variant="secondary" className="text-[10px] bg-indigo-100 text-indigo-700 border-indigo-200">
-                              🕐 {hrSlotBooking.booking_time}
-                            </Badge>
-                            <Badge className={`text-[10px] py-0 ${
-                              hrSlotBooking.status === 'confirmed' 
-                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
-                                : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                            }`}>
-                              {hrSlotBooking.status === 'confirmed' ? '✓ Confirmed' : hrSlotBooking.status}
-                            </Badge>
-                          </div>
-                        )}
-                        {hrSlotBooking.subject && (
-                          <p className="text-[10px] text-muted-foreground">Stage: {hrSlotBooking.subject}</p>
-                        )}
-                        
-                        {/* Observer Email Input - Multiple Emails for HR Round */}
-                        <div className="mt-1.5 pt-1.5 border-t border-indigo-200 space-y-1" onClick={(e) => e.stopPropagation()}>
-                          <label className="text-[10px] font-medium text-indigo-700 flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            Observer/Employer Emails
-                          </label>
-                          <div className="flex gap-1.5">
-                            <Input
-                              type="email"
-                              placeholder="Add email address"
-                              value={hrObserverEmail}
-                              onChange={(e) => setHrObserverEmail(e.target.value)}
-                              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddHrObserverEmail(); }}}
-                              className="h-6 text-[10px] flex-1 border-indigo-200"
-                            />
-                            <Button
-                              size="sm"
-                              className="h-6 text-[9px] px-2 bg-indigo-600 hover:bg-indigo-700"
-                              onClick={handleAddHrObserverEmail}
-                              disabled={isSavingHrObserver || !hrObserverEmail.trim()}
-                            >
-                              {isSavingHrObserver ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                            </Button>
-                          </div>
-                          {hrObserverEmails.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {hrObserverEmails.map((email) => (
-                                <Badge key={email} variant="secondary" className="text-[9px] px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200 flex items-center gap-1">
-                                  <CheckCircle2 className="h-2.5 w-2.5" />
-                                  {email}
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleRemoveHrObserverEmail(email); }}
-                                    className="ml-0.5 hover:text-red-500 transition-colors"
-                                  >
-                                    <X className="h-2.5 w-2.5" />
-                                  </button>
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          <p className="text-[9px] text-muted-foreground">
-                            These emails will receive notifications when the HR Round starts
-                          </p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
+                {/* HR Round Slot Booking now handled by shared slot booking UI above */}
 
                 {/* HR Round - Schedule Meeting button is provided via StageActionButtons */}
 
