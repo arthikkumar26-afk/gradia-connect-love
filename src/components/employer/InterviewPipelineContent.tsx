@@ -1250,7 +1250,7 @@ const ClickableStagesList = ({
   };
 
   const handleConfirmPreferredSlot = async (stepTitle: string) => {
-    const { isSegment, isAdmin, isCoreTeam, isManagement, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
+    const { isSegment, isAdmin, isCoreTeam, isManagement, isHR, activeBookingData, activeEmails } = getSlotBookingContext(stepTitle);
 
     if (!activeBookingData || selectedPreferredSlot === null || !activeBookingData.preferred_slots) return;
     const chosen = activeBookingData.preferred_slots[selectedPreferredSlot];
