@@ -21,7 +21,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { interviewCandidateId } = await req.json();
+    const { interviewCandidateId, customSubject, customBody } = await req.json();
     console.log('Sending HR feedback emails for:', interviewCandidateId);
 
     const { data: interviewCandidate, error: candidateError } = await supabase
