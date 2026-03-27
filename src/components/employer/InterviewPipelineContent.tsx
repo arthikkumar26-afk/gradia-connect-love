@@ -1018,7 +1018,7 @@ const ClickableStagesList = ({
   onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   getStepIcon: (step: InterviewStep) => React.ReactNode;
   getStatusBadge: (step: InterviewStep) => React.ReactNode;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
 }) => {
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
@@ -1341,8 +1341,7 @@ const ClickableStagesList = ({
         duration: 5000,
       });
 
-      // Reload after all async operations complete
-      window.location.reload();
+      await onRefresh?.();
     } catch (err) {
       console.error('Error confirming slot:', err);
       toast.error('Failed to confirm slot');
@@ -2041,7 +2040,7 @@ const CandidateProfileInline = ({
   candidate: Candidate;
   onBack: () => void;
   onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
-  onRefresh?: () => void;
+  onRefresh?: () => void | Promise<void>;
 }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedStageForSchedule, setSelectedStageForSchedule] = useState<InterviewStep | null>(null);

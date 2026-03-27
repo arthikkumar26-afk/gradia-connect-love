@@ -37,7 +37,7 @@ export const RoundFeedbackResults = ({
 }: {
   interviewCandidateId: string;
   feedbackType?: 'demo' | 'hr' | 'segment' | 'admin_academic' | 'core_team' | 'management';
-  onAllSubmitted?: () => void;
+  onAllSubmitted?: () => void | Promise<void>;
   stageStatus?: FeedbackStageStatus;
 }) => {
   const [reviews, setReviews] = useState<FeedbackReview[]>([]);
@@ -52,7 +52,7 @@ export const RoundFeedbackResults = ({
   const [showEmailPreview, setShowEmailPreview] = useState(false);
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
-  const isActiveStage = stageStatus === 'current' || stageStatus === 'in_progress' || stageStatus === 'completed';
+  const canAutoAdvance = stageStatus === 'current' || stageStatus === 'in_progress';
 
   const roundLabelMap: Record<string, string> = {
     demo: 'Demo Round',
@@ -163,7 +163,7 @@ export const RoundFeedbackResults = ({
   }, [interviewCandidateId, feedbackType]);
 
   useEffect(() => {
-    if (!isActiveStage || reviews.length === 0) return;
+    if (!canAutoAdvance || reviews.length === 0) return;
 
     const submittedReviews = reviews.filter((review) => review.status === 'submitted');
     const allSubmitted = submittedReviews.length === reviews.length;
@@ -213,12 +213,7 @@ export const RoundFeedbackResults = ({
         } else {
           toast.success(`All ${roundDisplayName} feedback received! Stage completed. Advancing to next round...`);
         }
-        onAllSubmitted?.();
-        
-        // Force reload to reflect the updated pipeline state
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        await onAllSubmitted?.();
       } catch (err) {
         feedbackAutoAdvanceInFlight.delete(autoAdvanceKey);
         console.error('Error auto-advancing after feedback:', err);
@@ -233,7 +228,7 @@ export const RoundFeedbackResults = ({
     return () => {
       cancelled = true;
     };
-  }, [reviews, interviewCandidateId, feedbackType, onAllSubmitted, isActiveStage]);
+  }, [reviews, interviewCandidateId, feedbackType, onAllSubmitted, canAutoAdvance]);
 
   const handleOpenEmailPreview = () => {
     setEmailSubject(`📝 ${roundLabel} Feedback Request`);
