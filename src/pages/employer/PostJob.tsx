@@ -15,6 +15,124 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, ArrowLeft, Sparkles, RefreshCw } from "lucide-react";
 import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline, pipelineRoleOptions, defaultRoleOptions, type PipelineStage } from "@/data/interviewPipelineConfig";
 
+// Levenshtein distance for fuzzy matching
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = Math.min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return dp[m][n];
+}
+
+function JobTitleAutocomplete({ value, onChange, interviewType, pipelineType }: {
+  value: string; onChange: (v: string) => void; interviewType: string; pipelineType: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [inputVal, setInputVal] = useState(value || "");
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setInputVal(value || ""); }, [value]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Collect all role labels for the current pipeline
+  const allRoles = useMemo(() => {
+    const key = `${interviewType}.${pipelineType}`;
+    const roles = pipelineRoleOptions[key] || [];
+    // If no specific roles, gather all roles from the interview type
+    if (roles.length === 0 && interviewType) {
+      const allForType = Object.entries(pipelineRoleOptions)
+        .filter(([k]) => k.startsWith(`${interviewType}.`))
+        .flatMap(([, v]) => v);
+      if (allForType.length > 0) return [...new Set(allForType.map(r => r.label))];
+    }
+    return roles.length > 0 ? roles.map(r => r.label) : defaultRoleOptions.map(r => r.label);
+  }, [interviewType, pipelineType]);
+
+  const suggestions = useMemo(() => {
+    if (!inputVal.trim()) return allRoles.slice(0, 10);
+    const q = inputVal.toLowerCase();
+    // Score: exact substring match first, then fuzzy
+    return allRoles
+      .map(role => {
+        const rl = role.toLowerCase();
+        if (rl === q) return { role, score: 0 };
+        if (rl.startsWith(q)) return { role, score: 1 };
+        if (rl.includes(q)) return { role, score: 2 };
+        const dist = levenshtein(q, rl.slice(0, Math.max(q.length, 3)));
+        if (dist <= Math.ceil(q.length * 0.4)) return { role, score: 3 + dist };
+        // Check each word
+        const words = rl.split(/\s+/);
+        const wordMatch = words.some(w => w.startsWith(q) || levenshtein(q, w.slice(0, q.length)) <= 2);
+        if (wordMatch) return { role, score: 5 };
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => a!.score - b!.score)
+      .map(r => r!.role)
+      .slice(0, 8);
+  }, [inputVal, allRoles]);
+
+  // Auto-correct: if user typed something close to a role, fix on blur
+  const handleBlur = () => {
+    if (!inputVal.trim()) return;
+    const q = inputVal.toLowerCase();
+    const exact = allRoles.find(r => r.toLowerCase() === q);
+    if (exact) { onChange(exact); setInputVal(exact); return; }
+    // Find closest match
+    let best = { role: "", dist: Infinity };
+    for (const role of allRoles) {
+      const d = levenshtein(q, role.toLowerCase());
+      if (d < best.dist) best = { role, dist: d };
+    }
+    if (best.dist <= Math.ceil(q.length * 0.3) && best.dist <= 3) {
+      onChange(best.role);
+      setInputVal(best.role);
+    } else {
+      onChange(inputVal);
+    }
+  };
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <Input
+        placeholder={allRoles.length > 0 ? `e.g., ${allRoles[0]}` : "e.g., Senior Full Stack Developer"}
+        value={inputVal}
+        onChange={(e) => { setInputVal(e.target.value); onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(handleBlur, 200)}
+        autoComplete="off"
+      />
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {suggestions.map((role) => (
+            <button
+              key={role}
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setInputVal(role);
+                onChange(role);
+                setOpen(false);
+              }}
+            >
+              {role}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const jobFormSchema = z.object({
   job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
