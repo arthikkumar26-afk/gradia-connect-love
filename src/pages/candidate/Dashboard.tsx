@@ -72,6 +72,7 @@ import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 import { CouponInput } from "@/components/shared/CouponInput";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
+import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 
 interface FamilyRecord {
   id?: string;
