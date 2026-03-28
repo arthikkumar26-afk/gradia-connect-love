@@ -1173,6 +1173,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       }
 
 
+      case 'Design Challenge': {
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Palette className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">AI Design Challenge</span>
+            </div>
+            <GraphicDesignChallenge />
+          </div>
+        );
+      }
+
       case 'Final Review': {
         return (
           <div className="space-y-4">
