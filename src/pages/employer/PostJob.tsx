@@ -864,9 +864,12 @@ const PostJob = () => {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <FormControl>
-                          <Input placeholder="e.g., Senior Software Engineer" {...field} />
-                        </FormControl>
+                        <JobTitleAutocomplete
+                          value={field.value}
+                          onChange={field.onChange}
+                          interviewType={watchedInterviewType}
+                          pipelineType={selectedPipelineType}
+                        />
                       )}
                       <FormMessage />
                     </FormItem>
