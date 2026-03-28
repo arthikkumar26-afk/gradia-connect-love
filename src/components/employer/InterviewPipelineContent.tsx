@@ -2088,8 +2088,8 @@ const CandidateProfileInline = ({
         return;
       }
 
-      // Mark Interview Guidelines as completed
-      onUpdateStep(instructionStep.id, "completed", true);
+      // Mark Interview Guidelines as completed (await to ensure DB is updated before pipeline trigger)
+      await onUpdateStep(instructionStep.id, "completed", true);
 
       // Trigger the full post-application pipeline (instruction email → CV results → slot booking)
       // This runs sequentially in the edge function: each email + stage advancement
