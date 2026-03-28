@@ -670,7 +670,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
     const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
     const isFinalReview = stage.name === 'Final Review';
-    if (!isFinalReview && status !== 'completed' && status !== 'passed') return null;
+    const isDesignChallenge = stage.name === 'Design Challenge';
+    if (!isFinalReview && !isDesignChallenge && status !== 'completed' && status !== 'passed') return null;
 
     switch (stage.name) {
       case 'Interview Guidelines': {
