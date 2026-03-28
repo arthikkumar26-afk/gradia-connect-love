@@ -456,6 +456,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         return UserCheck;
       case 'HR Feedback':
         return MessageSquare;
+      case 'Design Challenge':
+        return Palette;
       case 'Final Review':
         return FileCheck;
       case 'Offer Stage':
