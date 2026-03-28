@@ -2039,7 +2039,7 @@ const CandidateProfileInline = ({
 }: { 
   candidate: Candidate;
   onBack: () => void;
-  onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
+  onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
 }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
