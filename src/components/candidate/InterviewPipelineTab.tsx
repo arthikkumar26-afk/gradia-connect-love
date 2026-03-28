@@ -152,8 +152,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     fetchData();
 
     // Realtime: listen for current_stage_id / status changes on interview_candidates
+    const channelId = Date.now();
     const candidateChannel = supabase
-      .channel(`pipeline-candidate-${candidateId}`)
+      .channel(`pipeline-candidate-${candidateId}-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -162,16 +163,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           table: 'interview_candidates',
           filter: `candidate_id=eq.${candidateId}`,
         },
-        () => {
-          console.log('Realtime: interview_candidates updated');
+        (payload) => {
+          console.log('Realtime: interview_candidates updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Candidates channel status:', status);
+      });
 
     // Realtime: listen for new / updated interview_events
+    // We subscribe without filter since events are linked via interview_candidate_id
+    // and refetch will filter by candidateId anyway
     const eventsChannel = supabase
-      .channel(`pipeline-events-${candidateId}`)
+      .channel(`pipeline-events-${candidateId}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -179,16 +184,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           schema: 'public',
           table: 'interview_events',
         },
-        () => {
-          console.log('Realtime: interview_events updated');
+        (payload) => {
+          console.log('Realtime: interview_events updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Events channel status:', status);
+      });
 
     // Realtime: listen for management_reviews (feedback submissions)
     const reviewsChannel = supabase
-      .channel(`pipeline-reviews-${candidateId}`)
+      .channel(`pipeline-reviews-${candidateId}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -196,16 +203,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           schema: 'public',
           table: 'management_reviews',
         },
-        () => {
-          console.log('Realtime: management_reviews updated');
+        (payload) => {
+          console.log('Realtime: management_reviews updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Reviews channel status:', status);
+      });
 
     // Realtime: listen for slot_bookings changes
     const bookingsChannel = supabase
-      .channel(`pipeline-bookings-${candidateId}`)
+      .channel(`pipeline-bookings-${candidateId}-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -214,17 +223,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           table: 'slot_bookings',
           filter: `candidate_id=eq.${candidateId}`,
         },
-        () => {
-          console.log('Realtime: slot_bookings updated');
+        (payload) => {
+          console.log('Realtime: slot_bookings updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Bookings channel status:', status);
+      });
 
-    // Also poll every 30 seconds as fallback for realtime issues
+    // Poll every 10 seconds as fallback for realtime issues
     const pollInterval = setInterval(() => {
       fetchData();
-    }, 30000);
+    }, 10000);
 
     return () => {
       supabase.removeChannel(candidateChannel);
