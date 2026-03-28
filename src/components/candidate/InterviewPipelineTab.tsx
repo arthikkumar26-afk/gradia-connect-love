@@ -214,7 +214,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
     // Realtime: listen for slot_bookings changes
     const bookingsChannel = supabase
-      .channel(`pipeline-bookings-${candidateId}`)
+      .channel(`pipeline-bookings-${candidateId}-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -223,17 +223,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           table: 'slot_bookings',
           filter: `candidate_id=eq.${candidateId}`,
         },
-        () => {
-          console.log('Realtime: slot_bookings updated');
+        (payload) => {
+          console.log('Realtime: slot_bookings updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Bookings channel status:', status);
+      });
 
-    // Also poll every 30 seconds as fallback for realtime issues
+    // Poll every 10 seconds as fallback for realtime issues
     const pollInterval = setInterval(() => {
       fetchData();
-    }, 30000);
+    }, 10000);
 
     return () => {
       supabase.removeChannel(candidateChannel);
