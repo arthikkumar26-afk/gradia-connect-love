@@ -34,9 +34,11 @@ import {
   Eye,
   RefreshCw,
   Download,
+  Palette,
 } from "lucide-react";
 import { StageResultsModal } from "@/components/employer/StageResultsModal";
 import { AllStagesReviewSummary } from "@/components/employer/AllStagesReviewSummary";
+import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 
 interface InterviewStage {
   id: string;
