@@ -52,6 +52,7 @@ import {
   Rocket,
   Mail,
   Lock,
+  Palette,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,6 +73,7 @@ import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 import { CouponInput } from "@/components/shared/CouponInput";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
+import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 
 interface FamilyRecord {
   id?: string;
@@ -1270,6 +1272,7 @@ const CandidateDashboard = () => {
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "mentors", label: "Mentors", icon: Users },
     { id: "externaljobs", label: "External Job Listings", icon: ExternalLink },
+    { id: "designchallenge", label: "Design Challenge", icon: Palette },
     { id: "freelancer", label: "Freelancer", icon: Zap, link: "/freelancer/login" },
     
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
@@ -3782,6 +3785,11 @@ const CandidateDashboard = () => {
             {/* Attend Mock Test - Standalone Section */}
             {activeMenu === "mocktest" && (
               <MockInterviewTab />
+            )}
+
+            {/* Graphic Design Challenge */}
+            {activeMenu === "designchallenge" && (
+              <GraphicDesignChallenge />
             )}
 
             {/* Upskill Yourself - Standalone Section */}
