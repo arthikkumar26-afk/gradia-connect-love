@@ -1271,6 +1271,7 @@ const CandidateDashboard = () => {
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     { id: "mentors", label: "Mentors", icon: Users },
     { id: "externaljobs", label: "External Job Listings", icon: ExternalLink },
+    { id: "designchallenge", label: "Design Challenge", icon: Palette },
     { id: "freelancer", label: "Freelancer", icon: Zap, link: "/freelancer/login" },
     
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
