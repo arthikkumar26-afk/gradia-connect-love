@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Briefcase, ArrowLeft, Sparkles, RefreshCw } from "lucide-react";
-import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline, type PipelineStage } from "@/data/interviewPipelineConfig";
+import { getPipelineTypesForInterviewType, getPipelineStages, getRolesForPipeline, pipelineRoleOptions, defaultRoleOptions, type PipelineStage } from "@/data/interviewPipelineConfig";
 
 
 const jobFormSchema = z.object({
