@@ -3786,6 +3786,11 @@ const CandidateDashboard = () => {
               <MockInterviewTab />
             )}
 
+            {/* Graphic Design Challenge */}
+            {activeMenu === "designchallenge" && (
+              <GraphicDesignChallenge />
+            )}
+
             {/* Upskill Yourself - Standalone Section */}
             {activeMenu === "upskill" && (
               <div className="space-y-6">
