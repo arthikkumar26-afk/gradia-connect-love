@@ -170,8 +170,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       .subscribe();
 
     // Realtime: listen for new / updated interview_events
+    // We subscribe without filter since events are linked via interview_candidate_id
+    // and refetch will filter by candidateId anyway
     const eventsChannel = supabase
-      .channel(`pipeline-events-${candidateId}`)
+      .channel(`pipeline-events-${candidateId}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -179,16 +181,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           schema: 'public',
           table: 'interview_events',
         },
-        () => {
-          console.log('Realtime: interview_events updated');
+        (payload) => {
+          console.log('Realtime: interview_events updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Events channel status:', status);
+      });
 
     // Realtime: listen for management_reviews (feedback submissions)
     const reviewsChannel = supabase
-      .channel(`pipeline-reviews-${candidateId}`)
+      .channel(`pipeline-reviews-${candidateId}-${Date.now()}`)
       .on(
         'postgres_changes',
         {
@@ -196,12 +200,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           schema: 'public',
           table: 'management_reviews',
         },
-        () => {
-          console.log('Realtime: management_reviews updated');
+        (payload) => {
+          console.log('Realtime: management_reviews updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Reviews channel status:', status);
+      });
 
     // Realtime: listen for slot_bookings changes
     const bookingsChannel = supabase
