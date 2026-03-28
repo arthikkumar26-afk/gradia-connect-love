@@ -34,9 +34,11 @@ import {
   Eye,
   RefreshCw,
   Download,
+  Palette,
 } from "lucide-react";
 import { StageResultsModal } from "@/components/employer/StageResultsModal";
 import { AllStagesReviewSummary } from "@/components/employer/AllStagesReviewSummary";
+import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 
 interface InterviewStage {
   id: string;
@@ -454,6 +456,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         return UserCheck;
       case 'HR Feedback':
         return MessageSquare;
+      case 'Design Challenge':
+        return Palette;
       case 'Final Review':
         return FileCheck;
       case 'Offer Stage':
@@ -666,7 +670,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
     const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
     const isFinalReview = stage.name === 'Final Review';
-    if (!isFinalReview && status !== 'completed' && status !== 'passed') return null;
+    const isDesignChallenge = stage.name === 'Design Challenge';
+    if (!isFinalReview && !isDesignChallenge && status !== 'completed' && status !== 'passed') return null;
 
     switch (stage.name) {
       case 'Interview Guidelines': {
@@ -1168,6 +1173,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         );
       }
 
+
+      case 'Design Challenge': {
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Palette className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">AI Design Challenge</span>
+            </div>
+            <GraphicDesignChallenge />
+          </div>
+        );
+      }
 
       case 'Final Review': {
         return (
