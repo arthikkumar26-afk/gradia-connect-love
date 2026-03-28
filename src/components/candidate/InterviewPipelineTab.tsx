@@ -152,8 +152,9 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     fetchData();
 
     // Realtime: listen for current_stage_id / status changes on interview_candidates
+    const channelId = Date.now();
     const candidateChannel = supabase
-      .channel(`pipeline-candidate-${candidateId}`)
+      .channel(`pipeline-candidate-${candidateId}-${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -162,12 +163,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           table: 'interview_candidates',
           filter: `candidate_id=eq.${candidateId}`,
         },
-        () => {
-          console.log('Realtime: interview_candidates updated');
+        (payload) => {
+          console.log('Realtime: interview_candidates updated', payload.eventType);
           fetchData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Candidates channel status:', status);
+      });
 
     // Realtime: listen for new / updated interview_events
     // We subscribe without filter since events are linked via interview_candidate_id
