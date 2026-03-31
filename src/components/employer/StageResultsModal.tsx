@@ -353,6 +353,8 @@ export const StageResultsModal = ({
                   interviewCandidateId={interviewCandidateId} 
                   feedbackType={isHrFeedbackStage ? 'hr' : isCoreTeamFeedbackStage ? 'core_team' : isManagementFeedbackStage ? 'management' : isSegmentFeedbackStage ? 'segment' : isAdminAcademicFeedbackStage ? 'admin_academic' : 'demo'} 
                 />
+                {/* AI Resume Analysis Report */}
+                {candidateId && <ResumeAnalysisReport userId={candidateId} />}
               </div>
             ) : isSlotBookingStage ? (
               <>
