@@ -78,6 +78,7 @@ import { RoundMeetingOptions } from "./RoundMeetingOptions";
 import { RoundFeedbackResults } from "./RoundFeedbackResults";
 import { AllStagesReviewSummary } from "./AllStagesReviewSummary";
 import OfferLetterModal from "./OfferLetterModal";
+import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -2460,7 +2461,8 @@ const CandidateProfileInline = ({
                 </Card>
               )}
 
-              {/* Actions */}
+              {/* Detailed Resume Analysis Report */}
+              <ResumeAnalysisReport userId={candidate.id} />
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
                   <Button className="flex-1" size="sm">
