@@ -64,7 +64,8 @@ export const StageResultsModal = ({
   interviewCandidateId,
   stageId,
   stageName,
-  candidateName
+  candidateName,
+  candidateId
 }: StageResultsModalProps) => {
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState<InterviewResponse | null>(null);
