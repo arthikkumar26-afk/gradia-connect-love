@@ -711,7 +711,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     const currentInterview = interviews.find(i => i.id === selectedInterview);
     if (!currentInterview) return null;
 
-    const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
+    const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id, currentInterview);
     const isFinalReview = stage.name === 'Final Review';
     const isDesignChallenge = stage.name === 'Design Challenge';
     if (!isFinalReview && !isDesignChallenge && status !== 'completed' && status !== 'passed') return null;
