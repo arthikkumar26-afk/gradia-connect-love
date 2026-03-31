@@ -161,13 +161,22 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [profilesRes, credentialsRes] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('user_credentials').select('user_id, initial_password'),
+      ]);
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (profilesRes.error) throw profilesRes.error;
+      
+      const credMap = new Map<string, string>();
+      (credentialsRes.data || []).forEach((c: any) => credMap.set(c.user_id, c.initial_password));
+      
+      const usersWithPasswords = (profilesRes.data || []).map((u: any) => ({
+        ...u,
+        initial_password: credMap.get(u.id) || null,
+      }));
+      
+      setUsers(usersWithPasswords);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
