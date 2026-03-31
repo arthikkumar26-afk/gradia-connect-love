@@ -75,14 +75,14 @@ async function sendViaGateway(supabaseUrl: string, serviceKey: string, body: any
   }
 }
 
-async function processInitialPipeline(interviewCandidateId: string, analysisData: any) {
+async function processInitialPipeline(interviewCandidateId: string, _analysisData: any) {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  const DELAY = 5000;
 
-  // Step 1: Send Instruction Email via gateway
-  console.log('Step 1: Sending instruction email via gateway...');
+  // Only send the initial alert/instruction email when interview starts.
+  // CV results, slot booking, and all other stage emails are triggered
+  // individually when each stage is completed or advanced by the employer.
+  console.log('Sending interview started alert email via gateway...');
   await sendViaGateway(supabaseUrl, supabaseServiceKey, {
     interviewCandidateId,
     stageName: 'Interview Guidelines',
@@ -90,33 +90,7 @@ async function processInitialPipeline(interviewCandidateId: string, analysisData
     triggerSource: 'post-application-pipeline',
   });
 
-  // Step 2: Send CV/Resume ATS results email via gateway
-  console.log('Waiting before CV results email...');
-  await new Promise(resolve => setTimeout(resolve, DELAY));
-
-  console.log('Step 2: Sending CV/Resume ATS results email via gateway...');
-  await sendViaGateway(supabaseUrl, supabaseServiceKey, {
-    interviewCandidateId,
-    stageName: 'CV/Resume',
-    emailType: 'cv_results',
-    triggerSource: 'post-application-pipeline',
-    analysisData: analysisData || null,
-  });
-
-  // Step 3: Advance to Written Test Slot Booking + send slot booking email via gateway
-  console.log('Waiting before Written Test slot booking...');
-  await new Promise(resolve => setTimeout(resolve, DELAY));
-  await advanceCandidateToStage(supabase, interviewCandidateId, 'Written Test Slot Booking');
-  
-  console.log('Step 3: Sending Written Test slot booking email via gateway...');
-  await sendViaGateway(supabaseUrl, supabaseServiceKey, {
-    interviewCandidateId,
-    stageName: 'Written Test Slot Booking',
-    emailType: 'slot_booking',
-    triggerSource: 'post-application-pipeline',
-  });
-
-  console.log('Initial pipeline completed. Next stages will trigger on completion events.');
+  console.log('Interview alert email sent. Subsequent emails will be sent per-stage.');
 }
 
 serve(async (req) => {
@@ -137,7 +111,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Initial pipeline completed (Instruction → CV Results → Written Test Slot Booking). Next stages trigger on completion.',
+      message: 'Interview alert email sent. Subsequent stage emails will trigger individually.',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
