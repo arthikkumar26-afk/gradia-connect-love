@@ -1469,7 +1469,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         {/* Pipeline Stages - Vertical Timeline */}
         <div className="space-y-3">
           {stages.map((stage, index) => {
-            const rawStatus = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
+            const rawStatus = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id, currentInterview);
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
             const isFeedbackStage = stage.name.toLowerCase().includes('feedback');
