@@ -2461,7 +2461,8 @@ const CandidateProfileInline = ({
                 </Card>
               )}
 
-              {/* Actions */}
+              {/* Detailed Resume Analysis Report */}
+              <ResumeAnalysisReport userId={candidate.id} />
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
                   <Button className="flex-1" size="sm">
