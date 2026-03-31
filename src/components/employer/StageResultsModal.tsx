@@ -24,6 +24,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { RoundFeedbackResults } from "./RoundFeedbackResults";
+import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
 
 interface InterviewResponse {
   id: string;
