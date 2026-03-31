@@ -2292,7 +2292,7 @@ const CandidateProfileInline = ({
     <div className="space-y-4">
       {/* Header with Back Button */}
       <div className="flex items-center gap-4 pb-4 border-b">
-        <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+        <Button variant="outline" size="sm" onClick={onBack} className="gap-2 border-primary/30 text-primary hover:bg-primary/10">
           <ChevronRight className="h-4 w-4 rotate-180" />
           Back to Pipeline
         </Button>
