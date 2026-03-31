@@ -1802,6 +1802,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           stageId={selectedStageForResults.stageId}
           stageName={selectedStageForResults.stageName}
           candidateName="My Results"
+          candidateId={candidateId}
         />
       )}
       {/* PDF Report Modal */}
