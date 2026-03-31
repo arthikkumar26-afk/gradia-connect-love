@@ -1477,7 +1477,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const slotStageName = roundSlotStageNameMap[stage.name];
             const slotStage = slotStageName ? stages.find(s => s.name === slotStageName) : null;
             const slotStageStatus = slotStage
-              ? getStageStatus(slotStage.id, slotStage.name, currentInterview.events, currentInterview.current_stage_id)
+              ? getStageStatus(slotStage.id, slotStage.name, currentInterview.events, currentInterview.current_stage_id, currentInterview)
               : null;
             const status = rawStatus === 'upcoming' && liveRoundJoinAction && slotStageStatus === 'completed'
               ? 'current'
