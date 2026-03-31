@@ -114,6 +114,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [blockReason, setBlockReason] = useState<string>("");
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
 
   const blockReasons = [
     "Violation of Terms of Service",
