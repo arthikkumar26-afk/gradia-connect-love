@@ -130,16 +130,26 @@ serve(async (req) => {
       );
     }
 
-    // 3. Create application record
-    const { error: appError } = await supabase.from("applications").insert({
+    // 3. Create application record (use upsert to handle edge cases)
+    const { error: appError } = await supabase.from("applications").upsert({
       job_id: jobId,
       candidate_id: userId,
       status: "pending",
       cover_letter: coverLetter || null,
-    });
+    }, { onConflict: 'job_id,candidate_id' });
 
     if (appError) {
       console.error("Application insert error:", appError);
+      // Retry once with plain insert if upsert fails
+      const { error: retryError } = await supabase.from("applications").insert({
+        job_id: jobId,
+        candidate_id: userId,
+        status: "pending",
+        cover_letter: coverLetter || null,
+      });
+      if (retryError) {
+        console.error("Application retry insert also failed:", retryError);
+      }
     }
 
     // 4. Get first interview stage (Resume Screening)
