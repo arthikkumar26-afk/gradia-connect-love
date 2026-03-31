@@ -21,6 +21,7 @@ import {
   Phone,
   Calendar,
   Eye,
+  EyeOff,
   UserCheck,
   UserX,
   CreditCard,
