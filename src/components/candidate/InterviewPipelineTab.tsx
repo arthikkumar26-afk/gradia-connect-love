@@ -654,10 +654,38 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return null;
   };
 
-  const getCurrentStageOrder = (currentStageId: string | null) => {
-    if (!currentStageId) return 1;
-    const idx = stages.findIndex(s => s.id === currentStageId);
-    return idx !== -1 ? idx + 1 : 1;
+  // Compute the effective current stage index from completed events + feedback
+  const getEffectiveCurrentIndex = (interview: InterviewCandidate): number => {
+    // Find the highest completed stage index
+    let highestCompleted = -1;
+    stages.forEach((stage, idx) => {
+      const completedEvent = interview.events.find(
+        e => e.stage_id === stage.id && (e.status === 'completed' || e.status === 'passed')
+      );
+      if (completedEvent) {
+        highestCompleted = Math.max(highestCompleted, idx);
+      }
+      // Check round feedback completion
+      if (hasSubmittedFeedbackForRoundStage(stage.name)) {
+        highestCompleted = Math.max(highestCompleted, idx);
+      }
+      if (hasSubmittedFeedbackForFeedbackStage(stage.name)) {
+        highestCompleted = Math.max(highestCompleted, idx);
+      }
+    });
+
+    // The current stage is the one after the highest completed
+    const effectiveIdx = highestCompleted + 1;
+    
+    // Also consider the DB current_stage_id as a fallback
+    const dbIdx = resolveVisibleIndex(interview.current_stage_id);
+    
+    return Math.max(effectiveIdx, dbIdx !== -1 ? dbIdx : 0);
+  };
+
+  const getCurrentStageOrder = (interview: InterviewCandidate) => {
+    const idx = getEffectiveCurrentIndex(interview);
+    return Math.min(idx + 1, stages.length);
   };
 
   const renderStarRating = (rating: number | null, max: number = 5) => {
