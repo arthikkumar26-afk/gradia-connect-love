@@ -566,6 +566,36 @@ const Users = () => {
                               </div>
                             </TableCell>
                             <TableCell>{getRoleBadge(user.role)}</TableCell>
+                            <TableCell>
+                              {user.initial_password ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="font-mono text-xs">
+                                    {visiblePasswords.has(user.id) ? user.initial_password : '••••••••'}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => {
+                                      setVisiblePasswords(prev => {
+                                        const next = new Set(prev);
+                                        if (next.has(user.id)) next.delete(user.id);
+                                        else next.add(user.id);
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    {visiblePasswords.has(user.id) ? (
+                                      <EyeOff className="h-3 w-3 text-muted-foreground" />
+                                    ) : (
+                                      <Eye className="h-3 w-3 text-muted-foreground" />
+                                    )}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                             <TableCell>{user.location || 'Not specified'}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1 text-sm text-muted-foreground">
