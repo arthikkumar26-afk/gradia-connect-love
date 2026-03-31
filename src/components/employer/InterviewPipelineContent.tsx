@@ -1006,6 +1006,7 @@ const ClickableStagesList = ({
   candidateName,
   candidateEmail,
   jobTitle,
+  candidateId,
   onUpdateStep,
   getStepIcon,
   getStatusBadge,
@@ -1016,6 +1017,7 @@ const ClickableStagesList = ({
   candidateName: string;
   candidateEmail: string;
   jobTitle: string;
+  candidateId?: string;
   onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   getStepIcon: (step: InterviewStep) => React.ReactNode;
   getStatusBadge: (step: InterviewStep) => React.ReactNode;
@@ -1995,6 +1997,7 @@ const ClickableStagesList = ({
           stageId={selectedStageForResults.id}
           stageName={selectedStageForResults.title}
           candidateName={candidateName}
+          candidateId={candidateId}
         />
       )}
       
@@ -2600,6 +2603,7 @@ const CandidateProfileInline = ({
                     candidateName={candidate.name}
                     candidateEmail={candidate.email}
                     jobTitle={candidate.role}
+                    candidateId={candidate.id}
                     onUpdateStep={onUpdateStep}
                     getStepIcon={getStepIcon}
                     getStatusBadge={getStatusBadge}

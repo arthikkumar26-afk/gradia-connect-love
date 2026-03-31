@@ -24,6 +24,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { RoundFeedbackResults } from "./RoundFeedbackResults";
+import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
 
 interface InterviewResponse {
   id: string;
@@ -55,6 +56,7 @@ interface StageResultsModalProps {
   stageId: string;
   stageName: string;
   candidateName: string;
+  candidateId?: string;
 }
 
 export const StageResultsModal = ({
@@ -63,7 +65,8 @@ export const StageResultsModal = ({
   interviewCandidateId,
   stageId,
   stageName,
-  candidateName
+  candidateName,
+  candidateId
 }: StageResultsModalProps) => {
   const [loading, setLoading] = useState(true);
   const [response, setResponse] = useState<InterviewResponse | null>(null);
@@ -350,6 +353,8 @@ export const StageResultsModal = ({
                   interviewCandidateId={interviewCandidateId} 
                   feedbackType={isHrFeedbackStage ? 'hr' : isCoreTeamFeedbackStage ? 'core_team' : isManagementFeedbackStage ? 'management' : isSegmentFeedbackStage ? 'segment' : isAdminAcademicFeedbackStage ? 'admin_academic' : 'demo'} 
                 />
+                {/* AI Resume Analysis Report */}
+                {candidateId && <ResumeAnalysisReport userId={candidateId} />}
               </div>
             ) : isSlotBookingStage ? (
               <>
