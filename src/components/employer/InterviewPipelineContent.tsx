@@ -1997,6 +1997,7 @@ const ClickableStagesList = ({
           stageId={selectedStageForResults.id}
           stageName={selectedStageForResults.title}
           candidateName={candidateName}
+          candidateId={candidateId}
         />
       )}
       
