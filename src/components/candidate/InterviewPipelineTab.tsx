@@ -1448,7 +1448,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             <span className="text-sm font-medium text-foreground">Interview Stages</span>
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">
-                Stage {getCurrentStageOrder(currentInterview.current_stage_id)} of {stages.length}
+                Stage {getCurrentStageOrder(currentInterview)} of {stages.length}
               </span>
               <Badge variant="outline" className="text-xs border-green-500/50 text-green-600 bg-green-500/10 gap-1">
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -1457,7 +1457,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             </div>
           </div>
           <Progress 
-            value={(getCurrentStageOrder(currentInterview.current_stage_id) / stages.length) * 100} 
+            value={(getCurrentStageOrder(currentInterview) / stages.length) * 100} 
             className="h-2"
           />
         </div>
