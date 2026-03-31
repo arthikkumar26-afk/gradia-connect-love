@@ -330,14 +330,15 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
           }
         }
 
-        filteredStages = allStages
-          .filter(s => pipelineNames.has(s.name) && !hiddenRoundStages.has(s.name))
-          .sort((a, b) => {
-            // For injected 'Segment Round', place it right after 'Segment Round Slot Booking'
+        // First try matching DB stages by name
+        const matchedStages = allStages.filter(s => pipelineNames.has(s.name) && !hiddenRoundStages.has(s.name));
+        
+        if (matchedStages.length >= jobPipeline.length * 0.5) {
+          // Enough DB stages matched — use them with proper ordering
+          filteredStages = matchedStages.sort((a, b) => {
             const getOrder = (s: InterviewStage) => {
               const pipelineEntry = jobPipeline.find(p => p.name === s.name);
               if (pipelineEntry) return pipelineEntry.order;
-              // For injected round stages, place right after their slot booking
               const roundToSlotMap: Record<string, string> = {
                 'Segment Round': 'Segment Round Slot Booking',
                 'Admin & Academic Round': 'Admin & Academic Round Slot Booking',
@@ -354,6 +355,24 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             };
             return getOrder(a) - getOrder(b);
           });
+        } else {
+          // Custom pipeline names don't match DB stages — create virtual stages from pipeline config
+          filteredStages = jobPipeline
+            .filter(ps => !hiddenRoundStages.has(ps.name))
+            .sort((a, b) => a.order - b.order)
+            .map((ps) => {
+              // Try to find a matching DB stage first
+              const dbStage = allStages.find(s => s.name === ps.name);
+              if (dbStage) return dbStage;
+              // Create a virtual stage entry
+              return {
+                id: `virtual-${ps.order}`,
+                name: ps.name,
+                stage_order: ps.order,
+                is_ai_automated: !!(ps as any).isAutomated,
+              } as InterviewStage;
+            });
+        }
       } else {
         // Default pipeline: filter out hidden rounds
         filteredStages = allStages.filter(s => !hiddenRoundStages.has(s.name));
