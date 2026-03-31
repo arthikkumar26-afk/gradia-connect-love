@@ -1006,6 +1006,7 @@ const ClickableStagesList = ({
   candidateName,
   candidateEmail,
   jobTitle,
+  candidateId,
   onUpdateStep,
   getStepIcon,
   getStatusBadge,
@@ -1016,6 +1017,7 @@ const ClickableStagesList = ({
   candidateName: string;
   candidateEmail: string;
   jobTitle: string;
+  candidateId?: string;
   onUpdateStep: (stepId: string, status: InterviewStep["status"], skipEmail?: boolean) => void;
   getStepIcon: (step: InterviewStep) => React.ReactNode;
   getStatusBadge: (step: InterviewStep) => React.ReactNode;
