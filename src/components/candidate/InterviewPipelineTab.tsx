@@ -546,7 +546,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return hasSubmittedFeedbackForFeedbackStage(prevStage.name);
   };
 
-  const getStageStatus = (stageId: string, stageName: string, events: InterviewEvent[], currentStageId: string | null) => {
+  const getStageStatus = (stageId: string, stageName: string, events: InterviewEvent[], currentStageId: string | null, interview?: InterviewCandidate) => {
     // Check for completed or passed events first
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
@@ -558,7 +558,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     if (hasSubmittedFeedbackForFeedbackStage(stageName)) return 'completed';
 
     const stageIndex = stages.findIndex(s => s.id === stageId);
-    const currentStageIndex = resolveVisibleIndex(currentStageId);
+    
+    // Use effective current index computed from events if interview is available
+    const currentStageIndex = interview 
+      ? getEffectiveCurrentIndex(interview)
+      : resolveVisibleIndex(currentStageId);
 
     // If current stage has advanced past this stage, it's completed
     if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex < currentStageIndex) {
