@@ -49,10 +49,16 @@ export const JobApplicationModal = ({
 }: JobApplicationModalProps) => {
   const [coverLetter, setCoverLetter] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [useExistingResume, setUseExistingResume] = useState(!!candidateProfile?.resume_url);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [analysisStep, setAnalysisStep] = useState<AnalysisStep>('idle');
   const [aiScore, setAiScore] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const existingResumeUrl = candidateProfile?.resume_url;
+  const existingResumeName = existingResumeUrl
+    ? decodeURIComponent(existingResumeUrl.split('/').pop() || 'resume.pdf')
+    : null;
 
   const getProgress = () => {
     switch (analysisStep) {
