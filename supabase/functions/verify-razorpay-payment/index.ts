@@ -6,36 +6,55 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple HMAC-SHA256 verification without crypto module
 async function verifySignature(orderId: string, paymentId: string, signature: string, secret: string): Promise<boolean> {
   const message = `${orderId}|${paymentId}`;
-  
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
   const messageData = encoder.encode(message);
-  
+
   const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    keyData,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
+    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
   );
-  
+
   const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
   const hashArray = Array.from(new Uint8Array(signatureBuffer));
   const generatedSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
+
   return generatedSignature === signature;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const authSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await authSupabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -54,8 +73,15 @@ serve(async (req) => {
       );
     }
 
+    // Verify authenticated user matches employer_id
+    if (userId !== employer_id) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: user mismatch' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET');
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!RAZORPAY_KEY_SECRET) {
@@ -65,12 +91,8 @@ serve(async (req) => {
       );
     }
 
-    // Verify payment signature
     const isValid = await verifySignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      RAZORPAY_KEY_SECRET
+      razorpay_order_id, razorpay_payment_id, razorpay_signature, RAZORPAY_KEY_SECRET
     );
 
     if (!isValid) {
@@ -81,8 +103,7 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with service role
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const supabase = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Insert subscription record
     const { data: subscription, error: insertError } = await supabase
@@ -96,7 +117,7 @@ serve(async (req) => {
         currency: 'INR',
         status: 'active',
         payment_method: 'razorpay',
-        stripe_subscription_id: razorpay_payment_id, // Reusing this field for razorpay payment ID
+        stripe_subscription_id: razorpay_payment_id,
       })
       .select()
       .single();
