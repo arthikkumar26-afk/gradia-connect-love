@@ -78,7 +78,7 @@ import { RoundMeetingOptions } from "./RoundMeetingOptions";
 import { RoundFeedbackResults } from "./RoundFeedbackResults";
 import { AllStagesReviewSummary } from "./AllStagesReviewSummary";
 import OfferLetterModal from "./OfferLetterModal";
-import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
+import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
