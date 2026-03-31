@@ -49,10 +49,16 @@ export const JobApplicationModal = ({
 }: JobApplicationModalProps) => {
   const [coverLetter, setCoverLetter] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [useExistingResume, setUseExistingResume] = useState(!!candidateProfile?.resume_url);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [analysisStep, setAnalysisStep] = useState<AnalysisStep>('idle');
   const [aiScore, setAiScore] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const existingResumeUrl = candidateProfile?.resume_url;
+  const existingResumeName = existingResumeUrl
+    ? decodeURIComponent(existingResumeUrl.split('/').pop() || 'resume.pdf')
+    : null;
 
   const getProgress = () => {
     switch (analysisStep) {
@@ -234,6 +240,7 @@ export const JobApplicationModal = ({
   const handleClose = () => {
     setCoverLetter("");
     setResumeFile(null);
+    setUseExistingResume(!!candidateProfile?.resume_url);
     setAnalysisStep('idle');
     setAiScore(null);
     onOpenChange(false);
@@ -282,11 +289,37 @@ export const JobApplicationModal = ({
         ) : (
           <div className="space-y-6 py-4">
             {/* Resume Upload */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Resume / CV</Label>
+
+              {/* Existing resume option */}
+              {existingResumeUrl && (
+                <div
+                  onClick={() => { setUseExistingResume(true); setResumeFile(null); }}
+                  className={`border-2 rounded-lg p-4 cursor-pointer transition-colors flex items-center gap-3 ${
+                    useExistingResume && !resumeFile
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                    useExistingResume && !resumeFile ? 'border-primary' : 'border-muted-foreground'
+                  }`}>
+                    {useExistingResume && !resumeFile && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <FileText className="h-5 w-5 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">Use uploaded resume</p>
+                    <p className="text-xs text-muted-foreground truncate">{existingResumeName}</p>
+                  </div>
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                </div>
+              )}
+
+              {/* Upload new resume option */}
               <div
-                onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                onClick={() => { setUseExistingResume(false); fileInputRef.current?.click(); }}
+                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
                   resumeFile
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50 hover:bg-muted/50'
@@ -296,31 +329,24 @@ export const JobApplicationModal = ({
                   ref={fileInputRef}
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
+                  onChange={(e) => { handleFileChange(e); setUseExistingResume(false); }}
                   className="hidden"
                 />
                 {resumeFile ? (
                   <div className="flex items-center justify-center gap-2 text-primary">
-                    <FileText className="h-6 w-6" />
-                    <span className="font-medium">{resumeFile.name}</span>
+                    <FileText className="h-5 w-5" />
+                    <span className="text-sm font-medium">{resumeFile.name}</span>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      PDF or Word (max 5MB)
-                    </p>
+                  <div className="flex items-center gap-3 justify-center">
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <div className="text-left">
+                      <p className="text-sm text-muted-foreground">Upload a new resume</p>
+                      <p className="text-xs text-muted-foreground">PDF or Word (max 5MB)</p>
+                    </div>
                   </div>
                 )}
               </div>
-              {candidateProfile?.resume_url && !resumeFile && (
-                <p className="text-xs text-muted-foreground">
-                  You have a resume on file. Upload a new one or continue with existing.
-                </p>
-              )}
             </div>
 
             {/* Cover Letter */}
@@ -357,7 +383,7 @@ export const JobApplicationModal = ({
               </Button>
               <Button 
                 onClick={handleSubmit} 
-                disabled={isSubmitting || (!resumeFile && !candidateProfile?.resume_url)}
+                disabled={isSubmitting || (!resumeFile && !useExistingResume)}
               >
                 {isSubmitting ? (
                   <>
