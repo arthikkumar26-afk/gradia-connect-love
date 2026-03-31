@@ -313,19 +313,82 @@ export const useInterviewPipeline = () => {
             // otherwise, dbStages is already filtered to Offer Stage.
             // Sort by the custom pipeline order, not the DB stage_order.
             let relevantStages = dbStages;
+            let useVirtualStages = false;
             if (effectiveCustomStages && effectiveCustomStages.length > 0) {
               const customFiltered = dbStagesAll2.filter(s => effectiveCustomStages.some(cs => cs.name === s.name));
-              if (customFiltered.length > 0) {
+              // If less than half the custom stages matched DB stages, use virtual stage fallback
+              if (customFiltered.length >= effectiveCustomStages.length * 0.5 && customFiltered.length > 0) {
                 // Sort by the job's custom pipeline order
                 relevantStages = customFiltered.sort((a, b) => {
                   const aOrder = effectiveCustomStages.findIndex(cs => cs.name === a.name);
                   const bOrder = effectiveCustomStages.findIndex(cs => cs.name === b.name);
                   return aOrder - bOrder;
                 });
+              } else {
+                useVirtualStages = true;
               }
             }
 
-            const interviewSteps: InterviewStep[] = relevantStages.map((s) => {
+            let interviewSteps: InterviewStep[];
+
+            if (useVirtualStages && effectiveCustomStages && effectiveCustomStages.length > 0) {
+              // Virtual stage fallback: create steps directly from job's pipeline_stages config
+              interviewSteps = effectiveCustomStages.map((cs, idx) => {
+                // Try to find a matching DB stage for event lookups
+                const matchingDbStage = dbStagesAll2.find(s => s.name === cs.name);
+                const stageEvents = matchingDbStage 
+                  ? events.filter((e) => e.stage_id === matchingDbStage.id)
+                  : [];
+                const event = stageEvents.find((e) => e.status === 'completed' || e.status === 'passed')
+                  || stageEvents.find((e) => e.status === 'in_progress')
+                  || stageEvents.find((e) => e.status === 'failed')
+                  || stageEvents[0] || null;
+
+                let status: InterviewStep["status"] = "pending";
+                let isLive = false;
+                let liveStatus: InterviewStep["liveStatus"] = undefined;
+
+                if (idx < currentPipelinePosition) {
+                  status = "completed";
+                } else if (idx === currentPipelinePosition) {
+                  status = "current";
+                  liveStatus = "waiting";
+                } else {
+                  status = "pending";
+                }
+
+                // Override with event status if exists
+                if (event) {
+                  if (event.status === "completed" || event.status === "passed") {
+                    status = "completed";
+                  } else if (event.status === "failed") {
+                    status = "failed";
+                  } else if (event.status === "in_progress") {
+                    status = "in_progress";
+                    isLive = true;
+                    liveStatus = "in_interview";
+                  }
+                }
+
+                return {
+                  id: matchingDbStage?.id || `virtual-${idx}`,
+                  title: cs.name,
+                  status,
+                  isLive,
+                  liveStatus,
+                  date: event?.scheduled_at 
+                    ? new Date(event.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : event?.completed_at 
+                      ? new Date(event.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      : undefined,
+                  notes: event?.notes || undefined,
+                  score: event?.ai_score || undefined,
+                  startedAt: event?.created_at || undefined,
+                  completedAt: event?.completed_at || undefined,
+                };
+              });
+            } else {
+              interviewSteps = relevantStages.map((s) => {
               // Find the most relevant event for this stage (completed > in_progress > pending)
               const stageEvents = events.filter((e) => e.stage_id === s.id);
               const event = stageEvents.find((e) => e.status === 'completed' || e.status === 'passed')
@@ -406,6 +469,7 @@ export const useInterviewPipeline = () => {
                 completedAt: event?.completed_at || undefined,
               };
             });
+            }
 
             // Get candidate data from AI analysis first, fallback to profile
             const candidateData = c.ai_analysis?.candidate_data;
