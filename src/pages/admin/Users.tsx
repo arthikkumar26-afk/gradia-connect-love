@@ -21,6 +21,7 @@ import {
   Phone,
   Calendar,
   Eye,
+  EyeOff,
   UserCheck,
   UserX,
   CreditCard,
@@ -94,6 +95,7 @@ interface User {
   company_name: string | null;
   created_at: string | null;
   experience_level: string | null;
+  initial_password?: string | null;
 }
 
 const Users = () => {
@@ -112,6 +114,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [blockReason, setBlockReason] = useState<string>("");
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
 
   const blockReasons = [
     "Violation of Terms of Service",
@@ -160,13 +163,22 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [profilesRes, credentialsRes] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('user_credentials').select('user_id, initial_password'),
+      ]);
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (profilesRes.error) throw profilesRes.error;
+      
+      const credMap = new Map<string, string>();
+      (credentialsRes.data || []).forEach((c: any) => credMap.set(c.user_id, c.initial_password));
+      
+      const usersWithPasswords = (profilesRes.data || []).map((u: any) => ({
+        ...u,
+        initial_password: credMap.get(u.id) || null,
+      }));
+      
+      setUsers(usersWithPasswords);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -522,6 +534,7 @@ const Users = () => {
                           <TableHead>Name</TableHead>
                           <TableHead>Contact</TableHead>
                           <TableHead>Role</TableHead>
+                          <TableHead>Password</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Joined</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
@@ -553,6 +566,36 @@ const Users = () => {
                               </div>
                             </TableCell>
                             <TableCell>{getRoleBadge(user.role)}</TableCell>
+                            <TableCell>
+                              {user.initial_password ? (
+                                <div className="flex items-center gap-1">
+                                  <span className="font-mono text-xs">
+                                    {visiblePasswords.has(user.id) ? user.initial_password : '••••••••'}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => {
+                                      setVisiblePasswords(prev => {
+                                        const next = new Set(prev);
+                                        if (next.has(user.id)) next.delete(user.id);
+                                        else next.add(user.id);
+                                        return next;
+                                      });
+                                    }}
+                                  >
+                                    {visiblePasswords.has(user.id) ? (
+                                      <EyeOff className="h-3 w-3 text-muted-foreground" />
+                                    ) : (
+                                      <Eye className="h-3 w-3 text-muted-foreground" />
+                                    )}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                             <TableCell>{user.location || 'Not specified'}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1 text-sm text-muted-foreground">
