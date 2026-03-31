@@ -2603,6 +2603,7 @@ const CandidateProfileInline = ({
                     candidateName={candidate.name}
                     candidateEmail={candidate.email}
                     jobTitle={candidate.role}
+                    candidateId={candidate.id}
                     onUpdateStep={onUpdateStep}
                     getStepIcon={getStepIcon}
                     getStatusBadge={getStatusBadge}
