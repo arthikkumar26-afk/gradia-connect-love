@@ -111,7 +111,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Initial pipeline completed (Instruction → CV Results → Written Test Slot Booking). Next stages trigger on completion.',
+      message: 'Interview alert email sent. Subsequent stage emails will trigger individually.',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
