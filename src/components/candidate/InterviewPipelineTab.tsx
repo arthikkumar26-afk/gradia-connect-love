@@ -780,22 +780,18 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                 </Badge>
               </div>
             )}
-            {analysis?.summary && (
-              <p className="text-sm text-muted-foreground">{analysis.summary}</p>
-            )}
-            {analysis?.strengths && analysis.strengths.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-foreground mb-1">Strengths:</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {analysis.strengths.slice(0, 5).map((s: string, i: number) => (
-                    <Badge key={i} variant="secondary" className="text-xs">
-                      <ThumbsUp className="h-3 w-3 mr-1 text-green-500" />
-                      {s}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Detailed Resume Analysis Report */}
+            <ResumeAnalysisReport 
+              userId={candidateId} 
+              data={resumeAnalysis ? {
+                overall_score: resumeAnalysis.overall_score || 0,
+                career_level: resumeAnalysis.career_level || '',
+                experience_summary: resumeAnalysis.experience_summary || '',
+                strengths: resumeAnalysis.strengths || [],
+                improvements: resumeAnalysis.improvements || [],
+                skill_highlights: resumeAnalysis.skill_highlights || [],
+              } : undefined}
+            />
             {analysis?.skill_match_score != null && (
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div className="bg-muted/50 rounded-lg p-2 text-center">
