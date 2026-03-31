@@ -546,7 +546,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return hasSubmittedFeedbackForFeedbackStage(prevStage.name);
   };
 
-  const getStageStatus = (stageId: string, stageName: string, events: InterviewEvent[], currentStageId: string | null) => {
+  const getStageStatus = (stageId: string, stageName: string, events: InterviewEvent[], currentStageId: string | null, interview?: InterviewCandidate) => {
     // Check for completed or passed events first
     const completedEvent = events.find(e => e.stage_id === stageId && (e.status === 'completed' || e.status === 'passed'));
     if (completedEvent) return 'completed';
@@ -558,7 +558,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     if (hasSubmittedFeedbackForFeedbackStage(stageName)) return 'completed';
 
     const stageIndex = stages.findIndex(s => s.id === stageId);
-    const currentStageIndex = resolveVisibleIndex(currentStageId);
+    
+    // Use effective current index computed from events if interview is available
+    const currentStageIndex = interview 
+      ? getEffectiveCurrentIndex(interview)
+      : resolveVisibleIndex(currentStageId);
 
     // If current stage has advanced past this stage, it's completed
     if (stageIndex !== -1 && currentStageIndex !== -1 && stageIndex < currentStageIndex) {
@@ -654,10 +658,38 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return null;
   };
 
-  const getCurrentStageOrder = (currentStageId: string | null) => {
-    if (!currentStageId) return 1;
-    const idx = stages.findIndex(s => s.id === currentStageId);
-    return idx !== -1 ? idx + 1 : 1;
+  // Compute the effective current stage index from completed events + feedback
+  const getEffectiveCurrentIndex = (interview: InterviewCandidate): number => {
+    // Find the highest completed stage index
+    let highestCompleted = -1;
+    stages.forEach((stage, idx) => {
+      const completedEvent = interview.events.find(
+        e => e.stage_id === stage.id && (e.status === 'completed' || e.status === 'passed')
+      );
+      if (completedEvent) {
+        highestCompleted = Math.max(highestCompleted, idx);
+      }
+      // Check round feedback completion
+      if (hasSubmittedFeedbackForRoundStage(stage.name)) {
+        highestCompleted = Math.max(highestCompleted, idx);
+      }
+      if (hasSubmittedFeedbackForFeedbackStage(stage.name)) {
+        highestCompleted = Math.max(highestCompleted, idx);
+      }
+    });
+
+    // The current stage is the one after the highest completed
+    const effectiveIdx = highestCompleted + 1;
+    
+    // Also consider the DB current_stage_id as a fallback
+    const dbIdx = resolveVisibleIndex(interview.current_stage_id);
+    
+    return Math.max(effectiveIdx, dbIdx !== -1 ? dbIdx : 0);
+  };
+
+  const getCurrentStageOrder = (interview: InterviewCandidate) => {
+    const idx = getEffectiveCurrentIndex(interview);
+    return Math.min(idx + 1, stages.length);
   };
 
   const renderStarRating = (rating: number | null, max: number = 5) => {
@@ -679,7 +711,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     const currentInterview = interviews.find(i => i.id === selectedInterview);
     if (!currentInterview) return null;
 
-    const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
+    const status = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id, currentInterview);
     const isFinalReview = stage.name === 'Final Review';
     const isDesignChallenge = stage.name === 'Design Challenge';
     if (!isFinalReview && !isDesignChallenge && status !== 'completed' && status !== 'passed') return null;
@@ -1420,7 +1452,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             <span className="text-sm font-medium text-foreground">Interview Stages</span>
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">
-                Stage {getCurrentStageOrder(currentInterview.current_stage_id)} of {stages.length}
+                Stage {getCurrentStageOrder(currentInterview)} of {stages.length}
               </span>
               <Badge variant="outline" className="text-xs border-green-500/50 text-green-600 bg-green-500/10 gap-1">
                 <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -1429,7 +1461,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             </div>
           </div>
           <Progress 
-            value={(getCurrentStageOrder(currentInterview.current_stage_id) / stages.length) * 100} 
+            value={(getCurrentStageOrder(currentInterview) / stages.length) * 100} 
             className="h-2"
           />
         </div>
@@ -1437,7 +1469,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         {/* Pipeline Stages - Vertical Timeline */}
         <div className="space-y-3">
           {stages.map((stage, index) => {
-            const rawStatus = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id);
+            const rawStatus = getStageStatus(stage.id, stage.name, currentInterview.events, currentInterview.current_stage_id, currentInterview);
             const event = currentInterview.events.find(e => e.stage_id === stage.id);
             const Icon = getStageIcon(stage.name);
             const isFeedbackStage = stage.name.toLowerCase().includes('feedback');
@@ -1445,7 +1477,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             const slotStageName = roundSlotStageNameMap[stage.name];
             const slotStage = slotStageName ? stages.find(s => s.name === slotStageName) : null;
             const slotStageStatus = slotStage
-              ? getStageStatus(slotStage.id, slotStage.name, currentInterview.events, currentInterview.current_stage_id)
+              ? getStageStatus(slotStage.id, slotStage.name, currentInterview.events, currentInterview.current_stage_id, currentInterview)
               : null;
             const status = rawStatus === 'upcoming' && liveRoundJoinAction && slotStageStatus === 'completed'
               ? 'current'
