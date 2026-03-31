@@ -240,6 +240,7 @@ export const JobApplicationModal = ({
   const handleClose = () => {
     setCoverLetter("");
     setResumeFile(null);
+    setUseExistingResume(!!candidateProfile?.resume_url);
     setAnalysisStep('idle');
     setAiScore(null);
     onOpenChange(false);
