@@ -649,6 +649,7 @@ export const RoundFeedbackResults = ({
     );
   }
 
+  return (
     <div className="mt-2 bg-amber-50 border border-amber-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
       {/* Demo Recording Section */}
       {demoRecordingUrl && (
