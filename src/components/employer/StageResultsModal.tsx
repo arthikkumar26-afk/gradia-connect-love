@@ -55,6 +55,7 @@ interface StageResultsModalProps {
   stageId: string;
   stageName: string;
   candidateName: string;
+  candidateId?: string;
 }
 
 export const StageResultsModal = ({
