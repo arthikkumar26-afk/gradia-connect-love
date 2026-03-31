@@ -405,7 +405,250 @@ export const RoundFeedbackResults = ({
   const submittedCount = reviews.filter(r => r.status === 'submitted').length;
   const pendingCount = reviews.length - submittedCount;
 
-  return (
+  // Table-style rendering (like AI Resume Analysis report)
+  if (tableStyle) {
+    return (
+      <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+        {/* Demo Recording */}
+        {demoRecordingUrl && (
+          <Card className="overflow-hidden border-border">
+            <CardHeader className="bg-pink-50 dark:bg-pink-950/30 border-b border-pink-200 dark:border-pink-800 py-3 px-4">
+              <div className="flex items-center gap-2">
+                <Video className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                <CardTitle className="text-sm font-semibold text-foreground">Demo Recording</CardTitle>
+                <Button size="sm" variant="ghost" className="ml-auto h-7 text-xs" onClick={() => setShowRecording(!showRecording)}>
+                  <Play className="h-3 w-3 mr-1" />
+                  {showRecording ? 'Hide' : 'Watch'}
+                </Button>
+              </div>
+            </CardHeader>
+            {showRecording && (
+              <CardContent className="p-4">
+                <video src={demoRecordingUrl} controls className="w-full rounded bg-black aspect-video" preload="metadata" />
+              </CardContent>
+            )}
+          </Card>
+        )}
+
+        {/* Observer Feedback Cards */}
+        {reviews.length > 0 && (
+          <Card className="overflow-hidden border-border shadow-soft">
+            <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 border-b border-amber-200 dark:border-amber-800 py-3 px-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <CardTitle className="text-sm font-semibold text-foreground">Observer Feedback ({submittedCount}/{reviews.length})</CardTitle>
+                </div>
+                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleOpenEmailPreview} disabled={isResending}>
+                  {isResending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />}
+                  Resend
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {reviews.map((review, idx) => (
+                <div key={review.id} className={`${idx < reviews.length - 1 ? 'border-b border-amber-200 dark:border-amber-800' : ''}`}>
+                  {/* Observer Header Row */}
+                  <div className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{review.reviewer_email || review.reviewer_name || 'Unknown'}</span>
+                      {review.status !== 'submitted' && (
+                        <button className="text-muted-foreground hover:text-primary" onClick={(e) => { e.stopPropagation(); handleEditEmail(review.id, review.reviewer_email || ''); }} title="Edit observer email">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <Badge className={review.status === 'submitted' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}>
+                      {review.status === 'submitted' ? <><CheckCircle2 className="h-3 w-3 mr-1" /> Submitted</> : <><Clock className="h-3 w-3 mr-1" /> Pending</>}
+                    </Badge>
+                  </div>
+
+                  {/* Email editing */}
+                  {editingEmailId === review.id && (
+                    <div className="px-4 pb-3 flex items-center gap-2">
+                      <Input value={editEmailValue} onChange={(e) => setEditEmailValue(e.target.value)} className="h-8 text-sm flex-1" placeholder="Enter observer email" type="email" autoFocus
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEmail(review.id); if (e.key === 'Escape') setEditingEmailId(null); }} />
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-emerald-600" onClick={() => handleSaveEmail(review.id)} disabled={isSavingEmail}>
+                        {isSavingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500" onClick={() => setEditingEmailId(null)}><X className="h-3.5 w-3.5" /></Button>
+                    </div>
+                  )}
+
+                  {/* Submitted review details in table style */}
+                  {review.status === 'submitted' && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <tbody>
+                          {/* Overall Rating */}
+                          <tr className="border-t border-amber-200 dark:border-amber-800">
+                            <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top w-[180px]">OVERALL RATING</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-0.5">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star key={star} className={`h-4 w-4 ${star <= (review.overall_rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
+                                  ))}
+                                </div>
+                                <span className="text-sm text-muted-foreground">{review.overall_rating}/5</span>
+                                {review.recommendation && (
+                                  <Badge className={`${getRecommendationLabel(review.recommendation).color}`}>
+                                    {getRecommendationLabel(review.recommendation).label}
+                                  </Badge>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+
+                          {/* Detailed Ratings */}
+                          {(review.teaching_skills_rating || review.communication_rating || review.subject_knowledge_rating) && (
+                            <tr className="border-t border-amber-200 dark:border-amber-800">
+                              <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top w-[180px]">DETAILED RATINGS</td>
+                              <td className="px-4 py-3 space-y-1.5">
+                                {review.teaching_skills_rating && (
+                                  <div className="flex items-center gap-2">
+                                    <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground w-24">Teaching:</span>
+                                    <div className="flex items-center gap-0.5">
+                                      {[1,2,3,4,5].map(s => <Star key={s} className={`h-3 w-3 ${s <= review.teaching_skills_rating! ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20"}`} />)}
+                                    </div>
+                                  </div>
+                                )}
+                                {review.communication_rating && (
+                                  <div className="flex items-center gap-2">
+                                    <Mic className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground w-24">Communication:</span>
+                                    <div className="flex items-center gap-0.5">
+                                      {[1,2,3,4,5].map(s => <Star key={s} className={`h-3 w-3 ${s <= review.communication_rating! ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20"}`} />)}
+                                    </div>
+                                  </div>
+                                )}
+                                {review.subject_knowledge_rating && (
+                                  <div className="flex items-center gap-2">
+                                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground w-24">Subject:</span>
+                                    <div className="flex items-center gap-0.5">
+                                      {[1,2,3,4,5].map(s => <Star key={s} className={`h-3 w-3 ${s <= review.subject_knowledge_rating! ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/20"}`} />)}
+                                    </div>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+
+                          {/* Strengths */}
+                          {review.strengths && review.strengths.length > 0 && (
+                            <tr className="border-t border-amber-200 dark:border-amber-800">
+                              <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top w-[180px]">STRENGTHS</td>
+                              <td className="px-4 py-3">
+                                <ul className="space-y-1.5">
+                                  {review.strengths.map((s, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                      <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                      <span className="text-foreground">{s}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </td>
+                            </tr>
+                          )}
+
+                          {/* Areas for Improvement */}
+                          {review.areas_for_improvement && review.areas_for_improvement.length > 0 && (
+                            <tr className="border-t border-amber-200 dark:border-amber-800">
+                              <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top w-[180px]">AREAS TO IMPROVE</td>
+                              <td className="px-4 py-3">
+                                <ul className="space-y-1.5">
+                                  {review.areas_for_improvement.map((a, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                      <TrendingUp className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                      <span className="text-foreground">{a}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </td>
+                            </tr>
+                          )}
+
+                          {/* Feedback Text */}
+                          {review.feedback_text && (
+                            <tr className="border-t border-amber-200 dark:border-amber-800">
+                              <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top w-[180px]">FEEDBACK</td>
+                              <td className="px-4 py-3 text-foreground italic">"{review.feedback_text}"</td>
+                            </tr>
+                          )}
+
+                          {/* Submitted At */}
+                          {review.submitted_at && (
+                            <tr className="border-t border-amber-200 dark:border-amber-800">
+                              <td className="px-4 py-3 bg-muted/30 font-medium text-muted-foreground align-top w-[180px]">SUBMITTED AT</td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {new Date(review.submitted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {pendingCount > 0 && (
+          <p className="text-xs text-amber-600">
+            ⏳ Waiting for {pendingCount} observer{pendingCount > 1 ? 's' : ''} to submit feedback
+          </p>
+        )}
+
+        {reviews.length === 0 && demoRecordingUrl && (
+          <Button size="sm" variant="outline" className="w-full" onClick={handleOpenEmailPreview} disabled={isResending}>
+            {isResending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />}
+            Send Feedback Request to Observers
+          </Button>
+        )}
+
+        {/* Email Preview Dialog */}
+        <Dialog open={showEmailPreview} onOpenChange={setShowEmailPreview}>
+          <DialogContent className="sm:max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <Eye className="h-4 w-4" />
+                Preview & Edit Feedback Email
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Subject</label>
+                <Input value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} className="text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Email Body</label>
+                <Textarea value={emailBody} onChange={(e) => setEmailBody(e.target.value)} rows={6} className="text-sm" />
+              </div>
+              <div className="bg-muted/50 border rounded-md p-2 text-[10px] text-muted-foreground space-y-1">
+                <p className="font-medium">ℹ️ Note:</p>
+                <p>• Candidate details, evaluation criteria, and feedback link will be automatically included below your message.</p>
+                <p>• The link expires in 7 days.</p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" size="sm" onClick={() => setShowEmailPreview(false)}>Cancel</Button>
+              <Button size="sm" onClick={handleSendWithPreview} disabled={isResending}>
+                {isResending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />}
+                Send Email
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
     <div className="mt-2 bg-amber-50 border border-amber-200 rounded-md p-2 space-y-1.5" onClick={(e) => e.stopPropagation()}>
       {/* Demo Recording Section */}
       {demoRecordingUrl && (
