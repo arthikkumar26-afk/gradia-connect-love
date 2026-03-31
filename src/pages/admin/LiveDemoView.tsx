@@ -78,9 +78,7 @@ export default function LiveDemoView() {
 
     pollRef.current = setInterval(async () => {
       const { data, error } = await supabase
-        .from('mock_interview_sessions')
-        .select('live_view_active, live_stream_started_at, status, current_stage_order')
-        .eq('live_view_token', token)
+        .rpc('get_session_by_live_token', { p_token: token })
         .maybeSingle();
 
       if (data) {
