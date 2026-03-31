@@ -383,7 +383,7 @@ export const JobApplicationModal = ({
               </Button>
               <Button 
                 onClick={handleSubmit} 
-                disabled={isSubmitting || (!resumeFile && !candidateProfile?.resume_url)}
+                disabled={isSubmitting || (!resumeFile && !useExistingResume)}
               >
                 {isSubmitting ? (
                   <>
