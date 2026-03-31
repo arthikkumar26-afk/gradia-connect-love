@@ -39,6 +39,7 @@ import {
 import { StageResultsModal } from "@/components/employer/StageResultsModal";
 import { AllStagesReviewSummary } from "@/components/employer/AllStagesReviewSummary";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
+import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
 
 interface InterviewStage {
   id: string;
