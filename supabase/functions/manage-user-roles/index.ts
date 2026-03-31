@@ -141,6 +141,14 @@ Deno.serve(async (req) => {
         { onConflict: "user_id,role" }
       );
 
+      // Store the initial password for admin reference
+      if (userPassword) {
+        await supabaseAdmin.from("user_credentials").upsert(
+          { user_id: newUser.user.id, initial_password: userPassword },
+          { onConflict: "user_id" }
+        );
+      }
+
       return new Response(
         JSON.stringify({ success: true, message: `User ${targetEmail} created with role ${role}`, userId: newUser.user.id }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }

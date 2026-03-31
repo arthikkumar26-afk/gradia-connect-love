@@ -94,6 +94,7 @@ interface User {
   company_name: string | null;
   created_at: string | null;
   experience_level: string | null;
+  initial_password?: string | null;
 }
 
 const Users = () => {
