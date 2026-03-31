@@ -380,11 +380,14 @@ function CandidateDetailDialog({
               <Mail className="h-4 w-4 mr-1.5" /> Mail
             </a>
           </Button>
-          {candidate.resume_url && (
-            <Button size="sm" variant="outline" onClick={() => openResume(candidate.resume_url!)}>
-              <Download className="h-4 w-4 mr-1.5" /> Resume
-            </Button>
-          )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!candidate.resume_url}
+            onClick={() => candidate.resume_url && openResume(candidate.resume_url)}
+          >
+            <Download className="h-4 w-4 mr-1.5" /> {candidate.resume_url ? "Resume" : "No Resume"}
+          </Button>
           {candidate.linkedin && (
             <Button size="sm" variant="outline" asChild>
               <a href={candidate.linkedin} target="_blank" rel="noopener noreferrer">
