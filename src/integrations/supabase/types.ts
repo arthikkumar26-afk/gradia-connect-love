@@ -3600,6 +3600,17 @@ export type Database = {
           profile_picture: string
         }[]
       }
+      get_session_by_live_token: {
+        Args: { p_token: string }
+        Returns: {
+          candidate_id: string
+          current_stage_order: number
+          id: string
+          live_stream_started_at: string
+          live_view_active: boolean
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
