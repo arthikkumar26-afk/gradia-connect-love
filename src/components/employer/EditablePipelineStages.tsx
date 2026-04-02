@@ -26,6 +26,25 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [automationConfig, setAutomationConfig] = useState<any>(null);
+  const [disabledOptionalStages, setDisabledOptionalStages] = useState<Set<number>>(new Set());
+
+  const handleToggleOptionalStage = (index: number) => {
+    const newDisabled = new Set(disabledOptionalStages);
+    if (newDisabled.has(index)) {
+      newDisabled.delete(index);
+    } else {
+      newDisabled.add(index);
+    }
+    setDisabledOptionalStages(newDisabled);
+    
+    const updated = stages.map((s, i) => {
+      if (i === index && s.isOptional) {
+        return { ...s, isOptional: true };
+      }
+      return s;
+    });
+    onStagesChange(updated);
+  };
 
   const handleRemoveStage = (index: number) => {
     const updated = stages.filter((_, i) => i !== index).map((s, i) => ({ ...s, order: i + 1 }));
