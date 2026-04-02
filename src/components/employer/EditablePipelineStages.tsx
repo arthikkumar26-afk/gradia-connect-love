@@ -172,7 +172,7 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
             onDragStart={() => handleDragStart(index)}
             onDragOver={handleDragOver}
             onDrop={() => handleDrop(index)}
-            className={`flex items-center gap-2 rounded-md border bg-background p-2.5 transition-opacity ${draggedIndex === index ? "opacity-50" : ""}`}
+            className={`flex items-center gap-2 rounded-md border bg-background p-2.5 transition-all ${draggedIndex === index ? "opacity-50" : ""} ${stage.isOptional && disabledOptionalStages.has(index) ? "opacity-40 border-dashed" : ""}`}
           >
             <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab shrink-0" />
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
@@ -182,6 +182,18 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
               <p className="text-sm font-medium">{stage.name}</p>
               <p className="text-xs text-muted-foreground truncate">{stage.description}</p>
             </div>
+            {stage.isOptional && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Switch
+                  checked={!disabledOptionalStages.has(index)}
+                  onCheckedChange={() => handleToggleOptionalStage(index)}
+                  className="scale-75"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  {disabledOptionalStages.has(index) ? "Off" : "On"}
+                </span>
+              </div>
+            )}
             <Badge variant={stage.isAutomated ? "default" : "outline"} className="shrink-0 text-[10px] gap-1">
               {stage.isAutomated ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
               {stage.isAutomated ? "AI" : "Manual"}
