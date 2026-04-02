@@ -6,6 +6,7 @@ export interface PipelineStage {
   name: string;
   description: string;
   isAutomated: boolean;
+  isOptional?: boolean;
 }
 
 export interface PipelineType {
