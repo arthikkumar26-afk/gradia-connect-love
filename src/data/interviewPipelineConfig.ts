@@ -6,6 +6,7 @@ export interface PipelineStage {
   name: string;
   description: string;
   isAutomated: boolean;
+  isOptional?: boolean;
 }
 
 export interface PipelineType {
@@ -159,6 +160,31 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
           { order: 11, name: 'HR Round Feedback', description: 'HR evaluation feedback', isAutomated: false },
           { order: 12, name: 'Final Review', description: 'Final evaluation & decision', isAutomated: true },
           { order: 13, name: 'Offer Stage', description: 'On-boarding & offer letter generation', isAutomated: true },
+        ],
+      },
+      {
+        value: 'zonal_coordinator',
+        label: 'Zonal Coordinator',
+        stages: [
+          { order: 1, name: 'Interview Guidelines', description: 'Introduction & interview process overview', isAutomated: true },
+          { order: 2, name: 'CV/Resume', description: 'AI-powered resume analysis & scoring', isAutomated: true },
+          { order: 3, name: 'Written Test Slot Booking', description: 'Candidate books Written Test slot', isAutomated: true },
+          { order: 4, name: 'Written Test', description: 'Written assessment for Zonal Coordinator role', isAutomated: true },
+          { order: 5, name: 'Written Test Feedback', description: 'Review of written test performance', isAutomated: false },
+          { order: 6, name: 'Demo Round Slot Booking', description: 'Schedule Demo Round slot', isAutomated: true },
+          { order: 7, name: 'Demo Round', description: 'Live teaching/presentation demo round', isAutomated: false },
+          { order: 8, name: 'Demo Round Feedback', description: 'Observer feedback from Demo Round', isAutomated: false },
+          { order: 9, name: 'Panel Round Slot Booking', description: 'Schedule Panel Round slot', isAutomated: true },
+          { order: 10, name: 'Panel Round', description: 'Live Panel Round with observers', isAutomated: false },
+          { order: 11, name: 'Panel Round Feedback', description: 'Panel evaluation feedback', isAutomated: false },
+          { order: 12, name: 'HR Round Slot Booking', description: 'Candidate books HR round slot', isAutomated: true },
+          { order: 13, name: 'HR Round', description: 'HR interview & negotiation', isAutomated: false },
+          { order: 14, name: 'HR Round Feedback', description: 'HR evaluation feedback', isAutomated: false },
+          { order: 15, name: 'Management Round Slot Booking', description: 'Schedule Management Round slot (enable/disable as needed)', isAutomated: true, isOptional: true },
+          { order: 16, name: 'Management Round', description: 'Management interview round', isAutomated: false, isOptional: true },
+          { order: 17, name: 'Management Round Feedback', description: 'Management evaluation feedback', isAutomated: false, isOptional: true },
+          { order: 18, name: 'Final Review', description: 'Final evaluation & decision', isAutomated: true },
+          { order: 19, name: 'Offer Stage', description: 'On-boarding & offer letter generation', isAutomated: true },
         ],
       },
     ],

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { CheckCircle2, Bot, User, X, Plus, GripVertical, Pencil, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +27,25 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [automationConfig, setAutomationConfig] = useState<any>(null);
+  const [disabledOptionalStages, setDisabledOptionalStages] = useState<Set<number>>(new Set());
+
+  const handleToggleOptionalStage = (index: number) => {
+    const newDisabled = new Set(disabledOptionalStages);
+    if (newDisabled.has(index)) {
+      newDisabled.delete(index);
+    } else {
+      newDisabled.add(index);
+    }
+    setDisabledOptionalStages(newDisabled);
+    
+    const updated = stages.map((s, i) => {
+      if (i === index && s.isOptional) {
+        return { ...s, isOptional: true };
+      }
+      return s;
+    });
+    onStagesChange(updated);
+  };
 
   const handleRemoveStage = (index: number) => {
     const updated = stages.filter((_, i) => i !== index).map((s, i) => ({ ...s, order: i + 1 }));
@@ -153,7 +173,7 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
             onDragStart={() => handleDragStart(index)}
             onDragOver={handleDragOver}
             onDrop={() => handleDrop(index)}
-            className={`flex items-center gap-2 rounded-md border bg-background p-2.5 transition-opacity ${draggedIndex === index ? "opacity-50" : ""}`}
+            className={`flex items-center gap-2 rounded-md border bg-background p-2.5 transition-all ${draggedIndex === index ? "opacity-50" : ""} ${stage.isOptional && disabledOptionalStages.has(index) ? "opacity-40 border-dashed" : ""}`}
           >
             <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab shrink-0" />
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
@@ -163,6 +183,18 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
               <p className="text-sm font-medium">{stage.name}</p>
               <p className="text-xs text-muted-foreground truncate">{stage.description}</p>
             </div>
+            {stage.isOptional && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Switch
+                  checked={!disabledOptionalStages.has(index)}
+                  onCheckedChange={() => handleToggleOptionalStage(index)}
+                  className="scale-75"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  {disabledOptionalStages.has(index) ? "Off" : "On"}
+                </span>
+              </div>
+            )}
             <Badge variant={stage.isAutomated ? "default" : "outline"} className="shrink-0 text-[10px] gap-1">
               {stage.isAutomated ? <Bot className="h-3 w-3" /> : <User className="h-3 w-3" />}
               {stage.isAutomated ? "AI" : "Manual"}
