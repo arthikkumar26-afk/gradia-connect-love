@@ -70,6 +70,11 @@ serve(async (req) => {
       'Core Team Round Slot Booking': 'Core Team Round',
       'Management Round Slot Booking': 'Management Round',
       'HR Round Slot Booking': 'HR Round',
+      'Panel Team Slot Booking': 'Panel Team',
+      'Panel Round Slot Booking': 'Panel Round',
+      'Demo Round Slot Booking': 'Demo Round',
+      'Subject Demo Slot Booking': 'Demo Round',
+      'Senior Management Round Slot Booking': 'Senior Management Round',
     };
     
     // Check if the job has a custom pipeline_stages config
@@ -96,6 +101,8 @@ serve(async (req) => {
           if (nextPipelineStage) {
             nextStage = nextPipelineStage;
             console.log(`Job-specific pipeline: advancing from "${currentStageName}" via "${pipelineLookupStageName}" to "${nextPipelineStageName}" (order ${nextPipelineStage.stage_order})`);
+          } else {
+            console.warn(`Job-specific pipeline: stage "${nextPipelineStageName}" not found in interview_stages table`);
           }
         }
       }
