@@ -70,6 +70,11 @@ serve(async (req) => {
       'Core Team Round Slot Booking': 'Core Team Round',
       'Management Round Slot Booking': 'Management Round',
       'HR Round Slot Booking': 'HR Round',
+      'Panel Team Slot Booking': 'Panel Team',
+      'Panel Round Slot Booking': 'Panel Round',
+      'Demo Round Slot Booking': 'Demo Round',
+      'Subject Demo Slot Booking': 'Demo Round',
+      'Senior Management Round Slot Booking': 'Senior Management Round',
     };
     
     // Check if the job has a custom pipeline_stages config
@@ -96,6 +101,8 @@ serve(async (req) => {
           if (nextPipelineStage) {
             nextStage = nextPipelineStage;
             console.log(`Job-specific pipeline: advancing from "${currentStageName}" via "${pipelineLookupStageName}" to "${nextPipelineStageName}" (order ${nextPipelineStage.stage_order})`);
+          } else {
+            console.warn(`Job-specific pipeline: stage "${nextPipelineStageName}" not found in interview_stages table`);
           }
         }
       }
@@ -213,12 +220,19 @@ serve(async (req) => {
             console.log(`[GATEWAY] Sending feedback email via pipeline gateway for: ${targetStage.name}`);
             const feedbackTypeMap: Record<string, string> = {
               'Demo Feedback': 'demo',
+              'Demo Round Feedback': 'demo',
               'HR Feedback': 'hr',
+              'HR Round Feedback': 'hr',
               'Segment Feedback': 'segment',
               'Admin & Academic Feedback': 'admin_academic',
               'Core Team Feedback': 'core_team',
+              'Core Team Round Feedback': 'core_team',
               'Management Feedback': 'management',
               'Management Round Feedback': 'management',
+              'Panel Team Feedback': 'panel_team',
+              'Panel Round Feedback': 'panel_round',
+              'Written Test Feedback': 'written_test',
+              'Senior Management Round Feedback': 'senior_management',
             };
             const feedbackType = feedbackTypeMap[targetStage.name] || 'demo';
             
