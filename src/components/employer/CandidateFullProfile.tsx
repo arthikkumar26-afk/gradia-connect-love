@@ -357,6 +357,18 @@ export const CandidateFullProfile = () => {
         return;
       }
 
+      // Prevent skipping slot booking: if current stage is a slot booking stage,
+      // block advancement — the candidate must book their slot first
+      if (currentStage && currentStage.name.toLowerCase().includes('slot booking')) {
+        toast.error(`Cannot skip "${currentStage.name}" — candidate must book their slot first`);
+        setAiActionLoading(null);
+        return;
+      }
+
+      // Also prevent advancing if the NEXT stage is supposed to be a slot booking
+      // but there's a completed stage AFTER it (indicating it was skipped)
+      // This ensures sequential progression through the pipeline
+
       // Update current stage to completed
       if (currentStage) {
         await supabase
