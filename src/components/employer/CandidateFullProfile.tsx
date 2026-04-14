@@ -194,10 +194,20 @@ export const CandidateFullProfile = () => {
 
       if (eventsError) throw eventsError;
 
-      // Build stages with status
-      const stagesWithStatus: InterviewStage[] = (allStages || [])
-        .filter(stage => stage.name !== 'AI Phone Interview')
-        .map(stage => {
+      // Build stages with status — use job's custom pipeline_stages if available
+      const pipelineStages = (job?.pipeline_stages as any[] | null);
+      let filteredStages = (allStages || []).filter(stage => stage.name !== 'AI Phone Interview');
+      
+      if (pipelineStages && pipelineStages.length > 0) {
+        // Reorder and filter stages based on the job's custom pipeline
+        const pipelineStageNames = pipelineStages.map((ps: any) => ps.name);
+        filteredStages = pipelineStageNames
+          .map((name: string) => filteredStages.find(s => s.name === name))
+          .filter(Boolean) as typeof filteredStages;
+      }
+
+      const stagesWithStatus: InterviewStage[] = filteredStages
+        .map((stage, idx) => {
           const event = events?.find(e => e.stage_id === stage.id);
           let status: InterviewStage['status'] = 'pending';
           
@@ -216,7 +226,7 @@ export const CandidateFullProfile = () => {
           return {
             id: stage.id,
             name: stage.name,
-            stageOrder: stage.stage_order,
+            stageOrder: pipelineStages ? idx : stage.stage_order,
             status,
             score: event?.ai_score || undefined,
             notes: event?.notes || undefined,
