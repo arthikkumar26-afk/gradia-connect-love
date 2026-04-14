@@ -220,12 +220,19 @@ serve(async (req) => {
             console.log(`[GATEWAY] Sending feedback email via pipeline gateway for: ${targetStage.name}`);
             const feedbackTypeMap: Record<string, string> = {
               'Demo Feedback': 'demo',
+              'Demo Round Feedback': 'demo',
               'HR Feedback': 'hr',
+              'HR Round Feedback': 'hr',
               'Segment Feedback': 'segment',
               'Admin & Academic Feedback': 'admin_academic',
               'Core Team Feedback': 'core_team',
+              'Core Team Round Feedback': 'core_team',
               'Management Feedback': 'management',
               'Management Round Feedback': 'management',
+              'Panel Team Feedback': 'panel_team',
+              'Panel Round Feedback': 'panel_round',
+              'Written Test Feedback': 'written_test',
+              'Senior Management Round Feedback': 'senior_management',
             };
             const feedbackType = feedbackTypeMap[targetStage.name] || 'demo';
             
