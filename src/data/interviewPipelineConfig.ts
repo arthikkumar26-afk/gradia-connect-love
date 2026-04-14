@@ -1571,6 +1571,76 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'finishing_engineer', label: 'Finishing Engineer' },
     { value: 'shuttering_engineer', label: 'Shuttering Engineer' },
   ],
+  // Banking & Finance
+  'banking.branch_manager': [
+    { value: 'branch_manager', label: 'Branch Manager' },
+    { value: 'assistant_branch_manager', label: 'Assistant Branch Manager' },
+    { value: 'branch_operations_manager', label: 'Branch Operations Manager' },
+    { value: 'regional_branch_head', label: 'Regional Branch Head' },
+  ],
+  'banking.relationship_manager': [
+    { value: 'rm_retail', label: 'Relationship Manager – Retail' },
+    { value: 'rm_corporate', label: 'Relationship Manager – Corporate' },
+    { value: 'rm_sme', label: 'Relationship Manager – SME' },
+    { value: 'rm_hni', label: 'Relationship Manager – HNI' },
+    { value: 'rm_priority', label: 'Priority Banking RM' },
+  ],
+  'banking.loan_officer': [
+    { value: 'home_loan_officer', label: 'Home Loan Officer' },
+    { value: 'personal_loan_officer', label: 'Personal Loan Officer' },
+    { value: 'business_loan_officer', label: 'Business Loan Officer' },
+    { value: 'credit_officer', label: 'Credit Officer' },
+    { value: 'vehicle_loan_officer', label: 'Vehicle Loan Officer' },
+    { value: 'agri_loan_officer', label: 'Agriculture Loan Officer' },
+  ],
+  'banking.teller_cashier': [
+    { value: 'teller', label: 'Bank Teller' },
+    { value: 'senior_cashier', label: 'Senior Cashier' },
+    { value: 'cash_officer', label: 'Cash Officer' },
+    { value: 'front_desk_officer', label: 'Front Desk Officer' },
+  ],
+  'banking.credit_analyst': [
+    { value: 'credit_analyst', label: 'Credit Analyst' },
+    { value: 'risk_analyst', label: 'Risk Analyst' },
+    { value: 'credit_risk_manager', label: 'Credit Risk Manager' },
+    { value: 'portfolio_analyst', label: 'Portfolio Analyst' },
+    { value: 'underwriter', label: 'Underwriter' },
+  ],
+  'banking.investment_banking': [
+    { value: 'ib_analyst', label: 'IB Analyst' },
+    { value: 'ib_associate', label: 'IB Associate' },
+    { value: 'ib_vp', label: 'Vice President – IB' },
+    { value: 'equity_research_analyst', label: 'Equity Research Analyst' },
+    { value: 'deal_advisory', label: 'Deal Advisory' },
+  ],
+  'banking.compliance_officer': [
+    { value: 'compliance_officer', label: 'Compliance Officer' },
+    { value: 'aml_analyst', label: 'AML Analyst' },
+    { value: 'kyc_officer', label: 'KYC Officer' },
+    { value: 'fraud_analyst', label: 'Fraud Analyst' },
+    { value: 'regulatory_officer', label: 'Regulatory Officer' },
+  ],
+  'banking.treasury_forex': [
+    { value: 'treasury_dealer', label: 'Treasury Dealer' },
+    { value: 'forex_dealer', label: 'Forex Dealer' },
+    { value: 'treasury_analyst', label: 'Treasury Analyst' },
+    { value: 'alm_analyst', label: 'ALM Analyst' },
+    { value: 'fixed_income_trader', label: 'Fixed Income Trader' },
+  ],
+  'banking.insurance': [
+    { value: 'insurance_advisor', label: 'Insurance Advisor' },
+    { value: 'claims_officer', label: 'Claims Officer' },
+    { value: 'underwriting_officer', label: 'Underwriting Officer' },
+    { value: 'actuarial_analyst', label: 'Actuarial Analyst' },
+    { value: 'bancassurance_manager', label: 'Bancassurance Manager' },
+  ],
+  'banking.wealth_management': [
+    { value: 'wealth_advisor', label: 'Wealth Advisor' },
+    { value: 'portfolio_manager', label: 'Portfolio Manager' },
+    { value: 'private_banker', label: 'Private Banker' },
+    { value: 'financial_planner', label: 'Financial Planner' },
+    { value: 'investment_advisor', label: 'Investment Advisor' },
+  ],
 };
 
 // Default seniority-based roles used when no specific roles are defined
