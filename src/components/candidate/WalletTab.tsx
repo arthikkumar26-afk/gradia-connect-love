@@ -661,8 +661,8 @@ export default function WalletTab({ userId }: { userId: string }) {
 
           {/* Referral Section */}
           <Separator className="my-4" />
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-lg bg-muted/50">
-            <div className="flex items-center gap-3 flex-1">
+          <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+            <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
@@ -671,19 +671,44 @@ export default function WalletTab({ userId }: { userId: string }) {
                 <p className="text-xs text-muted-foreground">Share your referral code. After their first purchase, you both get 100 bonus points!</p>
               </div>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 shrink-0"
-              onClick={() => {
-                const code = myReferralCode || userId.slice(0, 8);
-                const referralLink = `${window.location.origin}/candidate/signup?ref=${code}`;
-                navigator.clipboard.writeText(referralLink);
-                toast({ title: "📋 Referral Link Copied!", description: "Share it with your friends. You both earn 100 points after their first purchase!" });
-              }}
-            >
-              <Users className="h-3.5 w-3.5" /> Copy Referral Link
-            </Button>
+
+            {/* Show referral code prominently */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-primary/30 bg-background">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Your Code:</span>
+                <span className="text-lg font-bold tracking-widest text-primary">{myReferralCode || "Loading..."}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => {
+                    const code = myReferralCode || userId.slice(0, 8);
+                    navigator.clipboard.writeText(code);
+                    toast({ title: "📋 Code Copied!", description: `Referral code "${code}" copied to clipboard.` });
+                  }}
+                >
+                  <FileText className="h-3.5 w-3.5" /> Copy Code
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => {
+                    const code = myReferralCode || userId.slice(0, 8);
+                    const referralLink = `${window.location.origin}/candidate/signup?ref=${code}`;
+                    navigator.clipboard.writeText(referralLink);
+                    toast({ title: "🔗 Link Copied!", description: "Share this link with friends. You both earn 100 pts after their first purchase!" });
+                  }}
+                >
+                  <Users className="h-3.5 w-3.5" /> Copy Link
+                </Button>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground">
+              New users can enter your code during signup at <span className="font-medium text-foreground">/candidate/signup?ref=YOUR_CODE</span> or paste the link directly.
+            </p>
           </div>
         </CardContent>
       </Card>
