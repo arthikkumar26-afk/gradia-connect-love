@@ -53,6 +53,7 @@ import {
   Mail,
   Lock,
   Palette,
+  Wallet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,6 +75,7 @@ import { CouponInput } from "@/components/shared/CouponInput";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
+import WalletTab from "@/components/candidate/WalletTab";
 
 interface FamilyRecord {
   id?: string;
@@ -1273,6 +1275,7 @@ const CandidateDashboard = () => {
     { id: "mentors", label: "Mentors", icon: Users },
     { id: "externaljobs", label: "External Job Listings", icon: ExternalLink },
     { id: "designchallenge", label: "Design Challenge", icon: Palette },
+    { id: "wallet", label: "My Wallet", icon: Wallet },
     { id: "freelancer", label: "Freelancer", icon: Zap, link: "/freelancer/login" },
     
     { id: "upgrade", label: "Upgrade Plans", icon: Crown },
@@ -4672,6 +4675,11 @@ const CandidateDashboard = () => {
             {/* External Job Listings */}
             {activeMenu === "externaljobs" && (
               <ExternalJobListings />
+            )}
+
+            {/* Wallet */}
+            {activeMenu === "wallet" && profile?.id && (
+              <WalletTab userId={profile.id} />
             )}
 
             {/* Upgrade Plans */}
