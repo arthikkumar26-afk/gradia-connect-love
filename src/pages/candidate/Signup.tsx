@@ -256,6 +256,7 @@ const CandidateSignup = () => {
             category: industryCategory || null,
             primary_subject: primarySubject || null,
             segment: segment || null,
+            ...(referralCode ? { referred_by: referralCode.toUpperCase() } : {}),
           }),
           supabase.from("user_roles").upsert({
             user_id: authData.user!.id,
