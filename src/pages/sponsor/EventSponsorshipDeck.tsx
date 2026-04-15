@@ -1,48 +1,87 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, MapPin, Download, Check } from "lucide-react";
+import { Calendar, Users, MapPin, Download, Check, Star, Crown, Gem, Zap, Shield } from "lucide-react";
 
 export default function EventSponsorshipDeck() {
   const packages = [
     {
-      tier: "Silver",
-      price: "₹50,000",
+      tier: "Bronze",
+      points: "5,000 pts",
+      icon: Shield,
+      color: "text-amber-700",
       benefits: [
-        "Logo on event materials",
-        "2 complimentary passes",
-        "Social media mention",
-        "Website listing"
+        "Logo on event website",
+        "1 complimentary pass",
+        "Social media mention (1 post)",
+        "Website listing with link"
+      ]
+    },
+    {
+      tier: "Silver",
+      points: "12,000 pts",
+      icon: Star,
+      color: "text-gray-400",
+      benefits: [
+        "All Bronze benefits",
+        "3 complimentary passes",
+        "Booth space (2x2m)",
+        "Social media mentions (3 posts)",
+        "Logo on printed materials"
       ]
     },
     {
       tier: "Gold",
-      price: "₹1,25,000",
+      points: "25,000 pts",
+      icon: Zap,
+      color: "text-yellow-500",
+      popular: true,
       benefits: [
         "All Silver benefits",
         "5 complimentary passes",
-        "Booth space (3x3m)",
+        "Premium booth space (3x3m)",
         "Speaking opportunity (5 min)",
-        "Logo on event t-shirts"
+        "Logo on event t-shirts",
+        "Email blast to attendees"
       ]
     },
     {
       tier: "Platinum",
-      price: "₹2,50,000",
+      points: "50,000 pts",
+      icon: Gem,
+      color: "text-blue-400",
       benefits: [
         "All Gold benefits",
         "10 complimentary passes",
-        "Premium booth space (6x6m)",
-        "Keynote speaking slot (20 min)",
+        "Large booth space (4x4m)",
+        "Keynote speaking slot (15 min)",
+        "Logo on stage backdrop",
+        "Dedicated newsletter feature",
+        "VIP networking access"
+      ]
+    },
+    {
+      tier: "Diamond",
+      points: "1,00,000 pts",
+      icon: Crown,
+      color: "text-purple-400",
+      benefits: [
+        "All Platinum benefits",
+        "20 complimentary passes",
+        "Premium booth (6x6m) with branding",
+        "Keynote speaking slot (30 min)",
         "Title sponsor recognition",
-        "Logo on stage backdrop"
+        "Exclusive branding on all materials",
+        "Post-event attendee data access",
+        "Year-round website banner",
+        "Priority stall location"
       ]
     }
   ];
 
   return (
     <div className="min-h-screen bg-background py-20 px-4">
-      <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <div className="text-center mb-16">
           <Badge className="mb-4">Exclusive Event</Badge>
@@ -107,25 +146,35 @@ export default function EventSponsorshipDeck() {
 
         {/* Sponsorship Packages */}
         <div className="mb-12">
-          <h2 className="text-3xl font-bold mb-8 text-center">Sponsorship Packages</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {packages.map((pkg) => (
-              <Card key={pkg.tier} className="p-6">
-                <h3 className="text-2xl font-bold mb-2">{pkg.tier}</h3>
-                <div className="text-3xl font-bold text-primary mb-6">{pkg.price}</div>
-                <ul className="space-y-3 mb-6">
-                  {pkg.benefits.map((benefit) => (
-                    <li key={benefit} className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-sm">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-full" variant={pkg.tier === "Gold" ? "default" : "outline"}>
-                  Select {pkg.tier}
-                </Button>
-              </Card>
-            ))}
+          <h2 className="text-3xl font-bold mb-2 text-center">Sponsorship Packages</h2>
+          <p className="text-center text-muted-foreground mb-8">Choose a tier that fits your brand goals. All values in sponsorship points.</p>
+          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-5">
+            {packages.map((pkg) => {
+              const Icon = pkg.icon;
+              return (
+                <Card key={pkg.tier} className={`p-5 relative ${pkg.popular ? 'border-primary ring-2 ring-primary/20' : ''}`}>
+                  {pkg.popular && (
+                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs">Most Popular</Badge>
+                  )}
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className={`h-5 w-5 ${pkg.color}`} />
+                    <h3 className="text-lg font-bold">{pkg.tier}</h3>
+                  </div>
+                  <div className="text-2xl font-bold text-primary mb-4">{pkg.points}</div>
+                  <ul className="space-y-2 mb-5">
+                    {pkg.benefits.map((benefit) => (
+                      <li key={benefit} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-xs">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full" size="sm" variant={pkg.popular ? "default" : "outline"}>
+                    Select {pkg.tier}
+                  </Button>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
