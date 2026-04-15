@@ -2,20 +2,20 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2 } from "lucide-react";
+import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { CouponInput } from "@/components/shared/CouponInput";
 
+// Points-based pricing (₹5 = 1 point)
 const plans = [
   {
     id: "starter",
     name: "Starter",
     subtitle: "For small teams getting started",
-    monthlyPrice: 0,
-    annualPrice: 0,
+    points: 0,
     icon: Zap,
     features: [
       "Up to 3 active job posts",
@@ -31,8 +31,7 @@ const plans = [
     id: "growth",
     name: "Growth",
     subtitle: "Scale your hiring pipeline",
-    monthlyPrice: 4999,
-    annualPrice: 49990,
+    points: 1000,
     icon: Star,
     popular: true,
     features: [
@@ -53,8 +52,7 @@ const plans = [
     id: "professional",
     name: "Professional",
     subtitle: "Full AI-powered recruitment",
-    monthlyPrice: 14999,
-    annualPrice: 149990,
+    points: 3000,
     icon: Rocket,
     badge: "Best Value",
     features: [
@@ -77,8 +75,7 @@ const plans = [
     id: "enterprise",
     name: "Enterprise",
     subtitle: "Custom solutions at scale",
-    monthlyPrice: 29000,
-    annualPrice: 290000,
+    points: 5800,
     icon: Building2,
     features: [
       "Unlimited job posts & seats",
@@ -111,11 +108,8 @@ export const UpgradePlanContent = () => {
   const navigate = useNavigate();
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
-  const [isAnnual, setIsAnnual] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string } | null>(null);
   const [selectedPlanForCoupon, setSelectedPlanForCoupon] = useState<string | null>(null);
-
-  const getPrice = (plan: typeof plans[0]) => isAnnual ? plan.annualPrice : plan.monthlyPrice;
 
   useEffect(() => {
     const fetchCurrentPlan = async () => {
@@ -149,101 +143,63 @@ export const UpgradePlanContent = () => {
     const selectedPlan = plans.find((p) => p.id === planId);
     if (!selectedPlan || !user?.id) return;
 
-    const planPrice = getPrice(selectedPlan);
-    const payAmount = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : planPrice;
+    const pointsCost = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.points;
 
     setLoading(planId);
     try {
-      toast({ title: "Initializing payment...", description: "Please wait" });
+      // Get wallet
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
-        body: {
-          amount: payAmount,
-          currency: "INR",
-          plan_id: planId,
-          plan_name: selectedPlan.name,
-          employer_id: user.id,
-        },
+      if (!wallet) {
+        throw new Error("Wallet not found. Please set up your wallet first.");
+      }
+
+      if ((wallet.points_balance || 0) < pointsCost) {
+        toast({
+          title: "Insufficient Points",
+          description: `You need ${pointsCost} pts but have ${wallet.points_balance || 0} pts. Load points from your Wallet.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Deduct points
+      const newBalance = (wallet.points_balance || 0) - pointsCost;
+      await supabase.from("wallets").update({ points_balance: newBalance }).eq("id", wallet.id);
+
+      // Record transaction
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "subscription",
+        points: pointsCost,
+        description: `Employer ${selectedPlan.name} Plan Subscription`,
       });
 
-      if (orderError || !orderData?.order_id) {
-        throw new Error(orderData?.error || "Failed to create payment order");
-      }
-
-      if (!(window as any).Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://checkout.razorpay.com/v1/checkout.js";
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load Razorpay"));
-          document.body.appendChild(script);
+      // Record coupon usage if applied
+      if (appliedCoupon && selectedPlanForCoupon === planId) {
+        await supabase.from("coupon_usages").insert({
+          coupon_id: appliedCoupon.couponId,
+          user_id: user.id,
+          user_role: "employer",
+          plan_name: selectedPlan.name,
+          discount_applied: appliedCoupon.discount,
+          original_amount: selectedPlan.points,
+          final_amount: appliedCoupon.finalAmount,
         });
+        await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: appliedCoupon.couponId });
+        setAppliedCoupon(null);
+        setSelectedPlanForCoupon(null);
       }
 
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "Gradia",
-        description: `${selectedPlan.name} Plan - ${isAnnual ? 'Annual' : 'Monthly'}`,
-        order_id: orderData.order_id,
-        handler: async (response: any) => {
-          try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                plan_id: planId,
-                plan_name: selectedPlan.name,
-                amount: planPrice,
-                employer_id: user.id,
-                billing_cycle: isAnnual ? "annual" : "monthly",
-              },
-            });
-
-            if (verifyError || !verifyData?.success) {
-              throw new Error(verifyData?.error || "Payment verification failed");
-            }
-
-            // Record coupon usage if applied
-            if (appliedCoupon && selectedPlanForCoupon === planId) {
-              await supabase.from("coupon_usages").insert({
-                coupon_id: appliedCoupon.couponId,
-                user_id: user.id,
-                user_role: "employer",
-                plan_name: selectedPlan.name,
-                discount_applied: appliedCoupon.discount,
-                original_amount: planPrice,
-                final_amount: appliedCoupon.finalAmount,
-              });
-              // Increment total_used
-              await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: appliedCoupon.couponId });
-              setAppliedCoupon(null);
-              setSelectedPlanForCoupon(null);
-            }
-
-            toast({ title: "Payment Successful!", description: `${selectedPlan.name} plan activated` });
-            setCurrentPlan(planId);
-          } catch (err: any) {
-            toast({ title: "Payment Verification Failed", description: err.message, variant: "destructive" });
-          }
-        },
-        prefill: { email: user.email || "" },
-        theme: { color: "#10b981" },
-        modal: {
-          ondismiss: () => {
-            setLoading(null);
-            toast({ title: "Payment Cancelled", description: "You can try again anytime", variant: "destructive" });
-          },
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-      return;
+      toast({ title: "Plan Activated!", description: `${selectedPlan.name} plan activated. ${pointsCost} pts deducted.` });
+      setCurrentPlan(planId);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to process payment", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Failed to process", variant: "destructive" });
     } finally {
       setLoading(null);
     }
@@ -266,22 +222,9 @@ export const UpgradePlanContent = () => {
         <p className="text-muted-foreground mb-6">
           {currentPlan
             ? `You're currently on the ${plans.find((p) => p.id === currentPlan)?.name || "Starter"} plan`
-            : "Select a plan to get started"}
+            : "Select a plan • Pay with wallet points"}
         </p>
-        <div className="inline-flex items-center gap-3 bg-muted rounded-full p-1">
-          <button
-            onClick={() => setIsAnnual(false)}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${!isAnnual ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setIsAnnual(true)}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${isAnnual ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            Annual <span className="text-xs opacity-80">(Save ~17%)</span>
-          </button>
-        </div>
+        <Badge variant="secondary" className="text-xs">₹5,000 = 1,000 Points</Badge>
       </div>
 
       {/* Plans Grid */}
@@ -291,7 +234,6 @@ export const UpgradePlanContent = () => {
           const isCurrent = currentPlan === plan.id;
           const planIndex = planOrder.indexOf(plan.id);
           const isUpgrade = planIndex > currentIndex;
-          const price = getPrice(plan);
 
           return (
             <Card
@@ -324,12 +266,15 @@ export const UpgradePlanContent = () => {
                 <p className="text-xs text-muted-foreground">{plan.subtitle}</p>
                 <div className="mt-3">
                   <span className="text-2xl font-bold text-foreground">
-                    {price === 0 ? "Free" : `₹${price.toLocaleString()}`}
+                    {plan.points === 0 ? "Free" : `${plan.points.toLocaleString()} pts`}
                   </span>
-                  {price > 0 && (
-                    <span className="text-muted-foreground text-xs">/{isAnnual ? 'year' : 'month'}</span>
+                  {plan.points > 0 && (
+                    <span className="text-muted-foreground text-xs">/month</span>
                   )}
                 </div>
+                {plan.points > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1">≈ ₹{(plan.points * 5).toLocaleString("en-IN")}</p>
+                )}
               </CardHeader>
 
               <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -360,14 +305,14 @@ export const UpgradePlanContent = () => {
                     : plan.cta === "free"
                     ? "Get Started Free"
                     : isUpgrade
-                    ? "Upgrade Now"
-                    : "Switch Plan"}
+                    ? `Upgrade – ${plan.points} pts`
+                    : `Switch – ${plan.points} pts`}
                 </Button>
 
                 {/* Coupon Input for paid plans */}
                 {plan.cta === "subscribe" && !isCurrent && (
                   <CouponInput
-                    originalAmount={price}
+                    originalAmount={plan.points}
                     userRole="employer"
                     onCouponApplied={(discount, finalAmount, couponId, couponCode) => {
                       setAppliedCoupon({ discount, finalAmount, couponId, couponCode });
@@ -381,7 +326,7 @@ export const UpgradePlanContent = () => {
                 )}
                 {appliedCoupon && selectedPlanForCoupon === plan.id && (
                   <p className="text-xs text-center text-muted-foreground">
-                    Pay ₹{appliedCoupon.finalAmount.toLocaleString()} instead of ₹{price.toLocaleString()}
+                    Pay {appliedCoupon.finalAmount.toLocaleString()} pts instead of {plan.points.toLocaleString()} pts
                   </p>
                 )}
 
