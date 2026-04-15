@@ -4731,8 +4731,8 @@ const CandidateDashboard = () => {
                       <CardTitle className="text-lg">Pro</CardTitle>
                       <p className="text-xs text-muted-foreground">Accelerate your job search</p>
                       <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹1499</span>
-                        <span className="text-muted-foreground text-xs">/month</span>
+                         <span className="text-2xl font-bold text-foreground">300 pts</span>
+                         <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -4758,20 +4758,20 @@ const CandidateDashboard = () => {
                           Current Plan
                         </Button>
                       ) : (
-                        <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 1499)}>
-                          {upgradingPlan === "pro" ? "Processing..." : "Subscribe ₹1499/mo"}
+                         <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 300)}>
+                           {upgradingPlan === "pro" ? "Processing..." : "Subscribe – 300 pts/mo"}
                         </Button>
                       )}
                       {!(isActiveSub && candidateSubscription?.plan === "pro") && (
                         <CouponInput
-                          originalAmount={1499}
+                          originalAmount={300}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "pro" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "pro" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹1499</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay {candidateCoupon.finalAmount} pts instead of 300 pts</p>
                       )}
                     </CardContent>
                   </Card>
@@ -4785,10 +4785,10 @@ const CandidateDashboard = () => {
                       </div>
                       <CardTitle className="text-lg">Premium</CardTitle>
                       <p className="text-xs text-muted-foreground">Full career support</p>
-                      <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹1999</span>
-                        <span className="text-muted-foreground text-xs">/month</span>
-                      </div>
+                       <div className="mt-3">
+                         <span className="text-2xl font-bold text-foreground">400 pts</span>
+                         <span className="text-muted-foreground text-xs">/month</span>
+                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
                       <ul className="space-y-2 flex-1">
@@ -4812,21 +4812,21 @@ const CandidateDashboard = () => {
                       {isActiveSub && candidateSubscription?.plan === "premium" ? (
                         <Button className="w-full" variant="outline" disabled>Current Plan</Button>
                       ) : (
-                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 1999)}>
-                          {upgradingPlan === "premium" ? "Processing..." : "Subscribe ₹1999/mo"}
+                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 400)}>
+                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe – 400 pts/mo"}
                         </Button>
                       )}
                       {/* Coupon for Premium */}
                       {!(isActiveSub && candidateSubscription?.plan === "premium") && (
                         <CouponInput
-                          originalAmount={1999}
+                          originalAmount={400}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "premium" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "premium" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹1999</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay {candidateCoupon.finalAmount} pts instead of 400 pts</p>
                       )}
                     </CardContent>
                   </Card>
