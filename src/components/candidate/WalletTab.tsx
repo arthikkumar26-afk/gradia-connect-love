@@ -222,6 +222,67 @@ export default function WalletTab({ userId }: { userId: string }) {
             });
 
             toast({ title: "✅ Points Added!", description: `${pkg.points} points added to your wallet.` });
+
+            // Check & process referral bonus (first purchase only)
+            try {
+              const { data: myProfile } = await supabase
+                .from("profiles")
+                .select("referred_by, referral_bonus_given")
+                .eq("id", userId)
+                .maybeSingle();
+
+              if (myProfile?.referred_by && !myProfile?.referral_bonus_given) {
+                // Find the referrer by their referral_code
+                const { data: referrer } = await supabase
+                  .from("profiles")
+                  .select("id")
+                  .eq("referral_code", myProfile.referred_by)
+                  .maybeSingle();
+
+                if (referrer) {
+                  // Credit +100 to new user (me)
+                  await supabase.from("wallets").update({
+                    points_balance: newBalance + 100,
+                  }).eq("id", wallet.id);
+
+                  await supabase.from("wallet_transactions").insert({
+                    wallet_id: wallet.id,
+                    transaction_type: "credit",
+                    category: "referral",
+                    points: 100,
+                    description: "Referral bonus — welcome reward for signing up via referral",
+                  });
+
+                  // Credit +100 to referrer
+                  const { data: referrerWallet } = await supabase
+                    .from("wallets")
+                    .select("id, points_balance")
+                    .eq("user_id", referrer.id)
+                    .maybeSingle();
+
+                  if (referrerWallet) {
+                    await supabase.from("wallets").update({
+                      points_balance: (referrerWallet.points_balance || 0) + 100,
+                    }).eq("id", referrerWallet.id);
+
+                    await supabase.from("wallet_transactions").insert({
+                      wallet_id: referrerWallet.id,
+                      transaction_type: "credit",
+                      category: "referral",
+                      points: 100,
+                      description: "Referral bonus — your referred friend made their first purchase!",
+                    });
+                  }
+
+                  // Mark bonus as given
+                  await supabase.from("profiles").update({ referral_bonus_given: true }).eq("id", userId);
+
+                  toast({ title: "🎉 Referral Bonus!", description: "You and your referrer both earned 100 bonus points!" });
+                }
+              }
+            } catch (refErr) {
+              console.error("Referral bonus processing error:", refErr);
+            }
             fetchWallet();
           } catch (err: any) {
             toast({ title: "Error", description: err.message || "Failed to add points", variant: "destructive" });
