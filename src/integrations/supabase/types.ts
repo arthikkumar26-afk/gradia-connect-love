@@ -3522,6 +3522,83 @@ export type Database = {
           },
         ]
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          rewards: number
+          transaction_type: string
+          wallet_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          rewards?: number
+          transaction_type?: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          rewards?: number
+          transaction_type?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          cash_balance: number
+          created_at: string
+          id: string
+          points_balance: number
+          rewards_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cash_balance?: number
+          created_at?: string
+          id?: string
+          points_balance?: number
+          rewards_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cash_balance?: number
+          created_at?: string
+          id?: string
+          points_balance?: number
+          rewards_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       work_experience: {
         Row: {
           created_at: string
