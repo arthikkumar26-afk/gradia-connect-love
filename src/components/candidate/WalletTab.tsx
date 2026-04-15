@@ -153,13 +153,21 @@ export default function WalletTab({ userId }: { userId: string }) {
 
     if (data) {
       setWallet(data as WalletData);
-      const { data: txns } = await supabase
-        .from("wallet_transactions")
-        .select("*")
-        .eq("wallet_id", data.id)
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const [{ data: txns }, { data: profileData }] = await Promise.all([
+        supabase
+          .from("wallet_transactions")
+          .select("*")
+          .eq("wallet_id", data.id)
+          .order("created_at", { ascending: false })
+          .limit(100),
+        supabase
+          .from("profiles")
+          .select("referral_code")
+          .eq("id", userId)
+          .maybeSingle(),
+      ]);
       setTransactions((txns as Transaction[]) || []);
+      if (profileData?.referral_code) setMyReferralCode(profileData.referral_code);
     }
     setLoading(false);
   };
