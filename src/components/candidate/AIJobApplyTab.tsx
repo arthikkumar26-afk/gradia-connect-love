@@ -504,7 +504,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
                 <Crown className="h-4 w-4 text-primary" />
                 <span className="font-semibold text-sm text-foreground">Premium Plan</span>
               </div>
-              <p className="text-lg font-bold text-foreground">₹1,999<span className="text-xs text-muted-foreground font-normal">/month</span></p>
+              <p className="text-lg font-bold text-foreground">400 pts<span className="text-xs text-muted-foreground font-normal">/month</span></p>
               <p className="text-xs text-muted-foreground mt-1">Unlimited auto-applies</p>
             </Card>
           </div>
