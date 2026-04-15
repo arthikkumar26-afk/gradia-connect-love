@@ -2628,6 +2628,9 @@ export type Database = {
           primary_subject: string | null
           profile_picture: string | null
           program: string | null
+          referral_bonus_given: boolean | null
+          referral_code: string | null
+          referred_by: string | null
           registration_number: string | null
           resume_url: string | null
           role: string
@@ -2669,6 +2672,9 @@ export type Database = {
           primary_subject?: string | null
           profile_picture?: string | null
           program?: string | null
+          referral_bonus_given?: boolean | null
+          referral_code?: string | null
+          referred_by?: string | null
           registration_number?: string | null
           resume_url?: string | null
           role: string
@@ -2710,6 +2716,9 @@ export type Database = {
           primary_subject?: string | null
           profile_picture?: string | null
           program?: string | null
+          referral_bonus_given?: boolean | null
+          referral_code?: string | null
+          referred_by?: string | null
           registration_number?: string | null
           resume_url?: string | null
           role?: string

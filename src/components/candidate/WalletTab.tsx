@@ -110,6 +110,7 @@ export default function WalletTab({ userId }: { userId: string }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [buyingPkg, setBuyingPkg] = useState<number | null>(null);
+  const [myReferralCode, setMyReferralCode] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -152,13 +153,21 @@ export default function WalletTab({ userId }: { userId: string }) {
 
     if (data) {
       setWallet(data as WalletData);
-      const { data: txns } = await supabase
-        .from("wallet_transactions")
-        .select("*")
-        .eq("wallet_id", data.id)
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const [{ data: txns }, { data: profileData }] = await Promise.all([
+        supabase
+          .from("wallet_transactions")
+          .select("*")
+          .eq("wallet_id", data.id)
+          .order("created_at", { ascending: false })
+          .limit(100),
+        supabase
+          .from("profiles")
+          .select("referral_code")
+          .eq("id", userId)
+          .maybeSingle(),
+      ]);
       setTransactions((txns as Transaction[]) || []);
+      if (profileData?.referral_code) setMyReferralCode(profileData.referral_code);
     }
     setLoading(false);
   };
@@ -222,6 +231,67 @@ export default function WalletTab({ userId }: { userId: string }) {
             });
 
             toast({ title: "✅ Points Added!", description: `${pkg.points} points added to your wallet.` });
+
+            // Check & process referral bonus (first purchase only)
+            try {
+              const { data: myProfile } = await supabase
+                .from("profiles")
+                .select("referred_by, referral_bonus_given")
+                .eq("id", userId)
+                .maybeSingle();
+
+              if (myProfile?.referred_by && !myProfile?.referral_bonus_given) {
+                // Find the referrer by their referral_code
+                const { data: referrer } = await supabase
+                  .from("profiles")
+                  .select("id")
+                  .eq("referral_code", myProfile.referred_by)
+                  .maybeSingle();
+
+                if (referrer) {
+                  // Credit +100 to new user (me)
+                  await supabase.from("wallets").update({
+                    points_balance: newBalance + 100,
+                  }).eq("id", wallet.id);
+
+                  await supabase.from("wallet_transactions").insert({
+                    wallet_id: wallet.id,
+                    transaction_type: "credit",
+                    category: "referral",
+                    points: 100,
+                    description: "Referral bonus — welcome reward for signing up via referral",
+                  });
+
+                  // Credit +100 to referrer
+                  const { data: referrerWallet } = await supabase
+                    .from("wallets")
+                    .select("id, points_balance")
+                    .eq("user_id", referrer.id)
+                    .maybeSingle();
+
+                  if (referrerWallet) {
+                    await supabase.from("wallets").update({
+                      points_balance: (referrerWallet.points_balance || 0) + 100,
+                    }).eq("id", referrerWallet.id);
+
+                    await supabase.from("wallet_transactions").insert({
+                      wallet_id: referrerWallet.id,
+                      transaction_type: "credit",
+                      category: "referral",
+                      points: 100,
+                      description: "Referral bonus — your referred friend made their first purchase!",
+                    });
+                  }
+
+                  // Mark bonus as given
+                  await supabase.from("profiles").update({ referral_bonus_given: true }).eq("id", userId);
+
+                  toast({ title: "🎉 Referral Bonus!", description: "You and your referrer both earned 100 bonus points!" });
+                }
+              }
+            } catch (refErr) {
+              console.error("Referral bonus processing error:", refErr);
+            }
             fetchWallet();
           } catch (err: any) {
             toast({ title: "Error", description: err.message || "Failed to add points", variant: "destructive" });
@@ -570,7 +640,7 @@ export default function WalletTab({ userId }: { userId: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: "Complete Profile", pts: "+50 pts", icon: Award, desc: "Fill all profile fields" },
-              { label: "Refer a Friend", pts: "+200 pts", icon: Users, desc: "Share your referral link" },
+              { label: "Refer a Friend", pts: "+100 pts", icon: Users, desc: "Earn after their first purchase" },
               { label: "Attend Mock Test", pts: "+30 pts", icon: BookOpen, desc: "Take any mock test" },
               { label: "Attend Event", pts: "+100 pts", icon: Star, desc: "Join a Job Mela event" },
             ].map((item) => (
@@ -597,8 +667,8 @@ export default function WalletTab({ userId }: { userId: string }) {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="font-semibold text-foreground">Refer a Friend & Earn 200 pts</p>
-                <p className="text-xs text-muted-foreground">Share your referral link. When they sign up, you both get bonus points!</p>
+                <p className="font-semibold text-foreground">Refer a Friend & Earn 100 pts</p>
+                <p className="text-xs text-muted-foreground">Share your referral code. After their first purchase, you both get 100 bonus points!</p>
               </div>
             </div>
             <Button
@@ -606,9 +676,10 @@ export default function WalletTab({ userId }: { userId: string }) {
               variant="outline"
               className="gap-1.5 shrink-0"
               onClick={() => {
-                const referralLink = `${window.location.origin}/candidate/signup?ref=${userId.slice(0, 8)}`;
+                const code = myReferralCode || userId.slice(0, 8);
+                const referralLink = `${window.location.origin}/candidate/signup?ref=${code}`;
                 navigator.clipboard.writeText(referralLink);
-                toast({ title: "📋 Referral Link Copied!", description: "Share it with your friends to earn 200 points each." });
+                toast({ title: "📋 Referral Link Copied!", description: "Share it with your friends. You both earn 100 points after their first purchase!" });
               }}
             >
               <Users className="h-3.5 w-3.5" /> Copy Referral Link

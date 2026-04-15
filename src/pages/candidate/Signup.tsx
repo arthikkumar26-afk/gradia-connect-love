@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +82,8 @@ const CandidateSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, refreshProfile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref") || "";
   
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
@@ -253,6 +256,7 @@ const CandidateSignup = () => {
             category: industryCategory || null,
             primary_subject: primarySubject || null,
             segment: segment || null,
+            ...(referralCode ? { referred_by: referralCode.toUpperCase() } : {}),
           }),
           supabase.from("user_roles").upsert({
             user_id: authData.user!.id,
