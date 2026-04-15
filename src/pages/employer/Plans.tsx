@@ -3,21 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, ArrowLeft } from 'lucide-react';
+import { Check, ArrowLeft, Wallet } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingProgress from '@/components/employer/OnboardingProgress';
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
 const plans = [
-  { id: 'basic', name: 'Basic', duration: '1 Month', price: 499, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
-  { id: 'standard', name: 'Standard', duration: '3 Months', price: 1299, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
-  { id: 'premium', name: 'Premium', duration: '6 Months', price: 2499, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
+  { id: 'basic', name: 'Basic', duration: '1 Month', points: 100, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
+  { id: 'standard', name: 'Standard', duration: '3 Months', points: 260, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
+  { id: 'premium', name: 'Premium', duration: '6 Months', points: 500, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
 ];
 
 export default function Plans() {
@@ -25,7 +19,6 @@ export default function Plans() {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [retryError, setRetryError] = useState<string | null>(null);
-  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,19 +28,6 @@ export default function Plans() {
       if (!terms) { toast({ title: 'Please accept terms first', variant: 'destructive' }); navigate("/employer/terms"); }
     };
     checkAuth();
-
-    // Load Razorpay script
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => setRazorpayLoaded(true);
-    document.body.appendChild(script);
-
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
   }, [navigate, toast]);
 
   const handleSelectPlan = async (planId: string) => {
@@ -61,89 +41,46 @@ export default function Plans() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/employer/signup"); return; }
 
-      // Get user profile for prefilling Razorpay
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, email, mobile, company_name')
-        .eq('id', user.id)
-        .single();
+      // Get wallet
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      // Create Razorpay order via edge function
-      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: {
-          amount: selectedPlan.price,
-          currency: 'INR',
-          plan_id: selectedPlan.id,
-          plan_name: selectedPlan.name,
-          employer_id: user.id,
-        },
+      if (!wallet) {
+        throw new Error('Wallet not found. Please set up your wallet first.');
+      }
+
+      if ((wallet.points_balance || 0) < selectedPlan.points) {
+        toast({
+          title: 'Insufficient Points',
+          description: `You need ${selectedPlan.points} pts but have ${wallet.points_balance || 0} pts. Load points from your Wallet.`,
+          variant: 'destructive',
+        });
+        setLoading(null);
+        return;
+      }
+
+      // Deduct points
+      const newBalance = (wallet.points_balance || 0) - selectedPlan.points;
+      await supabase.from('wallets').update({ points_balance: newBalance }).eq('id', wallet.id);
+
+      // Record transaction
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: wallet.id,
+        transaction_type: 'debit',
+        category: 'subscription',
+        points: selectedPlan.points,
+        description: `Employer ${selectedPlan.name} Plan - ${selectedPlan.duration}`,
       });
 
-      if (orderError || !orderData) {
-        throw new Error(orderError?.message || 'Failed to create order');
-      }
-
-      if (!razorpayLoaded || !window.Razorpay) {
-        throw new Error('Payment gateway not loaded. Please refresh and try again.');
-      }
-
-      // Configure Razorpay options
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'Gradia',
-        description: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
-        order_id: orderData.order_id,
-        prefill: {
-          name: profile?.full_name || profile?.company_name || '',
-          email: profile?.email || user.email || '',
-          contact: profile?.mobile || '',
-        },
-        theme: {
-          color: '#7c3aed',
-        },
-        handler: async function (response: any) {
-          try {
-            // Verify payment via edge function
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                plan_id: selectedPlan.id,
-                plan_name: selectedPlan.name,
-                amount: selectedPlan.price,
-                employer_id: user.id,
-                billing_cycle: 'monthly',
-              },
-            });
-
-            if (verifyError || !verifyData?.success) {
-              throw new Error('Payment verification failed');
-            }
-
-            toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
-            navigate(`/employer/subscription-success?session_id=${response.razorpay_payment_id}`);
-          } catch (error: any) {
-            console.error('Payment verification error:', error);
-            toast({ title: 'Error', description: 'Payment verification failed. Please contact support.', variant: 'destructive' });
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setLoading(null);
-            toast({ title: 'Payment Cancelled', description: 'You can try again anytime', variant: 'default' });
-          },
-        },
-      };
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+      toast({ title: 'Plan Activated!', description: `${selectedPlan.name} plan activated. ${selectedPlan.points} pts deducted.` });
+      navigate(`/employer/subscription-success?session_id=wallet-${Date.now()}`);
     } catch (error: any) {
-      console.error('Payment error:', error);
-      setRetryError(error.message || 'Failed to initiate payment. Please try again.');
-      toast({ title: 'Error', description: error.message || 'Failed to process payment', variant: 'destructive' });
+      console.error('Plan error:', error);
+      setRetryError(error.message || 'Failed to activate plan. Please try again.');
+      toast({ title: 'Error', description: error.message || 'Failed to process', variant: 'destructive' });
       setLoading(null);
     }
   };
@@ -154,7 +91,7 @@ export default function Plans() {
         <OnboardingProgress currentStep="payment" />
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">Choose Your Plan</h1>
-          <p className="text-muted-foreground text-lg">Select the perfect plan for your hiring needs</p>
+          <p className="text-muted-foreground text-lg">Pay with wallet points • ₹5,000 = 1,000 points</p>
         </div>
 
         {retryError && <div className="mb-8 p-4 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive text-center max-w-md mx-auto">{retryError}</div>}
@@ -167,9 +104,10 @@ export default function Plans() {
                 <h3 className="text-2xl font-bold text-foreground mb-1">{plan.name} Plan</h3>
                 <p className="text-sm text-muted-foreground mb-4">Duration: {plan.duration}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-primary">₹{plan.price}</span>
-                  <span className="text-muted-foreground text-sm">/ {plan.duration.toLowerCase()}</span>
+                  <Wallet className="h-5 w-5 text-primary" />
+                  <span className="text-3xl font-bold text-primary">{plan.points} pts</span>
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">≈ ₹{(plan.points * 5).toLocaleString("en-IN")}</p>
               </div>
               <ul className="space-y-3 mb-6 flex-grow">
                 {plan.features.map((feature, index) => (
@@ -181,11 +119,11 @@ export default function Plans() {
               </ul>
               <Button 
                 onClick={() => handleSelectPlan(plan.id)} 
-                disabled={loading !== null || !razorpayLoaded} 
+                disabled={loading !== null} 
                 className="w-full" 
                 variant={plan.popular ? 'default' : 'outline'}
               >
-                {loading === plan.id ? 'Processing...' : !razorpayLoaded ? 'Loading...' : `Choose ${plan.name}`}
+                {loading === plan.id ? 'Processing...' : `Choose ${plan.name} – ${plan.points} pts`}
               </Button>
             </Card>
           ))}
