@@ -640,7 +640,7 @@ export default function WalletTab({ userId }: { userId: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: "Complete Profile", pts: "+50 pts", icon: Award, desc: "Fill all profile fields" },
-              { label: "Refer a Friend", pts: "+200 pts", icon: Users, desc: "Share your referral link" },
+              { label: "Refer a Friend", pts: "+100 pts", icon: Users, desc: "Earn after their first purchase" },
               { label: "Attend Mock Test", pts: "+30 pts", icon: BookOpen, desc: "Take any mock test" },
               { label: "Attend Event", pts: "+100 pts", icon: Star, desc: "Join a Job Mela event" },
             ].map((item) => (
