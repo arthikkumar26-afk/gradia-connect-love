@@ -528,6 +528,8 @@ export default function ResumeBuilderTab() {
     }
   };
 
+  const EXPORT_PDF_POINTS = 250;
+
   const handleExport = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -550,62 +552,53 @@ export default function ResumeBuilderTab() {
         return;
       }
 
-      sonnerToast.loading("Initializing payment...", { id: "resume-payment" });
+      // Use wallet points instead of Razorpay
+      const { data: wallet, error: walletErr } = await supabase
+        .from('wallets')
+        .select('id, points_balance')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-resume-payment", {
-        body: { candidate_id: user.id },
-      });
-
-      if (orderError || !orderData?.order_id) {
-        sonnerToast.dismiss("resume-payment");
-        toast({ title: "Payment Error", description: "Failed to initialize payment. Please try again.", variant: "destructive" });
+      if (walletErr || !wallet) {
+        toast({ title: "Wallet not found", description: "Please visit 'My Wallet' tab first to activate your wallet.", variant: "destructive" });
         return;
       }
 
-      // Load Razorpay script if not loaded
-      if (!(window as any).Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://checkout.razorpay.com/v1/checkout.js";
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load Razorpay"));
-          document.body.appendChild(script);
+      if ((wallet.points_balance || 0) < EXPORT_PDF_POINTS) {
+        toast({
+          title: "Insufficient Points",
+          description: `You need ${EXPORT_PDF_POINTS} pts to export. Your balance: ${wallet.points_balance || 0} pts.`,
+          variant: "destructive",
         });
+        return;
       }
 
-      sonnerToast.dismiss("resume-payment");
+      // Deduct points
+      const newBalance = (wallet.points_balance || 0) - EXPORT_PDF_POINTS;
+      const { error: deductErr } = await supabase
+        .from('wallets')
+        .update({ points_balance: newBalance })
+        .eq('id', wallet.id);
 
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "Gradia",
-        description: "Resume PDF Export - ₹249",
-        order_id: orderData.order_id,
-        handler: async (response: any) => {
-          if (response.razorpay_payment_id) {
-            sonnerToast.success("Payment successful! Generating PDF...");
-            await generatePDF();
-          }
-        },
-        prefill: {
-          email: formData.email || user.email,
-          contact: formData.phone || "",
-        },
-        theme: { color: "#008080" },
-        modal: {
-          ondismiss: () => {
-            sonnerToast.info("Payment cancelled");
-          },
-        },
-      };
+      if (deductErr) {
+        toast({ title: "Error", description: "Failed to deduct points. Please try again.", variant: "destructive" });
+        return;
+      }
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      // Log transaction
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: wallet.id,
+        transaction_type: 'debit',
+        category: 'resume_builder',
+        points: EXPORT_PDF_POINTS,
+        description: 'Resume PDF Export',
+      });
+
+      sonnerToast.success(`${EXPORT_PDF_POINTS} pts deducted. Generating PDF...`);
+      await generatePDF();
     } catch (error) {
-      console.error("Payment error:", error);
-      sonnerToast.dismiss("resume-payment");
-      toast({ title: "Payment Failed", description: "Something went wrong. Please try again.", variant: "destructive" });
+      console.error("Export error:", error);
+      toast({ title: "Export Failed", description: "Something went wrong. Please try again.", variant: "destructive" });
     }
   };
 
@@ -724,7 +717,7 @@ export default function ResumeBuilderTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            {isPremiumUser ? "Export PDF" : "Export PDF - ₹249"}
+            {isPremiumUser ? "Export PDF" : "Export PDF - 250 pts"}
           </Button>
         </div>
       </div>
