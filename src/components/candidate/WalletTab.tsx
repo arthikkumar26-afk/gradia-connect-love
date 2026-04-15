@@ -676,9 +676,10 @@ export default function WalletTab({ userId }: { userId: string }) {
               variant="outline"
               className="gap-1.5 shrink-0"
               onClick={() => {
-                const referralLink = `${window.location.origin}/candidate/signup?ref=${userId.slice(0, 8)}`;
+                const code = myReferralCode || userId.slice(0, 8);
+                const referralLink = `${window.location.origin}/candidate/signup?ref=${code}`;
                 navigator.clipboard.writeText(referralLink);
-                toast({ title: "📋 Referral Link Copied!", description: "Share it with your friends to earn 200 points each." });
+                toast({ title: "📋 Referral Link Copied!", description: "Share it with your friends. You both earn 100 points after their first purchase!" });
               }}
             >
               <Users className="h-3.5 w-3.5" /> Copy Referral Link
