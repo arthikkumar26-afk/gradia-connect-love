@@ -1709,10 +1709,11 @@ const SignupPortal = () => {
                         <div className="mb-6">
                           <h3 className="text-2xl font-bold text-white mb-1">{plan.name} Plan</h3>
                           <p className="text-sm text-slate-400 mb-4">Duration: {plan.duration}</p>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-bold text-green-400">₹{plan.price}</span>
-                            <span className="text-slate-400 text-sm">/ {plan.duration.toLowerCase()}</span>
-                          </div>
+                           <div className="flex items-baseline gap-1">
+                             <span className="text-3xl font-bold text-green-400">{plan.points} pts</span>
+                             <span className="text-slate-400 text-sm">/ {plan.duration.toLowerCase()}</span>
+                           </div>
+                           <p className="text-xs text-slate-500 mt-1">≈ ₹{(plan.points * 5).toLocaleString("en-IN")}</p>
                         </div>
                         <ul className="space-y-3 mb-6 flex-grow">
                           {plan.features.map((feature, index) => (
