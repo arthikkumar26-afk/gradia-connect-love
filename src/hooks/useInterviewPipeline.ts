@@ -276,9 +276,9 @@ export const useInterviewPipeline = () => {
             // Use job-specific custom pipeline stages for display names if available
             const jobCustomStages = c.jobs?.pipeline_stages as Array<{ order: number; name: string; description: string; isAutomated: boolean }> | null;
 
-            // Ensure Interview Guidelines is always included as the first stage
+            // Ensure Interview Guidelines (or equivalent like Instruction Mail) is always included as the first stage
             const effectiveCustomStages = jobCustomStages && jobCustomStages.length > 0
-              ? (jobCustomStages.some(cs => cs.name === 'Interview Guidelines')
+              ? (jobCustomStages.some(cs => cs.name === 'Interview Guidelines' || cs.name === 'Instruction Mail')
                 ? jobCustomStages
                 : [{ order: 0, name: 'Interview Guidelines', description: 'Automated interview guidelines sent to candidate', isAutomated: true }, ...jobCustomStages])
               : null;
