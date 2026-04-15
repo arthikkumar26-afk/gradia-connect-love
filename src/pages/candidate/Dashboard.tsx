@@ -74,6 +74,7 @@ import { CouponInput } from "@/components/shared/CouponInput";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
+import WalletTab from "@/components/candidate/WalletTab";
 
 interface FamilyRecord {
   id?: string;
