@@ -629,8 +629,8 @@ const SignupPortal = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setEmployerOnboardingStep('form'); return; }
 
-      // For free/basic plan (₹0), activate directly without payment
-      if (selectedPlan.price === 0) {
+      // For free/basic plan (0 pts), activate directly
+      if (selectedPlan.points === 0) {
         const { error } = await supabase.from("subscriptions").insert({
           employer_id: user.id,
           plan_id: planId,
@@ -647,88 +647,76 @@ const SignupPortal = () => {
         return;
       }
 
-      // For paid plans, use Razorpay
-      toast({ title: 'Initializing payment...', description: 'Please wait' });
+      // For paid plans, use wallet points
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      // Create Razorpay order via edge function
-      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: {
-          amount: selectedPlan.price,
-          currency: 'INR',
-          plan_id: planId,
-          plan_name: selectedPlan.name,
-          employer_id: user.id,
-        },
+      if (!wallet) {
+        // Auto-create wallet
+        const { data: newWallet, error: createErr } = await supabase
+          .from('wallets')
+          .insert({ user_id: user.id, cash_balance: 0, points_balance: 100, rewards_balance: 10 })
+          .select()
+          .single();
+
+        if (createErr || !newWallet) {
+          throw new Error('Could not create wallet. Please try again.');
+        }
+
+        if ((newWallet.points_balance || 0) < selectedPlan.points) {
+          toast({
+            title: 'Insufficient Points',
+            description: `You need ${selectedPlan.points} pts but have ${newWallet.points_balance || 0} pts. Load points from your Wallet first.`,
+            variant: 'destructive',
+          });
+          setPlanLoading(null);
+          return;
+        }
+      }
+
+      const walletData = wallet || (await supabase.from('wallets').select('*').eq('user_id', user.id).single()).data;
+      if (!walletData || (walletData.points_balance || 0) < selectedPlan.points) {
+        toast({
+          title: 'Insufficient Points',
+          description: `You need ${selectedPlan.points} pts but have ${walletData?.points_balance || 0} pts. Load points from your Wallet.`,
+          variant: 'destructive',
+        });
+        setPlanLoading(null);
+        return;
+      }
+
+      // Deduct points
+      const newBalance = (walletData.points_balance || 0) - selectedPlan.points;
+      await supabase.from('wallets').update({ points_balance: newBalance }).eq('id', walletData.id);
+
+      // Record transaction
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: walletData.id,
+        transaction_type: 'debit',
+        category: 'subscription',
+        points: selectedPlan.points,
+        description: `Employer ${selectedPlan.name} Plan - ${selectedPlan.duration}`,
       });
 
-      if (orderError || !orderData?.order_id) {
-        throw new Error(orderData?.error || 'Failed to create payment order');
-      }
+      // Create subscription
+      await supabase.from("subscriptions").insert({
+        employer_id: user.id,
+        plan_id: planId,
+        plan_name: selectedPlan.name,
+        billing_cycle: 'monthly',
+        amount: selectedPlan.points,
+        currency: "PTS",
+        status: "active",
+        payment_method: "wallet",
+      });
 
-      // Load Razorpay script if not loaded
-      if (!(window as any).Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load Razorpay'));
-          document.body.appendChild(script);
-        });
-      }
-
-      // Open Razorpay checkout
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'Gradia',
-        description: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
-        order_id: orderData.order_id,
-        handler: async (response: any) => {
-          try {
-            // Verify payment via edge function
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                plan_id: planId,
-                plan_name: selectedPlan.name,
-                amount: selectedPlan.price,
-                employer_id: user.id,
-                billing_cycle: 'monthly',
-              },
-            });
-
-            if (verifyError || !verifyData?.success) {
-              throw new Error(verifyData?.error || 'Payment verification failed');
-            }
-
-            toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated` });
-            setEmployerOnboardingStep('job-alert-onboarding');
-          } catch (err: any) {
-            toast({ title: 'Payment Verification Failed', description: err.message, variant: 'destructive' });
-          }
-        },
-        prefill: {
-          email: user.email || '',
-        },
-        theme: {
-          color: '#10b981',
-        },
-        modal: {
-          ondismiss: () => {
-            setPlanLoading(null);
-            toast({ title: 'Payment Cancelled', description: 'You can try again anytime', variant: 'destructive' });
-          },
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-      return; // Don't clear loading until modal closes
+      toast({ title: 'Plan Activated!', description: `${selectedPlan.name} plan activated. ${selectedPlan.points} pts deducted.` });
+      setEmployerOnboardingStep('job-alert-onboarding');
     } catch (error: any) {
-      setRetryError('Failed to process payment. Please try again.');
+      setRetryError('Failed to process. Please try again.');
       toast({ title: 'Error', description: error.message || 'Failed to process plan selection', variant: 'destructive' });
     } finally {
       setPlanLoading(null);
