@@ -609,11 +609,11 @@ const SignupPortal = () => {
     }
   };
 
-  // Plans data for payment step
+  // Plans data for payment step (points-based)
   const employerPlans = [
-    { id: 'basic', name: 'Basic', duration: '1 Month', price: 499, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
-    { id: 'standard', name: 'Standard', duration: '3 Months', price: 1299, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
-    { id: 'premium', name: 'Premium', duration: '6 Months', price: 2499, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
+    { id: 'basic', name: 'Basic', duration: '1 Month', price: 0, points: 100, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
+    { id: 'standard', name: 'Standard', duration: '3 Months', price: 0, points: 260, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
+    { id: 'premium', name: 'Premium', duration: '6 Months', price: 0, points: 500, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
   ];
 
   const [planLoading, setPlanLoading] = useState<string | null>(null);
