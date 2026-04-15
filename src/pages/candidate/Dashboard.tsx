@@ -373,88 +373,87 @@ const CandidateDashboard = () => {
 
   // Trial removed - direct subscription only
 
-  const handleCandidateUpgrade = async (plan: string, price: number) => {
+  const handleCandidateUpgrade = async (plan: string, pointsCost: number) => {
     if (!profile?.id) return;
     setUpgradingPlan(plan);
     try {
-      toast({ title: "Setting up subscription...", description: "Please wait" });
+      toast({ title: "Processing subscription...", description: "Checking wallet balance" });
 
-      const { data, error } = await supabase.functions.invoke("create-candidate-subscription", {
-        body: { plan, candidate_id: profile.id, candidate_email: profile.email },
+      // Get wallet
+      const { data: wallet, error: walletErr } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+
+      if (walletErr || !wallet) {
+        throw new Error("Wallet not found. Please visit My Wallet first.");
+      }
+
+      if ((wallet.points_balance || 0) < pointsCost) {
+        toast({
+          title: "Insufficient Points",
+          description: `You need ${pointsCost} pts but have ${wallet.points_balance || 0} pts. Load points from My Wallet.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Deduct points
+      const newBalance = (wallet.points_balance || 0) - pointsCost;
+      const { error: deductErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: newBalance })
+        .eq("id", wallet.id);
+
+      if (deductErr) throw new Error("Failed to deduct points");
+
+      // Record transaction
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "subscription",
+        points: pointsCost,
+        description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Subscription`,
       });
 
-      if (error || !data?.subscription_id) {
-        throw new Error(data?.error || "Failed to create subscription");
-      }
+      // Deactivate old subs
+      await supabase
+        .from("candidate_subscriptions")
+        .update({ status: "inactive" })
+        .eq("candidate_id", profile.id)
+        .in("status", ["active", "trial"]);
 
-      if (!(window as any).Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = "https://checkout.razorpay.com/v1/checkout.js";
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error("Failed to load Razorpay"));
-          document.body.appendChild(script);
+      // Activate new sub
+      const { error: insertErr } = await supabase
+        .from("candidate_subscriptions")
+        .insert({
+          candidate_id: profile.id,
+          plan,
+          status: "active",
+          started_at: new Date().toISOString(),
+          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         });
+
+      if (insertErr) throw insertErr;
+
+      // Record coupon usage if applied
+      if (candidateCoupon?.plan === plan) {
+        await supabase.from("coupon_usages").insert({
+          coupon_id: candidateCoupon.couponId,
+          user_id: profile.id,
+          user_role: "candidate",
+          plan_name: plan,
+          discount_applied: candidateCoupon.discount,
+          original_amount: pointsCost,
+          final_amount: candidateCoupon.finalAmount,
+        });
+        await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: candidateCoupon.couponId });
+        setCandidateCoupon(null);
       }
 
-      const options = {
-        key: data.key_id,
-        subscription_id: data.subscription_id,
-        name: "Gradia",
-        description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan - Monthly Subscription`,
-        handler: async (response: any) => {
-          try {
-            await supabase
-              .from("candidate_subscriptions")
-              .update({ status: "inactive" })
-              .eq("candidate_id", profile.id)
-              .in("status", ["active", "trial"]);
-
-            const { error: insertErr } = await supabase
-              .from("candidate_subscriptions")
-              .insert({
-                candidate_id: profile.id,
-                plan,
-                status: "active",
-                started_at: new Date().toISOString(),
-                ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              });
-
-            if (insertErr) throw insertErr;
-
-            // Record coupon usage if applied
-            if (candidateCoupon?.plan === plan) {
-              await supabase.from("coupon_usages").insert({
-                coupon_id: candidateCoupon.couponId,
-                user_id: profile.id,
-                user_role: "candidate",
-                plan_name: plan,
-                discount_applied: candidateCoupon.discount,
-                original_amount: price,
-                final_amount: candidateCoupon.finalAmount,
-              });
-              await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: candidateCoupon.couponId });
-              setCandidateCoupon(null);
-            }
-
-            toast({ title: "🎉 Subscription Activated!", description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active.` });
-            window.location.reload();
-          } catch (err: any) {
-            toast({ title: "Activation Failed", description: err.message, variant: "destructive" });
-          }
-        },
-        prefill: { email: profile.email || "" },
-        theme: { color: "#10b981" },
-        modal: {
-          ondismiss: () => {
-            setUpgradingPlan(null);
-            toast({ title: "Cancelled", description: "You can subscribe anytime", variant: "destructive" });
-          },
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      toast({ title: "🎉 Subscription Activated!", description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active. ${pointsCost} pts deducted.` });
+      window.location.reload();
     } catch (error: any) {
       toast({ title: isNetworkError(error) ? "Connection Error" : "Error", description: friendlyError(error, "Failed to process"), variant: "destructive" });
     } finally {
@@ -4732,8 +4731,8 @@ const CandidateDashboard = () => {
                       <CardTitle className="text-lg">Pro</CardTitle>
                       <p className="text-xs text-muted-foreground">Accelerate your job search</p>
                       <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹1499</span>
-                        <span className="text-muted-foreground text-xs">/month</span>
+                         <span className="text-2xl font-bold text-foreground">300 pts</span>
+                         <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -4759,20 +4758,20 @@ const CandidateDashboard = () => {
                           Current Plan
                         </Button>
                       ) : (
-                        <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 1499)}>
-                          {upgradingPlan === "pro" ? "Processing..." : "Subscribe ₹1499/mo"}
+                         <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 300)}>
+                           {upgradingPlan === "pro" ? "Processing..." : "Subscribe – 300 pts/mo"}
                         </Button>
                       )}
                       {!(isActiveSub && candidateSubscription?.plan === "pro") && (
                         <CouponInput
-                          originalAmount={1499}
+                          originalAmount={300}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "pro" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "pro" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹1499</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay {candidateCoupon.finalAmount} pts instead of 300 pts</p>
                       )}
                     </CardContent>
                   </Card>
@@ -4786,10 +4785,10 @@ const CandidateDashboard = () => {
                       </div>
                       <CardTitle className="text-lg">Premium</CardTitle>
                       <p className="text-xs text-muted-foreground">Full career support</p>
-                      <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹1999</span>
-                        <span className="text-muted-foreground text-xs">/month</span>
-                      </div>
+                       <div className="mt-3">
+                         <span className="text-2xl font-bold text-foreground">400 pts</span>
+                         <span className="text-muted-foreground text-xs">/month</span>
+                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
                       <ul className="space-y-2 flex-1">
@@ -4813,21 +4812,21 @@ const CandidateDashboard = () => {
                       {isActiveSub && candidateSubscription?.plan === "premium" ? (
                         <Button className="w-full" variant="outline" disabled>Current Plan</Button>
                       ) : (
-                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 1999)}>
-                          {upgradingPlan === "premium" ? "Processing..." : "Subscribe ₹1999/mo"}
+                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 400)}>
+                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe – 400 pts/mo"}
                         </Button>
                       )}
                       {/* Coupon for Premium */}
                       {!(isActiveSub && candidateSubscription?.plan === "premium") && (
                         <CouponInput
-                          originalAmount={1999}
+                          originalAmount={400}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "premium" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "premium" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹1999</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay {candidateCoupon.finalAmount} pts instead of 400 pts</p>
                       )}
                     </CardContent>
                   </Card>

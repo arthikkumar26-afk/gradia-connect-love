@@ -4,17 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
 import { Check, Star, Zap, Crown, Rocket, Building2, User, Award, GraduationCap, Handshake } from "lucide-react";
 
 const PricingPage = () => {
-  const [annual, setAnnual] = useState(false);
-
   const candidatePlans = [
     {
       name: "Pro",
-      monthly: 1499,
-      annual: 14990,
+      points: 300,
       popular: false,
       features: [
         "Unlimited job applications",
@@ -27,8 +23,7 @@ const PricingPage = () => {
     },
     {
       name: "Premium",
-      monthly: 1999,
-      annual: 19990,
+      points: 400,
       popular: true,
       features: [
         "Everything in Pro",
@@ -45,8 +40,7 @@ const PricingPage = () => {
   const employerPlans = [
     {
       name: "Starter",
-      monthly: 0,
-      annual: 0,
+      points: 0,
       popular: false,
       features: [
         "3 job posts",
@@ -58,8 +52,7 @@ const PricingPage = () => {
     },
     {
       name: "Growth",
-      monthly: 4999,
-      annual: 49990,
+      points: 1000,
       popular: true,
       features: [
         "15 job posts",
@@ -72,8 +65,7 @@ const PricingPage = () => {
     },
     {
       name: "Professional",
-      monthly: 14999,
-      annual: 149990,
+      points: 3000,
       popular: false,
       features: [
         "50 job posts",
@@ -87,8 +79,7 @@ const PricingPage = () => {
     },
     {
       name: "Enterprise",
-      monthly: 29000,
-      annual: 290000,
+      points: 5800,
       popular: false,
       features: [
         "Unlimited job posts",
@@ -105,8 +96,7 @@ const PricingPage = () => {
   const freelancerPlans = [
     {
       name: "Starter",
-      monthly: 0,
-      annual: 0,
+      points: 0,
       popular: false,
       features: [
         "Portfolio page",
@@ -118,8 +108,7 @@ const PricingPage = () => {
     },
     {
       name: "Pro",
-      monthly: 1499,
-      annual: 14990,
+      points: 300,
       popular: true,
       features: [
         "Unlimited projects",
@@ -132,8 +121,7 @@ const PricingPage = () => {
     },
     {
       name: "Premium",
-      monthly: 2999,
-      annual: 29990,
+      points: 600,
       popular: false,
       features: [
         "Everything in Pro",
@@ -149,8 +137,7 @@ const PricingPage = () => {
   const sponsorPlans = [
     {
       name: "Silver",
-      monthly: 3500,
-      annual: 35000,
+      points: 700,
       popular: false,
       features: [
         "Logo on event banners",
@@ -162,8 +149,7 @@ const PricingPage = () => {
     },
     {
       name: "Gold",
-      monthly: 7500,
-      annual: 75000,
+      points: 1500,
       popular: true,
       features: [
         "Premium banner placement",
@@ -176,8 +162,7 @@ const PricingPage = () => {
     },
     {
       name: "Platinum",
-      monthly: 15000,
-      annual: 150000,
+      points: 3000,
       popular: false,
       features: [
         "Title sponsorship",
@@ -194,8 +179,7 @@ const PricingPage = () => {
   const edutechPlans = [
     {
       name: "Starter",
-      monthly: 0,
-      annual: 0,
+      points: 0,
       popular: false,
       features: [
         "Up to 50 students",
@@ -207,8 +191,7 @@ const PricingPage = () => {
     },
     {
       name: "Growth",
-      monthly: 4999,
-      annual: 49990,
+      points: 1000,
       popular: true,
       features: [
         "Up to 500 students",
@@ -221,8 +204,7 @@ const PricingPage = () => {
     },
     {
       name: "Enterprise",
-      monthly: 14999,
-      annual: 149990,
+      points: 3000,
       popular: false,
       features: [
         "Unlimited students",
@@ -244,11 +226,10 @@ const PricingPage = () => {
     edutech: <GraduationCap className="h-4 w-4" />,
   };
 
-  const renderPlans = (plans: typeof candidatePlans, accent: string) => (
+  const renderPlans = (plans: typeof candidatePlans) => (
     <div className={`grid gap-6 ${plans.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' : plans.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
       {plans.map((plan) => {
-        const price = annual ? plan.annual : plan.monthly;
-        const isFree = price === 0;
+        const isFree = plan.points === 0;
         return (
           <Card
             key={plan.name}
@@ -267,17 +248,15 @@ const PricingPage = () => {
               <CardTitle className="text-xl">{plan.name}</CardTitle>
               <div className="mt-4">
                 <span className="text-4xl font-bold text-foreground">
-                  {isFree ? "Free" : `₹${price.toLocaleString("en-IN")}`}
+                  {isFree ? "Free" : `${plan.points.toLocaleString("en-IN")} pts`}
                 </span>
                 {!isFree && (
-                  <span className="text-muted-foreground text-sm ml-1">
-                    /{annual ? "year" : "month"}
-                  </span>
+                  <span className="text-muted-foreground text-sm ml-1">/month</span>
                 )}
               </div>
-              {annual && !isFree && (
-                <CardDescription className="text-xs text-green-600 dark:text-green-400 font-medium mt-1">
-                  Save ~17% with annual billing
+              {!isFree && (
+                <CardDescription className="text-xs text-muted-foreground mt-1">
+                  ≈ ₹{(plan.points * 5).toLocaleString("en-IN")} equivalent
                 </CardDescription>
               )}
             </CardHeader>
@@ -312,18 +291,14 @@ const PricingPage = () => {
       <section className="py-16 md:py-24 bg-gradient-hero text-white text-center">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Simple, Transparent Pricing
+            Simple, Points-Based Pricing
           </h1>
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8">
-            Plans for every role — candidates, employers, freelancers, sponsors & institutes. Pick what fits you.
+          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-4">
+            All plans use wallet points. Load points via payment gateway and use them for any service.
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <span className={`text-sm font-medium ${!annual ? "text-white" : "text-white/60"}`}>Monthly</span>
-            <Switch checked={annual} onCheckedChange={setAnnual} />
-            <span className={`text-sm font-medium ${annual ? "text-white" : "text-white/60"}`}>
-              Annual <Badge variant="secondary" className="ml-1 text-[10px]">Save 17%</Badge>
-            </span>
-          </div>
+          <Badge variant="secondary" className="text-sm px-4 py-1.5">
+            ₹5,000 = 1,000 Points
+          </Badge>
         </div>
       </section>
 
@@ -349,11 +324,11 @@ const PricingPage = () => {
             ))}
           </TabsList>
 
-          <TabsContent value="candidates">{renderPlans(candidatePlans, "blue")}</TabsContent>
-          <TabsContent value="employers">{renderPlans(employerPlans, "green")}</TabsContent>
-          <TabsContent value="freelancers">{renderPlans(freelancerPlans, "orange")}</TabsContent>
-          <TabsContent value="sponsors">{renderPlans(sponsorPlans, "purple")}</TabsContent>
-          <TabsContent value="edutech">{renderPlans(edutechPlans, "indigo")}</TabsContent>
+          <TabsContent value="candidates">{renderPlans(candidatePlans)}</TabsContent>
+          <TabsContent value="employers">{renderPlans(employerPlans)}</TabsContent>
+          <TabsContent value="freelancers">{renderPlans(freelancerPlans)}</TabsContent>
+          <TabsContent value="sponsors">{renderPlans(sponsorPlans)}</TabsContent>
+          <TabsContent value="edutech">{renderPlans(edutechPlans)}</TabsContent>
         </Tabs>
       </section>
 
