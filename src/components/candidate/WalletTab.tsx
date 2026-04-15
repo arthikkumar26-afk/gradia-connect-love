@@ -667,8 +667,8 @@ export default function WalletTab({ userId }: { userId: string }) {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="font-semibold text-foreground">Refer a Friend & Earn 200 pts</p>
-                <p className="text-xs text-muted-foreground">Share your referral link. When they sign up, you both get bonus points!</p>
+                <p className="font-semibold text-foreground">Refer a Friend & Earn 100 pts</p>
+                <p className="text-xs text-muted-foreground">Share your referral code. After their first purchase, you both get 100 bonus points!</p>
               </div>
             </div>
             <Button
