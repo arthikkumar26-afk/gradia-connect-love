@@ -53,6 +53,7 @@ import {
   Mail,
   Lock,
   Palette,
+  Wallet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
