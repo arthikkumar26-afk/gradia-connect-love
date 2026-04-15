@@ -556,6 +556,66 @@ export default function WalletTab({ userId }: { userId: string }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Earn Free Points - Always Visible */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Gift className="h-5 w-5 text-primary" />
+            Earn Free Points
+          </CardTitle>
+          <CardDescription>Complete actions to earn bonus points for free</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { label: "Complete Profile", pts: "+50 pts", icon: Award, desc: "Fill all profile fields" },
+              { label: "Refer a Friend", pts: "+200 pts", icon: Users, desc: "Share your referral link" },
+              { label: "Attend Mock Test", pts: "+30 pts", icon: BookOpen, desc: "Take any mock test" },
+              { label: "Attend Event", pts: "+100 pts", icon: Star, desc: "Join a Job Mela event" },
+            ].map((item) => (
+              <Card key={item.label} className="border-dashed hover:border-primary/50 transition-colors cursor-pointer">
+                <CardContent className="p-4 flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <item.icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                    <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    <Badge variant="secondary" className="mt-1.5 text-xs font-bold text-primary">{item.pts}</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Referral Section */}
+          <Separator className="my-4" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Refer a Friend & Earn 200 pts</p>
+                <p className="text-xs text-muted-foreground">Share your referral link. When they sign up, you both get bonus points!</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 shrink-0"
+              onClick={() => {
+                const referralLink = `${window.location.origin}/candidate/signup?ref=${userId.slice(0, 8)}`;
+                navigator.clipboard.writeText(referralLink);
+                toast({ title: "📋 Referral Link Copied!", description: "Share it with your friends to earn 200 points each." });
+              }}
+            >
+              <Users className="h-3.5 w-3.5" /> Copy Referral Link
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
