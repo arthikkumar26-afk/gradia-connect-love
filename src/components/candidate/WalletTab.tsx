@@ -379,34 +379,6 @@ export default function WalletTab({ userId }: { userId: string }) {
               </div>
             </CardContent>
           </Card>
-
-          {/* How to Earn Free Points */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Gift className="h-5 w-5 text-primary" />
-                Earn Free Points
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  { label: "Complete Profile", pts: "+50 pts", icon: Award },
-                  { label: "Refer a Friend", pts: "+200 pts", icon: Users },
-                  { label: "Attend Mock Test", pts: "+30 pts", icon: BookOpen },
-                  { label: "Attend Event", pts: "+100 pts", icon: Star },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                    <item.icon className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">{item.label}</p>
-                      <p className="text-xs text-primary font-semibold">{item.pts}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Usage Breakdown */}
