@@ -82,6 +82,8 @@ const CandidateSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAuthenticated, refreshProfile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get("ref") || "";
   
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
