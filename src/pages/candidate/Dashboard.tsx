@@ -4677,6 +4677,11 @@ const CandidateDashboard = () => {
               <ExternalJobListings />
             )}
 
+            {/* Wallet */}
+            {activeMenu === "wallet" && profile?.id && (
+              <WalletTab userId={profile.id} />
+            )}
+
             {/* Upgrade Plans */}
             {activeMenu === "upgrade" && (
               <div className="space-y-6">
