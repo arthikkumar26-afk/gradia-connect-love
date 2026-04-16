@@ -246,10 +246,10 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
 
     const colW = innerW / 2;
 
-    // QR section (left)
+    // QR section (left) - white background for max scan reliability
     const qrBoxX = pad;
     const qrBoxY = bottomY + 20;
-    ctx.fillStyle = "#f9f9f9";
+    ctx.fillStyle = "#ffffff";
     roundRect(ctx, qrBoxX, qrBoxY, colW - 15, 280, 12);
     ctx.fill();
     ctx.strokeStyle = "#e0e0e0";
@@ -257,14 +257,32 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     roundRect(ctx, qrBoxX, qrBoxY, colW - 15, 280, 12);
     ctx.stroke();
 
-    // Draw QR code
+    // Draw QR code - white quiet zone behind QR for guaranteed scannability
+    const qrSize = 180;
+    const qrX = qrBoxX + (colW - 15) / 2 - qrSize / 2;
+    const qrY = qrBoxY + 15;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(qrX - 6, qrY - 6, qrSize + 12, qrSize + 12);
+
     const qrSvg = document.getElementById("flyer-qr-code");
     if (qrSvg) {
       try {
-        const svgData = new XMLSerializer().serializeToString(qrSvg);
+        // Clone & force pure black/white for max contrast in export
+        const cloned = qrSvg.cloneNode(true) as SVGElement;
+        cloned.querySelectorAll("path, rect").forEach((el) => {
+          const fill = el.getAttribute("fill");
+          if (fill && fill.toLowerCase() !== "none") {
+            // background rect (largest) -> white; foreground modules -> black
+            if (fill === "#f9f9f9" || fill === "#ffffff" || fill === "white") {
+              el.setAttribute("fill", "#ffffff");
+            } else {
+              el.setAttribute("fill", "#000000");
+            }
+          }
+        });
+        const svgData = new XMLSerializer().serializeToString(cloned);
         const qrImg = await loadImage("data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))));
-        const qrSize = 160;
-        ctx.drawImage(qrImg, qrBoxX + (colW - 15) / 2 - qrSize / 2, qrBoxY + 20, qrSize, qrSize);
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
       } catch (e) {
         console.error("Failed to load QR code:", e);
       }
