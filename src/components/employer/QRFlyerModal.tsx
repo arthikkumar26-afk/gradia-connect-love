@@ -442,7 +442,16 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
                   {flyerData.positions}
                 </div>
 
-                {/* QR Code */}
+                {/* Job Details */}
+                {flyerData.jobDetails && (
+                  <div className="bg-white/10 rounded-lg px-4 py-3 text-left">
+                    <p className="text-[10px] font-semibold text-emerald-400 uppercase mb-1">Job Details</p>
+                    <p className="text-gray-200 text-[10px] leading-relaxed whitespace-pre-line">
+                      {flyerData.jobDetails}
+                    </p>
+                  </div>
+                )}
+
                 <div className="bg-white rounded-xl p-4 inline-block mx-auto">
                   <QRCodeSVG
                     id="flyer-qr-code"
