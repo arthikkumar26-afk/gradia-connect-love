@@ -346,6 +346,16 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
                 placeholder="Software Engineers, Designers..."
               />
             </div>
+            <div>
+              <Label htmlFor="jobDetails">Job Description / Details</Label>
+              <Textarea
+                id="jobDetails"
+                value={flyerData.jobDetails}
+                onChange={(e) => setFlyerData({ ...flyerData, jobDetails: e.target.value })}
+                placeholder="Full job description, requirements, qualifications..."
+                rows={4}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="location">Location</Label>
