@@ -20,6 +20,12 @@ interface JobData {
   segment?: string | null;
   category?: string | null;
   sector_division?: string | null;
+  description?: string | null;
+  experience_required?: string | null;
+  skills?: string[] | null;
+  job_type?: string | null;
+  subjects?: string | null;
+  classes?: string | null;
 }
 
 interface QRFlyerModalProps {
