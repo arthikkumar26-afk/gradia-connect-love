@@ -37,10 +37,11 @@ serve(async (req) => {
 - headline: A short, punchy hiring headline (max 5 words, e.g. "We're Hiring Teachers!")
 - tagline: An engaging tagline that attracts candidates (max 15 words)
 - positions: A concise description of the open position(s) (max 10 words)
+- keyPoints: An array of 4-6 short bullet points (max 12 words each) summarizing the most important job highlights like role, subjects, experience, salary, skills. Do NOT include the full description.
 - contactEmail: A suggested professional email format like "careers@company.com" based on the company name
 - website: A suggested website URL based on the company name
 
-Make the content professional, engaging, and relevant to the education/recruitment sector. Use the job details to personalize the content.`;
+Make the content professional, engaging, and relevant to the education/recruitment sector. Use the job details to personalize the content. The keyPoints should be concise highlights, NOT the full job description.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
