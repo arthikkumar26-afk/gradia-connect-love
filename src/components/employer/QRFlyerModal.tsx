@@ -44,23 +44,21 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
   const buildJobDetails = () => {
     if (!jobData) return "";
     const bullets: string[] = [];
-    if (jobData.subjects) bullets.push(`• Subjects: ${jobData.subjects}`);
-    if (jobData.classes) bullets.push(`• Classes: ${jobData.classes}`);
-    if (jobData.experience_required) bullets.push(`• Experience: ${jobData.experience_required}`);
-    if (jobData.salary_range) bullets.push(`• Salary: ${jobData.salary_range}`);
-    if (jobData.job_type) bullets.push(`• Type: ${jobData.job_type}`);
-    if (jobData.skills?.length) bullets.push(`• Skills: ${jobData.skills.slice(0, 6).join(", ")}`);
-    // Extract key points from description instead of full text
-    if (jobData.description && bullets.length < 6) {
+    if (jobData.subjects) bullets.push(`Subjects: ${jobData.subjects}`);
+    if (jobData.classes) bullets.push(`Classes: ${jobData.classes}`);
+    if (jobData.experience_required) bullets.push(`Experience: ${jobData.experience_required}`);
+    if (jobData.salary_range) bullets.push(`Salary: ${jobData.salary_range}`);
+    if (jobData.job_type) bullets.push(`Type: ${jobData.job_type}`);
+    if (jobData.skills?.length) bullets.push(`Skills: ${jobData.skills.slice(0, 4).join(", ")}`);
+    if (jobData.description && bullets.length < 5) {
       const desc = jobData.description.replace(/\s+/g, " ").trim();
-      // Take first meaningful sentence as a summary
       const firstSentence = desc.split(/[.!]\s/).filter(s => s.trim().length > 10)[0];
       if (firstSentence) {
-        const summary = firstSentence.length > 100 ? firstSentence.substring(0, 97) + "..." : firstSentence;
-        bullets.unshift(`• ${summary}`);
+        const summary = firstSentence.length > 80 ? firstSentence.substring(0, 77) + "..." : firstSentence;
+        bullets.unshift(summary);
       }
     }
-    return bullets.slice(0, 7).join("\n");
+    return bullets.slice(0, 6).join("\n");
   };
 
   const [flyerData, setFlyerData] = useState({
@@ -83,29 +81,21 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
       toast.error("No job selected. Please select a job to generate AI content.");
       return;
     }
-
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-flyer-content", {
         body: { job: jobData, companyName },
       });
-
       if (error) {
-        // Check for rate limit / payment errors
-        if (error.message?.includes("429")) {
-          toast.error("Rate limit exceeded. Please try again in a moment.");
-        } else if (error.message?.includes("402")) {
-          toast.error("AI credits exhausted. Please add credits to continue.");
-        } else {
-          throw error;
-        }
+        if (error.message?.includes("429")) toast.error("Rate limit exceeded. Please try again in a moment.");
+        else if (error.message?.includes("402")) toast.error("AI credits exhausted. Please add credits to continue.");
+        else throw error;
         return;
       }
-
       if (data?.flyerContent) {
         const content = data.flyerContent;
         const aiJobDetails = content.keyPoints?.length
-          ? content.keyPoints.map((p: string) => `• ${p}`).join("\n")
+          ? content.keyPoints.slice(0, 6).join("\n")
           : "";
         setFlyerData(prev => ({
           ...prev,
@@ -126,36 +116,6 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     }
   };
 
-  const handleDownload = async () => {
-    if (!flyerRef.current) return;
-
-    try {
-      const flyer = flyerRef.current;
-      const canvas = document.createElement("canvas");
-      const scale = 2;
-      canvas.width = flyer.offsetWidth * scale;
-      canvas.height = flyer.offsetHeight * scale;
-      const ctx = canvas.getContext("2d");
-      
-      if (!ctx) return;
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const dataUrl = await generateFlyerImage();
-      
-      const downloadLink = document.createElement("a");
-      downloadLink.download = `${companyName.replace(/\s+/g, "-")}-job-flyer.png`;
-      downloadLink.href = dataUrl;
-      downloadLink.click();
-      
-      toast.success("Flyer downloaded successfully!");
-    } catch (error) {
-      console.error("Download error:", error);
-      toast.error("Failed to download flyer. Try using Print instead.");
-    }
-  };
-
   const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -166,122 +126,136 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     });
   };
 
-  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
-    const lines: string[] = [];
-    const paragraphs = text.split("\n");
-    for (const para of paragraphs) {
-      const words = para.split(" ");
-      let currentLine = "";
-      for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        if (ctx.measureText(testLine).width > maxWidth && currentLine) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          currentLine = testLine;
-        }
-      }
-      if (currentLine) lines.push(currentLine);
-      if (!para) lines.push("");
-    }
-    return lines;
+  const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
   };
 
   const generateFlyerImage = async (): Promise<string> => {
     const canvas = document.createElement("canvas");
     const width = 800;
-
-    // Pre-calculate job details height
-    const tempCanvas = document.createElement("canvas");
-    const tempCtx = tempCanvas.getContext("2d")!;
-    tempCtx.font = "16px Arial";
-    const detailLines = flyerData.jobDetails ? wrapText(tempCtx, flyerData.jobDetails, width - 160) : [];
-    const detailsBlockHeight = detailLines.length > 0 ? detailLines.length * 22 + 50 : 0;
-
-    const height = 1100 + detailsBlockHeight;
+    const height = 1130;
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-
     if (!ctx) return "";
 
-    // Background gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, "#1a365d");
-    gradient.addColorStop(0.3, "#2c5282");
-    gradient.addColorStop(1, "#1a365d");
-    ctx.fillStyle = gradient;
+    const pad = 60;
+    const innerW = width - pad * 2;
+
+    // --- Background: white ---
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
 
-    // Decorative elements
-    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
-    ctx.beginPath();
-    ctx.arc(700, 100, 200, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(100, height - 200, 150, 0, Math.PI * 2);
+    // --- Top accent bar ---
+    const barGrad = ctx.createLinearGradient(0, 0, width, 0);
+    barGrad.addColorStop(0, "#0f4c75");
+    barGrad.addColorStop(1, "#3282b8");
+    ctx.fillStyle = barGrad;
+    ctx.fillRect(0, 0, width, 8);
+
+    // --- Header band ---
+    ctx.fillStyle = "#0f4c75";
+    roundRect(ctx, pad, 40, innerW, 90, 12);
     ctx.fill();
 
-    // Header bar
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.fillRect(0, 0, width, 120);
-
-    // Company name
+    // Company icon placeholder + name
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 36px Arial";
+    ctx.font = "bold 30px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(companyName, width / 2, 75);
+    ctx.fillText(companyName.toUpperCase(), width / 2, 95);
 
-    // Headline
-    ctx.font = "bold 56px Arial";
-    ctx.fillStyle = "#48bb78";
-    ctx.fillText(flyerData.headline, width / 2, 220);
+    // --- Headline ---
+    ctx.fillStyle = "#0f4c75";
+    ctx.font = "bold 46px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(flyerData.headline, width / 2, 195);
 
-    // Tagline
-    ctx.font = "24px Arial";
-    ctx.fillStyle = "#e2e8f0";
-    ctx.fillText(flyerData.tagline, width / 2, 270);
+    // Underline accent
+    const headW = ctx.measureText(flyerData.headline).width;
+    ctx.fillStyle = "#f7941d";
+    ctx.fillRect(width / 2 - headW / 2, 205, headW, 4);
 
-    // Positions box
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.beginPath();
-    ctx.roundRect(50, 320, width - 100, 80, 10);
+    // --- Tagline ---
+    ctx.fillStyle = "#555555";
+    ctx.font = "18px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText(flyerData.tagline, width / 2, 240);
+
+    // --- Position badge ---
+    const badgeY = 270;
+    ctx.fillStyle = "#f7941d";
+    roundRect(ctx, pad, badgeY, innerW, 60, 10);
     ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 24px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText(flyerData.positions, width / 2, badgeY + 38);
 
-    ctx.fillStyle = "#1a365d";
-    ctx.font = "bold 28px Arial";
-    ctx.fillText(flyerData.positions, width / 2, 370);
+    // --- Key Highlights section ---
+    let y = 365;
+    const detailItems = flyerData.jobDetails
+      ? flyerData.jobDetails.split("\n").filter(l => l.trim()).slice(0, 6)
+      : [];
 
-    let yOffset = 420;
-
-    // Job Details section
-    if (detailLines.length > 0) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-      ctx.beginPath();
-      ctx.roundRect(50, yOffset, width - 100, detailsBlockHeight, 10);
-      ctx.fill();
-
-      ctx.fillStyle = "#48bb78";
-      ctx.font = "bold 16px Arial";
+    if (detailItems.length > 0) {
+      // Section header
+      ctx.fillStyle = "#0f4c75";
+      ctx.font = "bold 16px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "left";
-      ctx.fillText("JOB DETAILS", 80, yOffset + 25);
+      ctx.fillText("KEY HIGHLIGHTS", pad, y);
+      // Thin line
+      ctx.fillStyle = "#e0e0e0";
+      ctx.fillRect(pad, y + 8, innerW, 1);
+      y += 30;
 
-      ctx.fillStyle = "#e2e8f0";
-      ctx.font = "16px Arial";
-      let textY = yOffset + 50;
-      for (const line of detailLines) {
-        ctx.fillText(line, 80, textY);
-        textY += 22;
+      ctx.font = "15px 'Segoe UI', Arial, sans-serif";
+      for (const item of detailItems) {
+        const text = item.replace(/^[•\-]\s*/, "");
+        // Bullet dot
+        ctx.fillStyle = "#f7941d";
+        ctx.beginPath();
+        ctx.arc(pad + 8, y - 4, 4, 0, Math.PI * 2);
+        ctx.fill();
+        // Text
+        ctx.fillStyle = "#333333";
+        ctx.textAlign = "left";
+        // Truncate if too long
+        let displayText = text;
+        while (ctx.measureText(displayText).width > innerW - 30 && displayText.length > 10) {
+          displayText = displayText.slice(0, -4) + "...";
+        }
+        ctx.fillText(displayText, pad + 22, y);
+        y += 28;
       }
-      yOffset += detailsBlockHeight + 20;
+      y += 10;
     }
 
-    // QR Code section background
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.roundRect(width / 2 - 130, yOffset, 260, 320, 15);
+    // --- Two-column bottom: QR left, Contact right ---
+    const bottomY = Math.max(y, 580);
+    // Divider line
+    ctx.fillStyle = "#e0e0e0";
+    ctx.fillRect(pad, bottomY, innerW, 1);
+
+    const colW = innerW / 2;
+
+    // QR section (left)
+    const qrBoxX = pad;
+    const qrBoxY = bottomY + 20;
+    ctx.fillStyle = "#f9f9f9";
+    roundRect(ctx, qrBoxX, qrBoxY, colW - 15, 280, 12);
     ctx.fill();
+    ctx.strokeStyle = "#e0e0e0";
+    ctx.lineWidth = 1;
+    roundRect(ctx, qrBoxX, qrBoxY, colW - 15, 280, 12);
+    ctx.stroke();
 
     // Draw QR code
     const qrSvg = document.getElementById("flyer-qr-code");
@@ -289,62 +263,105 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
       try {
         const svgData = new XMLSerializer().serializeToString(qrSvg);
         const qrImg = await loadImage("data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))));
-        ctx.drawImage(qrImg, width / 2 - 100, yOffset + 30, 200, 200);
+        const qrSize = 160;
+        ctx.drawImage(qrImg, qrBoxX + (colW - 15) / 2 - qrSize / 2, qrBoxY + 20, qrSize, qrSize);
       } catch (e) {
         console.error("Failed to load QR code:", e);
       }
     }
-
-    // Scan instruction
-    ctx.fillStyle = "#1a365d";
-    ctx.font = "bold 18px Arial";
-    ctx.fillText("SCAN TO APPLY", width / 2, yOffset + 270);
-
-    ctx.fillStyle = "#48bb78";
-    ctx.font = "24px Arial";
-    ctx.fillText("👆", width / 2, yOffset + 300);
-
-    yOffset += 340;
-
-    // Contact section background
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.fillRect(0, yOffset, width, 100);
-
-    // Contact info
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "18px Arial";
-    ctx.textAlign = "left";
-    ctx.fillText(`📍 ${flyerData.location}`, 80, yOffset + 35);
-    if (flyerData.contactPhone) ctx.fillText(`📞 ${flyerData.contactPhone}`, 80, yOffset + 65);
-    ctx.textAlign = "right";
-    ctx.fillText(`✉️ ${flyerData.contactEmail}`, width - 80, yOffset + 35);
-    ctx.fillText(`🌐 ${flyerData.website}`, width - 80, yOffset + 65);
-
-    yOffset += 120;
-
-    // Footer
+    ctx.fillStyle = "#0f4c75";
+    ctx.font = "bold 16px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillStyle = "#a0aec0";
-    ctx.font = "14px Arial";
-    ctx.fillText("Powered by Gradia - Your Next Step", width / 2, yOffset + 20);
+    ctx.fillText("SCAN TO APPLY", qrBoxX + (colW - 15) / 2, qrBoxY + 210);
+    ctx.fillStyle = "#888";
+    ctx.font = "12px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText("Point your camera at the QR code", qrBoxX + (colW - 15) / 2, qrBoxY + 232);
+    ctx.fillText("to apply instantly", qrBoxX + (colW - 15) / 2, qrBoxY + 248);
 
-    ctx.fillStyle = "#48bb78";
-    ctx.font = "bold 16px Arial";
-    ctx.fillText("gradia.jobs", width / 2, yOffset + 50);
+    // Contact section (right)
+    const contactX = pad + colW + 15;
+    const contactW = colW - 15;
+    ctx.fillStyle = "#0f4c75";
+    roundRect(ctx, contactX, qrBoxY, contactW, 280, 12);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 16px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("CONTACT US", contactX + 24, qrBoxY + 35);
+    // Thin line
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(contactX + 24, qrBoxY + 45, contactW - 48, 1);
+
+    const contactItems = [
+      { icon: "📍", text: flyerData.location },
+      { icon: "📧", text: flyerData.contactEmail },
+      { icon: "🌐", text: flyerData.website },
+      ...(flyerData.contactPhone ? [{ icon: "📞", text: flyerData.contactPhone }] : []),
+    ];
+
+    ctx.font = "14px 'Segoe UI', Arial, sans-serif";
+    let cy = qrBoxY + 80;
+    for (const item of contactItems) {
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "left";
+      ctx.fillText(item.icon, contactX + 24, cy);
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.fillText(item.text, contactX + 50, cy);
+      cy += 38;
+    }
+
+    // --- Footer bar ---
+    const footerY = height - 80;
+    ctx.fillStyle = "#f5f5f5";
+    ctx.fillRect(0, footerY, width, 80);
+    ctx.fillStyle = "#e0e0e0";
+    ctx.fillRect(0, footerY, width, 1);
+
+    ctx.fillStyle = "#999";
+    ctx.font = "12px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Powered by Gradia  •  www.gradia.world", width / 2, footerY + 35);
 
     try {
       const logoImg = await loadImage(gradiaLogo);
-      ctx.drawImage(logoImg, width / 2 - 40, yOffset + 60, 80, 30);
+      ctx.drawImage(logoImg, width / 2 - 35, footerY + 45, 70, 25);
     } catch (e) {
       console.error("Failed to load Gradia logo:", e);
     }
 
+    // Bottom accent bar
+    const bottomBar = ctx.createLinearGradient(0, 0, width, 0);
+    bottomBar.addColorStop(0, "#0f4c75");
+    bottomBar.addColorStop(1, "#3282b8");
+    ctx.fillStyle = bottomBar;
+    ctx.fillRect(0, height - 8, width, 8);
+
     return canvas.toDataURL("image/png");
+  };
+
+  const handleDownload = async () => {
+    try {
+      const dataUrl = await generateFlyerImage();
+      if (!dataUrl) return;
+      const downloadLink = document.createElement("a");
+      downloadLink.download = `${companyName.replace(/\s+/g, "-")}-job-flyer.png`;
+      downloadLink.href = dataUrl;
+      downloadLink.click();
+      toast.success("Flyer downloaded successfully!");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download flyer. Try using Print instead.");
+    }
   };
 
   const handlePrint = () => {
     window.print();
   };
+
+  const detailItems = flyerData.jobDetails
+    ? flyerData.jobDetails.split("\n").filter(l => l.trim()).slice(0, 6)
+    : [];
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -364,7 +381,6 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form Section */}
           <div className="space-y-4">
-            {/* AI Generate Button */}
             <Button
               onClick={handleAIGenerate}
               disabled={isGenerating || !jobData}
@@ -372,15 +388,9 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
               className="w-full border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary"
             >
               {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating with AI...
-                </>
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating with AI...</>
               ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  AI Generate Flyer Content
-                </>
+                <><Sparkles className="h-4 w-4 mr-2" />AI Generate Flyer Content</>
               )}
             </Button>
             {!jobData && (
@@ -388,183 +398,148 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
                 Select a specific job to enable AI suggestions
               </p>
             )}
-
             <div>
               <Label htmlFor="headline">Headline</Label>
-              <Input
-                id="headline"
-                value={flyerData.headline}
-                onChange={(e) => setFlyerData({ ...flyerData, headline: e.target.value })}
-                placeholder="We're Hiring!"
-              />
+              <Input id="headline" value={flyerData.headline} onChange={(e) => setFlyerData({ ...flyerData, headline: e.target.value })} />
             </div>
             <div>
               <Label htmlFor="tagline">Tagline</Label>
-              <Textarea
-                id="tagline"
-                value={flyerData.tagline}
-                onChange={(e) => setFlyerData({ ...flyerData, tagline: e.target.value })}
-                placeholder="Join our team..."
-                rows={2}
-              />
+              <Textarea id="tagline" value={flyerData.tagline} onChange={(e) => setFlyerData({ ...flyerData, tagline: e.target.value })} rows={2} />
             </div>
             <div>
               <Label htmlFor="positions">Open Positions</Label>
-              <Input
-                id="positions"
-                value={flyerData.positions}
-                onChange={(e) => setFlyerData({ ...flyerData, positions: e.target.value })}
-                placeholder="Software Engineers, Designers..."
-              />
+              <Input id="positions" value={flyerData.positions} onChange={(e) => setFlyerData({ ...flyerData, positions: e.target.value })} />
             </div>
             <div>
-              <Label htmlFor="jobDetails">Job Description / Details</Label>
-              <Textarea
-                id="jobDetails"
-                value={flyerData.jobDetails}
-                onChange={(e) => setFlyerData({ ...flyerData, jobDetails: e.target.value })}
-                placeholder="Full job description, requirements, qualifications..."
-                rows={4}
-              />
+              <Label htmlFor="jobDetails">Key Highlights (one per line, max 6)</Label>
+              <Textarea id="jobDetails" value={flyerData.jobDetails} onChange={(e) => setFlyerData({ ...flyerData, jobDetails: e.target.value })} rows={4} placeholder="Experience: 5-10 years&#10;Salary: ₹50,000 - ₹75,000&#10;Type: Full-time" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={flyerData.location}
-                  onChange={(e) => setFlyerData({ ...flyerData, location: e.target.value })}
-                  placeholder="City, Country"
-                />
+                <Input id="location" value={flyerData.location} onChange={(e) => setFlyerData({ ...flyerData, location: e.target.value })} />
               </div>
               <div>
                 <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={flyerData.contactPhone}
-                  onChange={(e) => setFlyerData({ ...flyerData, contactPhone: e.target.value })}
-                  placeholder="+91 12345 67890"
-                />
+                <Input id="phone" value={flyerData.contactPhone} onChange={(e) => setFlyerData({ ...flyerData, contactPhone: e.target.value })} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={flyerData.contactEmail}
-                  onChange={(e) => setFlyerData({ ...flyerData, contactEmail: e.target.value })}
-                  placeholder="careers@company.com"
-                />
+                <Input id="email" value={flyerData.contactEmail} onChange={(e) => setFlyerData({ ...flyerData, contactEmail: e.target.value })} />
               </div>
               <div>
                 <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  value={flyerData.website}
-                  onChange={(e) => setFlyerData({ ...flyerData, website: e.target.value })}
-                  placeholder="www.company.com"
-                />
+                <Input id="website" value={flyerData.website} onChange={(e) => setFlyerData({ ...flyerData, website: e.target.value })} />
               </div>
             </div>
-
             <div className="flex gap-3 pt-4">
               <Button onClick={handleDownload} className="flex-1">
-                <Download className="h-4 w-4 mr-2" />
-                Download PNG
+                <Download className="h-4 w-4 mr-2" />Download PNG
               </Button>
               <Button variant="outline" onClick={handlePrint} className="flex-1">
-                <FileText className="h-4 w-4 mr-2" />
-                Print
+                <FileText className="h-4 w-4 mr-2" />Print
               </Button>
             </div>
           </div>
 
-          {/* Preview Section */}
-          <div className="border rounded-lg overflow-hidden">
-            <div 
-              ref={flyerRef}
-              className="bg-gradient-to-b from-[#1a365d] via-[#2c5282] to-[#1a365d] text-white p-6 aspect-[3/4] relative overflow-hidden"
-              style={{ minHeight: "500px" }}
-            >
-              {/* Decorative circles */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-              <div className="absolute bottom-20 left-0 w-32 h-32 bg-white/5 rounded-full -translate-x-1/2" />
+          {/* Preview Section - Professional clean design */}
+          <div className="border rounded-lg overflow-hidden bg-white">
+            <div ref={flyerRef} className="bg-white text-gray-800 relative" style={{ minHeight: "500px" }}>
+              {/* Top accent bar */}
+              <div className="h-2 bg-gradient-to-r from-[#0f4c75] to-[#3282b8]" />
 
-              {/* Header */}
-              <div className="bg-white/10 -mx-6 -mt-6 px-6 py-4 mb-6">
-                <div className="flex items-center justify-center gap-3">
+              {/* Header band */}
+              <div className="mx-6 mt-5 bg-[#0f4c75] rounded-xl px-4 py-4 text-center">
+                <div className="flex items-center justify-center gap-2">
                   {companyLogo ? (
-                    <img src={companyLogo} alt={companyName} className="h-10 w-10 object-contain rounded" />
+                    <img src={companyLogo} alt={companyName} className="h-8 w-8 object-contain rounded" />
                   ) : (
-                    <Briefcase className="h-8 w-8 text-emerald-400" />
+                    <Briefcase className="h-6 w-6 text-white/80" />
                   )}
-                  <h2 className="text-xl font-bold">{companyName}</h2>
+                  <h2 className="text-white font-bold text-lg tracking-wide uppercase">{companyName}</h2>
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="text-center space-y-4 relative z-10">
-                <h1 className="text-3xl font-bold text-emerald-400">{flyerData.headline}</h1>
-                <p className="text-gray-200 text-sm">{flyerData.tagline}</p>
+              {/* Headline */}
+              <div className="text-center mt-5 px-6">
+                <h1 className="text-3xl font-bold text-[#0f4c75]">{flyerData.headline}</h1>
+                <div className="w-20 h-1 bg-[#f7941d] mx-auto mt-2 rounded-full" />
+                <p className="text-gray-500 text-sm mt-2">{flyerData.tagline}</p>
+              </div>
 
-                {/* Positions */}
-                <div className="bg-white text-gray-800 rounded-lg px-4 py-3 font-semibold text-sm">
-                  {flyerData.positions}
-                </div>
+              {/* Position badge */}
+              <div className="mx-6 mt-4 bg-[#f7941d] rounded-lg px-4 py-3 text-center">
+                <span className="text-white font-bold text-base">{flyerData.positions}</span>
+              </div>
 
-                {/* Job Details */}
-                {flyerData.jobDetails && (
-                  <div className="bg-white/10 rounded-lg px-4 py-3 text-left">
-                    <p className="text-[10px] font-semibold text-emerald-400 uppercase mb-1">Job Details</p>
-                    <p className="text-gray-200 text-[10px] leading-relaxed whitespace-pre-line">
-                      {flyerData.jobDetails}
-                    </p>
+              {/* Key Highlights */}
+              {detailItems.length > 0 && (
+                <div className="mx-6 mt-4">
+                  <p className="text-xs font-bold text-[#0f4c75] uppercase tracking-wider mb-2">Key Highlights</p>
+                  <div className="border-t border-gray-200 pt-2 space-y-2">
+                    {detailItems.map((item, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <div className="w-2 h-2 rounded-full bg-[#f7941d] mt-1.5 shrink-0" />
+                        <span className="text-xs text-gray-700 leading-snug">{item.replace(/^[•\-]\s*/, "")}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                <div className="bg-white rounded-xl p-4 inline-block mx-auto">
+              {/* Bottom: QR + Contact side by side */}
+              <div className="mx-6 mt-5 grid grid-cols-2 gap-3">
+                {/* QR */}
+                <div className="border border-gray-200 rounded-xl p-3 bg-gray-50 text-center">
                   <QRCodeSVG
                     id="flyer-qr-code"
                     value={qrUrl}
-                    size={120}
+                    size={100}
                     level="H"
                     includeMargin
-                    bgColor="#ffffff"
-                    fgColor="#1a365d"
+                    bgColor="#f9f9f9"
+                    fgColor="#0f4c75"
                   />
-                  <p className="text-gray-800 font-bold text-xs mt-2">SCAN TO APPLY</p>
-                  <span className="text-emerald-500 text-lg">👆</span>
+                  <p className="text-[#0f4c75] font-bold text-[10px] mt-1">SCAN TO APPLY</p>
+                  <p className="text-gray-400 text-[8px]">Point camera at QR code</p>
                 </div>
 
-                {/* Contact Info */}
-                <div className="bg-white/10 rounded-lg px-4 py-3 text-xs space-y-1 mt-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <MapPin className="h-3 w-3" />
-                    <span>{flyerData.location}</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-4">
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {flyerData.contactPhone}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {flyerData.contactEmail}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1">
-                    <Globe className="h-3 w-3" />
-                    <span>{flyerData.website}</span>
+                {/* Contact */}
+                <div className="bg-[#0f4c75] rounded-xl p-3 text-white">
+                  <p className="font-bold text-[10px] uppercase tracking-wider mb-2">Contact Us</p>
+                  <div className="border-t border-white/20 pt-2 space-y-2">
+                    <div className="flex items-start gap-1.5">
+                      <MapPin className="h-3 w-3 shrink-0 mt-0.5 text-white/70" />
+                      <span className="text-[9px] text-white/90">{flyerData.location}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <Mail className="h-3 w-3 shrink-0 mt-0.5 text-white/70" />
+                      <span className="text-[9px] text-white/90">{flyerData.contactEmail}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <Globe className="h-3 w-3 shrink-0 mt-0.5 text-white/70" />
+                      <span className="text-[9px] text-white/90">{flyerData.website}</span>
+                    </div>
+                    {flyerData.contactPhone && (
+                      <div className="flex items-start gap-1.5">
+                        <Phone className="h-3 w-3 shrink-0 mt-0.5 text-white/70" />
+                        <span className="text-[9px] text-white/90">{flyerData.contactPhone}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="absolute bottom-4 left-0 right-0 text-center">
-                <p className="text-gray-400 text-[10px]">Powered by</p>
-                <img src={gradiaLogo} alt="Gradia" className="h-6 mx-auto opacity-70" />
+              <div className="mt-4 bg-gray-50 border-t border-gray-200 py-3 text-center">
+                <p className="text-gray-400 text-[8px]">Powered by Gradia • www.gradia.world</p>
+                <img src={gradiaLogo} alt="Gradia" className="h-4 mx-auto mt-1 opacity-60" />
               </div>
+
+              {/* Bottom accent bar */}
+              <div className="h-2 bg-gradient-to-r from-[#0f4c75] to-[#3282b8]" />
             </div>
           </div>
         </div>
