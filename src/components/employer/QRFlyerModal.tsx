@@ -43,15 +43,24 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
   
   const buildJobDetails = () => {
     if (!jobData) return "";
-    const parts: string[] = [];
-    if (jobData.description) parts.push(jobData.description);
-    if (jobData.subjects) parts.push(`Subjects: ${jobData.subjects}`);
-    if (jobData.classes) parts.push(`Classes: ${jobData.classes}`);
-    if (jobData.experience_required) parts.push(`Experience: ${jobData.experience_required}`);
-    if (jobData.salary_range) parts.push(`Salary: ${jobData.salary_range}`);
-    if (jobData.job_type) parts.push(`Type: ${jobData.job_type}`);
-    if (jobData.skills?.length) parts.push(`Skills: ${jobData.skills.join(", ")}`);
-    return parts.join("\n");
+    const bullets: string[] = [];
+    if (jobData.subjects) bullets.push(`• Subjects: ${jobData.subjects}`);
+    if (jobData.classes) bullets.push(`• Classes: ${jobData.classes}`);
+    if (jobData.experience_required) bullets.push(`• Experience: ${jobData.experience_required}`);
+    if (jobData.salary_range) bullets.push(`• Salary: ${jobData.salary_range}`);
+    if (jobData.job_type) bullets.push(`• Type: ${jobData.job_type}`);
+    if (jobData.skills?.length) bullets.push(`• Skills: ${jobData.skills.slice(0, 6).join(", ")}`);
+    // Extract key points from description instead of full text
+    if (jobData.description && bullets.length < 6) {
+      const desc = jobData.description.replace(/\s+/g, " ").trim();
+      // Take first meaningful sentence as a summary
+      const firstSentence = desc.split(/[.!]\s/).filter(s => s.trim().length > 10)[0];
+      if (firstSentence) {
+        const summary = firstSentence.length > 100 ? firstSentence.substring(0, 97) + "..." : firstSentence;
+        bullets.unshift(`• ${summary}`);
+      }
+    }
+    return bullets.slice(0, 7).join("\n");
   };
 
   const [flyerData, setFlyerData] = useState({
