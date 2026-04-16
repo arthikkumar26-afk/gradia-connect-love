@@ -153,14 +153,43 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     });
   };
 
+  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+    const lines: string[] = [];
+    const paragraphs = text.split("\n");
+    for (const para of paragraphs) {
+      const words = para.split(" ");
+      let currentLine = "";
+      for (const word of words) {
+        const testLine = currentLine ? `${currentLine} ${word}` : word;
+        if (ctx.measureText(testLine).width > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      }
+      if (currentLine) lines.push(currentLine);
+      if (!para) lines.push("");
+    }
+    return lines;
+  };
+
   const generateFlyerImage = async (): Promise<string> => {
     const canvas = document.createElement("canvas");
     const width = 800;
-    const height = 1100;
+
+    // Pre-calculate job details height
+    const tempCanvas = document.createElement("canvas");
+    const tempCtx = tempCanvas.getContext("2d")!;
+    tempCtx.font = "16px Arial";
+    const detailLines = flyerData.jobDetails ? wrapText(tempCtx, flyerData.jobDetails, width - 160) : [];
+    const detailsBlockHeight = detailLines.length > 0 ? detailLines.length * 22 + 50 : 0;
+
+    const height = 1100 + detailsBlockHeight;
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-    
+
     if (!ctx) return "";
 
     // Background gradient
@@ -177,7 +206,7 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     ctx.arc(700, 100, 200, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(100, 900, 150, 0, Math.PI * 2);
+    ctx.arc(100, height - 200, 150, 0, Math.PI * 2);
     ctx.fill();
 
     // Header bar
@@ -205,15 +234,40 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     ctx.beginPath();
     ctx.roundRect(50, 320, width - 100, 80, 10);
     ctx.fill();
-    
+
     ctx.fillStyle = "#1a365d";
     ctx.font = "bold 28px Arial";
     ctx.fillText(flyerData.positions, width / 2, 370);
 
+    let yOffset = 420;
+
+    // Job Details section
+    if (detailLines.length > 0) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.beginPath();
+      ctx.roundRect(50, yOffset, width - 100, detailsBlockHeight, 10);
+      ctx.fill();
+
+      ctx.fillStyle = "#48bb78";
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText("JOB DETAILS", 80, yOffset + 25);
+
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "16px Arial";
+      let textY = yOffset + 50;
+      for (const line of detailLines) {
+        ctx.fillText(line, 80, textY);
+        textY += 22;
+      }
+      yOffset += detailsBlockHeight + 20;
+    }
+
     // QR Code section background
+    ctx.textAlign = "center";
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.roundRect(width / 2 - 130, 440, 260, 320, 15);
+    ctx.roundRect(width / 2 - 130, yOffset, 260, 320, 15);
     ctx.fill();
 
     // Draw QR code
@@ -222,48 +276,52 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
       try {
         const svgData = new XMLSerializer().serializeToString(qrSvg);
         const qrImg = await loadImage("data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData))));
-        ctx.drawImage(qrImg, width / 2 - 100, 470, 200, 200);
+        ctx.drawImage(qrImg, width / 2 - 100, yOffset + 30, 200, 200);
       } catch (e) {
         console.error("Failed to load QR code:", e);
       }
     }
-    
+
     // Scan instruction
     ctx.fillStyle = "#1a365d";
     ctx.font = "bold 18px Arial";
-    ctx.fillText("SCAN TO APPLY", width / 2, 710);
-    
+    ctx.fillText("SCAN TO APPLY", width / 2, yOffset + 270);
+
     ctx.fillStyle = "#48bb78";
     ctx.font = "24px Arial";
-    ctx.fillText("👆", width / 2, 740);
+    ctx.fillText("👆", width / 2, yOffset + 300);
+
+    yOffset += 340;
 
     // Contact section background
     ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.fillRect(0, 800, width, 150);
+    ctx.fillRect(0, yOffset, width, 100);
 
     // Contact info
     ctx.fillStyle = "#ffffff";
     ctx.font = "18px Arial";
     ctx.textAlign = "left";
-    ctx.fillText(`📍 ${flyerData.location}`, 80, 850);
-    ctx.fillText(`📞 ${flyerData.contactPhone}`, 80, 885);
+    ctx.fillText(`📍 ${flyerData.location}`, 80, yOffset + 35);
+    if (flyerData.contactPhone) ctx.fillText(`📞 ${flyerData.contactPhone}`, 80, yOffset + 65);
     ctx.textAlign = "right";
-    ctx.fillText(`✉️ ${flyerData.contactEmail}`, width - 80, 850);
-    ctx.fillText(`🌐 ${flyerData.website}`, width - 80, 885);
+    ctx.fillText(`✉️ ${flyerData.contactEmail}`, width - 80, yOffset + 35);
+    ctx.fillText(`🌐 ${flyerData.website}`, width - 80, yOffset + 65);
+
+    yOffset += 120;
 
     // Footer
     ctx.textAlign = "center";
     ctx.fillStyle = "#a0aec0";
     ctx.font = "14px Arial";
-    ctx.fillText("Powered by Gradia - Your Next Step", width / 2, 1000);
+    ctx.fillText("Powered by Gradia - Your Next Step", width / 2, yOffset + 20);
 
     ctx.fillStyle = "#48bb78";
     ctx.font = "bold 16px Arial";
-    ctx.fillText("gradia.jobs", width / 2, 1030);
+    ctx.fillText("gradia.jobs", width / 2, yOffset + 50);
 
     try {
       const logoImg = await loadImage(gradiaLogo);
-      ctx.drawImage(logoImg, width / 2 - 40, 1040, 80, 30);
+      ctx.drawImage(logoImg, width / 2 - 40, yOffset + 60, 80, 30);
     } catch (e) {
       console.error("Failed to load Gradia logo:", e);
     }
