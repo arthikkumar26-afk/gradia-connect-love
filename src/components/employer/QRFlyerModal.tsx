@@ -41,14 +41,28 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
   const [isGenerating, setIsGenerating] = useState(false);
   const flyerRef = useRef<HTMLDivElement>(null);
   
+  const buildJobDetails = () => {
+    if (!jobData) return "";
+    const parts: string[] = [];
+    if (jobData.description) parts.push(jobData.description);
+    if (jobData.subjects) parts.push(`Subjects: ${jobData.subjects}`);
+    if (jobData.classes) parts.push(`Classes: ${jobData.classes}`);
+    if (jobData.experience_required) parts.push(`Experience: ${jobData.experience_required}`);
+    if (jobData.salary_range) parts.push(`Salary: ${jobData.salary_range}`);
+    if (jobData.job_type) parts.push(`Type: ${jobData.job_type}`);
+    if (jobData.skills?.length) parts.push(`Skills: ${jobData.skills.join(", ")}`);
+    return parts.join("\n");
+  };
+
   const [flyerData, setFlyerData] = useState({
     headline: "We're Hiring!",
     tagline: "Join our growing team and build your career",
     positions: jobData?.designation || jobData?.job_title || "Multiple Positions Available",
-    location: jobData?.location || "Hyderabad, India",
-    contactPhone: "+91 98765 43210",
-    contactEmail: "careers@company.com",
-    website: "www.company.com",
+    jobDetails: buildJobDetails(),
+    location: jobData?.location || "All India",
+    contactPhone: "",
+    contactEmail: "info@gradia.world",
+    website: "www.gradia.world",
   });
 
   const qrUrl = jobData?.id
