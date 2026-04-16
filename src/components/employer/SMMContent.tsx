@@ -61,7 +61,7 @@ export const SMMContent = () => {
       
       const { data } = await supabase
         .from("jobs")
-        .select("id, job_title, location, status, designation, organisation, salary_range, segment, category, sector_division, created_at")
+        .select("id, job_title, location, status, designation, organisation, salary_range, segment, category, sector_division, created_at, description, experience_required, skills, job_type, subjects, classes")
         .eq("employer_id", user.id)
         .order("created_at", { ascending: false });
       
