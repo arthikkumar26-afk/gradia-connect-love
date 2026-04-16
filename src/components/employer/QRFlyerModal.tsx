@@ -510,15 +510,15 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
               {/* Bottom: QR + Contact side by side */}
               <div className="mx-6 mt-5 grid grid-cols-2 gap-3">
                 {/* QR */}
-                <div className="border border-gray-200 rounded-xl p-3 bg-gray-50 text-center">
+                <div className="border border-gray-200 rounded-xl p-3 bg-white text-center">
                   <QRCodeSVG
                     id="flyer-qr-code"
                     value={qrUrl}
-                    size={100}
+                    size={110}
                     level="H"
                     includeMargin
-                    bgColor="#f9f9f9"
-                    fgColor="#0f4c75"
+                    bgColor="#ffffff"
+                    fgColor="#000000"
                   />
                   <p className="text-[#0f4c75] font-bold text-[10px] mt-1">SCAN TO APPLY</p>
                   <p className="text-gray-400 text-[8px]">Point camera at QR code</p>
