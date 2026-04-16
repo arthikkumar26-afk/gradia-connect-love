@@ -40,6 +40,12 @@ interface Job {
   category: string | null;
   sector_division: string | null;
   created_at: string | null;
+  description: string | null;
+  experience_required: string | null;
+  skills: string[] | null;
+  job_type: string | null;
+  subjects: string | null;
+  classes: string | null;
 }
 
 export const SMMContent = () => {
@@ -55,7 +61,7 @@ export const SMMContent = () => {
       
       const { data } = await supabase
         .from("jobs")
-        .select("id, job_title, location, status, designation, organisation, salary_range, segment, category, sector_division, created_at")
+        .select("id, job_title, location, status, designation, organisation, salary_range, segment, category, sector_division, created_at, description, experience_required, skills, job_type, subjects, classes")
         .eq("employer_id", user.id)
         .order("created_at", { ascending: false });
       
