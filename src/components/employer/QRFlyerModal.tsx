@@ -104,11 +104,15 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
 
       if (data?.flyerContent) {
         const content = data.flyerContent;
+        const aiJobDetails = content.keyPoints?.length
+          ? content.keyPoints.map((p: string) => `• ${p}`).join("\n")
+          : "";
         setFlyerData(prev => ({
           ...prev,
           headline: content.headline || prev.headline,
           tagline: content.tagline || prev.tagline,
           positions: content.positions || prev.positions,
+          jobDetails: aiJobDetails || prev.jobDetails,
           contactEmail: content.contactEmail || prev.contactEmail,
           website: content.website || prev.website,
         }));
