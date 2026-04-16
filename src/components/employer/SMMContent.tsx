@@ -40,6 +40,12 @@ interface Job {
   category: string | null;
   sector_division: string | null;
   created_at: string | null;
+  description: string | null;
+  experience_required: string | null;
+  skills: string[] | null;
+  job_type: string | null;
+  subjects: string | null;
+  classes: string | null;
 }
 
 export const SMMContent = () => {
