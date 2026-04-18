@@ -1360,7 +1360,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               name="job_title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Job Title *</FormLabel>
+                  <FormLabel>Job Title</FormLabel>
                   {watchedInterviewType === 'education' ? (
                     <>
                       <FormControl>
