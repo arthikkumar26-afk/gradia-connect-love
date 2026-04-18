@@ -31,8 +31,11 @@ import {
   Upload,
   FileText,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from "lucide-react";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -40,6 +43,32 @@ const EditProfile = () => {
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8) {
+      toast({ title: "Password too short", description: "Use at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password updated", description: "Your password has been changed successfully." });
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({ title: "Failed to update password", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
   const [isDetecting, setIsDetecting] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [detectedLogo, setDetectedLogo] = useState<{ file: File; preview: string } | null>(null);
@@ -1663,6 +1692,57 @@ const EditProfile = () => {
               </Button>
             </div>
           </form>
+        </Card>
+
+        {/* Change Password */}
+        <Card className="p-6 md:p-8 mt-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Change Password</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-6">
+            Update the password used to sign in to your account.
+          </p>
+          <div className="space-y-4 max-w-md">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <PasswordInput
+                id="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                autoComplete="new-password"
+              />
+              <PasswordStrengthIndicator password={newPassword} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <PasswordInput
+                id="confirm-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter new password"
+                autoComplete="new-password"
+              />
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-destructive">Passwords do not match</p>
+              )}
+            </div>
+            <Button
+              type="button"
+              onClick={handleChangePassword}
+              disabled={isChangingPassword || !newPassword || !confirmPassword}
+            >
+              {isChangingPassword ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Password"
+              )}
+            </Button>
+          </div>
         </Card>
       </div>
 
