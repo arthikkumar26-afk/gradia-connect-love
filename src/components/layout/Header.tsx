@@ -79,13 +79,17 @@ const Header = () => {
     }
     navigate(path);
   };
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out."
-    });
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      setCompanyName(null);
+      navigate("/", { replace: true });
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out."
+      });
+    }
   };
 
   // Restructured Candidates menu - public items only
