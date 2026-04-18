@@ -1362,30 +1362,20 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 <FormItem>
                   <FormLabel>Job Title *</FormLabel>
                   {watchedInterviewType === 'education' ? (
-                    <Select
-                      key={`job-title-${JSON.stringify(dynamicFieldValues)}`}
-                      value={field.value || undefined}
-                      onValueChange={field.onChange}
-                    >
+                    <>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={jobTitleOptions.length > 0 ? "Select job title" : "Select fields above to see job titles"} />
-                        </SelectTrigger>
+                        <Input
+                          list="education-job-title-options"
+                          placeholder={jobTitleOptions.length > 0 ? "Select or type job title" : "Type job title (or select fields above for suggestions)"}
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent className="bg-popover z-[200]">
-                        {jobTitleOptions.length > 0 ? (
-                          jobTitleOptions.map((title) => (
-                            <SelectItem key={title} value={title}>
-                              {title}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="px-3 py-2 text-sm text-muted-foreground">
-                            Please select Sector, Segment & Designation first
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                      <datalist id="education-job-title-options">
+                        {jobTitleOptions.map((title) => (
+                          <option key={title} value={title} />
+                        ))}
+                      </datalist>
+                    </>
                   ) : (
                     <FormControl>
                       <Input placeholder={activeConfig.jobTitlePlaceholder || "e.g., Senior Software Engineer"} {...field} />
