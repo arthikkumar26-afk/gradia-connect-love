@@ -65,6 +65,27 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         ],
       },
       {
+        value: 'sme',
+        label: 'S M E (Subject Matter Expert)',
+        stages: [
+          commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
+          commonStages.technicalAssessment,
+          { order: 4, name: 'Segment Round Slot Booking', description: 'Candidate books Segment Round slot & live meeting', isAutomated: true },
+          { order: 5, name: 'Segment Feedback', description: 'Observer review & segment evaluation', isAutomated: false },
+          { order: 6, name: 'Admin & Academic Round Slot Booking', description: 'Candidate books Admin & Academic round slot & live meeting', isAutomated: true },
+          { order: 7, name: 'Admin & Academic Feedback', description: 'Admin & academic evaluation & feedback', isAutomated: false },
+          { order: 8, name: 'Core Team Round Slot Booking', description: 'Candidate books Core Team round slot & live meeting', isAutomated: true },
+          { order: 9, name: 'Core Team Feedback', description: 'Core team evaluation & feedback', isAutomated: false },
+          { order: 10, name: 'Management Round Slot Booking', description: 'Candidate books Management round slot & live meeting', isAutomated: true },
+          { order: 11, name: 'Management Round Feedback', description: 'Management evaluation & feedback', isAutomated: false },
+          { order: 12, name: 'HR Round Slot Booking', description: 'Candidate books HR round slot', isAutomated: true },
+          { order: 13, name: 'HR Feedback', description: 'HR evaluation & feedback', isAutomated: false },
+          { order: 14, name: 'Final Review', description: 'Final evaluation & decision', isAutomated: true },
+          { order: 15, name: 'Offer Stage', description: 'Offer letter generation & sending', isAutomated: true },
+        ],
+      },
+      {
         value: 'vice_principal',
         label: 'Vice Principal',
         stages: [
