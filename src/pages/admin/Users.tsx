@@ -126,6 +126,63 @@ const Users = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [blockReason, setBlockReason] = useState<string>("");
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    role: "candidate" as "candidate" | "employer",
+  });
+  const [createLoading, setCreateLoading] = useState(false);
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let pwd = "";
+    for (let i = 0; i < 10; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+    setCreateForm((p) => ({ ...p, password: pwd }));
+  };
+
+  const handleCreateUser = async () => {
+    const { fullName, email, password, role } = createForm;
+    if (!fullName.trim() || !email.trim() || !password.trim()) {
+      toast({ title: "Missing fields", description: "Please fill all fields.", variant: "destructive" });
+      return;
+    }
+    if (password.length < 6) {
+      toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    setCreateLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+        body: { action: "create-user", targetEmail: email.trim(), password, fullName: fullName.trim(), role },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      try {
+        await supabase.functions.invoke("send-account-credentials", {
+          body: { email: email.trim(), fullName: fullName.trim(), password, role },
+        });
+        toast({ title: "Account created", description: `Credentials emailed to ${email}.` });
+      } catch (mailErr: any) {
+        console.error("Email send failed:", mailErr);
+        toast({
+          title: "Account created (email failed)",
+          description: "User created, but the credentials email could not be sent.",
+          variant: "destructive",
+        });
+      }
+
+      setCreateDialogOpen(false);
+      setCreateForm({ fullName: "", email: "", password: "", role: "candidate" });
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to create user", variant: "destructive" });
+    } finally {
+      setCreateLoading(false);
+    }
+  };
 
   const blockReasons = [
     "Violation of Terms of Service",
