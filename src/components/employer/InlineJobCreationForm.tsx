@@ -1462,7 +1462,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               />
 
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none">City *</label>
+                <label className="text-sm font-medium leading-none">City</label>
                 <Select
                   key={`city-${selectedState}`}
                   value={selectedCity || undefined}
