@@ -552,7 +552,7 @@ const EmployerDashboard = () => {
                   {/* Quick Actions Section */}
                   <div className="lg:col-span-2 bg-card rounded-xl border border-border p-4 shadow-soft">
                     <h3 className="text-base font-semibold text-foreground mb-3">Quick Actions</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       <Button variant="outline" className="justify-start h-auto py-3" onClick={() => setActiveMenu("jobs")}>
                         <Briefcase className="h-4 w-4 mr-2" />
                         <div className="text-left">
@@ -560,7 +560,7 @@ const EmployerDashboard = () => {
                           <div className="text-xs opacity-70">View postings</div>
                         </div>
                       </Button>
-                      
+
                       <Button variant="outline" className="justify-start h-auto py-3" onClick={() => { setActiveMenu("talent-pool"); setNewApplications(0); }}>
                         <Users className="h-4 w-4 mr-2" />
                         <div className="text-left">
@@ -568,12 +568,36 @@ const EmployerDashboard = () => {
                           <div className="text-xs opacity-70">Find candidates</div>
                         </div>
                       </Button>
-                      
+
                       <Button variant="outline" className="justify-start h-auto py-3" onClick={() => setActiveMenu("approvals")}>
                         <CheckSquare className="h-4 w-4 mr-2" />
                         <div className="text-left">
                           <div className="text-sm font-medium">Review Approvals</div>
                           <div className="text-xs opacity-70">Pending actions</div>
+                        </div>
+                      </Button>
+
+                      <Button variant="outline" className="justify-start h-auto py-3" onClick={() => setActiveMenu("interview-pipeline")}>
+                        <GitBranch className="h-4 w-4 mr-2" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Interview Pipeline</div>
+                          <div className="text-xs opacity-70">Track stages</div>
+                        </div>
+                      </Button>
+
+                      <Button variant="outline" className="justify-start h-auto py-3" onClick={() => setActiveMenu("question-bank")}>
+                        <ClipboardList className="h-4 w-4 mr-2" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Question Bank</div>
+                          <div className="text-xs opacity-70">Manage tests</div>
+                        </div>
+                      </Button>
+
+                      <Button variant="outline" className="justify-start h-auto py-3" onClick={() => setActiveMenu("campaign")}>
+                        <Megaphone className="h-4 w-4 mr-2" />
+                        <div className="text-left">
+                          <div className="text-sm font-medium">Campaigns</div>
+                          <div className="text-xs opacity-70">Send outreach</div>
                         </div>
                       </Button>
                     </div>
