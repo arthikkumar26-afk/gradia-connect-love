@@ -662,7 +662,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             {selectedPipelineType && (
               <div className="space-y-2 max-w-sm">
                 <label className="text-sm font-medium leading-none">
-                  Role *
+                  Role
                 </label>
                 <Select
                   value={selectedRole || undefined}
