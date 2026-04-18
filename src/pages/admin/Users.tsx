@@ -31,8 +31,19 @@ import {
   Trash2,
   Ticket,
   Ban,
-  MoreHorizontal
+  MoreHorizontal,
+  UserPlus,
+  Send
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
