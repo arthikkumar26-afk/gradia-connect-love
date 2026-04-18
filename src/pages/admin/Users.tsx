@@ -589,6 +589,8 @@ const Users = () => {
                       <UserPlus className="h-4 w-4 mr-1" />
                       Create User
                     </Button>
+                  </div>
+                </div>
 
                 {/* Users Table */}
                 {usersLoading ? (
