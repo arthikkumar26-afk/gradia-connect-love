@@ -43,6 +43,32 @@ const EditProfile = () => {
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8) {
+      toast({ title: "Password too short", description: "Use at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password updated", description: "Your password has been changed successfully." });
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast({ title: "Failed to update password", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
   const [isDetecting, setIsDetecting] = useState(false);
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [detectedLogo, setDetectedLogo] = useState<{ file: File; preview: string } | null>(null);
