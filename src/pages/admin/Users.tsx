@@ -109,6 +109,20 @@ interface User {
   initial_password?: string | null;
 }
 
+interface UserDetailsResponse {
+  profile: Record<string, any> | null;
+  authUser: {
+    email?: string | null;
+    created_at?: string | null;
+    last_sign_in_at?: string | null;
+    email_confirmed_at?: string | null;
+    banned_until?: string | null;
+  } | null;
+  initialPassword?: string | null;
+  roles: string[];
+  subscription: Record<string, any> | null;
+}
+
 const Users = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -134,6 +148,9 @@ const Users = () => {
     role: "candidate" as "candidate" | "employer",
   });
   const [createLoading, setCreateLoading] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [userDetails, setUserDetails] = useState<UserDetailsResponse | null>(null);
 
   const generatePassword = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -231,22 +248,14 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      const [profilesRes, credentialsRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('user_credentials').select('user_id, initial_password'),
-      ]);
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'list-users' }
+      });
 
-      if (profilesRes.error) throw profilesRes.error;
-      
-      const credMap = new Map<string, string>();
-      (credentialsRes.data || []).forEach((c: any) => credMap.set(c.user_id, c.initial_password));
-      
-      const usersWithPasswords = (profilesRes.data || []).map((u: any) => ({
-        ...u,
-        initial_password: credMap.get(u.id) || null,
-      }));
-      
-      setUsers(usersWithPasswords);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setUsers(data?.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -256,6 +265,30 @@ const Users = () => {
       });
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const handleViewUser = async (user: User) => {
+    setSelectedUser(user);
+    setViewDialogOpen(true);
+    setViewLoading(true);
+    setUserDetails(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'get-user-details', targetUserId: user.id }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setUserDetails(data);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to load user profile', variant: 'destructive' });
+      setViewDialogOpen(false);
+      setSelectedUser(null);
+    } finally {
+      setViewLoading(false);
     }
   };
 
@@ -686,12 +719,7 @@ const Users = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => {
-                                    toast({
-                                      title: "View User",
-                                      description: `Viewing ${user.full_name}'s profile.`,
-                                    });
-                                  }}
+                                  onClick={() => handleViewUser(user)}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
@@ -736,6 +764,116 @@ const Users = () => {
           </main>
         </div>
       </div>
+
+      <Dialog
+        open={viewDialogOpen}
+        onOpenChange={(open) => {
+          setViewDialogOpen(open);
+          if (!open) {
+            setUserDetails(null);
+            setSelectedUser(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>User Profile</DialogTitle>
+            <DialogDescription>
+              Full account details for {selectedUser?.full_name || 'this user'}.
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card className="border-border shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Profile</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Name</p>
+                    <p className="font-medium">{userDetails?.profile?.full_name || selectedUser?.full_name || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Email</p>
+                    <p className="font-medium break-all">{userDetails?.authUser?.email || selectedUser?.email || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Phone</p>
+                    <p className="font-medium">{userDetails?.profile?.mobile || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Location</p>
+                    <p className="font-medium">{userDetails?.profile?.location || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Company</p>
+                    <p className="font-medium">{userDetails?.profile?.company_name || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Experience</p>
+                    <p className="font-medium">{userDetails?.profile?.experience_level || 'Not specified'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Access & Status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Role</p>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {userDetails?.roles?.length ? userDetails.roles.map((role) => (
+                        <Badge key={role} variant="secondary">{role}</Badge>
+                      )) : getRoleBadge(selectedUser?.role || 'user')}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Temporary Password</p>
+                    <p className="font-medium font-mono break-all">{userDetails?.initialPassword || selectedUser?.initial_password || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Joined</p>
+                    <p className="font-medium">
+                      {userDetails?.authUser?.created_at
+                        ? format(new Date(userDetails.authUser.created_at), 'MMM d, yyyy h:mm a')
+                        : selectedUser?.created_at
+                          ? format(new Date(selectedUser.created_at), 'MMM d, yyyy')
+                          : 'Unknown'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Last Sign In</p>
+                    <p className="font-medium">
+                      {userDetails?.authUser?.last_sign_in_at
+                        ? formatDistanceToNow(new Date(userDetails.authUser.last_sign_in_at), { addSuffix: true })
+                        : 'Never'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Email Status</p>
+                    <p className="font-medium">{userDetails?.authUser?.email_confirmed_at ? 'Confirmed' : 'Pending confirmation'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Subscription</p>
+                    <p className="font-medium">
+                      {userDetails?.subscription?.plan
+                        ? `${userDetails.subscription.plan}${userDetails.subscription.status ? ` • ${userDetails.subscription.status}` : ''}`
+                        : 'No active plan'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
