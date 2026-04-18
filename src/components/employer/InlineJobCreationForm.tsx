@@ -533,23 +533,23 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         return;
       }
 
-      const skillsArray = values.skills.split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+      const skillsArray = (values.skills || "").split(",").map((s) => s.trim()).filter((s) => s.length > 0);
 
       const { error } = await supabase.from("jobs").insert([{
         employer_id: user.id,
-        job_title: values.job_title,
+        job_title: values.job_title || "Untitled Job",
         department: values.department || null,
-        job_type: values.job_type,
-        location: values.location,
-        experience_required: values.experience_required,
+        job_type: values.job_type || null,
+        location: values.location || null,
+        experience_required: values.experience_required || null,
         salary_range: values.salary_range || null,
         organisation: values.organisation || null,
-        description: values.description,
-        requirements: values.requirements,
-        skills: skillsArray,
+        description: values.description || null,
+        requirements: values.requirements || null,
+        skills: skillsArray.length > 0 ? skillsArray : null,
         closing_date: values.closing_date || null,
         status: "active",
-        interview_type: values.interview_type,
+        interview_type: values.interview_type || null,
         sector_division: dynamicFieldValues["sector_division"] || null,
         category: dynamicFieldValues["category"] || null,
         function_type: dynamicFieldValues["function"] || null,
