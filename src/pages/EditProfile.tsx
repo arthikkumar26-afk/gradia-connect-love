@@ -31,8 +31,11 @@ import {
   Upload,
   FileText,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Lock
 } from "lucide-react";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 
 const EditProfile = () => {
   const navigate = useNavigate();
