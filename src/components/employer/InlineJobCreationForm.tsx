@@ -1435,7 +1435,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>State *</FormLabel>
+                    <FormLabel>State</FormLabel>
                     <Select
                       value={selectedState || undefined}
                       onValueChange={(val) => {
