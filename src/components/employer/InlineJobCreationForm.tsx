@@ -19,18 +19,18 @@ import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/intervi
 import { indiaLocationData } from "@/data/indiaLocations";
 
 const jobFormSchema = z.object({
-  job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
+  job_title: z.string().max(100).optional().or(z.literal("")),
   department: z.string().optional(),
-  job_type: z.string().min(1, "Please select a job type"),
-  location: z.string().min(2, "Location is required"),
-  experience_required: z.string().min(1, "Please select experience level"),
+  job_type: z.string().optional().or(z.literal("")),
+  location: z.string().optional().or(z.literal("")),
+  experience_required: z.string().optional().or(z.literal("")),
   salary_range: z.string().optional(),
   organisation: z.string().optional(),
-  description: z.string().min(50, "Description must be at least 50 characters").max(5000),
-  requirements: z.string().min(20, "Requirements must be at least 20 characters").max(3000),
-  skills: z.string().min(2, "Please add at least one skill"),
+  description: z.string().max(5000).optional().or(z.literal("")),
+  requirements: z.string().max(3000).optional().or(z.literal("")),
+  skills: z.string().optional().or(z.literal("")),
   closing_date: z.string().optional(),
-  interview_type: z.string().min(1, "Please select interview type"),
+  interview_type: z.string().optional().or(z.literal("")),
 });
 
 type JobFormValues = z.infer<typeof jobFormSchema>;
@@ -533,23 +533,23 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         return;
       }
 
-      const skillsArray = values.skills.split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+      const skillsArray = (values.skills || "").split(",").map((s) => s.trim()).filter((s) => s.length > 0);
 
       const { error } = await supabase.from("jobs").insert([{
         employer_id: user.id,
-        job_title: values.job_title,
+        job_title: values.job_title || "Untitled Job",
         department: values.department || null,
-        job_type: values.job_type,
-        location: values.location,
-        experience_required: values.experience_required,
+        job_type: values.job_type || null,
+        location: values.location || null,
+        experience_required: values.experience_required || null,
         salary_range: values.salary_range || null,
         organisation: values.organisation || null,
-        description: values.description,
-        requirements: values.requirements,
-        skills: skillsArray,
+        description: values.description || null,
+        requirements: values.requirements || null,
+        skills: skillsArray.length > 0 ? skillsArray : null,
         closing_date: values.closing_date || null,
         status: "active",
-        interview_type: values.interview_type,
+        interview_type: values.interview_type || null,
         sector_division: dynamicFieldValues["sector_division"] || null,
         category: dynamicFieldValues["category"] || null,
         function_type: dynamicFieldValues["function"] || null,
@@ -596,7 +596,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="interview_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Interview Type *</FormLabel>
+                    <FormLabel>Interview Type</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         field.onChange(val);
@@ -636,7 +636,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               {pipelineTypes.length > 0 && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none">
-                    Interview Pipeline Type *
+                    Interview Pipeline Type
                   </label>
                   <Select value={selectedPipelineType} onValueChange={(val) => {
                     setSelectedPipelineType(val);
@@ -662,7 +662,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
             {selectedPipelineType && (
               <div className="space-y-2 max-w-sm">
                 <label className="text-sm font-medium leading-none">
-                  Role *
+                  Role
                 </label>
                 <Select
                   value={selectedRole || undefined}
@@ -1360,7 +1360,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               name="job_title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Job Title *</FormLabel>
+                  <FormLabel>Job Title</FormLabel>
                   {watchedInterviewType === 'education' ? (
                     <>
                       <FormControl>
@@ -1407,7 +1407,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="job_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Job Type *</FormLabel>
+                    <FormLabel>Job Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -1435,7 +1435,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>State *</FormLabel>
+                    <FormLabel>State</FormLabel>
                     <Select
                       value={selectedState || undefined}
                       onValueChange={(val) => {
@@ -1462,7 +1462,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               />
 
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none">City *</label>
+                <label className="text-sm font-medium leading-none">City</label>
                 <Select
                   key={`city-${selectedState}`}
                   value={selectedCity || undefined}
@@ -1517,7 +1517,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="experience_required"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Experience Required *</FormLabel>
+                    <FormLabel>Experience Required</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -1614,7 +1614,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Skills (comma-separated) *</FormLabel>
+                    <FormLabel>Skills (comma-separated)</FormLabel>
                     <div className="flex gap-2">
                       {hasGenerated && (
                         <Button type="button" variant="outline" size="sm" disabled={isGenerating} className="gap-1.5 h-7 text-xs">
@@ -1645,7 +1645,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Job Description *</FormLabel>
+                  <FormLabel>Job Description</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Provide a detailed description of the role..." className="min-h-[120px]" {...field} />
                   </FormControl>
@@ -1661,7 +1661,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Requirements *</FormLabel>
+                    <FormLabel>Requirements</FormLabel>
                     <div className="flex gap-2">
                       {hasGeneratedReq && (
                         <Button type="button" variant="outline" size="sm" onClick={handleRefineRequirements} disabled={isRefiningReq} className="gap-1.5 h-7 text-xs">
