@@ -1407,7 +1407,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="job_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Job Type *</FormLabel>
+                    <FormLabel>Job Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
