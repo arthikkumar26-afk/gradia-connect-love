@@ -31,8 +31,19 @@ import {
   Trash2,
   Ticket,
   Ban,
-  MoreHorizontal
+  MoreHorizontal,
+  UserPlus,
+  Send
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -115,6 +126,63 @@ const Users = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [blockReason, setBlockReason] = useState<string>("");
   const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    role: "candidate" as "candidate" | "employer",
+  });
+  const [createLoading, setCreateLoading] = useState(false);
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let pwd = "";
+    for (let i = 0; i < 10; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+    setCreateForm((p) => ({ ...p, password: pwd }));
+  };
+
+  const handleCreateUser = async () => {
+    const { fullName, email, password, role } = createForm;
+    if (!fullName.trim() || !email.trim() || !password.trim()) {
+      toast({ title: "Missing fields", description: "Please fill all fields.", variant: "destructive" });
+      return;
+    }
+    if (password.length < 6) {
+      toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    setCreateLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+        body: { action: "create-user", targetEmail: email.trim(), password, fullName: fullName.trim(), role },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      try {
+        await supabase.functions.invoke("send-account-credentials", {
+          body: { email: email.trim(), fullName: fullName.trim(), password, role },
+        });
+        toast({ title: "Account created", description: `Credentials emailed to ${email}.` });
+      } catch (mailErr: any) {
+        console.error("Email send failed:", mailErr);
+        toast({
+          title: "Account created (email failed)",
+          description: "User created, but the credentials email could not be sent.",
+          variant: "destructive",
+        });
+      }
+
+      setCreateDialogOpen(false);
+      setCreateForm({ fullName: "", email: "", password: "", role: "candidate" });
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to create user", variant: "destructive" });
+    } finally {
+      setCreateLoading(false);
+    }
+  };
 
   const blockReasons = [
     "Violation of Terms of Service",
@@ -513,6 +581,14 @@ const Users = () => {
                       <Download className="h-4 w-4 mr-1" />
                       Export
                     </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setCreateDialogOpen(true)}
+                      title="Create new user account"
+                    >
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Create User
+                    </Button>
                   </div>
                 </div>
 
@@ -722,6 +798,85 @@ const Users = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create User Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New User Account</DialogTitle>
+            <DialogDescription>
+              Create a Candidate or Employer account. Login credentials will be emailed to the user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="cu-role">Account Type</Label>
+              <Select
+                value={createForm.role}
+                onValueChange={(v) => setCreateForm((p) => ({ ...p, role: v as "candidate" | "employer" }))}
+              >
+                <SelectTrigger id="cu-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="candidate">Candidate</SelectItem>
+                  <SelectItem value="employer">Employer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cu-name">Full Name</Label>
+              <Input
+                id="cu-name"
+                placeholder="John Doe"
+                value={createForm.fullName}
+                onChange={(e) => setCreateForm((p) => ({ ...p, fullName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cu-email">Email</Label>
+              <Input
+                id="cu-email"
+                type="email"
+                placeholder="user@example.com"
+                value={createForm.email}
+                onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cu-pwd">Temporary Password</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="cu-pwd"
+                  type="text"
+                  placeholder="Min 6 characters"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
+                />
+                <Button type="button" variant="outline" onClick={generatePassword}>
+                  Generate
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The user will be asked to change this on first login.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={createLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateUser} disabled={createLoading}>
+              {createLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Send className="h-4 w-4 mr-2" />
+              )}
+              Create & Email Credentials
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 };
