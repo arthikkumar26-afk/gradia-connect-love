@@ -19,18 +19,18 @@ import { getFormConfigForInterviewType, defaultFormConfig } from "@/data/intervi
 import { indiaLocationData } from "@/data/indiaLocations";
 
 const jobFormSchema = z.object({
-  job_title: z.string().min(3, "Job title must be at least 3 characters").max(100),
+  job_title: z.string().max(100).optional().or(z.literal("")),
   department: z.string().optional(),
-  job_type: z.string().min(1, "Please select a job type"),
-  location: z.string().min(2, "Location is required"),
-  experience_required: z.string().min(1, "Please select experience level"),
+  job_type: z.string().optional().or(z.literal("")),
+  location: z.string().optional().or(z.literal("")),
+  experience_required: z.string().optional().or(z.literal("")),
   salary_range: z.string().optional(),
   organisation: z.string().optional(),
-  description: z.string().min(50, "Description must be at least 50 characters").max(5000),
-  requirements: z.string().min(20, "Requirements must be at least 20 characters").max(3000),
-  skills: z.string().min(2, "Please add at least one skill"),
+  description: z.string().max(5000).optional().or(z.literal("")),
+  requirements: z.string().max(3000).optional().or(z.literal("")),
+  skills: z.string().optional().or(z.literal("")),
   closing_date: z.string().optional(),
-  interview_type: z.string().min(1, "Please select interview type"),
+  interview_type: z.string().optional().or(z.literal("")),
 });
 
 type JobFormValues = z.infer<typeof jobFormSchema>;
