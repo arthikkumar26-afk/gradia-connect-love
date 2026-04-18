@@ -1614,7 +1614,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Skills (comma-separated) *</FormLabel>
+                    <FormLabel>Skills (comma-separated)</FormLabel>
                     <div className="flex gap-2">
                       {hasGenerated && (
                         <Button type="button" variant="outline" size="sm" disabled={isGenerating} className="gap-1.5 h-7 text-xs">
