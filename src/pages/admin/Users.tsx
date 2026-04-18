@@ -109,6 +109,20 @@ interface User {
   initial_password?: string | null;
 }
 
+interface UserDetailsResponse {
+  profile: Record<string, any> | null;
+  authUser: {
+    email?: string | null;
+    created_at?: string | null;
+    last_sign_in_at?: string | null;
+    email_confirmed_at?: string | null;
+    banned_until?: string | null;
+  } | null;
+  initialPassword?: string | null;
+  roles: string[];
+  subscription: Record<string, any> | null;
+}
+
 const Users = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -134,6 +148,9 @@ const Users = () => {
     role: "candidate" as "candidate" | "employer",
   });
   const [createLoading, setCreateLoading] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [userDetails, setUserDetails] = useState<UserDetailsResponse | null>(null);
 
   const generatePassword = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -231,22 +248,14 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       setUsersLoading(true);
-      const [profilesRes, credentialsRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('user_credentials').select('user_id, initial_password'),
-      ]);
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'list-users' }
+      });
 
-      if (profilesRes.error) throw profilesRes.error;
-      
-      const credMap = new Map<string, string>();
-      (credentialsRes.data || []).forEach((c: any) => credMap.set(c.user_id, c.initial_password));
-      
-      const usersWithPasswords = (profilesRes.data || []).map((u: any) => ({
-        ...u,
-        initial_password: credMap.get(u.id) || null,
-      }));
-      
-      setUsers(usersWithPasswords);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setUsers(data?.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -256,6 +265,30 @@ const Users = () => {
       });
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const handleViewUser = async (user: User) => {
+    setSelectedUser(user);
+    setViewDialogOpen(true);
+    setViewLoading(true);
+    setUserDetails(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-user-roles', {
+        body: { action: 'get-user-details', targetUserId: user.id }
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setUserDetails(data);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to load user profile', variant: 'destructive' });
+      setViewDialogOpen(false);
+      setSelectedUser(null);
+    } finally {
+      setViewLoading(false);
     }
   };
 
