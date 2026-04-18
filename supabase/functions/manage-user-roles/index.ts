@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
       // Get all users with their roles
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from("profiles")
-        .select("id, email, full_name, role, created_at")
+        .select("id, email, full_name, mobile, role, location, company_name, experience_level, created_at")
         .order("created_at", { ascending: false });
 
       if (profilesError) {
@@ -175,9 +175,22 @@ Deno.serve(async (req) => {
         throw rolesError;
       }
 
+      const { data: credentials, error: credentialsError } = await supabaseAdmin
+        .from("user_credentials")
+        .select("user_id, initial_password");
+
+      if (credentialsError) {
+        throw credentialsError;
+      }
+
+      const credentialMap = new Map(
+        (credentials || []).map((credential) => [credential.user_id, credential.initial_password])
+      );
+
       // Combine profiles with their roles
       const usersWithRoles = profiles?.map((profile) => ({
         ...profile,
+        initial_password: credentialMap.get(profile.id) ?? null,
         privilegedRoles: userRoles
           ?.filter((r) => r.user_id === profile.id)
           .map((r) => r.role) || [],
@@ -395,6 +408,12 @@ Deno.serve(async (req) => {
         .select("role")
         .eq("user_id", targetUserId);
 
+      const { data: credentials } = await supabaseAdmin
+        .from("user_credentials")
+        .select("initial_password")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+
       // Check subscriptions
       let subscription = null;
       if (profile?.role === "candidate") {
@@ -427,6 +446,7 @@ Deno.serve(async (req) => {
             email_confirmed_at: authUser.user.email_confirmed_at,
             banned_until: authUser.user.banned_until,
           } : null,
+          initialPassword: credentials?.initial_password ?? null,
           roles: roles?.map(r => r.role) || [],
           subscription,
         }),
