@@ -41,6 +41,7 @@ const menuItems = [
   { title: "Popup Ads", icon: Bell, path: "/admin/popup-ads" },
   { title: "Event Alerts", icon: Bell, path: "/admin/event-alerts" },
   { title: "Bulk Mail & Register", icon: FileUp, path: "/admin/bulk-mail-register" },
+  { title: "Invite from Resume", icon: Mail, path: "/admin/invite-from-resume" },
   { title: "Reports", icon: BarChart3, path: "/admin/reports" },
   { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
   { title: "Settings", icon: Settings, path: "/admin/settings" },
