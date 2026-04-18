@@ -1645,7 +1645,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Job Description *</FormLabel>
+                  <FormLabel>Job Description</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Provide a detailed description of the role..." className="min-h-[120px]" {...field} />
                   </FormControl>
