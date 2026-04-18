@@ -719,12 +719,7 @@ const Users = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => {
-                                    toast({
-                                      title: "View User",
-                                      description: `Viewing ${user.full_name}'s profile.`,
-                                    });
-                                  }}
+                                  onClick={() => handleViewUser(user)}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
@@ -769,6 +764,116 @@ const Users = () => {
           </main>
         </div>
       </div>
+
+      <Dialog
+        open={viewDialogOpen}
+        onOpenChange={(open) => {
+          setViewDialogOpen(open);
+          if (!open) {
+            setUserDetails(null);
+            setSelectedUser(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>User Profile</DialogTitle>
+            <DialogDescription>
+              Full account details for {selectedUser?.full_name || 'this user'}.
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card className="border-border shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Profile</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Name</p>
+                    <p className="font-medium">{userDetails?.profile?.full_name || selectedUser?.full_name || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Email</p>
+                    <p className="font-medium break-all">{userDetails?.authUser?.email || selectedUser?.email || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Phone</p>
+                    <p className="font-medium">{userDetails?.profile?.mobile || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Location</p>
+                    <p className="font-medium">{userDetails?.profile?.location || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Company</p>
+                    <p className="font-medium">{userDetails?.profile?.company_name || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Experience</p>
+                    <p className="font-medium">{userDetails?.profile?.experience_level || 'Not specified'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border shadow-none">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Access & Status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Role</p>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {userDetails?.roles?.length ? userDetails.roles.map((role) => (
+                        <Badge key={role} variant="secondary">{role}</Badge>
+                      )) : getRoleBadge(selectedUser?.role || 'user')}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Temporary Password</p>
+                    <p className="font-medium font-mono break-all">{userDetails?.initialPassword || selectedUser?.initial_password || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Joined</p>
+                    <p className="font-medium">
+                      {userDetails?.authUser?.created_at
+                        ? format(new Date(userDetails.authUser.created_at), 'MMM d, yyyy h:mm a')
+                        : selectedUser?.created_at
+                          ? format(new Date(selectedUser.created_at), 'MMM d, yyyy')
+                          : 'Unknown'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Last Sign In</p>
+                    <p className="font-medium">
+                      {userDetails?.authUser?.last_sign_in_at
+                        ? formatDistanceToNow(new Date(userDetails.authUser.last_sign_in_at), { addSuffix: true })
+                        : 'Never'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Email Status</p>
+                    <p className="font-medium">{userDetails?.authUser?.email_confirmed_at ? 'Confirmed' : 'Pending confirmation'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Subscription</p>
+                    <p className="font-medium">
+                      {userDetails?.subscription?.plan
+                        ? `${userDetails.subscription.plan}${userDetails.subscription.status ? ` • ${userDetails.subscription.status}` : ''}`
+                        : 'No active plan'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
