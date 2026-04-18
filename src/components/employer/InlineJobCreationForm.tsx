@@ -1517,7 +1517,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="experience_required"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Experience Required *</FormLabel>
+                    <FormLabel>Experience Required</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
