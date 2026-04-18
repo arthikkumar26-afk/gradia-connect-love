@@ -596,7 +596,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 name="interview_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Interview Type *</FormLabel>
+                    <FormLabel>Interview Type</FormLabel>
                     <Select
                       onValueChange={(val) => {
                         field.onChange(val);
