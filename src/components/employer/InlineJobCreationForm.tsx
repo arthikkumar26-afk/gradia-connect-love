@@ -1661,7 +1661,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Requirements *</FormLabel>
+                    <FormLabel>Requirements</FormLabel>
                     <div className="flex gap-2">
                       {hasGeneratedReq && (
                         <Button type="button" variant="outline" size="sm" onClick={handleRefineRequirements} disabled={isRefiningReq} className="gap-1.5 h-7 text-xs">
