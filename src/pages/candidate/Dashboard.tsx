@@ -1303,10 +1303,10 @@ const CandidateDashboard = () => {
       gradient: "from-success/20 to-success/5",
     },
     {
-      title: "Experience Level",
-      value: profile?.experience_level || "N/A",
-      subtitle: "Your profile",
-      icon: Award,
+      title: "Wallet",
+      value: "300 pts",
+      subtitle: "Available balance",
+      icon: Wallet,
       gradient: "from-secondary/20 to-secondary/5",
     },
   ];
