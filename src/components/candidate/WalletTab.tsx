@@ -177,11 +177,12 @@ export default function WalletTab({ userId }: { userId: string }) {
     setBuyingPkg(pkg.points);
     try {
       const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
-        body: { amount: pkg.price, currency: "INR", receipt: `wallet_${wallet.id}_${pkg.points}pts` },
+        body: { amount: pkg.price, currency: "INR", receipt: `wal_${wallet.id.slice(0, 8)}_${pkg.points}` },
       });
 
       if (orderError || !orderData?.order_id) {
-        throw new Error("Failed to create payment order");
+        console.error("Wallet order creation failed", { orderError, orderData, amount: pkg.price, points: pkg.points });
+        throw new Error(orderError?.message || orderData?.error || "Failed to create payment order");
       }
 
       if (!(window as any).Razorpay) {
@@ -306,6 +307,7 @@ export default function WalletTab({ userId }: { userId: string }) {
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
     } catch (err: any) {
+      console.error("Wallet top-up failed", err);
       toast({ title: "Error", description: err.message || "Payment failed", variant: "destructive" });
     } finally {
       setBuyingPkg(null);
