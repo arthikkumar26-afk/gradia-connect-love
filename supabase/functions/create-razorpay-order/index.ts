@@ -67,11 +67,14 @@ serve(async (req) => {
       );
     }
 
-    // Create Razorpay order
+    const safeReceipt = receipt && receipt.length <= 40
+      ? receipt
+      : `ord_${(plan_id || 'wallet').slice(0, 8)}_${Date.now()}`;
+
     const orderData = {
       amount: amount * 100, // Razorpay expects amount in paise
       currency: currency || 'INR',
-      receipt: receipt || `order_${plan_id || 'wallet'}_${Date.now()}`,
+      receipt: safeReceipt,
       notes: {
         plan_id: plan_id || '',
         plan_name: plan_name || '',
