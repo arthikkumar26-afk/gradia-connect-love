@@ -39,17 +39,17 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub;
 
-    const { amount, currency, plan_id, plan_name, employer_id } = await req.json();
+    const { amount, currency, plan_id, plan_name, employer_id, receipt } = await req.json();
 
-    if (!amount || !plan_id || !employer_id) {
+    if (!amount) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: amount, plan_id, employer_id' }),
+        JSON.stringify({ error: 'Missing required field: amount' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Verify the authenticated user matches the employer_id
-    if (userId !== employer_id) {
+    // If employer_id is provided, verify it matches the authenticated user
+    if (employer_id && userId !== employer_id) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: user mismatch' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
