@@ -250,20 +250,20 @@ export default function WalletTab({ userId }: { userId: string }) {
                   .maybeSingle();
 
                 if (referrer) {
-                  // Credit +100 to new user (me)
+                  // Credit +50 to new user (me)
                   await supabase.from("wallets").update({
-                    points_balance: newBalance + 100,
+                    points_balance: newBalance + 50,
                   }).eq("id", wallet.id);
 
                   await supabase.from("wallet_transactions").insert({
                     wallet_id: wallet.id,
                     transaction_type: "credit",
                     category: "referral",
-                    points: 100,
+                    points: 50,
                     description: "Referral bonus — welcome reward for signing up via referral",
                   });
 
-                  // Credit +100 to referrer
+                  // Credit +50 to referrer
                   const { data: referrerWallet } = await supabase
                     .from("wallets")
                     .select("id, points_balance")
@@ -272,14 +272,14 @@ export default function WalletTab({ userId }: { userId: string }) {
 
                   if (referrerWallet) {
                     await supabase.from("wallets").update({
-                      points_balance: (referrerWallet.points_balance || 0) + 100,
+                      points_balance: (referrerWallet.points_balance || 0) + 50,
                     }).eq("id", referrerWallet.id);
 
                     await supabase.from("wallet_transactions").insert({
                       wallet_id: referrerWallet.id,
                       transaction_type: "credit",
                       category: "referral",
-                      points: 100,
+                      points: 50,
                       description: "Referral bonus — your referred friend made their first purchase!",
                     });
                   }
@@ -287,7 +287,7 @@ export default function WalletTab({ userId }: { userId: string }) {
                   // Mark bonus as given
                   await supabase.from("profiles").update({ referral_bonus_given: true }).eq("id", userId);
 
-                  toast({ title: "🎉 Referral Bonus!", description: "You and your referrer both earned 100 bonus points!" });
+                  toast({ title: "🎉 Referral Bonus!", description: "You and your referrer both earned 50 bonus points!" });
                 }
               }
             } catch (refErr) {
@@ -642,7 +642,7 @@ export default function WalletTab({ userId }: { userId: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { label: "Complete Profile", pts: "+50 pts", icon: Award, desc: "Fill all profile fields" },
-              { label: "Refer a Friend", pts: "+100 pts", icon: Users, desc: "Earn after their first purchase" },
+              { label: "Refer a Friend", pts: "+50 pts", icon: Users, desc: "Earn after their first purchase" },
               { label: "Attend Mock Test", pts: "+30 pts", icon: BookOpen, desc: "Take any mock test" },
               { label: "Attend Event", pts: "+100 pts", icon: Star, desc: "Join a Job Mela event" },
             ].map((item) => (
@@ -669,8 +669,8 @@ export default function WalletTab({ userId }: { userId: string }) {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="font-semibold text-foreground">Refer a Friend & Earn 100 pts</p>
-                <p className="text-xs text-muted-foreground">Share your referral code. After their first purchase, you both get 100 bonus points!</p>
+                <p className="font-semibold text-foreground">Refer a Friend & Earn 50 pts</p>
+                <p className="text-xs text-muted-foreground">Share your referral code. After their first purchase, you both get 50 bonus points!</p>
               </div>
             </div>
 
@@ -700,7 +700,7 @@ export default function WalletTab({ userId }: { userId: string }) {
                     const code = myReferralCode || userId.slice(0, 8);
                     const referralLink = `${window.location.origin}/candidate/signup?ref=${code}`;
                     navigator.clipboard.writeText(referralLink);
-                    toast({ title: "🔗 Link Copied!", description: "Share this link with friends. You both earn 100 pts after their first purchase!" });
+                    toast({ title: "🔗 Link Copied!", description: "Share this link with friends. You both earn 50 pts after their first purchase!" });
                   }}
                 >
                   <Users className="h-3.5 w-3.5" /> Copy Link
