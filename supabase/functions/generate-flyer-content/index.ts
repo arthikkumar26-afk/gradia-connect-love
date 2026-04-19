@@ -36,12 +36,17 @@ serve(async (req) => {
     const systemPrompt = `You are a creative recruitment marketing expert. Generate compelling flyer content for a job posting. Return ONLY valid JSON, no markdown or code fences. The JSON must have these exact fields:
 - headline: A short, punchy hiring headline (max 5 words, e.g. "We're Hiring Teachers!")
 - tagline: An engaging tagline that attracts candidates (max 15 words)
-- positions: A concise description of the open position(s) (max 10 words)
-- keyPoints: An array of 4-6 short bullet points (max 12 words each) summarizing the most important job highlights like role, subjects, experience, salary, skills. Do NOT include the full description.
+- positions: The exact role/designation title (max 10 words, e.g. "Subject Matter Expert (SME) – Pre-Primary")
+- keyPoints: An array of 4-6 short bullet points (max 12 words each) summarizing the most important job highlights. Used for compact flyers.
+- responsibilities: An array of 5-8 objects { title: short bold heading (max 5 words), detail: one-line description (max 18 words) } describing core job responsibilities. Used for content-heavy flyers.
+- educationalBackground: An array of 3-5 short strings describing required qualifications (max 18 words each).
+- experience: An array of 1-3 short strings describing required experience (max 18 words each).
+- salaryRange: A single string describing salary (e.g. "Rs.70,000/- to Rs.80,000/-"). Use job salary if provided.
+- moreInformation: An array of 1-3 short strings (address, website, phone) — keep generic if unknown.
 - contactEmail: A suggested professional email format like "careers@company.com" based on the company name
 - website: A suggested website URL based on the company name
 
-Make the content professional, engaging, and relevant to the education/recruitment sector. Use the job details to personalize the content. The keyPoints should be concise highlights, NOT the full job description.`;
+Make the content professional, engaging, and relevant to the recruitment sector. Use the job details to personalize the content. Do NOT include the full job description verbatim — extract structured highlights.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
