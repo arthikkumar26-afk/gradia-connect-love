@@ -115,6 +115,7 @@ const PopupAds = lazy(() => import("./pages/admin/PopupAds"));
 const BulkMailRegister = lazy(() => import("./pages/admin/BulkMailRegister"));
 const AIFlyerMaker = lazy(() => import("./pages/admin/AIFlyerMaker"));
 const InviteFromResume = lazy(() => import("./pages/admin/InviteFromResume"));
+const CandidateResumes = lazy(() => import("./pages/admin/CandidateResumes"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -266,6 +267,7 @@ const MainRoutes = () => (
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/subscribed-employers" element={<SubscribedEmployers />} />
         <Route path="/admin/subscribed-candidates" element={<SubscribedCandidates />} />
+        <Route path="/admin/candidate-resumes" element={<CandidateResumes />} />
         <Route path="/admin/unsubscribed-employers" element={<UnsubscribedEmployers />} />
         <Route path="/admin/unsubscribed-candidates" element={<UnsubscribedCandidates />} />
         <Route path="/admin/companies" element={<AdminCompanies />} />
