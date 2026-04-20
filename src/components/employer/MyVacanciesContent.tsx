@@ -250,6 +250,42 @@ export const MyVacanciesContent = () => {
     }
   };
 
+  const openResume = async (url: string, download: boolean) => {
+    try {
+      // Extract path inside the resumes bucket from a public-style URL
+      const match = url.match(/\/storage\/v1\/object\/(?:public|sign)\/resumes\/(.+?)(?:\?|$)/);
+      const path = match ? decodeURIComponent(match[1]) : null;
+
+      let finalUrl = url;
+      if (path) {
+        const { data, error } = await supabase.storage
+          .from("resumes")
+          .createSignedUrl(path, 60 * 60, download ? { download: true } : undefined);
+        if (error) throw error;
+        finalUrl = data.signedUrl;
+      }
+
+      if (download) {
+        const a = document.createElement("a");
+        a.href = finalUrl;
+        a.download = "";
+        a.target = "_blank";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } else {
+        window.open(finalUrl, "_blank", "noopener,noreferrer");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Could not open CV",
+        description: err.message || "Resume file is unavailable.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const total = vacancies.reduce((s, v) => s + v.applicationCount, 0);
   const withApps = vacancies.filter((v) => v.applicationCount > 0);
 
