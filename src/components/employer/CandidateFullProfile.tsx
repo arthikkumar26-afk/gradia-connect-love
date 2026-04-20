@@ -263,6 +263,95 @@ export const CandidateFullProfile = () => {
     fetchCandidateData();
   }, [candidateId]);
 
+  // Check if employer has already unlocked interviews for this candidate
+  useEffect(() => {
+    const checkUnlock = async () => {
+      if (!candidate?.id) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('interview_unlocks')
+        .select('id')
+        .eq('employer_id', user.id)
+        .eq('candidate_id', candidate.id)
+        .maybeSingle();
+      setInterviewUnlocked(!!data);
+    };
+    checkUnlock();
+  }, [candidate?.id]);
+
+  const requireInterviewUnlock = async (action: () => void) => {
+    if (interviewUnlocked) { action(); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error('Please sign in'); return; }
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('points_balance')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    setWalletPoints(wallet?.points_balance || 0);
+    setPendingAction(() => action);
+    setUnlockDialogOpen(true);
+  };
+
+  const handleConfirmUnlock = async () => {
+    if (!candidate) return;
+    setUnlocking(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!wallet) throw new Error('Wallet not found');
+
+      const balance = wallet.points_balance || 0;
+      if (balance < INTERVIEW_UNLOCK_COST) {
+        toast.error(`Insufficient points. You need ${INTERVIEW_UNLOCK_COST} pts but have ${balance} pts.`);
+        setUnlocking(false);
+        return;
+      }
+
+      const { error: insertErr } = await supabase
+        .from('interview_unlocks')
+        .insert({
+          employer_id: user.id,
+          candidate_id: candidate.id,
+          interview_candidate_id: candidate.interviewCandidateId,
+          points_spent: INTERVIEW_UNLOCK_COST,
+        });
+      if (insertErr && !insertErr.message.toLowerCase().includes('duplicate')) throw insertErr;
+
+      await supabase
+        .from('wallets')
+        .update({ points_balance: balance - INTERVIEW_UNLOCK_COST })
+        .eq('id', wallet.id);
+
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: wallet.id,
+        transaction_type: 'debit',
+        category: 'interview_unlock',
+        points: INTERVIEW_UNLOCK_COST,
+        description: `Interview unlock for ${candidate.name}`,
+      });
+
+      setInterviewUnlocked(true);
+      setUnlockDialogOpen(false);
+      toast.success(`Interviews unlocked! ${INTERVIEW_UNLOCK_COST} pts deducted.`);
+      const action = pendingAction;
+      setPendingAction(null);
+      if (action) setTimeout(action, 100);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || 'Failed to unlock interviews');
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
   const toggleStageExpansion = (stageId: string) => {
     setExpandedStages(prev => {
       const newSet = new Set(prev);
