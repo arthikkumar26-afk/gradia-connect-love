@@ -3416,6 +3416,47 @@ export const InterviewPipelineContent = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Interview Unlock Confirmation */}
+      <AlertDialog open={!!pendingUnlock} onOpenChange={(o) => !o && !unlocking && setPendingUnlock(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Unlock Interview Access
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  To take an interview with <strong>{pendingUnlock?.name}</strong>, redeem{' '}
+                  <strong>{INTERVIEW_UNLOCK_COST.toLocaleString()} points</strong> from your wallet.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Current balance: <strong>{walletPoints.toLocaleString()} points</strong>
+                </p>
+                {walletPoints < INTERVIEW_UNLOCK_COST && (
+                  <p className="text-sm text-destructive">
+                    Insufficient points. Please load your wallet first.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unlocking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmInterviewUnlock(); }}
+              disabled={unlocking || walletPoints < INTERVIEW_UNLOCK_COST}
+            >
+              {unlocking ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Redeeming...</>
+              ) : (
+                `Redeem ${INTERVIEW_UNLOCK_COST.toLocaleString()} pts`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
