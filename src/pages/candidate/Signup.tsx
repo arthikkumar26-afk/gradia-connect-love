@@ -307,8 +307,8 @@ const CandidateSignup = () => {
         description: "Explore the benefits of joining Gradia",
       });
 
-      // Move to next step instead of navigating
-      setCurrentStep('benefits');
+      // Move to resume scan step
+      setCurrentStep('resume');
     } catch (error: any) {
       const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
       if (isNetworkError) {
