@@ -623,15 +623,30 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     setIsGeneratingImage(true);
     setAiImageUrl("");
     try {
-      const promptParts = [
-        `Hiring poster for ${flyerData.positions || "open positions"}`,
-        `at ${companyName}`,
-        flyerData.headline && `Headline: "${flyerData.headline}"`,
-        flyerData.tagline && `Tagline: "${flyerData.tagline}"`,
-        flyerData.location && `Location: ${flyerData.location}`,
-        flyerData.salaryText && `Salary: ${flyerData.salaryText}`,
-        `Include text "WE'RE HIRING" prominently and a clear call-to-action.`,
-      ].filter(Boolean).join(". ");
+      const respList = flyerData.responsibilities.split("\n").map(l => l.trim()).filter(Boolean).slice(0, 8);
+      const eduList = flyerData.educationalBackground.split("\n").map(l => l.trim()).filter(Boolean).slice(0, 4);
+      const expList = flyerData.experienceText.split("\n").map(l => l.trim()).filter(Boolean).slice(0, 3);
+      const moreList = flyerData.moreInformation.split("\n").map(l => l.trim()).filter(Boolean).slice(0, 3);
+
+      const sections: string[] = [
+        `Design a professional, content-rich recruitment hiring flyer poster (portrait 1080x1350).`,
+        `COMPANY: ${companyName}.`,
+        `HEADLINE (render large at top): "${flyerData.headline || "WE'RE HIRING"}".`,
+        flyerData.tagline && `TAGLINE: "${flyerData.tagline}".`,
+        `POSITION (render prominently): "${flyerData.positions || "Open Position"}".`,
+        flyerData.location && `LOCATION: ${flyerData.location}.`,
+        flyerData.salaryText && `SALARY: ${flyerData.salaryText}.`,
+        respList.length > 0 && `KEY RESPONSIBILITIES (render as a clear bulleted list, all items visible):\n- ${respList.join("\n- ")}`,
+        eduList.length > 0 && `EDUCATION REQUIREMENTS (bulleted list):\n- ${eduList.join("\n- ")}`,
+        expList.length > 0 && `EXPERIENCE REQUIRED (bulleted list):\n- ${expList.join("\n- ")}`,
+        moreList.length > 0 && `CONTACT / MORE INFO:\n- ${moreList.join("\n- ")}`,
+        flyerData.contactEmail && `EMAIL: ${flyerData.contactEmail}.`,
+        flyerData.website && `WEBSITE: ${flyerData.website}.`,
+        `CALL TO ACTION: "APPLY NOW" with a "Scan to Apply" QR placeholder area at the bottom-left.`,
+        `LAYOUT RULES: Use a two-column body if content is heavy (Responsibilities on left, Requirements on right). Render ALL the text content above clearly and legibly — do NOT truncate, summarize, or omit any bullet point. Use clean professional typography, strong hierarchy, balanced spacing, and ensure no text is cut off. Reserve a clean square area at bottom-left for the QR code.`,
+      ].filter(Boolean) as string[];
+
+      const promptParts = sections.join("\n\n");
 
       const { data, error } = await supabase.functions.invoke("generate-flyer-image", {
         body: { prompt: promptParts, style: aiStyle, size: "1080x1350" },
