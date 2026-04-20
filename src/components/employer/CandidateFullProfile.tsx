@@ -42,6 +42,8 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StageInterviewScheduleModal } from "./StageInterviewScheduleModal";
@@ -113,7 +115,13 @@ export const CandidateFullProfile = () => {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<InterviewStage | null>(null);
   const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
-  
+  const [interviewUnlocked, setInterviewUnlocked] = useState(false);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const [walletPoints, setWalletPoints] = useState(0);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const INTERVIEW_UNLOCK_COST = 1000;
+
   const { 
     notifyShortlisted, 
     notifyHired, 
@@ -255,6 +263,95 @@ export const CandidateFullProfile = () => {
     fetchCandidateData();
   }, [candidateId]);
 
+  // Check if employer has already unlocked interviews for this candidate
+  useEffect(() => {
+    const checkUnlock = async () => {
+      if (!candidate?.id) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('interview_unlocks')
+        .select('id')
+        .eq('employer_id', user.id)
+        .eq('candidate_id', candidate.id)
+        .maybeSingle();
+      setInterviewUnlocked(!!data);
+    };
+    checkUnlock();
+  }, [candidate?.id]);
+
+  const requireInterviewUnlock = async (action: () => void) => {
+    if (interviewUnlocked) { action(); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error('Please sign in'); return; }
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('points_balance')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    setWalletPoints(wallet?.points_balance || 0);
+    setPendingAction(() => action);
+    setUnlockDialogOpen(true);
+  };
+
+  const handleConfirmUnlock = async () => {
+    if (!candidate) return;
+    setUnlocking(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!wallet) throw new Error('Wallet not found');
+
+      const balance = wallet.points_balance || 0;
+      if (balance < INTERVIEW_UNLOCK_COST) {
+        toast.error(`Insufficient points. You need ${INTERVIEW_UNLOCK_COST} pts but have ${balance} pts.`);
+        setUnlocking(false);
+        return;
+      }
+
+      const { error: insertErr } = await supabase
+        .from('interview_unlocks')
+        .insert({
+          employer_id: user.id,
+          candidate_id: candidate.id,
+          interview_candidate_id: candidate.interviewCandidateId,
+          points_spent: INTERVIEW_UNLOCK_COST,
+        });
+      if (insertErr && !insertErr.message.toLowerCase().includes('duplicate')) throw insertErr;
+
+      await supabase
+        .from('wallets')
+        .update({ points_balance: balance - INTERVIEW_UNLOCK_COST })
+        .eq('id', wallet.id);
+
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: wallet.id,
+        transaction_type: 'debit',
+        category: 'interview_unlock',
+        points: INTERVIEW_UNLOCK_COST,
+        description: `Interview unlock for ${candidate.name}`,
+      });
+
+      setInterviewUnlocked(true);
+      setUnlockDialogOpen(false);
+      toast.success(`Interviews unlocked! ${INTERVIEW_UNLOCK_COST} pts deducted.`);
+      const action = pendingAction;
+      setPendingAction(null);
+      if (action) setTimeout(action, 100);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || 'Failed to unlock interviews');
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
   const toggleStageExpansion = (stageId: string) => {
     setExpandedStages(prev => {
       const newSet = new Set(prev);
@@ -268,13 +365,19 @@ export const CandidateFullProfile = () => {
   };
 
   const handleScheduleInterview = (stage: InterviewStage) => {
-    setSelectedStage(stage);
-    setScheduleModalOpen(true);
+    requireInterviewUnlock(() => {
+      setSelectedStage(stage);
+      setScheduleModalOpen(true);
+    });
   };
 
   const handleSendEmail = async (stage: InterviewStage) => {
     if (!candidate) return;
-    
+    if (!interviewUnlocked) {
+      requireInterviewUnlock(() => handleSendEmail(stage));
+      return;
+    }
+
     try {
       toast.loading(`Sending interview invitation for ${stage.name}...`);
       
@@ -1031,6 +1134,42 @@ export const CandidateFullProfile = () => {
           onSuccess={fetchCandidateData}
         />
       )}
+
+      {/* Interview Unlock Dialog */}
+      <AlertDialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Unlock Interview Access
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 pt-2">
+              <span className="block">
+                To take interviews with <strong>{candidate?.name}</strong>, redeem{" "}
+                <strong>{INTERVIEW_UNLOCK_COST} points</strong> from your wallet.
+              </span>
+              <span className="block text-sm">
+                Your balance: <strong>{walletPoints} pts</strong>
+                {walletPoints < INTERVIEW_UNLOCK_COST && (
+                  <span className="text-destructive"> — Insufficient points</span>
+                )}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                One-time unlock per candidate. Covers all interview rounds and email invitations.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unlocking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleConfirmUnlock(); }}
+              disabled={unlocking || walletPoints < INTERVIEW_UNLOCK_COST}
+            >
+              {unlocking ? 'Redeeming...' : `Redeem ${INTERVIEW_UNLOCK_COST} pts`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

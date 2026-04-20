@@ -1629,6 +1629,33 @@ export type Database = {
         }
         Relationships: []
       }
+      interview_unlocks: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          employer_id: string
+          id: string
+          interview_candidate_id: string | null
+          points_spent: number
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          employer_id: string
+          id?: string
+          interview_candidate_id?: string | null
+          points_spent?: number
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          employer_id?: string
+          id?: string
+          interview_candidate_id?: string | null
+          points_spent?: number
+        }
+        Relationships: []
+      }
       job_melas: {
         Row: {
           city: string
