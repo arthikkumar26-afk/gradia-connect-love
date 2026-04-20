@@ -762,7 +762,7 @@ const EmployerDashboard = () => {
             {activeMenu === "all-candidates" && <AllCandidatesContent />}
             {activeMenu === "campaigns" && <EmployerCampaignContent />}
             {activeMenu === "outsource-projects" && <OutsourceProjectsContent />}
-            {activeMenu === "wallet" && <WalletTab />}
+            {activeMenu === "wallet" && user?.id && <WalletTab userId={user.id} />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
             
