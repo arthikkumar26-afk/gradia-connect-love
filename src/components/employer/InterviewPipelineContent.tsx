@@ -38,6 +38,7 @@ import {
   Plus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wallet } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -2869,6 +2870,106 @@ export const InterviewPipelineContent = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortBy, setSortBy] = useState<string>("newest");
 
+  // Interview unlock gating (1000 points per candidate)
+  const INTERVIEW_UNLOCK_COST = 1000;
+  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
+  const [pendingUnlock, setPendingUnlock] = useState<Candidate | null>(null);
+  const [walletPoints, setWalletPoints] = useState<number>(0);
+  const [unlocking, setUnlocking] = useState(false);
+
+  // Preload existing unlocks for this employer
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await (supabase as any)
+        .from('interview_unlocks')
+        .select('candidate_id')
+        .eq('employer_id', user.id);
+      if (data) setUnlockedIds(new Set(data.map((r: any) => r.candidate_id)));
+    })();
+  }, []);
+
+  const requireInterviewUnlock = async (candidate: Candidate) => {
+    if (unlockedIds.has(candidate.id)) {
+      setSelectedCandidate(candidate);
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Please sign in');
+      return;
+    }
+    // Double-check DB in case another session unlocked already
+    const { data: existing } = await (supabase as any)
+      .from('interview_unlocks')
+      .select('id')
+      .eq('employer_id', user.id)
+      .eq('candidate_id', candidate.id)
+      .maybeSingle();
+    if (existing) {
+      setUnlockedIds(prev => new Set(prev).add(candidate.id));
+      setSelectedCandidate(candidate);
+      return;
+    }
+    const { data: wallet } = await (supabase as any)
+      .from('wallets')
+      .select('points')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    setWalletPoints(wallet?.points ?? 0);
+    setPendingUnlock(candidate);
+  };
+
+  const confirmInterviewUnlock = async () => {
+    if (!pendingUnlock) return;
+    setUnlocking(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in');
+      const { data: wallet } = await (supabase as any)
+        .from('wallets')
+        .select('points')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const balance = wallet?.points ?? 0;
+      if (balance < INTERVIEW_UNLOCK_COST) {
+        toast.error(`Insufficient points. You need ${INTERVIEW_UNLOCK_COST} points.`);
+        setPendingUnlock(null);
+        return;
+      }
+      const { error: updErr } = await (supabase as any)
+        .from('wallets')
+        .update({ points: balance - INTERVIEW_UNLOCK_COST, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+      if (updErr) throw updErr;
+      await (supabase as any).from('wallet_transactions').insert({
+        user_id: user.id,
+        type: 'debit',
+        amount: INTERVIEW_UNLOCK_COST,
+        category: 'interview_unlock',
+        description: `Interview unlock for ${pendingUnlock.name}`,
+      });
+      const { error: insErr } = await (supabase as any).from('interview_unlocks').insert({
+        employer_id: user.id,
+        candidate_id: pendingUnlock.id,
+        interview_candidate_id: pendingUnlock.interviewCandidateId,
+        points_spent: INTERVIEW_UNLOCK_COST,
+      });
+      if (insErr && !String(insErr.message || '').includes('duplicate')) throw insErr;
+      setUnlockedIds(prev => new Set(prev).add(pendingUnlock.id));
+      toast.success(`${INTERVIEW_UNLOCK_COST} points redeemed. Interview access unlocked.`);
+      const candidate = pendingUnlock;
+      setPendingUnlock(null);
+      setSelectedCandidate(candidate);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || 'Failed to redeem points');
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
   // Get all candidates from all stages and sort them
   const allCandidates = stages.flatMap(stage => stage.candidates).sort((a, b) => {
     switch (sortBy) {
@@ -2944,8 +3045,8 @@ export const InterviewPipelineContent = () => {
   };
 
   const handleOpenCandidate = (candidate: Candidate) => {
-    // Open candidate profile in modal instead of navigating
-    setSelectedCandidate(candidate);
+    // Gate behind 1000-point interview unlock
+    requireInterviewUnlock(candidate);
   };
 
   // Sync selectedCandidate with fresh stages data after any refetch
