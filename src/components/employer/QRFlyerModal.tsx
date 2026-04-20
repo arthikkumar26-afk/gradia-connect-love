@@ -851,7 +851,18 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
               <QRCodeSVG id="flyer-qr-code" value={qrUrl} size={180} level="H" includeMargin bgColor="#ffffff" fgColor="#000000" />
             </div>
 
-            {layout === "compact" ? (
+            {layout === "ai" ? (
+              <div className="bg-white p-4 flex items-center justify-center min-h-[500px]">
+                {aiImageUrl ? (
+                  <img src={aiImageUrl} alt="AI generated flyer" className="max-w-full max-h-[700px] object-contain rounded-md shadow" />
+                ) : (
+                  <div className="text-center text-muted-foreground text-sm space-y-2 px-6">
+                    <Sparkles className="h-10 w-10 mx-auto opacity-50" />
+                    <p>Pick a visual style and click <strong>Generate AI Flyer</strong> to create a custom designed poster.</p>
+                  </div>
+                )}
+              </div>
+            ) : layout === "compact" ? (
               <div ref={flyerRef} className="bg-white text-gray-800 relative" style={{ minHeight: "500px" }}>
                 <div className="h-2 bg-gradient-to-r from-[#0f4c75] to-[#3282b8]" />
                 <div className="mx-6 mt-5 bg-[#0f4c75] rounded-xl px-4 py-4 text-center">
