@@ -13,6 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { openResume } from "@/utils/resumeUrl";
+import { useInterviewUnlock } from "@/hooks/useInterviewUnlock";
+import { InterviewUnlockDialog } from "./InterviewUnlockDialog";
 
 
 interface CandidateProfile {
@@ -60,6 +62,22 @@ export function AllCandidatesContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [industryFilter, setIndustryFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
+  const {
+    requireUnlock,
+    confirmUnlock,
+    cancelUnlock,
+    pendingCandidate,
+    walletPoints,
+    unlocking,
+    INTERVIEW_UNLOCK_COST,
+  } = useInterviewUnlock();
+
+  const openCandidate = (c: CandidateProfile) => {
+    requireUnlock(
+      { id: c.id, name: c.full_name },
+      () => setSelectedCandidate(c)
+    );
+  };
 
   useEffect(() => {
     fetchCandidates();
