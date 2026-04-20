@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check, Upload, Wand2 } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -26,13 +26,14 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
-type WizardStep = 'signup' | 'benefits' | 'agreement' | 'terms';
+type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms';
 
 const wizardSteps = [
   { id: 'signup' as const, label: 'Create Account', stepNumber: 1 },
-  { id: 'benefits' as const, label: 'Benefits', stepNumber: 2 },
-  { id: 'agreement' as const, label: 'Agreement', stepNumber: 3 },
-  { id: 'terms' as const, label: 'Terms & Conditions', stepNumber: 4 },
+  { id: 'resume' as const, label: 'AI Resume Scan', stepNumber: 2 },
+  { id: 'benefits' as const, label: 'Benefits', stepNumber: 3 },
+  { id: 'agreement' as const, label: 'Agreement', stepNumber: 4 },
+  { id: 'terms' as const, label: 'Terms & Conditions', stepNumber: 5 },
 ];
 
 const benefits = [
@@ -116,6 +117,11 @@ const CandidateSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
+  // Resume step state
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeParsing, setResumeParsing] = useState(false);
+  const [resumeParsed, setResumeParsed] = useState<any | null>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
     // If user just signed up, let them complete the wizard flow
@@ -301,8 +307,8 @@ const CandidateSignup = () => {
         description: "Explore the benefits of joining Gradia",
       });
 
-      // Move to next step instead of navigating
-      setCurrentStep('benefits');
+      // Move to resume scan step
+      setCurrentStep('resume');
     } catch (error: any) {
       const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
       if (isNetworkError) {
@@ -358,10 +364,118 @@ const CandidateSignup = () => {
   };
 
   const goBack = () => {
-    const stepOrder: WizardStep[] = ['signup', 'benefits', 'agreement', 'terms'];
+    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
+    }
+  };
+
+  // Resume scan: upload, AI parse, save to profile + related tables
+  const handleResumeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const allowed = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
+    if (!allowed.some(ext => f.name.toLowerCase().endsWith(ext))) {
+      toast({ title: 'Invalid file', description: 'Upload PDF, Word, or image file', variant: 'destructive' });
+      return;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 20MB allowed', variant: 'destructive' });
+      return;
+    }
+    setResumeFile(f);
+    setResumeParsed(null);
+  };
+
+  const handleResumeScan = async () => {
+    if (!resumeFile) {
+      toast({ title: 'Please upload a resume first', variant: 'destructive' });
+      return;
+    }
+    setResumeParsing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+      const userId = session.user.id;
+
+      // 1. Upload resume to storage
+      const ext = resumeFile.name.split('.').pop();
+      const filePath = `${userId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('resumes').upload(filePath, resumeFile, { upsert: true });
+      if (upErr) console.warn('Resume upload error:', upErr);
+      const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
+      const resumeUrl = urlData?.publicUrl || null;
+
+      // 2. AI parse via edge function
+      const formData = new FormData();
+      formData.append('file', resumeFile);
+      const parseResp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: formData,
+        }
+      );
+      if (!parseResp.ok) {
+        const errText = await parseResp.text();
+        throw new Error(errText || 'Failed to parse resume');
+      }
+      const parsed = await parseResp.json();
+
+      // 3. Update profile with extracted info (only fill empty fields)
+      const profileUpdate: Record<string, any> = { resume_url: resumeUrl };
+      if (parsed.full_name && !fullName) profileUpdate.full_name = parsed.full_name;
+      if (parsed.mobile && !mobile) profileUpdate.mobile = String(parsed.mobile).replace(/\D/g, '').slice(-10);
+      if (parsed.location) profileUpdate.location = parsed.location;
+      if (parsed.current_state) profileUpdate.current_state = parsed.current_state;
+      if (parsed.current_district) profileUpdate.current_district = parsed.current_district;
+      if (parsed.linkedin) profileUpdate.linkedin = parsed.linkedin;
+      if (parsed.website) profileUpdate.website = parsed.website;
+      if (parsed.date_of_birth) profileUpdate.date_of_birth = parsed.date_of_birth;
+      if (parsed.gender) profileUpdate.gender = parsed.gender;
+      if (Array.isArray(parsed.skills) && parsed.skills.length) profileUpdate.skills = parsed.skills;
+      if (Array.isArray(parsed.languages) && parsed.languages.length) profileUpdate.languages = parsed.languages;
+      if (parsed.highest_qualification) profileUpdate.highest_qualification = parsed.highest_qualification;
+      if (parsed.experience_level) profileUpdate.experience_level = parsed.experience_level;
+      if (parsed.preferred_role) profileUpdate.preferred_role = parsed.preferred_role;
+
+      await supabase.from('profiles').update(profileUpdate).eq('id', userId);
+
+      // 4. Insert education rows
+      if (Array.isArray(parsed.education) && parsed.education.length) {
+        const eduRows = parsed.education
+          .filter((e: any) => e?.education_level)
+          .map((e: any, idx: number) => ({
+            user_id: userId,
+            education_level: String(e.education_level).slice(0, 100),
+            school_college_name: e.school_college_name || null,
+            specialization: e.specialization || null,
+            board_university: e.board_university || null,
+            year_of_passing: e.year_of_passing ? Number(e.year_of_passing) : null,
+            percentage_marks: e.percentage_marks ? Number(e.percentage_marks) : null,
+            display_order: idx,
+          }));
+        if (eduRows.length) {
+          await supabase.from('educational_qualifications').insert(eduRows);
+        }
+      }
+
+      setResumeParsed(parsed);
+      toast({
+        title: '✨ Resume scanned successfully!',
+        description: 'Your profile has been auto-filled with extracted info.',
+      });
+    } catch (err: any) {
+      console.error('Resume scan error:', err);
+      toast({
+        title: 'Could not scan resume',
+        description: err.message || 'Please try again or skip this step',
+        variant: 'destructive',
+      });
+    } finally {
+      setResumeParsing(false);
     }
   };
 
@@ -1138,9 +1252,108 @@ const CandidateSignup = () => {
     </div>
   );
 
+  // Render resume scan step
+  const renderResumeStep = () => (
+    <div className="w-full max-w-3xl">
+      <ProgressIndicator />
+      <Card className="w-full p-8 shadow-lg">
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-4">
+            <img src={gradiaLogo} alt="Gradia" className="h-14 w-auto object-contain" />
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold mb-3">
+            <Sparkles className="h-3.5 w-3.5" /> AI-Powered
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">Upload Your Resume</h1>
+          <p className="text-muted-foreground mt-2">
+            Let our AI scan your resume and auto-fill your profile in seconds.
+          </p>
+        </div>
+
+        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center mb-6 hover:border-accent/50 transition-colors">
+          <input
+            ref={resumeInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+            className="hidden"
+            onChange={handleResumeFileChange}
+          />
+          {!resumeFile ? (
+            <>
+              <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <p className="text-sm text-foreground mb-1 font-medium">Drag & drop or click to upload</p>
+              <p className="text-xs text-muted-foreground mb-4">PDF, DOC, DOCX, PNG, JPG (max 20MB)</p>
+              <Button type="button" variant="outline" onClick={() => resumeInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" /> Choose File
+              </Button>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <FileText className="h-10 w-10 mx-auto text-accent" />
+              <p className="text-sm font-medium text-foreground truncate">{resumeFile.name}</p>
+              <p className="text-xs text-muted-foreground">{(resumeFile.size / 1024).toFixed(1)} KB</p>
+              <div className="flex justify-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => resumeInputRef.current?.click()} disabled={resumeParsing}>
+                  Change
+                </Button>
+                {!resumeParsed && (
+                  <Button type="button" size="sm" onClick={handleResumeScan} disabled={resumeParsing}>
+                    {resumeParsing ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning...</>
+                    ) : (
+                      <><Wand2 className="h-4 w-4 mr-2" /> Scan with AI</>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {resumeParsed && (
+          <div className="mb-6 p-4 rounded-lg bg-accent/10 border border-accent/30">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
+              <div className="flex-1 text-sm">
+                <p className="font-semibold text-foreground mb-1">Profile auto-filled!</p>
+                <ul className="text-muted-foreground text-xs space-y-0.5">
+                  {resumeParsed.full_name && <li>✓ Name: {resumeParsed.full_name}</li>}
+                  {Array.isArray(resumeParsed.skills) && resumeParsed.skills.length > 0 && (
+                    <li>✓ {resumeParsed.skills.length} skills extracted</li>
+                  )}
+                  {Array.isArray(resumeParsed.education) && resumeParsed.education.length > 0 && (
+                    <li>✓ {resumeParsed.education.length} education record(s) added</li>
+                  )}
+                  {Array.isArray(resumeParsed.experience) && resumeParsed.experience.length > 0 && (
+                    <li>✓ {resumeParsed.experience.length} work experience(s) detected</li>
+                  )}
+                  {resumeParsed.experience_level && <li>✓ Experience level: {resumeParsed.experience_level}</li>}
+                </ul>
+                <p className="text-xs text-muted-foreground mt-2">
+                  You can edit and complete details later in your profile.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-4">
+          <Button variant="ghost" onClick={() => setCurrentStep('benefits')} className="flex-1" disabled={resumeParsing}>
+            Skip for now
+          </Button>
+          <Button onClick={() => setCurrentStep('benefits')} className="flex-1" disabled={resumeParsing || (!!resumeFile && !resumeParsed)}>
+            Continue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
       {currentStep === 'signup' && renderSignupStep()}
+      {currentStep === 'resume' && renderResumeStep()}
       {currentStep === 'benefits' && renderBenefitsStep()}
       {currentStep === 'agreement' && renderAgreementStep()}
       {currentStep === 'terms' && renderTermsStep()}
