@@ -70,7 +70,10 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
   const flyerRef = useRef<HTMLDivElement>(null);
 
   const autoHeavy = useMemo(() => detectContentHeavy(jobData), [jobData]);
-  const [layout, setLayout] = useState<"compact" | "detailed">(autoHeavy ? "detailed" : "compact");
+  const [layout, setLayout] = useState<"compact" | "detailed" | "ai">(autoHeavy ? "detailed" : "compact");
+  const [aiStyle, setAiStyle] = useState<string>("modern corporate");
+  const [aiImageUrl, setAiImageUrl] = useState<string>("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   const buildJobDetails = () => {
     if (!jobData) return "";
@@ -605,8 +608,57 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     return canvas.toDataURL("image/png");
   };
 
+  const handleAIGenerateImage = async () => {
+    setIsGeneratingImage(true);
+    setAiImageUrl("");
+    try {
+      const promptParts = [
+        `Hiring poster for ${flyerData.positions || "open positions"}`,
+        `at ${companyName}`,
+        flyerData.headline && `Headline: "${flyerData.headline}"`,
+        flyerData.tagline && `Tagline: "${flyerData.tagline}"`,
+        flyerData.location && `Location: ${flyerData.location}`,
+        flyerData.salaryText && `Salary: ${flyerData.salaryText}`,
+        `Include text "WE'RE HIRING" prominently and a clear call-to-action.`,
+      ].filter(Boolean).join(". ");
+
+      const { data, error } = await supabase.functions.invoke("generate-flyer-image", {
+        body: { prompt: promptParts, style: aiStyle, size: "1080x1350" },
+      });
+      if (error) {
+        if (error.message?.includes("429")) toast.error("Rate limit exceeded. Try again shortly.");
+        else if (error.message?.includes("402")) toast.error("AI credits exhausted.");
+        else throw error;
+        return;
+      }
+      if (data?.imageUrl) {
+        setAiImageUrl(data.imageUrl);
+        toast.success("AI flyer generated!");
+      } else if (data?.error) {
+        toast.error(data.error);
+      }
+    } catch (err: any) {
+      console.error("AI image error:", err);
+      toast.error(err.message || "Failed to generate AI flyer image.");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
   const handleDownload = async () => {
     try {
+      if (layout === "ai") {
+        if (!aiImageUrl) {
+          toast.error("Generate an AI flyer first.");
+          return;
+        }
+        const link = document.createElement("a");
+        link.download = `${companyName.replace(/\s+/g, "-")}-ai-flyer.png`;
+        link.href = aiImageUrl;
+        link.click();
+        toast.success("AI flyer downloaded!");
+        return;
+      }
       const dataUrl = layout === "detailed" ? await generateDetailedFlyer() : await generateCompactFlyer();
       if (!dataUrl) return;
       const link = document.createElement("a");
@@ -644,26 +696,77 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form Section */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
               <div>
-                <Label className="text-sm font-semibold">Detailed layout (content-heavy)</Label>
-                <p className="text-[11px] text-muted-foreground">Auto-enabled for jobs with long descriptions. Matches the magazine-style hiring poster.</p>
+                <Label className="text-sm font-semibold">Flyer Style</Label>
+                <p className="text-[11px] text-muted-foreground">Pick a layout. AI Designed creates a fully custom poster image.</p>
               </div>
-              <Switch checked={layout === "detailed"} onCheckedChange={(v) => setLayout(v ? "detailed" : "compact")} />
+              <div className="grid grid-cols-3 gap-1 rounded-md bg-background p-1 border">
+                {([
+                  { v: "compact", label: "Compact" },
+                  { v: "detailed", label: "Detailed" },
+                  { v: "ai", label: "✨ AI Designed" },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => setLayout(opt.v)}
+                    className={`text-xs font-medium py-1.5 rounded transition-colors ${
+                      layout === opt.v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {layout === "ai" && (
+                <div className="space-y-2">
+                  <Label htmlFor="aiStyle" className="text-xs">Visual Style</Label>
+                  <select
+                    id="aiStyle"
+                    value={aiStyle}
+                    onChange={(e) => setAiStyle(e.target.value)}
+                    className="w-full text-sm rounded-md border bg-background px-2 py-1.5"
+                  >
+                    <option value="modern corporate">Modern Corporate</option>
+                    <option value="bold minimal">Bold Minimal</option>
+                    <option value="vibrant gradient">Vibrant Gradient</option>
+                    <option value="elegant dark">Elegant Dark</option>
+                    <option value="playful illustrated">Playful Illustrated</option>
+                    <option value="editorial magazine">Editorial Magazine</option>
+                    <option value="tech startup neon">Tech Startup / Neon</option>
+                    <option value="indian festive">Indian Festive</option>
+                  </select>
+                  <Button
+                    onClick={handleAIGenerateImage}
+                    disabled={isGeneratingImage}
+                    className="w-full"
+                    size="sm"
+                  >
+                    {isGeneratingImage ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Designing flyer...</>
+                    ) : (
+                      <><Sparkles className="h-4 w-4 mr-2" />{aiImageUrl ? "Regenerate" : "Generate"} AI Flyer</>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <Button
-              onClick={handleAIGenerate}
-              disabled={isGenerating || !jobData}
-              variant="outline"
-              className="w-full border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary"
-            >
-              {isGenerating ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating with AI...</>
-              ) : (
-                <><Sparkles className="h-4 w-4 mr-2" />AI Generate Flyer Content</>
-              )}
-            </Button>
+            {layout !== "ai" && (
+              <Button
+                onClick={handleAIGenerate}
+                disabled={isGenerating || !jobData}
+                variant="outline"
+                className="w-full border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary"
+              >
+                {isGenerating ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating with AI...</>
+                ) : (
+                  <><Sparkles className="h-4 w-4 mr-2" />AI Generate Flyer Content</>
+                )}
+              </Button>
+            )}
 
             <div>
               <Label htmlFor="headline">Headline</Label>
@@ -748,7 +851,18 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
               <QRCodeSVG id="flyer-qr-code" value={qrUrl} size={180} level="H" includeMargin bgColor="#ffffff" fgColor="#000000" />
             </div>
 
-            {layout === "compact" ? (
+            {layout === "ai" ? (
+              <div className="bg-white p-4 flex items-center justify-center min-h-[500px]">
+                {aiImageUrl ? (
+                  <img src={aiImageUrl} alt="AI generated flyer" className="max-w-full max-h-[700px] object-contain rounded-md shadow" />
+                ) : (
+                  <div className="text-center text-muted-foreground text-sm space-y-2 px-6">
+                    <Sparkles className="h-10 w-10 mx-auto opacity-50" />
+                    <p>Pick a visual style and click <strong>Generate AI Flyer</strong> to create a custom designed poster.</p>
+                  </div>
+                )}
+              </div>
+            ) : layout === "compact" ? (
               <div ref={flyerRef} className="bg-white text-gray-800 relative" style={{ minHeight: "500px" }}>
                 <div className="h-2 bg-gradient-to-r from-[#0f4c75] to-[#3282b8]" />
                 <div className="mx-6 mt-5 bg-[#0f4c75] rounded-xl px-4 py-4 text-center">
