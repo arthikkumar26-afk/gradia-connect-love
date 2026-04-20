@@ -3,15 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Check, ArrowLeft, Wallet } from 'lucide-react';
+import { Check, ArrowLeft, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import OnboardingProgress from '@/components/employer/OnboardingProgress';
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const plans = [
-  { id: 'basic', name: 'Basic', duration: '1 Month', points: 100, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
-  { id: 'standard', name: 'Standard', duration: '3 Months', points: 260, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
-  { id: 'premium', name: 'Premium', duration: '6 Months', points: 500, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
+  { id: 'basic', name: 'Basic', duration: '1 Month', price: 2499, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
+  { id: 'standard', name: 'Standard', duration: '3 Months', price: 4999, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
+  { id: 'premium', name: 'Premium', duration: '6 Months', price: 9999, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
 ];
 
 export default function Plans() {
@@ -19,6 +25,7 @@ export default function Plans() {
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
   const [retryError, setRetryError] = useState<string | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -30,56 +37,95 @@ export default function Plans() {
     checkAuth();
   }, [navigate, toast]);
 
+  useEffect(() => {
+    if (document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) {
+      setScriptLoaded(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => setScriptLoaded(true);
+    document.body.appendChild(script);
+  }, []);
+
   const handleSelectPlan = async (planId: string) => {
     const selectedPlan = plans.find(p => p.id === planId);
-    if (!selectedPlan) return;
+    if (!selectedPlan || !scriptLoaded) return;
 
     setLoading(planId);
     setRetryError(null);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/employer/signup"); return; }
 
-      // Get wallet
-      const { data: wallet } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) throw new Error('Not authenticated');
 
-      if (!wallet) {
-        throw new Error('Wallet not found. Please set up your wallet first.');
-      }
-
-      if ((wallet.points_balance || 0) < selectedPlan.points) {
-        toast({
-          title: 'Insufficient Points',
-          description: `You need ${selectedPlan.points} pts but have ${wallet.points_balance || 0} pts. Load points from your Wallet.`,
-          variant: 'destructive',
-        });
-        setLoading(null);
-        return;
-      }
-
-      // Deduct points
-      const newBalance = (wallet.points_balance || 0) - selectedPlan.points;
-      await supabase.from('wallets').update({ points_balance: newBalance }).eq('id', wallet.id);
-
-      // Record transaction
-      await supabase.from('wallet_transactions').insert({
-        wallet_id: wallet.id,
-        transaction_type: 'debit',
-        category: 'subscription',
-        points: selectedPlan.points,
-        description: `Employer ${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+      // Create Razorpay order via edge function
+      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: selectedPlan.price,
+          currency: 'INR',
+          plan_id: selectedPlan.id,
+          plan_name: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+          employer_id: user.id,
+          receipt: `emp_${selectedPlan.id}_${Date.now()}`,
+        },
       });
 
-      toast({ title: 'Plan Activated!', description: `${selectedPlan.name} plan activated. ${selectedPlan.points} pts deducted.` });
-      navigate(`/employer/subscription-success?session_id=wallet-${Date.now()}`);
+      if (error || !data?.order_id) throw new Error(error?.message || 'Failed to create order');
+
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: 'Gradia',
+        description: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+        order_id: data.order_id,
+        handler: async (response: any) => {
+          try {
+            // Verify payment
+            const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_id: selectedPlan.id,
+                plan_name: selectedPlan.name,
+                amount: selectedPlan.price,
+                duration: selectedPlan.duration,
+                employer_id: user.id,
+              },
+            });
+
+            if (verifyError) throw verifyError;
+
+            toast({ title: 'Payment Successful!', description: `${selectedPlan.name} plan activated.` });
+            navigate(`/employer/subscription-success?session_id=${response.razorpay_payment_id}`);
+          } catch (err: any) {
+            console.error('Payment verification error:', err);
+            toast({ title: 'Verification Failed', description: 'Payment received but verification failed. Contact support.', variant: 'destructive' });
+          }
+        },
+        prefill: { email: user.email },
+        theme: { color: '#6366f1' },
+        modal: {
+          ondismiss: () => setLoading(null),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (resp: any) => {
+        console.error('Payment failed:', resp.error);
+        toast({ title: 'Payment Failed', description: resp.error?.description || 'Please try again', variant: 'destructive' });
+        setLoading(null);
+      });
+      rzp.open();
     } catch (error: any) {
       console.error('Plan error:', error);
-      setRetryError(error.message || 'Failed to activate plan. Please try again.');
+      setRetryError(error.message || 'Failed to initiate payment.');
       toast({ title: 'Error', description: error.message || 'Failed to process', variant: 'destructive' });
       setLoading(null);
     }
@@ -91,7 +137,7 @@ export default function Plans() {
         <OnboardingProgress currentStep="payment" />
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">Choose Your Plan</h1>
-          <p className="text-muted-foreground text-lg">Pay with wallet points • ₹5,000 = 1,000 points</p>
+          <p className="text-muted-foreground text-lg">Secure payment via Razorpay</p>
         </div>
 
         {retryError && <div className="mb-8 p-4 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive text-center max-w-md mx-auto">{retryError}</div>}
@@ -104,10 +150,8 @@ export default function Plans() {
                 <h3 className="text-2xl font-bold text-foreground mb-1">{plan.name} Plan</h3>
                 <p className="text-sm text-muted-foreground mb-4">Duration: {plan.duration}</p>
                 <div className="flex items-baseline gap-1">
-                  <Wallet className="h-5 w-5 text-primary" />
-                  <span className="text-3xl font-bold text-primary">{plan.points} pts</span>
+                  <span className="text-3xl font-bold text-primary">₹{plan.price.toLocaleString("en-IN")}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">≈ ₹{(plan.points * 5).toLocaleString("en-IN")}</p>
               </div>
               <ul className="space-y-3 mb-6 flex-grow">
                 {plan.features.map((feature, index) => (
@@ -117,13 +161,14 @@ export default function Plans() {
                   </li>
                 ))}
               </ul>
-              <Button 
-                onClick={() => handleSelectPlan(plan.id)} 
-                disabled={loading !== null} 
-                className="w-full" 
+              <Button
+                onClick={() => handleSelectPlan(plan.id)}
+                disabled={loading !== null || !scriptLoaded}
+                className="w-full"
                 variant={plan.popular ? 'default' : 'outline'}
               >
-                {loading === plan.id ? 'Processing...' : `Choose ${plan.name} – ${plan.points} pts`}
+                <CreditCard className="mr-2 h-4 w-4" />
+                {loading === plan.id ? 'Processing...' : `Pay ₹${plan.price.toLocaleString("en-IN")}`}
               </Button>
             </Card>
           ))}
