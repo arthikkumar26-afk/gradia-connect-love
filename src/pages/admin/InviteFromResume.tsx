@@ -42,10 +42,20 @@ interface ParsedResume {
   experience?: Array<{ designation?: string; organization?: string }>;
 }
 
+interface BulkRow {
+  fileName: string;
+  status: "pending" | "parsing" | "sending" | "sent" | "failed";
+  email?: string;
+  fullName?: string;
+  matchedJobs?: number;
+  error?: string;
+}
+
 const InviteFromResume = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
+  const bulkRef = useRef<HTMLInputElement>(null);
 
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -55,6 +65,10 @@ const InviteFromResume = () => {
   const [parsed, setParsed] = useState<ParsedResume | null>(null);
   const [emailOverride, setEmailOverride] = useState("");
   const [lastResult, setLastResult] = useState<{ matchedJobs: number; jobs: any[] } | null>(null);
+
+  // Bulk state
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -122,6 +136,71 @@ const InviteFromResume = () => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleBulkFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setBulkRows(files.map((f) => ({ fileName: f.name, status: "pending" as const })));
+    // Store actual files via dataset on a ref-less map: re-trigger via input instead
+    (window as any).__bulkResumeFiles = files;
+    toast.success(`${files.length} resume${files.length > 1 ? "s" : ""} queued. Click "Process & Invite All" to start.`);
+  };
+
+  const processBulk = async () => {
+    const files: File[] = (window as any).__bulkResumeFiles || [];
+    if (!files.length) { toast.error("No files queued"); return; }
+    setBulkRunning(true);
+    let sent = 0, failed = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      // parse
+      setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "parsing" } : r));
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const { data: parsedData, error: parseErr } = await supabase.functions.invoke("parse-resume", { body: fd });
+        if (parseErr) throw parseErr;
+        if (parsedData?.error) throw new Error(parsedData.error);
+
+        const email = (parsedData?.email || "").trim();
+        const fullName = parsedData?.full_name || "";
+        if (!email || !email.includes("@")) {
+          throw new Error("No valid email found in resume");
+        }
+
+        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "sending", email, fullName } : r));
+
+        const lastDesignation = parsedData?.experience?.[0]?.designation || "";
+        const { data: inviteData, error: inviteErr } = await supabase.functions.invoke("invite-candidate-from-resume", {
+          body: {
+            email,
+            fullName: fullName || undefined,
+            skills: parsedData?.skills || [],
+            preferredRole: parsedData?.preferred_role || "",
+            experienceLevel: parsedData?.experience_level || "",
+            lastDesignation,
+            location: parsedData?.location || "",
+            maxJobs: 6,
+          },
+        });
+        if (inviteErr) throw inviteErr;
+        if (inviteData?.error) throw new Error(inviteData.error);
+
+        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "sent", matchedJobs: inviteData.matchedJobs } : r));
+        sent++;
+      } catch (err: any) {
+        console.error("Bulk row failed:", file.name, err);
+        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "failed", error: err.message || "Failed" } : r));
+        failed++;
+      }
+      // small gap to avoid rate limits
+      await new Promise((r) => setTimeout(r, 800));
+    }
+
+    setBulkRunning(false);
+    toast.success(`Bulk complete: ${sent} sent, ${failed} failed`);
   };
 
   if (loading) {
