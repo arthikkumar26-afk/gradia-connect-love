@@ -494,20 +494,28 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     ctx.fillText("Job Responsibilities:", leftX, leftY);
     leftY += 28;
 
+    const contentMaxY = height - 160; // keep clear of footer (footer starts at height-140)
     const respItems = flyerData.responsibilities.split("\n").filter(l => l.trim()).slice(0, 8);
-    respItems.forEach((line, i) => {
+    for (let i = 0; i < respItems.length; i++) {
+      const line = respItems[i];
       const colon = line.indexOf(":");
       const title = colon > 0 ? line.slice(0, colon).trim() : `Item ${i + 1}`;
       const detail = colon > 0 ? line.slice(colon + 1).trim() : line.trim();
+      if (leftY + 40 > contentMaxY) break; // stop before overlapping footer
       ctx.fillStyle = NAVY;
       ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
       ctx.fillText(`${i + 1}. ${title}`, leftX, leftY);
       leftY += 18;
       ctx.fillStyle = "#374151";
       ctx.font = "13px 'Segoe UI', Arial, sans-serif";
-      leftY = wrapText(ctx, detail, leftX, leftY, leftW, 16);
-      leftY += 4;
-    });
+      const newY = wrapText(ctx, detail, leftX, leftY, leftW, 16);
+      // If wrap overflowed, clamp by skipping rest
+      if (newY > contentMaxY) {
+        leftY = contentMaxY;
+        break;
+      }
+      leftY = newY + 4;
+    }
 
     // Right: Requirements heading
     ctx.fillStyle = NAVY;
