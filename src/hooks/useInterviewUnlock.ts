@@ -169,6 +169,7 @@ export const useInterviewUnlock = () => {
     pendingCandidate,
     walletPoints,
     unlocking,
+    refreshWallet,
     INTERVIEW_UNLOCK_COST,
   };
 };
