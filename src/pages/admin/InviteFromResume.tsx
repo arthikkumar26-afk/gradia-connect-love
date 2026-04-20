@@ -384,6 +384,66 @@ const InviteFromResume = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* BULK INVITE SECTION */}
+            <Card className="border-primary/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <FileUp className="h-4 w-4 text-primary" /> Bulk Invite — Upload Multiple Resumes
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Upload multiple PDF/DOCX resumes. Each one is parsed → AI suggests jobs → invite email sent automatically.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div
+                  onClick={() => bulkRef.current?.click()}
+                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition"
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="font-medium text-sm">Click to select multiple resumes</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF / DOCX / Image. Up to 10 files at once.</p>
+                </div>
+                <input
+                  ref={bulkRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.docx,.doc,.png,.jpg,.jpeg"
+                  onChange={handleBulkFiles}
+                  className="hidden"
+                />
+
+                {bulkRows.length > 0 && (
+                  <>
+                    <div className="border rounded-md divide-y">
+                      {bulkRows.map((row, i) => (
+                        <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{row.fileName}</p>
+                            {row.email && <p className="text-xs text-muted-foreground truncate">{row.fullName ? `${row.fullName} · ` : ""}{row.email}</p>}
+                            {row.error && <p className="text-xs text-destructive truncate">{row.error}</p>}
+                          </div>
+                          <div className="ml-3 shrink-0">
+                            {row.status === "pending" && <Badge variant="outline" className="text-[10px]">Queued</Badge>}
+                            {row.status === "parsing" && <Badge variant="secondary" className="text-[10px]"><Loader2 className="h-3 w-3 mr-1 animate-spin inline" />Parsing</Badge>}
+                            {row.status === "sending" && <Badge variant="secondary" className="text-[10px]"><Loader2 className="h-3 w-3 mr-1 animate-spin inline" />Sending</Badge>}
+                            {row.status === "sent" && <Badge className="text-[10px] bg-green-600">Sent · {row.matchedJobs} jobs</Badge>}
+                            {row.status === "failed" && <Badge variant="destructive" className="text-[10px]">Failed</Badge>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Button onClick={processBulk} disabled={bulkRunning} className="w-full">
+                      {bulkRunning ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing {bulkRows.filter(r => r.status === "sent" || r.status === "failed").length}/{bulkRows.length}…</>
+                      ) : (
+                        <><Send className="h-4 w-4 mr-2" /> Process & Invite All ({bulkRows.length})</>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>
