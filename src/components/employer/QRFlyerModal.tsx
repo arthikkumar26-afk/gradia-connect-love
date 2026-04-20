@@ -70,7 +70,10 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
   const flyerRef = useRef<HTMLDivElement>(null);
 
   const autoHeavy = useMemo(() => detectContentHeavy(jobData), [jobData]);
-  const [layout, setLayout] = useState<"compact" | "detailed">(autoHeavy ? "detailed" : "compact");
+  const [layout, setLayout] = useState<"compact" | "detailed" | "ai">(autoHeavy ? "detailed" : "compact");
+  const [aiStyle, setAiStyle] = useState<string>("modern corporate");
+  const [aiImageUrl, setAiImageUrl] = useState<string>("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   const buildJobDetails = () => {
     if (!jobData) return "";
