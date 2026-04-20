@@ -135,7 +135,7 @@ export const MyVacanciesContent = () => {
     const [{ data: profiles }, { data: unlocks }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name, email, phone, location, resume_url")
+        .select("id, full_name, email, mobile, location, resume_url")
         .in("id", candidateIds),
       supabase
         .from("cv_unlocks")
@@ -155,7 +155,7 @@ export const MyVacanciesContent = () => {
         candidate_id: a.candidate_id,
         full_name: p.full_name || null,
         email: p.email || null,
-        phone: p.phone || null,
+        phone: p.mobile || null,
         location: p.location || null,
         resume_url: p.resume_url || null,
         applied_date: a.applied_date,
