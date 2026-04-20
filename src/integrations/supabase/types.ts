@@ -510,6 +510,33 @@ export type Database = {
           },
         ]
       }
+      cv_unlocks: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          employer_id: string
+          id: string
+          job_id: string | null
+          points_spent: number
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          employer_id: string
+          id?: string
+          job_id?: string | null
+          points_spent?: number
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          employer_id?: string
+          id?: string
+          job_id?: string | null
+          points_spent?: number
+        }
+        Relationships: []
+      }
       discount_coupons: {
         Row: {
           applicable_to: string
