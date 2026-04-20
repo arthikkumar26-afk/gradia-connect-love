@@ -64,6 +64,7 @@ import { JobAlertContent } from "@/components/employer/JobAlertContent";
 import { LiveInterviewMonitor } from "@/components/employer/LiveInterviewMonitor";
 import { EmployerInterviewPipelineTracker } from "@/components/employer/EmployerInterviewPipelineTracker";
 import { SMMContent } from "@/components/employer/SMMContent";
+import { MyVacanciesContent } from "@/components/employer/MyVacanciesContent";
 import { FeedbackMatrixContent } from "@/components/employer/FeedbackMatrixContent";
 import { ConfirmationContent } from "@/components/employer/ConfirmationContent";
 import { OfferLetterContent } from "@/components/employer/OfferLetterContent";
@@ -351,6 +352,7 @@ const EmployerDashboard = () => {
     { id: "qpm", label: "Smart Assessment", icon: BookOpen, path: "/employer/qpm" },
     { id: "test-papers", label: "Test Papers", icon: FileText, path: "/employer/test-papers" },
     { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
+    { id: "my-vacancies", label: "My Vacancies", icon: Briefcase, path: "/employer/my-vacancies" },
     { id: "talent-pool", label: "Candidate Data", icon: Users, path: "/employer/talent-pool" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
@@ -749,6 +751,7 @@ const EmployerDashboard = () => {
             {activeMenu === "email-templates" && <EmailTemplatesEditor />}
             
             {activeMenu === "smm" && <SMMContent />}
+            {activeMenu === "my-vacancies" && <MyVacanciesContent />}
             {activeMenu === "feedback-matrix" && <FeedbackMatrixContent />}
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
