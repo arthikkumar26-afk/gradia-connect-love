@@ -81,6 +81,8 @@ import { AllStagesReviewSummary } from "./AllStagesReviewSummary";
 import OfferLetterModal from "./OfferLetterModal";
 import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
 import { useInterviewPipeline, PipelineCandidate, PipelineStage, InterviewStep } from "@/hooks/useInterviewPipeline";
+import { useInterviewUnlock } from "@/hooks/useInterviewUnlock";
+import { InterviewUnlockDialog } from "./InterviewUnlockDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -2870,104 +2872,22 @@ export const InterviewPipelineContent = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [sortBy, setSortBy] = useState<string>("newest");
 
-  // Interview unlock gating (1000 points per candidate)
-  const INTERVIEW_UNLOCK_COST = 1000;
-  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
-  const [pendingUnlock, setPendingUnlock] = useState<Candidate | null>(null);
-  const [walletPoints, setWalletPoints] = useState<number>(0);
-  const [unlocking, setUnlocking] = useState(false);
+  // Interview unlock gating (1000 points per candidate) — shared hook
+  const {
+    requireUnlock: requireInterviewUnlockBase,
+    confirmUnlock: confirmInterviewUnlock,
+    cancelUnlock: cancelInterviewUnlock,
+    pendingCandidate: pendingUnlock,
+    walletPoints,
+    unlocking,
+    INTERVIEW_UNLOCK_COST,
+  } = useInterviewUnlock();
 
-  // Preload existing unlocks for this employer
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await (supabase as any)
-        .from('interview_unlocks')
-        .select('candidate_id')
-        .eq('employer_id', user.id);
-      if (data) setUnlockedIds(new Set(data.map((r: any) => r.candidate_id)));
-    })();
-  }, []);
-
-  const requireInterviewUnlock = async (candidate: Candidate) => {
-    if (unlockedIds.has(candidate.id)) {
-      setSelectedCandidate(candidate);
-      return;
-    }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error('Please sign in');
-      return;
-    }
-    // Double-check DB in case another session unlocked already
-    const { data: existing } = await (supabase as any)
-      .from('interview_unlocks')
-      .select('id')
-      .eq('employer_id', user.id)
-      .eq('candidate_id', candidate.id)
-      .maybeSingle();
-    if (existing) {
-      setUnlockedIds(prev => new Set(prev).add(candidate.id));
-      setSelectedCandidate(candidate);
-      return;
-    }
-    const { data: wallet } = await (supabase as any)
-      .from('wallets')
-      .select('points')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    setWalletPoints(wallet?.points ?? 0);
-    setPendingUnlock(candidate);
-  };
-
-  const confirmInterviewUnlock = async () => {
-    if (!pendingUnlock) return;
-    setUnlocking(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not signed in');
-      const { data: wallet } = await (supabase as any)
-        .from('wallets')
-        .select('points')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      const balance = wallet?.points ?? 0;
-      if (balance < INTERVIEW_UNLOCK_COST) {
-        toast.error(`Insufficient points. You need ${INTERVIEW_UNLOCK_COST} points.`);
-        setPendingUnlock(null);
-        return;
-      }
-      const { error: updErr } = await (supabase as any)
-        .from('wallets')
-        .update({ points: balance - INTERVIEW_UNLOCK_COST, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
-      if (updErr) throw updErr;
-      await (supabase as any).from('wallet_transactions').insert({
-        user_id: user.id,
-        type: 'debit',
-        amount: INTERVIEW_UNLOCK_COST,
-        category: 'interview_unlock',
-        description: `Interview unlock for ${pendingUnlock.name}`,
-      });
-      const { error: insErr } = await (supabase as any).from('interview_unlocks').insert({
-        employer_id: user.id,
-        candidate_id: pendingUnlock.id,
-        interview_candidate_id: pendingUnlock.interviewCandidateId,
-        points_spent: INTERVIEW_UNLOCK_COST,
-      });
-      if (insErr && !String(insErr.message || '').includes('duplicate')) throw insErr;
-      setUnlockedIds(prev => new Set(prev).add(pendingUnlock.id));
-      toast.success(`${INTERVIEW_UNLOCK_COST} points redeemed. Interview access unlocked.`);
-      const candidate = pendingUnlock;
-      setPendingUnlock(null);
-      setSelectedCandidate(candidate);
-    } catch (e: any) {
-      console.error(e);
-      toast.error(e.message || 'Failed to redeem points');
-    } finally {
-      setUnlocking(false);
-    }
+  const requireInterviewUnlock = (candidate: Candidate) => {
+    requireInterviewUnlockBase(
+      { id: candidate.id, name: candidate.name, interviewCandidateId: candidate.interviewCandidateId },
+      () => setSelectedCandidate(candidate)
+    );
   };
 
   // Get all candidates from all stages and sort them
@@ -3418,45 +3338,15 @@ export const InterviewPipelineContent = () => {
       </AlertDialog>
 
       {/* Interview Unlock Confirmation */}
-      <AlertDialog open={!!pendingUnlock} onOpenChange={(o) => !o && !unlocking && setPendingUnlock(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" />
-              Unlock Interview Access
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2">
-                <p>
-                  To take an interview with <strong>{pendingUnlock?.name}</strong>, redeem{' '}
-                  <strong>{INTERVIEW_UNLOCK_COST.toLocaleString()} points</strong> from your wallet.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Current balance: <strong>{walletPoints.toLocaleString()} points</strong>
-                </p>
-                {walletPoints < INTERVIEW_UNLOCK_COST && (
-                  <p className="text-sm text-destructive">
-                    Insufficient points. Please load your wallet first.
-                  </p>
-                )}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={unlocking}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); confirmInterviewUnlock(); }}
-              disabled={unlocking || walletPoints < INTERVIEW_UNLOCK_COST}
-            >
-              {unlocking ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Redeeming...</>
-              ) : (
-                `Redeem ${INTERVIEW_UNLOCK_COST.toLocaleString()} pts`
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <InterviewUnlockDialog
+        open={!!pendingUnlock}
+        onCancel={cancelInterviewUnlock}
+        onConfirm={confirmInterviewUnlock}
+        candidateName={pendingUnlock?.name}
+        walletPoints={walletPoints}
+        cost={INTERVIEW_UNLOCK_COST}
+        unlocking={unlocking}
+      />
     </div>
   );
 };

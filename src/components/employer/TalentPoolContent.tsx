@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AddCandidateModal } from './AddCandidateModal';
 import CandidateDetailModal from './CandidateDetailModal';
+import { useInterviewUnlock } from '@/hooks/useInterviewUnlock';
+import { InterviewUnlockDialog } from './InterviewUnlockDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +85,28 @@ export default function TalentPoolContent() {
     interviewing: 0,
     avgScore: 0
   });
+
+  const {
+    requireUnlock,
+    confirmUnlock,
+    cancelUnlock,
+    pendingCandidate,
+    walletPoints,
+    unlocking,
+    INTERVIEW_UNLOCK_COST,
+  } = useInterviewUnlock();
+
+  const openCandidate = (c: AppliedCandidate) => {
+    const cd = c.candidate;
+    requireUnlock(
+      {
+        id: c.candidate_id,
+        name: cd?.full_name || 'Candidate',
+        interviewCandidateId: c.id,
+      },
+      () => setSelectedCandidate(c)
+    );
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -617,6 +641,17 @@ export default function TalentPoolContent() {
         candidate={selectedCandidate}
       />
 
+      {/* Interview Unlock Confirmation */}
+      <InterviewUnlockDialog
+        open={!!pendingCandidate}
+        onCancel={cancelUnlock}
+        onConfirm={confirmUnlock}
+        candidateName={pendingCandidate?.name}
+        walletPoints={walletPoints}
+        cost={INTERVIEW_UNLOCK_COST}
+        unlocking={unlocking}
+      />
+
       {/* Candidates Display */}
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
         {loading ? (
@@ -639,7 +674,7 @@ export default function TalentPoolContent() {
                 <Card 
                   key={candidate.id} 
                   className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-                  onClick={() => setSelectedCandidate(candidate)}
+                  onClick={() => openCandidate(candidate)}
                 >
                   {/* AI Score Banner */}
                   <div className={`h-2 ${
@@ -962,7 +997,7 @@ export default function TalentPoolContent() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => setSelectedCandidate(candidate)}
+                          onClick={() => openCandidate(candidate)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
