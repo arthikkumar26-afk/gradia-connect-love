@@ -671,29 +671,6 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     }
   };
 
-      const { data, error } = await supabase.functions.invoke("generate-flyer-image", {
-        body: { prompt: promptParts, style: aiStyle, size: "1080x1350" },
-      });
-      if (error) {
-        if (error.message?.includes("429")) toast.error("Rate limit exceeded. Try again shortly.");
-        else if (error.message?.includes("402")) toast.error("AI credits exhausted.");
-        else throw error;
-        return;
-      }
-      if (data?.imageUrl) {
-        setAiImageUrl(data.imageUrl);
-        toast.success("AI flyer generated!");
-      } else if (data?.error) {
-        toast.error(data.error);
-      }
-    } catch (err: any) {
-      console.error("AI image error:", err);
-      toast.error(err.message || "Failed to generate AI flyer image.");
-    } finally {
-      setIsGeneratingImage(false);
-    }
-  };
-
   const handleDownload = async () => {
     try {
       if (layout === "ai") {
