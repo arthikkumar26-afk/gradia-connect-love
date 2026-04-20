@@ -351,18 +351,16 @@ export const MyVacanciesContent = () => {
                               <Button
                                 size="sm"
                                 variant="default"
-                                onClick={() => window.open(a.resume_url!, "_blank")}
+                                onClick={() => openResume(a.resume_url!, false)}
                               >
                                 <Eye className="h-3.5 w-3.5 mr-1" /> View CV
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                asChild
+                                onClick={() => openResume(a.resume_url!, true)}
                               >
-                                <a href={a.resume_url} download target="_blank" rel="noreferrer">
-                                  <Download className="h-3.5 w-3.5 mr-1" /> Download
-                                </a>
+                                <Download className="h-3.5 w-3.5 mr-1" /> Download
                               </Button>
                             </>
                           ) : (
