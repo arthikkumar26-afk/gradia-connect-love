@@ -696,26 +696,77 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form Section */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
               <div>
-                <Label className="text-sm font-semibold">Detailed layout (content-heavy)</Label>
-                <p className="text-[11px] text-muted-foreground">Auto-enabled for jobs with long descriptions. Matches the magazine-style hiring poster.</p>
+                <Label className="text-sm font-semibold">Flyer Style</Label>
+                <p className="text-[11px] text-muted-foreground">Pick a layout. AI Designed creates a fully custom poster image.</p>
               </div>
-              <Switch checked={layout === "detailed"} onCheckedChange={(v) => setLayout(v ? "detailed" : "compact")} />
+              <div className="grid grid-cols-3 gap-1 rounded-md bg-background p-1 border">
+                {([
+                  { v: "compact", label: "Compact" },
+                  { v: "detailed", label: "Detailed" },
+                  { v: "ai", label: "✨ AI Designed" },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => setLayout(opt.v)}
+                    className={`text-xs font-medium py-1.5 rounded transition-colors ${
+                      layout === opt.v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {layout === "ai" && (
+                <div className="space-y-2">
+                  <Label htmlFor="aiStyle" className="text-xs">Visual Style</Label>
+                  <select
+                    id="aiStyle"
+                    value={aiStyle}
+                    onChange={(e) => setAiStyle(e.target.value)}
+                    className="w-full text-sm rounded-md border bg-background px-2 py-1.5"
+                  >
+                    <option value="modern corporate">Modern Corporate</option>
+                    <option value="bold minimal">Bold Minimal</option>
+                    <option value="vibrant gradient">Vibrant Gradient</option>
+                    <option value="elegant dark">Elegant Dark</option>
+                    <option value="playful illustrated">Playful Illustrated</option>
+                    <option value="editorial magazine">Editorial Magazine</option>
+                    <option value="tech startup neon">Tech Startup / Neon</option>
+                    <option value="indian festive">Indian Festive</option>
+                  </select>
+                  <Button
+                    onClick={handleAIGenerateImage}
+                    disabled={isGeneratingImage}
+                    className="w-full"
+                    size="sm"
+                  >
+                    {isGeneratingImage ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Designing flyer...</>
+                    ) : (
+                      <><Sparkles className="h-4 w-4 mr-2" />{aiImageUrl ? "Regenerate" : "Generate"} AI Flyer</>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <Button
-              onClick={handleAIGenerate}
-              disabled={isGenerating || !jobData}
-              variant="outline"
-              className="w-full border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary"
-            >
-              {isGenerating ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating with AI...</>
-              ) : (
-                <><Sparkles className="h-4 w-4 mr-2" />AI Generate Flyer Content</>
-              )}
-            </Button>
+            {layout !== "ai" && (
+              <Button
+                onClick={handleAIGenerate}
+                disabled={isGenerating || !jobData}
+                variant="outline"
+                className="w-full border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary"
+              >
+                {isGenerating ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating with AI...</>
+                ) : (
+                  <><Sparkles className="h-4 w-4 mr-2" />AI Generate Flyer Content</>
+                )}
+              </Button>
+            )}
 
             <div>
               <Label htmlFor="headline">Headline</Label>
