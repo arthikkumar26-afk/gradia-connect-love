@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AddCandidateModal } from './AddCandidateModal';
 import CandidateDetailModal from './CandidateDetailModal';
+import { useInterviewUnlock } from '@/hooks/useInterviewUnlock';
+import { InterviewUnlockDialog } from './InterviewUnlockDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,6 +85,28 @@ export default function TalentPoolContent() {
     interviewing: 0,
     avgScore: 0
   });
+
+  const {
+    requireUnlock,
+    confirmUnlock,
+    cancelUnlock,
+    pendingCandidate,
+    walletPoints,
+    unlocking,
+    INTERVIEW_UNLOCK_COST,
+  } = useInterviewUnlock();
+
+  const openCandidate = (c: AppliedCandidate) => {
+    const cd = c.candidate;
+    requireUnlock(
+      {
+        id: c.candidate_id,
+        name: cd?.full_name || 'Candidate',
+        interviewCandidateId: c.id,
+      },
+      () => setSelectedCandidate(c)
+    );
+  };
 
   useEffect(() => {
     if (user?.id) {
