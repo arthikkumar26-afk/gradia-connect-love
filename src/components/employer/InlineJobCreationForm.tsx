@@ -474,8 +474,75 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     if (previewData.department) form.setValue("department", previewData.department);
     if (previewData.job_type) form.setValue("job_type", previewData.job_type);
     if (previewData.location) form.setValue("location", previewData.location);
-    if (previewData.experience_required) form.setValue("experience_required", previewData.experience_required);
-    if (previewData.salary_range) form.setValue("salary_range", previewData.salary_range);
+    if (previewData.experience_required) {
+      const expOptions = activeConfig.experienceOptions.map((o: any) => o.value as string);
+      const raw = String(previewData.experience_required).toLowerCase().trim();
+      // Try exact match (case-insensitive)
+      let matched = expOptions.find((v) => v.toLowerCase() === raw);
+      // Fresher detection
+      if (!matched && /(fresher|fresh|intern|no exp|0 year)/i.test(raw)) {
+        matched = expOptions.find((v) => /fresher/i.test(v)) || expOptions.find((v) => v === "0-1 years");
+      }
+      // Extract numeric range like "2-4", "3 to 5", "5+ years"
+      if (!matched) {
+        const nums = raw.match(/\d+/g)?.map(Number) || [];
+        const lo = nums[0];
+        const hi = nums[1] ?? lo;
+        if (typeof lo === "number") {
+          const buckets: Array<{ value: string; min: number; max: number }> = [
+            { value: "0-1 years", min: 0, max: 1 },
+            { value: "1-3 years", min: 1, max: 3 },
+            { value: "3-5 years", min: 3, max: 5 },
+            { value: "5-8 years", min: 5, max: 8 },
+            { value: "5-10 years", min: 5, max: 10 },
+            { value: "8+ years", min: 8, max: 99 },
+            { value: "10+ years", min: 10, max: 99 },
+          ];
+          const mid = (lo + hi) / 2;
+          const candidate = buckets
+            .filter((b) => expOptions.includes(b.value))
+            .find((b) => mid >= b.min && mid <= b.max);
+          matched = candidate?.value;
+        }
+      }
+      if (matched) form.setValue("experience_required", matched);
+    }
+    if (previewData.salary_range) {
+      const salaryOptions = [
+        "₹5,000 - ₹10,000","₹10,000 - ₹15,000","₹15,000 - ₹20,000","₹20,000 - ₹25,000",
+        "₹25,000 - ₹30,000","₹30,000 - ₹40,000","₹40,000 - ₹50,000","₹50,000 - ₹75,000",
+        "₹75,000 - ₹1,00,000","₹1,00,000+","Negotiable",
+      ];
+      const raw = String(previewData.salary_range).trim();
+      let matched = salaryOptions.find((s) => s.toLowerCase() === raw.toLowerCase());
+      if (!matched && /negotia/i.test(raw)) matched = "Negotiable";
+      if (!matched) {
+        // Extract numbers; handle LPA (lakhs per annum) → monthly
+        const isLPA = /lpa|lakh|per annum|p\.?a\.?/i.test(raw);
+        const nums = raw.replace(/,/g, "").match(/\d+(?:\.\d+)?/g)?.map(Number) || [];
+        if (nums.length > 0) {
+          const toMonthly = (n: number) => (isLPA ? Math.round((n * 100000) / 12) : n);
+          const lo = toMonthly(nums[0]);
+          const hi = toMonthly(nums[1] ?? nums[0]);
+          const mid = (lo + hi) / 2;
+          const buckets: Array<{ value: string; min: number; max: number }> = [
+            { value: "₹5,000 - ₹10,000", min: 0, max: 10000 },
+            { value: "₹10,000 - ₹15,000", min: 10000, max: 15000 },
+            { value: "₹15,000 - ₹20,000", min: 15000, max: 20000 },
+            { value: "₹20,000 - ₹25,000", min: 20000, max: 25000 },
+            { value: "₹25,000 - ₹30,000", min: 25000, max: 30000 },
+            { value: "₹30,000 - ₹40,000", min: 30000, max: 40000 },
+            { value: "₹40,000 - ₹50,000", min: 40000, max: 50000 },
+            { value: "₹50,000 - ₹75,000", min: 50000, max: 75000 },
+            { value: "₹75,000 - ₹1,00,000", min: 75000, max: 100000 },
+            { value: "₹1,00,000+", min: 100000, max: Infinity },
+          ];
+          matched = buckets.find((b) => mid >= b.min && mid < b.max)?.value || "₹1,00,000+";
+        }
+      }
+      if (!matched) matched = "Negotiable";
+      form.setValue("salary_range", matched);
+    }
     if (previewData.organisation) form.setValue("organisation", previewData.organisation);
     if (previewData.description) form.setValue("description", previewData.description);
     if (previewData.requirements) form.setValue("requirements", previewData.requirements);
