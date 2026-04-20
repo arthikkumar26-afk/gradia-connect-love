@@ -364,10 +364,118 @@ const CandidateSignup = () => {
   };
 
   const goBack = () => {
-    const stepOrder: WizardStep[] = ['signup', 'benefits', 'agreement', 'terms'];
+    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
+    }
+  };
+
+  // Resume scan: upload, AI parse, save to profile + related tables
+  const handleResumeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const allowed = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
+    if (!allowed.some(ext => f.name.toLowerCase().endsWith(ext))) {
+      toast({ title: 'Invalid file', description: 'Upload PDF, Word, or image file', variant: 'destructive' });
+      return;
+    }
+    if (f.size > 20 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Max 20MB allowed', variant: 'destructive' });
+      return;
+    }
+    setResumeFile(f);
+    setResumeParsed(null);
+  };
+
+  const handleResumeScan = async () => {
+    if (!resumeFile) {
+      toast({ title: 'Please upload a resume first', variant: 'destructive' });
+      return;
+    }
+    setResumeParsing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+      const userId = session.user.id;
+
+      // 1. Upload resume to storage
+      const ext = resumeFile.name.split('.').pop();
+      const filePath = `${userId}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('resumes').upload(filePath, resumeFile, { upsert: true });
+      if (upErr) console.warn('Resume upload error:', upErr);
+      const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
+      const resumeUrl = urlData?.publicUrl || null;
+
+      // 2. AI parse via edge function
+      const formData = new FormData();
+      formData.append('file', resumeFile);
+      const parseResp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: formData,
+        }
+      );
+      if (!parseResp.ok) {
+        const errText = await parseResp.text();
+        throw new Error(errText || 'Failed to parse resume');
+      }
+      const parsed = await parseResp.json();
+
+      // 3. Update profile with extracted info (only fill empty fields)
+      const profileUpdate: Record<string, any> = { resume_url: resumeUrl };
+      if (parsed.full_name && !fullName) profileUpdate.full_name = parsed.full_name;
+      if (parsed.mobile && !mobile) profileUpdate.mobile = String(parsed.mobile).replace(/\D/g, '').slice(-10);
+      if (parsed.location) profileUpdate.location = parsed.location;
+      if (parsed.current_state) profileUpdate.current_state = parsed.current_state;
+      if (parsed.current_district) profileUpdate.current_district = parsed.current_district;
+      if (parsed.linkedin) profileUpdate.linkedin = parsed.linkedin;
+      if (parsed.website) profileUpdate.website = parsed.website;
+      if (parsed.date_of_birth) profileUpdate.date_of_birth = parsed.date_of_birth;
+      if (parsed.gender) profileUpdate.gender = parsed.gender;
+      if (Array.isArray(parsed.skills) && parsed.skills.length) profileUpdate.skills = parsed.skills;
+      if (Array.isArray(parsed.languages) && parsed.languages.length) profileUpdate.languages = parsed.languages;
+      if (parsed.highest_qualification) profileUpdate.highest_qualification = parsed.highest_qualification;
+      if (parsed.experience_level) profileUpdate.experience_level = parsed.experience_level;
+      if (parsed.preferred_role) profileUpdate.preferred_role = parsed.preferred_role;
+
+      await supabase.from('profiles').update(profileUpdate).eq('id', userId);
+
+      // 4. Insert education rows
+      if (Array.isArray(parsed.education) && parsed.education.length) {
+        const eduRows = parsed.education
+          .filter((e: any) => e?.education_level)
+          .map((e: any, idx: number) => ({
+            user_id: userId,
+            education_level: String(e.education_level).slice(0, 100),
+            school_college_name: e.school_college_name || null,
+            specialization: e.specialization || null,
+            board_university: e.board_university || null,
+            year_of_passing: e.year_of_passing ? Number(e.year_of_passing) : null,
+            percentage_marks: e.percentage_marks ? Number(e.percentage_marks) : null,
+            display_order: idx,
+          }));
+        if (eduRows.length) {
+          await supabase.from('educational_qualifications').insert(eduRows);
+        }
+      }
+
+      setResumeParsed(parsed);
+      toast({
+        title: '✨ Resume scanned successfully!',
+        description: 'Your profile has been auto-filled with extracted info.',
+      });
+    } catch (err: any) {
+      console.error('Resume scan error:', err);
+      toast({
+        title: 'Could not scan resume',
+        description: err.message || 'Please try again or skip this step',
+        variant: 'destructive',
+      });
+    } finally {
+      setResumeParsing(false);
     }
   };
 
