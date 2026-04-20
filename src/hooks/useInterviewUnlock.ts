@@ -19,16 +19,35 @@ export const useInterviewUnlock = () => {
   const [walletPoints, setWalletPoints] = useState<number>(0);
   const [unlocking, setUnlocking] = useState(false);
 
-  // Preload existing unlocks for this employer
+  // Preload existing unlocks + wallet balance for this employer
+  const refreshWallet = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("points_balance")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setWalletPoints(wallet?.points_balance ?? 0);
+  }, []);
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await (supabase as any)
-        .from("interview_unlocks")
-        .select("candidate_id")
-        .eq("employer_id", user.id);
-      if (data) setUnlockedIds(new Set(data.map((r: any) => r.candidate_id)));
+      const [{ data: unlocks }, { data: wallet }] = await Promise.all([
+        (supabase as any)
+          .from("interview_unlocks")
+          .select("candidate_id")
+          .eq("employer_id", user.id),
+        supabase
+          .from("wallets")
+          .select("points_balance")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      if (unlocks) setUnlockedIds(new Set(unlocks.map((r: any) => r.candidate_id)));
+      setWalletPoints(wallet?.points_balance ?? 0);
     })();
   }, []);
 
@@ -150,6 +169,7 @@ export const useInterviewUnlock = () => {
     pendingCandidate,
     walletPoints,
     unlocking,
+    refreshWallet,
     INTERVIEW_UNLOCK_COST,
   };
 };
