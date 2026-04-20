@@ -365,8 +365,10 @@ export const CandidateFullProfile = () => {
   };
 
   const handleScheduleInterview = (stage: InterviewStage) => {
-    setSelectedStage(stage);
-    setScheduleModalOpen(true);
+    requireInterviewUnlock(() => {
+      setSelectedStage(stage);
+      setScheduleModalOpen(true);
+    });
   };
 
   const handleSendEmail = async (stage: InterviewStage) => {
