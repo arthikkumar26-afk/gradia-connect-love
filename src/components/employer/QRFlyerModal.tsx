@@ -608,8 +608,57 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     return canvas.toDataURL("image/png");
   };
 
+  const handleAIGenerateImage = async () => {
+    setIsGeneratingImage(true);
+    setAiImageUrl("");
+    try {
+      const promptParts = [
+        `Hiring poster for ${flyerData.positions || "open positions"}`,
+        `at ${companyName}`,
+        flyerData.headline && `Headline: "${flyerData.headline}"`,
+        flyerData.tagline && `Tagline: "${flyerData.tagline}"`,
+        flyerData.location && `Location: ${flyerData.location}`,
+        flyerData.salaryText && `Salary: ${flyerData.salaryText}`,
+        `Include text "WE'RE HIRING" prominently and a clear call-to-action.`,
+      ].filter(Boolean).join(". ");
+
+      const { data, error } = await supabase.functions.invoke("generate-flyer-image", {
+        body: { prompt: promptParts, style: aiStyle, size: "1080x1350" },
+      });
+      if (error) {
+        if (error.message?.includes("429")) toast.error("Rate limit exceeded. Try again shortly.");
+        else if (error.message?.includes("402")) toast.error("AI credits exhausted.");
+        else throw error;
+        return;
+      }
+      if (data?.imageUrl) {
+        setAiImageUrl(data.imageUrl);
+        toast.success("AI flyer generated!");
+      } else if (data?.error) {
+        toast.error(data.error);
+      }
+    } catch (err: any) {
+      console.error("AI image error:", err);
+      toast.error(err.message || "Failed to generate AI flyer image.");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
   const handleDownload = async () => {
     try {
+      if (layout === "ai") {
+        if (!aiImageUrl) {
+          toast.error("Generate an AI flyer first.");
+          return;
+        }
+        const link = document.createElement("a");
+        link.download = `${companyName.replace(/\s+/g, "-")}-ai-flyer.png`;
+        link.href = aiImageUrl;
+        link.click();
+        toast.success("AI flyer downloaded!");
+        return;
+      }
       const dataUrl = layout === "detailed" ? await generateDetailedFlyer() : await generateCompactFlyer();
       if (!dataUrl) return;
       const link = document.createElement("a");
