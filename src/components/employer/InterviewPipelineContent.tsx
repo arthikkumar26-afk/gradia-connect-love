@@ -3182,6 +3182,13 @@ export const InterviewPipelineContent = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-primary/30 bg-primary/5">
+            <Wallet className="h-4 w-4 text-primary" />
+            <div className="leading-tight">
+              <p className="text-sm font-bold text-foreground">{walletPoints.toLocaleString()} pts</p>
+              <p className="text-[10px] text-muted-foreground">Wallet Balance</p>
+            </div>
+          </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-foreground">{totalCandidates}</p>
             <p className="text-xs text-muted-foreground">Total Candidates</p>
