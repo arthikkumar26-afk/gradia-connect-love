@@ -42,10 +42,20 @@ interface ParsedResume {
   experience?: Array<{ designation?: string; organization?: string }>;
 }
 
+interface BulkRow {
+  fileName: string;
+  status: "pending" | "parsing" | "sending" | "sent" | "failed";
+  email?: string;
+  fullName?: string;
+  matchedJobs?: number;
+  error?: string;
+}
+
 const InviteFromResume = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
+  const bulkRef = useRef<HTMLInputElement>(null);
 
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -55,6 +65,10 @@ const InviteFromResume = () => {
   const [parsed, setParsed] = useState<ParsedResume | null>(null);
   const [emailOverride, setEmailOverride] = useState("");
   const [lastResult, setLastResult] = useState<{ matchedJobs: number; jobs: any[] } | null>(null);
+
+  // Bulk state
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -122,6 +136,71 @@ const InviteFromResume = () => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleBulkFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setBulkRows(files.map((f) => ({ fileName: f.name, status: "pending" as const })));
+    // Store actual files via dataset on a ref-less map: re-trigger via input instead
+    (window as any).__bulkResumeFiles = files;
+    toast.success(`${files.length} resume${files.length > 1 ? "s" : ""} queued. Click "Process & Invite All" to start.`);
+  };
+
+  const processBulk = async () => {
+    const files: File[] = (window as any).__bulkResumeFiles || [];
+    if (!files.length) { toast.error("No files queued"); return; }
+    setBulkRunning(true);
+    let sent = 0, failed = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      // parse
+      setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "parsing" } : r));
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const { data: parsedData, error: parseErr } = await supabase.functions.invoke("parse-resume", { body: fd });
+        if (parseErr) throw parseErr;
+        if (parsedData?.error) throw new Error(parsedData.error);
+
+        const email = (parsedData?.email || "").trim();
+        const fullName = parsedData?.full_name || "";
+        if (!email || !email.includes("@")) {
+          throw new Error("No valid email found in resume");
+        }
+
+        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "sending", email, fullName } : r));
+
+        const lastDesignation = parsedData?.experience?.[0]?.designation || "";
+        const { data: inviteData, error: inviteErr } = await supabase.functions.invoke("invite-candidate-from-resume", {
+          body: {
+            email,
+            fullName: fullName || undefined,
+            skills: parsedData?.skills || [],
+            preferredRole: parsedData?.preferred_role || "",
+            experienceLevel: parsedData?.experience_level || "",
+            lastDesignation,
+            location: parsedData?.location || "",
+            maxJobs: 6,
+          },
+        });
+        if (inviteErr) throw inviteErr;
+        if (inviteData?.error) throw new Error(inviteData.error);
+
+        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "sent", matchedJobs: inviteData.matchedJobs } : r));
+        sent++;
+      } catch (err: any) {
+        console.error("Bulk row failed:", file.name, err);
+        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "failed", error: err.message || "Failed" } : r));
+        failed++;
+      }
+      // small gap to avoid rate limits
+      await new Promise((r) => setTimeout(r, 800));
+    }
+
+    setBulkRunning(false);
+    toast.success(`Bulk complete: ${sent} sent, ${failed} failed`);
   };
 
   if (loading) {
@@ -305,6 +384,66 @@ const InviteFromResume = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* BULK INVITE SECTION */}
+            <Card className="border-primary/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <FileUp className="h-4 w-4 text-primary" /> Bulk Invite — Upload Multiple Resumes
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Upload multiple PDF/DOCX resumes. Each one is parsed → AI suggests jobs → invite email sent automatically.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div
+                  onClick={() => bulkRef.current?.click()}
+                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition"
+                >
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="font-medium text-sm">Click to select multiple resumes</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF / DOCX / Image. Up to 10 files at once.</p>
+                </div>
+                <input
+                  ref={bulkRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.docx,.doc,.png,.jpg,.jpeg"
+                  onChange={handleBulkFiles}
+                  className="hidden"
+                />
+
+                {bulkRows.length > 0 && (
+                  <>
+                    <div className="border rounded-md divide-y">
+                      {bulkRows.map((row, i) => (
+                        <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate">{row.fileName}</p>
+                            {row.email && <p className="text-xs text-muted-foreground truncate">{row.fullName ? `${row.fullName} · ` : ""}{row.email}</p>}
+                            {row.error && <p className="text-xs text-destructive truncate">{row.error}</p>}
+                          </div>
+                          <div className="ml-3 shrink-0">
+                            {row.status === "pending" && <Badge variant="outline" className="text-[10px]">Queued</Badge>}
+                            {row.status === "parsing" && <Badge variant="secondary" className="text-[10px]"><Loader2 className="h-3 w-3 mr-1 animate-spin inline" />Parsing</Badge>}
+                            {row.status === "sending" && <Badge variant="secondary" className="text-[10px]"><Loader2 className="h-3 w-3 mr-1 animate-spin inline" />Sending</Badge>}
+                            {row.status === "sent" && <Badge className="text-[10px] bg-green-600">Sent · {row.matchedJobs} jobs</Badge>}
+                            {row.status === "failed" && <Badge variant="destructive" className="text-[10px]">Failed</Badge>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Button onClick={processBulk} disabled={bulkRunning} className="w-full">
+                      {bulkRunning ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing {bulkRows.filter(r => r.status === "sent" || r.status === "failed").length}/{bulkRows.length}…</>
+                      ) : (
+                        <><Send className="h-4 w-4 mr-2" /> Process & Invite All ({bulkRows.length})</>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

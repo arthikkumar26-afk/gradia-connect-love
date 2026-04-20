@@ -84,6 +84,8 @@ const CandidateSignup = () => {
   const { isAuthenticated, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get("ref") || "";
+  const prefillEmail = searchParams.get("email") || "";
+  const prefillName = searchParams.get("name") || "";
   
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
@@ -91,9 +93,9 @@ const CandidateSignup = () => {
   // Track if user just signed up (to allow wizard flow to complete)
   const [justSignedUp, setJustSignedUp] = useState(false);
   
-  // Form state
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  // Form state (prefilled from invite link if present)
+  const [fullName, setFullName] = useState(prefillName);
+  const [email, setEmail] = useState(prefillEmail);
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

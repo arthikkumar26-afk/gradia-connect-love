@@ -184,9 +184,42 @@ serve(async (req) => {
       }
     }
 
-    const signupUrl = `${SITE_URL}/candidate/signup?email=${encodeURIComponent(email)}`;
+    const signupParams = new URLSearchParams({ email });
+    if (fullName) signupParams.set("name", fullName);
+    const signupUrl = `${SITE_URL}/candidate/signup?${signupParams.toString()}`;
     const greetingName = fullName?.trim() || email.split("@")[0];
     const headlineRole = preferredRole || lastDesignation || "your next role";
+
+    // AI-suggested role ideas based on resume skills (in addition to matched real jobs)
+    let aiSuggestedRoles: Array<{ title: string; why: string }> = [];
+    if (LOVABLE_API_KEY && skills.length > 0) {
+      try {
+        const roleRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              {
+                role: "user",
+                content: `Suggest 4 specific job titles that fit this candidate. Last role: ${lastDesignation || "n/a"}. Experience: ${experienceLevel || "n/a"}. Skills: ${skills.slice(0, 12).join(", ")}. Reply ONLY as compact JSON: [{"title":"...","why":"one short reason (max 12 words)"}]. No prose.`,
+              },
+            ],
+          }),
+        });
+        if (roleRes.ok) {
+          const j = await roleRes.json();
+          const txt = j.choices?.[0]?.message?.content?.trim() || "";
+          const cleaned = txt.replace(/```json|```/g, "").trim();
+          const start = cleaned.indexOf("[");
+          const end = cleaned.lastIndexOf("]");
+          if (start >= 0 && end > start) {
+            const parsed = JSON.parse(cleaned.slice(start, end + 1));
+            if (Array.isArray(parsed)) aiSuggestedRoles = parsed.slice(0, 4).filter((r: any) => r?.title);
+          }
+        }
+      } catch (_e) { /* ignore */ }
+    }
 
     // Optional: AI-crafted personalized intro line
     let personalIntro = `Based on your background${lastDesignation ? ` as ${lastDesignation}` : ""}${experienceLevel ? ` (${experienceLevel})` : ""}, we've handpicked opportunities matching your profile.`;
@@ -253,6 +286,18 @@ serve(async (req) => {
         <tr><td style="background:#f8fafc;padding:16px 20px;">
           <table width="100%" cellpadding="0" cellspacing="0">${jobCardsHtml}</table>
         </td></tr>
+        ${aiSuggestedRoles.length > 0 ? `
+        <tr><td style="background:#ffffff;padding:20px 28px 6px;">
+          <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">AI-suggested roles for your skill set</h2>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${aiSuggestedRoles.map(r => `
+              <tr><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="font-size:14px;font-weight:600;color:#0f172a;">${r.title}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:2px;">${r.why || ""}</div>
+              </td></tr>
+            `).join("")}
+          </table>
+        </td></tr>` : ""}
         <tr><td style="background:#ffffff;padding:20px 28px;">
           <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;">
             Once you sign up, your profile will be auto-prefilled from your resume so you can apply with a single click.
