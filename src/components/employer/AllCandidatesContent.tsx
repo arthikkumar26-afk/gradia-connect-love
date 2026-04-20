@@ -226,7 +226,7 @@ export function AllCandidatesContent() {
             <Card
               key={candidate.id}
               className="border-border hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => setSelectedCandidate(candidate)}
+              onClick={() => openCandidate(candidate)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -308,6 +308,16 @@ export function AllCandidatesContent() {
         candidate={selectedCandidate}
         onClose={() => setSelectedCandidate(null)}
         getSegmentLabel={getSegmentLabel}
+      />
+
+      <InterviewUnlockDialog
+        open={!!pendingCandidate}
+        onCancel={cancelUnlock}
+        onConfirm={confirmUnlock}
+        candidateName={pendingCandidate?.name}
+        walletPoints={walletPoints}
+        cost={INTERVIEW_UNLOCK_COST}
+        unlocking={unlocking}
       />
     </div>
   );
