@@ -310,11 +310,6 @@ export const MyVacanciesContent = () => {
                               <Lock className="h-3 w-3 mr-1" /> Locked
                             </Badge>
                           )}
-                          {a.status && (
-                            <Badge variant="secondary" className="text-xs capitalize">
-                              {a.status}
-                            </Badge>
-                          )}
                         </div>
 
                         {a.unlocked ? (
