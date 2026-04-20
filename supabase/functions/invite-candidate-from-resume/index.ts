@@ -286,6 +286,18 @@ serve(async (req) => {
         <tr><td style="background:#f8fafc;padding:16px 20px;">
           <table width="100%" cellpadding="0" cellspacing="0">${jobCardsHtml}</table>
         </td></tr>
+        ${aiSuggestedRoles.length > 0 ? `
+        <tr><td style="background:#ffffff;padding:20px 28px 6px;">
+          <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">AI-suggested roles for your skill set</h2>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${aiSuggestedRoles.map(r => `
+              <tr><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                <div style="font-size:14px;font-weight:600;color:#0f172a;">${r.title}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:2px;">${r.why || ""}</div>
+              </td></tr>
+            `).join("")}
+          </table>
+        </td></tr>` : ""}
         <tr><td style="background:#ffffff;padding:20px 28px;">
           <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;">
             Once you sign up, your profile will be auto-prefilled from your resume so you can apply with a single click.
