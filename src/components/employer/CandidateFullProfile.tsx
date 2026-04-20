@@ -373,7 +373,11 @@ export const CandidateFullProfile = () => {
 
   const handleSendEmail = async (stage: InterviewStage) => {
     if (!candidate) return;
-    
+    if (!interviewUnlocked) {
+      requireInterviewUnlock(() => handleSendEmail(stage));
+      return;
+    }
+
     try {
       toast.loading(`Sending interview invitation for ${stage.name}...`);
       
