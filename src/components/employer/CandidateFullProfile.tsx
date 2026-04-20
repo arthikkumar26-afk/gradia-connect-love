@@ -1134,6 +1134,42 @@ export const CandidateFullProfile = () => {
           onSuccess={fetchCandidateData}
         />
       )}
+
+      {/* Interview Unlock Dialog */}
+      <AlertDialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Unlock Interview Access
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 pt-2">
+              <span className="block">
+                To take interviews with <strong>{candidate?.name}</strong>, redeem{" "}
+                <strong>{INTERVIEW_UNLOCK_COST} points</strong> from your wallet.
+              </span>
+              <span className="block text-sm">
+                Your balance: <strong>{walletPoints} pts</strong>
+                {walletPoints < INTERVIEW_UNLOCK_COST && (
+                  <span className="text-destructive"> — Insufficient points</span>
+                )}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                One-time unlock per candidate. Covers all interview rounds and email invitations.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unlocking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleConfirmUnlock(); }}
+              disabled={unlocking || walletPoints < INTERVIEW_UNLOCK_COST}
+            >
+              {unlocking ? 'Redeeming...' : `Redeem ${INTERVIEW_UNLOCK_COST} pts`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
