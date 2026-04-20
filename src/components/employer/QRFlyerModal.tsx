@@ -524,18 +524,21 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
     rightY += 30;
 
     const drawRightSection = (title: string, items: string[]) => {
+      if (rightY + 30 > contentMaxY) return;
       ctx.fillStyle = NAVY;
       ctx.font = "bold 16px 'Segoe UI', Arial, sans-serif";
       ctx.fillText(title, rightX, rightY);
       rightY += 22;
       ctx.fillStyle = "#374151";
       ctx.font = "13px 'Segoe UI', Arial, sans-serif";
-      items.forEach((item) => {
+      for (const item of items) {
+        if (rightY + 16 > contentMaxY) return;
         ctx.fillStyle = "#374151";
         ctx.fillText("•", rightX + 4, rightY);
-        rightY = wrapText(ctx, item, rightX + 18, rightY, rightW - 18, 16);
-        rightY += 2;
-      });
+        const newY = wrapText(ctx, item, rightX + 18, rightY, rightW - 18, 16);
+        if (newY > contentMaxY) { rightY = contentMaxY; return; }
+        rightY = newY + 2;
+      }
       rightY += 10;
     };
 
