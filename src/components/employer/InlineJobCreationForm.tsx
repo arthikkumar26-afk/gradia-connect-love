@@ -466,6 +466,42 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     }
   };
 
+  const normalizeExperienceValue = (value: string, options: string[]) => {
+    const raw = String(value).toLowerCase().trim();
+    let matched = options.find((option) => option.toLowerCase() === raw);
+
+    if (!matched && /(fresher|fresh|intern|no exp|no experience|0 year)/i.test(raw)) {
+      matched = options.find((option) => /fresher/i.test(option)) || options.find((option) => option === "0-1 years");
+    }
+
+    if (!matched) {
+      const nums = raw.match(/\d+/g)?.map(Number) || [];
+      const lo = nums[0];
+      const hi = nums[1] ?? lo;
+
+      if (typeof lo === "number") {
+        const plusRange = /\+/.test(raw) || /(above|over|minimum|at least)/i.test(raw);
+        const mid = plusRange ? lo : (lo + hi) / 2;
+
+        matched = options.find((option) => {
+          const optionRaw = option.toLowerCase();
+          const optionNums = optionRaw.match(/\d+/g)?.map(Number) || [];
+
+          if (optionNums.length === 0) return false;
+          if (/fresher/i.test(optionRaw)) return lo === 0;
+
+          const optionMin = optionNums[0];
+          const optionMax = /\+/.test(optionRaw) ? Number.POSITIVE_INFINITY : (optionNums[1] ?? optionNums[0]);
+
+          if (plusRange) return lo >= optionMin && lo <= optionMax;
+          return mid >= optionMin && mid <= optionMax;
+        });
+      }
+    }
+
+    return matched;
+  };
+
   const applyPreviewData = () => {
     if (!previewData) return;
 
@@ -475,36 +511,9 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     if (previewData.job_type) form.setValue("job_type", previewData.job_type);
     if (previewData.location) form.setValue("location", previewData.location);
     if (previewData.experience_required) {
-      const expOptions = activeConfig.experienceOptions.map((o: any) => o.value as string);
-      const raw = String(previewData.experience_required).toLowerCase().trim();
-      // Try exact match (case-insensitive)
-      let matched = expOptions.find((v) => v.toLowerCase() === raw);
-      // Fresher detection
-      if (!matched && /(fresher|fresh|intern|no exp|0 year)/i.test(raw)) {
-        matched = expOptions.find((v) => /fresher/i.test(v)) || expOptions.find((v) => v === "0-1 years");
-      }
-      // Extract numeric range like "2-4", "3 to 5", "5+ years"
-      if (!matched) {
-        const nums = raw.match(/\d+/g)?.map(Number) || [];
-        const lo = nums[0];
-        const hi = nums[1] ?? lo;
-        if (typeof lo === "number") {
-          const buckets: Array<{ value: string; min: number; max: number }> = [
-            { value: "0-1 years", min: 0, max: 1 },
-            { value: "1-3 years", min: 1, max: 3 },
-            { value: "3-5 years", min: 3, max: 5 },
-            { value: "5-8 years", min: 5, max: 8 },
-            { value: "5-10 years", min: 5, max: 10 },
-            { value: "8+ years", min: 8, max: 99 },
-            { value: "10+ years", min: 10, max: 99 },
-          ];
-          const mid = (lo + hi) / 2;
-          const candidate = buckets
-            .filter((b) => expOptions.includes(b.value))
-            .find((b) => mid >= b.min && mid <= b.max);
-          matched = candidate?.value;
-        }
-      }
+      const detectedConfig = getFormConfigForInterviewType(previewData.detected_interview_type || watchedInterviewType) || defaultFormConfig;
+      const expOptions = detectedConfig.experienceOptions.map((option: any) => option.value as string);
+      const matched = normalizeExperienceValue(previewData.experience_required, expOptions);
       if (matched) form.setValue("experience_required", matched);
     }
     if (previewData.salary_range) {
@@ -1475,7 +1484,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Job Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select value={field.value || undefined} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select job type" />
