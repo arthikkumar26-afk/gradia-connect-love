@@ -1311,12 +1311,12 @@ const CandidateSignup = () => {
         </div>
 
         {resumeParsed && (
-          <div className="mb-6 p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900">
+          <div className="mb-6 p-4 rounded-lg bg-accent/10 border border-accent/30">
             <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+              <CheckCircle className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
               <div className="flex-1 text-sm">
-                <p className="font-semibold text-green-900 dark:text-green-100 mb-1">Profile auto-filled!</p>
-                <ul className="text-green-800 dark:text-green-200 text-xs space-y-0.5">
+                <p className="font-semibold text-foreground mb-1">Profile auto-filled!</p>
+                <ul className="text-muted-foreground text-xs space-y-0.5">
                   {resumeParsed.full_name && <li>✓ Name: {resumeParsed.full_name}</li>}
                   {Array.isArray(resumeParsed.skills) && resumeParsed.skills.length > 0 && (
                     <li>✓ {resumeParsed.skills.length} skills extracted</li>
@@ -1329,7 +1329,7 @@ const CandidateSignup = () => {
                   )}
                   {resumeParsed.experience_level && <li>✓ Experience level: {resumeParsed.experience_level}</li>}
                 </ul>
-                <p className="text-xs text-green-700 dark:text-green-300 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   You can edit and complete details later in your profile.
                 </p>
               </div>
