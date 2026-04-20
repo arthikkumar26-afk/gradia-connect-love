@@ -3,8 +3,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, MapPin, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Briefcase,
+  Users,
+  MapPin,
+  FileText,
+  ArrowLeft,
+  Lock,
+  Unlock,
+  Mail,
+  Phone,
+  Download,
+  Eye,
+  Wallet,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+const UNLOCK_COST = 10; // points to unlock one CV
 
 interface VacancyRow {
   id: string;
@@ -16,59 +41,402 @@ interface VacancyRow {
   applicationCount: number;
 }
 
+interface ApplicantRow {
+  applicationId: string;
+  candidate_id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  resume_url: string | null;
+  applied_date: string | null;
+  status: string | null;
+  unlocked: boolean;
+}
+
 export const MyVacanciesContent = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [vacancies, setVacancies] = useState<VacancyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedJob, setSelectedJob] = useState<VacancyRow | null>(null);
+  const [applicants, setApplicants] = useState<ApplicantRow[]>([]);
+  const [loadingApps, setLoadingApps] = useState(false);
+  const [confirmUnlock, setConfirmUnlock] = useState<ApplicantRow | null>(null);
+  const [unlocking, setUnlocking] = useState(false);
+  const [walletPoints, setWalletPoints] = useState<number>(0);
+
+  const loadVacancies = async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    const { data: jobs } = await supabase
+      .from("jobs")
+      .select("id, job_title, location, status, job_type, created_at")
+      .eq("employer_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (!jobs) {
+      setVacancies([]);
+      setLoading(false);
+      return;
+    }
+
+    const ids = jobs.map((j) => j.id);
+    const counts: Record<string, number> = {};
+    if (ids.length > 0) {
+      const { data: apps } = await supabase
+        .from("applications")
+        .select("job_id")
+        .in("job_id", ids);
+      (apps || []).forEach((a: any) => {
+        counts[a.job_id] = (counts[a.job_id] || 0) + 1;
+      });
+    }
+
+    setVacancies(jobs.map((j) => ({ ...j, applicationCount: counts[j.id] || 0 })));
+    setLoading(false);
+  };
+
+  const loadWallet = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("wallets")
+      .select("points_balance")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setWalletPoints(data?.points_balance || 0);
+  };
 
   useEffect(() => {
-    if (!user?.id) return;
-    const load = async () => {
-      setLoading(true);
-      const { data: jobs, error } = await supabase
-        .from("jobs")
-        .select("id, job_title, location, status, job_type, created_at")
-        .eq("employer_id", user.id)
-        .order("created_at", { ascending: false });
+    loadVacancies();
+    loadWallet();
+  }, [user?.id]);
 
-      if (error || !jobs) {
-        setVacancies([]);
-        setLoading(false);
+  const openJob = async (job: VacancyRow) => {
+    setSelectedJob(job);
+    setLoadingApps(true);
+
+    // Get applications
+    const { data: apps } = await supabase
+      .from("applications")
+      .select("id, candidate_id, applied_date, status")
+      .eq("job_id", job.id)
+      .order("applied_date", { ascending: false });
+
+    if (!apps || apps.length === 0) {
+      setApplicants([]);
+      setLoadingApps(false);
+      return;
+    }
+
+    const candidateIds = apps.map((a: any) => a.candidate_id);
+
+    // Get candidate profiles + unlocks in parallel
+    const [{ data: profiles }, { data: unlocks }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, phone, location, resume_url")
+        .in("id", candidateIds),
+      supabase
+        .from("cv_unlocks")
+        .select("candidate_id")
+        .eq("employer_id", user!.id)
+        .eq("job_id", job.id)
+        .in("candidate_id", candidateIds),
+    ]);
+
+    const unlockedSet = new Set((unlocks || []).map((u: any) => u.candidate_id));
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+    const rows: ApplicantRow[] = apps.map((a: any) => {
+      const p: any = profileMap.get(a.candidate_id) || {};
+      return {
+        applicationId: a.id,
+        candidate_id: a.candidate_id,
+        full_name: p.full_name || null,
+        email: p.email || null,
+        phone: p.phone || null,
+        location: p.location || null,
+        resume_url: p.resume_url || null,
+        applied_date: a.applied_date,
+        status: a.status,
+        unlocked: unlockedSet.has(a.candidate_id),
+      };
+    });
+
+    setApplicants(rows);
+    setLoadingApps(false);
+  };
+
+  const handleUnlock = async () => {
+    if (!confirmUnlock || !selectedJob || !user?.id) return;
+    setUnlocking(true);
+
+    try {
+      // Refetch wallet to ensure latest balance
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!wallet) {
+        toast({
+          title: "Wallet not found",
+          description: "Please load points into your wallet first.",
+          variant: "destructive",
+        });
+        setUnlocking(false);
         return;
       }
 
-      const ids = jobs.map((j) => j.id);
-      const counts: Record<string, number> = {};
-      if (ids.length > 0) {
-        const { data: apps } = await supabase
-          .from("applications")
-          .select("job_id")
-          .in("job_id", ids);
-        (apps || []).forEach((a: any) => {
-          counts[a.job_id] = (counts[a.job_id] || 0) + 1;
+      if ((wallet.points_balance || 0) < UNLOCK_COST) {
+        toast({
+          title: "Insufficient points",
+          description: `You need ${UNLOCK_COST} pts. Current balance: ${wallet.points_balance || 0} pts.`,
+          variant: "destructive",
         });
+        setUnlocking(false);
+        return;
       }
 
-      setVacancies(
-        jobs.map((j) => ({ ...j, applicationCount: counts[j.id] || 0 }))
+      // Deduct points
+      const newBalance = (wallet.points_balance || 0) - UNLOCK_COST;
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: newBalance })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      // Record transaction
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "cv_unlock",
+        points: UNLOCK_COST,
+        description: `Unlocked CV: ${confirmUnlock.full_name || "Candidate"} for ${selectedJob.job_title}`,
+      });
+
+      // Insert unlock record
+      const { error: unlockErr } = await supabase.from("cv_unlocks").insert({
+        employer_id: user.id,
+        candidate_id: confirmUnlock.candidate_id,
+        job_id: selectedJob.id,
+        points_spent: UNLOCK_COST,
+      });
+      if (unlockErr && !unlockErr.message?.includes("duplicate")) throw unlockErr;
+
+      // Update local state
+      setApplicants((prev) =>
+        prev.map((a) =>
+          a.candidate_id === confirmUnlock.candidate_id ? { ...a, unlocked: true } : a
+        )
       );
-      setLoading(false);
-    };
-    load();
-  }, [user?.id]);
+      setWalletPoints(newBalance);
+      toast({
+        title: "CV Unlocked!",
+        description: `${UNLOCK_COST} pts deducted. New balance: ${newBalance} pts.`,
+      });
+      setConfirmUnlock(null);
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: err.message || "Failed to unlock CV",
+        variant: "destructive",
+      });
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const total = vacancies.reduce((s, v) => s + v.applicationCount, 0);
   const withApps = vacancies.filter((v) => v.applicationCount > 0);
 
+  // ======== APPLICANTS VIEW ========
+  if (selectedJob) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={() => setSelectedJob(null)}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">{selectedJob.job_title}</h2>
+              <p className="text-xs text-muted-foreground">
+                {applicants.length} applicant{applicants.length !== 1 ? "s" : ""} • Unlock cost:{" "}
+                {UNLOCK_COST} pts per CV
+              </p>
+            </div>
+          </div>
+          <Badge variant="secondary" className="text-sm px-3 py-1.5">
+            <Wallet className="h-3.5 w-3.5 mr-1.5" />
+            {walletPoints} pts
+          </Badge>
+        </div>
+
+        <Card>
+          <CardContent className="p-4">
+            {loadingApps ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full" />
+                ))}
+              </div>
+            ) : applicants.length === 0 ? (
+              <p className="text-center text-muted-foreground py-12">
+                No applications received yet for this vacancy.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {applicants.map((a) => (
+                  <div
+                    key={a.applicationId}
+                    className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-foreground">
+                            {a.unlocked ? a.full_name || "Candidate" : "🔒 Locked Profile"}
+                          </h3>
+                          {a.unlocked ? (
+                            <Badge variant="default" className="text-xs">
+                              <Unlock className="h-3 w-3 mr-1" /> Unlocked
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              <Lock className="h-3 w-3 mr-1" /> Locked
+                            </Badge>
+                          )}
+                          {a.status && (
+                            <Badge variant="secondary" className="text-xs capitalize">
+                              {a.status}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {a.unlocked ? (
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            {a.email && (
+                              <p className="flex items-center gap-1.5">
+                                <Mail className="h-3.5 w-3.5" /> {a.email}
+                              </p>
+                            )}
+                            {a.phone && (
+                              <p className="flex items-center gap-1.5">
+                                <Phone className="h-3.5 w-3.5" /> {a.phone}
+                              </p>
+                            )}
+                            {a.location && (
+                              <p className="flex items-center gap-1.5">
+                                <MapPin className="h-3.5 w-3.5" /> {a.location}
+                              </p>
+                            )}
+                            {a.applied_date && (
+                              <p className="text-xs">
+                                Applied: {new Date(a.applied_date).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Candidate details and CV are hidden. Spend{" "}
+                            <span className="font-semibold text-foreground">{UNLOCK_COST} pts</span>{" "}
+                            to view full profile and download CV.
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-2 shrink-0">
+                        {a.unlocked ? (
+                          a.resume_url ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => window.open(a.resume_url!, "_blank")}
+                              >
+                                <Eye className="h-3.5 w-3.5 mr-1" /> View CV
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                asChild
+                              >
+                                <a href={a.resume_url} download target="_blank" rel="noreferrer">
+                                  <Download className="h-3.5 w-3.5 mr-1" /> Download
+                                </a>
+                              </Button>
+                            </>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              No CV uploaded
+                            </Badge>
+                          )
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => setConfirmUnlock(a)}
+                            disabled={walletPoints < UNLOCK_COST}
+                          >
+                            <Unlock className="h-3.5 w-3.5 mr-1" />
+                            Unlock for {UNLOCK_COST} pts
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Dialog open={!!confirmUnlock} onOpenChange={(o) => !o && setConfirmUnlock(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Unlock Candidate CV?</DialogTitle>
+              <DialogDescription>
+                <span className="font-semibold text-foreground">{UNLOCK_COST} points</span> will be
+                deducted from your wallet to view this candidate's full details and download their
+                CV.
+                <br />
+                <br />
+                Current balance: <span className="font-semibold">{walletPoints} pts</span>
+                <br />
+                After unlock: <span className="font-semibold">{walletPoints - UNLOCK_COST} pts</span>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmUnlock(null)} disabled={unlocking}>
+                Cancel
+              </Button>
+              <Button onClick={handleUnlock} disabled={unlocking}>
+                {unlocking ? "Processing..." : `Confirm & Pay ${UNLOCK_COST} pts`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // ======== VACANCIES LIST VIEW ========
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-foreground">My Vacancies</h2>
           <p className="text-sm text-muted-foreground">
-            Track CVs/resumes received per vacancy
+            Click a vacancy to view received resumes • {UNLOCK_COST} pts per CV unlock
           </p>
         </div>
+        <Badge variant="secondary" className="text-sm px-3 py-1.5">
+          <Wallet className="h-3.5 w-3.5 mr-1.5" />
+          {walletPoints} pts
+        </Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -119,16 +487,15 @@ export const MyVacanciesContent = () => {
           ) : (
             <div className="space-y-2">
               {vacancies.map((v) => (
-                <div
+                <button
                   key={v.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/40 transition-colors"
+                  onClick={() => openJob(v)}
+                  className="w-full text-left flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/40 hover:border-primary/40 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <Briefcase className="h-5 w-5 text-muted-foreground shrink-0" />
                     <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">
-                        {v.job_title}
-                      </p>
+                      <p className="font-medium text-foreground truncate">{v.job_title}</p>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         {v.location && (
                           <span className="flex items-center gap-1">
@@ -155,7 +522,7 @@ export const MyVacanciesContent = () => {
                       {v.applicationCount} {v.applicationCount === 1 ? "CV" : "CVs"}
                     </Badge>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

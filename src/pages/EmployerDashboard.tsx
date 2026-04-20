@@ -36,6 +36,7 @@ import {
   FileText,
   BookOpen,
   Crown,
+  Wallet,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -78,6 +79,7 @@ import { UpgradePlanContent } from "@/components/employer/UpgradePlanContent";
 import { EmployerSettingsContent } from "@/components/employer/EmployerSettingsContent";
 import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent";
 import { OutsourceProjectsContent } from "@/components/employer/OutsourceProjectsContent";
+import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
 import { EmployerNotifications } from "@/components/employer/EmployerNotifications";
 
@@ -363,6 +365,7 @@ const EmployerDashboard = () => {
     { id: "all-candidates", label: "Candidates", icon: ClipboardList, path: "/employer/candidates" },
     { id: "campaigns", label: "Campaigns", icon: Megaphone, path: "/employer/campaigns" },
     { id: "outsource-projects", label: "Outsource Projects", icon: Briefcase, path: "/employer/outsource-projects" },
+    { id: "wallet", label: "My Wallet", icon: Wallet, path: "/employer/wallet" },
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
     
@@ -759,6 +762,7 @@ const EmployerDashboard = () => {
             {activeMenu === "all-candidates" && <AllCandidatesContent />}
             {activeMenu === "campaigns" && <EmployerCampaignContent />}
             {activeMenu === "outsource-projects" && <OutsourceProjectsContent />}
+            {activeMenu === "wallet" && user?.id && <WalletTab userId={user.id} />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
             
