@@ -115,7 +115,13 @@ export const CandidateFullProfile = () => {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<InterviewStage | null>(null);
   const [aiActionLoading, setAiActionLoading] = useState<string | null>(null);
-  
+  const [interviewUnlocked, setInterviewUnlocked] = useState(false);
+  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const [walletPoints, setWalletPoints] = useState(0);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const INTERVIEW_UNLOCK_COST = 1000;
+
   const { 
     notifyShortlisted, 
     notifyHired, 
