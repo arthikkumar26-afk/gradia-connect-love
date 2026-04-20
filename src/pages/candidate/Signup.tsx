@@ -117,6 +117,11 @@ const CandidateSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
+  // Resume step state
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeParsing, setResumeParsing] = useState(false);
+  const [resumeParsed, setResumeParsed] = useState<any | null>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
     // If user just signed up, let them complete the wizard flow
