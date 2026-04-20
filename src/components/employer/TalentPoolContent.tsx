@@ -641,6 +641,17 @@ export default function TalentPoolContent() {
         candidate={selectedCandidate}
       />
 
+      {/* Interview Unlock Confirmation */}
+      <InterviewUnlockDialog
+        open={!!pendingCandidate}
+        onCancel={cancelUnlock}
+        onConfirm={confirmUnlock}
+        candidateName={pendingCandidate?.name}
+        walletPoints={walletPoints}
+        cost={INTERVIEW_UNLOCK_COST}
+        unlocking={unlocking}
+      />
+
       {/* Candidates Display */}
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
         {loading ? (
@@ -663,7 +674,7 @@ export default function TalentPoolContent() {
                 <Card 
                   key={candidate.id} 
                   className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-                  onClick={() => setSelectedCandidate(candidate)}
+                  onClick={() => openCandidate(candidate)}
                 >
                   {/* AI Score Banner */}
                   <div className={`h-2 ${
@@ -986,7 +997,7 @@ export default function TalentPoolContent() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => setSelectedCandidate(candidate)}
+                          onClick={() => openCandidate(candidate)}
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           View
