@@ -37,6 +37,7 @@ import {
   Loader2,
   Download,
   Ticket,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -526,7 +527,24 @@ export default function WalletTab({ userId }: { userId: string }) {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-muted-foreground">Points Balance</span>
-              <Star className="h-5 w-5 text-yellow-600" />
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-yellow-700 hover:text-yellow-800 hover:bg-yellow-100/60 dark:text-yellow-400 dark:hover:bg-yellow-900/30"
+                  onClick={async () => {
+                    setBalancePulse(true);
+                    await fetchWallet();
+                    setTimeout(() => setBalancePulse(false), 1200);
+                    toast({ title: "Balance refreshed", description: "Wallet synced with the latest server value." });
+                  }}
+                  disabled={loading}
+                  title="Refresh balance"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                </Button>
+                <Star className="h-5 w-5 text-yellow-600" />
+              </div>
             </div>
             <div className={`text-3xl font-bold text-yellow-700 dark:text-yellow-400 transition-all duration-500 ${balancePulse ? "scale-110 drop-shadow-[0_0_12px_rgba(234,179,8,0.6)]" : "scale-100"}`}>
               {wallet?.points_balance?.toLocaleString("en-IN") || "0"} pts
