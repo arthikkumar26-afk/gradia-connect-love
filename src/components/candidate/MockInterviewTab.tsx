@@ -96,6 +96,8 @@ interface MockInterviewSession {
   recording_url?: string;
   created_at: string;
   completed_at?: string;
+  points_paid?: boolean | null;
+  points_paid_at?: string | null;
 }
 
 export const MockInterviewTab = () => {
@@ -564,19 +566,25 @@ export const MockInterviewTab = () => {
         .maybeSingle();
       setProfile(profileData);
 
-      // Get the most recent session
-      const { data: recentSession } = await supabase
+      // Prefer an active unpaid/in-progress session so the lock is shown for the current attempt.
+      // Fall back to the latest paid in-progress session, then latest completed session.
+      const { data: sessionRows } = await supabase
         .from('mock_interview_sessions')
         .select('*')
         .eq('candidate_id', user?.id)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(20);
+
+      const sessions = (sessionRows || []) as MockInterviewSession[];
+      const prioritizedSession =
+        sessions.find((session) => session.status === 'in_progress' && session.points_paid !== true) ||
+        sessions.find((session) => session.status === 'in_progress' && session.points_paid === true) ||
+        null;
 
       // Resolve stages from local pipeline config if session has pipeline info
       let resolvedStages: InterviewStage[] = [];
-      const sessInterviewType = recentSession?.interview_type || localStorage.getItem('mock_interview_type') || '';
-      const sessPipelineType = recentSession?.pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
+      const sessInterviewType = (prioritizedSession as any)?.interview_type || localStorage.getItem('mock_interview_type') || '';
+      const sessPipelineType = (prioritizedSession as any)?.pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
 
       if (sessInterviewType && sessPipelineType) {
         const configStages = interviewPipelineConfig
@@ -615,22 +623,22 @@ export const MockInterviewTab = () => {
 
       setStages(resolvedStages);
 
-      if (recentSession) {
-        setCurrentSession(recentSession);
+      if (prioritizedSession) {
+        setCurrentSession(prioritizedSession);
 
         // Restore pipeline selections from session if available
-        if (recentSession.interview_type && !selectedMockInterviewType) {
-          setSelectedMockInterviewType(recentSession.interview_type);
+        if ((prioritizedSession as any).interview_type && !selectedMockInterviewType) {
+          setSelectedMockInterviewType((prioritizedSession as any).interview_type);
         }
-        if (recentSession.pipeline_type && !selectedMockPipelineType) {
-          setSelectedMockPipelineType(recentSession.pipeline_type);
+        if ((prioritizedSession as any).pipeline_type && !selectedMockPipelineType) {
+          setSelectedMockPipelineType((prioritizedSession as any).pipeline_type);
         }
         
         // Get stage results for this session
         const { data: resultsData } = await supabase
           .from('mock_interview_stage_results')
           .select('*')
-          .eq('session_id', recentSession.id)
+          .eq('session_id', prioritizedSession.id)
           .order('stage_order', { ascending: true });
         
         if (resultsData) {
@@ -641,13 +649,21 @@ export const MockInterviewTab = () => {
         const { data: negotiationData } = await supabase
           .from('hr_negotiations')
           .select('*')
-          .eq('session_id', recentSession.id)
+          .eq('session_id', prioritizedSession.id)
           .maybeSingle();
         
         if (negotiationData) {
           setExistingNegotiation(negotiationData);
           setHrNegotiationType(negotiationData.negotiation_type as 'call' | 'form');
+        } else {
+          setExistingNegotiation(null);
+          setHrNegotiationType(null);
         }
+      } else {
+        setCurrentSession(null);
+        setStageResults([]);
+        setExistingNegotiation(null);
+        setHrNegotiationType(null);
       }
 
     } catch (error) {
