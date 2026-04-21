@@ -5,7 +5,33 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { EmployerProvider } from "./contexts/EmployerContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, ComponentType } from "react";
+
+// Retry wrapper for lazy imports — handles stale chunk hashes after redeploys.
+// On chunk load failure, reload the page once to fetch fresh asset manifest.
+const lazyWithRetry = <T extends ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) =>
+  lazy(async () => {
+    const reloadKey = "lovable_chunk_reloaded";
+    try {
+      return await factory();
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      const isChunkErr =
+        msg.includes("Failed to fetch dynamically imported module") ||
+        msg.includes("Importing a module script failed") ||
+        msg.includes("ChunkLoadError") ||
+        msg.includes("error loading dynamically imported module");
+      if (isChunkErr && !sessionStorage.getItem(reloadKey)) {
+        sessionStorage.setItem(reloadKey, "1");
+        window.location.reload();
+        // Return a never-resolving promise so Suspense keeps showing fallback until reload
+        return new Promise<{ default: T }>(() => {});
+      }
+      throw err;
+    }
+  });
 
 // Layout - keep eagerly loaded
 import Layout from "./components/layout/Layout";
