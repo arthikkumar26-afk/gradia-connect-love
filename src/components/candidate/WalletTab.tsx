@@ -115,6 +115,9 @@ export default function WalletTab({ userId }: { userId: string }) {
   const [myReferralCode, setMyReferralCode] = useState<string>("");
   const [bonusCode, setBonusCode] = useState("");
   const [redeeming, setRedeeming] = useState(false);
+  const [freePointsCoupon, setFreePointsCoupon] = useState<{ id: string; max: number | null } | null>(null);
+  const [freePointsAmount, setFreePointsAmount] = useState<string>("");
+  const [validatingCode, setValidatingCode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
