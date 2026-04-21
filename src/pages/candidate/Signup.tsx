@@ -222,6 +222,15 @@ const CandidateSignup = () => {
           const result = await Promise.race([signupPromise, timeoutPromise]);
           signupData = result.data;
           signupError = result.error;
+          // Try to extract the JSON error body from FunctionsHttpError
+          if (signupError && (signupError as any).context?.json) {
+            try {
+              const body = await (signupError as any).context.json();
+              if (body?.error) {
+                signupData = { ...(signupData || {}), error: body.error };
+              }
+            } catch { /* ignore */ }
+          }
           if (!signupError || !isNetErr(signupError.message)) break;
         } catch (err: any) {
           signupError = err;
@@ -231,7 +240,7 @@ const CandidateSignup = () => {
         if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
       }
 
-      const signupMessage = signupError?.message || signupData?.error || '';
+      const signupMessage = signupData?.error || signupError?.message || '';
       if (signupError || !signupData?.userId) {
         if (signupMessage.toLowerCase().includes("already registered") || signupMessage.toLowerCase().includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
