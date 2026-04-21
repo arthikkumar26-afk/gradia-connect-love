@@ -19,7 +19,7 @@ async function sendEmail(to: string, subject: string, html: string, fromName: st
     body: JSON.stringify({
       from: 'Gradia Hiring <noreply@gradia.co.in>',
       to: [to],
-      reply_to: 'support@gradia.co.in',
+      reply_to: 'info@gradiaa.com',
       subject,
       html,
       headers: {

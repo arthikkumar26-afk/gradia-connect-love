@@ -84,7 +84,7 @@ serve(async (req) => {
             <div class="warn">
               🔒 For your security, please change your password immediately after your first login.
             </div>
-            <p style="margin-top:20px; color:#6b7280; font-size:13px;">If you did not request this account, please contact <a href="mailto:support@gradia.co.in">support@gradia.co.in</a>.</p>
+            <p style="margin-top:20px; color:#6b7280; font-size:13px;">If you did not request this account, please contact <a href="mailto:info@gradiaa.com">info@gradiaa.com</a>.</p>
           </div>
           <div class="footer">
             <p>© ${new Date().getFullYear()} Gradia. All rights reserved.</p>

@@ -448,7 +448,7 @@ serve(async (req) => {
           </p>
         </td></tr>
         <tr><td style="background:#f9fafb;padding:18px;text-align:center;border-radius:0 0 12px 12px;color:#6b7280;font-size:12px;">
-          © ${new Date().getFullYear()} Gradia. Need help? <a href="mailto:support@gradia.co.in" style="color:#ea580c;">support@gradia.co.in</a>
+          © ${new Date().getFullYear()} Gradia. Need help? <a href="mailto:info@gradiaa.com" style="color:#ea580c;">info@gradiaa.com</a>
         </td></tr>
       </table>
     </td></tr>

@@ -95,7 +95,7 @@ function buildEmailHtml(params: {
 <tr><td style="padding:24px;background:#f9fafb;border-top:1px solid #e5e7eb;border-radius:0 0 8px 8px;">
   <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
     Sent by Gradia Job Portal on behalf of ${params.companyName}.<br>
-    <a href="mailto:support@gradia.co.in" style="color:#2563eb;">Contact Support</a>
+    <a href="mailto:info@gradiaa.com" style="color:#2563eb;">Contact Support</a>
   </p>
 </td></tr>
 </table></body></html>`;
