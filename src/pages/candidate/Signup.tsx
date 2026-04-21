@@ -188,9 +188,15 @@ const CandidateSignup = () => {
   const prefillEmail = searchParams.get("email") || "";
   const prefillName = searchParams.get("name") || "";
   
-  // Wizard state
-  const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
-  
+  // Wizard state — persisted so reloads/auth state changes don't skip steps
+  const STEP_STORAGE_KEY = 'candidateSignupWizardStep';
+  const [currentStep, setCurrentStep] = useState<WizardStep>(() => {
+    if (typeof window === 'undefined') return 'signup';
+    const saved = window.localStorage.getItem(STEP_STORAGE_KEY) as WizardStep | null;
+    const valid: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
+    return saved && valid.includes(saved) ? saved : 'signup';
+  });
+
   // Track if user just signed up (to allow wizard flow to complete)
   const [justSignedUp, setJustSignedUp] = useState(false);
   const justSignedUpRef = useRef(false);
