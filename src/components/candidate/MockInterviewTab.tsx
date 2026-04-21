@@ -2076,7 +2076,7 @@ export const MockInterviewTab = () => {
             </Select>
           )}
 
-          <Button onClick={() => requestStartWithPoints(startNewSession)} disabled={isStarting || !isMockRoleSelected} variant="default" className="gap-2">
+          <Button onClick={startNewSession} disabled={isStarting || !isMockRoleSelected} variant="default" className="gap-2">
             {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             {!isMockRoleSelected ? 'Select All Fields' : 'Start Mock Interview'}
           </Button>
