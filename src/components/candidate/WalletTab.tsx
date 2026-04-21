@@ -572,28 +572,52 @@ export default function WalletTab({ userId }: { userId: string }) {
               </CardTitle>
               <CardDescription>Have a promo code? Enter it below to instantly add bonus points to your wallet.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   value={bonusCode}
-                  onChange={(e) => setBonusCode(e.target.value.toUpperCase())}
+                  onChange={(e) => { setBonusCode(e.target.value.toUpperCase()); setFreePointsCoupon(null); setFreePointsAmount(""); }}
                   placeholder="Enter coupon code (e.g. WELCOME500)"
                   className="uppercase font-mono"
                   disabled={redeeming}
                 />
                 <Button
                   onClick={handleRedeemBonusCode}
-                  disabled={redeeming || !bonusCode.trim()}
+                  disabled={redeeming || !bonusCode.trim() || !!freePointsCoupon}
                   className="sm:w-auto"
                 >
                   {redeeming ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redeeming</>
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Validating</>
                   ) : (
-                    <><Gift className="h-4 w-4 mr-2" /> Redeem</>
+                    <><Gift className="h-4 w-4 mr-2" /> Apply</>
                   )}
                 </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-2">
+
+              {freePointsCoupon && (
+                <div className="rounded-md border border-green-300 bg-green-50 dark:bg-green-950/20 dark:border-green-800 p-3 space-y-2">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                    ✓ Code accepted — choose how many points to add for FREE
+                    {freePointsCoupon.max ? ` (max ${freePointsCoupon.max})` : ""}
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={freePointsCoupon.max || undefined}
+                      value={freePointsAmount}
+                      onChange={(e) => setFreePointsAmount(e.target.value)}
+                      placeholder="e.g. 1000"
+                      disabled={redeeming}
+                    />
+                    <Button onClick={handleClaimFreePoints} disabled={redeeming || !freePointsAmount} className="sm:w-auto">
+                      {redeeming ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Adding</> : <><Plus className="h-4 w-4 mr-2" /> Add Points</>}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground">
                 Bonus codes are issued by Gradia admins for promotions, contests & referral campaigns.
               </p>
             </CardContent>
