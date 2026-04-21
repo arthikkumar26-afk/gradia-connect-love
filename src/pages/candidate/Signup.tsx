@@ -103,6 +103,7 @@ const CandidateSignup = () => {
   
   // Track if user just signed up (to allow wizard flow to complete)
   const [justSignedUp, setJustSignedUp] = useState(false);
+  const justSignedUpRef = useRef(false);
   
   // Form state (prefilled from invite link if present)
   const [fullName, setFullName] = useState(prefillName);
@@ -142,7 +143,7 @@ const CandidateSignup = () => {
   useEffect(() => {
     // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
     // If user just signed up, let them complete the wizard flow
-    if (isAuthenticated && currentStep === 'signup' && !justSignedUp) {
+    if (isAuthenticated && currentStep === 'signup' && !justSignedUp && !justSignedUpRef.current) {
       navigate('/candidate/dashboard');
     }
   }, [isAuthenticated, navigate, currentStep, justSignedUp]);
@@ -251,6 +252,11 @@ const CandidateSignup = () => {
         return;
       }
 
+      // Mark wizard as in-progress BEFORE signing in to avoid the auth-state-change redirect race
+      justSignedUpRef.current = true;
+      setJustSignedUp(true);
+      setCurrentStep('resume');
+
       let signInError: any = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -267,9 +273,6 @@ const CandidateSignup = () => {
         navigate('/candidate/login');
         return;
       }
-
-      setJustSignedUp(true);
-      setCurrentStep('resume');
 
       refreshProfile().catch(err => console.error("Profile refresh error:", err));
       supabase.functions.invoke('send-welcome-email', {
