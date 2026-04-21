@@ -1883,17 +1883,45 @@ const CandidateDashboard = () => {
         );
       };
 
+      // Helper: detect if a job belongs to the Legal sector
+      const isLegalJob = (job: any): boolean => {
+        const interviewType = (job.interview_type || '').toLowerCase();
+        if (interviewType === 'legal') return true;
+        if (['it_corporate', 'education', 'non_it_corporate', 'sales', 'management'].includes(interviewType)) return false;
+
+        const jobTitle = (job.job_title || '').toLowerCase();
+        const jobDept  = (job.department || '').toLowerCase();
+        const jobCat   = (job.category || '').toLowerCase();
+        const jobSeg   = (job.segment || '').toLowerCase();
+        const legalKeywords = ['legal', 'lawyer', 'advocate', 'attorney', 'paralegal', 'litigation', 'compliance officer', 'law firm'];
+        return legalKeywords.some(kw =>
+          jobTitle.includes(kw) || jobDept.includes(kw) || jobCat.includes(kw) || jobSeg.includes(kw)
+        );
+      };
+
+      const isLegalCandidate =
+        profileCategory.includes('legal') ||
+        profileSegment.includes('legal') ||
+        profileRole.includes('lawyer') ||
+        profileRole.includes('advocate') ||
+        profileRole.includes('attorney') ||
+        profileRole.includes('paralegal') ||
+        profileRole.includes('legal');
+
       // ── Hard cross-sector filter ───────────────────────────────────────────
-      // If the candidate is clearly an IT professional, exclude education-only jobs.
-      // If the candidate is clearly an educator, exclude IT-only jobs.
+      // Exclude jobs from sectors the candidate clearly does not belong to.
       const sectorFilteredJobs = allJobs.filter((job: any) => {
-        if (isITCandidate && !isEducationCandidate) {
-          // Remove jobs that are education-sector AND NOT IT-sector
+        if (isITCandidate && !isEducationCandidate && !isLegalCandidate) {
           if (isEducationJob(job) && !isITJob(job)) return false;
+          if (isLegalJob(job) && !isITJob(job)) return false;
         }
-        if (isEducationCandidate && !isITCandidate) {
-          // Remove jobs that are IT-sector AND NOT education-sector
+        if (isEducationCandidate && !isITCandidate && !isLegalCandidate) {
           if (isITJob(job) && !isEducationJob(job)) return false;
+          if (isLegalJob(job) && !isEducationJob(job)) return false;
+        }
+        if (isLegalCandidate && !isITCandidate && !isEducationCandidate) {
+          if (isITJob(job) && !isLegalJob(job)) return false;
+          if (isEducationJob(job) && !isLegalJob(job)) return false;
         }
         return true;
       });
