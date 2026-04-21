@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { preloadAdminChunks } from "@/utils/preloadAdminChunks";
 
 interface Profile {
   id: string;
@@ -107,6 +108,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const actualRole = roleData?.role || profileData.role;
           console.log("Profile fetched successfully, role:", actualRole);
           setProfile({ ...profileData, role: actualRole } as Profile);
+          // Warm admin route chunks once we know the user is an admin/owner
+          if (actualRole === "admin" || actualRole === "owner") {
+            preloadAdminChunks();
+          }
         } else {
           console.log("No profile found for user");
           setProfile(null);
