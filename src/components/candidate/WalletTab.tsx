@@ -180,13 +180,42 @@ export default function WalletTab({ userId }: { userId: string }) {
   };
 
 
+  const creditPoints = async (points: number, couponId: string, code: string) => {
+    if (!wallet) return;
+    const newBalance = (wallet.points_balance || 0) + points;
+    const { error: updErr } = await supabase.from("wallets").update({ points_balance: newBalance }).eq("id", wallet.id);
+    if (updErr) throw updErr;
+
+    await supabase.from("wallet_transactions").insert({
+      wallet_id: wallet.id,
+      transaction_type: "credit",
+      category: "reward",
+      points,
+      description: `Bonus points redeemed via coupon ${code}`,
+    });
+
+    await supabase.from("coupon_usages").insert({
+      coupon_id: couponId,
+      user_id: userId,
+      user_role: "candidate",
+      plan_name: "Wallet Bonus",
+      original_amount: 0,
+      discount_applied: points,
+      final_amount: 0,
+    });
+
+    try { await supabase.rpc("increment_coupon_usage", { coupon_id_input: couponId }); } catch {}
+
+    toast({ title: "🎉 Points Added!", description: `${points} points credited to your wallet.` });
+    setBonusCode("");
+    fetchWallet();
+  };
+
   const handleRedeemBonusCode = async () => {
     if (!wallet || !bonusCode.trim()) return;
     setRedeeming(true);
     try {
       const code = bonusCode.toUpperCase().trim();
-
-      // 1. Fetch coupon
       const { data: coupon, error: cErr } = await supabase
         .from("discount_coupons")
         .select("*")
@@ -196,19 +225,12 @@ export default function WalletTab({ userId }: { userId: string }) {
 
       if (cErr) throw cErr;
       if (!coupon) throw new Error("Invalid or inactive coupon code");
-      if (coupon.discount_type !== "bonus_points") throw new Error("This coupon is not a wallet bonus code");
-
-      // 2. Validate expiry
-      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
-        throw new Error("This coupon has expired");
+      if (coupon.discount_type !== "bonus_points" && coupon.discount_type !== "free_points") {
+        throw new Error("This coupon is not a wallet bonus code");
       }
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) throw new Error("This coupon has expired");
+      if (coupon.max_total_uses && coupon.total_used >= coupon.max_total_uses) throw new Error("This coupon has reached its usage limit");
 
-      // 3. Validate global usage cap
-      if (coupon.max_total_uses && coupon.total_used >= coupon.max_total_uses) {
-        throw new Error("This coupon has reached its usage limit");
-      }
-
-      // 4. Validate per-user cap
       const { count: myUses } = await supabase
         .from("coupon_usages")
         .select("id", { count: "exact", head: true })
@@ -219,61 +241,44 @@ export default function WalletTab({ userId }: { userId: string }) {
         throw new Error("You have already redeemed this coupon");
       }
 
-      // 5. Validate role applicability
       if (coupon.applicable_to && coupon.applicable_to !== "both" && coupon.applicable_to !== "wallet") {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", userId)
-          .maybeSingle();
-        if (profile?.role && profile.role !== coupon.applicable_to) {
-          throw new Error("This coupon is not available for your account type");
-        }
+        const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle();
+        if (profile?.role && profile.role !== coupon.applicable_to) throw new Error("This coupon is not available for your account type");
       }
 
-      const points = Number(coupon.discount_value) || 0;
-      if (points <= 0) throw new Error("Invalid coupon value");
-
-      // 6. Credit points
-      const newBalance = (wallet.points_balance || 0) + points;
-      const { error: updErr } = await supabase
-        .from("wallets")
-        .update({ points_balance: newBalance })
-        .eq("id", wallet.id);
-      if (updErr) throw updErr;
-
-      // 7. Record transaction
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        transaction_type: "credit",
-        category: "reward",
-        points,
-        description: `Bonus points redeemed via coupon ${code}`,
-      });
-
-      // 8. Record coupon usage
-      await supabase.from("coupon_usages").insert({
-        coupon_id: coupon.id,
-        user_id: userId,
-        user_role: "candidate",
-        plan_name: "Wallet Bonus",
-        original_amount: 0,
-        discount_applied: points,
-        final_amount: 0,
-      });
-
-      // 9. Increment global counter (best effort)
-      try {
-        await supabase.rpc("increment_coupon_usage", { coupon_id_input: coupon.id });
-      } catch {
-        // ignore — usage row already recorded
+      if (coupon.discount_type === "free_points") {
+        setFreePointsCoupon({ id: coupon.id, max: coupon.max_discount_amount });
+        toast({ title: "✓ Code valid", description: `Enter the points you'd like to add${coupon.max_discount_amount ? ` (max ${coupon.max_discount_amount})` : ""}.` });
+      } else {
+        const points = Number(coupon.discount_value) || 0;
+        if (points <= 0) throw new Error("Invalid coupon value");
+        await creditPoints(points, coupon.id, code);
       }
-
-      toast({ title: "🎉 Bonus Applied!", description: `${points} points added to your wallet.` });
-      setBonusCode("");
-      fetchWallet();
     } catch (err: any) {
       toast({ title: "Could not redeem", description: err.message || "Failed to redeem coupon", variant: "destructive" });
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
+  const handleClaimFreePoints = async () => {
+    if (!freePointsCoupon || !wallet) return;
+    const amount = parseInt(freePointsAmount);
+    if (!amount || amount <= 0) {
+      toast({ title: "Invalid amount", description: "Enter a positive number of points", variant: "destructive" });
+      return;
+    }
+    if (freePointsCoupon.max && amount > freePointsCoupon.max) {
+      toast({ title: "Over the limit", description: `Maximum ${freePointsCoupon.max} points allowed`, variant: "destructive" });
+      return;
+    }
+    setRedeeming(true);
+    try {
+      await creditPoints(amount, freePointsCoupon.id, bonusCode.toUpperCase().trim());
+      setFreePointsCoupon(null);
+      setFreePointsAmount("");
+    } catch (err: any) {
+      toast({ title: "Could not redeem", description: err.message || "Failed", variant: "destructive" });
     } finally {
       setRedeeming(false);
     }
