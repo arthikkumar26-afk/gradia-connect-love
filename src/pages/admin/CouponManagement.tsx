@@ -439,8 +439,8 @@ const CouponManagement = () => {
                             </TableCell>
                             <TableCell className="font-mono font-bold">{c.code}</TableCell>
                             <TableCell>
-                              {c.discount_type === "percentage" ? `${c.discount_value}%` : `₹${c.discount_value}`}
-                              {c.max_discount_amount && <span className="text-xs text-muted-foreground ml-1">(max ₹{c.max_discount_amount})</span>}
+                              {c.discount_type === "percentage" ? `${c.discount_value}%` : c.discount_type === "bonus_points" ? `+${c.discount_value} pts` : `₹${c.discount_value}`}
+                              {c.discount_type !== "bonus_points" && c.max_discount_amount && <span className="text-xs text-muted-foreground ml-1">(max ₹{c.max_discount_amount})</span>}
                             </TableCell>
                             <TableCell><Badge variant="outline" className="capitalize text-xs">{c.applicable_to}</Badge></TableCell>
                             <TableCell>{c.total_used}/{c.max_total_uses || "∞"}</TableCell>
