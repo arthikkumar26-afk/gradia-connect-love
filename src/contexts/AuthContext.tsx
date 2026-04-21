@@ -51,7 +51,18 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Default value prevents HMR boundary errors during Fast Refresh
+const defaultAuthValue: AuthContextType = {
+  user: null,
+  profile: null,
+  session: null,
+  isAuthenticated: false,
+  isLoading: true,
+  logout: async () => {},
+  refreshProfile: async () => {},
+};
+
+const AuthContext = createContext<AuthContextType>(defaultAuthValue);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
