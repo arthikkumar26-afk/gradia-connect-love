@@ -289,9 +289,9 @@ serve(async (req) => {
             <tr style="background:#0f4c75;color:#fff;">
               <td style="padding:10px;font-size:11px;font-weight:600;border:1px solid #0f4c75;width:18%;">Suggested Position</td>
               <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:20%;">Starter<br/><span style="font-weight:400;opacity:0.85;">400 pts</span></td>
-              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:20%;">Basic<br/><span style="font-weight:400;opacity:0.85;">2,000 pts</span></td>
+              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:20%;">Basic<br/><span style="font-weight:400;opacity:0.85;">1,000 pts</span></td>
               <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;background:#0a3a5c;width:21%;">Pro ★<br/><span style="font-weight:400;opacity:0.85;">2,000 pts</span></td>
-              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:21%;">Premium<br/><span style="font-weight:400;opacity:0.85;">2,2,000 pts</span></td>
+              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:21%;">Premium<br/><span style="font-weight:400;opacity:0.85;">5,000 pts</span></td>
             </tr>
             ${topMatches.map((j: any, i: number) => `
             <tr style="background:${i % 2 === 0 ? "#f8fafc" : "#ffffff"};">
@@ -396,7 +396,7 @@ serve(async (req) => {
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-collapse:collapse;">
             <tr><td style="padding:12px;background:#eff6ff;border-left:4px solid #3b82f6;border-radius:4px;">
-              <div style="font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:8px;">Basic — 2,000 pts · 1× Mock Interview</div>
+              <div style="font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:8px;">Basic — 1,000 pts · 1× Mock Interview</div>
               <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
                 <tr><td style="padding:3px 0;"><strong>Round 1 — Aptitude / Screening (20 min)</strong><br/><span style="color:#475569;">15 MCQs on logical reasoning, basics of role. Auto-scored. You receive: % score, weak topic list.</span></td></tr>
                 <tr><td style="padding:3px 0;"><strong>Round 2 — Core Technical (30 min)</strong><br/><span style="color:#475569;">10 role-specific questions (coding/subject/domain). You receive: per-question correctness, basic AI feedback summary.</span></td></tr>
@@ -418,7 +418,7 @@ serve(async (req) => {
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;border-collapse:collapse;">
             <tr><td style="padding:12px;background:#ecfdf5;border-left:4px solid #10b981;border-radius:4px;">
-              <div style="font-size:13px;font-weight:700;color:#064e3b;margin-bottom:8px;">Premium — 2,2,000 pts · 5× Mock Interviews (Full Pipeline)</div>
+              <div style="font-size:13px;font-weight:700;color:#064e3b;margin-bottom:8px;">Premium — 5,000 pts · 5× Mock Interviews (Full Pipeline)</div>
               <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
                 <tr><td style="padding:3px 0;"><strong>Round 1 — Aptitude & Screening (30 min)</strong><br/><span style="color:#475569;">25 questions, percentile ranking, weak-area heatmap.</span></td></tr>
                 <tr><td style="padding:3px 0;"><strong>Round 2 — Technical / Subject Mastery (45 min)</strong><br/><span style="color:#475569;">In-depth domain test. You receive: detailed answer review with model solutions.</span></td></tr>
