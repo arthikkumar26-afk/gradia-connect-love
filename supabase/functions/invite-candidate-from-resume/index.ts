@@ -270,7 +270,7 @@ serve(async (req) => {
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2937;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <table width="900" cellpadding="0" cellspacing="0" style="max-width:900px;width:100%;">
         <tr><td style="background:linear-gradient(135deg,#0f4c75 0%,#1e3a5f 100%);padding:32px 28px;border-radius:12px 12px 0 0;color:#fff;text-align:center;">
           <h1 style="margin:0;font-size:24px;font-weight:700;">Hi ${greetingName}, opportunities are waiting</h1>
           <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">Curated for ${headlineRole}</p>
