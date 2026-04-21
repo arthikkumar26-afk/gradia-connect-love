@@ -76,7 +76,7 @@ const sections = [
     points: [
       "All payments on Gradia are processed securely through Razorpay. Gradia does not store credit/debit card details.",
       "Subscription plans for Candidates and Employers activate immediately upon successful payment verification.",
-      "Refund requests must be raised within 7 days of purchase by contacting support@gradia.co.in. Refunds are processed at Gradia's discretion and may take 5–10 business days.",
+      "Refund requests must be raised within 7 days of purchase by contacting info@gradiaa.com. Refunds are processed at Gradia's discretion and may take 5–10 business days.",
       "Failed payment transactions are not charged. If an amount is debited but the subscription is not activated, users should contact support with their transaction ID.",
       "Pricing is displayed in Indian Rupees (₹). Applicable taxes (GST) are included as per Indian tax regulations.",
     ],
@@ -141,7 +141,7 @@ const sections = [
   {
     title: "15. Account Termination",
     points: [
-      "Users may delete their account by contacting support@gradia.co.in. Active subscriptions will not be refunded upon voluntary termination.",
+      "Users may delete their account by contacting info@gradiaa.com. Active subscriptions will not be refunded upon voluntary termination.",
       "Gradia may suspend or permanently ban accounts that violate these Terms, engage in fraudulent activity, or harm other users.",
       "Employers whose job postings are repeatedly flagged or rejected may have their posting privileges revoked.",
       "Upon termination, access to dashboard data, interview results, and uploaded files will be revoked.",
@@ -170,7 +170,7 @@ const sections = [
   },
   {
     title: "19. Contact Information",
-    content: `For questions, concerns, or disputes regarding these Terms and Conditions:\n\nEmail: support@gradia.co.in\nOffice Locations: Bangalore & Hyderabad, India\nBusiness Hours: Monday – Friday, 9:00 AM – 6:00 PM IST`,
+    content: `For questions, concerns, or disputes regarding these Terms and Conditions:\n\nEmail: info@gradiaa.com\nOffice Locations: Bangalore & Hyderabad, India\nBusiness Hours: Monday – Friday, 9:00 AM – 6:00 PM IST`,
   },
 ];
 

@@ -320,7 +320,7 @@ const JobModeration = () => {
                     <strong>Job Title:</strong> ${selectedJob.job_title}<br/>
                     <strong>Reason:</strong> ${deleteReason}
                   </div>
-                  <p>If you believe this action was taken in error or would like to discuss further, please contact our support team at <a href="mailto:support@gradia.co.in">support@gradia.co.in</a>.</p>
+                  <p>If you believe this action was taken in error or would like to discuss further, please contact our support team at <a href="mailto:info@gradiaa.com">info@gradiaa.com</a>.</p>
                   <p style="color: #6b7280; margin-top: 24px;">Best regards,<br/>Gradia Team</p>
                 </div>
               `,

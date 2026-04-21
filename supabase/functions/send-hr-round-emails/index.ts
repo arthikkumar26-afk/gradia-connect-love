@@ -91,7 +91,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: [candidate.email],
-        reply_to: 'support@gradia.co.in',
+        reply_to: 'info@gradiaa.com',
         subject: `📋 HR Round Scheduled - ${job.job_title} at ${companyName}`,
         html: `
 <!DOCTYPE html>
@@ -150,7 +150,7 @@ serve(async (req) => {
       <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
         <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
           This email was sent by Gradia Job Portal on behalf of ${companyName}.<br>
-          <a href="mailto:support@gradia.co.in" style="color: #6366f1;">Contact Support</a>
+          <a href="mailto:info@gradiaa.com" style="color: #6366f1;">Contact Support</a>
         </p>
       </td>
     </tr>
@@ -185,7 +185,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: 'Gradia Hiring <noreply@gradia.co.in>',
           to: [singleObserverEmail],
-          reply_to: 'support@gradia.co.in',
+          reply_to: 'info@gradiaa.com',
           subject: `👁️ HR Round Observer - ${candidate.full_name} for ${job.job_title}`,
           html: `
 <!DOCTYPE html>
@@ -242,7 +242,7 @@ serve(async (req) => {
       <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
         <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
           This email was sent by Gradia Job Portal on behalf of ${companyName}.<br>
-          <a href="mailto:support@gradia.co.in" style="color: #6366f1;">Contact Support</a>
+          <a href="mailto:info@gradiaa.com" style="color: #6366f1;">Contact Support</a>
         </p>
       </td>
     </tr>

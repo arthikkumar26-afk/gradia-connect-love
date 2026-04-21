@@ -238,7 +238,7 @@ serve(async (req) => {
                 body: JSON.stringify({
                   from: 'Gradia Hiring <noreply@gradia.co.in>',
                   to: [candidate.email],
-                  reply_to: 'support@gradia.co.in',
+                  reply_to: 'info@gradiaa.com',
                   subject: `🎉 Congratulations! Book your ${nextStage.name.replace(' Slot Booking', '')} slot - ${job?.job_title}`,
                   html: `
 <!DOCTYPE html>
@@ -281,7 +281,7 @@ serve(async (req) => {
     </div>
     <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
       <p style="margin: 0;">© ${new Date().getFullYear()} Gradia. All rights reserved.</p>
-      <p style="margin: 8px 0 0 0;"><a href="mailto:support@gradia.co.in" style="color: #3b82f6; text-decoration: none;">Contact Support</a></p>
+      <p style="margin: 8px 0 0 0;"><a href="mailto:info@gradiaa.com" style="color: #3b82f6; text-decoration: none;">Contact Support</a></p>
     </div>
   </div>
 </body>
@@ -333,7 +333,7 @@ serve(async (req) => {
                 body: JSON.stringify({
                   from: 'Gradia Hiring <noreply@gradia.co.in>',
                   to: [candidate.email],
-                  reply_to: 'support@gradia.co.in',
+                  reply_to: 'info@gradiaa.com',
                   subject: `🎉 Congratulations! You've advanced to ${nextStage.name} - ${job?.job_title}`,
                   html: `
 <!DOCTYPE html>
@@ -375,7 +375,7 @@ serve(async (req) => {
     </div>
     <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
       <p style="margin: 0;">© ${new Date().getFullYear()} Gradia. All rights reserved.</p>
-      <p style="margin: 8px 0 0 0;"><a href="mailto:support@gradia.co.in" style="color: #3b82f6; text-decoration: none;">Contact Support</a></p>
+      <p style="margin: 8px 0 0 0;"><a href="mailto:info@gradiaa.com" style="color: #3b82f6; text-decoration: none;">Contact Support</a></p>
     </div>
   </div>
 </body>
@@ -419,7 +419,7 @@ serve(async (req) => {
             body: JSON.stringify({
               from: 'Gradia Hiring <noreply@gradia.co.in>',
               to: [employer.email],
-              reply_to: 'support@gradia.co.in',
+              reply_to: 'info@gradiaa.com',
               subject: `Interview completed: ${candidate.full_name} scored ${score}%${shouldProgress ? ' - Auto-progressed to ' + nextStage.name : ''}`,
               html: `
 <!DOCTYPE html>

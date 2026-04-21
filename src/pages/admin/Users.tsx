@@ -364,7 +364,7 @@ const Users = () => {
                   <strong>Reason:</strong> ${blockReason}
                 </div>
                 <p>During this period, you will not be able to access your account or use any platform services.</p>
-                <p>If you believe this action was taken in error, or if you would like to discuss this further, please contact our support team at <a href="mailto:support@gradia.co.in">support@gradia.co.in</a>.</p>
+                <p>If you believe this action was taken in error, or if you would like to discuss this further, please contact our support team at <a href="mailto:info@gradiaa.com">info@gradiaa.com</a>.</p>
                 <p>Thank you for your understanding.</p>
                 <p style="color: #6b7280; margin-top: 24px;">Best regards,<br/>Gradia Team</p>
               </div>
