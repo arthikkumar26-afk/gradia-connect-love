@@ -369,15 +369,31 @@ const InviteFromResume = () => {
                 <CardContent>
                   <div className="space-y-2">
                     {lastResult.jobs.map((j, i) => (
-                      <div key={i} className="flex items-center justify-between bg-background border rounded-md px-3 py-2 text-sm">
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{j.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{j.company} {j.location ? `· ${j.location}` : ""}</p>
+                      <div key={i} className="bg-background border rounded-md px-3 py-2 text-sm space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{j.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{j.company} {j.location ? `· ${j.location}` : ""}</p>
+                          </div>
+                          <div className="flex items-center gap-2 ml-3 shrink-0">
+                            <Badge variant={j.source === "internal" ? "default" : "outline"} className="text-[10px]">{j.source}</Badge>
+                            <Badge variant="secondary" className="text-[10px]">Score {j.matchScore}</Badge>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-3 shrink-0">
-                          <Badge variant={j.source === "internal" ? "default" : "outline"} className="text-[10px]">{j.source}</Badge>
-                          <Badge variant="secondary" className="text-[10px]">Score {j.matchScore}</Badge>
+                        <div className="flex flex-wrap gap-1.5 pt-1.5 border-t">
+                          <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">Apply — FREE</Badge>
+                          <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">ATS Score — FREE</Badge>
+                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Resume Export — 150 pts</Badge>
+                          {j.source === "internal" ? (
+                            <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Mock Interview — 500 pts</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">External · redirects off-site</Badge>
+                          )}
+                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Featured Boost — 250 pts</Badge>
                         </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          Likely spend if candidate applies + boosts profile: <span className="font-semibold text-foreground">~{j.source === "internal" ? "900" : "400"} pts</span>
+                        </p>
                       </div>
                     ))}
                   </div>
