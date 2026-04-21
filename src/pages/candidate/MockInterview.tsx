@@ -223,7 +223,7 @@ const MockInterview = () => {
 
       setSessionData(fetchedSessionData);
 
-      if ((fetchedSessionData as any).points_paid === false) {
+      if ((fetchedSessionData as any).points_paid !== true) {
         toast.error("Unlock this mock interview with 500 points before using it.");
         navigate('/candidate/dashboard?tab=mocktest');
         return;
