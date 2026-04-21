@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check, Upload, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check, Upload, Wand2, Wallet, Star, CreditCard } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getRolesForPipeline } from "@/data/interviewPipelineConfig";
 import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { Badge } from "@/components/ui/badge";
+import { CouponInput } from "@/components/shared/CouponInput";
 
 interface FormErrors {
   fullName?: string;
@@ -26,7 +28,7 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
-type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms';
+type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms' | 'wallet';
 
 const wizardSteps = [
   { id: 'signup' as const, label: 'Create Account', stepNumber: 1 },
@@ -34,6 +36,14 @@ const wizardSteps = [
   { id: 'benefits' as const, label: 'Benefits', stepNumber: 3 },
   { id: 'agreement' as const, label: 'Agreement', stepNumber: 4 },
   { id: 'terms' as const, label: 'Terms & Conditions', stepNumber: 5 },
+  { id: 'wallet' as const, label: 'Activate Wallet', stepNumber: 6 },
+];
+
+const POINT_PACKAGES = [
+  { points: 200, price: 1000, popular: false },
+  { points: 500, price: 2500, popular: false },
+  { points: 1000, price: 5000, popular: true },
+  { points: 2000, price: 10000, popular: false },
 ];
 
 const benefits = [
