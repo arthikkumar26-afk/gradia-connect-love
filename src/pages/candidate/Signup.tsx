@@ -308,6 +308,15 @@ const CandidateSignup = () => {
         }).catch(err => console.error("Welcome email failed:", err));
       }
 
+      if (!hasActiveSession) {
+        toast({
+          title: "Account Created!",
+          description: "Please verify your email, then log in to continue.",
+        });
+        navigate('/candidate/login');
+        return;
+      }
+
       // Mark that user just signed up to prevent redirect during wizard flow
       setJustSignedUp(true);
 
