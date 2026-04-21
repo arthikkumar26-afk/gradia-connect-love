@@ -225,8 +225,12 @@ const CouponManagement = () => {
   };
 
   const handleCreate = async () => {
-    if (!form.code || !form.discount_value) {
-      toast({ title: "Error", description: "Code and discount value are required", variant: "destructive" });
+    if (!form.code) {
+      toast({ title: "Error", description: "Coupon code is required", variant: "destructive" });
+      return;
+    }
+    if (form.discount_type !== "free_points" && !form.discount_value) {
+      toast({ title: "Error", description: "Discount value is required", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -236,7 +240,7 @@ const CouponManagement = () => {
         code: form.code.toUpperCase().trim(),
         description: form.applicable_packages.length > 0 ? form.applicable_packages.join(", ") : null,
         discount_type: form.discount_type,
-        discount_value: parseFloat(form.discount_value),
+        discount_value: form.discount_type === "free_points" ? 100 : parseFloat(form.discount_value),
         min_order_amount: form.min_order_amount ? parseFloat(form.min_order_amount) : 0,
         max_discount_amount: form.max_discount_amount ? parseFloat(form.max_discount_amount) : null,
         applicable_to: form.applicable_to,
@@ -289,12 +293,18 @@ const CouponManagement = () => {
             <SelectContent>
               <SelectItem value="percentage">Percentage (%)</SelectItem>
               <SelectItem value="fixed">Fixed Amount (₹)</SelectItem>
-              <SelectItem value="bonus_points">Bonus Wallet Points</SelectItem>
+              <SelectItem value="bonus_points">Bonus Wallet Points (Fixed)</SelectItem>
+              <SelectItem value="free_points">Free Points (User Chooses Amount)</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
-      {formState.discount_type !== "bonus_points" && (
+      {formState.discount_type === "free_points" && (
+        <div className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 text-xs text-muted-foreground">
+          <strong className="text-foreground">Free Points Coupon:</strong> Candidates redeem this code in their wallet and choose how many points to add — completely free. Set an optional max cap below.
+        </div>
+      )}
+      {formState.discount_type !== "bonus_points" && formState.discount_type !== "free_points" && (
         <div>
           <Label>Applicable Packages</Label>
           <div className="flex flex-wrap gap-2 mt-1">
@@ -315,18 +325,31 @@ const CouponManagement = () => {
         </div>
       )}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>
-            {formState.discount_type === "bonus_points" ? "Points to Award *" : "Discount Value *"}
-          </Label>
-          <Input
-            type="number"
-            value={formState.discount_value}
-            onChange={e => setFormState({...formState, discount_value: e.target.value})}
-            placeholder={formState.discount_type === "percentage" ? "e.g. 20" : formState.discount_type === "bonus_points" ? "e.g. 500" : "e.g. 500"}
-          />
-        </div>
-        {formState.discount_type !== "bonus_points" && (
+        {formState.discount_type !== "free_points" && (
+          <div>
+            <Label>
+              {formState.discount_type === "bonus_points" ? "Points to Award *" : "Discount Value *"}
+            </Label>
+            <Input
+              type="number"
+              value={formState.discount_value}
+              onChange={e => setFormState({...formState, discount_value: e.target.value})}
+              placeholder={formState.discount_type === "percentage" ? "e.g. 20" : formState.discount_type === "bonus_points" ? "e.g. 500" : "e.g. 500"}
+            />
+          </div>
+        )}
+        {formState.discount_type === "free_points" && (
+          <div>
+            <Label>Max Points Per Redemption</Label>
+            <Input
+              type="number"
+              value={formState.max_discount_amount}
+              onChange={e => setFormState({...formState, max_discount_amount: e.target.value})}
+              placeholder="Optional — leave empty for unlimited"
+            />
+          </div>
+        )}
+        {formState.discount_type !== "bonus_points" && formState.discount_type !== "free_points" && (
           <div>
             <Label>Max Discount (₹)</Label>
             <Input type="number" value={formState.max_discount_amount} onChange={e => setFormState({...formState, max_discount_amount: e.target.value})} placeholder="Optional cap" />
@@ -439,8 +462,8 @@ const CouponManagement = () => {
                             </TableCell>
                             <TableCell className="font-mono font-bold">{c.code}</TableCell>
                             <TableCell>
-                              {c.discount_type === "percentage" ? `${c.discount_value}%` : c.discount_type === "bonus_points" ? `+${c.discount_value} pts` : `₹${c.discount_value}`}
-                              {c.discount_type !== "bonus_points" && c.max_discount_amount && <span className="text-xs text-muted-foreground ml-1">(max ₹{c.max_discount_amount})</span>}
+                              {c.discount_type === "percentage" ? `${c.discount_value}%` : c.discount_type === "bonus_points" ? `+${c.discount_value} pts` : c.discount_type === "free_points" ? `Free Points${c.max_discount_amount ? ` (max ${c.max_discount_amount})` : " (unlimited)"}` : `₹${c.discount_value}`}
+                              {c.discount_type !== "bonus_points" && c.discount_type !== "free_points" && c.max_discount_amount && <span className="text-xs text-muted-foreground ml-1">(max ₹{c.max_discount_amount})</span>}
                             </TableCell>
                             <TableCell><Badge variant="outline" className="capitalize text-xs">{c.applicable_to}</Badge></TableCell>
                             <TableCell>{c.total_used}/{c.max_total_uses || "∞"}</TableCell>
