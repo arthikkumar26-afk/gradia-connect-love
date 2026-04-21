@@ -1509,6 +1509,8 @@ export const MockInterviewTab = () => {
     }
   }, [stageResults]);
 
+  const isCurrentSessionUnlocked = (currentSession as any)?.points_paid === true;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -2084,7 +2086,7 @@ export const MockInterviewTab = () => {
       </div>
 
       <div className="relative">
-        {(currentSession as any)?.points_paid === false && (
+        {!isCurrentSessionUnlocked && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/40 backdrop-blur-md rounded-lg">
             <Card className="border-2 border-primary/40 bg-background shadow-xl max-w-md mx-4">
               <CardContent className="py-8 flex flex-col items-center text-center gap-4">
@@ -2119,7 +2121,7 @@ export const MockInterviewTab = () => {
           </div>
         )}
 
-        <div className={(currentSession as any)?.points_paid === false ? 'pointer-events-none select-none blur-sm' : ''}>
+        <div className={!isCurrentSessionUnlocked ? 'pointer-events-none select-none blur-sm' : ''}>
         <>
 
       {/* Progress Tracker */}
