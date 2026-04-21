@@ -906,6 +906,32 @@ export default function WalletTab({ userId }: { userId: string }) {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!pendingRedeem} onOpenChange={(open) => { if (!open && !redeeming) setPendingRedeem(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Redemption</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              {pendingRedeem && wallet ? (
+                <div className="space-y-2">
+                  <p>
+                    You are about to redeem <span className="font-semibold text-foreground">{pendingRedeem.points} pts</span> using code{" "}
+                    <span className="font-mono font-semibold text-foreground">{pendingRedeem.code}</span>.
+                  </p>
+                  <p>Current balance: <span className="font-semibold text-foreground">{wallet.points_balance || 0} pts</span></p>
+                  <p>New balance after redemption: <span className="font-semibold text-accent">{(wallet.points_balance || 0) + pendingRedeem.points} pts</span></p>
+                </div>
+              ) : <span />}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={redeeming}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmRedeem(); }} disabled={redeeming}>
+              {redeeming ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redeeming</> : "Confirm & Add Points"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
