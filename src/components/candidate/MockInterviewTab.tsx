@@ -396,6 +396,82 @@ export const MockInterviewTab = () => {
   const [courseSuggestions, setCourseSuggestions] = useState<any[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
 
+  // Points gating for starting a mock interview
+  const MOCK_INTERVIEW_COST = 500;
+  const [showPointsDialog, setShowPointsDialog] = useState(false);
+  const [walletPoints, setWalletPoints] = useState<number>(0);
+  const [pendingStartFn, setPendingStartFn] = useState<null | (() => Promise<void>)>(null);
+  const [deducting, setDeducting] = useState(false);
+
+  const fetchWalletPoints = async () => {
+    if (!user) return 0;
+    const { data } = await supabase
+      .from('wallets')
+      .select('points_balance')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    const pts = (data as any)?.points_balance ?? 0;
+    setWalletPoints(pts);
+    return pts;
+  };
+
+  const requestStartWithPoints = async (startFn: () => Promise<void>) => {
+    if (!user) {
+      toast.error('Please sign in');
+      return;
+    }
+    await fetchWalletPoints();
+    setPendingStartFn(() => startFn);
+    setShowPointsDialog(true);
+  };
+
+  const confirmDeductAndStart = async () => {
+    if (!user || !pendingStartFn) return;
+    setDeducting(true);
+    try {
+      const { data: wallet } = await supabase
+        .from('wallets')
+        .select('id, points_balance')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!wallet) {
+        toast.error('Wallet not found. Please load points first.');
+        return;
+      }
+      const balance = (wallet as any).points_balance ?? 0;
+      if (balance < MOCK_INTERVIEW_COST) {
+        toast.error(`Insufficient points. Need ${MOCK_INTERVIEW_COST}, you have ${balance}.`);
+        return;
+      }
+      const { error: updErr } = await supabase
+        .from('wallets')
+        .update({ points_balance: balance - MOCK_INTERVIEW_COST })
+        .eq('id', (wallet as any).id);
+      if (updErr) throw updErr;
+
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: (wallet as any).id,
+        transaction_type: 'debit',
+        category: 'mock_interview',
+        amount: 0,
+        points: MOCK_INTERVIEW_COST,
+        description: 'Mock interview pipeline unlock',
+      });
+
+      setWalletPoints(balance - MOCK_INTERVIEW_COST);
+      toast.success(`${MOCK_INTERVIEW_COST} pts deducted. Pipeline unlocked!`);
+      setShowPointsDialog(false);
+      const fn = pendingStartFn;
+      setPendingStartFn(null);
+      await fn();
+    } catch (e: any) {
+      console.error('Mock interview points deduction error:', e);
+      toast.error(e.message || 'Failed to deduct points');
+    } finally {
+      setDeducting(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       loadData();
