@@ -270,7 +270,7 @@ serve(async (req) => {
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1f2937;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+      <table width="900" cellpadding="0" cellspacing="0" style="max-width:900px;width:100%;">
         <tr><td style="background:linear-gradient(135deg,#0f4c75 0%,#1e3a5f 100%);padding:32px 28px;border-radius:12px 12px 0 0;color:#fff;text-align:center;">
           <h1 style="margin:0;font-size:24px;font-weight:700;">Hi ${greetingName}, opportunities are waiting</h1>
           <p style="margin:8px 0 0;font-size:14px;opacity:0.9;">Curated for ${headlineRole}</p>
@@ -284,35 +284,62 @@ serve(async (req) => {
         </td></tr>
         <tr><td style="background:#ffffff;padding:20px 28px 6px;">
           <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">💎 Your Wallet Points — What You Unlock Per Role</h2>
-          <p style="margin:0 0 12px;font-size:13px;color:#475569;line-height:1.6;">No single package fits all — pick a pack based on the role you're targeting. Job applications, resume scoring & ATS matching are <strong>always free</strong>. Points are spent only when you confirm a premium action.</p>
+          <p style="margin:0 0 12px;font-size:13px;color:#475569;line-height:1.6;">No single package fits all — pick a pack based on the role you're targeting. Job applications, resume scoring & ATS matching are <strong>always free</strong>. Points are spent only when you confirm a premium action like mock interviews, AI feedback, or featured visibility.</p>
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px;border-collapse:collapse;">
             <tr style="background:#0f4c75;color:#fff;">
-              <td style="padding:8px 10px;font-size:11px;font-weight:600;border:1px solid #0f4c75;">Suggested Position</td>
-              <td style="padding:8px 10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;">Starter<br/><span style="font-weight:400;opacity:0.85;">200 pts</span></td>
-              <td style="padding:8px 10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;">Basic<br/><span style="font-weight:400;opacity:0.85;">500 pts</span></td>
-              <td style="padding:8px 10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;background:#0a3a5c;">Pro ★<br/><span style="font-weight:400;opacity:0.85;">1,000 pts</span></td>
-              <td style="padding:8px 10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;">Premium<br/><span style="font-weight:400;opacity:0.85;">2,500 pts</span></td>
+              <td style="padding:10px;font-size:11px;font-weight:600;border:1px solid #0f4c75;width:18%;">Suggested Position</td>
+              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:20%;">Starter<br/><span style="font-weight:400;opacity:0.85;">200 pts</span></td>
+              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:20%;">Basic<br/><span style="font-weight:400;opacity:0.85;">500 pts</span></td>
+              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;background:#0a3a5c;width:21%;">Pro ★<br/><span style="font-weight:400;opacity:0.85;">1,000 pts</span></td>
+              <td style="padding:10px;font-size:11px;font-weight:600;text-align:center;border:1px solid #0f4c75;width:21%;">Premium<br/><span style="font-weight:400;opacity:0.85;">2,500 pts</span></td>
             </tr>
             ${topMatches.map((j: any, i: number) => `
             <tr style="background:${i % 2 === 0 ? "#f8fafc" : "#ffffff"};">
-              <td style="padding:10px;font-size:12px;color:#0f172a;font-weight:600;border:1px solid #e2e8f0;vertical-align:top;">
+              <td style="padding:12px 10px;font-size:12px;color:#0f172a;font-weight:600;border:1px solid #e2e8f0;vertical-align:top;">
                 ${j.job_title || j.title || "Suggested Role"}
-                <div style="font-size:10px;color:#64748b;font-weight:400;margin-top:2px;">${j.company_name || j.company || ""}</div>
+                <div style="font-size:10px;color:#64748b;font-weight:400;margin-top:3px;">${j.company_name || j.company || ""}</div>
+                ${j.location ? `<div style="font-size:10px;color:#94a3b8;font-weight:400;margin-top:2px;">📍 ${j.location}</div>` : ""}
               </td>
-              <td style="padding:10px;font-size:11px;color:#475569;text-align:center;border:1px solid #e2e8f0;vertical-align:top;line-height:1.5;">
-                Apply ✓<br/>Resume Export<br/><span style="color:#94a3b8;">No mock interview</span>
+              <td style="padding:12px 10px;font-size:11px;color:#475569;border:1px solid #e2e8f0;vertical-align:top;line-height:1.6;">
+                ✓ Apply to job<br/>
+                ✓ Resume export (1×)<br/>
+                ✓ ATS score check<br/>
+                <span style="color:#94a3b8;">✗ Mock interview</span><br/>
+                <span style="color:#94a3b8;">✗ AI feedback report</span><br/>
+                <span style="color:#94a3b8;">✗ Featured profile boost</span>
               </td>
-              <td style="padding:10px;font-size:11px;color:#475569;text-align:center;border:1px solid #e2e8f0;vertical-align:top;line-height:1.5;">
-                Apply ✓<br/>Resume Export<br/><strong style="color:#0f4c75;">1× Mock Interview</strong>
+              <td style="padding:12px 10px;font-size:11px;color:#475569;border:1px solid #e2e8f0;vertical-align:top;line-height:1.6;">
+                ✓ Apply to job<br/>
+                ✓ Resume export (1×)<br/>
+                ✓ ATS score check<br/>
+                <strong style="color:#0f4c75;">✓ 1× Mock Interview</strong><br/>
+                <span style="font-size:10px;color:#64748b;">(Aptitude + 1 Technical round)</span><br/>
+                ✓ Basic AI feedback<br/>
+                <span style="color:#94a3b8;">✗ Featured boost</span>
               </td>
-              <td style="padding:10px;font-size:11px;color:#0f172a;text-align:center;border:1px solid #fbbf24;background:#fffbeb;vertical-align:top;line-height:1.5;">
-                Apply ✓<br/>Resume Export ×2<br/><strong>2× Mock Interviews</strong><br/>Featured Boost
+              <td style="padding:12px 10px;font-size:11px;color:#0f172a;border:1px solid #fbbf24;background:#fffbeb;vertical-align:top;line-height:1.6;">
+                ✓ Apply to job<br/>
+                ✓ Resume export (2×)<br/>
+                ✓ ATS score check<br/>
+                <strong>✓ 2× Mock Interviews</strong><br/>
+                <span style="font-size:10px;color:#475569;">(Aptitude + Technical + HR rounds)</span><br/>
+                ✓ Detailed AI feedback report<br/>
+                ✓ Featured profile boost (1×)<br/>
+                ✓ Priority application tag
               </td>
-              <td style="padding:10px;font-size:11px;color:#475569;text-align:center;border:1px solid #e2e8f0;vertical-align:top;line-height:1.5;">
-                Apply ✓<br/>Unlimited Exports<br/><strong style="color:#0f4c75;">5× Mock Interviews</strong><br/>Featured Boost ×3<br/>Priority Support
+              <td style="padding:12px 10px;font-size:11px;color:#475569;border:1px solid #e2e8f0;vertical-align:top;line-height:1.6;">
+                ✓ Apply to job<br/>
+                ✓ Unlimited resume exports<br/>
+                ✓ ATS score check<br/>
+                <strong style="color:#0f4c75;">✓ 5× Mock Interviews</strong><br/>
+                <span style="font-size:10px;color:#64748b;">(Aptitude + Technical + Coding/Demo + HR + Final rounds)</span><br/>
+                ✓ Full AI feedback + improvement plan<br/>
+                ✓ Featured profile boost (3×)<br/>
+                ✓ Priority support & faster shortlisting
               </td>
             </tr>`).join("")}
           </table>
+          <p style="margin:0 0 6px;font-size:11px;color:#64748b;line-height:1.5;font-style:italic;">Interview rounds vary by industry — Education roles include Demo + Subject + Management; IT roles include Coding + Technical + HR; Non-IT roles include Aptitude + Group Discussion + HR. Mock Interviews simulate the exact pipeline of the role you select.</p>
         </td></tr>
         ${aiSuggestedRoles.length > 0 ? `
         <tr><td style="background:#ffffff;padding:20px 28px 6px;">
