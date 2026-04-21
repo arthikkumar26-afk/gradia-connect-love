@@ -373,18 +373,146 @@ const CandidateSignup = () => {
       return;
     }
 
-    // Refresh profile one more time before navigating to ensure it's loaded
-    await refreshProfile();
-    
-    toast({ title: 'Welcome to Gradia!', description: 'Your account is ready' });
-    navigate('/candidate/dashboard');
+    // Move to wallet activation step (payment required to access dashboard)
+    setCurrentStep('wallet');
   };
 
   const goBack = () => {
-    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms'];
+    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
+    }
+  };
+
+  // Wallet activation: load points via Razorpay, apply coupon, then unlock dashboard
+  const finalAmount = Math.max(0, walletPkg.price - couponDiscount);
+
+  const handleWalletPayment = async () => {
+    setWalletPaying(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+      const userId = session.user.id;
+
+      // Ensure wallet exists
+      let { data: wallet } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!wallet) {
+        const { data: newWallet } = await supabase
+          .from('wallets')
+          .insert({ user_id: userId, cash_balance: 0, points_balance: 100, rewards_balance: 10 })
+          .select()
+          .single();
+        wallet = newWallet;
+      }
+
+      if (!wallet) throw new Error('Could not initialize wallet');
+
+      // If 100% discount → free unlock, no payment needed
+      if (finalAmount === 0) {
+        await creditPointsAndFinish(wallet, 0);
+        return;
+      }
+
+      // Create Razorpay order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: { amount: finalAmount, currency: 'INR', receipt: `signup_${userId.slice(0, 8)}` },
+      });
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderError?.message || orderData?.error || 'Failed to create payment order');
+      }
+
+      // Load Razorpay script if needed
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load payment gateway'));
+          document.body.appendChild(script);
+        });
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: finalAmount * 100,
+        currency: 'INR',
+        name: 'Gradia',
+        description: `Activate Wallet — ${walletPkg.points} Points`,
+        order_id: orderData.order_id,
+        prefill: { email, contact: mobile, name: fullName },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+            if (verifyError || !verifyData?.verified) {
+              throw new Error('Payment verification failed');
+            }
+            await creditPointsAndFinish(wallet!, finalAmount);
+          } catch (err: any) {
+            toast({ title: 'Payment Error', description: err.message || 'Verification failed', variant: 'destructive' });
+            setWalletPaying(false);
+          }
+        },
+        theme: { color: '#10b981' },
+        modal: { ondismiss: () => setWalletPaying(false) },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      console.error('Wallet activation failed', err);
+      toast({ title: 'Error', description: err.message || 'Payment failed', variant: 'destructive' });
+      setWalletPaying(false);
+    }
+  };
+
+  const creditPointsAndFinish = async (wallet: any, amountPaid: number) => {
+    try {
+      const newBalance = (wallet.points_balance || 0) + walletPkg.points;
+      await supabase.from('wallets').update({ points_balance: newBalance }).eq('id', wallet.id);
+
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: wallet.id,
+        transaction_type: 'credit',
+        category: 'point_purchase',
+        amount: amountPaid,
+        points: walletPkg.points,
+        description: `Signup activation — ${walletPkg.points} points${couponCode ? ` (coupon ${couponCode})` : ''}`,
+      });
+
+      // Record coupon usage if applied
+      if (couponId && wallet.user_id) {
+        await Promise.all([
+          supabase.from('coupon_usages').insert({
+            coupon_id: couponId,
+            user_id: wallet.user_id,
+            user_role: 'candidate',
+            original_amount: walletPkg.price,
+            discount_applied: couponDiscount,
+            final_amount: amountPaid,
+            plan_name: `${walletPkg.points} pts`,
+          }),
+          supabase.rpc('increment_coupon_usage', { coupon_id_input: couponId }),
+        ]);
+      }
+
+      await refreshProfile();
+      toast({ title: '🎉 Welcome to Gradia!', description: `${walletPkg.points} points added. Your dashboard is ready.` });
+      navigate('/candidate/dashboard');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to credit points', variant: 'destructive' });
+      setWalletPaying(false);
     }
   };
 
