@@ -1203,7 +1203,7 @@ const CandidateSignup = () => {
                 </>
               )}
             </div>
-          )}
+          ) : null}
 
 
           {retryError && (
