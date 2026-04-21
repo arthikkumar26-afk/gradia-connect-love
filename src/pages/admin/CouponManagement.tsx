@@ -98,7 +98,8 @@ const CouponManagement = () => {
     if (target === "candidate") return candidatePackages;
     if (target === "employer") return employerPackages;
     if (target === "freelancer") return freelancerPackages;
-    return [...candidatePackages, ...employerPackages, ...freelancerPackages];
+    if (target === "wallet") return walletPackages;
+    return [...candidatePackages, ...employerPackages, ...freelancerPackages, ...walletPackages];
   };
 
   const togglePackage = (pkg: string) => {
