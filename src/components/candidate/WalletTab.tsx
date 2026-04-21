@@ -176,6 +176,106 @@ export default function WalletTab({ userId }: { userId: string }) {
     setLoading(false);
   };
 
+
+  const handleRedeemBonusCode = async () => {
+    if (!wallet || !bonusCode.trim()) return;
+    setRedeeming(true);
+    try {
+      const code = bonusCode.toUpperCase().trim();
+
+      // 1. Fetch coupon
+      const { data: coupon, error: cErr } = await supabase
+        .from("discount_coupons")
+        .select("*")
+        .eq("code", code)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (cErr) throw cErr;
+      if (!coupon) throw new Error("Invalid or inactive coupon code");
+      if (coupon.discount_type !== "bonus_points") throw new Error("This coupon is not a wallet bonus code");
+
+      // 2. Validate expiry
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
+        throw new Error("This coupon has expired");
+      }
+
+      // 3. Validate global usage cap
+      if (coupon.max_total_uses && coupon.total_used >= coupon.max_total_uses) {
+        throw new Error("This coupon has reached its usage limit");
+      }
+
+      // 4. Validate per-user cap
+      const { count: myUses } = await supabase
+        .from("coupon_usages")
+        .select("id", { count: "exact", head: true })
+        .eq("coupon_id", coupon.id)
+        .eq("user_id", userId);
+
+      if (myUses !== null && coupon.max_uses_per_user && myUses >= coupon.max_uses_per_user) {
+        throw new Error("You have already redeemed this coupon");
+      }
+
+      // 5. Validate role applicability
+      if (coupon.applicable_to && coupon.applicable_to !== "both" && coupon.applicable_to !== "wallet") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .maybeSingle();
+        if (profile?.role && profile.role !== coupon.applicable_to) {
+          throw new Error("This coupon is not available for your account type");
+        }
+      }
+
+      const points = Number(coupon.discount_value) || 0;
+      if (points <= 0) throw new Error("Invalid coupon value");
+
+      // 6. Credit points
+      const newBalance = (wallet.points_balance || 0) + points;
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: newBalance })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      // 7. Record transaction
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "credit",
+        category: "reward",
+        points,
+        description: `Bonus points redeemed via coupon ${code}`,
+      });
+
+      // 8. Record coupon usage
+      await supabase.from("coupon_usages").insert({
+        coupon_id: coupon.id,
+        user_id: userId,
+        user_role: "candidate",
+        plan_name: "Wallet Bonus",
+        original_amount: 0,
+        discount_applied: points,
+        final_amount: 0,
+      });
+
+      // 9. Increment global counter (best effort)
+      try {
+        await supabase.rpc("increment_coupon_usage", { coupon_id_input: coupon.id });
+      } catch {
+        // ignore — usage row already recorded
+      }
+
+      toast({ title: "🎉 Bonus Applied!", description: `${points} points added to your wallet.` });
+      setBonusCode("");
+      fetchWallet();
+    } catch (err: any) {
+      toast({ title: "Could not redeem", description: err.message || "Failed to redeem coupon", variant: "destructive" });
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
   const handleBuyPoints = async (pkg: typeof POINT_PACKAGES[0]) => {
     if (!wallet) return;
     setBuyingPkg(pkg.points);
