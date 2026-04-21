@@ -243,6 +243,12 @@ const CandidateSignup = () => {
     }
   }, [isAuthenticated, navigate, currentStep, justSignedUp]);
 
+  // Scroll to top whenever the wizard advances to a new step so users
+  // see the new step header instead of the previous step's footer position.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [currentStep]);
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
