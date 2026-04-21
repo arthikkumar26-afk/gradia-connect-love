@@ -2085,43 +2085,56 @@ export const MockInterviewTab = () => {
         </div>
       </div>
 
-      <div className="relative">
-        {!isCurrentSessionUnlocked && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/40 backdrop-blur-md rounded-lg">
-            <Card className="border-2 border-primary/40 bg-background shadow-xl max-w-md mx-4">
-              <CardContent className="py-8 flex flex-col items-center text-center gap-4">
-                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Lock className="h-7 w-7 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold">Mock Interview Locked</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Spend {MOCK_INTERVIEW_COST} wallet points to unlock and use the full pipeline.
-                  </p>
-                </div>
-                <Button
-                  onClick={async () => {
-                    await fetchWalletPoints();
-                    setPendingStartFn(() => async () => {
-                      await supabase
-                        .from('mock_interview_sessions')
-                        .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
-                        .eq('id', currentSession.id);
-                      setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
-                    });
-                    setShowPointsDialog(true);
-                  }}
-                  className="gap-2"
-                  size="lg"
-                >
-                  <Zap className="h-5 w-5" /> Pay {MOCK_INTERVIEW_COST} pts to Unlock
-                </Button>
-              </CardContent>
+      {!isCurrentSessionUnlocked ? (
+        <Card className="p-8 text-center border-dashed border-2 border-primary/30">
+          <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Premium Feature</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            AI Mock Interview Pipeline is a paid feature. Spend{" "}
+            <strong>{MOCK_INTERVIEW_COST} wallet points</strong> to unlock the full
+            8-stage interview simulation.
+          </p>
+          <div className="flex justify-center mb-6">
+            <Card className="p-4 border-primary/20 bg-primary/5 text-left max-w-[260px]">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-sm text-foreground">
+                  AI Mock Interview Pipeline
+                </span>
+              </div>
+              <p className="text-lg font-bold text-foreground">
+                {MOCK_INTERVIEW_COST} pts
+                <span className="text-xs text-muted-foreground font-normal">
+                  /attempt
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Full pipeline access — all 8 stages
+              </p>
             </Card>
           </div>
-        )}
-
-        <div className={!isCurrentSessionUnlocked ? 'pointer-events-none select-none blur-sm' : ''}>
+          <Button
+            onClick={async () => {
+              await fetchWalletPoints();
+              setPendingStartFn(() => async () => {
+                await supabase
+                  .from('mock_interview_sessions')
+                  .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
+                  .eq('id', currentSession.id);
+                setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
+              });
+              setShowPointsDialog(true);
+            }}
+            className="gap-2"
+            size="lg"
+          >
+            <Zap className="h-4 w-4" />
+            Pay {MOCK_INTERVIEW_COST} pts to Unlock
+          </Button>
+        </Card>
+      ) : (
+      <div className="relative">
+        <div>
         <>
 
       {/* Progress Tracker */}
