@@ -528,7 +528,7 @@ export default function WalletTab({ userId }: { userId: string }) {
               <span className="text-sm font-medium text-muted-foreground">Points Balance</span>
               <Star className="h-5 w-5 text-yellow-600" />
             </div>
-            <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">
+            <div className={`text-3xl font-bold text-yellow-700 dark:text-yellow-400 transition-all duration-500 ${balancePulse ? "scale-110 drop-shadow-[0_0_12px_rgba(234,179,8,0.6)]" : "scale-100"}`}>
               {wallet?.points_balance?.toLocaleString("en-IN") || "0"} pts
             </div>
             <p className="text-xs text-muted-foreground mt-1">Use for subscriptions, services & features</p>
