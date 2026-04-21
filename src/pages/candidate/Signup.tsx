@@ -1701,9 +1701,9 @@ const CandidateSignup = () => {
 
   // Render wallet activation popup-style step
   const renderWalletStep = () => (
-    <div className="w-full max-w-3xl">
+    <div className="w-full max-w-5xl">
       <ProgressIndicator />
-      <Card className="w-full p-8 shadow-large border-primary/20">
+      <Card className="w-full p-6 sm:p-8 shadow-large border-primary/20">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-full bg-primary/10">
@@ -1714,8 +1714,72 @@ const CandidateSignup = () => {
             <Sparkles className="h-3.5 w-3.5" /> Final Step
           </div>
           <h1 className="text-3xl font-bold text-foreground">Activate Your Wallet</h1>
-          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-            Load wallet points to unlock your dashboard. Use points for mock interviews, resume exports, subscriptions, and premium features. <span className="font-medium text-foreground">₹5 = 1 point.</span>
+          <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
+            Based on your resume, here are matched roles and exactly what each tier unlocks at every interview round. <span className="font-medium text-foreground">₹5 = 1 point.</span>
+          </p>
+        </div>
+
+        {/* Suggested Jobs from resume */}
+        {suggestedJobs.length > 0 && (
+          <div className="rounded-lg border border-border bg-card p-4 mb-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Briefcase className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Suggested jobs from your resume</h3>
+              <Badge variant="secondary" className="text-[10px]">{suggestedJobs.length} matches</Badge>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {suggestedJobs.map((j) => (
+                <div key={j.id} className="rounded-md border border-border bg-background p-3 hover:shadow-sm transition-shadow">
+                  <div className="text-[13px] font-semibold text-foreground line-clamp-1">{j.title}</div>
+                  <div className="text-[11px] text-muted-foreground line-clamp-1">{j.company}{j.location ? ` · ${j.location}` : ''}</div>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {j.type && <span className="text-[9px] bg-muted px-1.5 py-0.5 rounded">{j.type}</span>}
+                    {j.salary && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{j.salary}</span>}
+                  </div>
+                  {j.matchReason && (
+                    <div className="text-[10px] text-green-600 mt-1.5">✓ {j.matchReason}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2 italic">
+              Apply to any of these for free after activating — points are only spent on premium actions like mock interviews.
+            </p>
+          </div>
+        )}
+
+        {/* Tier × Deliverables matrix (mirrors invite email) */}
+        <div className="rounded-lg border border-border bg-card p-4 mb-5 overflow-x-auto">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Price breakdown — what you unlock at every round</h3>
+          </div>
+          <table className="w-full text-[11px] border-collapse min-w-[640px]">
+            <thead>
+              <tr className="bg-primary text-primary-foreground">
+                <th className="text-left p-2 font-semibold border border-primary">Round / Feature</th>
+                {POINT_PACKAGES.map((p) => (
+                  <th key={p.points} className={`text-center p-2 font-semibold border border-primary ${p.popular ? 'bg-primary/80' : ''}`}>
+                    {p.name}{p.popular ? ' ★' : ''}
+                    <div className="font-normal opacity-90 text-[10px]">{p.points.toLocaleString('en-IN')} pts · ₹{p.price.toLocaleString('en-IN')}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {TIER_MATRIX.rows.map((r, i) => (
+                <tr key={r.round} className={i % 2 === 0 ? 'bg-muted/30' : 'bg-background'}>
+                  <td className="p-2 border border-border font-medium text-foreground">{r.round}</td>
+                  <td className="p-2 border border-border text-center text-muted-foreground">{r.starter}</td>
+                  <td className="p-2 border border-border text-center text-muted-foreground">{r.basic}</td>
+                  <td className="p-2 border border-border text-center text-foreground bg-yellow-50 dark:bg-yellow-950/20">{r.pro}</td>
+                  <td className="p-2 border border-border text-center text-muted-foreground">{r.premium}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-[10px] text-muted-foreground mt-2 italic">
+            Rounds adapt to your industry — IT roles include Coding tests, Education roles include Demo class & Subject Mastery, Non-IT includes Group Discussion & Domain rounds.
           </p>
         </div>
 
