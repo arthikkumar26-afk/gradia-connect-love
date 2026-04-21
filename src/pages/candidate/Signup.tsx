@@ -222,6 +222,15 @@ const CandidateSignup = () => {
           const result = await Promise.race([signupPromise, timeoutPromise]);
           signupData = result.data;
           signupError = result.error;
+          // Try to extract the JSON error body from FunctionsHttpError
+          if (signupError && (signupError as any).context?.json) {
+            try {
+              const body = await (signupError as any).context.json();
+              if (body?.error) {
+                signupData = { ...(signupData || {}), error: body.error };
+              }
+            } catch { /* ignore */ }
+          }
           if (!signupError || !isNetErr(signupError.message)) break;
         } catch (err: any) {
           signupError = err;
