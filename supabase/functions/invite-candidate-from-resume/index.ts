@@ -292,12 +292,12 @@ serve(async (req) => {
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px;">
             <tr style="background:#0f4c75;color:#fff;">
               <td style="padding:8px 12px;font-size:12px;font-weight:600;">Starter Packs</td>
-              <td style="padding:8px 12px;font-size:12px;font-weight:600;text-align:right;">Points → Price</td>
+              <td style="padding:8px 12px;font-size:12px;font-weight:600;text-align:right;">Wallet Points</td>
             </tr>
-            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Starter</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>200 pts</strong> — ₹1,000</td></tr>
-            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Basic</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>500 pts</strong> — ₹2,500</td></tr>
-            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Pro <span style="background:#fbbf24;color:#78350f;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;margin-left:4px;">POPULAR</span></td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>1,000 pts</strong> — ₹5,000</td></tr>
-            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Premium</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>2,500 pts</strong> — ₹12,500</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Starter</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>200 pts</strong></td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Basic</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>500 pts</strong></td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Pro <span style="background:#fbbf24;color:#78350f;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;margin-left:4px;">POPULAR</span></td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>1,000 pts</strong></td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Premium</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>2,500 pts</strong></td></tr>
           </table>
           <h3 style="margin:14px 0 8px;font-size:14px;color:#0f172a;">How points are spent</h3>
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">
