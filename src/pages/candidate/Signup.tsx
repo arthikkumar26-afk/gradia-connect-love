@@ -40,10 +40,60 @@ const wizardSteps = [
 ];
 
 const POINT_PACKAGES = [
-  { points: 200, price: 1000, popular: false },
-  { points: 500, price: 2500, popular: false },
-  { points: 1000, price: 5000, popular: true },
-  { points: 2000, price: 10000, popular: false },
+  {
+    points: 200,
+    price: 1000,
+    popular: false,
+    name: 'Starter',
+    tagline: 'Try the platform',
+    features: [
+      '1 AI Mock Interview (200 pts)',
+      'Unlimited job applications',
+      'AI Resume Score & ATS report',
+      'Basic profile visibility to employers',
+    ],
+  },
+  {
+    points: 500,
+    price: 2500,
+    popular: false,
+    name: 'Basic',
+    tagline: 'Get interview ready',
+    features: [
+      '2 AI Mock Interviews (200 pts each)',
+      '1 PDF Resume export (100 pts)',
+      'AI Career Coaching tips',
+      'Priority profile in search results',
+    ],
+  },
+  {
+    points: 1000,
+    price: 5000,
+    popular: true,
+    name: 'Pro',
+    tagline: 'Most popular — best value',
+    features: [
+      '5 AI Mock Interviews + Feedback',
+      'Unlimited Resume PDF exports',
+      'AI Resume Builder (all templates)',
+      'Featured profile badge for employers',
+      'Live demo room access',
+    ],
+  },
+  {
+    points: 2000,
+    price: 10000,
+    popular: false,
+    name: 'Premium',
+    tagline: 'Career accelerator',
+    features: [
+      '10+ AI Mock Interviews (all pipelines)',
+      'Unlimited Resume builder & exports',
+      '1-on-1 mentor sessions (Freelancer)',
+      'Top-tier profile boost & job alerts',
+      'All premium dashboard features unlocked',
+    ],
+  },
 ];
 
 const benefits = [
