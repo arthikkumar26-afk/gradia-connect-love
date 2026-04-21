@@ -1,0 +1,2 @@
+ALTER TABLE public.discount_coupons DROP CONSTRAINT IF EXISTS discount_coupons_discount_type_check;
+ALTER TABLE public.discount_coupons ADD CONSTRAINT discount_coupons_discount_type_check CHECK (discount_type = ANY (ARRAY['percentage'::text, 'fixed'::text, 'bonus_points'::text]));
