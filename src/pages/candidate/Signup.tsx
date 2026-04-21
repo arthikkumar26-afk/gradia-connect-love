@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check, Upload, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check, Upload, Wand2, Wallet, Star, CreditCard } from "lucide-react";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { getRolesForPipeline } from "@/data/interviewPipelineConfig";
 import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+import { Badge } from "@/components/ui/badge";
+import { CouponInput } from "@/components/shared/CouponInput";
 
 interface FormErrors {
   fullName?: string;
@@ -26,7 +28,7 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
-type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms';
+type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms' | 'wallet';
 
 const wizardSteps = [
   { id: 'signup' as const, label: 'Create Account', stepNumber: 1 },
@@ -34,6 +36,14 @@ const wizardSteps = [
   { id: 'benefits' as const, label: 'Benefits', stepNumber: 3 },
   { id: 'agreement' as const, label: 'Agreement', stepNumber: 4 },
   { id: 'terms' as const, label: 'Terms & Conditions', stepNumber: 5 },
+  { id: 'wallet' as const, label: 'Activate Wallet', stepNumber: 6 },
+];
+
+const POINT_PACKAGES = [
+  { points: 200, price: 1000, popular: false },
+  { points: 500, price: 2500, popular: false },
+  { points: 1000, price: 5000, popular: true },
+  { points: 2000, price: 10000, popular: false },
 ];
 
 const benefits = [
@@ -122,6 +132,13 @@ const CandidateSignup = () => {
   const [resumeParsing, setResumeParsing] = useState(false);
   const [resumeParsed, setResumeParsed] = useState<any | null>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  // Wallet step state
+  const [walletPkg, setWalletPkg] = useState<typeof POINT_PACKAGES[0]>(POINT_PACKAGES[2]);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponId, setCouponId] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [walletPaying, setWalletPaying] = useState(false);
+
   useEffect(() => {
     // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
     // If user just signed up, let them complete the wizard flow
@@ -356,18 +373,146 @@ const CandidateSignup = () => {
       return;
     }
 
-    // Refresh profile one more time before navigating to ensure it's loaded
-    await refreshProfile();
-    
-    toast({ title: 'Welcome to Gradia!', description: 'Your account is ready' });
-    navigate('/candidate/dashboard');
+    // Move to wallet activation step (payment required to access dashboard)
+    setCurrentStep('wallet');
   };
 
   const goBack = () => {
-    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms'];
+    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
+    }
+  };
+
+  // Wallet activation: load points via Razorpay, apply coupon, then unlock dashboard
+  const finalAmount = Math.max(0, walletPkg.price - couponDiscount);
+
+  const handleWalletPayment = async () => {
+    setWalletPaying(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('Not authenticated');
+      const userId = session.user.id;
+
+      // Ensure wallet exists
+      let { data: wallet } = await supabase
+        .from('wallets')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!wallet) {
+        const { data: newWallet } = await supabase
+          .from('wallets')
+          .insert({ user_id: userId, cash_balance: 0, points_balance: 100, rewards_balance: 10 })
+          .select()
+          .single();
+        wallet = newWallet;
+      }
+
+      if (!wallet) throw new Error('Could not initialize wallet');
+
+      // If 100% discount → free unlock, no payment needed
+      if (finalAmount === 0) {
+        await creditPointsAndFinish(wallet, 0);
+        return;
+      }
+
+      // Create Razorpay order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: { amount: finalAmount, currency: 'INR', receipt: `signup_${userId.slice(0, 8)}` },
+      });
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderError?.message || orderData?.error || 'Failed to create payment order');
+      }
+
+      // Load Razorpay script if needed
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load payment gateway'));
+          document.body.appendChild(script);
+        });
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: finalAmount * 100,
+        currency: 'INR',
+        name: 'Gradia',
+        description: `Activate Wallet — ${walletPkg.points} Points`,
+        order_id: orderData.order_id,
+        prefill: { email, contact: mobile, name: fullName },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+            if (verifyError || !verifyData?.verified) {
+              throw new Error('Payment verification failed');
+            }
+            await creditPointsAndFinish(wallet!, finalAmount);
+          } catch (err: any) {
+            toast({ title: 'Payment Error', description: err.message || 'Verification failed', variant: 'destructive' });
+            setWalletPaying(false);
+          }
+        },
+        theme: { color: '#10b981' },
+        modal: { ondismiss: () => setWalletPaying(false) },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      console.error('Wallet activation failed', err);
+      toast({ title: 'Error', description: err.message || 'Payment failed', variant: 'destructive' });
+      setWalletPaying(false);
+    }
+  };
+
+  const creditPointsAndFinish = async (wallet: any, amountPaid: number) => {
+    try {
+      const newBalance = (wallet.points_balance || 0) + walletPkg.points;
+      await supabase.from('wallets').update({ points_balance: newBalance }).eq('id', wallet.id);
+
+      await supabase.from('wallet_transactions').insert({
+        wallet_id: wallet.id,
+        transaction_type: 'credit',
+        category: 'point_purchase',
+        amount: amountPaid,
+        points: walletPkg.points,
+        description: `Signup activation — ${walletPkg.points} points${couponCode ? ` (coupon ${couponCode})` : ''}`,
+      });
+
+      // Record coupon usage if applied
+      if (couponId && wallet.user_id) {
+        await Promise.all([
+          supabase.from('coupon_usages').insert({
+            coupon_id: couponId,
+            user_id: wallet.user_id,
+            user_role: 'candidate',
+            original_amount: walletPkg.price,
+            discount_applied: couponDiscount,
+            final_amount: amountPaid,
+            plan_name: `${walletPkg.points} pts`,
+          }),
+          supabase.rpc('increment_coupon_usage', { coupon_id_input: couponId }),
+        ]);
+      }
+
+      await refreshProfile();
+      toast({ title: '🎉 Welcome to Gradia!', description: `${walletPkg.points} points added. Your dashboard is ready.` });
+      navigate('/candidate/dashboard');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to credit points', variant: 'destructive' });
+      setWalletPaying(false);
     }
   };
 
@@ -1350,6 +1495,113 @@ const CandidateSignup = () => {
     </div>
   );
 
+  // Render wallet activation popup-style step
+  const renderWalletStep = () => (
+    <div className="w-full max-w-3xl">
+      <ProgressIndicator />
+      <Card className="w-full p-8 shadow-large border-primary/20">
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 rounded-full bg-primary/10">
+              <Wallet className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold mb-3">
+            <Sparkles className="h-3.5 w-3.5" /> Final Step
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">Activate Your Wallet</h1>
+          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
+            Load wallet points to unlock your dashboard. Use points for mock interviews, resume exports, subscriptions, and premium features. <span className="font-medium text-foreground">₹5 = 1 point.</span>
+          </p>
+        </div>
+
+        {/* Point packages */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {POINT_PACKAGES.map((pkg) => {
+            const isSelected = walletPkg.points === pkg.points;
+            return (
+              <Card
+                key={pkg.points}
+                onClick={() => { setWalletPkg(pkg); setCouponDiscount(0); setCouponId(null); setCouponCode(null); }}
+                className={`relative cursor-pointer transition-all hover:shadow-md ${
+                  isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border'
+                }`}
+              >
+                {pkg.popular && (
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] bg-primary text-primary-foreground">
+                    Best Value
+                  </Badge>
+                )}
+                <div className="p-4 text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    <div className="text-xl font-bold text-foreground">{pkg.points.toLocaleString('en-IN')}</div>
+                  </div>
+                  <div className="text-base font-semibold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
+                  <p className="text-[10px] text-muted-foreground">pts • ₹5/pt</p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Coupon input */}
+        <div className="mb-4">
+          <Label className="text-sm mb-2 block">Have a coupon code?</Label>
+          <CouponInput
+            originalAmount={walletPkg.price}
+            userRole="candidate"
+            onCouponApplied={(discount, _final, id, code) => {
+              setCouponDiscount(discount);
+              setCouponId(id);
+              setCouponCode(code);
+            }}
+            onCouponRemoved={() => {
+              setCouponDiscount(0);
+              setCouponId(null);
+              setCouponCode(null);
+            }}
+          />
+        </div>
+
+        {/* Order summary */}
+        <div className="rounded-lg border bg-muted/40 p-4 mb-6 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">{walletPkg.points} wallet points</span>
+            <span className="font-medium">₹{walletPkg.price.toLocaleString('en-IN')}</span>
+          </div>
+          {couponDiscount > 0 && (
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Coupon discount{couponCode ? ` (${couponCode})` : ''}</span>
+              <span>− ₹{couponDiscount.toLocaleString('en-IN')}</span>
+            </div>
+          )}
+          <div className="flex justify-between pt-2 border-t border-border">
+            <span className="font-semibold text-foreground">Total payable</span>
+            <span className="text-lg font-bold text-primary">₹{finalAmount.toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+
+        <Button
+          onClick={handleWalletPayment}
+          disabled={walletPaying}
+          className="w-full"
+          size="lg"
+        >
+          {walletPaying ? (
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing payment...</>
+          ) : (
+            <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{finalAmount.toLocaleString('en-IN')} & Unlock Dashboard</>
+          )}
+        </Button>
+
+        <p className="text-[11px] text-center text-muted-foreground mt-3">
+          🔒 Secure payment via Razorpay • Points never expire • Required to access your candidate dashboard
+        </p>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
       {currentStep === 'signup' && renderSignupStep()}
@@ -1357,6 +1609,7 @@ const CandidateSignup = () => {
       {currentStep === 'benefits' && renderBenefitsStep()}
       {currentStep === 'agreement' && renderAgreementStep()}
       {currentStep === 'terms' && renderTermsStep()}
+      {currentStep === 'wallet' && renderWalletStep()}
     </div>
   );
 };
