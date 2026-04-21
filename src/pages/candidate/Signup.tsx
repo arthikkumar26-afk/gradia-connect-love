@@ -348,8 +348,20 @@ const CandidateSignup = () => {
   const handleWalletPayment = async () => {
     setWalletPaying(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error('Not authenticated');
+      // Try a few times — session may still be propagating after signup
+      let session = (await supabase.auth.getSession()).data.session;
+      for (let i = 0; i < 3 && !session?.user; i++) {
+        await new Promise(r => setTimeout(r, 500));
+        session = (await supabase.auth.getSession()).data.session;
+      }
+      if (!session?.user) {
+        // Last resort: re-establish session if we still have credentials in scope
+        if (email && password) {
+          await supabase.auth.signInWithPassword({ email, password });
+          session = (await supabase.auth.getSession()).data.session;
+        }
+      }
+      if (!session?.user) throw new Error('Session expired. Please log in again to continue.');
       const userId = session.user.id;
 
       // Ensure wallet exists
