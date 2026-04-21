@@ -143,7 +143,7 @@ const CandidateSignup = () => {
   useEffect(() => {
     // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
     // If user just signed up, let them complete the wizard flow
-    if (isAuthenticated && currentStep === 'signup' && !justSignedUp) {
+    if (isAuthenticated && currentStep === 'signup' && !justSignedUp && !justSignedUpRef.current) {
       navigate('/candidate/dashboard');
     }
   }, [isAuthenticated, navigate, currentStep, justSignedUp]);
