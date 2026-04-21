@@ -1507,7 +1507,7 @@ const CandidateSignup = () => {
           <Label className="text-sm mb-2 block">Have a coupon code?</Label>
           <CouponInput
             originalAmount={walletPkg.price}
-            userRole="candidate"
+            userRole="wallet"
             onCouponApplied={(discount, _final, id, code) => {
               setCouponDiscount(discount);
               setCouponId(id);
