@@ -579,7 +579,6 @@ export const MockInterviewTab = () => {
       const prioritizedSession =
         sessions.find((session) => session.status === 'in_progress' && session.points_paid !== true) ||
         sessions.find((session) => session.status === 'in_progress' && session.points_paid === true) ||
-        sessions[0] ||
         null;
 
       // Resolve stages from local pipeline config if session has pipeline info
