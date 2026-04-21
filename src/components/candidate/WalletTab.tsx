@@ -217,13 +217,24 @@ export default function WalletTab({ userId }: { userId: string }) {
 
     try { await supabase.rpc("increment_coupon_usage", { coupon_id_input: couponId }); } catch {}
 
+    // Re-fetch wallet to get the actual latest balance from server
+    const { data: refreshedWallet } = await supabase
+      .from("wallets")
+      .select("points_balance")
+      .eq("id", wallet.id)
+      .single();
+    const actualBalance = refreshedWallet?.points_balance ?? newBalance;
+
+    // Update local state with fresh data
+    setWallet((prev) => prev ? { ...prev, points_balance: actualBalance } : prev);
+
     toast({
       title: "🎉 Points Added!",
-      description: `${points} pts credited. New balance: ${newBalance} pts.`,
+      description: `${points} pts credited. New balance: ${actualBalance} pts.`,
     });
     setBonusCode("");
-    fetchWallet();
-    return newBalance;
+    await fetchWallet(); // Also refresh transactions list
+    return actualBalance;
   };
 
   const confirmRedeem = async () => {
