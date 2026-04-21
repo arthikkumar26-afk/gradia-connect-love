@@ -281,10 +281,6 @@ serve(async (req) => {
           <div style="text-align:center;margin:8px 0 24px;">
             <a href="${signupUrl}" style="display:inline-block;background:#0f4c75;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">Create your account</a>
           </div>
-          <h2 style="margin:24px 0 14px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">Top ${topMatches.length} matches for you</h2>
-        </td></tr>
-        <tr><td style="background:#f8fafc;padding:16px 20px;">
-          <table width="100%" cellpadding="0" cellspacing="0">${jobCardsHtml}</table>
         </td></tr>
         <tr><td style="background:#ffffff;padding:20px 28px 6px;">
           <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">💎 Your Wallet Points — What You Unlock Per Role</h2>
