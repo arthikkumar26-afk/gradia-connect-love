@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -25,7 +26,7 @@ import {
   CreditCard,
   Loader2,
   Download,
-} from "lucide-react";
+  Ticket,
 import { useToast } from "@/hooks/use-toast";
 
 // ₹5000 = 1000 points → ₹5 = 1 point
