@@ -1653,7 +1653,69 @@ const CandidateSignup = () => {
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-primary/20">
-            💡 Points are spent on usage — e.g. 200 pts per AI Mock Interview, 100 pts per Resume PDF, 500 pts to unlock premium features. Unused points never expire.
+            💡 Points are spent on usage — e.g. 500 pts per AI Mock Interview (full pipeline), 150 pts per Resume PDF. Unused points never expire.
+          </p>
+        </div>
+
+        {/* AI Mock Interview pipeline preview */}
+        <div className="rounded-lg border border-border bg-card p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">
+              What's inside an AI Mock Interview (500 pts unlocks the full pipeline)
+            </h3>
+          </div>
+          <p className="text-[11px] text-muted-foreground mb-3">
+            Pipeline rounds adapt to your department once you set your preferred role. Examples:
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="rounded-md border border-border/60 p-3 bg-background">
+              <div className="flex items-center justify-between mb-2">
+                <Badge variant="outline" className="text-[10px]">Education / Teaching</Badge>
+                <span className="text-[10px] text-muted-foreground">7 rounds</span>
+              </div>
+              <ol className="space-y-1 text-[11px] text-foreground/80">
+                {[
+                  'CV / Resume Screening',
+                  'Written Test (10 MCQs)',
+                  'Demo Round (live teaching)',
+                  'Segment / Subject Round',
+                  'Management Round',
+                  'HR Round',
+                  'Final Review & Offer',
+                ].map((s, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="rounded-md border border-border/60 p-3 bg-background">
+              <div className="flex items-center justify-between mb-2">
+                <Badge variant="outline" className="text-[10px]">IT / Software</Badge>
+                <span className="text-[10px] text-muted-foreground">6 rounds</span>
+              </div>
+              <ol className="space-y-1 text-[11px] text-foreground/80">
+                {[
+                  'CV / Resume Screening',
+                  'Written Test (MCQs)',
+                  'Coding Test (timed)',
+                  'Technical Interview',
+                  'HR Round',
+                  'Final Review & Offer',
+                ].map((s, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-3">
+            Other supported pipelines: Civil Engineering, Film & Media (Audition + Showreel), Banking & Finance, Legal, Doctor, Real Estate, Freelance.
           </p>
         </div>
 
