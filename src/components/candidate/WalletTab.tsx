@@ -47,11 +47,10 @@ import PointsPricingPanel from "./PointsPricingPanel";
 const RUPEE_PER_POINT = 5;
 
 const POINT_PACKAGES = [
-  { points: 200, price: 1000, popular: false },
-  { points: 500, price: 2500, popular: false },
-  { points: 1000, price: 5000, popular: true },
-  { points: 2000, price: 10000, popular: false },
-  { points: 5000, price: 25000, popular: false },
+  { points: 400, price: 2000, popular: false, label: "Starter" },
+  { points: 1000, price: 5000, popular: false, label: "Basic" },
+  { points: 2000, price: 10000, popular: true, label: "Pro" },
+  { points: 5000, price: 25000, popular: false, label: "Premium" },
 ];
 
 interface WalletData {
