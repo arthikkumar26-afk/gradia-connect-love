@@ -606,6 +606,82 @@ const CandidateSignup = () => {
     setResumeParsed(null);
   };
 
+  const fetchSuggestedJobs = async (skills: string[], preferredRole: string, location: string) => {
+    const candSkills = skills.map((s) => s.toLowerCase());
+    const role = (preferredRole || '').toLowerCase();
+    const loc = (location || '').toLowerCase().split(',')[0]?.trim() || '';
+
+    const score = (job: { title: string; skills?: string[] | null; description?: string | null; location?: string | null }) => {
+      const t = (job.title || '').toLowerCase();
+      const d = (job.description || '').toLowerCase();
+      const js = (job.skills || []).map((s) => s.toLowerCase());
+      let s = 0;
+      const reasons: string[] = [];
+      if (role && (t.includes(role) || role.split(/\s+/).some((w) => w.length > 3 && t.includes(w)))) {
+        s += 40;
+        reasons.push('role match');
+      }
+      const overlap = candSkills.filter((sk) => js.includes(sk) || d.includes(sk));
+      if (overlap.length) {
+        s += Math.min(40, overlap.length * 8);
+        reasons.push(`${overlap.length} skill${overlap.length > 1 ? 's' : ''} match`);
+      }
+      if (loc && job.location && job.location.toLowerCase().includes(loc)) {
+        s += 20;
+        reasons.push('location match');
+      }
+      return { score: s, reason: reasons.join(' · ') || 'general fit' };
+    };
+
+    const matches: SuggestedJob[] = [];
+
+    const [{ data: internalJobs }, { data: externalJobs }] = await Promise.all([
+      supabase.from('jobs').select('id, job_title, employer_id, location, salary_range, job_type, description, skills, status').eq('status', 'active').limit(120),
+      supabase.from('external_jobs').select('id, job_title, company_name, location, salary_range, job_type, description, skills, apply_url, is_active').eq('is_active', true).limit(120),
+    ]);
+
+    const employerIds = [...new Set((internalJobs || []).map((j: any) => j.employer_id).filter(Boolean))];
+    const employerMap = new Map<string, string>();
+    if (employerIds.length) {
+      const { data: emps } = await supabase.from('employer_registrations').select('employer_id, company_name').in('employer_id', employerIds);
+      (emps || []).forEach((e: any) => employerMap.set(e.employer_id, e.company_name));
+    }
+
+    for (const j of internalJobs || []) {
+      const r = score({ title: (j as any).job_title, skills: (j as any).skills, description: (j as any).description, location: (j as any).location });
+      if (r.score > 0) {
+        matches.push({
+          id: (j as any).id,
+          title: (j as any).job_title,
+          company: employerMap.get((j as any).employer_id) || 'Verified Employer',
+          location: (j as any).location || undefined,
+          salary: (j as any).salary_range || undefined,
+          type: (j as any).job_type || undefined,
+          url: `/jobs/${(j as any).id}`,
+          matchReason: r.reason,
+        });
+      }
+    }
+    for (const j of externalJobs || []) {
+      const r = score({ title: (j as any).job_title, skills: (j as any).skills, description: (j as any).description, location: (j as any).location });
+      if (r.score > 0) {
+        matches.push({
+          id: (j as any).id,
+          title: (j as any).job_title,
+          company: (j as any).company_name,
+          location: (j as any).location || undefined,
+          salary: (j as any).salary_range || undefined,
+          type: (j as any).job_type || undefined,
+          url: (j as any).apply_url,
+          matchReason: r.reason,
+        });
+      }
+    }
+
+    matches.sort((a, b) => 0); // already roughly ordered by insert order; keep top 6
+    setSuggestedJobs(matches.slice(0, 6));
+  };
+
   const handleResumeScan = async () => {
     if (!resumeFile) {
       toast({ title: 'Please upload a resume first', variant: 'destructive' });
