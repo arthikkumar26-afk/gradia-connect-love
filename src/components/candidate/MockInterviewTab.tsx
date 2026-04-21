@@ -472,10 +472,56 @@ export const MockInterviewTab = () => {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
+  const renderPointsDialog = () => {
+    const insufficient = walletPoints < MOCK_INTERVIEW_COST;
+    return (
+      <Dialog open={showPointsDialog} onOpenChange={(o) => { if (!deducting) setShowPointsDialog(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Unlock Mock Interview Pipeline
+            </DialogTitle>
+            <DialogDescription>
+              Spend wallet points to unlock the full mock interview pipeline. Points are deducted once per attempt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/40">
+              <span className="text-sm text-muted-foreground">Cost</span>
+              <span className="font-semibold">{MOCK_INTERVIEW_COST} pts</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/40">
+              <span className="text-sm text-muted-foreground">Your balance</span>
+              <span className={`font-semibold ${insufficient ? 'text-destructive' : ''}`}>{walletPoints} pts</span>
+            </div>
+            {insufficient && (
+              <p className="text-xs text-destructive">
+                You need {MOCK_INTERVIEW_COST - walletPoints} more points. Load points in your wallet to continue.
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowPointsDialog(false)} disabled={deducting}>
+              Cancel
+            </Button>
+            {insufficient ? (
+              <Button onClick={() => { setShowPointsDialog(false); navigate('/candidate/dashboard?tab=wallet'); }} className="gap-2">
+                <IndianRupee className="h-4 w-4" /> Load Points
+              </Button>
+            ) : (
+              <Button onClick={confirmDeductAndStart} disabled={deducting} className="gap-2">
+                {deducting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                Deduct & Unlock
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+
   }, [user]);
 
   // Refresh data when tab becomes visible (user comes back from interview page)
