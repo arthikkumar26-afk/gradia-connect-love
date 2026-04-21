@@ -590,7 +590,9 @@ export default function WalletTab({ userId }: { userId: string }) {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
 
+        {/* Usage Breakdown */}
         <TabsContent value="usage" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
