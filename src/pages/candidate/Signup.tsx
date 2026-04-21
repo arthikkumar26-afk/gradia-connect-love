@@ -201,6 +201,10 @@ const CandidateSignup = () => {
       const isNetErr = (msg?: string) => 
         msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("TypeError") || msg?.includes("timed out");
 
+      const isEmailRateLimitErr = (msg?: string) =>
+        msg?.toLowerCase().includes("email rate limit exceeded") ||
+        msg?.toLowerCase().includes("over_email_send_rate_limit");
+
       // Sign up with retry + timeout (Supabase returns {data,error} instead of throwing)
       let authData: any = null;
       let authError: any = null;
@@ -220,7 +224,7 @@ const CandidateSignup = () => {
           const result = await Promise.race([signupPromise, timeoutPromise]);
           authData = result.data;
           authError = result.error;
-          // If no error or non-network error, stop retrying
+          // Stop retrying for non-network errors, especially auth email send limits
           if (!authError || !isNetErr(authError.message)) break;
           console.warn(`Signup attempt ${attempt + 1} failed (network):`, authError.message);
         } catch (err: any) {
@@ -235,6 +239,13 @@ const CandidateSignup = () => {
         const msg = authError.message || '';
         if (msg.includes("already registered") || msg.includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
+        } else if (isEmailRateLimitErr(msg)) {
+          setRetryError(null);
+          toast({
+            title: "Signup temporarily unavailable",
+            description: "Too many verification emails were sent recently. Please wait a bit, then try again once — do not repeat clicks.",
+            variant: "destructive",
+          });
         } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("timed out")) {
           setRetryError("Network issue detected. Please check your internet connection and try again.");
           toast({
@@ -327,9 +338,17 @@ const CandidateSignup = () => {
 
       // Move to resume scan step
       setCurrentStep('resume');
-    } catch (error: any) {
+      } catch (error: any) {
+      const isEmailRateLimit = error.message?.toLowerCase().includes("email rate limit exceeded") || error.message?.toLowerCase().includes("over_email_send_rate_limit");
       const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
-      if (isNetworkError) {
+      if (isEmailRateLimit) {
+        setRetryError(null);
+        toast({
+          title: "Signup temporarily unavailable",
+          description: "Too many verification emails were sent recently. Please wait a bit, then try again once.",
+          variant: "destructive",
+        });
+      } else if (isNetworkError) {
         setRetryError("Network issue detected. Please check your internet connection and try again.");
         toast({
           title: "Connection Error",
