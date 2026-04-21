@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface CouponInputProps {
   originalAmount: number;
-  userRole: "candidate" | "employer";
+  userRole: "candidate" | "employer" | "wallet";
   onCouponApplied: (discount: number, finalAmount: number, couponId: string, couponCode: string) => void;
   onCouponRemoved: () => void;
 }

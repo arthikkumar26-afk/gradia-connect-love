@@ -78,6 +78,7 @@ const CouponManagement = () => {
   const candidatePackages = ["Pro (₹1499/mo)", "Premium (₹1999/mo)"];
   const employerPackages = ["Growth (₹4,999/mo)", "Professional (₹14,999/mo)", "Enterprise (₹29,000/mo)"];
   const freelancerPackages = ["Starter (₹0/mo)", "Pro (₹1,499/mo)", "Premium (₹2,999/mo)"];
+  const walletPackages = ["200 pts (₹1,000)", "500 pts (₹2,500)", "1,000 pts (₹5,000)", "2,000 pts (₹10,000)"];
 
   const [form, setForm] = useState({
     code: "",
@@ -97,7 +98,8 @@ const CouponManagement = () => {
     if (target === "candidate") return candidatePackages;
     if (target === "employer") return employerPackages;
     if (target === "freelancer") return freelancerPackages;
-    return [...candidatePackages, ...employerPackages, ...freelancerPackages];
+    if (target === "wallet") return walletPackages;
+    return [...candidatePackages, ...employerPackages, ...freelancerPackages, ...walletPackages];
   };
 
   const togglePackage = (pkg: string) => {
@@ -329,6 +331,7 @@ const CouponManagement = () => {
               <SelectItem value="candidate">Candidates Only</SelectItem>
               <SelectItem value="employer">Employers Only</SelectItem>
               <SelectItem value="freelancer">Freelancers Only</SelectItem>
+              <SelectItem value="wallet">Wallet Top-up Only</SelectItem>
             </SelectContent>
           </Select>
         </div>
