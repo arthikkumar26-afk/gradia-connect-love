@@ -600,6 +600,7 @@ const CandidateSignup = () => {
       }
 
       await refreshProfile();
+      try { window.localStorage.removeItem(STEP_STORAGE_KEY); } catch { /* ignore */ }
       toast({ title: '🎉 Welcome to Gradia!', description: `${walletPkg.points} points added. Your dashboard is ready.` });
       navigate('/candidate/dashboard');
     } catch (err: any) {
