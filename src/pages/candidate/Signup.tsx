@@ -198,7 +198,7 @@ const CandidateSignup = () => {
       const isNetErr = (msg?: string) =>
         msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("TypeError") || msg?.includes("timed out");
 
-      let signupData: { userId?: string } | null = null;
+      let signupData: { userId?: string; error?: string } | null = null;
       let signupError: any = null;
 
       for (let attempt = 0; attempt < 3; attempt++) {
