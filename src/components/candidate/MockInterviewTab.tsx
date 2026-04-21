@@ -96,6 +96,8 @@ interface MockInterviewSession {
   recording_url?: string;
   created_at: string;
   completed_at?: string;
+  points_paid?: boolean | null;
+  points_paid_at?: string | null;
 }
 
 export const MockInterviewTab = () => {
