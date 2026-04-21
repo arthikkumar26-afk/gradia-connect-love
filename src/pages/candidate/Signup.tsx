@@ -902,8 +902,53 @@ const CandidateSignup = () => {
           </div>
 
           {/* Category-specific fields */}
-          {industryCategory && industryCategory !== "Education" && (
+          {industryCategory && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {industryCategory === "Education" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Segment</Label>
+                    <Select value={segment || undefined} onValueChange={setSegment}>
+                      <SelectTrigger className="h-10"><SelectValue placeholder="Select Segment" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="School">School</SelectItem>
+                        <SelectItem value="Pre-University / Junior College">Pre-University / Junior College</SelectItem>
+                        <SelectItem value="College / University">College / University</SelectItem>
+                        <SelectItem value="Coaching / Tuition Centre">Coaching / Tuition Centre</SelectItem>
+                        <SelectItem value="Ed-Tech / Online">Ed-Tech / Online</SelectItem>
+                        <SelectItem value="Administration">Administration</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Primary Subject</Label>
+                    <Select value={primarySubject || undefined} onValueChange={setPrimarySubject}>
+                      <SelectTrigger className="h-10"><SelectValue placeholder="Select Subject" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Mathematics">Mathematics</SelectItem>
+                        <SelectItem value="Physics">Physics</SelectItem>
+                        <SelectItem value="Chemistry">Chemistry</SelectItem>
+                        <SelectItem value="Biology">Biology</SelectItem>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Hindi">Hindi</SelectItem>
+                        <SelectItem value="Social Studies">Social Studies</SelectItem>
+                        <SelectItem value="Computer Science">Computer Science</SelectItem>
+                        <SelectItem value="Commerce / Accountancy">Commerce / Accountancy</SelectItem>
+                        <SelectItem value="Economics">Economics</SelectItem>
+                        <SelectItem value="History">History</SelectItem>
+                        <SelectItem value="Geography">Geography</SelectItem>
+                        <SelectItem value="Political Science">Political Science</SelectItem>
+                        <SelectItem value="Languages">Languages</SelectItem>
+                        <SelectItem value="Arts & Crafts">Arts & Crafts</SelectItem>
+                        <SelectItem value="Physical Education">Physical Education</SelectItem>
+                        <SelectItem value="Administration">Administration</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
               {industryCategory === "IT Corporate" && (
                 <>
                   <div className="space-y-2">
