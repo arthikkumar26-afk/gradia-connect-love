@@ -41,60 +41,100 @@ const wizardSteps = [
 
 const POINT_PACKAGES = [
   {
-    points: 200,
-    price: 1000,
+    points: 400,
+    price: 2000,
     popular: false,
     name: 'Starter',
-    tagline: 'Try the platform',
+    tagline: 'Apply & self-prepare',
+    rounds: 'No mock rounds',
     features: [
-      '1 AI Mock Interview (200 pts)',
-      'Unlimited job applications',
-      'AI Resume Score & ATS report',
-      'Basic profile visibility to employers',
+      'Apply to unlimited jobs',
+      'Resume export (1×)',
+      'AI ATS keyword score',
+      'Application tracker dashboard',
     ],
-  },
-  {
-    points: 500,
-    price: 2500,
-    popular: false,
-    name: 'Basic',
-    tagline: 'Get interview ready',
-    features: [
-      '2 AI Mock Interviews (200 pts each)',
-      '1 PDF Resume export (100 pts)',
-      'AI Career Coaching tips',
-      'Priority profile in search results',
-    ],
+    excluded: ['Mock interviews', 'AI feedback report', 'Featured profile boost'],
   },
   {
     points: 1000,
     price: 5000,
-    popular: true,
-    name: 'Pro',
-    tagline: 'Most popular — best value',
+    popular: false,
+    name: 'Basic',
+    tagline: 'Get interview ready',
+    rounds: '1× Mock Interview (Aptitude + 1 Technical)',
     features: [
-      '5 AI Mock Interviews + Feedback',
-      'Unlimited Resume PDF exports',
-      'AI Resume Builder (all templates)',
-      'Featured profile badge for employers',
-      'Live demo room access',
+      'Everything in Starter',
+      '1× full Mock Interview',
+      'Round 1 — Aptitude / Screening (15 MCQs)',
+      'Round 2 — Core Technical (10 role-specific Qs)',
+      'Basic AI feedback summary',
     ],
+    excluded: ['Featured profile boost', 'Detailed feedback report'],
   },
   {
     points: 2000,
     price: 10000,
+    popular: true,
+    name: 'Pro',
+    tagline: 'Most popular — best value',
+    rounds: '2× Mock Interviews (Aptitude + Technical + HR)',
+    features: [
+      'Everything in Basic',
+      '2× Mock Interviews — full 3-round flow',
+      'Round 1 — Aptitude + Domain (20 Qs)',
+      'Round 2 — Technical Deep-Dive (Coding/Demo/Case)',
+      'Round 3 — HR Behavioral (video, STAR-method)',
+      'Detailed AI feedback report',
+      'Featured profile boost (1×) + priority tag',
+    ],
+    excluded: [],
+  },
+  {
+    points: 5000,
+    price: 25000,
     popular: false,
     name: 'Premium',
-    tagline: 'Career accelerator',
+    tagline: 'Full pipeline rehearsal',
+    rounds: '5× Mock Interviews — full pipeline',
     features: [
-      '10+ AI Mock Interviews (all pipelines)',
-      'Unlimited Resume builder & exports',
-      '1-on-1 mentor sessions (Freelancer)',
-      'Top-tier profile boost & job alerts',
-      'All premium dashboard features unlocked',
+      'Everything in Pro',
+      '5× Mock Interviews (full hiring pipeline)',
+      'Aptitude + Technical + Coding/Demo + HR + Final',
+      'Full AI feedback + 30-day improvement roadmap',
+      'Unlimited resume exports',
+      'Featured boost (3×) + priority support',
     ],
+    excluded: [],
   },
 ];
+
+// Tier × deliverables matrix (mirrors invite email)
+const TIER_MATRIX: { label: string; rows: { round: string; starter: string; basic: string; pro: string; premium: string }[] } = {
+  label: 'What you unlock at every round',
+  rows: [
+    { round: 'Apply to jobs', starter: '✓', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'Resume export', starter: '1×', basic: '1×', pro: '2×', premium: 'Unlimited' },
+    { round: 'ATS score check', starter: '✓', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'Mock interviews', starter: '—', basic: '1×', pro: '2×', premium: '5× (full pipeline)' },
+    { round: 'Aptitude / Screening', starter: '—', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'Technical Deep-Dive', starter: '—', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'HR Behavioral (video)', starter: '—', basic: '—', pro: '✓', premium: '✓' },
+    { round: 'Final / Management Sim', starter: '—', basic: '—', pro: '—', premium: '✓' },
+    { round: 'AI feedback depth', starter: '—', basic: 'Basic', pro: 'Detailed', premium: 'Full + roadmap' },
+    { round: 'Featured profile boost', starter: '—', basic: '—', pro: '1×', premium: '3×' },
+  ],
+};
+
+interface SuggestedJob {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  salary?: string;
+  type?: string;
+  url: string;
+  matchReason?: string;
+}
 
 const benefits = [
   {
