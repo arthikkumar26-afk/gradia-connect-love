@@ -2257,6 +2257,8 @@ export type Database = {
           overall_feedback: string | null
           overall_score: number | null
           pipeline_type: string | null
+          points_paid: boolean
+          points_paid_at: string | null
           recording_url: string | null
           stages_completed: Json | null
           started_at: string | null
@@ -2276,6 +2278,8 @@ export type Database = {
           overall_feedback?: string | null
           overall_score?: number | null
           pipeline_type?: string | null
+          points_paid?: boolean
+          points_paid_at?: string | null
           recording_url?: string | null
           stages_completed?: Json | null
           started_at?: string | null
@@ -2295,6 +2299,8 @@ export type Database = {
           overall_feedback?: string | null
           overall_score?: number | null
           pipeline_type?: string | null
+          points_paid?: boolean
+          points_paid_at?: string | null
           recording_url?: string | null
           stages_completed?: Json | null
           started_at?: string | null
