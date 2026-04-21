@@ -121,28 +121,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let subscription: { unsubscribe: () => void } | null = null;
+    let lastFetchedUserId: string | null = null;
+    let initialSessionHandled = false;
+
+    const handleSession = (session: Session | null, source: string) => {
+      console.log(`[Auth] ${source}:`, session?.user?.email);
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // Dedupe: don't refetch profile for the same user
+        if (lastFetchedUserId === session.user.id) {
+          setIsLoading(false);
+          return;
+        }
+        lastFetchedUserId = session.user.id;
+        // setTimeout to prevent deadlock inside auth callback
+        setTimeout(() => {
+          fetchProfile(session.user.id).finally(() => {
+            setIsLoading(false);
+          });
+        }, 0);
+      } else {
+        lastFetchedUserId = null;
+        setProfile(null);
+        setIsLoading(false);
+      }
+    };
 
     try {
       // Set up auth state listener FIRST
-      const { data } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          console.log("Auth state changed:", event, session?.user?.email);
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            // Use setTimeout to prevent deadlock
-            setTimeout(() => {
-              fetchProfile(session.user.id).finally(() => {
-                setIsLoading(false);
-              });
-            }, 0);
-          } else {
-            setProfile(null);
-            setIsLoading(false);
-          }
-        }
-      );
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        // Skip INITIAL_SESSION if we've already handled it via getSession
+        if (event === "INITIAL_SESSION" && initialSessionHandled) return;
+        if (event === "INITIAL_SESSION") initialSessionHandled = true;
+        handleSession(session, `event:${event}`);
+      });
       subscription = data.subscription;
     } catch (err) {
       console.warn("Auth state listener failed (likely iframe security restriction):", err);
@@ -152,17 +166,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // THEN check for existing session
     try {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log("Initial session check:", session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          fetchProfile(session.user.id).finally(() => {
-            setIsLoading(false);
-          });
-        } else {
-          setIsLoading(false);
-        }
+        initialSessionHandled = true;
+        handleSession(session, "getSession");
       }).catch((err) => {
         console.warn("getSession failed:", err);
         setIsLoading(false);
