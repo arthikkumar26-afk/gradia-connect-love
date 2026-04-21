@@ -129,6 +129,7 @@ export default function WalletTab({ userId }: { userId: string }) {
   const [freePointsAmount, setFreePointsAmount] = useState<string>("");
   const [pendingRedeem, setPendingRedeem] = useState<{ points: number; couponId: string; code: string } | null>(null);
   const [validatingCode, setValidatingCode] = useState(false);
+  const [balancePulse, setBalancePulse] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
