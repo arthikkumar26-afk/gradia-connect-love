@@ -41,60 +41,100 @@ const wizardSteps = [
 
 const POINT_PACKAGES = [
   {
-    points: 200,
-    price: 1000,
+    points: 400,
+    price: 2000,
     popular: false,
     name: 'Starter',
-    tagline: 'Try the platform',
+    tagline: 'Apply & self-prepare',
+    rounds: 'No mock rounds',
     features: [
-      '1 AI Mock Interview (200 pts)',
-      'Unlimited job applications',
-      'AI Resume Score & ATS report',
-      'Basic profile visibility to employers',
+      'Apply to unlimited jobs',
+      'Resume export (1×)',
+      'AI ATS keyword score',
+      'Application tracker dashboard',
     ],
-  },
-  {
-    points: 500,
-    price: 2500,
-    popular: false,
-    name: 'Basic',
-    tagline: 'Get interview ready',
-    features: [
-      '2 AI Mock Interviews (200 pts each)',
-      '1 PDF Resume export (100 pts)',
-      'AI Career Coaching tips',
-      'Priority profile in search results',
-    ],
+    excluded: ['Mock interviews', 'AI feedback report', 'Featured profile boost'],
   },
   {
     points: 1000,
     price: 5000,
-    popular: true,
-    name: 'Pro',
-    tagline: 'Most popular — best value',
+    popular: false,
+    name: 'Basic',
+    tagline: 'Get interview ready',
+    rounds: '1× Mock Interview (Aptitude + 1 Technical)',
     features: [
-      '5 AI Mock Interviews + Feedback',
-      'Unlimited Resume PDF exports',
-      'AI Resume Builder (all templates)',
-      'Featured profile badge for employers',
-      'Live demo room access',
+      'Everything in Starter',
+      '1× full Mock Interview',
+      'Round 1 — Aptitude / Screening (15 MCQs)',
+      'Round 2 — Core Technical (10 role-specific Qs)',
+      'Basic AI feedback summary',
     ],
+    excluded: ['Featured profile boost', 'Detailed feedback report'],
   },
   {
     points: 2000,
     price: 10000,
+    popular: true,
+    name: 'Pro',
+    tagline: 'Most popular — best value',
+    rounds: '2× Mock Interviews (Aptitude + Technical + HR)',
+    features: [
+      'Everything in Basic',
+      '2× Mock Interviews — full 3-round flow',
+      'Round 1 — Aptitude + Domain (20 Qs)',
+      'Round 2 — Technical Deep-Dive (Coding/Demo/Case)',
+      'Round 3 — HR Behavioral (video, STAR-method)',
+      'Detailed AI feedback report',
+      'Featured profile boost (1×) + priority tag',
+    ],
+    excluded: [],
+  },
+  {
+    points: 5000,
+    price: 25000,
     popular: false,
     name: 'Premium',
-    tagline: 'Career accelerator',
+    tagline: 'Full pipeline rehearsal',
+    rounds: '5× Mock Interviews — full pipeline',
     features: [
-      '10+ AI Mock Interviews (all pipelines)',
-      'Unlimited Resume builder & exports',
-      '1-on-1 mentor sessions (Freelancer)',
-      'Top-tier profile boost & job alerts',
-      'All premium dashboard features unlocked',
+      'Everything in Pro',
+      '5× Mock Interviews (full hiring pipeline)',
+      'Aptitude + Technical + Coding/Demo + HR + Final',
+      'Full AI feedback + 30-day improvement roadmap',
+      'Unlimited resume exports',
+      'Featured boost (3×) + priority support',
     ],
+    excluded: [],
   },
 ];
+
+// Tier × deliverables matrix (mirrors invite email)
+const TIER_MATRIX: { label: string; rows: { round: string; starter: string; basic: string; pro: string; premium: string }[] } = {
+  label: 'What you unlock at every round',
+  rows: [
+    { round: 'Apply to jobs', starter: '✓', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'Resume export', starter: '1×', basic: '1×', pro: '2×', premium: 'Unlimited' },
+    { round: 'ATS score check', starter: '✓', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'Mock interviews', starter: '—', basic: '1×', pro: '2×', premium: '5× (full pipeline)' },
+    { round: 'Aptitude / Screening', starter: '—', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'Technical Deep-Dive', starter: '—', basic: '✓', pro: '✓', premium: '✓' },
+    { round: 'HR Behavioral (video)', starter: '—', basic: '—', pro: '✓', premium: '✓' },
+    { round: 'Final / Management Sim', starter: '—', basic: '—', pro: '—', premium: '✓' },
+    { round: 'AI feedback depth', starter: '—', basic: 'Basic', pro: 'Detailed', premium: 'Full + roadmap' },
+    { round: 'Featured profile boost', starter: '—', basic: '—', pro: '1×', premium: '3×' },
+  ],
+};
+
+interface SuggestedJob {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  salary?: string;
+  type?: string;
+  url: string;
+  matchReason?: string;
+}
 
 const benefits = [
   {
@@ -189,6 +229,7 @@ const CandidateSignup = () => {
   const [couponId, setCouponId] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [walletPaying, setWalletPaying] = useState(false);
+  const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
 
   const normalizedIndustryCategory = industryCategory.trim().toLowerCase();
   const matchesIndustryCategory = (...categories: string[]) =>
@@ -565,6 +606,82 @@ const CandidateSignup = () => {
     setResumeParsed(null);
   };
 
+  const fetchSuggestedJobs = async (skills: string[], preferredRole: string, location: string) => {
+    const candSkills = skills.map((s) => s.toLowerCase());
+    const role = (preferredRole || '').toLowerCase();
+    const loc = (location || '').toLowerCase().split(',')[0]?.trim() || '';
+
+    const score = (job: { title: string; skills?: string[] | null; description?: string | null; location?: string | null }) => {
+      const t = (job.title || '').toLowerCase();
+      const d = (job.description || '').toLowerCase();
+      const js = (job.skills || []).map((s) => s.toLowerCase());
+      let s = 0;
+      const reasons: string[] = [];
+      if (role && (t.includes(role) || role.split(/\s+/).some((w) => w.length > 3 && t.includes(w)))) {
+        s += 40;
+        reasons.push('role match');
+      }
+      const overlap = candSkills.filter((sk) => js.includes(sk) || d.includes(sk));
+      if (overlap.length) {
+        s += Math.min(40, overlap.length * 8);
+        reasons.push(`${overlap.length} skill${overlap.length > 1 ? 's' : ''} match`);
+      }
+      if (loc && job.location && job.location.toLowerCase().includes(loc)) {
+        s += 20;
+        reasons.push('location match');
+      }
+      return { score: s, reason: reasons.join(' · ') || 'general fit' };
+    };
+
+    const matches: SuggestedJob[] = [];
+
+    const [{ data: internalJobs }, { data: externalJobs }] = await Promise.all([
+      supabase.from('jobs').select('id, job_title, employer_id, location, salary_range, job_type, description, skills, status').eq('status', 'active').limit(120),
+      supabase.from('external_jobs').select('id, job_title, company_name, location, salary_range, job_type, description, skills, apply_url, is_active').eq('is_active', true).limit(120),
+    ]);
+
+    const employerIds = [...new Set((internalJobs || []).map((j: any) => j.employer_id).filter(Boolean))];
+    const employerMap = new Map<string, string>();
+    if (employerIds.length) {
+      const { data: emps } = await supabase.from('employer_registrations').select('employer_id, company_name').in('employer_id', employerIds);
+      (emps || []).forEach((e: any) => employerMap.set(e.employer_id, e.company_name));
+    }
+
+    for (const j of internalJobs || []) {
+      const r = score({ title: (j as any).job_title, skills: (j as any).skills, description: (j as any).description, location: (j as any).location });
+      if (r.score > 0) {
+        matches.push({
+          id: (j as any).id,
+          title: (j as any).job_title,
+          company: employerMap.get((j as any).employer_id) || 'Verified Employer',
+          location: (j as any).location || undefined,
+          salary: (j as any).salary_range || undefined,
+          type: (j as any).job_type || undefined,
+          url: `/jobs/${(j as any).id}`,
+          matchReason: r.reason,
+        });
+      }
+    }
+    for (const j of externalJobs || []) {
+      const r = score({ title: (j as any).job_title, skills: (j as any).skills, description: (j as any).description, location: (j as any).location });
+      if (r.score > 0) {
+        matches.push({
+          id: (j as any).id,
+          title: (j as any).job_title,
+          company: (j as any).company_name,
+          location: (j as any).location || undefined,
+          salary: (j as any).salary_range || undefined,
+          type: (j as any).job_type || undefined,
+          url: (j as any).apply_url,
+          matchReason: r.reason,
+        });
+      }
+    }
+
+    matches.sort((a, b) => 0); // already roughly ordered by insert order; keep top 6
+    setSuggestedJobs(matches.slice(0, 6));
+  };
+
   const handleResumeScan = async () => {
     if (!resumeFile) {
       toast({ title: 'Please upload a resume first', variant: 'destructive' });
@@ -640,6 +757,12 @@ const CandidateSignup = () => {
       }
 
       setResumeParsed(parsed);
+      // Fetch suggested jobs based on parsed skills (in background)
+      fetchSuggestedJobs(
+        Array.isArray(parsed.skills) ? parsed.skills : [],
+        parsed.preferred_role || parsed.last_designation || '',
+        parsed.location || ''
+      ).catch((e) => console.warn('Suggested jobs fetch failed:', e));
       toast({
         title: '✨ Resume scanned successfully!',
         description: 'Your profile has been auto-filled with extracted info.',
@@ -1578,9 +1701,9 @@ const CandidateSignup = () => {
 
   // Render wallet activation popup-style step
   const renderWalletStep = () => (
-    <div className="w-full max-w-3xl">
+    <div className="w-full max-w-5xl">
       <ProgressIndicator />
-      <Card className="w-full p-8 shadow-large border-primary/20">
+      <Card className="w-full p-6 sm:p-8 shadow-large border-primary/20">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <div className="p-3 rounded-full bg-primary/10">
@@ -1591,8 +1714,72 @@ const CandidateSignup = () => {
             <Sparkles className="h-3.5 w-3.5" /> Final Step
           </div>
           <h1 className="text-3xl font-bold text-foreground">Activate Your Wallet</h1>
-          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-            Load wallet points to unlock your dashboard. Use points for mock interviews, resume exports, subscriptions, and premium features. <span className="font-medium text-foreground">₹5 = 1 point.</span>
+          <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
+            Based on your resume, here are matched roles and exactly what each tier unlocks at every interview round. <span className="font-medium text-foreground">₹5 = 1 point.</span>
+          </p>
+        </div>
+
+        {/* Suggested Jobs from resume */}
+        {suggestedJobs.length > 0 && (
+          <div className="rounded-lg border border-border bg-card p-4 mb-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Briefcase className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Suggested jobs from your resume</h3>
+              <Badge variant="secondary" className="text-[10px]">{suggestedJobs.length} matches</Badge>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {suggestedJobs.map((j) => (
+                <div key={j.id} className="rounded-md border border-border bg-background p-3 hover:shadow-sm transition-shadow">
+                  <div className="text-[13px] font-semibold text-foreground line-clamp-1">{j.title}</div>
+                  <div className="text-[11px] text-muted-foreground line-clamp-1">{j.company}{j.location ? ` · ${j.location}` : ''}</div>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {j.type && <span className="text-[9px] bg-muted px-1.5 py-0.5 rounded">{j.type}</span>}
+                    {j.salary && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{j.salary}</span>}
+                  </div>
+                  {j.matchReason && (
+                    <div className="text-[10px] text-green-600 mt-1.5">✓ {j.matchReason}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2 italic">
+              Apply to any of these for free after activating — points are only spent on premium actions like mock interviews.
+            </p>
+          </div>
+        )}
+
+        {/* Tier × Deliverables matrix (mirrors invite email) */}
+        <div className="rounded-lg border border-border bg-card p-4 mb-5 overflow-x-auto">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Price breakdown — what you unlock at every round</h3>
+          </div>
+          <table className="w-full text-[11px] border-collapse min-w-[640px]">
+            <thead>
+              <tr className="bg-primary text-primary-foreground">
+                <th className="text-left p-2 font-semibold border border-primary">Round / Feature</th>
+                {POINT_PACKAGES.map((p) => (
+                  <th key={p.points} className={`text-center p-2 font-semibold border border-primary ${p.popular ? 'bg-primary/80' : ''}`}>
+                    {p.name}{p.popular ? ' ★' : ''}
+                    <div className="font-normal opacity-90 text-[10px]">{p.points.toLocaleString('en-IN')} pts · ₹{p.price.toLocaleString('en-IN')}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {TIER_MATRIX.rows.map((r, i) => (
+                <tr key={r.round} className={i % 2 === 0 ? 'bg-muted/30' : 'bg-background'}>
+                  <td className="p-2 border border-border font-medium text-foreground">{r.round}</td>
+                  <td className="p-2 border border-border text-center text-muted-foreground">{r.starter}</td>
+                  <td className="p-2 border border-border text-center text-muted-foreground">{r.basic}</td>
+                  <td className="p-2 border border-border text-center text-foreground bg-yellow-50 dark:bg-yellow-950/20">{r.pro}</td>
+                  <td className="p-2 border border-border text-center text-muted-foreground">{r.premium}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="text-[10px] text-muted-foreground mt-2 italic">
+            Rounds adapt to your industry — IT roles include Coding tests, Education roles include Demo class & Subject Mastery, Non-IT includes Group Discussion & Domain rounds.
           </p>
         </div>
 
@@ -1657,67 +1844,6 @@ const CandidateSignup = () => {
           </p>
         </div>
 
-        {/* AI Mock Interview pipeline preview */}
-        <div className="rounded-lg border border-border bg-card p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">
-              What's inside an AI Mock Interview (500 pts unlocks the full pipeline)
-            </h3>
-          </div>
-          <p className="text-[11px] text-muted-foreground mb-3">
-            Pipeline rounds adapt to your department once you set your preferred role. Examples:
-          </p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="rounded-md border border-border/60 p-3 bg-background">
-              <div className="flex items-center justify-between mb-2">
-                <Badge variant="outline" className="text-[10px]">Education / Teaching</Badge>
-                <span className="text-[10px] text-muted-foreground">7 rounds</span>
-              </div>
-              <ol className="space-y-1 text-[11px] text-foreground/80">
-                {[
-                  'CV / Resume Screening',
-                  'Written Test (10 MCQs)',
-                  'Demo Round (live teaching)',
-                  'Segment / Subject Round',
-                  'Management Round',
-                  'HR Round',
-                  'Final Review & Offer',
-                ].map((s, i) => (
-                  <li key={i} className="flex items-start gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="rounded-md border border-border/60 p-3 bg-background">
-              <div className="flex items-center justify-between mb-2">
-                <Badge variant="outline" className="text-[10px]">IT / Software</Badge>
-                <span className="text-[10px] text-muted-foreground">6 rounds</span>
-              </div>
-              <ol className="space-y-1 text-[11px] text-foreground/80">
-                {[
-                  'CV / Resume Screening',
-                  'Written Test (MCQs)',
-                  'Coding Test (timed)',
-                  'Technical Interview',
-                  'HR Round',
-                  'Final Review & Offer',
-                ].map((s, i) => (
-                  <li key={i} className="flex items-start gap-1.5">
-                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-3">
-            Other supported pipelines: Civil Engineering, Film & Media (Audition + Showreel), Banking & Finance, Legal, Doctor, Real Estate, Freelance.
-          </p>
-        </div>
 
         {/* Coupon input */}
         <div className="mb-4">
