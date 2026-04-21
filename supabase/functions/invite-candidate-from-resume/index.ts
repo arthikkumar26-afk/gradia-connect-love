@@ -341,6 +341,53 @@ serve(async (req) => {
           </table>
           <p style="margin:0 0 6px;font-size:11px;color:#64748b;line-height:1.5;font-style:italic;">Interview rounds vary by industry — Education roles include Demo + Subject + Management; IT roles include Coding + Technical + HR; Non-IT roles include Aptitude + Group Discussion + HR. Mock Interviews simulate the exact pipeline of the role you select.</p>
         </td></tr>
+        <tr><td style="background:#ffffff;padding:8px 28px 6px;">
+          <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">🎯 Interview Stage Breakdown — What Happens at Each Round</h2>
+          <p style="margin:0 0 14px;font-size:12px;color:#475569;line-height:1.6;">Every tier unlocks a specific set of mock-interview rounds. Each round mirrors a real hiring stage so you walk in fully prepared.</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-collapse:collapse;">
+            <tr><td style="padding:10px 12px;background:#f1f5f9;border-left:4px solid #94a3b8;border-radius:4px;">
+              <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:6px;">Starter — 200 pts · No mock rounds</div>
+              <div style="font-size:11px;color:#64748b;line-height:1.6;">Apply directly to jobs · Resume export · ATS keyword score · Application tracker. Best if you only need to apply and self-prepare.</div>
+            </td></tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-collapse:collapse;">
+            <tr><td style="padding:12px;background:#eff6ff;border-left:4px solid #3b82f6;border-radius:4px;">
+              <div style="font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:8px;">Basic — 500 pts · 1× Mock Interview</div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
+                <tr><td style="padding:3px 0;"><strong>Round 1 — Aptitude / Screening (20 min)</strong><br/><span style="color:#475569;">15 MCQs on logical reasoning, basics of role. Auto-scored. You receive: % score, weak topic list.</span></td></tr>
+                <tr><td style="padding:3px 0;"><strong>Round 2 — Core Technical (30 min)</strong><br/><span style="color:#475569;">10 role-specific questions (coding/subject/domain). You receive: per-question correctness, basic AI feedback summary.</span></td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-collapse:collapse;">
+            <tr><td style="padding:12px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;">
+              <div style="font-size:13px;font-weight:700;color:#78350f;margin-bottom:8px;">Pro ★ — 1,000 pts · 2× Mock Interviews</div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
+                <tr><td style="padding:3px 0;"><strong>Round 1 — Aptitude + Domain (25 min)</strong><br/><span style="color:#475569;">20 mixed questions. You receive: scorecard, percentile, topic-wise breakdown.</span></td></tr>
+                <tr><td style="padding:3px 0;"><strong>Round 2 — Technical Deep-Dive (45 min)</strong><br/><span style="color:#475569;">Coding test (IT) / Demo class (Education) / Case study (Non-IT). You receive: AI-graded feedback, code/answer review, improvement tips.</span></td></tr>
+                <tr><td style="padding:3px 0;"><strong>Round 3 — HR Behavioral (20 min)</strong><br/><span style="color:#475569;">5 situational questions with video recording. You receive: communication score, body-language tips, sample strong answers.</span></td></tr>
+                <tr><td style="padding:6px 0 0;color:#92400e;"><strong>Bonus:</strong> Featured profile boost (1×) + priority application tag.</td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;border-collapse:collapse;">
+            <tr><td style="padding:12px;background:#ecfdf5;border-left:4px solid #10b981;border-radius:4px;">
+              <div style="font-size:13px;font-weight:700;color:#064e3b;margin-bottom:8px;">Premium — 2,500 pts · 5× Mock Interviews (Full Pipeline)</div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
+                <tr><td style="padding:3px 0;"><strong>Round 1 — Aptitude & Screening (30 min)</strong><br/><span style="color:#475569;">25 questions, percentile ranking, weak-area heatmap.</span></td></tr>
+                <tr><td style="padding:3px 0;"><strong>Round 2 — Technical / Subject Mastery (45 min)</strong><br/><span style="color:#475569;">In-depth domain test. You receive: detailed answer review with model solutions.</span></td></tr>
+                <tr><td style="padding:3px 0;"><strong>Round 3 — Practical / Coding / Demo (60 min)</strong><br/><span style="color:#475569;">Live coding (IT) / Recorded demo class (Education) / Live case (Non-IT). You receive: AI rubric scoring across 6 dimensions.</span></td></tr>
+                <tr><td style="padding:3px 0;"><strong>Round 4 — HR & Behavioral (25 min)</strong><br/><span style="color:#475569;">Video round with STAR-method evaluation. You receive: communication, confidence, clarity scores.</span></td></tr>
+                <tr><td style="padding:3px 0;"><strong>Round 5 — Final / Management Simulation (30 min)</strong><br/><span style="color:#475569;">Role-play with hiring-manager scenarios. You receive: full feedback PDF + 30-day improvement roadmap.</span></td></tr>
+                <tr><td style="padding:6px 0 0;color:#065f46;"><strong>Bonus:</strong> Unlimited resume exports · Featured boost (3×) · Priority support · Faster shortlisting flag for employers.</td></tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
         ${aiSuggestedRoles.length > 0 ? `
         <tr><td style="background:#ffffff;padding:20px 28px 6px;">
           <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">AI-suggested roles for your skill set</h2>
