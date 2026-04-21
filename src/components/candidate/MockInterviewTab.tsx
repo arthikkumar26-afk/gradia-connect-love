@@ -1933,7 +1933,7 @@ export const MockInterviewTab = () => {
           {/* Start Button */}
           <div className="space-y-2">
             <Button
-              onClick={() => requestStartWithPoints(startMockTest)}
+              onClick={startMockTest}
               disabled={isStarting || !mockTestLimits.canStart || !isMockRoleSelected}
               className="w-full gap-2"
               size="lg"
@@ -2076,7 +2076,7 @@ export const MockInterviewTab = () => {
             </Select>
           )}
 
-          <Button onClick={() => requestStartWithPoints(startNewSession)} disabled={isStarting || !isMockRoleSelected} variant="default" className="gap-2">
+          <Button onClick={startNewSession} disabled={isStarting || !isMockRoleSelected} variant="default" className="gap-2">
             {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
             {!isMockRoleSelected ? 'Select All Fields' : 'Start Mock Interview'}
           </Button>
