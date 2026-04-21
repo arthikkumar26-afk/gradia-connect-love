@@ -286,6 +286,29 @@ serve(async (req) => {
         <tr><td style="background:#f8fafc;padding:16px 20px;">
           <table width="100%" cellpadding="0" cellspacing="0">${jobCardsHtml}</table>
         </td></tr>
+        <tr><td style="background:#ffffff;padding:20px 28px 6px;">
+          <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">💎 Your Wallet Points — What You Get</h2>
+          <p style="margin:0 0 12px;font-size:13px;color:#475569;line-height:1.6;">Gradia runs on a simple wallet-points system. Load points once at signup and spend them only on premium actions. Job applications, resume scoring, and profile matching are <strong>always free</strong>.</p>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px;">
+            <tr style="background:#0f4c75;color:#fff;">
+              <td style="padding:8px 12px;font-size:12px;font-weight:600;">Starter Packs</td>
+              <td style="padding:8px 12px;font-size:12px;font-weight:600;text-align:right;">Points → Price</td>
+            </tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Starter</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>200 pts</strong> — ₹1,000</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Basic</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>500 pts</strong> — ₹2,500</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Pro <span style="background:#fbbf24;color:#78350f;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;margin-left:4px;">POPULAR</span></td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>1,000 pts</strong> — ₹5,000</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #e2e8f0;">Premium</td><td style="padding:8px 12px;font-size:13px;color:#0f172a;text-align:right;border-top:1px solid #e2e8f0;"><strong>2,500 pts</strong> — ₹12,500</td></tr>
+          </table>
+          <h3 style="margin:14px 0 8px;font-size:14px;color:#0f172a;">How points are spent</h3>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;">🎯 AI Mock Interview (full pipeline)</td><td style="padding:8px 12px;font-size:13px;color:#ea580c;text-align:right;font-weight:600;">500 pts</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #f1f5f9;">📄 Resume PDF Export</td><td style="padding:8px 12px;font-size:13px;color:#ea580c;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">150 pts</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #f1f5f9;">🛠️ Resume Builder (premium templates)</td><td style="padding:8px 12px;font-size:13px;color:#ea580c;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">100 pts</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#334155;border-top:1px solid #f1f5f9;">✨ Featured Profile Boost (7 days)</td><td style="padding:8px 12px;font-size:13px;color:#ea580c;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">250 pts</td></tr>
+            <tr><td style="padding:8px 12px;font-size:13px;color:#16a34a;border-top:1px solid #f1f5f9;">✓ Job Applications · ATS Score · Profile Matching</td><td style="padding:8px 12px;font-size:13px;color:#16a34a;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">FREE</td></tr>
+          </table>
+          <p style="margin:12px 0 4px;font-size:12px;color:#64748b;line-height:1.6;"><strong>AI Mock Interview includes</strong> department-specific rounds — e.g. Education: CV Screening → Written Test → Demo Round → Management → HR (7 rounds). IT: Coding Test → Technical Interview → HR → Final Review (6 rounds). Rounds adapt to the department you pick.</p>
+        </td></tr>
         ${aiSuggestedRoles.length > 0 ? `
         <tr><td style="background:#ffffff;padding:20px 28px 6px;">
           <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">AI-suggested roles for your skill set</h2>
