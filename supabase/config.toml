@@ -108,6 +108,9 @@ verify_jwt = false
 [functions.send-demo-feedback-email]
 verify_jwt = false
 
+[functions.candidate-signup]
+verify_jwt = false
+
 [functions.sales-chatbot]
 verify_jwt = false
 
