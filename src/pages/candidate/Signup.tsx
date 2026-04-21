@@ -229,6 +229,7 @@ const CandidateSignup = () => {
   const [couponId, setCouponId] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [walletPaying, setWalletPaying] = useState(false);
+  const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
 
   const normalizedIndustryCategory = industryCategory.trim().toLowerCase();
   const matchesIndustryCategory = (...categories: string[]) =>
