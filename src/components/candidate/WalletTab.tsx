@@ -246,6 +246,15 @@ export default function WalletTab({ userId }: { userId: string }) {
       setPendingRedeem(null);
       setFreePointsCoupon(null);
       setFreePointsAmount("");
+      // Trigger pulse animation on balance immediately
+      setBalancePulse(true);
+      setTimeout(() => setBalancePulse(false), 1500);
+      // Auto re-fetch from server after toast finishes animating (~4s)
+      setTimeout(() => {
+        fetchWallet();
+        setBalancePulse(true);
+        setTimeout(() => setBalancePulse(false), 1200);
+      }, 4200);
     } catch (err: any) {
       toast({ title: "Could not redeem", description: err.message || "Failed", variant: "destructive" });
     } finally {
