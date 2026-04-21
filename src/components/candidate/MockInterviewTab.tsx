@@ -753,8 +753,7 @@ export const MockInterviewTab = () => {
           started_at: new Date().toISOString(),
           interview_type: selectedMockInterviewType || null,
           pipeline_type: selectedMockPipelineType || null,
-          points_paid: true,
-          points_paid_at: new Date().toISOString(),
+          points_paid: false,
         } as any)
         .select()
         .single();
@@ -791,8 +790,7 @@ export const MockInterviewTab = () => {
           started_at: new Date().toISOString(),
           interview_type: selectedMockInterviewType || null,
           pipeline_type: selectedMockPipelineType || null,
-          points_paid: true,
-          points_paid_at: new Date().toISOString(),
+          points_paid: false,
         } as any)
         .select()
         .single();
