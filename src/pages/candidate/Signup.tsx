@@ -681,6 +681,12 @@ const CandidateSignup = () => {
       }
 
       setResumeParsed(parsed);
+      // Fetch suggested jobs based on parsed skills (in background)
+      fetchSuggestedJobs(
+        Array.isArray(parsed.skills) ? parsed.skills : [],
+        parsed.preferred_role || parsed.last_designation || '',
+        parsed.location || ''
+      ).catch((e) => console.warn('Suggested jobs fetch failed:', e));
       toast({
         title: '✨ Resume scanned successfully!',
         description: 'Your profile has been auto-filled with extracted info.',
