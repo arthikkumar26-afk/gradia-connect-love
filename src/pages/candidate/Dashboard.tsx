@@ -249,6 +249,7 @@ const CandidateDashboard = () => {
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [applicationCount, setApplicationCount] = useState(0);
   const [interviewCount, setInterviewCount] = useState(0);
+  const [walletPoints, setWalletPoints] = useState<number>(0);
   const [searchParams] = useSearchParams();
   const [activeMenu, setActiveMenu] = useState(() => searchParams.get("tab") || "dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -1320,6 +1321,16 @@ const CandidateDashboard = () => {
     setApplicationCount(count || 0);
   };
 
+  const fetchWalletBalance = async () => {
+    if (!profile?.id) return;
+    const { data } = await supabase
+      .from('wallets')
+      .select('points_balance')
+      .eq('user_id', profile.id)
+      .maybeSingle();
+    setWalletPoints(data?.points_balance || 0);
+  };
+
   const fetchInterviewCount = async () => {
     if (!profile?.id) return;
     // Get application job_ids to only count pipeline entries with matching applications
@@ -1707,6 +1718,17 @@ const CandidateDashboard = () => {
     fetchApplicationCount();
     fetchInterviewCount();
     fetchMockTestSessions();
+    fetchWalletBalance();
+
+    // Subscribe to wallet changes
+    const walletChannel = supabase
+      .channel('wallet-balance-sidebar')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${profile?.id}` },
+        () => fetchWalletBalance()
+      )
+      .subscribe();
 
     // Subscribe to real-time job updates
     const channel = supabase
@@ -2141,6 +2163,11 @@ const CandidateDashboard = () => {
                 {item.id === "pipeline" && interviewCount > 0 && (
                   <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0">
                     {interviewCount}
+                  </Badge>
+                )}
+                {item.id === "wallet" && (
+                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0 bg-accent/15 text-accent border-accent/20">
+                    {walletPoints} pts
                   </Badge>
                 )}
               </button>
