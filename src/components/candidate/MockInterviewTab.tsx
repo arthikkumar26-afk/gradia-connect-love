@@ -2085,40 +2085,44 @@ export const MockInterviewTab = () => {
         </div>
       </div>
 
-      {(currentSession as any)?.points_paid === false && (
-        <Card className="border-2 border-primary/40 bg-primary/5">
-          <CardContent className="py-8 flex flex-col items-center text-center gap-4">
-            <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <Lock className="h-7 w-7 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold">Pipeline Locked</h3>
-              <p className="text-sm text-muted-foreground max-w-md">
-                Unlock the full mock interview pipeline by spending {MOCK_INTERVIEW_COST} wallet points.
-              </p>
-            </div>
-            <Button
-              onClick={async () => {
-                await fetchWalletPoints();
-                setPendingStartFn(() => async () => {
-                  await supabase
-                    .from('mock_interview_sessions')
-                    .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
-                    .eq('id', currentSession.id);
-                  setCurrentSession({ ...currentSession, ...( { points_paid: true } as any) });
-                });
-                setShowPointsDialog(true);
-              }}
-              className="gap-2"
-              size="lg"
-            >
-              <Zap className="h-5 w-5" /> Pay {MOCK_INTERVIEW_COST} pts to Unlock
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <div className="relative">
+        {(currentSession as any)?.points_paid === false && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/40 backdrop-blur-md rounded-lg">
+            <Card className="border-2 border-primary/40 bg-background shadow-xl max-w-md mx-4">
+              <CardContent className="py-8 flex flex-col items-center text-center gap-4">
+                <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Lock className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Mock Interview Locked</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Spend {MOCK_INTERVIEW_COST} wallet points to unlock and use the full pipeline.
+                  </p>
+                </div>
+                <Button
+                  onClick={async () => {
+                    await fetchWalletPoints();
+                    setPendingStartFn(() => async () => {
+                      await supabase
+                        .from('mock_interview_sessions')
+                        .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
+                        .eq('id', currentSession.id);
+                      setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
+                    });
+                    setShowPointsDialog(true);
+                  }}
+                  className="gap-2"
+                  size="lg"
+                >
+                  <Zap className="h-5 w-5" /> Pay {MOCK_INTERVIEW_COST} pts to Unlock
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-      {(currentSession as any)?.points_paid !== false && (<>
+        <div className={(currentSession as any)?.points_paid === false ? 'pointer-events-none select-none blur-sm' : ''}>
+        <>
 
       {/* Progress Tracker */}
       <Card className="bg-muted/30">
