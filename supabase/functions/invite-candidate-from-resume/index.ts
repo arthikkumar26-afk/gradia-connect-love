@@ -317,15 +317,6 @@ serve(async (req) => {
               </td>
             </tr>`).join("")}
           </table>
-          <h3 style="margin:14px 0 8px;font-size:13px;color:#0f172a;">Per-action point costs</h3>
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">
-            <tr><td style="padding:7px 12px;font-size:12px;color:#334155;">🎯 AI Mock Interview (full pipeline)</td><td style="padding:7px 12px;font-size:12px;color:#ea580c;text-align:right;font-weight:600;">500 pts</td></tr>
-            <tr><td style="padding:7px 12px;font-size:12px;color:#334155;border-top:1px solid #f1f5f9;">📄 Resume PDF Export</td><td style="padding:7px 12px;font-size:12px;color:#ea580c;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">150 pts</td></tr>
-            <tr><td style="padding:7px 12px;font-size:12px;color:#334155;border-top:1px solid #f1f5f9;">🛠️ Resume Builder (premium templates)</td><td style="padding:7px 12px;font-size:12px;color:#ea580c;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">100 pts</td></tr>
-            <tr><td style="padding:7px 12px;font-size:12px;color:#334155;border-top:1px solid #f1f5f9;">✨ Featured Profile Boost (7 days)</td><td style="padding:7px 12px;font-size:12px;color:#ea580c;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">250 pts</td></tr>
-            <tr><td style="padding:7px 12px;font-size:12px;color:#16a34a;border-top:1px solid #f1f5f9;">✓ Job Applications · ATS Score · Profile Matching</td><td style="padding:7px 12px;font-size:12px;color:#16a34a;text-align:right;font-weight:600;border-top:1px solid #f1f5f9;">FREE</td></tr>
-          </table>
-          <p style="margin:12px 0 4px;font-size:11px;color:#64748b;line-height:1.6;"><strong>Mock Interview rounds adapt to your department</strong> — Education: CV → Written → Demo → Management → HR (7 rounds). IT: Coding → Technical → HR → Final Review (6 rounds).</p>
         </td></tr>
         ${aiSuggestedRoles.length > 0 ? `
         <tr><td style="background:#ffffff;padding:20px 28px 6px;">
