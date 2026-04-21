@@ -188,9 +188,15 @@ const CandidateSignup = () => {
   const prefillEmail = searchParams.get("email") || "";
   const prefillName = searchParams.get("name") || "";
   
-  // Wizard state
-  const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
-  
+  // Wizard state — persisted so reloads/auth state changes don't skip steps
+  const STEP_STORAGE_KEY = 'candidateSignupWizardStep';
+  const [currentStep, setCurrentStep] = useState<WizardStep>(() => {
+    if (typeof window === 'undefined') return 'signup';
+    const saved = window.localStorage.getItem(STEP_STORAGE_KEY) as WizardStep | null;
+    const valid: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
+    return saved && valid.includes(saved) ? saved : 'signup';
+  });
+
   // Track if user just signed up (to allow wizard flow to complete)
   const [justSignedUp, setJustSignedUp] = useState(false);
   const justSignedUpRef = useRef(false);
@@ -247,6 +253,13 @@ const CandidateSignup = () => {
   // see the new step header instead of the previous step's footer position.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    try {
+      if (currentStep === 'signup') {
+        window.localStorage.removeItem(STEP_STORAGE_KEY);
+      } else {
+        window.localStorage.setItem(STEP_STORAGE_KEY, currentStep);
+      }
+    } catch { /* ignore */ }
   }, [currentStep]);
 
   const validateForm = (): boolean => {
@@ -587,6 +600,7 @@ const CandidateSignup = () => {
       }
 
       await refreshProfile();
+      try { window.localStorage.removeItem(STEP_STORAGE_KEY); } catch { /* ignore */ }
       toast({ title: '🎉 Welcome to Gradia!', description: `${walletPkg.points} points added. Your dashboard is ready.` });
       navigate('/candidate/dashboard');
     } catch (err: any) {
