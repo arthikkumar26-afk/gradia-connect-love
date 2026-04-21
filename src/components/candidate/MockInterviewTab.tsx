@@ -521,7 +521,10 @@ export const MockInterviewTab = () => {
     );
   };
 
-
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
   }, [user]);
 
   // Refresh data when tab becomes visible (user comes back from interview page)
