@@ -342,7 +342,49 @@ serve(async (req) => {
           <p style="margin:0 0 6px;font-size:11px;color:#64748b;line-height:1.5;font-style:italic;">Interview rounds vary by industry — Education roles include Demo + Subject + Management; IT roles include Coding + Technical + HR; Non-IT roles include Aptitude + Group Discussion + HR. Mock Interviews simulate the exact pipeline of the role you select.</p>
         </td></tr>
         <tr><td style="background:#ffffff;padding:8px 28px 6px;">
-          <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">🎯 Interview Stage Breakdown — What Happens at Each Round</h2>
+          <h2 style="margin:8px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">🧭 Rounds Tailored to Your Job Category</h2>
+          <p style="margin:0 0 14px;font-size:12px;color:#475569;line-height:1.6;">The mock pipeline auto-adapts to the role you apply for. Here's exactly what each industry track looks like:</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;border-collapse:collapse;">
+            <tr><td style="padding:12px;background:#eef2ff;border-left:4px solid #6366f1;border-radius:4px;">
+              <div style="font-size:13px;font-weight:700;color:#3730a3;margin-bottom:8px;">💻 IT / Software (Coding + Technical track)</div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
+                <tr><td style="padding:3px 0;">1️⃣ <strong>Aptitude & MCQ</strong> — logical reasoning, DSA basics, OS/DB fundamentals.</td></tr>
+                <tr><td style="padding:3px 0;">2️⃣ <strong>Coding Test</strong> — live editor, 2–3 problems (easy → hard) with auto test-case grading.</td></tr>
+                <tr><td style="padding:3px 0;">3️⃣ <strong>Technical Deep-Dive</strong> — system design, framework Q&A (React/Node/Java/Python).</td></tr>
+                <tr><td style="padding:3px 0;">4️⃣ <strong>HR Behavioral</strong> — video round, STAR-method evaluation.</td></tr>
+                <tr><td style="padding:3px 0;">5️⃣ <strong>Final / Managerial</strong> — culture fit, salary expectations, project ownership.</td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;border-collapse:collapse;">
+            <tr><td style="padding:12px;background:#fef3c7;border-left:4px solid #d97706;border-radius:4px;">
+              <div style="font-size:13px;font-weight:700;color:#78350f;margin-bottom:8px;">🎓 Education / Teaching (Demo + Subject track)</div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
+                <tr><td style="padding:3px 0;">1️⃣ <strong>Aptitude & General Awareness</strong> — pedagogy, child psychology, current affairs.</td></tr>
+                <tr><td style="padding:3px 0;">2️⃣ <strong>Subject Mastery Test</strong> — chapter-wise MCQs from your specialization (Maths/Science/English/etc.).</td></tr>
+                <tr><td style="padding:3px 0;">3️⃣ <strong>Demo Class (Recorded Video)</strong> — 5–10 min teaching sample, AI-graded on clarity, engagement, board work.</td></tr>
+                <tr><td style="padding:3px 0;">4️⃣ <strong>Academic / Segment Round</strong> — live discussion on lesson planning & curriculum.</td></tr>
+                <tr><td style="padding:3px 0;">5️⃣ <strong>Management / Principal Round</strong> — discipline approach, parent handling, school values fit.</td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;border-collapse:collapse;">
+            <tr><td style="padding:12px;background:#fce7f3;border-left:4px solid #db2777;border-radius:4px;">
+              <div style="font-size:13px;font-weight:700;color:#831843;margin-bottom:8px;">🏢 Non-IT / Corporate (Aptitude + Domain track)</div>
+              <table width="100%" cellpadding="0" cellspacing="0" style="font-size:11px;color:#334155;line-height:1.6;">
+                <tr><td style="padding:3px 0;">1️⃣ <strong>Aptitude & Verbal</strong> — quant, reasoning, English comprehension.</td></tr>
+                <tr><td style="padding:3px 0;">2️⃣ <strong>Domain Knowledge</strong> — finance/sales/operations/HR-specific questions for your role.</td></tr>
+                <tr><td style="padding:3px 0;">3️⃣ <strong>Group Discussion / Case Study</strong> — situational analysis, business problem solving.</td></tr>
+                <tr><td style="padding:3px 0;">4️⃣ <strong>HR Behavioral</strong> — video round, communication & confidence scoring.</td></tr>
+                <tr><td style="padding:3px 0;">5️⃣ <strong>Final / Client Simulation</strong> — role-play with real-world business scenarios.</td></tr>
+              </table>
+            </td></tr>
+          </table>
+
+          <h2 style="margin:18px 0 12px;font-size:16px;color:#0f172a;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">🎯 Interview Stage Breakdown — What Happens at Each Round</h2>
           <p style="margin:0 0 14px;font-size:12px;color:#475569;line-height:1.6;">Every tier unlocks a specific set of mock-interview rounds. Each round mirrors a real hiring stage so you walk in fully prepared.</p>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-collapse:collapse;">
