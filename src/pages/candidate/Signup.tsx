@@ -1597,14 +1597,14 @@ const CandidateSignup = () => {
         </div>
 
         {/* Point packages */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {POINT_PACKAGES.map((pkg) => {
             const isSelected = walletPkg.points === pkg.points;
             return (
               <Card
                 key={pkg.points}
                 onClick={() => { setWalletPkg(pkg); setCouponDiscount(0); setCouponId(null); setCouponCode(null); }}
-                className={`relative cursor-pointer transition-all hover:shadow-md ${
+                className={`relative cursor-pointer transition-all hover:shadow-md flex flex-col ${
                   isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border'
                 }`}
               >
@@ -1613,17 +1613,48 @@ const CandidateSignup = () => {
                     Best Value
                   </Badge>
                 )}
-                <div className="p-4 text-center space-y-1">
+                <div className="p-4 text-center space-y-1 border-b border-border">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{pkg.name}</div>
                   <div className="flex items-center justify-center gap-1">
                     <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                     <div className="text-xl font-bold text-foreground">{pkg.points.toLocaleString('en-IN')}</div>
+                    <span className="text-[10px] text-muted-foreground">pts</span>
                   </div>
                   <div className="text-base font-semibold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
-                  <p className="text-[10px] text-muted-foreground">pts • ₹5/pt</p>
+                  <p className="text-[10px] text-muted-foreground italic">{pkg.tagline}</p>
                 </div>
+                <ul className="p-3 space-y-1.5 text-left flex-1">
+                  {pkg.features.map((f, i) => (
+                    <li key={i} className="flex items-start gap-1.5 text-[11px] text-foreground/80 leading-snug">
+                      <Check className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
               </Card>
             );
           })}
+        </div>
+
+        {/* Selected pack — what you'll unlock */}
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">
+              You're activating the <span className="text-primary">{walletPkg.name}</span> pack — here's what you'll get inside your dashboard:
+            </h3>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5">
+            {walletPkg.features.map((f, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs text-foreground/90">
+                <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                <span>{f}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-primary/20">
+            💡 Points are spent on usage — e.g. 200 pts per AI Mock Interview, 100 pts per Resume PDF, 500 pts to unlock premium features. Unused points never expire.
+          </p>
         </div>
 
         {/* Coupon input */}
