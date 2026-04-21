@@ -1933,7 +1933,7 @@ export const MockInterviewTab = () => {
           {/* Start Button */}
           <div className="space-y-2">
             <Button
-              onClick={() => requestStartWithPoints(startMockTest)}
+              onClick={startMockTest}
               disabled={isStarting || !mockTestLimits.canStart || !isMockRoleSelected}
               className="w-full gap-2"
               size="lg"
