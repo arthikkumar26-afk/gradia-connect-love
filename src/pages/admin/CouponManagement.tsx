@@ -331,6 +331,7 @@ const CouponManagement = () => {
               <SelectItem value="candidate">Candidates Only</SelectItem>
               <SelectItem value="employer">Employers Only</SelectItem>
               <SelectItem value="freelancer">Freelancers Only</SelectItem>
+              <SelectItem value="wallet">Wallet Top-up Only</SelectItem>
             </SelectContent>
           </Select>
         </div>
