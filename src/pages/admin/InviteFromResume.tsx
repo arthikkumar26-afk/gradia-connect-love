@@ -381,6 +381,28 @@ const InviteFromResume = () => {
                       </div>
                     ))}
                   </div>
+
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">💎 Wallet Points included in the email</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-background rounded border p-2">
+                        <p className="font-semibold text-foreground">Starter Packs</p>
+                        <p className="text-muted-foreground">Starter 200 pts · ₹1,000</p>
+                        <p className="text-muted-foreground">Basic 500 pts · ₹2,500</p>
+                        <p className="text-muted-foreground">Pro 1,000 pts · ₹5,000</p>
+                        <p className="text-muted-foreground">Premium 2,500 pts · ₹12,500</p>
+                      </div>
+                      <div className="bg-background rounded border p-2">
+                        <p className="font-semibold text-foreground">Point Costs</p>
+                        <p className="text-muted-foreground">Mock Interview — <span className="text-orange-600 font-semibold">500 pts</span></p>
+                        <p className="text-muted-foreground">Resume Export — <span className="text-orange-600 font-semibold">150 pts</span></p>
+                        <p className="text-muted-foreground">Resume Builder — <span className="text-orange-600 font-semibold">100 pts</span></p>
+                        <p className="text-muted-foreground">Featured Boost — <span className="text-orange-600 font-semibold">250 pts</span></p>
+                        <p className="text-green-700 font-semibold">Job Apply / ATS — FREE</p>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-2">Mock Interview includes department-specific rounds (e.g. Education = 7 rounds, IT = 6 rounds).</p>
+                  </div>
                 </CardContent>
               </Card>
             )}
