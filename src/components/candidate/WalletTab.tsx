@@ -7,6 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Wallet,
   IndianRupee,
   Star,
@@ -117,6 +127,7 @@ export default function WalletTab({ userId }: { userId: string }) {
   const [redeeming, setRedeeming] = useState(false);
   const [freePointsCoupon, setFreePointsCoupon] = useState<{ id: string; max: number | null } | null>(null);
   const [freePointsAmount, setFreePointsAmount] = useState<string>("");
+  const [pendingRedeem, setPendingRedeem] = useState<{ points: number; couponId: string; code: string } | null>(null);
   const [validatingCode, setValidatingCode] = useState(false);
   const { toast } = useToast();
 
@@ -206,9 +217,28 @@ export default function WalletTab({ userId }: { userId: string }) {
 
     try { await supabase.rpc("increment_coupon_usage", { coupon_id_input: couponId }); } catch {}
 
-    toast({ title: "🎉 Points Added!", description: `${points} points credited to your wallet.` });
+    toast({
+      title: "🎉 Points Added!",
+      description: `${points} pts credited. New balance: ${newBalance} pts.`,
+    });
     setBonusCode("");
     fetchWallet();
+    return newBalance;
+  };
+
+  const confirmRedeem = async () => {
+    if (!pendingRedeem) return;
+    setRedeeming(true);
+    try {
+      await creditPoints(pendingRedeem.points, pendingRedeem.couponId, pendingRedeem.code);
+      setPendingRedeem(null);
+      setFreePointsCoupon(null);
+      setFreePointsAmount("");
+    } catch (err: any) {
+      toast({ title: "Could not redeem", description: err.message || "Failed", variant: "destructive" });
+    } finally {
+      setRedeeming(false);
+    }
   };
 
   const handleRedeemBonusCode = async () => {
@@ -252,7 +282,7 @@ export default function WalletTab({ userId }: { userId: string }) {
       } else {
         const points = Number(coupon.discount_value) || 0;
         if (points <= 0) throw new Error("Invalid coupon value");
-        await creditPoints(points, coupon.id, code);
+        setPendingRedeem({ points, couponId: coupon.id, code });
       }
     } catch (err: any) {
       toast({ title: "Could not redeem", description: err.message || "Failed to redeem coupon", variant: "destructive" });
@@ -261,7 +291,7 @@ export default function WalletTab({ userId }: { userId: string }) {
     }
   };
 
-  const handleClaimFreePoints = async () => {
+  const handleClaimFreePoints = () => {
     if (!freePointsCoupon || !wallet) return;
     const amount = parseInt(freePointsAmount);
     if (!amount || amount <= 0) {
@@ -272,16 +302,7 @@ export default function WalletTab({ userId }: { userId: string }) {
       toast({ title: "Over the limit", description: `Maximum ${freePointsCoupon.max} points allowed`, variant: "destructive" });
       return;
     }
-    setRedeeming(true);
-    try {
-      await creditPoints(amount, freePointsCoupon.id, bonusCode.toUpperCase().trim());
-      setFreePointsCoupon(null);
-      setFreePointsAmount("");
-    } catch (err: any) {
-      toast({ title: "Could not redeem", description: err.message || "Failed", variant: "destructive" });
-    } finally {
-      setRedeeming(false);
-    }
+    setPendingRedeem({ points: amount, couponId: freePointsCoupon.id, code: bonusCode.toUpperCase().trim() });
   };
 
   const handleBuyPoints = async (pkg: typeof POINT_PACKAGES[0]) => {
