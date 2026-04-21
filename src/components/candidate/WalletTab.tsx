@@ -129,6 +129,7 @@ export default function WalletTab({ userId }: { userId: string }) {
   const [freePointsAmount, setFreePointsAmount] = useState<string>("");
   const [pendingRedeem, setPendingRedeem] = useState<{ points: number; couponId: string; code: string } | null>(null);
   const [validatingCode, setValidatingCode] = useState(false);
+  const [balancePulse, setBalancePulse] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -245,6 +246,15 @@ export default function WalletTab({ userId }: { userId: string }) {
       setPendingRedeem(null);
       setFreePointsCoupon(null);
       setFreePointsAmount("");
+      // Trigger pulse animation on balance immediately
+      setBalancePulse(true);
+      setTimeout(() => setBalancePulse(false), 1500);
+      // Auto re-fetch from server after toast finishes animating (~4s)
+      setTimeout(() => {
+        fetchWallet();
+        setBalancePulse(true);
+        setTimeout(() => setBalancePulse(false), 1200);
+      }, 4200);
     } catch (err: any) {
       toast({ title: "Could not redeem", description: err.message || "Failed", variant: "destructive" });
     } finally {
@@ -518,7 +528,7 @@ export default function WalletTab({ userId }: { userId: string }) {
               <span className="text-sm font-medium text-muted-foreground">Points Balance</span>
               <Star className="h-5 w-5 text-yellow-600" />
             </div>
-            <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">
+            <div className={`text-3xl font-bold text-yellow-700 dark:text-yellow-400 transition-all duration-500 ${balancePulse ? "scale-110 drop-shadow-[0_0_12px_rgba(234,179,8,0.6)]" : "scale-100"}`}>
               {wallet?.points_balance?.toLocaleString("en-IN") || "0"} pts
             </div>
             <p className="text-xs text-muted-foreground mt-1">Use for subscriptions, services & features</p>
