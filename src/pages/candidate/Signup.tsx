@@ -253,6 +253,13 @@ const CandidateSignup = () => {
   // see the new step header instead of the previous step's footer position.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    try {
+      if (currentStep === 'signup') {
+        window.localStorage.removeItem(STEP_STORAGE_KEY);
+      } else {
+        window.localStorage.setItem(STEP_STORAGE_KEY, currentStep);
+      }
+    } catch { /* ignore */ }
   }, [currentStep]);
 
   const validateForm = (): boolean => {
