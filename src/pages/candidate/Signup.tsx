@@ -195,58 +195,46 @@ const CandidateSignup = () => {
     setRetryError(null);
     
     try {
-      const redirectUrl = `${window.location.origin}/candidate/dashboard`;
-      
-      // Helper to detect network errors in messages
-      const isNetErr = (msg?: string) => 
+      const isNetErr = (msg?: string) =>
         msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("TypeError") || msg?.includes("timed out");
 
-      const isEmailRateLimitErr = (msg?: string) =>
-        msg?.toLowerCase().includes("email rate limit exceeded") ||
-        msg?.toLowerCase().includes("over_email_send_rate_limit");
+      let signupData: { userId?: string; error?: string } | null = null;
+      let signupError: any = null;
 
-      // Sign up with retry + timeout (Supabase returns {data,error} instead of throwing)
-      let authData: any = null;
-      let authError: any = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
-          const signupPromise = supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: redirectUrl,
-              data: { role: 'candidate', full_name: fullName }
-            }
+          const signupPromise = supabase.functions.invoke('candidate-signup', {
+            body: {
+              email,
+              password,
+              fullName,
+              mobile,
+              industryCategory,
+              primarySubject,
+              segment,
+              referralCode,
+            },
           });
           const timeoutPromise = new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error("Request timed out.")), 30000)
           );
           const result = await Promise.race([signupPromise, timeoutPromise]);
-          authData = result.data;
-          authError = result.error;
-          // Stop retrying for non-network errors, especially auth email send limits
-          if (!authError || !isNetErr(authError.message)) break;
-          console.warn(`Signup attempt ${attempt + 1} failed (network):`, authError.message);
+          signupData = result.data;
+          signupError = result.error;
+          if (!signupError || !isNetErr(signupError.message)) break;
         } catch (err: any) {
-          authError = err;
-          if (!(err.name === "TypeError" || isNetErr(err.message)) || attempt >= 2) break;
-          console.warn(`Signup attempt ${attempt + 1} threw:`, err.message);
+          signupError = err;
+          if (!isNetErr(err.message) || attempt >= 2) break;
         }
+
         if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
       }
 
-      if (authError && !authData?.user) {
-        const msg = authError.message || '';
-        if (msg.includes("already registered") || msg.includes("already been registered")) {
+      const signupMessage = signupError?.message || signupData?.error || '';
+      if (signupError || !signupData?.userId) {
+        if (signupMessage.toLowerCase().includes("already registered") || signupMessage.toLowerCase().includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
-        } else if (isEmailRateLimitErr(msg)) {
-          setRetryError(null);
-          toast({
-            title: "Signup temporarily unavailable",
-            description: "Too many verification emails were sent recently. Please wait a bit, then try again once — do not repeat clicks.",
-            variant: "destructive",
-          });
-        } else if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("timed out")) {
+        } else if (isNetErr(signupMessage)) {
           setRetryError("Network issue detected. Please check your internet connection and try again.");
           toast({
             title: "Connection Error",
@@ -256,99 +244,45 @@ const CandidateSignup = () => {
         } else {
           toast({
             title: "Signup Failed",
-            description: msg,
+            description: signupMessage || "Could not create account. Please try again.",
             variant: "destructive",
           });
         }
         return;
       }
 
-      // Detect duplicate email: with auto-confirm, Supabase returns 200 but empty identities
-      if (authData.user && (!authData.user.identities || authData.user.identities.length === 0)) {
-        setErrors({ email: "This email is already registered. Please login instead." });
-        return;
+      let signInError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        signInError = error;
+        if (!signInError || !isNetErr(signInError.message)) break;
+        if (attempt < 2) await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
       }
 
-      if (!authData.user) {
+      if (signInError) {
         toast({
-          title: "Signup Failed",
-          description: "Could not create account. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const hasActiveSession = !!authData.session;
-
-      if (hasActiveSession) {
-        let profileResult: any = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          profileResult = await supabase.from("profiles").upsert({
-            id: authData.user!.id,
-            email,
-            full_name: fullName,
-            mobile,
-            role: 'candidate',
-            category: industryCategory || null,
-            primary_subject: primarySubject || null,
-            segment: segment || null,
-            ...(referralCode ? { referred_by: referralCode.toUpperCase() } : {}),
-          });
-
-          if (!profileResult.error) break;
-
-          if (isNetErr(profileResult.error?.message) && attempt < 2) {
-            console.warn(`Profile update attempt ${attempt + 1} failed, retrying...`);
-            await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-            continue;
-          }
-
-          break;
-        }
-
-        if (profileResult?.error) {
-          console.error("Profile update error:", profileResult.error);
-        }
-      }
-
-      // Non-blocking: refresh profile and send welcome email
-      if (hasActiveSession) {
-        refreshProfile().catch(err => console.error("Profile refresh error:", err));
-        supabase.functions.invoke('send-welcome-email', {
-          body: { email, fullName, role: 'candidate' }
-        }).catch(err => console.error("Welcome email failed:", err));
-      }
-
-      if (!hasActiveSession) {
-        toast({
-          title: "Account Created!",
-          description: "Please verify your email, then log in to continue.",
+          title: "Account created",
+          description: "Please login once to continue your onboarding.",
         });
         navigate('/candidate/login');
         return;
       }
 
-      // Mark that user just signed up to prevent redirect during wizard flow
       setJustSignedUp(true);
+      setCurrentStep('resume');
+
+      refreshProfile().catch(err => console.error("Profile refresh error:", err));
+      supabase.functions.invoke('send-welcome-email', {
+        body: { email, fullName, role: 'candidate' }
+      }).catch(err => console.error("Welcome email failed:", err));
 
       toast({
         title: "Account Created!",
-        description: "Explore the benefits of joining Gradia",
+        description: "Continue your onboarding to unlock your dashboard.",
       });
-
-      // Move to resume scan step
-      setCurrentStep('resume');
-      } catch (error: any) {
-      const isEmailRateLimit = error.message?.toLowerCase().includes("email rate limit exceeded") || error.message?.toLowerCase().includes("over_email_send_rate_limit");
+    } catch (error: any) {
       const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
-      if (isEmailRateLimit) {
-        setRetryError(null);
-        toast({
-          title: "Signup temporarily unavailable",
-          description: "Too many verification emails were sent recently. Please wait a bit, then try again once.",
-          variant: "destructive",
-        });
-      } else if (isNetworkError) {
+      if (isNetworkError) {
         setRetryError("Network issue detected. Please check your internet connection and try again.");
         toast({
           title: "Connection Error",
