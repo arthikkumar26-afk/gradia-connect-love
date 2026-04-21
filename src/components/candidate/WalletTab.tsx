@@ -555,9 +555,42 @@ export default function WalletTab({ userId }: { userId: string }) {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* Usage Breakdown */}
+          <Card className="border-yellow-200 bg-gradient-to-br from-yellow-50/50 to-amber-50/50 dark:from-yellow-950/10 dark:to-amber-950/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Ticket className="h-5 w-5 text-yellow-600" />
+                Redeem Bonus Code
+              </CardTitle>
+              <CardDescription>Have a promo code? Enter it below to instantly add bonus points to your wallet.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  value={bonusCode}
+                  onChange={(e) => setBonusCode(e.target.value.toUpperCase())}
+                  placeholder="Enter coupon code (e.g. WELCOME500)"
+                  className="uppercase font-mono"
+                  disabled={redeeming}
+                />
+                <Button
+                  onClick={handleRedeemBonusCode}
+                  disabled={redeeming || !bonusCode.trim()}
+                  className="sm:w-auto"
+                >
+                  {redeeming ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redeeming</>
+                  ) : (
+                    <><Gift className="h-4 w-4 mr-2" /> Redeem</>
+                  )}
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">
+                Bonus codes are issued by Gradia admins for promotions, contests & referral campaigns.
+              </p>
+            </CardContent>
+          </Card>
+
         <TabsContent value="usage" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
