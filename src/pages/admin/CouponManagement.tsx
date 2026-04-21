@@ -289,37 +289,49 @@ const CouponManagement = () => {
             <SelectContent>
               <SelectItem value="percentage">Percentage (%)</SelectItem>
               <SelectItem value="fixed">Fixed Amount (₹)</SelectItem>
+              <SelectItem value="bonus_points">Bonus Wallet Points</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
-      <div>
-        <Label>Applicable Packages</Label>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {getAvailablePackages(formState.applicable_to).map(pkg => (
-            <Badge
-              key={pkg}
-              variant={formState.applicable_packages.includes(pkg) ? "default" : "outline"}
-              className="cursor-pointer select-none"
-              onClick={() => togglePkg(pkg)}
-            >
-              {pkg}
-            </Badge>
-          ))}
+      {formState.discount_type !== "bonus_points" && (
+        <div>
+          <Label>Applicable Packages</Label>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {getAvailablePackages(formState.applicable_to).map(pkg => (
+              <Badge
+                key={pkg}
+                variant={formState.applicable_packages.includes(pkg) ? "default" : "outline"}
+                className="cursor-pointer select-none"
+                onClick={() => togglePkg(pkg)}
+              >
+                {pkg}
+              </Badge>
+            ))}
+          </div>
+          {formState.applicable_packages.length === 0 && (
+            <p className="text-xs text-muted-foreground mt-1">All packages if none selected</p>
+          )}
         </div>
-        {formState.applicable_packages.length === 0 && (
-          <p className="text-xs text-muted-foreground mt-1">All packages if none selected</p>
-        )}
-      </div>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Discount Value *</Label>
-          <Input type="number" value={formState.discount_value} onChange={e => setFormState({...formState, discount_value: e.target.value})} placeholder={formState.discount_type === "percentage" ? "e.g. 20" : "e.g. 500"} />
+          <Label>
+            {formState.discount_type === "bonus_points" ? "Points to Award *" : "Discount Value *"}
+          </Label>
+          <Input
+            type="number"
+            value={formState.discount_value}
+            onChange={e => setFormState({...formState, discount_value: e.target.value})}
+            placeholder={formState.discount_type === "percentage" ? "e.g. 20" : formState.discount_type === "bonus_points" ? "e.g. 500" : "e.g. 500"}
+          />
         </div>
-        <div>
-          <Label>Max Discount (₹)</Label>
-          <Input type="number" value={formState.max_discount_amount} onChange={e => setFormState({...formState, max_discount_amount: e.target.value})} placeholder="Optional cap" />
-        </div>
+        {formState.discount_type !== "bonus_points" && (
+          <div>
+            <Label>Max Discount (₹)</Label>
+            <Input type="number" value={formState.max_discount_amount} onChange={e => setFormState({...formState, max_discount_amount: e.target.value})} placeholder="Optional cap" />
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
