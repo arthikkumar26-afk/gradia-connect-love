@@ -267,54 +267,46 @@ const CandidateSignup = () => {
         return;
       }
 
-      // Create profile and role with retry
-      let profileResult: any = null;
-      let roleResult: any = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        [profileResult, roleResult] = await Promise.all([
-          supabase.from("profiles").upsert({
+      const hasActiveSession = !!authData.session;
+
+      if (hasActiveSession) {
+        let profileResult: any = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          profileResult = await supabase.from("profiles").upsert({
             id: authData.user!.id,
-            email: email,
+            email,
             full_name: fullName,
-            mobile: mobile,
+            mobile,
             role: 'candidate',
             category: industryCategory || null,
             primary_subject: primarySubject || null,
             segment: segment || null,
             ...(referralCode ? { referred_by: referralCode.toUpperCase() } : {}),
-          }),
-          supabase.from("user_roles").upsert({
-            user_id: authData.user!.id,
-            role: 'candidate' as const,
-          }, { onConflict: 'user_id,role' }),
-        ]);
-        const pNetErr = isNetErr(profileResult.error?.message);
-        const rNetErr = isNetErr(roleResult.error?.message);
-        if (!profileResult.error && !roleResult.error) break;
-        if ((pNetErr || rNetErr) && attempt < 2) {
-          console.warn(`Profile/role attempt ${attempt + 1} failed, retrying...`);
-          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
-          continue;
-        }
-        break;
-      }
+          });
 
-      if (profileResult.error || roleResult.error) {
-        console.error("Profile creation error:", profileResult.error);
-        console.error("Role creation error:", roleResult.error);
-        toast({
-          title: "Account created but profile setup failed",
-          description: "Please try logging in and complete your profile.",
-          variant: "destructive",
-        });
-        return;
+          if (!profileResult.error) break;
+
+          if (isNetErr(profileResult.error?.message) && attempt < 2) {
+            console.warn(`Profile update attempt ${attempt + 1} failed, retrying...`);
+            await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+            continue;
+          }
+
+          break;
+        }
+
+        if (profileResult?.error) {
+          console.error("Profile update error:", profileResult.error);
+        }
       }
 
       // Non-blocking: refresh profile and send welcome email
-      refreshProfile().catch(err => console.error("Profile refresh error:", err));
-      supabase.functions.invoke('send-welcome-email', {
-        body: { email, fullName, role: 'candidate' }
-      }).catch(err => console.error("Welcome email failed:", err));
+      if (hasActiveSession) {
+        refreshProfile().catch(err => console.error("Profile refresh error:", err));
+        supabase.functions.invoke('send-welcome-email', {
+          body: { email, fullName, role: 'candidate' }
+        }).catch(err => console.error("Welcome email failed:", err));
+      }
 
       // Mark that user just signed up to prevent redirect during wizard flow
       setJustSignedUp(true);
