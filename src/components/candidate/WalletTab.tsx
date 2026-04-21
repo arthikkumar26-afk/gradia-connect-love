@@ -27,6 +27,7 @@ import {
   Loader2,
   Download,
   Ticket,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // ₹5000 = 1000 points → ₹5 = 1 point
