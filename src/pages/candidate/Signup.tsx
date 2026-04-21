@@ -140,6 +140,10 @@ const CandidateSignup = () => {
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [walletPaying, setWalletPaying] = useState(false);
 
+  const normalizedIndustryCategory = industryCategory.trim().toLowerCase();
+  const matchesIndustryCategory = (...categories: string[]) =>
+    categories.some((category) => normalizedIndustryCategory === category.trim().toLowerCase());
+
   useEffect(() => {
     // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
     // If user just signed up, let them complete the wizard flow
@@ -881,11 +885,15 @@ const CandidateSignup = () => {
           {/* Industry Category */}
           <div className="space-y-2">
             <Label htmlFor="industryCategory">Industry Category <span className="text-destructive">*</span></Label>
-            <Select value={industryCategory || undefined} onValueChange={(val) => {
-              setIndustryCategory(val);
-              setPrimarySubject("");
-              setSegment("");
-            }}>
+            <Select
+              key={`industry-category-${industryCategory || 'none'}`}
+              value={industryCategory || undefined}
+              onValueChange={(val) => {
+                setIndustryCategory(val.trim());
+                setPrimarySubject("");
+                setSegment("");
+              }}
+            >
               <SelectTrigger id="industryCategory" className="h-10">
                 <SelectValue placeholder="Select Industry Category" />
               </SelectTrigger>
@@ -902,9 +910,9 @@ const CandidateSignup = () => {
           </div>
 
           {/* Category-specific fields */}
-          {industryCategory && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {industryCategory === "Education" && (
+          {industryCategory ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" key={`industry-fields-${normalizedIndustryCategory || 'none'}`}>
+              {matchesIndustryCategory("Education") && (
                 <>
                   <div className="space-y-2">
                     <Label>Segment</Label>
@@ -1195,7 +1203,7 @@ const CandidateSignup = () => {
                 </>
               )}
             </div>
-          )}
+          ) : null}
 
 
           {retryError && (
