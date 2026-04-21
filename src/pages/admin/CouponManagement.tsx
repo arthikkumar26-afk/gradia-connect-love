@@ -78,7 +78,7 @@ const CouponManagement = () => {
   const candidatePackages = ["Pro (₹1499/mo)", "Premium (₹1999/mo)"];
   const employerPackages = ["Growth (₹4,999/mo)", "Professional (₹14,999/mo)", "Enterprise (₹29,000/mo)"];
   const freelancerPackages = ["Starter (₹0/mo)", "Pro (₹1,499/mo)", "Premium (₹2,999/mo)"];
-  const walletPackages = ["200 pts (₹1,000)", "500 pts (₹2,500)", "1,000 pts (₹5,000)", "2,000 pts (₹10,000)"];
+  const walletPackages = ["200 pts", "500 pts", "1,000 pts", "2,000 pts"];
 
   const [form, setForm] = useState({
     code: "",
