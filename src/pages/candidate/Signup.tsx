@@ -132,6 +132,13 @@ const CandidateSignup = () => {
   const [resumeParsing, setResumeParsing] = useState(false);
   const [resumeParsed, setResumeParsed] = useState<any | null>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  // Wallet step state
+  const [walletPkg, setWalletPkg] = useState<typeof POINT_PACKAGES[0]>(POINT_PACKAGES[2]);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponId, setCouponId] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [walletPaying, setWalletPaying] = useState(false);
+
   useEffect(() => {
     // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
     // If user just signed up, let them complete the wizard flow
