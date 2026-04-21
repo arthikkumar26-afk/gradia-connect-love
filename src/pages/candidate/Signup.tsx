@@ -1495,6 +1495,113 @@ const CandidateSignup = () => {
     </div>
   );
 
+  // Render wallet activation popup-style step
+  const renderWalletStep = () => (
+    <div className="w-full max-w-3xl">
+      <ProgressIndicator />
+      <Card className="w-full p-8 shadow-large border-primary/20">
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 rounded-full bg-primary/10">
+              <Wallet className="h-10 w-10 text-primary" />
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold mb-3">
+            <Sparkles className="h-3.5 w-3.5" /> Final Step
+          </div>
+          <h1 className="text-3xl font-bold text-foreground">Activate Your Wallet</h1>
+          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
+            Load wallet points to unlock your dashboard. Use points for mock interviews, resume exports, subscriptions, and premium features. <span className="font-medium text-foreground">₹5 = 1 point.</span>
+          </p>
+        </div>
+
+        {/* Point packages */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {POINT_PACKAGES.map((pkg) => {
+            const isSelected = walletPkg.points === pkg.points;
+            return (
+              <Card
+                key={pkg.points}
+                onClick={() => { setWalletPkg(pkg); setCouponDiscount(0); setCouponId(null); setCouponCode(null); }}
+                className={`relative cursor-pointer transition-all hover:shadow-md ${
+                  isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border'
+                }`}
+              >
+                {pkg.popular && (
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] bg-primary text-primary-foreground">
+                    Best Value
+                  </Badge>
+                )}
+                <div className="p-4 text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    <div className="text-xl font-bold text-foreground">{pkg.points.toLocaleString('en-IN')}</div>
+                  </div>
+                  <div className="text-base font-semibold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
+                  <p className="text-[10px] text-muted-foreground">pts • ₹5/pt</p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Coupon input */}
+        <div className="mb-4">
+          <Label className="text-sm mb-2 block">Have a coupon code?</Label>
+          <CouponInput
+            originalAmount={walletPkg.price}
+            userRole="candidate"
+            onCouponApplied={(discount, _final, id, code) => {
+              setCouponDiscount(discount);
+              setCouponId(id);
+              setCouponCode(code);
+            }}
+            onCouponRemoved={() => {
+              setCouponDiscount(0);
+              setCouponId(null);
+              setCouponCode(null);
+            }}
+          />
+        </div>
+
+        {/* Order summary */}
+        <div className="rounded-lg border bg-muted/40 p-4 mb-6 space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">{walletPkg.points} wallet points</span>
+            <span className="font-medium">₹{walletPkg.price.toLocaleString('en-IN')}</span>
+          </div>
+          {couponDiscount > 0 && (
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Coupon discount{couponCode ? ` (${couponCode})` : ''}</span>
+              <span>− ₹{couponDiscount.toLocaleString('en-IN')}</span>
+            </div>
+          )}
+          <div className="flex justify-between pt-2 border-t border-border">
+            <span className="font-semibold text-foreground">Total payable</span>
+            <span className="text-lg font-bold text-primary">₹{finalAmount.toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+
+        <Button
+          onClick={handleWalletPayment}
+          disabled={walletPaying}
+          className="w-full"
+          size="lg"
+        >
+          {walletPaying ? (
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing payment...</>
+          ) : (
+            <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{finalAmount.toLocaleString('en-IN')} & Unlock Dashboard</>
+          )}
+        </Button>
+
+        <p className="text-[11px] text-center text-muted-foreground mt-3">
+          🔒 Secure payment via Razorpay • Points never expire • Required to access your candidate dashboard
+        </p>
+      </Card>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
       {currentStep === 'signup' && renderSignupStep()}
@@ -1502,6 +1609,7 @@ const CandidateSignup = () => {
       {currentStep === 'benefits' && renderBenefitsStep()}
       {currentStep === 'agreement' && renderAgreementStep()}
       {currentStep === 'terms' && renderTermsStep()}
+      {currentStep === 'wallet' && renderWalletStep()}
     </div>
   );
 };
