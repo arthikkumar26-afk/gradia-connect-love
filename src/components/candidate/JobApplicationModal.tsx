@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, FileText, Loader2, CheckCircle2, Brain, Sparkles } from "lucide-react";
+import JobApplicationCostBreakdown from "./JobApplicationCostBreakdown";
 
 interface Job {
   id: string;
@@ -248,7 +249,7 @@ export const JobApplicationModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -360,6 +361,12 @@ export const JobApplicationModal = ({
                 rows={4}
               />
             </div>
+
+            {/* Per-job points/cost breakdown */}
+            <JobApplicationCostBreakdown
+              candidateId={candidateId}
+              jobTitle={job?.job_title}
+            />
 
             {/* AI Analysis Info */}
             <div className="bg-muted/50 rounded-lg p-4 flex items-start gap-3">
