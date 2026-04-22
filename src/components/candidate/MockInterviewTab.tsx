@@ -1986,9 +1986,9 @@ export const MockInterviewTab = () => {
           <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Premium Feature</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            AI Mock Interview Pipeline is a paid feature. Spend{" "}
-            <strong>{MOCK_INTERVIEW_COST} wallet points</strong> to unlock the full
-            8-stage interview simulation.
+            AI Mock Interview Pipeline is a paid feature. Pay{" "}
+            <strong>₹{MOCK_INTERVIEW_PRICE}</strong> to unlock the full 8-stage
+            interview simulation.
           </p>
           <div className="flex justify-center mb-6">
             <Card className="p-4 border-primary/20 bg-primary/5 text-left max-w-[260px]">
@@ -1999,7 +1999,7 @@ export const MockInterviewTab = () => {
                 </span>
               </div>
               <p className="text-lg font-bold text-foreground">
-                {MOCK_INTERVIEW_COST} pts
+                ₹{MOCK_INTERVIEW_PRICE}
                 <span className="text-xs text-muted-foreground font-normal">
                   /attempt
                 </span>
@@ -2011,21 +2011,27 @@ export const MockInterviewTab = () => {
           </div>
           <Button
             onClick={async () => {
-              await fetchWalletPoints();
-              setPendingStartFn(() => async () => {
+              const ok = await startMockPayment({
+                actionKey: "extra_mock_test",
+                relatedEntityId: currentSession.id,
+                userName: profile?.full_name || "",
+                userEmail: profile?.email || "",
+                metadata: { session_id: currentSession.id },
+              });
+              if (ok) {
                 await supabase
                   .from('mock_interview_sessions')
                   .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
                   .eq('id', currentSession.id);
                 setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
-              });
-              setShowPointsDialog(true);
+              }
             }}
+            disabled={payingForMock}
             className="gap-2"
             size="lg"
           >
-            <Zap className="h-4 w-4" />
-            Pay {MOCK_INTERVIEW_COST} pts to Unlock
+            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <IndianRupee className="h-4 w-4" />}
+            Pay ₹{MOCK_INTERVIEW_PRICE} to Unlock
           </Button>
         </Card>
       ) : (
