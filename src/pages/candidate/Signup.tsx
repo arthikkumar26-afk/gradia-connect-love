@@ -355,9 +355,20 @@ const CandidateSignup = () => {
       }
 
       const signupMessage = signupData?.error || signupError?.message || '';
+      const isRateLimit = (msg?: string) =>
+        !!msg && (msg.toLowerCase().includes("for security purposes") || msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("only request this after"));
+
       if (signupError || !signupData?.userId) {
         if (signupMessage.toLowerCase().includes("already registered") || signupMessage.toLowerCase().includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
+        } else if (isRateLimit(signupMessage)) {
+          const match = signupMessage.match(/(\d+)\s*seconds?/i);
+          const secs = match ? match[1] : "a few";
+          toast({
+            title: "Please wait",
+            description: `For security, you can try again in ${secs} seconds.`,
+            variant: "destructive",
+          });
         } else if (isNetErr(signupMessage)) {
           setRetryError("Network issue detected. Please check your internet connection and try again.");
           toast({
@@ -384,14 +395,27 @@ const CandidateSignup = () => {
       for (let attempt = 0; attempt < 3; attempt++) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         signInError = error;
-        if (!signInError || !isNetErr(signInError.message)) break;
+        if (!signInError) break;
+        // Rate-limited: wait the suggested seconds (capped) and retry once
+        if (isRateLimit(signInError.message)) {
+          const match = signInError.message.match(/(\d+)\s*seconds?/i);
+          const waitMs = Math.min((match ? parseInt(match[1], 10) : 15) + 1, 20) * 1000;
+          if (attempt < 2) {
+            await new Promise(r => setTimeout(r, waitMs));
+            continue;
+          }
+          break;
+        }
+        if (!isNetErr(signInError.message)) break;
         if (attempt < 2) await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
       }
 
       if (signInError) {
         toast({
           title: "Account created",
-          description: "Please login once to continue your onboarding.",
+          description: isRateLimit(signInError.message)
+            ? "Please log in to continue (security cooldown active)."
+            : "Please login once to continue your onboarding.",
         });
         navigate('/candidate/login');
         return;
