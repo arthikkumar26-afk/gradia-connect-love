@@ -4238,9 +4238,31 @@ const CandidateDashboard = () => {
                             {mentor.location && <Badge variant="outline" className="text-xs"><MapPin className="h-3 w-3 mr-1" />{mentor.location}</Badge>}
                             {mentor.experience_level && <Badge variant="secondary" className="text-xs">{mentor.experience_level}</Badge>}
                           </div>
-                          <Button size="sm" className="w-full" onClick={() => setShowMentorRequestForm(mentor)}>
-                            <Mail className="h-3.5 w-3.5 mr-1.5" /> Request Mentorship
-                          </Button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowMentorRequestForm(mentor)}>
+                              <Mail className="h-3.5 w-3.5 mr-1" /> Request
+                            </Button>
+                            {mentorUnlocks[mentor.id] ? (
+                              <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => setUnlockedContactView(mentor)}>
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> View Contact
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white"
+                                onClick={() => setUnlockConfirmMentor(mentor)}
+                                disabled={unlockingMentorId === mentor.id}
+                              >
+                                {unlockingMentorId === mentor.id
+                                  ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                                  : <Coins className="h-3.5 w-3.5 mr-1" />}
+                                {MENTOR_UNLOCK_COST} pts
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+                            Pay {MENTOR_UNLOCK_COST} pts for private 1-on-1 class contact
+                          </p>
                         </div>
                       ))}
                     </div>
