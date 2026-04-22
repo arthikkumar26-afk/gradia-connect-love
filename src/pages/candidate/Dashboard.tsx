@@ -55,6 +55,10 @@ import {
   Lock,
   Palette,
   Wallet,
+  Coins,
+  CheckCircle2,
+  Phone,
+  MessageCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -269,6 +273,13 @@ const CandidateDashboard = () => {
   const [sendingMentorRequest, setSendingMentorRequest] = useState(false);
   const [showMentorRequestForm, setShowMentorRequestForm] = useState<any>(null);
 
+  // Mentor contact unlock state (private 1-on-1 paid sessions — 300 pts unlocks contact)
+  const MENTOR_UNLOCK_COST = 300;
+  const [mentorUnlocks, setMentorUnlocks] = useState<Record<string, boolean>>({});
+  const [unlockingMentorId, setUnlockingMentorId] = useState<string | null>(null);
+  const [unlockConfirmMentor, setUnlockConfirmMentor] = useState<any>(null);
+  const [unlockedContactView, setUnlockedContactView] = useState<any>(null);
+
 
   // Education state
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
@@ -367,6 +378,107 @@ const CandidateDashboard = () => {
       toast({ title: isNetworkError(err) ? "Connection Error" : "Error", description: friendlyError(err, "Failed to send request"), variant: "destructive" });
     } finally {
       setSendingMentorRequest(false);
+    }
+  };
+
+  // Fetch which mentors this candidate has already unlocked
+  useEffect(() => {
+    if (!profile?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("mentor_contact_unlocks")
+        .select("mentor_id")
+        .eq("candidate_id", profile.id);
+      if (data) {
+        const map: Record<string, boolean> = {};
+        data.forEach((r: any) => { map[r.mentor_id] = true; });
+        setMentorUnlocks(map);
+      }
+    })();
+  }, [profile?.id]);
+
+  // Pay points to unlock mentor contact details (300 pts → mentor's wallet)
+  const handleUnlockMentorContact = async (mentor: any) => {
+    if (!profile?.id) return;
+    setUnlockingMentorId(mentor.id);
+    try {
+      // 1. Get candidate wallet
+      const { data: wallet, error: wErr } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+      if (wErr) throw wErr;
+      if (!wallet) throw new Error("Wallet not found. Please load points first.");
+      if ((wallet.points_balance || 0) < MENTOR_UNLOCK_COST) {
+        toast({
+          title: "Not enough points",
+          description: `You need ${MENTOR_UNLOCK_COST} pts to unlock this mentor's contact. Current balance: ${wallet.points_balance || 0} pts.`,
+          variant: "destructive",
+        });
+        setUnlockConfirmMentor(null);
+        return;
+      }
+
+      // 2. Deduct points from candidate
+      const newCandidateBal = (wallet.points_balance || 0) - MENTOR_UNLOCK_COST;
+      const { error: dErr } = await supabase.from("wallets").update({ points_balance: newCandidateBal }).eq("id", wallet.id);
+      if (dErr) throw dErr;
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "mentor_unlock",
+        points: MENTOR_UNLOCK_COST,
+        description: `Unlocked private mentor contact: ${mentor.full_name}`,
+      });
+
+      // 3. Credit points to mentor's wallet (create one if missing)
+      let { data: mentorWallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", mentor.id)
+        .maybeSingle();
+      if (!mentorWallet) {
+        const { data: newMW } = await supabase
+          .from("wallets")
+          .insert({ user_id: mentor.id, cash_balance: 0, points_balance: 0, rewards_balance: 0 })
+          .select("id, points_balance")
+          .single();
+        mentorWallet = newMW;
+      }
+      if (mentorWallet) {
+        await supabase.from("wallets").update({
+          points_balance: (mentorWallet.points_balance || 0) + MENTOR_UNLOCK_COST,
+        }).eq("id", mentorWallet.id);
+
+        await supabase.from("wallet_transactions").insert({
+          wallet_id: mentorWallet.id,
+          transaction_type: "credit",
+          category: "mentor_earnings",
+          points: MENTOR_UNLOCK_COST,
+          description: `Earned from candidate unlocking your contact: ${profile.full_name || "Candidate"}`,
+        });
+      }
+
+      // 4. Record the unlock
+      await supabase.from("mentor_contact_unlocks").insert({
+        candidate_id: profile.id,
+        mentor_id: mentor.id,
+        points_spent: MENTOR_UNLOCK_COST,
+      });
+
+      setMentorUnlocks((prev) => ({ ...prev, [mentor.id]: true }));
+      setUnlockConfirmMentor(null);
+      setUnlockedContactView(mentor);
+      toast({
+        title: "🎉 Contact Unlocked!",
+        description: `${MENTOR_UNLOCK_COST} pts paid to ${mentor.full_name}. Their contact details are now visible.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Unlock failed", description: err.message || "Please try again", variant: "destructive" });
+    } finally {
+      setUnlockingMentorId(null);
     }
   };
 
@@ -4130,9 +4242,31 @@ const CandidateDashboard = () => {
                             {mentor.location && <Badge variant="outline" className="text-xs"><MapPin className="h-3 w-3 mr-1" />{mentor.location}</Badge>}
                             {mentor.experience_level && <Badge variant="secondary" className="text-xs">{mentor.experience_level}</Badge>}
                           </div>
-                          <Button size="sm" className="w-full" onClick={() => setShowMentorRequestForm(mentor)}>
-                            <Mail className="h-3.5 w-3.5 mr-1.5" /> Request Mentorship
-                          </Button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowMentorRequestForm(mentor)}>
+                              <Mail className="h-3.5 w-3.5 mr-1" /> Request
+                            </Button>
+                            {mentorUnlocks[mentor.id] ? (
+                              <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => setUnlockedContactView(mentor)}>
+                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> View Contact
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white"
+                                onClick={() => setUnlockConfirmMentor(mentor)}
+                                disabled={unlockingMentorId === mentor.id}
+                              >
+                                {unlockingMentorId === mentor.id
+                                  ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                                  : <Coins className="h-3.5 w-3.5 mr-1" />}
+                                {MENTOR_UNLOCK_COST} pts
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground text-center mt-1.5">
+                            Pay {MENTOR_UNLOCK_COST} pts for private 1-on-1 class contact
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -4183,6 +4317,121 @@ const CandidateDashboard = () => {
                                 {sendingMentorRequest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
                                 Send Request
                               </Button>
+                            </div>
+                          </>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Unlock Confirmation Dialog */}
+                    <Dialog open={!!unlockConfirmMentor} onOpenChange={(open) => { if (!open) setUnlockConfirmMentor(null); }}>
+                      <DialogContent className="max-w-md">
+                        {unlockConfirmMentor && (
+                          <>
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <Coins className="h-5 w-5 text-yellow-500" />
+                                Unlock Private Mentor Contact
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 mt-2">
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
+                                {unlockConfirmMentor.profile_picture ? (
+                                  <img src={unlockConfirmMentor.profile_picture} alt="" className="h-12 w-12 rounded-full object-cover" />
+                                ) : (
+                                  <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                    {unlockConfirmMentor.full_name?.charAt(0)}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-foreground text-sm truncate">{unlockConfirmMentor.full_name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{unlockConfirmMentor.preferred_role || unlockConfirmMentor.primary_subject || "Mentor"}</p>
+                                </div>
+                              </div>
+                              <div className="rounded-lg p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/40 text-sm">
+                                <p className="font-medium text-foreground mb-1">What you get</p>
+                                <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+                                  <li>Email & phone number</li>
+                                  <li>WhatsApp / Telegram link (if provided)</li>
+                                  <li>Personal calendar link for booking 1-on-1 sessions</li>
+                                </ul>
+                              </div>
+                              <div className="flex items-center justify-between p-3 rounded-md bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 border border-yellow-200 dark:border-yellow-900/40">
+                                <p className="text-xs font-medium text-foreground">One-time cost</p>
+                                <span className="text-xl font-bold text-yellow-700 dark:text-yellow-400">{MENTOR_UNLOCK_COST} pts</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" className="flex-1" onClick={() => setUnlockConfirmMentor(null)}>Cancel</Button>
+                                <Button
+                                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
+                                  disabled={unlockingMentorId === unlockConfirmMentor.id}
+                                  onClick={() => handleUnlockMentorContact(unlockConfirmMentor)}
+                                >
+                                  {unlockingMentorId === unlockConfirmMentor.id
+                                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+                                    : <><Coins className="h-4 w-4 mr-2" /> Pay {MENTOR_UNLOCK_COST} pts</>}
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Unlocked Contact Reveal Dialog */}
+                    <Dialog open={!!unlockedContactView} onOpenChange={(open) => { if (!open) setUnlockedContactView(null); }}>
+                      <DialogContent className="max-w-md">
+                        {unlockedContactView && (
+                          <>
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                                Mentor Contact Details
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3 mt-2">
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
+                                {unlockedContactView.profile_picture ? (
+                                  <img src={unlockedContactView.profile_picture} alt="" className="h-12 w-12 rounded-full object-cover" />
+                                ) : (
+                                  <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                    {unlockedContactView.full_name?.charAt(0)}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-foreground text-sm truncate">{unlockedContactView.full_name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{unlockedContactView.preferred_role || unlockedContactView.primary_subject || "Mentor"}</p>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                {unlockedContactView.email && (
+                                  <a href={`mailto:${unlockedContactView.email}`} className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
+                                    <Mail className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="text-sm text-foreground truncate">{unlockedContactView.email}</span>
+                                  </a>
+                                )}
+                                {unlockedContactView.mobile && (
+                                  <>
+                                    <a href={`tel:${unlockedContactView.mobile}`} className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
+                                      <Phone className="h-4 w-4 text-primary shrink-0" />
+                                      <span className="text-sm text-foreground">{unlockedContactView.mobile}</span>
+                                    </a>
+                                    <a href={`https://wa.me/${(unlockedContactView.mobile || "").replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
+                                      <MessageCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                                      <span className="text-sm text-foreground">Chat on WhatsApp</span>
+                                    </a>
+                                  </>
+                                )}
+                                {!unlockedContactView.email && !unlockedContactView.mobile && (
+                                  <p className="text-xs text-muted-foreground p-2">This mentor hasn't shared additional contact details yet. Try reaching out via the Request Mentorship form.</p>
+                                )}
+                              </div>
+                              <div className="rounded-md p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40">
+                                <p className="text-[11px] text-emerald-800 dark:text-emerald-300 leading-snug">
+                                  ✓ {MENTOR_UNLOCK_COST} pts have been credited to {unlockedContactView.full_name}'s wallet. You can contact them anytime — this unlock is permanent.
+                                </p>
+                              </div>
+                              <Button variant="outline" className="w-full" onClick={() => setUnlockedContactView(null)}>Close</Button>
                             </div>
                           </>
                         )}
