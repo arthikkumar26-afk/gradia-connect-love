@@ -2580,6 +2580,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_transactions: {
+        Row: {
+          action_key: string
+          amount_inr: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          related_entity_id: string | null
+          related_user_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_key: string
+          amount_inr: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          related_entity_id?: string | null
+          related_user_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_key?: string
+          amount_inr?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          related_entity_id?: string | null
+          related_user_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pipeline_email_log: {
         Row: {
           created_at: string
@@ -2674,6 +2722,39 @@ export type Database = {
           link_url?: string | null
           show_email_input?: boolean
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_config: {
+        Row: {
+          action_key: string
+          amount_inr: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          action_key: string
+          amount_inr: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          action_key?: string
+          amount_inr?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
           updated_at?: string
         }
         Relationships: []
