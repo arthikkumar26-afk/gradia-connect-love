@@ -583,7 +583,7 @@ export default function WalletTab({ userId }: { userId: string }) {
 
       <Tabs defaultValue="pricing" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="pricing" className="gap-1 text-xs"><Coins className="h-3 w-3" /> Pricing</TabsTrigger>
+          <TabsTrigger value="pricing" className="gap-1 text-xs"><Coins className="h-3 w-3" /> Points Guide</TabsTrigger>
           <TabsTrigger value="load" className="gap-1 text-xs"><Plus className="h-3 w-3" /> Load Points</TabsTrigger>
           <TabsTrigger value="usage" className="gap-1 text-xs"><PieChart className="h-3 w-3" /> Usage</TabsTrigger>
           <TabsTrigger value="invoices" className="gap-1 text-xs"><Receipt className="h-3 w-3" /> Invoices</TabsTrigger>
