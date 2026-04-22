@@ -377,6 +377,107 @@ const CandidateDashboard = () => {
     }
   };
 
+  // Fetch which mentors this candidate has already unlocked
+  useEffect(() => {
+    if (!profile?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("mentor_contact_unlocks")
+        .select("mentor_id")
+        .eq("candidate_id", profile.id);
+      if (data) {
+        const map: Record<string, boolean> = {};
+        data.forEach((r: any) => { map[r.mentor_id] = true; });
+        setMentorUnlocks(map);
+      }
+    })();
+  }, [profile?.id]);
+
+  // Pay points to unlock mentor contact details (300 pts → mentor's wallet)
+  const handleUnlockMentorContact = async (mentor: any) => {
+    if (!profile?.id) return;
+    setUnlockingMentorId(mentor.id);
+    try {
+      // 1. Get candidate wallet
+      const { data: wallet, error: wErr } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+      if (wErr) throw wErr;
+      if (!wallet) throw new Error("Wallet not found. Please load points first.");
+      if ((wallet.points_balance || 0) < MENTOR_UNLOCK_COST) {
+        toast({
+          title: "Not enough points",
+          description: `You need ${MENTOR_UNLOCK_COST} pts to unlock this mentor's contact. Current balance: ${wallet.points_balance || 0} pts.`,
+          variant: "destructive",
+        });
+        setUnlockConfirmMentor(null);
+        return;
+      }
+
+      // 2. Deduct points from candidate
+      const newCandidateBal = (wallet.points_balance || 0) - MENTOR_UNLOCK_COST;
+      const { error: dErr } = await supabase.from("wallets").update({ points_balance: newCandidateBal }).eq("id", wallet.id);
+      if (dErr) throw dErr;
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "mentor_unlock",
+        points: MENTOR_UNLOCK_COST,
+        description: `Unlocked private mentor contact: ${mentor.full_name}`,
+      });
+
+      // 3. Credit points to mentor's wallet (create one if missing)
+      let { data: mentorWallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", mentor.id)
+        .maybeSingle();
+      if (!mentorWallet) {
+        const { data: newMW } = await supabase
+          .from("wallets")
+          .insert({ user_id: mentor.id, cash_balance: 0, points_balance: 0, rewards_balance: 0 })
+          .select("id, points_balance")
+          .single();
+        mentorWallet = newMW;
+      }
+      if (mentorWallet) {
+        await supabase.from("wallets").update({
+          points_balance: (mentorWallet.points_balance || 0) + MENTOR_UNLOCK_COST,
+        }).eq("id", mentorWallet.id);
+
+        await supabase.from("wallet_transactions").insert({
+          wallet_id: mentorWallet.id,
+          transaction_type: "credit",
+          category: "mentor_earnings",
+          points: MENTOR_UNLOCK_COST,
+          description: `Earned from candidate unlocking your contact: ${profile.full_name || "Candidate"}`,
+        });
+      }
+
+      // 4. Record the unlock
+      await supabase.from("mentor_contact_unlocks").insert({
+        candidate_id: profile.id,
+        mentor_id: mentor.id,
+        points_spent: MENTOR_UNLOCK_COST,
+      });
+
+      setMentorUnlocks((prev) => ({ ...prev, [mentor.id]: true }));
+      setUnlockConfirmMentor(null);
+      setUnlockedContactView(mentor);
+      toast({
+        title: "🎉 Contact Unlocked!",
+        description: `${MENTOR_UNLOCK_COST} pts paid to ${mentor.full_name}. Their contact details are now visible.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Unlock failed", description: err.message || "Please try again", variant: "destructive" });
+    } finally {
+      setUnlockingMentorId(null);
+    }
+  };
+
   const hasUsedTrial = false;
   const isActiveSub = candidateSubscription?.status === "active";
 
