@@ -1858,7 +1858,6 @@ export const MockInterviewTab = () => {
           </div>
         </div>
       </div>
-      </div>
     );
   }
 
@@ -3359,7 +3358,6 @@ export const MockInterviewTab = () => {
         </div>
       </div>
       )}
-      </div>
     </div>
   );
 };
