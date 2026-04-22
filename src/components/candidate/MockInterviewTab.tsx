@@ -54,6 +54,7 @@ import { InterviewProgressTracker } from "@/components/candidate/InterviewProgre
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
 import { useMockTestLimits } from "@/hooks/useMockTestLimits";
+import { useActionPayment } from "@/hooks/useActionPayment";
 import { Crown, Lock, Zap } from "lucide-react";
 import { interviewPipelineConfig, pipelineRoleOptions, defaultRoleOptions } from "@/data/interviewPipelineConfig";
 
