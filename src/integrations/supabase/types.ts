@@ -1963,6 +1963,30 @@ export type Database = {
         }
         Relationships: []
       }
+      mentor_contact_unlocks: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          id: string
+          mentor_id: string
+          points_spent: number
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          id?: string
+          mentor_id: string
+          points_spent?: number
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          id?: string
+          mentor_id?: string
+          points_spent?: number
+        }
+        Relationships: []
+      }
       mentorship_courses: {
         Row: {
           completed_modules: number
@@ -2678,6 +2702,7 @@ export type Database = {
           languages: string[] | null
           linkedin: string | null
           location: string | null
+          mentor_session_points: number | null
           mobile: string | null
           office_type: string | null
           preferred_district: string | null
@@ -2722,6 +2747,7 @@ export type Database = {
           languages?: string[] | null
           linkedin?: string | null
           location?: string | null
+          mentor_session_points?: number | null
           mobile?: string | null
           office_type?: string | null
           preferred_district?: string | null
@@ -2766,6 +2792,7 @@ export type Database = {
           languages?: string[] | null
           linkedin?: string | null
           location?: string | null
+          mentor_session_points?: number | null
           mobile?: string | null
           office_type?: string | null
           preferred_district?: string | null
