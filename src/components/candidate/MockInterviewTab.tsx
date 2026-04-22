@@ -1857,7 +1857,7 @@ export const MockInterviewTab = () => {
             </div>
           </div>
         </div>
-        {renderPointsDialog()}
+      </div>
       </div>
     );
   }
@@ -3359,7 +3359,7 @@ export const MockInterviewTab = () => {
         </div>
       </div>
       )}
-      {renderPointsDialog()}
+      </div>
     </div>
   );
 };
