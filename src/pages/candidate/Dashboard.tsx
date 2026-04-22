@@ -81,6 +81,7 @@ import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import WalletTab from "@/components/candidate/WalletTab";
+import { useActionPayment } from "@/hooks/useActionPayment";
 
 interface FamilyRecord {
   id?: string;
@@ -273,8 +274,8 @@ const CandidateDashboard = () => {
   const [sendingMentorRequest, setSendingMentorRequest] = useState(false);
   const [showMentorRequestForm, setShowMentorRequestForm] = useState<any>(null);
 
-  // Mentor contact unlock state (private 1-on-1 paid sessions — 300 pts unlocks contact)
-  const MENTOR_UNLOCK_COST = 300;
+  // Mentor contact unlock state (private 1-on-1 paid sessions — ₹1500 via Razorpay unlocks contact)
+  const MENTOR_UNLOCK_PRICE = 1500;
   const [mentorUnlocks, setMentorUnlocks] = useState<Record<string, boolean>>({});
   const [unlockingMentorId, setUnlockingMentorId] = useState<string | null>(null);
   const [unlockConfirmMentor, setUnlockConfirmMentor] = useState<any>(null);
@@ -315,6 +316,7 @@ const CandidateDashboard = () => {
   const [mockInterviewStageResults, setMockInterviewStageResults] = useState<any[]>([]);
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
+  const { startPayment: startActionPayment } = useActionPayment();
   const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
   const [candidateCoupon, setCandidateCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string; plan: string } | null>(null);
 
@@ -397,83 +399,26 @@ const CandidateDashboard = () => {
     })();
   }, [profile?.id]);
 
-  // Pay points to unlock mentor contact details (300 pts → mentor's wallet)
+  // Pay ₹1500 via Razorpay to unlock mentor contact details
   const handleUnlockMentorContact = async (mentor: any) => {
     if (!profile?.id) return;
     setUnlockingMentorId(mentor.id);
     try {
-      // 1. Get candidate wallet
-      const { data: wallet, error: wErr } = await supabase
-        .from("wallets")
-        .select("id, points_balance")
-        .eq("user_id", profile.id)
-        .maybeSingle();
-      if (wErr) throw wErr;
-      if (!wallet) throw new Error("Wallet not found. Please load points first.");
-      if ((wallet.points_balance || 0) < MENTOR_UNLOCK_COST) {
-        toast({
-          title: "Not enough points",
-          description: `You need ${MENTOR_UNLOCK_COST} pts to unlock this mentor's contact. Current balance: ${wallet.points_balance || 0} pts.`,
-          variant: "destructive",
-        });
-        setUnlockConfirmMentor(null);
-        return;
-      }
-
-      // 2. Deduct points from candidate
-      const newCandidateBal = (wallet.points_balance || 0) - MENTOR_UNLOCK_COST;
-      const { error: dErr } = await supabase.from("wallets").update({ points_balance: newCandidateBal }).eq("id", wallet.id);
-      if (dErr) throw dErr;
-
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        transaction_type: "debit",
-        category: "mentor_unlock",
-        points: MENTOR_UNLOCK_COST,
-        description: `Unlocked private mentor contact: ${mentor.full_name}`,
+      const ok = await startActionPayment({
+        actionKey: "mentor_contact_unlock",
+        relatedUserId: mentor.id,
+        userName: profile.full_name || "",
+        userEmail: profile.email || "",
+        metadata: { mentor_name: mentor.full_name },
       });
-
-      // 3. Credit points to mentor's wallet (create one if missing)
-      let { data: mentorWallet } = await supabase
-        .from("wallets")
-        .select("id, points_balance")
-        .eq("user_id", mentor.id)
-        .maybeSingle();
-      if (!mentorWallet) {
-        const { data: newMW } = await supabase
-          .from("wallets")
-          .insert({ user_id: mentor.id, cash_balance: 0, points_balance: 0, rewards_balance: 0 })
-          .select("id, points_balance")
-          .single();
-        mentorWallet = newMW;
-      }
-      if (mentorWallet) {
-        await supabase.from("wallets").update({
-          points_balance: (mentorWallet.points_balance || 0) + MENTOR_UNLOCK_COST,
-        }).eq("id", mentorWallet.id);
-
-        await supabase.from("wallet_transactions").insert({
-          wallet_id: mentorWallet.id,
-          transaction_type: "credit",
-          category: "mentor_earnings",
-          points: MENTOR_UNLOCK_COST,
-          description: `Earned from candidate unlocking your contact: ${profile.full_name || "Candidate"}`,
-        });
-      }
-
-      // 4. Record the unlock
-      await supabase.from("mentor_contact_unlocks").insert({
-        candidate_id: profile.id,
-        mentor_id: mentor.id,
-        points_spent: MENTOR_UNLOCK_COST,
-      });
+      if (!ok) return;
 
       setMentorUnlocks((prev) => ({ ...prev, [mentor.id]: true }));
       setUnlockConfirmMentor(null);
       setUnlockedContactView(mentor);
       toast({
         title: "🎉 Contact Unlocked!",
-        description: `${MENTOR_UNLOCK_COST} pts paid to ${mentor.full_name}. Their contact details are now visible.`,
+        description: `Payment of ₹${MENTOR_UNLOCK_PRICE} successful. ${mentor.full_name}'s contact details are now visible.`,
       });
     } catch (err: any) {
       toast({ title: "Unlock failed", description: err.message || "Please try again", variant: "destructive" });
@@ -4260,12 +4205,12 @@ const CandidateDashboard = () => {
                                 {unlockingMentorId === mentor.id
                                   ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
                                   : <Coins className="h-3.5 w-3.5 mr-1" />}
-                                {MENTOR_UNLOCK_COST} pts
+                                ₹{MENTOR_UNLOCK_PRICE}
                               </Button>
                             )}
                           </div>
                           <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-                            Pay {MENTOR_UNLOCK_COST} pts for private 1-on-1 class contact
+                            Pay ₹{MENTOR_UNLOCK_PRICE} for private 1-on-1 class contact
                           </p>
                         </div>
                       ))}
@@ -4358,7 +4303,7 @@ const CandidateDashboard = () => {
                               </div>
                               <div className="flex items-center justify-between p-3 rounded-md bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 border border-yellow-200 dark:border-yellow-900/40">
                                 <p className="text-xs font-medium text-foreground">One-time cost</p>
-                                <span className="text-xl font-bold text-yellow-700 dark:text-yellow-400">{MENTOR_UNLOCK_COST} pts</span>
+                                <span className="text-xl font-bold text-yellow-700 dark:text-yellow-400">₹{MENTOR_UNLOCK_PRICE}</span>
                               </div>
                               <div className="flex gap-2">
                                 <Button variant="outline" className="flex-1" onClick={() => setUnlockConfirmMentor(null)}>Cancel</Button>
@@ -4369,7 +4314,7 @@ const CandidateDashboard = () => {
                                 >
                                   {unlockingMentorId === unlockConfirmMentor.id
                                     ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
-                                    : <><Coins className="h-4 w-4 mr-2" /> Pay {MENTOR_UNLOCK_COST} pts</>}
+                                    : <>Pay ₹{MENTOR_UNLOCK_PRICE}</>}
                                 </Button>
                               </div>
                             </div>
@@ -4428,7 +4373,7 @@ const CandidateDashboard = () => {
                               </div>
                               <div className="rounded-md p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40">
                                 <p className="text-[11px] text-emerald-800 dark:text-emerald-300 leading-snug">
-                                  ✓ {MENTOR_UNLOCK_COST} pts have been credited to {unlockedContactView.full_name}'s wallet. You can contact them anytime — this unlock is permanent.
+                                  ✓ ₹{MENTOR_UNLOCK_PRICE} paid to {unlockedContactView.full_name}. You can contact them anytime — this unlock is permanent.
                                 </p>
                               </div>
                               <Button variant="outline" className="w-full" onClick={() => setUnlockedContactView(null)}>Close</Button>
