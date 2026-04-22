@@ -54,6 +54,7 @@ import { InterviewProgressTracker } from "@/components/candidate/InterviewProgre
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
 import { useMockTestLimits } from "@/hooks/useMockTestLimits";
+import { useActionPayment } from "@/hooks/useActionPayment";
 import { Crown, Lock, Zap } from "lucide-react";
 import { interviewPipelineConfig, pipelineRoleOptions, defaultRoleOptions } from "@/data/interviewPipelineConfig";
 
@@ -398,130 +399,9 @@ export const MockInterviewTab = () => {
   const [courseSuggestions, setCourseSuggestions] = useState<any[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
 
-  // Points gating for starting a mock interview
-  const MOCK_INTERVIEW_COST = 500;
-  const [showPointsDialog, setShowPointsDialog] = useState(false);
-  const [walletPoints, setWalletPoints] = useState<number>(0);
-  const [pendingStartFn, setPendingStartFn] = useState<null | (() => Promise<void>)>(null);
-  const [deducting, setDeducting] = useState(false);
-
-  const fetchWalletPoints = async () => {
-    if (!user) return 0;
-    const { data } = await supabase
-      .from('wallets')
-      .select('points_balance')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    const pts = (data as any)?.points_balance ?? 0;
-    setWalletPoints(pts);
-    return pts;
-  };
-
-  const requestStartWithPoints = async (startFn: () => Promise<void>) => {
-    if (!user) {
-      toast.error('Please sign in');
-      return;
-    }
-    await fetchWalletPoints();
-    setPendingStartFn(() => startFn);
-    setShowPointsDialog(true);
-  };
-
-  const confirmDeductAndStart = async () => {
-    if (!user || !pendingStartFn) return;
-    setDeducting(true);
-    try {
-      const { data: wallet } = await supabase
-        .from('wallets')
-        .select('id, points_balance')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (!wallet) {
-        toast.error('Wallet not found. Please load points first.');
-        return;
-      }
-      const balance = (wallet as any).points_balance ?? 0;
-      if (balance < MOCK_INTERVIEW_COST) {
-        toast.error(`Insufficient points. Need ${MOCK_INTERVIEW_COST}, you have ${balance}.`);
-        return;
-      }
-      const { error: updErr } = await supabase
-        .from('wallets')
-        .update({ points_balance: balance - MOCK_INTERVIEW_COST })
-        .eq('id', (wallet as any).id);
-      if (updErr) throw updErr;
-
-      await supabase.from('wallet_transactions').insert({
-        wallet_id: (wallet as any).id,
-        transaction_type: 'debit',
-        category: 'mock_interview',
-        amount: 0,
-        points: MOCK_INTERVIEW_COST,
-        description: 'Mock interview pipeline unlock',
-      });
-
-      setWalletPoints(balance - MOCK_INTERVIEW_COST);
-      toast.success(`${MOCK_INTERVIEW_COST} pts deducted. Pipeline unlocked!`);
-      setShowPointsDialog(false);
-      const fn = pendingStartFn;
-      setPendingStartFn(null);
-      await fn();
-    } catch (e: any) {
-      console.error('Mock interview points deduction error:', e);
-      toast.error(e.message || 'Failed to deduct points');
-    } finally {
-      setDeducting(false);
-    }
-  };
-
-  const renderPointsDialog = () => {
-    const insufficient = walletPoints < MOCK_INTERVIEW_COST;
-    return (
-      <Dialog open={showPointsDialog} onOpenChange={(o) => { if (!deducting) setShowPointsDialog(o); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5 text-primary" />
-              Unlock Mock Interview Pipeline
-            </DialogTitle>
-            <DialogDescription>
-              Spend wallet points to unlock the full mock interview pipeline. Points are deducted once per attempt.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/40">
-              <span className="text-sm text-muted-foreground">Cost</span>
-              <span className="font-semibold">{MOCK_INTERVIEW_COST} pts</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/40">
-              <span className="text-sm text-muted-foreground">Your balance</span>
-              <span className={`font-semibold ${insufficient ? 'text-destructive' : ''}`}>{walletPoints} pts</span>
-            </div>
-            {insufficient && (
-              <p className="text-xs text-destructive">
-                You need {MOCK_INTERVIEW_COST - walletPoints} more points. Load points in your wallet to continue.
-              </p>
-            )}
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowPointsDialog(false)} disabled={deducting}>
-              Cancel
-            </Button>
-            {insufficient ? (
-              <Button onClick={() => { setShowPointsDialog(false); navigate('/candidate/dashboard?tab=wallet'); }} className="gap-2">
-                <IndianRupee className="h-4 w-4" /> Load Points
-              </Button>
-            ) : (
-              <Button onClick={confirmDeductAndStart} disabled={deducting} className="gap-2">
-                {deducting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                Deduct & Unlock
-              </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  };
+  // ₹ payment gating for starting a mock interview (extra test beyond plan)
+  const MOCK_INTERVIEW_PRICE = 99;
+  const { startPayment: startMockPayment, isProcessing: payingForMock } = useActionPayment();
 
   useEffect(() => {
     if (user) {
@@ -1977,7 +1857,6 @@ export const MockInterviewTab = () => {
             </div>
           </div>
         </div>
-        {renderPointsDialog()}
       </div>
     );
   }
@@ -2106,9 +1985,9 @@ export const MockInterviewTab = () => {
           <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Premium Feature</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            AI Mock Interview Pipeline is a paid feature. Spend{" "}
-            <strong>{MOCK_INTERVIEW_COST} wallet points</strong> to unlock the full
-            8-stage interview simulation.
+            AI Mock Interview Pipeline is a paid feature. Pay{" "}
+            <strong>₹{MOCK_INTERVIEW_PRICE}</strong> to unlock the full 8-stage
+            interview simulation.
           </p>
           <div className="flex justify-center mb-6">
             <Card className="p-4 border-primary/20 bg-primary/5 text-left max-w-[260px]">
@@ -2119,7 +1998,7 @@ export const MockInterviewTab = () => {
                 </span>
               </div>
               <p className="text-lg font-bold text-foreground">
-                {MOCK_INTERVIEW_COST} pts
+                ₹{MOCK_INTERVIEW_PRICE}
                 <span className="text-xs text-muted-foreground font-normal">
                   /attempt
                 </span>
@@ -2131,21 +2010,27 @@ export const MockInterviewTab = () => {
           </div>
           <Button
             onClick={async () => {
-              await fetchWalletPoints();
-              setPendingStartFn(() => async () => {
+              const ok = await startMockPayment({
+                actionKey: "extra_mock_test",
+                relatedEntityId: currentSession.id,
+                userName: profile?.full_name || "",
+                userEmail: profile?.email || "",
+                metadata: { session_id: currentSession.id },
+              });
+              if (ok) {
                 await supabase
                   .from('mock_interview_sessions')
                   .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
                   .eq('id', currentSession.id);
                 setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
-              });
-              setShowPointsDialog(true);
+              }
             }}
+            disabled={payingForMock}
             className="gap-2"
             size="lg"
           >
-            <Zap className="h-4 w-4" />
-            Pay {MOCK_INTERVIEW_COST} pts to Unlock
+            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <IndianRupee className="h-4 w-4" />}
+            Pay ₹{MOCK_INTERVIEW_PRICE} to Unlock
           </Button>
         </Card>
       ) : (
@@ -3473,7 +3358,6 @@ export const MockInterviewTab = () => {
         </div>
       </div>
       )}
-      {renderPointsDialog()}
     </div>
   );
 };
