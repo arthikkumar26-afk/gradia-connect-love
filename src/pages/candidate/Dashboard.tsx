@@ -4322,6 +4322,121 @@ const CandidateDashboard = () => {
                         )}
                       </DialogContent>
                     </Dialog>
+
+                    {/* Unlock Confirmation Dialog */}
+                    <Dialog open={!!unlockConfirmMentor} onOpenChange={(open) => { if (!open) setUnlockConfirmMentor(null); }}>
+                      <DialogContent className="max-w-md">
+                        {unlockConfirmMentor && (
+                          <>
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <Coins className="h-5 w-5 text-yellow-500" />
+                                Unlock Private Mentor Contact
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 mt-2">
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
+                                {unlockConfirmMentor.profile_picture ? (
+                                  <img src={unlockConfirmMentor.profile_picture} alt="" className="h-12 w-12 rounded-full object-cover" />
+                                ) : (
+                                  <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                    {unlockConfirmMentor.full_name?.charAt(0)}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-foreground text-sm truncate">{unlockConfirmMentor.full_name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{unlockConfirmMentor.preferred_role || unlockConfirmMentor.primary_subject || "Mentor"}</p>
+                                </div>
+                              </div>
+                              <div className="rounded-lg p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/40 text-sm">
+                                <p className="font-medium text-foreground mb-1">What you get</p>
+                                <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+                                  <li>Email & phone number</li>
+                                  <li>WhatsApp / Telegram link (if provided)</li>
+                                  <li>Personal calendar link for booking 1-on-1 sessions</li>
+                                </ul>
+                              </div>
+                              <div className="flex items-center justify-between p-3 rounded-md bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 border border-yellow-200 dark:border-yellow-900/40">
+                                <p className="text-xs font-medium text-foreground">One-time cost</p>
+                                <span className="text-xl font-bold text-yellow-700 dark:text-yellow-400">{MENTOR_UNLOCK_COST} pts</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="outline" className="flex-1" onClick={() => setUnlockConfirmMentor(null)}>Cancel</Button>
+                                <Button
+                                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
+                                  disabled={unlockingMentorId === unlockConfirmMentor.id}
+                                  onClick={() => handleUnlockMentorContact(unlockConfirmMentor)}
+                                >
+                                  {unlockingMentorId === unlockConfirmMentor.id
+                                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+                                    : <><Coins className="h-4 w-4 mr-2" /> Pay {MENTOR_UNLOCK_COST} pts</>}
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Unlocked Contact Reveal Dialog */}
+                    <Dialog open={!!unlockedContactView} onOpenChange={(open) => { if (!open) setUnlockedContactView(null); }}>
+                      <DialogContent className="max-w-md">
+                        {unlockedContactView && (
+                          <>
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2">
+                                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                                Mentor Contact Details
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3 mt-2">
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
+                                {unlockedContactView.profile_picture ? (
+                                  <img src={unlockedContactView.profile_picture} alt="" className="h-12 w-12 rounded-full object-cover" />
+                                ) : (
+                                  <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                                    {unlockedContactView.full_name?.charAt(0)}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-foreground text-sm truncate">{unlockedContactView.full_name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{unlockedContactView.preferred_role || unlockedContactView.primary_subject || "Mentor"}</p>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                {unlockedContactView.email && (
+                                  <a href={`mailto:${unlockedContactView.email}`} className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
+                                    <Mail className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="text-sm text-foreground truncate">{unlockedContactView.email}</span>
+                                  </a>
+                                )}
+                                {unlockedContactView.mobile && (
+                                  <>
+                                    <a href={`tel:${unlockedContactView.mobile}`} className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
+                                      <Phone className="h-4 w-4 text-primary shrink-0" />
+                                      <span className="text-sm text-foreground">{unlockedContactView.mobile}</span>
+                                    </a>
+                                    <a href={`https://wa.me/${(unlockedContactView.mobile || "").replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
+                                      <MessageCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                                      <span className="text-sm text-foreground">Chat on WhatsApp</span>
+                                    </a>
+                                  </>
+                                )}
+                                {!unlockedContactView.email && !unlockedContactView.mobile && (
+                                  <p className="text-xs text-muted-foreground p-2">This mentor hasn't shared additional contact details yet. Try reaching out via the Request Mentorship form.</p>
+                                )}
+                              </div>
+                              <div className="rounded-md p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40">
+                                <p className="text-[11px] text-emerald-800 dark:text-emerald-300 leading-snug">
+                                  ✓ {MENTOR_UNLOCK_COST} pts have been credited to {unlockedContactView.full_name}'s wallet. You can contact them anytime — this unlock is permanent.
+                                </p>
+                              </div>
+                              <Button variant="outline" className="w-full" onClick={() => setUnlockedContactView(null)}>Close</Button>
+                            </div>
+                          </>
+                        )}
+                      </DialogContent>
+                    </Dialog>
                   </Card>
                 )}
 
