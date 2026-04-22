@@ -273,8 +273,8 @@ const CandidateDashboard = () => {
   const [sendingMentorRequest, setSendingMentorRequest] = useState(false);
   const [showMentorRequestForm, setShowMentorRequestForm] = useState<any>(null);
 
-  // Mentor contact unlock state (private 1-on-1 paid sessions — 300 pts unlocks contact)
-  const MENTOR_UNLOCK_COST = 300;
+  // Mentor contact unlock state (private 1-on-1 paid sessions — ₹1500 via Razorpay unlocks contact)
+  const MENTOR_UNLOCK_PRICE = 1500;
   const [mentorUnlocks, setMentorUnlocks] = useState<Record<string, boolean>>({});
   const [unlockingMentorId, setUnlockingMentorId] = useState<string | null>(null);
   const [unlockConfirmMentor, setUnlockConfirmMentor] = useState<any>(null);
