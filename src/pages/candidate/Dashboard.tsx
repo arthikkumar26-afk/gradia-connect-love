@@ -81,6 +81,7 @@ import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import WalletTab from "@/components/candidate/WalletTab";
+import { useActionPayment } from "@/hooks/useActionPayment";
 
 interface FamilyRecord {
   id?: string;
@@ -315,6 +316,7 @@ const CandidateDashboard = () => {
   const [mockInterviewStageResults, setMockInterviewStageResults] = useState<any[]>([]);
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
+  const { startPayment: startActionPayment } = useActionPayment();
   const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
   const [candidateCoupon, setCandidateCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string; plan: string } | null>(null);
 
@@ -4203,12 +4205,12 @@ const CandidateDashboard = () => {
                                 {unlockingMentorId === mentor.id
                                   ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
                                   : <Coins className="h-3.5 w-3.5 mr-1" />}
-                                {MENTOR_UNLOCK_COST} pts
+                                ₹{MENTOR_UNLOCK_PRICE}
                               </Button>
                             )}
                           </div>
                           <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-                            Pay {MENTOR_UNLOCK_COST} pts for private 1-on-1 class contact
+                            Pay ₹{MENTOR_UNLOCK_PRICE} for private 1-on-1 class contact
                           </p>
                         </div>
                       ))}
@@ -4301,7 +4303,7 @@ const CandidateDashboard = () => {
                               </div>
                               <div className="flex items-center justify-between p-3 rounded-md bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 border border-yellow-200 dark:border-yellow-900/40">
                                 <p className="text-xs font-medium text-foreground">One-time cost</p>
-                                <span className="text-xl font-bold text-yellow-700 dark:text-yellow-400">{MENTOR_UNLOCK_COST} pts</span>
+                                <span className="text-xl font-bold text-yellow-700 dark:text-yellow-400">₹{MENTOR_UNLOCK_PRICE}</span>
                               </div>
                               <div className="flex gap-2">
                                 <Button variant="outline" className="flex-1" onClick={() => setUnlockConfirmMentor(null)}>Cancel</Button>
@@ -4312,7 +4314,7 @@ const CandidateDashboard = () => {
                                 >
                                   {unlockingMentorId === unlockConfirmMentor.id
                                     ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
-                                    : <><Coins className="h-4 w-4 mr-2" /> Pay {MENTOR_UNLOCK_COST} pts</>}
+                                    : <>Pay ₹{MENTOR_UNLOCK_PRICE}</>}
                                 </Button>
                               </div>
                             </div>
@@ -4371,7 +4373,7 @@ const CandidateDashboard = () => {
                               </div>
                               <div className="rounded-md p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40">
                                 <p className="text-[11px] text-emerald-800 dark:text-emerald-300 leading-snug">
-                                  ✓ {MENTOR_UNLOCK_COST} pts have been credited to {unlockedContactView.full_name}'s wallet. You can contact them anytime — this unlock is permanent.
+                                  ✓ ₹{MENTOR_UNLOCK_PRICE} paid to {unlockedContactView.full_name}. You can contact them anytime — this unlock is permanent.
                                 </p>
                               </div>
                               <Button variant="outline" className="w-full" onClick={() => setUnlockedContactView(null)}>Close</Button>
