@@ -30,7 +30,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  WifiOff,
+  ShieldAlert
 } from "lucide-react";
 import { Job } from "@/data/sampleJobs";
 
