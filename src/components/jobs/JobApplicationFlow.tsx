@@ -224,7 +224,7 @@ export const JobApplicationFlow = ({
   // failures. invoke() otherwise surfaces only "non-2xx status code".
   const readFunctionError = async (
     err: unknown,
-  ): Promise<{ status?: number; message?: string }> => {
+  ): Promise<{ status?: number; message?: string; code?: string }> => {
     try {
       const anyErr = err as { context?: { response?: Response }; message?: string };
       const res = anyErr?.context?.response;
@@ -233,7 +233,7 @@ export const JobApplicationFlow = ({
         try {
           const cloned = res.clone();
           const body = await cloned.json();
-          return { status, message: body?.error || body?.message };
+          return { status, message: body?.error || body?.message, code: body?.code };
         } catch {
           try {
             const txt = await res.clone().text();
