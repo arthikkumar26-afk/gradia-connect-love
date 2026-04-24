@@ -877,8 +877,37 @@ const EmployerSignup = () => {
           <h1 className="text-3xl font-bold text-foreground">Benefits with Employer</h1>
           <p className="text-muted-foreground mt-2">
             Discover the advantages of partnering with Gradia Connect for your recruitment needs.
-          </p>
         </div>
+
+        {/* Verification email resend control. Only renders after a successful
+            signup; the button stays disabled while the cooldown timer is
+            counting down so users can't trigger upstream rate limits. */}
+        {pendingVerificationEmail && (
+          <div className="mb-6 p-4 rounded-lg border border-border bg-muted/20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm">
+                <p className="font-medium text-foreground">Verify your email</p>
+                <p className="text-muted-foreground">
+                  We sent a verification link to{' '}
+                  <span className="font-medium text-foreground">{pendingVerificationEmail}</span>.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResendVerification}
+                disabled={resendCooldown > 0 || isResending}
+              >
+                {isResending
+                  ? 'Sending…'
+                  : resendCooldown > 0
+                    ? `Resend in ${formatRetryWindow(resendCooldown)}`
+                    : 'Resend verification email'}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {benefits.map((benefit, index) => (
