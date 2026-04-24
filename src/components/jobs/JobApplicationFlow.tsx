@@ -142,6 +142,36 @@ export const JobApplicationFlow = ({
     return response.data?.url || null;
   };
 
+  // Extracts the real error info from a Supabase FunctionsHttpError so we can
+  // distinguish 402 (AI credits exhausted) and 429 (rate limit) from generic
+  // failures. invoke() otherwise surfaces only "non-2xx status code".
+  const readFunctionError = async (
+    err: unknown,
+  ): Promise<{ status?: number; message?: string }> => {
+    try {
+      const anyErr = err as { context?: { response?: Response }; message?: string };
+      const res = anyErr?.context?.response;
+      if (res) {
+        const status = res.status;
+        try {
+          const cloned = res.clone();
+          const body = await cloned.json();
+          return { status, message: body?.error || body?.message };
+        } catch {
+          try {
+            const txt = await res.clone().text();
+            return { status, message: txt };
+          } catch {
+            return { status };
+          }
+        }
+      }
+      return { message: anyErr?.message };
+    } catch {
+      return {};
+    }
+  };
+
   const handleSubmitResume = async () => {
     if (!job || !resumeFile) {
       toast.error("Please upload your resume");
