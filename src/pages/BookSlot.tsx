@@ -755,12 +755,30 @@ const BookSlot = () => {
                       } else {
                         validityLabel = "Expires in less than an hour";
                       }
+                      // Render the expiry in the candidate's LOCAL timezone
+                      // (toLocaleString w/ undefined locale === browser locale)
+                      // and append a short tz hint so they can disambiguate
+                      // when sharing screenshots, traveling, etc.
+                      // `timeZoneName: "short"` produces e.g. "GMT+5:30" / "PST".
+                      // We also resolve the IANA zone (e.g. "Asia/Kolkata") for
+                      // the title tooltip — useful when "GMT+5:30" alone is ambiguous.
                       const expiresAtLabel = linkExpiresAt
                         ? linkExpiresAt.toLocaleString(undefined, {
                             dateStyle: "medium",
                             timeStyle: "short",
+                            timeZoneName: "short",
                           })
                         : null;
+                      const ianaTimeZone = (() => {
+                        try {
+                          return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+                        } catch {
+                          return null;
+                        }
+                      })();
+                      const timeZoneHint = ianaTimeZone
+                        ? `Times shown in your local time zone (${ianaTimeZone}).`
+                        : "Times shown in your local time zone.";
                       return (
                         <div
                           className={`rounded-md border p-2.5 space-y-2 ${
@@ -782,7 +800,7 @@ const BookSlot = () => {
                                     ? "bg-amber-100 text-amber-800"
                                     : "bg-blue-100 text-blue-800"
                               }`}
-                              title={expiresAtLabel ? `Expires ${expiresAtLabel}` : undefined}
+                              title={expiresAtLabel ? `Expires ${expiresAtLabel}\n${timeZoneHint}` : timeZoneHint}
                             >
                               {validityLabel}
                             </span>
@@ -828,10 +846,10 @@ const BookSlot = () => {
                           </Button>
                           <p className={`text-[10px] ${isExpired ? "text-destructive/80" : "text-blue-800/80"}`}>
                             {isExpired
-                              ? "Use “Resend invitation” below to get a fresh link, or rebook your slot."
+                              ? `Use "Resend invitation" below to get a fresh link, or rebook your slot. ${timeZoneHint}`
                               : expiresAtLabel
-                                ? `Expires on ${expiresAtLabel}. Bookmark this page or copy the link in case the email is delayed.`
-                                : "Tip: bookmark this page or copy the link in case the email is delayed."}
+                                ? `Expires on ${expiresAtLabel}. ${timeZoneHint} Bookmark this page or copy the link in case the email is delayed.`
+                                : `${timeZoneHint} Tip: bookmark this page or copy the link in case the email is delayed.`}
                           </p>
                         </div>
                       );
