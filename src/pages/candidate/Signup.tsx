@@ -23,6 +23,10 @@ import { CouponInput } from "@/components/shared/CouponInput";
 // the exact same cooldown / rate-limit semantics as the candidate login,
 // employer signup, and freelancer login flows.
 import { useResendConfirmation } from "@/hooks/useResendConfirmation";
+// Aggregated ARIA live-region announcer for inline form validation errors.
+// Re-announces on every submit attempt (even with unchanged errors) so
+// screen-reader users get consistent feedback per submit.
+import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
 
 interface FormErrors {
   fullName?: string;
