@@ -169,32 +169,75 @@ const FreelancerSignup = () => {
             <p className="text-sm text-muted-foreground mt-1">Find projects & mentor students</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {/* Aggregated, polite live region — re-announces every submit. */}
+            <FormErrorAnnouncer
+              id="freelancer-signup-form-errors"
+              errors={errors}
+              submitCount={submitCount}
+            />
             <div>
-              <Label>Full Name</Label>
-              <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Enter your full name" />
-              {errors.fullName && <p className="text-xs text-destructive mt-1">{errors.fullName}</p>}
+              <Label htmlFor="fl-fullName">Full Name</Label>
+              <Input
+                id="fl-fullName"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                placeholder="Enter your full name"
+                aria-invalid={!!errors.fullName}
+                aria-describedby={errors.fullName ? "fl-fullName-error" : undefined}
+              />
+              {errors.fullName && <p id="fl-fullName-error" className="text-xs text-destructive mt-1">{errors.fullName}</p>}
             </div>
             <div>
-              <Label>Email</Label>
-              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" />
-              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+              <Label htmlFor="fl-email">Email</Label>
+              <Input
+                id="fl-email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "fl-email-error" : undefined}
+              />
+              {errors.email && <p id="fl-email-error" className="text-xs text-destructive mt-1">{errors.email}</p>}
             </div>
             <div>
-              <Label>Mobile Number</Label>
-              <Input value={mobile} onChange={e => setMobile(e.target.value)} placeholder="10-digit mobile" maxLength={10} />
-              {errors.mobile && <p className="text-xs text-destructive mt-1">{errors.mobile}</p>}
+              <Label htmlFor="fl-mobile">Mobile Number</Label>
+              <Input
+                id="fl-mobile"
+                value={mobile}
+                onChange={e => setMobile(e.target.value)}
+                placeholder="10-digit mobile"
+                maxLength={10}
+                aria-invalid={!!errors.mobile}
+                aria-describedby={errors.mobile ? "fl-mobile-error" : undefined}
+              />
+              {errors.mobile && <p id="fl-mobile-error" className="text-xs text-destructive mt-1">{errors.mobile}</p>}
             </div>
             <div>
-              <Label>Password</Label>
-              <PasswordInput value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 8 characters" />
+              <Label htmlFor="fl-password">Password</Label>
+              <PasswordInput
+                id="fl-password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Min 8 characters"
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? "fl-password-error" : undefined}
+              />
               <PasswordStrengthIndicator password={password} />
-              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
+              {errors.password && <p id="fl-password-error" className="text-xs text-destructive mt-1">{errors.password}</p>}
             </div>
             <div>
-              <Label>Confirm Password</Label>
-              <PasswordInput value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Re-enter password" />
-              {errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>}
+              <Label htmlFor="fl-confirmPassword">Confirm Password</Label>
+              <PasswordInput
+                id="fl-confirmPassword"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? "fl-confirmPassword-error" : undefined}
+              />
+              {errors.confirmPassword && <p id="fl-confirmPassword-error" className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</> : "Create Account"}
