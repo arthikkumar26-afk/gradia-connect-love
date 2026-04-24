@@ -523,6 +523,30 @@ const BookSlot = () => {
             </div>
           </div>
 
+          {/* Timezone Selector — applies to both single-slot and multi-slot flows */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Clock className="h-4 w-4 text-indigo-600" />
+              Your Timezone *
+            </label>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger aria-label="Select your timezone">
+                <SelectValue placeholder="Choose your timezone" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {timezoneChoices.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Slot times below are interpreted in this timezone — the confirmation will show
+              the booked time as <strong>{getTimezoneAbbr(new Date(), timezone)}</strong>.
+            </p>
+          </div>
+
           {isMultiSlotStage ? (
             <>
               {/* Multi-slot: Single Date + 3 Preferred Timings */}
