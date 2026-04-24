@@ -172,38 +172,28 @@ Provide your analysis using the suggest_analysis function.`;
       if (!response.ok) {
         const errorText = await response.text();
         console.error('AI gateway error:', response.status, errorText);
-        
-        if (response.status === 429) {
-          return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-            status: 429,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        if (response.status === 402) {
-          return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }), {
-            status: 402,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        throw new Error('AI analysis failed');
-      }
-
-      const aiResponse = await response.json();
-      const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
-      
-      if (toolCall) {
-        analysis = JSON.parse(toolCall.function.arguments);
-        console.log('AI analysis from tool call, score:', analysis.overall_score);
+        // IMPORTANT: do NOT return early on 402/429/5xx. The application must
+        // still be created so the candidate is not blocked. Fall through to
+        // the default analysis below.
+        analysis = null;
       } else {
-        const content = aiResponse.choices?.[0]?.message?.content;
-        if (content) {
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              analysis = JSON.parse(jsonMatch[0]);
-              console.log('AI analysis from content parse, score:', analysis.overall_score);
-            } catch (e) {
-              console.error('Failed to parse content as JSON:', e);
+        const aiResponse = await response.json();
+        const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];
+
+        if (toolCall) {
+          analysis = JSON.parse(toolCall.function.arguments);
+          console.log('AI analysis from tool call, score:', analysis.overall_score);
+        } else {
+          const content = aiResponse.choices?.[0]?.message?.content;
+          if (content) {
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              try {
+                analysis = JSON.parse(jsonMatch[0]);
+                console.log('AI analysis from content parse, score:', analysis.overall_score);
+              } catch (e) {
+                console.error('Failed to parse content as JSON:', e);
+              }
             }
           }
         }
