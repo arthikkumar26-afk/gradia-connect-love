@@ -27,13 +27,22 @@ const CandidateLogin = () => {
   const { profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  // Inline EMAIL_NOT_CONFIRMED state. `unverifiedEmail` is the address tied
-  // to the failed login (kept separate from the input so editing the field
-  // doesn't dismiss the recovery panel). `resendCooldown` gates the resend
-  // button so we never re-hit the upstream rate limit early.
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [isResending, setIsResending] = useState(false);
+  // All resend-confirmation state (unverified email, cooldown, ticker, in-flight
+  // flag) is owned by the shared hook so the freelancer/employer/candidate
+  // flows behave identically.
+  const {
+    unverifiedEmail,
+    setUnverifiedEmail,
+    resendCooldown,
+    isResending,
+    isDisabled: isResendDisabled,
+    cooldownLabel,
+    resend,
+    reset: resetResendState,
+  } = useResendConfirmation({
+    flow: "candidate-login",
+    redirectTo: `${window.location.origin}/candidate/login`,
+  });
 
   useEffect(() => {
     if (isAuthenticated && profile) {
