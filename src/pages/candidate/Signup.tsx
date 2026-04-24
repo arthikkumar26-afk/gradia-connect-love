@@ -982,6 +982,18 @@ const CandidateSignup = () => {
         <form onSubmit={handleSignupSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
+        <form onSubmit={handleSignupSubmit} className="space-y-5" noValidate>
+          {/* Aggregated, polite live region. Announces every validation error
+              after each submit attempt — re-announces on repeat submits via
+              the bumped submitCount. */}
+          <FormErrorAnnouncer
+            id="candidate-signup-form-errors"
+            errors={errors}
+            submitCount={submitCount}
+          />
+
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
             <Input
               id="fullName"
               type="text"
@@ -995,9 +1007,11 @@ const CandidateSignup = () => {
                   if (errors.fullName) setErrors({ ...errors, fullName: undefined });
                 }
               }}
+              aria-invalid={!!errors.fullName}
+              aria-describedby={errors.fullName ? "fullName-error" : undefined}
               className={errors.fullName ? "border-destructive" : ""}
             />
-            {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
+            {errors.fullName && <p id="fullName-error" className="text-sm text-destructive">{errors.fullName}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1011,9 +1025,11 @@ const CandidateSignup = () => {
                 setEmail(e.target.value);
                 if (errors.email) setErrors({ ...errors, email: undefined });
               }}
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
               className={errors.email ? "border-destructive" : ""}
             />
-            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+            {errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1027,9 +1043,11 @@ const CandidateSignup = () => {
                 setMobile(e.target.value.replace(/\D/g, '').slice(0, 10));
                 if (errors.mobile) setErrors({ ...errors, mobile: undefined });
               }}
+              aria-invalid={!!errors.mobile}
+              aria-describedby={errors.mobile ? "mobile-error" : undefined}
               className={errors.mobile ? "border-destructive" : ""}
             />
-            {errors.mobile && <p className="text-sm text-destructive">{errors.mobile}</p>}
+            {errors.mobile && <p id="mobile-error" className="text-sm text-destructive">{errors.mobile}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1042,10 +1060,12 @@ const CandidateSignup = () => {
                 setPassword(e.target.value);
                 if (errors.password) setErrors({ ...errors, password: undefined });
               }}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
               className={errors.password ? "border-destructive" : ""}
             />
             <PasswordStrengthIndicator password={password} />
-            {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+            {errors.password && <p id="password-error" className="text-sm text-destructive">{errors.password}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1058,9 +1078,11 @@ const CandidateSignup = () => {
                 setConfirmPassword(e.target.value);
                 if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
               }}
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
               className={errors.confirmPassword ? "border-destructive" : ""}
             />
-            {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && <p id="confirmPassword-error" className="text-sm text-destructive">{errors.confirmPassword}</p>}
           </div>
 
           {/* Industry Category */}
