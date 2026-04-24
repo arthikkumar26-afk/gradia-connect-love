@@ -43,6 +43,12 @@ const BookSlot = () => {
   const [demoTime1, setDemoTime1] = useState("");
   const [demoTime2, setDemoTime2] = useState("");
   const [demoTime3, setDemoTime3] = useState("");
+
+  // Quick filters for the time-slot dropdowns
+  type TimeOfDay = "all" | "morning" | "afternoon" | "evening";
+  type Granularity = 15 | 30;
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
+  const [granularity, setGranularity] = useState<Granularity>(30);
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
