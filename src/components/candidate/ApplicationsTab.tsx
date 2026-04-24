@@ -41,6 +41,7 @@ import {
   Layers,
   Trash2,
 } from "lucide-react";
+import { ApplicationTimeline } from "./ApplicationTimeline";
 
 interface Application {
   id: string;
