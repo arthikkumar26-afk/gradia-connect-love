@@ -201,6 +201,190 @@ export const JobApplicationFlow = ({
     }
   };
 
+  /**
+   * Builds a structured ApplicationError with user-actionable retry steps.
+   * `stage` tells us where in the pipeline the failure occurred so we can
+   * show the right messaging (upload vs. analyze).
+   */
+  const classifyError = (
+    err: unknown,
+    stage: 'upload' | 'parse' | 'analyze',
+    resumeUploaded: boolean,
+    statusHint?: number,
+    messageHint?: string,
+  ): ApplicationError => {
+    const anyErr = err as { message?: string; name?: string } | undefined;
+    const rawMsg = (messageHint || anyErr?.message || '').toLowerCase();
+    const status = statusHint;
+
+    if (
+      anyErr?.name === 'TypeError' ||
+      rawMsg.includes('failed to fetch') ||
+      rawMsg.includes('network') ||
+      !navigator.onLine
+    ) {
+      return {
+        category: 'network',
+        title: "Connection issue",
+        message: "We couldn't reach our servers. Your resume was not submitted.",
+        steps: [
+          "Check your internet connection",
+          "Disable any VPN or ad-blocker that might be interfering",
+          "Click \"Try again\" once you're back online",
+        ],
+        resumeUploaded,
+        canRetry: true,
+        canSubmitWithoutAI: false,
+      };
+    }
+
+    if (status === 401 || rawMsg.includes('not authenticated') || rawMsg.includes('unauthor')) {
+      return {
+        category: 'auth',
+        title: "Sign in required",
+        message: "Your session expired. Please sign in again to submit your application.",
+        steps: [
+          "Sign in with your candidate account",
+          "Return to this job and click Apply",
+        ],
+        resumeUploaded,
+        canRetry: false,
+        canSubmitWithoutAI: false,
+      };
+    }
+
+    if (stage === 'upload') {
+      if (status === 400 || status === 413 || rawMsg.includes('size') || rawMsg.includes('type')) {
+        return {
+          category: 'file_invalid',
+          title: "Resume couldn't be accepted",
+          message: messageHint || "Your file was rejected by our upload service.",
+          steps: [
+            "Make sure the file is a PDF or Word document under 10 MB",
+            "Try exporting your resume again from your editor",
+            "Choose a different file and resubmit",
+          ],
+          resumeUploaded: false,
+          canRetry: true,
+          canSubmitWithoutAI: false,
+        };
+      }
+      return {
+        category: 'upload_failed',
+        title: "Resume upload failed",
+        message: "We couldn't save your resume to our servers.",
+        steps: [
+          "Click \"Try again\" — most upload errors are temporary",
+          "If it keeps failing, try a smaller PDF (under 5 MB)",
+          "Try a different browser or disable browser extensions",
+        ],
+        resumeUploaded: false,
+        canRetry: true,
+        canSubmitWithoutAI: false,
+      };
+    }
+
+    // Analyze stage — resume was successfully uploaded
+    if (status === 402 || rawMsg.includes('credit')) {
+      return {
+        category: 'ai_credits',
+        title: "AI analysis temporarily unavailable",
+        message: "Your resume was uploaded successfully, but our AI scoring service is offline right now. You can still submit — our team will review your application manually.",
+        steps: [
+          "Click \"Submit for manual review\" to finish your application now",
+          "Or click \"Try AI analysis again\" in a few minutes",
+        ],
+        resumeUploaded: true,
+        canRetry: true,
+        canSubmitWithoutAI: true,
+      };
+    }
+
+    if (status === 429 || rawMsg.includes('rate limit') || rawMsg.includes('too many')) {
+      return {
+        category: 'ai_rate_limit',
+        title: "AI service is busy",
+        message: "Your resume was uploaded, but the AI is handling too many requests right now.",
+        steps: [
+          "Wait about 30 seconds, then click \"Try AI analysis again\"",
+          "Or click \"Submit for manual review\" to skip the AI step",
+        ],
+        resumeUploaded: true,
+        canRetry: true,
+        canSubmitWithoutAI: true,
+      };
+    }
+
+    if (status && status >= 500) {
+      return {
+        category: 'ai_server',
+        title: "AI analysis failed",
+        message: "Your resume was uploaded successfully, but the analysis service returned an error.",
+        steps: [
+          "Click \"Try AI analysis again\" — this is usually transient",
+          "If the issue persists, click \"Submit for manual review\"",
+        ],
+        resumeUploaded: true,
+        canRetry: true,
+        canSubmitWithoutAI: true,
+      };
+    }
+
+    return {
+      category: 'unknown',
+      title: resumeUploaded ? "Couldn't complete AI analysis" : "Application failed",
+      message: messageHint || anyErr?.message || "Something went wrong while processing your application.",
+      steps: resumeUploaded
+        ? [
+            "Click \"Try AI analysis again\"",
+            "Or click \"Submit for manual review\" to send your application without AI scoring",
+          ]
+        : [
+            "Click \"Try again\" to resubmit",
+            "If the problem continues, refresh the page and try once more",
+          ],
+      resumeUploaded,
+      canRetry: true,
+      canSubmitWithoutAI: resumeUploaded,
+    };
+  };
+
+  /**
+   * Submit the application without AI analysis (manual review fallback).
+   * Used when AI fails but the resume already uploaded successfully.
+   */
+  const submitForManualReview = async () => {
+    if (!job) return;
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('applications').insert({
+          candidate_id: user.id,
+          job_id: job.id,
+          cover_letter: coverLetter || null,
+          status: 'in_review',
+        });
+      }
+      setAiAnalysis({
+        overall_score: 0,
+        skill_match_score: 0,
+        experience_match_score: 0,
+        recommendation: 'pending',
+        strengths: ['Application submitted for manual review'],
+        summary: 'Your application has been submitted and will be reviewed by our hiring team.',
+      });
+      setError(null);
+      setFlowStep('complete');
+      toast.success("Application submitted for manual review");
+    } catch (err) {
+      console.error('Manual review submission failed:', err);
+      toast.error("Could not submit application. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmitResume = async () => {
     if (!job || !resumeFile) {
       toast.error("Please upload your resume");
