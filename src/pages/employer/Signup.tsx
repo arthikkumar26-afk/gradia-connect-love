@@ -877,6 +877,7 @@ const EmployerSignup = () => {
           <h1 className="text-3xl font-bold text-foreground">Benefits with Employer</h1>
           <p className="text-muted-foreground mt-2">
             Discover the advantages of partnering with Gradia Connect for your recruitment needs.
+          </p>
         </div>
 
         {/* Verification email resend control. Only renders after a successful
