@@ -380,46 +380,124 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
       throw new Error("No data returned from AI");
     }
 
-    // Parse JSON from the response (handle markdown code blocks)
-    let analysisData;
+    // Parse JSON from the response with multi-stage best-effort recovery
+    // so that even if the AI returns malformed/truncated JSON we still surface
+    // whatever fields we can extract instead of failing the whole flow.
+    let analysisData: Record<string, unknown> | null = null;
+    let parseWarning: string | null = null;
+    let parseFailed = false;
+
+    const tryParse = (raw: string): Record<string, unknown> | null => {
+      try {
+        const obj = JSON.parse(raw);
+        return obj && typeof obj === 'object' ? obj as Record<string, unknown> : null;
+      } catch {
+        return null;
+      }
+    };
+
+    // Best-effort extraction of top-level scalar/array fields from malformed JSON
+    // using regex. Only used when JSON.parse fully fails.
+    const bestEffortExtract = (raw: string): Record<string, unknown> => {
+      const out: Record<string, unknown> = {};
+      const stringFields = [
+        'full_name', 'email', 'mobile', 'date_of_birth', 'gender',
+        'location', 'current_state', 'current_district', 'linkedin', 'website',
+        'highest_qualification', 'experience_level', 'preferred_role',
+        'experience_summary', 'career_level',
+      ];
+      for (const f of stringFields) {
+        const m = raw.match(new RegExp(`"${f}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"`));
+        if (m && m[1]) out[f] = m[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+      }
+      const scoreMatch = raw.match(/"overall_score"\s*:\s*(\d+(?:\.\d+)?)/);
+      if (scoreMatch) out.overall_score = Number(scoreMatch[1]);
+
+      const arrayStringFields = ['skills', 'languages', 'strengths', 'improvements', 'skill_highlights'];
+      for (const f of arrayStringFields) {
+        const m = raw.match(new RegExp(`"${f}"\\s*:\\s*\\[([^\\]]*)\\]`));
+        if (m && m[1]) {
+          const items = Array.from(m[1].matchAll(/"((?:\\.|[^"\\])*)"/g)).map(x => x[1]);
+          if (items.length) out[f] = items;
+        }
+      }
+      return out;
+    };
+
     try {
-      // Clean the content - remove any non-JSON characters
       let cleanContent = content.trim();
-      
-      // Try to extract JSON from markdown code blocks
+
+      // Strip markdown fences if present
       const jsonMatch = cleanContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        cleanContent = jsonMatch[1].trim();
+      if (jsonMatch) cleanContent = jsonMatch[1].trim();
+
+      // Attempt 1: parse the full content as-is
+      analysisData = tryParse(cleanContent);
+
+      // Attempt 2: parse the slice between the first { and last }
+      if (!analysisData) {
+        const jsonStart = cleanContent.indexOf('{');
+        const jsonEnd = cleanContent.lastIndexOf('}');
+        if (jsonStart !== -1 && jsonEnd > jsonStart) {
+          analysisData = tryParse(cleanContent.slice(jsonStart, jsonEnd + 1));
+        }
       }
-      
-      // Find JSON object boundaries
-      const jsonStart = cleanContent.indexOf('{');
-      const jsonEnd = cleanContent.lastIndexOf('}');
-      
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        const jsonStr = cleanContent.slice(jsonStart, jsonEnd + 1);
-        analysisData = JSON.parse(jsonStr);
-      } else {
-        throw new Error("Could not find valid JSON in response");
+
+      // Attempt 3: progressively trim trailing characters in case JSON was truncated
+      if (!analysisData) {
+        const jsonStart = cleanContent.indexOf('{');
+        if (jsonStart !== -1) {
+          const candidate = cleanContent.slice(jsonStart);
+          for (let end = candidate.lastIndexOf('}'); end > 0; end = candidate.lastIndexOf('}', end - 1)) {
+            const slice = candidate.slice(0, end + 1);
+            const parsed = tryParse(slice);
+            if (parsed) { analysisData = parsed; parseWarning = 'Parsed truncated AI response — some fields may be missing.'; break; }
+            if (end < 50) break;
+          }
+        }
       }
+
+      // Attempt 4: regex-based best-effort extraction from malformed text
+      if (!analysisData) {
+        const partial = bestEffortExtract(cleanContent);
+        if (Object.keys(partial).length > 0) {
+          analysisData = partial;
+          parseWarning = 'AI response was not valid JSON — recovered partial profile via best-effort extraction.';
+        }
+      }
+
+      if (!analysisData) throw new Error('Could not find valid JSON in response');
     } catch (parseError) {
-      console.error("Failed to parse AI response:", content);
-      // Return a default score if parsing fails
+      console.error('Failed to parse AI response:', parseError, '\n--- raw content ---\n', content?.slice(0, 2000));
+      parseFailed = true;
+      parseWarning = 'AI returned an unreadable response. We saved a safe default — please review and edit your profile.';
       analysisData = {
-        overall_score: 70,
-        strengths: ["Resume uploaded successfully"],
-        improvements: ["Could not fully analyze - please ensure resume is clear and readable"],
-        experience_summary: "Resume analysis completed",
+        overall_score: 0,
+        strengths: ['Resume received'],
+        improvements: ['We could not fully analyze your resume. Please review and complete your profile manually.'],
+        experience_summary: 'Automatic analysis was not available for this upload.',
         skill_highlights: [],
-        career_level: "Mid-Level",
-        projects: []
+        career_level: 'Mid-Level',
+        projects: [],
       };
     }
 
-    console.log("Analysis completed for user:", userId, "Score:", analysisData.overall_score, "Projects found:", analysisData.projects?.length || 0);
+    // Always attach diagnostic flags so the UI can react with actionable messaging
+    const responseBody: Record<string, unknown> = {
+      ...analysisData,
+      parse_failed: parseFailed,
+      parse_warning: parseWarning,
+    };
 
-    return new Response(JSON.stringify(analysisData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.log(
+      'Analysis completed for user:', userId,
+      'Score:', (analysisData as any)?.overall_score,
+      'Projects found:', ((analysisData as any)?.projects as unknown[] | undefined)?.length || 0,
+      'parse_failed:', parseFailed,
+    );
+
+    return new Response(JSON.stringify(responseBody), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error("Error analyzing resume:", error);
