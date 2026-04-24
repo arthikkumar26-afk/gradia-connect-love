@@ -444,23 +444,26 @@ const BookSlot = () => {
                   Your <strong>{stageName}</strong> has been scheduled for:
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-center gap-2 text-blue-700">
-                    <Calendar className="h-4 w-4" />
-                    <span className="font-medium">
-                      {new Date(selectedDate).toLocaleDateString("en-IN", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-blue-700">
-                    <Clock className="h-4 w-4" />
-                    <span className="font-medium">
-                      {getTimeSlots().find((s) => s.value === selectedTime)?.label || selectedTime} IST
-                    </span>
-                  </div>
+                  {(() => {
+                    const f = formatBookedDateTime(selectedDate, selectedTime, timezone);
+                    return (
+                      <>
+                        <div className="flex items-center justify-center gap-2 text-blue-700">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-medium">{f.dateLabel}</span>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 text-blue-700">
+                          <Clock className="h-4 w-4" />
+                          <span className="font-medium">
+                            {f.timeLabel} <span className="text-sm text-blue-600">({f.tzAbbr})</span>
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground pt-1 text-center">
+                          Time shown in <strong>{timezone}</strong>
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
                 {stageName.toLowerCase().includes("hr") ? (
                   <p className="text-sm text-muted-foreground">
