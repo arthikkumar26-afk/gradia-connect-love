@@ -123,22 +123,47 @@ export const JobApplicationFlow = ({
     }
   };
 
+  const ALLOWED_RESUME_MIME_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+  const ALLOWED_RESUME_EXTENSIONS = ['pdf', 'doc', 'docx'];
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size must be less than 10MB");
-        return;
-      }
-      if (!file.type.includes('pdf') && !file.type.includes('document') && !file.type.includes('image')) {
-        toast.error("Please upload a PDF, Word document, or image");
-        return;
-      }
-      setResumeFile(file);
-      setError(null);
-      // New file → invalidate any cached upload URL from a previous attempt.
-      uploadedResumeUrlRef.current = null;
+    if (!file) return;
+
+    // Reset the input so selecting the same invalid file again still fires onChange.
+    const resetInput = () => {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large", {
+        description: "Resume must be less than 10 MB. Please compress or export a smaller PDF.",
+      });
+      resetInput();
+      return;
     }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const mimeOk = ALLOWED_RESUME_MIME_TYPES.includes(file.type);
+    const extOk = ALLOWED_RESUME_EXTENSIONS.includes(extension);
+
+    // Browsers sometimes report an empty MIME for .doc/.docx — accept if extension matches.
+    if (!mimeOk && !extOk) {
+      toast.error("Invalid file format", {
+        description: "Only PDF or Word documents (.pdf, .doc, .docx) are accepted. Screenshots and images cannot be used as a resume.",
+      });
+      resetInput();
+      return;
+    }
+
+    setResumeFile(file);
+    setError(null);
+    // New file → invalidate any cached upload URL from a previous attempt.
+    uploadedResumeUrlRef.current = null;
   };
 
   const handleStartApplication = () => {
