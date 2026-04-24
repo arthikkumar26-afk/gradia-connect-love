@@ -165,6 +165,44 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     }
   };
 
+  /**
+   * Re-trigger the test-link email for a stage whose previous invitation
+   * either failed or never arrived. Reuses the same edge function the
+   * employer/booking flow uses, so the candidate gets the same templated
+   * email — just with a fresh `email_sent_at`.
+   */
+  const handleResendInvitation = async (
+    interviewCandidateId: string,
+    stageName: string,
+    eventId: string,
+    scheduledAt: string | null,
+  ) => {
+    setResendingEventId(eventId);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-interview-invitation', {
+        body: {
+          interviewCandidateId,
+          stageName,
+          // Fall back to "now" so the function still has a valid date to
+          // render in the email body if the original event lost its schedule.
+          scheduledDate: scheduledAt || new Date().toISOString(),
+        },
+      });
+      if (error || (data && data.success === false)) {
+        const msg = error?.message || data?.error || 'Failed to resend the test link.';
+        toast.error(msg);
+      } else {
+        toast.success('Test link resent. Please check your inbox.');
+        // Refetch invitations so the badge updates from "failed" -> "sent".
+        await fetchData();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to resend the test link.');
+    } finally {
+      setResendingEventId(null);
+    }
+  };
+
   useEffect(() => {
     fetchData();
 
