@@ -355,7 +355,9 @@ Provide your analysis using the suggest_analysis function.`;
       interviewCandidateId: interviewCandidate.id,
       analysis: enrichedAnalysis,
       emailSent: true,
-      nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking'
+      nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking',
+      fallback: usedFallbackAnalysis,
+      status: usedFallbackAnalysis ? 'manual_review' : 'ai_reviewed'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
