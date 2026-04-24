@@ -500,6 +500,7 @@ const BookSlot = () => {
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
         const result = await sendInvitationEmail({
           functionName: "send-pipeline-email",
+          expectedStageName: stageName,
           body: {
             interviewCandidateId: candidateId,
             stageName: "Written Test",
@@ -517,6 +518,7 @@ const BookSlot = () => {
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
         const result = await sendInvitationEmail({
           functionName: "send-interview-invitation",
+          expectedStageName: stageName,
           body: {
             interviewCandidateId: candidateId,
             stageName,
