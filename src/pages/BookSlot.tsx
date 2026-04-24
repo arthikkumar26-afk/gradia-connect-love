@@ -631,15 +631,9 @@ const BookSlot = () => {
                   variant="outline"
                   className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
                   onClick={() => {
-                    const today = getTodayDate();
-                    setSelectedDate(today);
-                    const now = new Date();
-                    const minutes = now.getMinutes();
-                    const roundedMinutes = minutes < 30 ? 30 : 0;
-                    const hour = roundedMinutes === 0 ? now.getHours() + 1 : now.getHours();
-                    const minute = roundedMinutes.toString().padStart(2, "0");
-                    const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
-                    setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
+                    const nextSlot = getNextAvailableSlot();
+                    setSelectedDate(nextSlot.date);
+                    setSelectedTime(nextSlot.time);
                   }}
                 >
                   🚀 Start Now
@@ -649,11 +643,9 @@ const BookSlot = () => {
                   variant="outline"
                   className="flex-1 h-11 text-sm font-semibold border-2 border-green-400 text-green-700 hover:bg-green-100 bg-green-50"
                   onClick={() => {
-                    const nextTime = getNext10MinTime();
-                    setSelectedTime(nextTime);
-                    if (!selectedDate && getTodayDate()) {
-                      setSelectedDate(getTodayDate()!);
-                    }
+                    const nextSlot = getNextAvailableSlot();
+                    setSelectedDate(nextSlot.date);
+                    setSelectedTime(nextSlot.time);
                   }}
                 >
                   ⏰ Next 10 mins
@@ -704,7 +696,7 @@ const BookSlot = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a time slot" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60">
+                  <SelectContent className="max-h-[300px]">
                     {getTimeSlots().map((slot) => (
                       <SelectItem key={slot.value} value={slot.value}>
                         {slot.label}
