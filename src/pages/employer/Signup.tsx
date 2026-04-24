@@ -13,6 +13,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+// Shared helpers + hook for the resend-confirmation flow. Keeps rate-limit
+// detection, cooldown ticking, and toast copy consistent with every other
+// login/signup page (candidate login/signup, freelancer login).
+import {
+  isRateLimitErr,
+  getRetryAfterSeconds,
+  formatRetryWindow,
+} from "@/lib/auth/resendCooldown";
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 const companyCategories = [
   "IT & Technology",
@@ -116,14 +125,22 @@ const EmployerSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
-  // OTP / verification email resend state.
-  // `pendingVerificationEmail` is set after a successful signup so the resend
-  // panel knows which address to re-send to. `resendCooldown` is the number of
-  // seconds remaining before the next resend is allowed — it is the single
-  // source of truth that gates the button (no second API call until it hits 0).
-  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState<number>(0);
-  const [isResending, setIsResending] = useState(false);
+  // Verification email resend state, owned by the shared hook so behaviour
+  // is identical across every signup/login screen. We alias `unverifiedEmail`
+  // → `pendingVerificationEmail` here to preserve this screen's wording.
+  const {
+    unverifiedEmail: pendingVerificationEmail,
+    setUnverifiedEmail: setPendingVerificationEmail,
+    resendCooldown,
+    isResending,
+    isDisabled: isResendDisabled,
+    cooldownLabel,
+    resend,
+    applyExternalError,
+  } = useResendConfirmation({
+    flow: "employer-signup",
+    redirectTo: `${window.location.origin}/employer/signup`,
+  });
 
   useEffect(() => {
     if (isAuthenticated && currentStep === 'signup') {
