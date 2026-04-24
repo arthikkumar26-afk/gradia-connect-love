@@ -80,6 +80,7 @@ const FreelancerSignup = lazyWithRetry(() => import("./pages/freelancer/Signup")
 const FreelancerLogin = lazyWithRetry(() => import("./pages/freelancer/Login"));
 const EduTechLanding = lazyWithRetry(() => import("./pages/edutech/EduTechLanding"));
 const EduTechLogin = lazyWithRetry(() => import("./pages/edutech/EduTechLogin"));
+const EduTechSignup = lazyWithRetry(() => import("./pages/edutech/EduTechSignup"));
 const EduTechDashboard = lazyWithRetry(() => import("./pages/edutech/EduTechDashboard"));
 const LearningPlatform = lazyWithRetry(() => import("./pages/LearningPlatform"));
 const ResumeBuilder = lazyWithRetry(() => import("./pages/candidate/ResumeBuilder"));
@@ -256,7 +257,7 @@ const MainRoutes = () => (
         {/* EduTech Routes */}
         <Route path="/edutech" element={<EduTechLanding />} />
         <Route path="/edutech/login" element={<EduTechLogin />} />
-        <Route path="/edutech/signup" element={<EduTechLanding />} />
+        <Route path="/edutech/signup" element={<EduTechSignup />} />
         <Route path="/edutech/dashboard" element={<EduTechDashboard />} />
 
         {/* Freelancer Routes */}
