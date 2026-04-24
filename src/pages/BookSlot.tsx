@@ -135,12 +135,20 @@ const BookSlot = () => {
     return `${hour.toString().padStart(2, "0")}:${minute}`;
   };
 
-  // Generate time slots (8 AM to 9 PM, 30-min intervals) — full flexible range
-  const getTimeSlots = () => {
+  // Generate time slots (8 AM to 9 PM) — granularity & time-of-day filter applied
+  const getTimeSlots = (
+    granularityMin: Granularity = granularity,
+    period: TimeOfDay = timeOfDay,
+  ) => {
     const slots: { value: string; label: string }[] = [];
+    const minuteSteps = granularityMin === 15 ? ["00", "15", "30", "45"] : ["00", "30"];
     for (let hour = 8; hour <= 21; hour++) {
-      for (const minute of ["00", "30"]) {
-        if (hour === 21 && minute === "30") continue;
+      for (const minute of minuteSteps) {
+        if (hour === 21 && minute !== "00") continue;
+        // Period filter: morning 8-12, afternoon 12-17, evening 17-21
+        if (period === "morning" && hour >= 12) continue;
+        if (period === "afternoon" && (hour < 12 || hour >= 17)) continue;
+        if (period === "evening" && hour < 17) continue;
         const time = `${hour.toString().padStart(2, "0")}:${minute}`;
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const ampm = hour < 12 ? "AM" : "PM";
