@@ -160,8 +160,8 @@ export const UpgradePlanContent = () => {
 
       if ((wallet.points_balance || 0) < pointsCost) {
         toast({
-          title: "Insufficient Points",
-          description: `You need ${pointsCost} pts but have ${wallet.points_balance || 0} pts. Load points from your Wallet.`,
+          title: "Insufficient Balance",
+          description: `You need ₹${pointsCost} but have ₹${wallet.points_balance || 0}. Top up from your Wallet.`,
           variant: "destructive",
         });
         return;

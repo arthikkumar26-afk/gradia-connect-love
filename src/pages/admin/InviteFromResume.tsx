@@ -396,37 +396,36 @@ const InviteFromResume = () => {
                         <div className="flex flex-wrap gap-1.5 pt-1.5 border-t">
                           <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">Apply — FREE</Badge>
                           <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">ATS Score — FREE</Badge>
-                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Resume Export — 150 pts</Badge>
+                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Resume Export — ₹50</Badge>
                           {j.source === "internal" ? (
-                            <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Mock Interview — 500 pts</Badge>
+                            <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Mock Interview — ₹99</Badge>
                           ) : (
                             <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">External · redirects off-site</Badge>
                           )}
-                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Featured Boost — 250 pts</Badge>
+                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Featured Boost — ₹199</Badge>
                         </div>
                         <p className="text-[10px] text-muted-foreground">
-                          Likely spend if candidate applies + boosts profile: <span className="font-semibold text-foreground">~{j.source === "internal" ? "900" : "400"} pts</span>
+                          Likely spend if candidate applies + boosts profile: <span className="font-semibold text-foreground">~₹{j.source === "internal" ? "350" : "250"}</span>
                         </p>
                       </div>
                     ))}
                   </div>
 
                   <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">💎 Wallet Points included in the email</p>
+                    <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">💎 Pricing summary included in the email</p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-background rounded border p-2">
-                        <p className="font-semibold text-foreground">Starter Packs</p>
-                        <p className="text-muted-foreground">Starter 200 pts · ₹1,000</p>
-                        <p className="text-muted-foreground">Basic 500 pts · ₹2,500</p>
-                        <p className="text-muted-foreground">Pro 1,000 pts · ₹5,000</p>
-                        <p className="text-muted-foreground">Premium 2,500 pts · ₹12,500</p>
+                        <p className="font-semibold text-foreground">Subscription Plans</p>
+                        <p className="text-muted-foreground">Basic — Free</p>
+                        <p className="text-muted-foreground">Pro — ₹499/mo</p>
+                        <p className="text-muted-foreground">Premium — ₹999/mo</p>
                       </div>
                       <div className="bg-background rounded border p-2">
-                        <p className="font-semibold text-foreground">Point Costs</p>
-                        <p className="text-muted-foreground">Mock Interview — <span className="text-orange-600 font-semibold">500 pts</span></p>
-                        <p className="text-muted-foreground">Resume Export — <span className="text-orange-600 font-semibold">150 pts</span></p>
-                        <p className="text-muted-foreground">Resume Builder — <span className="text-orange-600 font-semibold">100 pts</span></p>
-                        <p className="text-muted-foreground">Featured Boost — <span className="text-orange-600 font-semibold">250 pts</span></p>
+                        <p className="font-semibold text-foreground">Pay-as-you-go</p>
+                        <p className="text-muted-foreground">Mock Interview — <span className="text-orange-600 font-semibold">₹99</span></p>
+                        <p className="text-muted-foreground">Resume Export — <span className="text-orange-600 font-semibold">₹50</span></p>
+                        <p className="text-muted-foreground">Mentor Contact — <span className="text-orange-600 font-semibold">₹1,500</span></p>
+                        <p className="text-muted-foreground">Featured Boost — <span className="text-orange-600 font-semibold">₹199</span></p>
                         <p className="text-green-700 font-semibold">Job Apply / ATS — FREE</p>
                       </div>
                     </div>
