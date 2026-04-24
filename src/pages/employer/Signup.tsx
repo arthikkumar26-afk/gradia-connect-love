@@ -22,6 +22,8 @@ import {
   formatRetryWindow,
 } from "@/lib/auth/resendCooldown";
 import { useResendConfirmation } from "@/hooks/useResendConfirmation";
+// Aggregated ARIA live-region announcer for inline form validation errors.
+import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
 
 const companyCategories = [
   "IT & Technology",
@@ -112,6 +114,8 @@ const EmployerSignup = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  // Bumped on each submit so the ARIA announcer re-fires on repeat submits.
+  const [submitCount, setSubmitCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
   // Agreement state
@@ -199,6 +203,9 @@ const EmployerSignup = () => {
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Bump first so the ARIA live region re-announces even if validation
+    // errors are unchanged from the previous attempt.
+    setSubmitCount((n) => n + 1);
 
     // Validation runs first — failures here return early and never call Supabase,
     // so a user fixing form errors won't be penalised by the email rate limit.
@@ -663,7 +670,16 @@ const EmployerSignup = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSignupSubmit} className="space-y-5">
+        <form onSubmit={handleSignupSubmit} className="space-y-5" noValidate>
+          {/* Aggregated, polite live region — announces every validation
+              error after each submit attempt and re-announces on repeat
+              submits via the bumped submitCount. */}
+          <FormErrorAnnouncer
+            id="employer-signup-form-errors"
+            errors={errors}
+            submitCount={submitCount}
+          />
+
           <div className="space-y-2">
             <Label htmlFor="companyName">Company Name <span className="text-destructive">*</span></Label>
             <Input
@@ -675,9 +691,11 @@ const EmployerSignup = () => {
                 setCompanyName(e.target.value);
                 if (errors.companyName) setErrors({ ...errors, companyName: undefined });
               }}
+              aria-invalid={!!errors.companyName}
+              aria-describedby={errors.companyName ? "companyName-error" : undefined}
               className={errors.companyName ? "border-destructive" : ""}
             />
-            {errors.companyName && <p className="text-sm text-destructive">{errors.companyName}</p>}
+            {errors.companyName && <p id="companyName-error" className="text-sm text-destructive">{errors.companyName}</p>}
           </div>
 
           <div className="space-y-2">
@@ -689,7 +707,12 @@ const EmployerSignup = () => {
                 if (errors.companyCategory) setErrors({ ...errors, companyCategory: undefined });
               }}
             >
-              <SelectTrigger className={errors.companyCategory ? "border-destructive" : ""}>
+              <SelectTrigger
+                id="companyCategory"
+                aria-invalid={!!errors.companyCategory}
+                aria-describedby={errors.companyCategory ? "companyCategory-error" : undefined}
+                className={errors.companyCategory ? "border-destructive" : ""}
+              >
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
@@ -698,7 +721,7 @@ const EmployerSignup = () => {
                 ))}
               </SelectContent>
             </Select>
-            {errors.companyCategory && <p className="text-sm text-destructive">{errors.companyCategory}</p>}
+            {errors.companyCategory && <p id="companyCategory-error" className="text-sm text-destructive">{errors.companyCategory}</p>}
           </div>
 
           <div className="space-y-2">
@@ -712,9 +735,11 @@ const EmployerSignup = () => {
                 setContactPerson(e.target.value);
                 if (errors.contactPerson) setErrors({ ...errors, contactPerson: undefined });
               }}
+              aria-invalid={!!errors.contactPerson}
+              aria-describedby={errors.contactPerson ? "contactPerson-error" : undefined}
               className={errors.contactPerson ? "border-destructive" : ""}
             />
-            {errors.contactPerson && <p className="text-sm text-destructive">{errors.contactPerson}</p>}
+            {errors.contactPerson && <p id="contactPerson-error" className="text-sm text-destructive">{errors.contactPerson}</p>}
           </div>
 
           <div className="space-y-2">
@@ -728,9 +753,11 @@ const EmployerSignup = () => {
                 setEmail(e.target.value);
                 if (errors.email) setErrors({ ...errors, email: undefined });
               }}
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "employer-email-error" : undefined}
               className={errors.email ? "border-destructive" : ""}
             />
-            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+            {errors.email && <p id="employer-email-error" className="text-sm text-destructive">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
@@ -744,10 +771,12 @@ const EmployerSignup = () => {
                 setPassword(e.target.value);
                 if (errors.password) setErrors({ ...errors, password: undefined });
               }}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "employer-password-error" : undefined}
               className={errors.password ? "border-destructive" : ""}
             />
             <PasswordStrengthIndicator password={password} />
-            {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+            {errors.password && <p id="employer-password-error" className="text-sm text-destructive">{errors.password}</p>}
           </div>
 
           <div className="space-y-2">
@@ -761,9 +790,11 @@ const EmployerSignup = () => {
                 setConfirmPassword(e.target.value);
                 if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
               }}
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? "employer-confirmPassword-error" : undefined}
               className={errors.confirmPassword ? "border-destructive" : ""}
             />
-            {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && <p id="employer-confirmPassword-error" className="text-sm text-destructive">{errors.confirmPassword}</p>}
           </div>
 
           <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isLoading}>

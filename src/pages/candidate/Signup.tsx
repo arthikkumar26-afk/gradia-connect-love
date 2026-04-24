@@ -23,6 +23,10 @@ import { CouponInput } from "@/components/shared/CouponInput";
 // the exact same cooldown / rate-limit semantics as the candidate login,
 // employer signup, and freelancer login flows.
 import { useResendConfirmation } from "@/hooks/useResendConfirmation";
+// Aggregated ARIA live-region announcer for inline form validation errors.
+// Re-announces on every submit attempt (even with unchanged errors) so
+// screen-reader users get consistent feedback per submit.
+import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
 
 interface FormErrors {
   fullName?: string;
@@ -247,6 +251,9 @@ const CandidateSignup = () => {
   const [primarySubject, setPrimarySubject] = useState("");
   const [segment, setSegment] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  // Bumped on every submit so the ARIA live announcer re-fires even when the
+  // user resubmits with the same unresolved errors.
+  const [submitCount, setSubmitCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
   // Agreement state
@@ -342,7 +349,10 @@ const CandidateSignup = () => {
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    // Bump first so the announcer re-runs even if validation errors are
+    // unchanged from the previous attempt.
+    setSubmitCount((n) => n + 1);
+
     if (!validateForm()) {
       return;
     }
@@ -969,7 +979,16 @@ const CandidateSignup = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSignupSubmit} className="space-y-5">
+        <form onSubmit={handleSignupSubmit} className="space-y-5" noValidate>
+          {/* Aggregated, polite live region. Announces every validation error
+              after each submit attempt — re-announces on repeat submits via
+              the bumped submitCount. */}
+          <FormErrorAnnouncer
+            id="candidate-signup-form-errors"
+            errors={errors}
+            submitCount={submitCount}
+          />
+
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
             <Input
@@ -985,9 +1004,11 @@ const CandidateSignup = () => {
                   if (errors.fullName) setErrors({ ...errors, fullName: undefined });
                 }
               }}
+              aria-invalid={!!errors.fullName}
+              aria-describedby={errors.fullName ? "fullName-error" : undefined}
               className={errors.fullName ? "border-destructive" : ""}
             />
-            {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
+            {errors.fullName && <p id="fullName-error" className="text-sm text-destructive">{errors.fullName}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1001,9 +1022,11 @@ const CandidateSignup = () => {
                 setEmail(e.target.value);
                 if (errors.email) setErrors({ ...errors, email: undefined });
               }}
+              aria-invalid={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
               className={errors.email ? "border-destructive" : ""}
             />
-            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+            {errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1017,9 +1040,11 @@ const CandidateSignup = () => {
                 setMobile(e.target.value.replace(/\D/g, '').slice(0, 10));
                 if (errors.mobile) setErrors({ ...errors, mobile: undefined });
               }}
+              aria-invalid={!!errors.mobile}
+              aria-describedby={errors.mobile ? "mobile-error" : undefined}
               className={errors.mobile ? "border-destructive" : ""}
             />
-            {errors.mobile && <p className="text-sm text-destructive">{errors.mobile}</p>}
+            {errors.mobile && <p id="mobile-error" className="text-sm text-destructive">{errors.mobile}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1032,10 +1057,12 @@ const CandidateSignup = () => {
                 setPassword(e.target.value);
                 if (errors.password) setErrors({ ...errors, password: undefined });
               }}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? "password-error" : undefined}
               className={errors.password ? "border-destructive" : ""}
             />
             <PasswordStrengthIndicator password={password} />
-            {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+            {errors.password && <p id="password-error" className="text-sm text-destructive">{errors.password}</p>}
           </div>
 
           <div className="space-y-2">
@@ -1048,9 +1075,11 @@ const CandidateSignup = () => {
                 setConfirmPassword(e.target.value);
                 if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
               }}
+              aria-invalid={!!errors.confirmPassword}
+              aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
               className={errors.confirmPassword ? "border-destructive" : ""}
             />
-            {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && <p id="confirmPassword-error" className="text-sm text-destructive">{errors.confirmPassword}</p>}
           </div>
 
           {/* Industry Category */}
