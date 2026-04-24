@@ -566,8 +566,8 @@ export default function ResumeBuilderTab() {
 
       if ((wallet.points_balance || 0) < EXPORT_PDF_POINTS) {
         toast({
-          title: "Insufficient Points",
-          description: `You need ${EXPORT_PDF_POINTS} pts to export. Your balance: ${wallet.points_balance || 0} pts.`,
+          title: "Insufficient Balance",
+          description: `You need ₹${EXPORT_PDF_POINTS} to export. Your balance: ₹${wallet.points_balance || 0}.`,
           variant: "destructive",
         });
         return;

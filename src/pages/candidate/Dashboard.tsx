@@ -451,8 +451,8 @@ const CandidateDashboard = () => {
 
       if ((wallet.points_balance || 0) < pointsCost) {
         toast({
-          title: "Insufficient Points",
-          description: `You need ${pointsCost} pts but have ${wallet.points_balance || 0} pts. Load points from My Wallet.`,
+          title: "Insufficient Balance",
+          description: `You need ₹${pointsCost} but have ₹${wallet.points_balance || 0}. Top up from My Wallet.`,
           variant: "destructive",
         });
         return;
