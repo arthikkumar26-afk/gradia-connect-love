@@ -103,7 +103,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("parse-external-job error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Failed to parse" }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Failed to parse" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
