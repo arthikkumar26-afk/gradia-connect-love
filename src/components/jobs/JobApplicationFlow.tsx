@@ -602,6 +602,7 @@ export const JobApplicationFlow = ({
           setAiAnalysis(analysisResult.analysis);
         }
 
+        setSubmissionStatus(analysisResult?.status === 'manual_review' ? 'manual_review' : 'ai_reviewed');
         setEmailSent(analysisResult?.emailSent || false);
         setNextStage(analysisResult?.nextStage || 'AI Phone Interview');
 
