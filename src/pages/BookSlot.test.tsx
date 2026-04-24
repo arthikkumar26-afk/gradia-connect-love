@@ -282,12 +282,10 @@ describe("BookSlot — multi-slot HR Round flow", () => {
       expect(screen.getByText(/Book Your Demo Round Slot/i)).toBeInTheDocument(),
     );
 
-    const dateTrigger = screen.getByRole("combobox", { name: /Select Date/i });
+    const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
-    const timeTriggers = screen.getAllByRole("combobox").filter((el) =>
-      /Choose time/i.test(el.textContent || ""),
-    );
+    const timeTriggers = allTriggersByPlaceholder(/^Choose time \d$/);
     await openSelectAndPick(user, timeTriggers[0], "10:00 AM");
     await openSelectAndPick(user, timeTriggers[1], "10:00 AM");
     await openSelectAndPick(user, timeTriggers[2], "10:00 AM");
