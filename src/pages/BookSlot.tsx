@@ -502,6 +502,7 @@ const BookSlot = () => {
                       key={opt.key}
                       type="button"
                       onClick={() => setTimeOfDay(opt.key)}
+                      aria-pressed={timeOfDay === opt.key}
                       className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                         timeOfDay === opt.key
                           ? "bg-purple-600 text-white border-purple-600"
