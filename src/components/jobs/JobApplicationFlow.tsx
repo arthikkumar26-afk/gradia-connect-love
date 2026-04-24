@@ -30,7 +30,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  WifiOff,
+  ShieldAlert
 } from "lucide-react";
 import { Job } from "@/data/sampleJobs";
 
@@ -42,6 +45,30 @@ interface JobApplicationFlowProps {
 
 type FlowStep = 'description' | 'upload' | 'analyzing' | 'complete';
 type AnalysisSubStep = 'uploading' | 'analyzing' | 'matching' | 'scheduling';
+
+type ErrorCategory =
+  | 'network'
+  | 'auth'
+  | 'file_invalid'
+  | 'upload_failed'
+  | 'parse_failed'
+  | 'ai_credits'
+  | 'ai_rate_limit'
+  | 'ai_server'
+  | 'unknown';
+
+interface ApplicationError {
+  category: ErrorCategory;
+  title: string;
+  message: string;
+  steps: string[];
+  /** Was the resume successfully uploaded before this error? */
+  resumeUploaded: boolean;
+  /** Can the user safely retry without re-uploading? */
+  canRetry: boolean;
+  /** Can the user submit anyway (manual review fallback)? */
+  canSubmitWithoutAI: boolean;
+}
 
 interface AIAnalysis {
   overall_score: number;
@@ -66,9 +93,11 @@ export const JobApplicationFlow = ({
   const [coverLetter, setCoverLetter] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApplicationError | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [nextStage, setNextStage] = useState<string>('AI Phone Interview');
+  /** Cache the storage URL so retry-after-AI-failure does not re-upload. */
+  const uploadedResumeUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getAnalysisProgress = () => {
@@ -104,6 +133,8 @@ export const JobApplicationFlow = ({
       }
       setResumeFile(file);
       setError(null);
+      // New file → invalidate any cached upload URL from a previous attempt.
+      uploadedResumeUrlRef.current = null;
     }
   };
 
@@ -172,6 +203,190 @@ export const JobApplicationFlow = ({
     }
   };
 
+  /**
+   * Builds a structured ApplicationError with user-actionable retry steps.
+   * `stage` tells us where in the pipeline the failure occurred so we can
+   * show the right messaging (upload vs. analyze).
+   */
+  const classifyError = (
+    err: unknown,
+    stage: 'upload' | 'parse' | 'analyze',
+    resumeUploaded: boolean,
+    statusHint?: number,
+    messageHint?: string,
+  ): ApplicationError => {
+    const anyErr = err as { message?: string; name?: string } | undefined;
+    const rawMsg = (messageHint || anyErr?.message || '').toLowerCase();
+    const status = statusHint;
+
+    if (
+      anyErr?.name === 'TypeError' ||
+      rawMsg.includes('failed to fetch') ||
+      rawMsg.includes('network') ||
+      !navigator.onLine
+    ) {
+      return {
+        category: 'network',
+        title: "Connection issue",
+        message: "We couldn't reach our servers. Your resume was not submitted.",
+        steps: [
+          "Check your internet connection",
+          "Disable any VPN or ad-blocker that might be interfering",
+          "Click \"Try again\" once you're back online",
+        ],
+        resumeUploaded,
+        canRetry: true,
+        canSubmitWithoutAI: false,
+      };
+    }
+
+    if (status === 401 || rawMsg.includes('not authenticated') || rawMsg.includes('unauthor')) {
+      return {
+        category: 'auth',
+        title: "Sign in required",
+        message: "Your session expired. Please sign in again to submit your application.",
+        steps: [
+          "Sign in with your candidate account",
+          "Return to this job and click Apply",
+        ],
+        resumeUploaded,
+        canRetry: false,
+        canSubmitWithoutAI: false,
+      };
+    }
+
+    if (stage === 'upload') {
+      if (status === 400 || status === 413 || rawMsg.includes('size') || rawMsg.includes('type')) {
+        return {
+          category: 'file_invalid',
+          title: "Resume couldn't be accepted",
+          message: messageHint || "Your file was rejected by our upload service.",
+          steps: [
+            "Make sure the file is a PDF or Word document under 10 MB",
+            "Try exporting your resume again from your editor",
+            "Choose a different file and resubmit",
+          ],
+          resumeUploaded: false,
+          canRetry: true,
+          canSubmitWithoutAI: false,
+        };
+      }
+      return {
+        category: 'upload_failed',
+        title: "Resume upload failed",
+        message: "We couldn't save your resume to our servers.",
+        steps: [
+          "Click \"Try again\" — most upload errors are temporary",
+          "If it keeps failing, try a smaller PDF (under 5 MB)",
+          "Try a different browser or disable browser extensions",
+        ],
+        resumeUploaded: false,
+        canRetry: true,
+        canSubmitWithoutAI: false,
+      };
+    }
+
+    // Analyze stage — resume was successfully uploaded
+    if (status === 402 || rawMsg.includes('credit')) {
+      return {
+        category: 'ai_credits',
+        title: "AI analysis temporarily unavailable",
+        message: "Your resume was uploaded successfully, but our AI scoring service is offline right now. You can still submit — our team will review your application manually.",
+        steps: [
+          "Click \"Submit for manual review\" to finish your application now",
+          "Or click \"Try AI analysis again\" in a few minutes",
+        ],
+        resumeUploaded: true,
+        canRetry: true,
+        canSubmitWithoutAI: true,
+      };
+    }
+
+    if (status === 429 || rawMsg.includes('rate limit') || rawMsg.includes('too many')) {
+      return {
+        category: 'ai_rate_limit',
+        title: "AI service is busy",
+        message: "Your resume was uploaded, but the AI is handling too many requests right now.",
+        steps: [
+          "Wait about 30 seconds, then click \"Try AI analysis again\"",
+          "Or click \"Submit for manual review\" to skip the AI step",
+        ],
+        resumeUploaded: true,
+        canRetry: true,
+        canSubmitWithoutAI: true,
+      };
+    }
+
+    if (status && status >= 500) {
+      return {
+        category: 'ai_server',
+        title: "AI analysis failed",
+        message: "Your resume was uploaded successfully, but the analysis service returned an error.",
+        steps: [
+          "Click \"Try AI analysis again\" — this is usually transient",
+          "If the issue persists, click \"Submit for manual review\"",
+        ],
+        resumeUploaded: true,
+        canRetry: true,
+        canSubmitWithoutAI: true,
+      };
+    }
+
+    return {
+      category: 'unknown',
+      title: resumeUploaded ? "Couldn't complete AI analysis" : "Application failed",
+      message: messageHint || anyErr?.message || "Something went wrong while processing your application.",
+      steps: resumeUploaded
+        ? [
+            "Click \"Try AI analysis again\"",
+            "Or click \"Submit for manual review\" to send your application without AI scoring",
+          ]
+        : [
+            "Click \"Try again\" to resubmit",
+            "If the problem continues, refresh the page and try once more",
+          ],
+      resumeUploaded,
+      canRetry: true,
+      canSubmitWithoutAI: resumeUploaded,
+    };
+  };
+
+  /**
+   * Submit the application without AI analysis (manual review fallback).
+   * Used when AI fails but the resume already uploaded successfully.
+   */
+  const submitForManualReview = async () => {
+    if (!job) return;
+    setIsSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('applications').insert({
+          candidate_id: user.id,
+          job_id: job.id,
+          cover_letter: coverLetter || null,
+          status: 'in_review',
+        });
+      }
+      setAiAnalysis({
+        overall_score: 0,
+        skill_match_score: 0,
+        experience_match_score: 0,
+        recommendation: 'pending',
+        strengths: ['Application submitted for manual review'],
+        summary: 'Your application has been submitted and will be reviewed by our hiring team.',
+      });
+      setError(null);
+      setFlowStep('complete');
+      toast.success("Application submitted for manual review");
+    } catch (err) {
+      console.error('Manual review submission failed:', err);
+      toast.error("Could not submit application. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmitResume = async () => {
     if (!job || !resumeFile) {
       toast.error("Please upload your resume");
@@ -224,12 +439,22 @@ export const JobApplicationFlow = ({
 
       setAnalysisSubStep('analyzing');
 
-      // Step 2: Upload resume to storage
-      let resumeUrl: string | null = null;
-      try {
-        resumeUrl = await uploadResumeToStorage();
-      } catch (uploadErr) {
-        console.log('Resume upload failed, continuing without URL:', uploadErr);
+      // Step 2: Upload resume to storage. Reuse cached URL on retries.
+      let resumeUrl: string | null = uploadedResumeUrlRef.current;
+      if (!resumeUrl) {
+        try {
+          resumeUrl = await uploadResumeToStorage();
+          uploadedResumeUrlRef.current = resumeUrl;
+        } catch (uploadErr) {
+          console.error('Resume upload failed:', uploadErr);
+          const info = await readFunctionError(uploadErr);
+          throw {
+            __stage: 'upload' as const,
+            __status: info.status,
+            __message: info.message,
+            original: uploadErr,
+          };
+        }
       }
 
       // Step 3: Get user profile for fallback data
@@ -280,13 +505,12 @@ export const JobApplicationFlow = ({
         if (analysisError) {
           const info = await readFunctionError(analysisError);
           console.error('Analysis error:', analysisError, info);
-          // Re-throw with a richer message so the catch block can branch on it.
-          const tag = info.status === 402
-            ? 'credits'
-            : info.status === 429
-              ? 'Rate limit'
-              : '';
-          throw new Error(`${tag} ${info.message || analysisError.message || 'AI analysis failed'}`.trim());
+          throw {
+            __stage: 'analyze' as const,
+            __status: info.status,
+            __message: info.message,
+            original: analysisError,
+          };
         }
 
         setAnalysisSubStep('scheduling');
@@ -344,43 +568,24 @@ export const JobApplicationFlow = ({
         await runMockAnalysis();
       }
 
-    } catch (error: any) {
-      console.error('Application error:', error);
-      setError(error.message || "Failed to submit application");
+    } catch (err: any) {
+      console.error('Application error:', err);
 
-      // If it's a rate limit or payment error, show specific message
-      if (error.message?.includes('Rate limit')) {
-        setError('The AI service is busy. Please try again in a moment.');
-      } else if (error.message?.includes('credits')) {
-        setError('AI analysis is temporarily unavailable, but your application was submitted and will be reviewed manually.');
-        // Still record the application so the candidate's submission isn't lost
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && job) {
-            await supabase
-              .from('applications')
-              .insert({
-                candidate_id: user.id,
-                job_id: job.id,
-                cover_letter: coverLetter || null,
-                status: 'in_review',
-              });
-          }
-        } catch (insertErr) {
-          console.error('Failed to record application after AI failure:', insertErr);
-        }
-        setFlowStep('complete');
-        setAiAnalysis({
-          overall_score: 0,
-          skill_match_score: 0,
-          experience_match_score: 0,
-          recommendation: 'pending',
-          strengths: ['Application submitted for manual review'],
-          summary: 'Your application has been submitted and will be reviewed by our hiring team.',
-        });
-        return;
-      }
+      // Errors thrown from inside our try block include __stage / __status hints.
+      // Anything else (DB queries, profile lookups) is treated as analyze-stage
+      // when we have already uploaded, otherwise as a generic upload failure.
+      const stage: 'upload' | 'analyze' =
+        err?.__stage === 'upload' ? 'upload' : 'analyze';
+      const resumeUploaded = !!uploadedResumeUrlRef.current;
+      const classified = classifyError(
+        err?.original ?? err,
+        stage,
+        resumeUploaded,
+        err?.__status,
+        err?.__message,
+      );
 
+      setError(classified);
       setFlowStep('upload');
     } finally {
       setIsSubmitting(false);
@@ -579,6 +784,7 @@ export const JobApplicationFlow = ({
     setError(null);
     setEmailSent(false);
     setNextStage('AI Phone Interview');
+    uploadedResumeUrlRef.current = null;
     onOpenChange(false);
   };
 
@@ -727,11 +933,69 @@ export const JobApplicationFlow = ({
 
             <ScrollArea className="flex-1 max-h-[50vh] pr-4">
               <div className="space-y-6 py-4">
-                {/* Error Alert */}
+                {/* Error Panel — actionable retry guidance */}
                 {error && (
-                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-2">
-                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-destructive">{error}</div>
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    className="bg-destructive/5 border border-destructive/30 rounded-lg p-4 space-y-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      {error.category === 'network' ? (
+                        <WifiOff className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      ) : error.category === 'auth' ? (
+                        <ShieldAlert className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      )}
+                      <div className="flex-1 space-y-1">
+                        <p className="font-semibold text-destructive">{error.title}</p>
+                        <p className="text-sm text-foreground/80">{error.message}</p>
+                      </div>
+                    </div>
+
+                    {error.resumeUploaded && (
+                      <div className="flex items-center gap-2 text-xs text-foreground/70 bg-muted/40 rounded px-2 py-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" aria-hidden="true" />
+                        <span>Your resume was uploaded successfully — no need to re-select the file.</span>
+                      </div>
+                    )}
+
+                    {error.steps.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold uppercase text-muted-foreground">What to try</p>
+                        <ol className="text-sm text-foreground/80 space-y-1 list-decimal list-inside">
+                          {error.steps.map((step, i) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {error.canRetry && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={handleSubmitResume}
+                          disabled={isSubmitting || !resumeFile}
+                          className="gap-1.5"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                          {error.resumeUploaded ? 'Try AI analysis again' : 'Try again'}
+                        </Button>
+                      )}
+                      {error.canSubmitWithoutAI && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={submitForManualReview}
+                          disabled={isSubmitting}
+                        >
+                          Submit for manual review
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
 
