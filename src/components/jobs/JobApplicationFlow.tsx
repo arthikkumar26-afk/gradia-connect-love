@@ -784,6 +784,7 @@ export const JobApplicationFlow = ({
     setError(null);
     setEmailSent(false);
     setNextStage('AI Phone Interview');
+    uploadedResumeUrlRef.current = null;
     onOpenChange(false);
   };
 
