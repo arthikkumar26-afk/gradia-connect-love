@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { safeErrorMessage } from "../_shared/safeError.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -277,7 +278,7 @@ serve(async (req) => {
           throw new Error(`Unknown email type: ${emailType}`);
       }
     } catch (err) {
-      emailError = err instanceof Error ? err.message : 'Unknown email error';
+      emailError = safeErrorMessage(err);
       console.error(`[EMAIL ERROR] ${emailType} for "${stageName}":`, emailError);
     }
 
@@ -325,7 +326,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('[PIPELINE EMAIL GATEWAY ERROR]:', error);
     return jsonResponse({
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: safeErrorMessage(error),
     }, 500);
   }
 });

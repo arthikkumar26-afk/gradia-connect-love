@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { safeErrorMessage } from "../_shared/safeError.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -313,7 +314,7 @@ serve(async (req) => {
     console.error("Error in send-registration-email:", error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error occurred" 
+        error: safeErrorMessage(error) 
       }),
       {
         status: 500,
