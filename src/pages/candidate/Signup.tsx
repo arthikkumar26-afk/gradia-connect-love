@@ -300,16 +300,7 @@ const CandidateSignup = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [currentStep]);
 
-  // Tick down the verification-email resend cooldown every second so the
-  // CTA shows a live countdown and stays disabled until the upstream
-  // rate-limit window has elapsed.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
+  // (Resend cooldown ticker is owned by `useResendConfirmation`.)
 
 
   const validateForm = (): boolean => {
@@ -442,9 +433,11 @@ const CandidateSignup = () => {
           const friendly = `Too many signup attempts for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
           console.warn("[candidate-signup] rate limit triggered", { email, retryAfter, raw: signupMessage });
           setRetryError(friendly);
-          // Arm the resend cooldown so the verification-resend control on
-          // step 2 (and any retry CTA) respects the same upstream window.
-          setResendCooldown(retryAfter);
+          // Arm the resend cooldown via the shared hook so the verification
+          // resend CTA respects the same upstream window. The hook's
+          // `applyExternalError` only arms the timer for genuine rate-limit
+          // errors — non-throttling failures are a no-op.
+          applyExternalError({ status: 429, message: signupMessage });
           toast({
             title: "Please wait a moment",
             description: friendly,
