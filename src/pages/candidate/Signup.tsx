@@ -28,7 +28,7 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
-type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms' | 'wallet';
+type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms';
 
 const wizardSteps = [
   { id: 'signup' as const, label: 'Create Account', stepNumber: 1 },
@@ -36,7 +36,13 @@ const wizardSteps = [
   { id: 'benefits' as const, label: 'Benefits', stepNumber: 3 },
   { id: 'agreement' as const, label: 'Agreement', stepNumber: 4 },
   { id: 'terms' as const, label: 'Terms & Conditions', stepNumber: 5 },
-  { id: 'wallet' as const, label: 'Activate Wallet', stepNumber: 6 },
+];
+
+// Keys we proactively clear on mount to prevent cross-browser stale-state divergence
+const STALE_STORAGE_KEYS = [
+  'candidateSignupWizardStep',
+  'candidateOnboardingStep',
+  'walletActivationPending',
 ];
 
 const POINT_PACKAGES = [
@@ -182,25 +188,51 @@ const benefits = [
 const CandidateSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, refreshProfile } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get("ref") || "";
   const prefillEmail = searchParams.get("email") || "";
   const prefillName = searchParams.get("name") || "";
-  
-  // Wizard state — persisted so reloads/auth state changes don't skip steps
-  const STEP_STORAGE_KEY = 'candidateSignupWizardStep';
-  const [currentStep, setCurrentStep] = useState<WizardStep>(() => {
-    if (typeof window === 'undefined') return 'signup';
-    const saved = window.localStorage.getItem(STEP_STORAGE_KEY) as WizardStep | null;
-    const valid: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
-    return saved && valid.includes(saved) ? saved : 'signup';
-  });
 
-  // Track if user just signed up (to allow wizard flow to complete)
+  // Wizard step lives in memory only — never persisted to localStorage/sessionStorage
+  // so that browser-specific storage (Edge vs Chrome) cannot resurrect stale steps.
+  // The single source of truth for "is this user already onboarded?" is the backend
+  // session returned by Supabase auth.
+  const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
+
+  // Track if user just signed up in THIS tab session (to allow wizard flow to complete
+  // without the auth-listener bouncing them to dashboard mid-flow).
   const [justSignedUp, setJustSignedUp] = useState(false);
   const justSignedUpRef = useRef(false);
-  
+
+  // One-shot purge of any stale onboarding-related keys left over from previous flows
+  // (the legacy wallet activation step persisted state that caused Edge vs Chrome drift).
+  useEffect(() => {
+    try {
+      STALE_STORAGE_KEYS.forEach((k) => {
+        window.localStorage.removeItem(k);
+        window.sessionStorage.removeItem(k);
+      });
+    } catch { /* storage may be blocked in some browsers — ignore */ }
+  }, []);
+
+  // Disable HTTP/browser caching for this route so every navigation re-evaluates
+  // the auth/onboarding state from the backend instead of a cached HTML snapshot.
+  useEffect(() => {
+    const metas: HTMLMetaElement[] = [];
+    const add = (httpEquiv: string, content: string) => {
+      const m = document.createElement('meta');
+      m.httpEquiv = httpEquiv;
+      m.content = content;
+      document.head.appendChild(m);
+      metas.push(m);
+    };
+    add('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    add('Pragma', 'no-cache');
+    add('Expires', '0');
+    return () => { metas.forEach((m) => m.remove()); };
+  }, []);
+
   // Form state (prefilled from invite link if present)
   const [fullName, setFullName] = useState(prefillName);
   const [email, setEmail] = useState(prefillEmail);
@@ -229,38 +261,30 @@ const CandidateSignup = () => {
   const [resumeParsing, setResumeParsing] = useState(false);
   const [resumeParsed, setResumeParsed] = useState<any | null>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
-  // Wallet step state
-  const [walletPkg, setWalletPkg] = useState<typeof POINT_PACKAGES[0]>(POINT_PACKAGES[2]);
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponId, setCouponId] = useState<string | null>(null);
-  const [couponCode, setCouponCode] = useState<string | null>(null);
-  const [walletPaying, setWalletPaying] = useState(false);
   const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
 
   const normalizedIndustryCategory = industryCategory.trim().toLowerCase();
   const matchesIndustryCategory = (...categories: string[]) =>
     categories.some((category) => normalizedIndustryCategory === category.trim().toLowerCase());
 
+  // Backend-driven gating: once the AuthContext has finished loading the session,
+  // route strictly based on the verified backend state.
+  //   - Not authenticated  → stay on signup form (Step 1).
+  //   - Authenticated AND not mid-wizard in this tab → go to dashboard.
+  //   - Authenticated AND just signed up here → let the in-memory wizard continue.
   useEffect(() => {
-    // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
-    // If user just signed up, let them complete the wizard flow
-    if (isAuthenticated && currentStep === 'signup' && !justSignedUp && !justSignedUpRef.current) {
-      navigate('/candidate/dashboard');
-    }
-  }, [isAuthenticated, navigate, currentStep, justSignedUp]);
+    if (authLoading) return;
+    if (!isAuthenticated) return;
+    if (justSignedUp || justSignedUpRef.current) return;
+    if (currentStep !== 'signup') return;
+    navigate('/candidate/dashboard', { replace: true });
+  }, [authLoading, isAuthenticated, justSignedUp, currentStep, navigate]);
 
-  // Scroll to top whenever the wizard advances to a new step so users
-  // see the new step header instead of the previous step's footer position.
+  // Scroll to top whenever the wizard advances to a new step.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    try {
-      if (currentStep === 'signup') {
-        window.localStorage.removeItem(STEP_STORAGE_KEY);
-      } else {
-        window.localStorage.setItem(STEP_STORAGE_KEY, currentStep);
-      }
-    } catch { /* ignore */ }
   }, [currentStep]);
+
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -477,161 +501,41 @@ const CandidateSignup = () => {
       return;
     }
 
-    // Move to wallet activation step (payment required to access dashboard)
-    setCurrentStep('wallet');
+    // Onboarding complete — confirm session is live with the backend, then route
+    // to the dashboard. We never gate on a wallet/payment step anymore.
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          title: 'Session expired',
+          description: 'Please log in to continue to your dashboard.',
+        });
+        navigate('/candidate/login', { replace: true });
+        return;
+      }
+      await refreshProfile();
+      toast({ title: '🎉 Welcome to Gradia!', description: 'Your dashboard is ready.' });
+      navigate('/candidate/dashboard', { replace: true });
+    } catch (err: any) {
+      console.error('Final onboarding step failed:', err);
+      toast({
+        title: 'Could not open dashboard',
+        description: err?.message || 'Please log in to continue.',
+        variant: 'destructive',
+      });
+      navigate('/candidate/login', { replace: true });
+    }
   };
 
   const goBack = () => {
-    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
+    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
     }
   };
 
-  // Wallet activation: load points via Razorpay, apply coupon, then unlock dashboard
-  const finalAmount = Math.max(0, walletPkg.price - couponDiscount);
-
-  const handleWalletPayment = async () => {
-    setWalletPaying(true);
-    try {
-      // Try a few times — session may still be propagating after signup
-      let session = (await supabase.auth.getSession()).data.session;
-      for (let i = 0; i < 3 && !session?.user; i++) {
-        await new Promise(r => setTimeout(r, 500));
-        session = (await supabase.auth.getSession()).data.session;
-      }
-      if (!session?.user) {
-        // Last resort: re-establish session if we still have credentials in scope
-        if (email && password) {
-          await supabase.auth.signInWithPassword({ email, password });
-          session = (await supabase.auth.getSession()).data.session;
-        }
-      }
-      if (!session?.user) throw new Error('Session expired. Please log in again to continue.');
-      const userId = session.user.id;
-
-      // Ensure wallet exists
-      let { data: wallet } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (!wallet) {
-        const { data: newWallet } = await supabase
-          .from('wallets')
-          .insert({ user_id: userId, cash_balance: 0, points_balance: 100, rewards_balance: 10 })
-          .select()
-          .single();
-        wallet = newWallet;
-      }
-
-      if (!wallet) throw new Error('Could not initialize wallet');
-
-      // If 100% discount → free unlock, no payment needed
-      if (finalAmount === 0) {
-        await creditPointsAndFinish(wallet, 0);
-        return;
-      }
-
-      // Create Razorpay order
-      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
-        body: { amount: finalAmount, currency: 'INR', receipt: `signup_${userId.slice(0, 8)}` },
-      });
-      if (orderError || !orderData?.order_id) {
-        throw new Error(orderError?.message || orderData?.error || 'Failed to create payment order');
-      }
-
-      // Load Razorpay script if needed
-      if (!(window as any).Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Failed to load payment gateway'));
-          document.body.appendChild(script);
-        });
-      }
-
-      const options = {
-        key: orderData.key_id,
-        amount: finalAmount * 100,
-        currency: 'INR',
-        name: 'Gradia',
-        description: `Activate Wallet — ${walletPkg.points} Points`,
-        order_id: orderData.order_id,
-        prefill: { email, contact: mobile, name: fullName },
-        handler: async (response: any) => {
-          try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              },
-            });
-            if (verifyError || !verifyData?.verified) {
-              throw new Error('Payment verification failed');
-            }
-            await creditPointsAndFinish(wallet!, finalAmount);
-          } catch (err: any) {
-            toast({ title: 'Payment Error', description: err.message || 'Verification failed', variant: 'destructive' });
-            setWalletPaying(false);
-          }
-        },
-        theme: { color: '#10b981' },
-        modal: { ondismiss: () => setWalletPaying(false) },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (err: any) {
-      console.error('Wallet activation failed', err);
-      toast({ title: 'Error', description: err.message || 'Payment failed', variant: 'destructive' });
-      setWalletPaying(false);
-    }
-  };
-
-  const creditPointsAndFinish = async (wallet: any, amountPaid: number) => {
-    try {
-      const newBalance = (wallet.points_balance || 0) + walletPkg.points;
-      await supabase.from('wallets').update({ points_balance: newBalance }).eq('id', wallet.id);
-
-      await supabase.from('wallet_transactions').insert({
-        wallet_id: wallet.id,
-        transaction_type: 'credit',
-        category: 'point_purchase',
-        amount: amountPaid,
-        points: walletPkg.points,
-        description: `Signup activation — ${walletPkg.points} points${couponCode ? ` (coupon ${couponCode})` : ''}`,
-      });
-
-      // Record coupon usage if applied
-      if (couponId && wallet.user_id) {
-        await Promise.all([
-          supabase.from('coupon_usages').insert({
-            coupon_id: couponId,
-            user_id: wallet.user_id,
-            user_role: 'candidate',
-            original_amount: walletPkg.price,
-            discount_applied: couponDiscount,
-            final_amount: amountPaid,
-            plan_name: `${walletPkg.points} pts`,
-          }),
-          supabase.rpc('increment_coupon_usage', { coupon_id_input: couponId }),
-        ]);
-      }
-
-      await refreshProfile();
-      try { window.localStorage.removeItem(STEP_STORAGE_KEY); } catch { /* ignore */ }
-      toast({ title: '🎉 Welcome to Gradia!', description: `${walletPkg.points} points added. Your dashboard is ready.` });
-      navigate('/candidate/dashboard');
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to credit points', variant: 'destructive' });
-      setWalletPaying(false);
-    }
-  };
+  // (Wallet activation step removed — onboarding finishes after Terms & Conditions.)
 
   // Resume scan: upload, AI parse, save to profile + related tables
   const handleResumeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1743,208 +1647,8 @@ const CandidateSignup = () => {
     </div>
   );
 
-  // Render wallet activation popup-style step
-  const renderWalletStep = () => (
-    <div className="w-full max-w-5xl">
-      <ProgressIndicator />
-      <Card className="w-full p-6 sm:p-8 shadow-large border-primary/20">
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-full bg-primary/10">
-              <Wallet className="h-10 w-10 text-primary" />
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold mb-3">
-            <Sparkles className="h-3.5 w-3.5" /> Final Step
-          </div>
-          <h1 className="text-3xl font-bold text-foreground">Activate Your Wallet</h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Based on your resume, here are matched roles and exactly what each tier unlocks at every interview round. <span className="font-medium text-foreground">₹5 = 1 point.</span>
-          </p>
-        </div>
+  // (Wallet activation step removed — onboarding ends at the Terms step.)
 
-        {/* Suggested Jobs from resume */}
-        {suggestedJobs.length > 0 && (
-          <div className="rounded-lg border border-border bg-card p-4 mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Briefcase className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold text-foreground">Suggested jobs from your resume</h3>
-              <Badge variant="secondary" className="text-[10px]">{suggestedJobs.length} matches</Badge>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {suggestedJobs.map((j) => (
-                <div key={j.id} className="rounded-md border border-border bg-background p-3 hover:shadow-sm transition-shadow">
-                  <div className="text-[13px] font-semibold text-foreground line-clamp-1">{j.title}</div>
-                  <div className="text-[11px] text-muted-foreground line-clamp-1">{j.company}{j.location ? ` · ${j.location}` : ''}</div>
-                  <div className="flex flex-wrap gap-1 mt-1.5">
-                    {j.type && <span className="text-[9px] bg-muted px-1.5 py-0.5 rounded">{j.type}</span>}
-                    {j.salary && <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{j.salary}</span>}
-                  </div>
-                  {j.matchReason && (
-                    <div className="text-[10px] text-green-600 mt-1.5">✓ {j.matchReason}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-2 italic">
-              Apply to any of these for free after activating — points are only spent on premium actions like mock interviews.
-            </p>
-          </div>
-        )}
-
-        {/* Tier × Deliverables matrix (mirrors invite email) */}
-        <div className="rounded-lg border border-border bg-card p-4 mb-5 overflow-x-auto">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Price breakdown — what you unlock at every round</h3>
-          </div>
-          <table className="w-full text-[11px] border-collapse min-w-[640px]">
-            <thead>
-              <tr className="bg-primary text-primary-foreground">
-                <th className="text-left p-2 font-semibold border border-primary">Round / Feature</th>
-                {POINT_PACKAGES.map((p) => (
-                  <th key={p.points} className={`text-center p-2 font-semibold border border-primary ${p.popular ? 'bg-primary/80' : ''}`}>
-                    {p.name}{p.popular ? ' ★' : ''}
-                    <div className="font-normal opacity-90 text-[10px]">{p.points.toLocaleString('en-IN')} pts · ₹{p.price.toLocaleString('en-IN')}</div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {TIER_MATRIX.rows.map((r, i) => (
-                <tr key={r.round} className={i % 2 === 0 ? 'bg-muted/30' : 'bg-background'}>
-                  <td className="p-2 border border-border font-medium text-foreground">{r.round}</td>
-                  <td className="p-2 border border-border text-center text-muted-foreground">{r.starter}</td>
-                  <td className="p-2 border border-border text-center text-muted-foreground">{r.basic}</td>
-                  <td className="p-2 border border-border text-center text-foreground bg-yellow-50 dark:bg-yellow-950/20">{r.pro}</td>
-                  <td className="p-2 border border-border text-center text-muted-foreground">{r.premium}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="text-[10px] text-muted-foreground mt-2 italic">
-            Rounds adapt to your industry — IT roles include Coding tests, Education roles include Demo class & Subject Mastery, Non-IT includes Group Discussion & Domain rounds.
-          </p>
-        </div>
-
-        {/* Point packages */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          {POINT_PACKAGES.map((pkg) => {
-            const isSelected = walletPkg.points === pkg.points;
-            return (
-              <Card
-                key={pkg.points}
-                onClick={() => { setWalletPkg(pkg); setCouponDiscount(0); setCouponId(null); setCouponCode(null); }}
-                className={`relative cursor-pointer transition-all hover:shadow-md flex flex-col ${
-                  isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border'
-                }`}
-              >
-                {pkg.popular && (
-                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] bg-primary text-primary-foreground">
-                    Best Value
-                  </Badge>
-                )}
-                <div className="p-4 text-center space-y-1 border-b border-border">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{pkg.name}</div>
-                  <div className="flex items-center justify-center gap-1">
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                    <div className="text-xl font-bold text-foreground">{pkg.points.toLocaleString('en-IN')}</div>
-                    <span className="text-[10px] text-muted-foreground">pts</span>
-                  </div>
-                  <div className="text-base font-semibold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
-                  <p className="text-[10px] text-muted-foreground italic">{pkg.tagline}</p>
-                </div>
-                <ul className="p-3 space-y-1.5 text-left flex-1">
-                  {pkg.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-1.5 text-[11px] text-foreground/80 leading-snug">
-                      <Check className="h-3 w-3 text-primary mt-0.5 shrink-0" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Selected pack — what you'll unlock */}
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">
-              You're activating the <span className="text-primary">{walletPkg.name}</span> pack — here's what you'll get inside your dashboard:
-            </h3>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5">
-            {walletPkg.features.map((f, i) => (
-              <div key={i} className="flex items-start gap-2 text-xs text-foreground/90">
-                <CheckCircle className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                <span>{f}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-primary/20">
-            💡 Pay only for what you use — e.g. ₹99 per AI Mock Interview, ₹50 per Resume PDF. No hidden fees.
-          </p>
-        </div>
-
-
-        {/* Coupon input */}
-        <div className="mb-4">
-          <Label className="text-sm mb-2 block">Have a coupon code?</Label>
-          <CouponInput
-            originalAmount={walletPkg.price}
-            userRole="wallet"
-            onCouponApplied={(discount, _final, id, code) => {
-              setCouponDiscount(discount);
-              setCouponId(id);
-              setCouponCode(code);
-            }}
-            onCouponRemoved={() => {
-              setCouponDiscount(0);
-              setCouponId(null);
-              setCouponCode(null);
-            }}
-          />
-        </div>
-
-        {/* Order summary */}
-        <div className="rounded-lg border bg-muted/40 p-4 mb-6 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">{walletPkg.points} wallet points</span>
-            <span className="font-medium">₹{walletPkg.price.toLocaleString('en-IN')}</span>
-          </div>
-          {couponDiscount > 0 && (
-            <div className="flex justify-between text-sm text-green-600">
-              <span>Coupon discount{couponCode ? ` (${couponCode})` : ''}</span>
-              <span>− ₹{couponDiscount.toLocaleString('en-IN')}</span>
-            </div>
-          )}
-          <div className="flex justify-between pt-2 border-t border-border">
-            <span className="font-semibold text-foreground">Total payable</span>
-            <span className="text-lg font-bold text-primary">₹{finalAmount.toLocaleString('en-IN')}</span>
-          </div>
-        </div>
-
-        <Button
-          onClick={handleWalletPayment}
-          disabled={walletPaying}
-          className="w-full"
-          size="lg"
-        >
-          {walletPaying ? (
-            <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing payment...</>
-          ) : (
-            <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{finalAmount.toLocaleString('en-IN')} & Unlock Dashboard</>
-          )}
-        </Button>
-
-        <p className="text-[11px] text-center text-muted-foreground mt-3">
-          🔒 Secure payment via Razorpay • Points never expire • Required to access your candidate dashboard
-        </p>
-      </Card>
-    </div>
-  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
@@ -1953,8 +1657,8 @@ const CandidateSignup = () => {
       {currentStep === 'benefits' && renderBenefitsStep()}
       {currentStep === 'agreement' && renderAgreementStep()}
       {currentStep === 'terms' && renderTermsStep()}
-      {currentStep === 'wallet' && renderWalletStep()}
     </div>
+
   );
 };
 
