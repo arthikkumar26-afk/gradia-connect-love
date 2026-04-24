@@ -615,9 +615,76 @@ const BookSlot = () => {
                     📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
-                  </p>
+                  // End-to-end verification: shows whether the invitation email
+                  // actually went out, and lets the candidate resend it on demand.
+                  <div className="rounded-lg border bg-card p-3 space-y-2 text-left">
+                    <div className="flex items-start gap-2">
+                      {inviteStatus === "sent" && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                      )}
+                      {inviteStatus === "sending" && (
+                        <Loader2 className="h-4 w-4 text-blue-600 mt-0.5 shrink-0 animate-spin" />
+                      )}
+                      {inviteStatus === "failed" && (
+                        <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+                      )}
+                      {inviteStatus === "idle" && (
+                        <Mail className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      )}
+                      <div className="text-sm space-y-0.5 flex-1">
+                        {inviteStatus === "sent" && (
+                          <>
+                            <p className="font-medium text-foreground">
+                              Invitation email sent
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Sent to <strong>{candidateInfo?.email}</strong>
+                              {inviteSentAt && ` at ${inviteSentAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}.
+                              Check your inbox (and spam folder).
+                            </p>
+                          </>
+                        )}
+                        {inviteStatus === "sending" && (
+                          <p className="font-medium text-foreground">Sending invitation email…</p>
+                        )}
+                        {inviteStatus === "failed" && (
+                          <>
+                            <p className="font-medium text-red-700">
+                              Couldn't send the invitation email
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {inviteError || "Please retry — your slot is still booked."}
+                            </p>
+                          </>
+                        )}
+                        {inviteStatus === "idle" && (
+                          <p className="text-xs text-muted-foreground">
+                            We'll send the test link to <strong>{candidateInfo?.email}</strong>.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant={inviteStatus === "failed" ? "default" : "outline"}
+                      size="sm"
+                      className="w-full"
+                      onClick={handleResendInvitation}
+                      disabled={inviteStatus === "sending"}
+                    >
+                      {inviteStatus === "sending" ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                          Sending…
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                          {inviteStatus === "sent" ? "Resend test link" : "Send test link"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 )}
               </>
             )}
