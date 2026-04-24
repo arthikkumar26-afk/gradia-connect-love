@@ -5,11 +5,65 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft } from "lucide-react";
-import gradiaLogo from "@/assets/gradia-logo.png";
+import { ArrowLeft, MailWarning } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+// Detect Supabase's EMAIL_NOT_CONFIRMED across the few shapes it can take —
+// status 400/422 with code "email_not_confirmed", or a message containing
+// "Email not confirmed" / "confirm your email". Treating these uniformly
+// lets us show a single inline recovery card instead of a generic toast.
+const isEmailNotConfirmedErr = (err: any): boolean => {
+  if (!err) return false;
+  const msg = (err.message || "").toLowerCase();
+  const code = (err.code || "").toLowerCase();
+  return (
+    code === "email_not_confirmed" ||
+    code === "email_address_not_confirmed" ||
+    msg.includes("email not confirmed") ||
+    msg.includes("email address not confirmed") ||
+    msg.includes("confirm your email") ||
+    msg.includes("not confirmed")
+  );
+};
+
+// Detect Supabase email-send rate limiting (status 429 / over_email_send_rate_limit
+// / "for security purposes" / "only request this after Ns").
+const isRateLimitErr = (err: any): boolean => {
+  if (!err) return false;
+  const msg = (err.message || "").toLowerCase();
+  const code = (err.code || "").toLowerCase();
+  const status = err.status;
+  return (
+    status === 429 ||
+    code.includes("over_email_send_rate") ||
+    code.includes("rate_limit") ||
+    msg.includes("rate limit") ||
+    msg.includes("for security purposes") ||
+    msg.includes("only request this after")
+  );
+};
+
+// Pull retry-after seconds out of the Supabase error message; fall back to 60s.
+const getRetryAfterSeconds = (err: any): number => {
+  const msg = err?.message || "";
+  const match =
+    msg.match(/after\s+(\d+)\s*seconds?/i) ||
+    msg.match(/in\s+(\d+)\s*seconds?/i) ||
+    msg.match(/(\d+)\s*seconds?/i);
+  if (match) {
+    const n = parseInt(match[1], 10);
+    if (!Number.isNaN(n) && n > 0) return Math.min(n, 600); // cap at 10 min
+  }
+  return 60;
+};
+
+const formatRetryWindow = (seconds: number) => {
+  if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
+  const mins = Math.ceil(seconds / 60);
+  return `${mins} minute${mins === 1 ? "" : "s"}`;
+};
 
 const CandidateLogin = () => {
   const navigate = useNavigate();
@@ -21,6 +75,14 @@ const CandidateLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
+
+  // Inline EMAIL_NOT_CONFIRMED state. `unverifiedEmail` is the address tied
+  // to the failed login (kept separate from the input so editing the field
+  // doesn't dismiss the recovery panel). `resendCooldown` gates the resend
+  // button so we never re-hit the upstream rate limit early.
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && profile) {
@@ -43,21 +105,35 @@ const CandidateLogin = () => {
     }
   }, [isAuthenticated, profile, navigate, toast, redirectUrl]);
 
+  // 1-second tick for the resend cooldown timer. Button stays disabled
+  // until this hits 0, mirroring the freelancer/employer flows.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    // Clear any prior unverified-state when the user retries — the new
+    // attempt may succeed or surface a different error entirely.
+    setUnverifiedEmail(null);
 
     try {
-      const isNetErr = (msg?: string) => 
+      const isNetErr = (msg?: string) =>
         msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("timed out");
 
-      // Sign in with retry for network errors
+      // Sign in with retry for transient network errors only. EMAIL_NOT_CONFIRMED,
+      // bad credentials, and rate limits are terminal — they should never loop.
       let data: any = null;
       let error: any = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           const signInPromise = supabase.auth.signInWithPassword({ email, password });
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Connection timed out.')), 30000)
           );
           const result = await Promise.race([signInPromise, timeoutPromise]) as any;
@@ -74,6 +150,19 @@ const CandidateLogin = () => {
       }
 
       if (error) {
+        // Structured EMAIL_NOT_CONFIRMED handling — show inline recovery
+        // card with a Resend CTA instead of a generic destructive toast.
+        if (isEmailNotConfirmedErr(error)) {
+          console.warn("[candidate-login] EMAIL_NOT_CONFIRMED", { email });
+          setUnverifiedEmail(email);
+          toast({
+            title: "Email not verified",
+            description: "Please confirm your email to continue. You can resend the verification link below.",
+          });
+          setIsLoading(false);
+          return;
+        }
+
         const isNetwork = error.name === "TypeError" || isNetErr(error.message);
         toast({
           title: isNetwork ? "Connection Error" : "Login Failed",
@@ -100,10 +189,10 @@ const CandidateLogin = () => {
       }
 
       if (profileError || !profileData) {
-        const isNetErr = profileError?.message?.includes("Failed to fetch") || profileError?.message?.includes("NetworkError");
+        const isNetErrLocal = profileError?.message?.includes("Failed to fetch") || profileError?.message?.includes("NetworkError");
         toast({
-          title: isNetErr ? "Connection Error" : "Profile Not Found",
-          description: isNetErr ? "Unable to connect. Please check your internet and try again." : "Please complete your profile registration first.",
+          title: isNetErrLocal ? "Connection Error" : "Profile Not Found",
+          description: isNetErrLocal ? "Unable to connect. Please check your internet and try again." : "Please complete your profile registration first.",
           variant: "destructive"
         });
         await supabase.auth.signOut();
@@ -134,6 +223,14 @@ const CandidateLogin = () => {
         navigate("/candidate/dashboard", { replace: true });
       }
     } catch (error: any) {
+      if (isEmailNotConfirmedErr(error)) {
+        setUnverifiedEmail(email);
+        toast({
+          title: "Email not verified",
+          description: "Please confirm your email to continue. You can resend the verification link below.",
+        });
+        return;
+      }
       const isNetworkError = error.name === "TypeError" || error.message?.includes("NetworkError") || error.message?.includes("Failed to fetch") || error.message?.includes("timed out");
       toast({
         title: isNetworkError ? "Connection Error" : "Error",
@@ -142,6 +239,55 @@ const CandidateLogin = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Resend the signup verification email. Gated by `resendCooldown` so it
+  // only fires once the local timer elapses; if the upstream rate limit
+  // still trips we re-arm the cooldown using the parsed retry-after value.
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    if (resendCooldown > 0 || isResending) return;
+
+    setIsResending(true);
+    try {
+      const redirectTarget = `${window.location.origin}/candidate/login`;
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: unverifiedEmail,
+        options: { emailRedirectTo: redirectTarget },
+      });
+
+      if (error) {
+        if (isRateLimitErr(error)) {
+          const retryAfter = getRetryAfterSeconds(error);
+          const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
+          console.warn('[candidate-login] resend rate limit', { email: unverifiedEmail, retryAfter, raw: error.message });
+          setResendCooldown(retryAfter);
+          toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Could not resend email', description: error.message || 'Please try again.', variant: 'destructive' });
+        return;
+      }
+
+      // Success — arm a 60s local cooldown to mirror Supabase's window.
+      setResendCooldown(60);
+      toast({
+        title: 'Resent successfully',
+        description: `Check your inbox at ${unverifiedEmail} for the confirmation link.`,
+      });
+    } catch (err: any) {
+      if (isRateLimitErr(err)) {
+        const retryAfter = getRetryAfterSeconds(err);
+        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
+        setResendCooldown(retryAfter);
+        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
+      } else {
+        toast({ title: 'Could not resend email', description: err?.message || 'Please try again.', variant: 'destructive' });
+      }
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -177,6 +323,42 @@ const CandidateLogin = () => {
               Sign in to access your job applications and profile
             </p>
           </div>
+
+          {/* Inline EMAIL_NOT_CONFIRMED recovery card. Renders only after a
+              login attempt surfaces an unverified email — provides a clear
+              explanation and a one-click resend with cooldown feedback. */}
+          {unverifiedEmail && (
+            <div
+              role="alert"
+              className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-4"
+            >
+              <div className="flex gap-3">
+                <MailWarning className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    Your email is not verified
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Please confirm <span className="font-medium text-foreground">{unverifiedEmail}</span> to continue. Check your inbox for the verification link, or resend it below.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendVerification}
+                    disabled={resendCooldown > 0 || isResending}
+                    className="mt-1"
+                  >
+                    {isResending
+                      ? 'Sending…'
+                      : resendCooldown > 0
+                        ? `Try again in ${formatRetryWindow(resendCooldown)}`
+                        : 'Resend confirmation email'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
