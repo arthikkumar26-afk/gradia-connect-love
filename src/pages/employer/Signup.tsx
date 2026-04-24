@@ -434,8 +434,7 @@ const EmployerSignup = () => {
       setIsResending(false);
     }
   };
-
-
+  const handleAgreementContinue = async () => {
     if (!agreementAccepted) {
       toast({ title: 'Please accept the agreement', variant: 'destructive' });
       return;
