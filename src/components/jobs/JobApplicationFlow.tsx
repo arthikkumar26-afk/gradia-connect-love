@@ -930,11 +930,69 @@ export const JobApplicationFlow = ({
 
             <ScrollArea className="flex-1 max-h-[50vh] pr-4">
               <div className="space-y-6 py-4">
-                {/* Error Alert */}
+                {/* Error Panel — actionable retry guidance */}
                 {error && (
-                  <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-2">
-                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-destructive">{error}</div>
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    className="bg-destructive/5 border border-destructive/30 rounded-lg p-4 space-y-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      {error.category === 'network' ? (
+                        <WifiOff className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      ) : error.category === 'auth' ? (
+                        <ShieldAlert className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      )}
+                      <div className="flex-1 space-y-1">
+                        <p className="font-semibold text-destructive">{error.title}</p>
+                        <p className="text-sm text-foreground/80">{error.message}</p>
+                      </div>
+                    </div>
+
+                    {error.resumeUploaded && (
+                      <div className="flex items-center gap-2 text-xs text-foreground/70 bg-muted/40 rounded px-2 py-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 flex-shrink-0" aria-hidden="true" />
+                        <span>Your resume was uploaded successfully — no need to re-select the file.</span>
+                      </div>
+                    )}
+
+                    {error.steps.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold uppercase text-muted-foreground">What to try</p>
+                        <ol className="text-sm text-foreground/80 space-y-1 list-decimal list-inside">
+                          {error.steps.map((step, i) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {error.canRetry && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={handleSubmitResume}
+                          disabled={isSubmitting || !resumeFile}
+                          className="gap-1.5"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                          {error.resumeUploaded ? 'Try AI analysis again' : 'Try again'}
+                        </Button>
+                      )}
+                      {error.canSubmitWithoutAI && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={submitForManualReview}
+                          disabled={isSubmitting}
+                        >
+                          Submit for manual review
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
 
