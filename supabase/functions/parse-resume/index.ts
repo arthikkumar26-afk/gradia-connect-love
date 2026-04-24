@@ -136,6 +136,11 @@ serve(async (req) => {
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
+    // Strict mode: when called from the job application resume upload, we
+    // must reject image files (screenshots, photos) so users cannot submit
+    // a screenshot in place of an actual CV document.
+    const contextRaw = (formData.get("context") as string | null) || "";
+    const strictResume = contextRaw === "resume_strict";
 
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
@@ -161,19 +166,63 @@ serve(async (req) => {
       });
     }
 
+    // Strict resume mode: reject images outright with a clear, user-friendly message.
+    const looksLikeImage =
+      mimeType.startsWith("image/") ||
+      fileName.endsWith(".png") ||
+      fileName.endsWith(".jpg") ||
+      fileName.endsWith(".jpeg") ||
+      fileName.endsWith(".gif") ||
+      fileName.endsWith(".webp") ||
+      fileName.endsWith(".heic") ||
+      fileName.endsWith(".heif") ||
+      fileName.startsWith("screenshot");
+
+    if (strictResume && looksLikeImage) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Screenshots and image files are not accepted. Please upload your resume as a PDF or Word document (.pdf, .doc, .docx).",
+          code: "invalid_resume_format",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const allowedExtensions = strictResume
+      ? ['.pdf', '.docx', '.doc']
+      : ALLOWED_EXTENSIONS;
+    const allowedMimeTypes = strictResume
+      ? [
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/msword',
+        ]
+      : ALLOWED_MIME_TYPES;
+
     // Validate file extension
-    const hasValidExtension = ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext));
+    const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
     if (!hasValidExtension) {
       return new Response(
-        JSON.stringify({ error: `Invalid file type. Allowed types: ${ALLOWED_EXTENSIONS.join(', ')}` }),
+        JSON.stringify({
+          error: strictResume
+            ? "Only PDF or Word documents (.pdf, .doc, .docx) are accepted as a resume."
+            : `Invalid file type. Allowed types: ${allowedExtensions.join(', ')}`,
+          code: "invalid_resume_format",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     // Validate MIME type
-    if (!ALLOWED_MIME_TYPES.includes(mimeType) && mimeType !== "application/octet-stream") {
+    if (!allowedMimeTypes.includes(mimeType) && mimeType !== "application/octet-stream") {
       return new Response(
-        JSON.stringify({ error: "Invalid file MIME type" }),
+        JSON.stringify({
+          error: strictResume
+            ? "Only PDF or Word documents (.pdf, .doc, .docx) are accepted as a resume."
+            : "Invalid file MIME type",
+          code: "invalid_resume_format",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
