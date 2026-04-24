@@ -8,6 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft } from "lucide-react";
+import {
+  formatDateValue,
+  getNextAvailableSlot,
+  getTimeSlots as buildTimeSlots,
+  type Granularity,
+  type TimeOfDay,
+} from "@/lib/scheduler/timeSlots";
 
 const BookSlot = () => {
   const [searchParams] = useSearchParams();
@@ -45,8 +52,6 @@ const BookSlot = () => {
   const [demoTime3, setDemoTime3] = useState("");
 
   // Quick filters for the time-slot dropdowns
-  type TimeOfDay = "all" | "morning" | "afternoon" | "evening";
-  type Granularity = 15 | 30;
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
   const [granularity, setGranularity] = useState<Granularity>(30);
   useEffect(() => {
@@ -90,14 +95,6 @@ const BookSlot = () => {
     fetchDetails();
   }, [candidateId]);
 
-  const formatDateValue = (date: Date) => {
-    const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, "0");
-    const day = `${date.getDate()}`.padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  };
-
   // Generate available dates (today + next 7 days, including all days)
   const getAvailableDates = () => {
     const dates: { value: string; label: string }[] = [];
@@ -123,54 +120,13 @@ const BookSlot = () => {
     return formatDateValue(new Date());
   };
 
-  const getNextAvailableSlot = (stepMinutes: Granularity = 30) => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 10);
-
-    const totalMinutes = now.getHours() * 60 + now.getMinutes();
-    const roundedTotalMinutes = Math.ceil(totalMinutes / stepMinutes) * stepMinutes;
-
-    const nextSlot = new Date(now);
-    nextSlot.setHours(0, 0, 0, 0);
-    nextSlot.setMinutes(roundedTotalMinutes);
-
-    return {
-      date: formatDateValue(nextSlot),
-      time: `${nextSlot.getHours().toString().padStart(2, "0")}:${nextSlot
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`,
-    };
-  };
-
   const getNext10MinTime = () => getNextAvailableSlot().time;
 
-  // Generate time slots (24 hours) — granularity & time-of-day filter applied
+  // Wrapper that defaults to current granularity/period state
   const getTimeSlots = (
     granularityMin: Granularity = granularity,
     period: TimeOfDay = timeOfDay,
-  ) => {
-    const slots: { value: string; label: string }[] = [];
-    const minuteSteps = granularityMin === 15 ? ["00", "15", "30", "45"] : ["00", "30"];
-
-    for (let hour = 0; hour < 24; hour++) {
-      for (const minute of minuteSteps) {
-        // Period filter: morning 00-11:59, afternoon 12-16:59, evening 17-23:59
-        if (period === "morning" && hour >= 12) continue;
-        if (period === "afternoon" && (hour < 12 || hour >= 17)) continue;
-        if (period === "evening" && hour < 17) continue;
-
-        const time = `${hour.toString().padStart(2, "0")}:${minute}`;
-        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        const ampm = hour < 12 ? "AM" : "PM";
-        slots.push({
-          value: time,
-          label: `${displayHour}:${minute} ${ampm}`,
-        });
-      }
-    }
-    return slots;
-  };
+  ) => buildTimeSlots(granularityMin, period);
 
   const handleBookSlot = async () => {
     // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
