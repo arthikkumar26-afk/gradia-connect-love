@@ -121,6 +121,16 @@ interface InterviewPipelineTabProps {
   candidateId: string;
 }
 
+// Per-event invitation status pulled from `interview_invitations` so the
+// candidate dashboard can display whether the test-link email actually went
+// out, and offer a "Resend link" action when it didn't.
+interface InvitationStatus {
+  email_status: string | null; // 'sent' | 'pending' | 'failed' | null
+  email_sent_at: string | null;
+  meeting_link: string | null;
+  created_at: string;
+}
+
 export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps) => {
   const navigate = useNavigate();
   const [interviews, setInterviews] = useState<InterviewCandidate[]>([]);
@@ -137,6 +147,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  // Map: interview_event_id -> latest invitation row for that event.
+  const [invitationsByEventId, setInvitationsByEventId] = useState<Record<string, InvitationStatus>>({});
+  // Tracks which event is currently mid-resend so we can disable the button
+  // and swap in a spinner without blocking other resends.
+  const [resendingEventId, setResendingEventId] = useState<string | null>(null);
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try {
