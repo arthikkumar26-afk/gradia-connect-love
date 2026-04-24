@@ -522,6 +522,46 @@ const BookSlot = () => {
                   Select 3 Preferred Timings *
                 </label>
 
+                {/* Quick filters: time of day + granularity */}
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Filter:</span>
+                  {([
+                    { key: "all", label: "All" },
+                    { key: "morning", label: "🌅 Morning" },
+                    { key: "afternoon", label: "☀️ Afternoon" },
+                    { key: "evening", label: "🌙 Evening" },
+                  ] as { key: TimeOfDay; label: string }[]).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setTimeOfDay(opt.key)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        timeOfDay === opt.key
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <span className="mx-1 h-4 w-px bg-border" />
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Step:</span>
+                  {([15, 30] as Granularity[]).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGranularity(g)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        granularity === g
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {g} min
+                    </button>
+                  ))}
+                </div>
+
                 {[
                   { label: "Option 1", value: demoTime1, setter: setDemoTime1 },
                   { label: "Option 2", value: demoTime2, setter: setDemoTime2 },
