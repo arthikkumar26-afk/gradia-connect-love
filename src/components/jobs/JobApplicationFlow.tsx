@@ -51,6 +51,8 @@ type ErrorCategory =
   | 'auth'
   | 'file_invalid'
   | 'upload_failed'
+  | 'profile_incomplete'
+  | 'already_applied'
   | 'parse_failed'
   | 'ai_credits'
   | 'ai_rate_limit'
