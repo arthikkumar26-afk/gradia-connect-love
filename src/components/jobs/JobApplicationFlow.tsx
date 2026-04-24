@@ -142,6 +142,36 @@ export const JobApplicationFlow = ({
     return response.data?.url || null;
   };
 
+  // Extracts the real error info from a Supabase FunctionsHttpError so we can
+  // distinguish 402 (AI credits exhausted) and 429 (rate limit) from generic
+  // failures. invoke() otherwise surfaces only "non-2xx status code".
+  const readFunctionError = async (
+    err: unknown,
+  ): Promise<{ status?: number; message?: string }> => {
+    try {
+      const anyErr = err as { context?: { response?: Response }; message?: string };
+      const res = anyErr?.context?.response;
+      if (res) {
+        const status = res.status;
+        try {
+          const cloned = res.clone();
+          const body = await cloned.json();
+          return { status, message: body?.error || body?.message };
+        } catch {
+          try {
+            const txt = await res.clone().text();
+            return { status, message: txt };
+          } catch {
+            return { status };
+          }
+        }
+      }
+      return { message: anyErr?.message };
+    } catch {
+      return {};
+    }
+  };
+
   const handleSubmitResume = async () => {
     if (!job || !resumeFile) {
       toast.error("Please upload your resume");
@@ -248,8 +278,15 @@ export const JobApplicationFlow = ({
         });
 
         if (analysisError) {
-          console.error('Analysis error:', analysisError);
-          throw new Error(analysisError.message || 'AI analysis failed');
+          const info = await readFunctionError(analysisError);
+          console.error('Analysis error:', analysisError, info);
+          // Re-throw with a richer message so the catch block can branch on it.
+          const tag = info.status === 402
+            ? 'credits'
+            : info.status === 429
+              ? 'Rate limit'
+              : '';
+          throw new Error(`${tag} ${info.message || analysisError.message || 'AI analysis failed'}`.trim());
         }
 
         setAnalysisSubStep('scheduling');
@@ -310,13 +347,28 @@ export const JobApplicationFlow = ({
     } catch (error: any) {
       console.error('Application error:', error);
       setError(error.message || "Failed to submit application");
-      
+
       // If it's a rate limit or payment error, show specific message
       if (error.message?.includes('Rate limit')) {
         setError('The AI service is busy. Please try again in a moment.');
       } else if (error.message?.includes('credits')) {
-        setError('AI analysis is temporarily unavailable. Your application will be reviewed manually.');
-        // Still complete the application without AI
+        setError('AI analysis is temporarily unavailable, but your application was submitted and will be reviewed manually.');
+        // Still record the application so the candidate's submission isn't lost
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && job) {
+            await supabase
+              .from('applications')
+              .insert({
+                candidate_id: user.id,
+                job_id: job.id,
+                cover_letter: coverLetter || null,
+                status: 'in_review',
+              });
+          }
+        } catch (insertErr) {
+          console.error('Failed to record application after AI failure:', insertErr);
+        }
         setFlowStep('complete');
         setAiAnalysis({
           overall_score: 0,
@@ -328,7 +380,7 @@ export const JobApplicationFlow = ({
         });
         return;
       }
-      
+
       setFlowStep('upload');
     } finally {
       setIsSubmitting(false);
