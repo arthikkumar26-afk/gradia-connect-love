@@ -39,6 +39,11 @@ const BookSlot = () => {
   const [inviteStatus, setInviteStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
   const [inviteSentAt, setInviteSentAt] = useState<Date | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  // The actual test/meeting URL pulled from `interview_invitations.meeting_link`
+  // after a successful send. Surfaced inline on the confirmation screen so the
+  // candidate can open the test even if the invitation email is delayed.
+  const [interviewLink, setInterviewLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [candidateInfo, setCandidateInfo] = useState<{
     name: string;
     email: string;
