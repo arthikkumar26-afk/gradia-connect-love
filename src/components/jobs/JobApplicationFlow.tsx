@@ -501,15 +501,38 @@ export const JobApplicationFlow = ({
             parsedResumeData = parseResponse.data;
             console.log('Parsed resume data:', parsedResumeData);
 
+            // Surface partial-parse warning so the candidate knows to review their profile
+            if (parsedResumeData?.parse_failed) {
+              toast.warning('Resume partially read', {
+                description: parsedResumeData.parse_warning ||
+                  'We could not fully read your resume. Please review your profile after submission.',
+              });
+            } else if (parsedResumeData?.parse_warning) {
+              toast.info('Resume read with notes', {
+                description: parsedResumeData.parse_warning,
+              });
+            }
+
             if (parsedResumeData.full_name) {
               await supabase
                 .from('profiles')
                 .update({ full_name: parsedResumeData.full_name })
                 .eq('id', user.id);
             }
+          } else if (parseResponse.error) {
+            // Don't fail the whole flow — parsing is best-effort. Inform the user.
+            const info = await readFunctionError(parseResponse.error);
+            console.warn('Resume parse failed, continuing with profile data:', info);
+            toast.info('Resume reading skipped', {
+              description: info.message ||
+                'We could not read details from your resume, so we will use your saved profile instead.',
+            });
           }
         } catch (parseError) {
           console.error('Resume parsing error:', parseError);
+          toast.info('Resume reading skipped', {
+            description: 'We could not read details from your resume; using your saved profile instead.',
+          });
         }
       }
 
