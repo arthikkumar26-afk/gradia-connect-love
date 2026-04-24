@@ -1122,7 +1122,7 @@ export const JobApplicationFlow = ({
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                       onChange={handleFileChange}
                       className="hidden"
                     />
