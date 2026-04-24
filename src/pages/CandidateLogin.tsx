@@ -213,33 +213,53 @@ const CandidateLogin = () => {
         options: { emailRedirectTo: redirectTarget },
       });
 
-      if (error) {
-        if (isRateLimitErr(error)) {
-          const retryAfter = getRetryAfterSeconds(error);
-          const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
-          console.warn('[candidate-login] resend rate limit', { email: unverifiedEmail, retryAfter, raw: error.message });
-          setResendCooldown(retryAfter);
-          toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-          return;
-        }
-        toast({ title: 'Could not resend email', description: error.message || 'Please try again.', variant: 'destructive' });
+      // Single decision point — pure, unit-tested. Guarantees that
+      // non-rate-limit errors NEVER arm the cooldown timer and that
+      // a successful resend resets it to the default 60s window.
+      const outcome = decideResendOutcome(error);
+
+      if (outcome.kind === 'rate_limited') {
+        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(outcome.cooldown)}.`;
+        console.warn('[candidate-login] resend rate limit', {
+          email: unverifiedEmail,
+          retryAfter: outcome.cooldown,
+          raw: error?.message,
+        });
+        setResendCooldown(outcome.cooldown);
+        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
         return;
       }
 
-      // Success — arm a 60s local cooldown to mirror Supabase's window.
-      setResendCooldown(60);
+      if (outcome.kind === 'other_error') {
+        // Cooldown intentionally untouched — the user should be able to
+        // retry immediately after a non-throttling failure.
+        toast({
+          title: 'Could not resend email',
+          description: error?.message || 'Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // outcome.kind === 'success' — arm the default cooldown.
+      setResendCooldown(outcome.cooldown);
       toast({
         title: 'Resent successfully',
         description: `Check your inbox at ${unverifiedEmail} for the confirmation link.`,
       });
     } catch (err: any) {
-      if (isRateLimitErr(err)) {
-        const retryAfter = getRetryAfterSeconds(err);
-        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
-        setResendCooldown(retryAfter);
+      // Same decision function for thrown errors (e.g. fetch failures).
+      const outcome = decideResendOutcome(err);
+      if (outcome.kind === 'rate_limited') {
+        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(outcome.cooldown)}.`;
+        setResendCooldown(outcome.cooldown);
         toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
       } else {
-        toast({ title: 'Could not resend email', description: err?.message || 'Please try again.', variant: 'destructive' });
+        toast({
+          title: 'Could not resend email',
+          description: err?.message || 'Please try again.',
+          variant: 'destructive',
+        });
       }
     } finally {
       setIsResending(false);
