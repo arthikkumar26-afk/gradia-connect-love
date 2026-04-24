@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PasswordInput } from "@/components/ui/password-input";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+// Aggregated ARIA live-region announcer for inline form validation errors.
+import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
 
 const FreelancerSignup = () => {
   const navigate = useNavigate();
@@ -24,6 +26,8 @@ const FreelancerSignup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Bumped on each submit so the ARIA announcer re-fires on repeat submits.
+  const [submitCount, setSubmitCount] = useState(0);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -47,6 +51,8 @@ const FreelancerSignup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Bump first so the ARIA live region re-announces on repeat submits.
+    setSubmitCount((n) => n + 1);
     if (!validateForm()) return;
     setIsLoading(true);
     
