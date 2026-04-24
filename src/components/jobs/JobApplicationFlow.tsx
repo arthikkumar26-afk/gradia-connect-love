@@ -1206,10 +1206,7 @@ export const JobApplicationFlow = ({
 
         {/* Step 4: Complete */}
         {flowStep === 'complete' && aiAnalysis && (() => {
-          // Derive the confirmation banner from the analysis result.
-          // - "pending" recommendation = manual review fallback (AI didn't run)
-          // - overall_score > 0 = AI analysis succeeded
-          const aiSucceeded = aiAnalysis.recommendation !== 'pending' && aiAnalysis.overall_score > 0;
+          const aiSucceeded = submissionStatus === 'ai_reviewed' || (aiAnalysis.recommendation !== 'pending' && aiAnalysis.overall_score > 0);
           const statusLabel = aiSucceeded ? 'Under AI Review' : 'Pending Manual Review';
 
           return (
