@@ -688,6 +688,58 @@ const BookSlot = () => {
                         )}
                       </div>
                     </div>
+                    {/* Inline test/meeting link — surfaced as soon as the
+                        invitation row is created so the candidate can join
+                        even if email delivery is delayed. */}
+                    {interviewLink && (
+                      <div className="rounded-md border border-blue-200 bg-blue-50 p-2.5 space-y-2">
+                        <p className="text-[11px] font-medium text-blue-900 flex items-center gap-1.5">
+                          <Mail className="h-3 w-3" />
+                          Your test link is ready
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            readOnly
+                            value={interviewLink}
+                            onFocus={(e) => e.currentTarget.select()}
+                            className="h-7 text-[11px] font-mono bg-background"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 shrink-0"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(interviewLink);
+                                setLinkCopied(true);
+                                toast.success("Link copied");
+                                setTimeout(() => setLinkCopied(false), 2000);
+                              } catch {
+                                toast.error("Could not copy. Long-press the link to copy manually.");
+                              }
+                            }}
+                          >
+                            {linkCopied ? (
+                              <Check className="h-3.5 w-3.5" />
+                            ) : (
+                              <span className="text-[11px]">Copy</span>
+                            )}
+                          </Button>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => window.open(interviewLink, "_blank", "noopener,noreferrer")}
+                        >
+                          Open test link
+                        </Button>
+                        <p className="text-[10px] text-blue-800/80">
+                          Tip: bookmark this page or copy the link in case the email is delayed.
+                        </p>
+                      </div>
+                    )}
                     <Button
                       type="button"
                       variant={inviteStatus === "failed" ? "default" : "outline"}
