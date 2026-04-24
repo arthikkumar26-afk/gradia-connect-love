@@ -732,55 +732,110 @@ const BookSlot = () => {
                     {/* Inline test/meeting link — surfaced as soon as the
                         invitation row is created so the candidate can join
                         even if email delivery is delayed. */}
-                    {interviewLink && (
-                      <div className="rounded-md border border-blue-200 bg-blue-50 p-2.5 space-y-2">
-                        <p className="text-[11px] font-medium text-blue-900 flex items-center gap-1.5">
-                          <Mail className="h-3 w-3" />
-                          Your test link is ready
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          <Input
-                            readOnly
-                            value={interviewLink}
-                            onFocus={(e) => e.currentTarget.select()}
-                            className="h-7 text-[11px] font-mono bg-background"
-                          />
+                    {interviewLink && (() => {
+                      // Compute a friendly validity hint. The edge function
+                      // sets expires_at to 7 days from send. We re-evaluate
+                      // on every render so the badge stays accurate without
+                      // a timer.
+                      const now = Date.now();
+                      const expMs = linkExpiresAt?.getTime() ?? null;
+                      const msLeft = expMs !== null ? expMs - now : null;
+                      const isExpired = msLeft !== null && msLeft <= 0;
+                      const hoursLeft = msLeft !== null ? Math.floor(msLeft / (1000 * 60 * 60)) : null;
+                      const daysLeft = hoursLeft !== null ? Math.floor(hoursLeft / 24) : null;
+                      let validityLabel = "";
+                      if (msLeft === null) {
+                        validityLabel = "Validity: 7 days from email";
+                      } else if (isExpired) {
+                        validityLabel = "Link expired — please resend or rebook";
+                      } else if (daysLeft !== null && daysLeft >= 1) {
+                        validityLabel = `Valid for ${daysLeft} more day${daysLeft === 1 ? "" : "s"}`;
+                      } else if (hoursLeft !== null && hoursLeft >= 1) {
+                        validityLabel = `Valid for ${hoursLeft} more hour${hoursLeft === 1 ? "" : "s"}`;
+                      } else {
+                        validityLabel = "Expires in less than an hour";
+                      }
+                      const expiresAtLabel = linkExpiresAt
+                        ? linkExpiresAt.toLocaleString(undefined, {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })
+                        : null;
+                      return (
+                        <div
+                          className={`rounded-md border p-2.5 space-y-2 ${
+                            isExpired
+                              ? "border-destructive/40 bg-destructive/5"
+                              : "border-blue-200 bg-blue-50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className={`text-[11px] font-medium flex items-center gap-1.5 ${isExpired ? "text-destructive" : "text-blue-900"}`}>
+                              <Mail className="h-3 w-3" />
+                              {isExpired ? "Your test link has expired" : "Your test link is ready"}
+                            </p>
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                isExpired
+                                  ? "bg-destructive/15 text-destructive"
+                                  : msLeft !== null && msLeft < 24 * 60 * 60 * 1000
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-blue-100 text-blue-800"
+                              }`}
+                              title={expiresAtLabel ? `Expires ${expiresAtLabel}` : undefined}
+                            >
+                              {validityLabel}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Input
+                              readOnly
+                              value={interviewLink}
+                              onFocus={(e) => e.currentTarget.select()}
+                              className="h-7 text-[11px] font-mono bg-background"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 shrink-0"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(interviewLink);
+                                  setLinkCopied(true);
+                                  toast.success("Link copied");
+                                  setTimeout(() => setLinkCopied(false), 2000);
+                                } catch {
+                                  toast.error("Could not copy. Long-press the link to copy manually.");
+                                }
+                              }}
+                            >
+                              {linkCopied ? (
+                                <Check className="h-3.5 w-3.5" />
+                              ) : (
+                                <span className="text-[11px]">Copy</span>
+                              )}
+                            </Button>
+                          </div>
                           <Button
                             type="button"
                             size="sm"
-                            variant="outline"
-                            className="h-7 px-2 shrink-0"
-                            onClick={async () => {
-                              try {
-                                await navigator.clipboard.writeText(interviewLink);
-                                setLinkCopied(true);
-                                toast.success("Link copied");
-                                setTimeout(() => setLinkCopied(false), 2000);
-                              } catch {
-                                toast.error("Could not copy. Long-press the link to copy manually.");
-                              }
-                            }}
+                            disabled={isExpired}
+                            className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+                            onClick={() => window.open(interviewLink, "_blank", "noopener,noreferrer")}
                           >
-                            {linkCopied ? (
-                              <Check className="h-3.5 w-3.5" />
-                            ) : (
-                              <span className="text-[11px]">Copy</span>
-                            )}
+                            {isExpired ? "Link no longer valid" : "Open test link"}
                           </Button>
+                          <p className={`text-[10px] ${isExpired ? "text-destructive/80" : "text-blue-800/80"}`}>
+                            {isExpired
+                              ? "Use “Resend invitation” below to get a fresh link, or rebook your slot."
+                              : expiresAtLabel
+                                ? `Expires on ${expiresAtLabel}. Bookmark this page or copy the link in case the email is delayed.`
+                                : "Tip: bookmark this page or copy the link in case the email is delayed."}
+                          </p>
                         </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={() => window.open(interviewLink, "_blank", "noopener,noreferrer")}
-                        >
-                          Open test link
-                        </Button>
-                        <p className="text-[10px] text-blue-800/80">
-                          Tip: bookmark this page or copy the link in case the email is delayed.
-                        </p>
-                      </div>
-                    )}
+                      );
+                    })()}
                     <Button
                       type="button"
                       variant={inviteStatus === "failed" ? "default" : "outline"}
