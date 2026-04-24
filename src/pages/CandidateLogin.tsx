@@ -9,16 +9,12 @@ import { ArrowLeft, MailWarning } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-// Shared, unit-tested helpers for the resend-confirmation flow. Keeping
-// these in one module guarantees identical rate-limit detection and
-// cooldown decisions across every login/signup page.
-import {
-  isEmailNotConfirmedErr,
-  isRateLimitErr,
-  getRetryAfterSeconds,
-  formatRetryWindow,
-  decideResendOutcome,
-} from "@/lib/auth/resendCooldown";
+// Shared helpers + hook for the resend-confirmation flow. Pure helpers stay
+// in `@/lib/auth/resendCooldown` so they remain unit-testable; the hook owns
+// state + the `supabase.auth.resend` call so every login/signup screen has
+// identical cooldown/rate-limit/toast behaviour.
+import { isEmailNotConfirmedErr } from "@/lib/auth/resendCooldown";
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 const CandidateLogin = () => {
   const navigate = useNavigate();
