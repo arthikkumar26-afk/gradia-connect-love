@@ -1145,13 +1145,13 @@ export const CandidateFullProfile = () => {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 pt-2">
               <span className="block">
-                To take interviews with <strong>{candidate?.name}</strong>, redeem{" "}
-                <strong>{INTERVIEW_UNLOCK_COST} points</strong> from your wallet.
+                To take interviews with <strong>{candidate?.name}</strong>, pay{" "}
+                <strong>₹{INTERVIEW_UNLOCK_COST}</strong> from your wallet.
               </span>
               <span className="block text-sm">
-                Your balance: <strong>{walletPoints} pts</strong>
+                Your balance: <strong>₹{walletPoints}</strong>
                 {walletPoints < INTERVIEW_UNLOCK_COST && (
-                  <span className="text-destructive"> — Insufficient points</span>
+                  <span className="text-destructive"> — Insufficient balance</span>
                 )}
               </span>
               <span className="block text-xs text-muted-foreground">
@@ -1165,7 +1165,7 @@ export const CandidateFullProfile = () => {
               onClick={(e) => { e.preventDefault(); handleConfirmUnlock(); }}
               disabled={unlocking || walletPoints < INTERVIEW_UNLOCK_COST}
             >
-              {unlocking ? 'Redeeming...' : `Redeem ${INTERVIEW_UNLOCK_COST} pts`}
+              {unlocking ? 'Processing...' : `Pay ₹${INTERVIEW_UNLOCK_COST}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

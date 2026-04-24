@@ -1884,7 +1884,7 @@ const CandidateSignup = () => {
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-primary/20">
-            💡 Points are spent on usage — e.g. 500 pts per AI Mock Interview (full pipeline), 150 pts per Resume PDF. Unused points never expire.
+            💡 Pay only for what you use — e.g. ₹99 per AI Mock Interview, ₹50 per Resume PDF. No hidden fees.
           </p>
         </div>
 

@@ -566,8 +566,8 @@ export default function ResumeBuilderTab() {
 
       if ((wallet.points_balance || 0) < EXPORT_PDF_POINTS) {
         toast({
-          title: "Insufficient Points",
-          description: `You need ${EXPORT_PDF_POINTS} pts to export. Your balance: ${wallet.points_balance || 0} pts.`,
+          title: "Insufficient Balance",
+          description: `You need ₹${EXPORT_PDF_POINTS} to export. Your balance: ₹${wallet.points_balance || 0}.`,
           variant: "destructive",
         });
         return;
@@ -717,7 +717,7 @@ export default function ResumeBuilderTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            {isPremiumUser ? "Export PDF" : "Export PDF - 150 pts"}
+            {isPremiumUser ? "Export PDF" : "Export PDF - ₹50"}
           </Button>
         </div>
       </div>

@@ -193,7 +193,7 @@ export const MyVacanciesContent = () => {
       if ((wallet.points_balance || 0) < UNLOCK_COST) {
         toast({
           title: "Insufficient points",
-          description: `You need ${UNLOCK_COST} pts. Current balance: ${wallet.points_balance || 0} pts.`,
+          description: `You need ₹${UNLOCK_COST}. Current balance: ₹${wallet.points_balance || 0}.`,
           variant: "destructive",
         });
         setUnlocking(false);
@@ -301,14 +301,14 @@ export const MyVacanciesContent = () => {
             <div>
               <h2 className="text-xl font-bold text-foreground">{selectedJob.job_title}</h2>
               <p className="text-xs text-muted-foreground">
-                {applicants.length} applicant{applicants.length !== 1 ? "s" : ""} • Unlock cost:{" "}
-                {UNLOCK_COST} pts per CV
+                {applicants.length} applicant{applicants.length !== 1 ? "s" : ""} • Unlock cost: ₹
+                {UNLOCK_COST} per CV
               </p>
             </div>
           </div>
           <Badge variant="secondary" className="text-sm px-3 py-1.5">
             <Wallet className="h-3.5 w-3.5 mr-1.5" />
-            {walletPoints} pts
+            ₹{walletPoints}
           </Badge>
         </div>
 
@@ -373,8 +373,8 @@ export const MyVacanciesContent = () => {
                           </div>
                         ) : (
                           <p className="text-sm text-muted-foreground">
-                            Candidate details and CV are hidden. Spend{" "}
-                            <span className="font-semibold text-foreground">{UNLOCK_COST} pts</span>{" "}
+                            Candidate details and CV are hidden. Pay{" "}
+                            <span className="font-semibold text-foreground">₹{UNLOCK_COST}</span>{" "}
                             to view full profile and download CV.
                           </p>
                         )}
@@ -411,7 +411,7 @@ export const MyVacanciesContent = () => {
                             disabled={walletPoints < UNLOCK_COST}
                           >
                             <Unlock className="h-3.5 w-3.5 mr-1" />
-                            Unlock for {UNLOCK_COST} pts
+                            Unlock for ₹{UNLOCK_COST}
                           </Button>
                         )}
                       </div>
@@ -428,14 +428,14 @@ export const MyVacanciesContent = () => {
             <DialogHeader>
               <DialogTitle>Unlock Candidate CV?</DialogTitle>
               <DialogDescription>
-                <span className="font-semibold text-foreground">{UNLOCK_COST} points</span> will be
+                <span className="font-semibold text-foreground">₹{UNLOCK_COST}</span> will be
                 deducted from your wallet to view this candidate's full details and download their
                 CV.
                 <br />
                 <br />
-                Current balance: <span className="font-semibold">{walletPoints} pts</span>
+                Current balance: <span className="font-semibold">₹{walletPoints}</span>
                 <br />
-                After unlock: <span className="font-semibold">{walletPoints - UNLOCK_COST} pts</span>
+                After unlock: <span className="font-semibold">₹{walletPoints - UNLOCK_COST}</span>
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -443,7 +443,7 @@ export const MyVacanciesContent = () => {
                 Cancel
               </Button>
               <Button onClick={handleUnlock} disabled={unlocking}>
-                {unlocking ? "Processing..." : `Confirm & Pay ${UNLOCK_COST} pts`}
+                {unlocking ? "Processing..." : `Confirm & Pay ₹${UNLOCK_COST}`}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -459,12 +459,12 @@ export const MyVacanciesContent = () => {
         <div>
           <h2 className="text-2xl font-bold text-foreground">My Vacancies</h2>
           <p className="text-sm text-muted-foreground">
-            Click a vacancy to view received resumes • {UNLOCK_COST} pts per CV unlock
+            Click a vacancy to view received resumes • ₹{UNLOCK_COST} per CV unlock
           </p>
         </div>
         <Badge variant="secondary" className="text-sm px-3 py-1.5">
           <Wallet className="h-3.5 w-3.5 mr-1.5" />
-          {walletPoints} pts
+          ₹{walletPoints}
         </Badge>
       </div>
 

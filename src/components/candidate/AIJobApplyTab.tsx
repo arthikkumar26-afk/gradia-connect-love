@@ -496,7 +496,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
                 <Star className="h-4 w-4 text-primary" />
                 <span className="font-semibold text-sm text-foreground">Pro Plan</span>
               </div>
-              <p className="text-lg font-bold text-foreground">300 pts<span className="text-xs text-muted-foreground font-normal">/month</span></p>
+              <p className="text-lg font-bold text-foreground">₹499<span className="text-xs text-muted-foreground font-normal">/month</span></p>
               <p className="text-xs text-muted-foreground mt-1">10 auto-applies/month</p>
             </Card>
             <Card className="p-4 border-primary/20 bg-primary/5 text-left max-w-[220px]">
@@ -504,7 +504,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
                 <Crown className="h-4 w-4 text-primary" />
                 <span className="font-semibold text-sm text-foreground">Premium Plan</span>
               </div>
-              <p className="text-lg font-bold text-foreground">400 pts<span className="text-xs text-muted-foreground font-normal">/month</span></p>
+              <p className="text-lg font-bold text-foreground">₹999<span className="text-xs text-muted-foreground font-normal">/month</span></p>
               <p className="text-xs text-muted-foreground mt-1">Unlimited auto-applies</p>
             </Card>
           </div>
