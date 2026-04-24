@@ -451,32 +451,29 @@ export const JobApplicationFlow = ({
     setError(null);
 
     try {
-      // Check if user is authenticated
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
-        // User not logged in - run mock analysis for demo
-        await runMockAnalysis();
+        const classified = classifyError(new Error('Not authenticated'), 'upload', false, 401, 'Session expired');
+        setError(classified);
+        setFlowStep('upload');
         return;
       }
 
-      // User is authenticated - proceed with real analysis
-      // Step 1: Parse resume to extract details
       let parsedResumeData: any = null;
       if (resumeFile) {
         try {
           const formData = new FormData();
           formData.append('file', resumeFile);
-          
+
           const parseResponse = await supabase.functions.invoke('parse-resume', {
             body: formData,
           });
-          
-      if (parseResponse.data && !parseResponse.error) {
+
+          if (parseResponse.data && !parseResponse.error) {
             parsedResumeData = parseResponse.data;
             console.log('Parsed resume data:', parsedResumeData);
-            
-            // Update profile full_name from resume if extracted
+
             if (parsedResumeData.full_name) {
               await supabase
                 .from('profiles')
@@ -491,7 +488,6 @@ export const JobApplicationFlow = ({
 
       setAnalysisSubStep('analyzing');
 
-      // Step 2: Upload resume to storage. Reuse cached URL on retries.
       let resumeUrl: string | null = uploadedResumeUrlRef.current;
       if (!resumeUrl) {
         try {
@@ -509,33 +505,66 @@ export const JobApplicationFlow = ({
         }
       }
 
-      // Step 3: Get user profile for fallback data
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-        // Step 4: Check if this is a real job from DB or sample job
-        const { data: dbJob } = await supabase
-          .from('jobs')
-          .select('*, employer:profiles!jobs_employer_id_fkey(company_name, full_name)')
-          .eq('id', job.id)
-          .single();
+      if (profileError) {
+        throw {
+          __stage: 'analyze' as const,
+          __status: 422,
+          __message: 'Profile incomplete',
+          original: profileError,
+        };
+      }
+
+      const candidateName = parsedResumeData?.full_name || profile?.full_name || user.email?.split('@')[0] || 'Candidate';
+      const candidateEmail = parsedResumeData?.email || profile?.email || user.email || '';
+
+      if (!candidateName?.trim() || !candidateEmail?.trim()) {
+        throw {
+          __stage: 'analyze' as const,
+          __status: 422,
+          __message: 'Profile incomplete',
+          original: new Error('Missing profile fields'),
+        };
+      }
+
+      const { data: existingApplication } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('candidate_id', user.id)
+        .eq('job_id', job.id)
+        .maybeSingle();
+
+      if (existingApplication) {
+        throw {
+          __stage: 'analyze' as const,
+          __status: 409,
+          __message: 'Already applied',
+          original: new Error('Already applied'),
+        };
+      }
+
+      const { data: dbJob } = await supabase
+        .from('jobs')
+        .select('*, employer:profiles!jobs_employer_id_fkey(company_name, full_name)')
+        .eq('id', job.id)
+        .single();
 
       if (dbJob) {
-        // Real job from database - call the analyze-resume edge function
         setAnalysisSubStep('matching');
 
-        // Use parsed resume data if available, otherwise fall back to profile
         const { data: analysisResult, error: analysisError } = await supabase.functions.invoke('analyze-resume', {
           body: {
             candidateId: user.id,
             jobId: job.id,
             resumeUrl,
             candidateProfile: {
-              full_name: parsedResumeData?.full_name || profile?.full_name || user.email?.split('@')[0] || 'Candidate',
-              email: parsedResumeData?.email || user.email || '',
+              full_name: candidateName,
+              email: candidateEmail,
               experience_level: parsedResumeData?.experience_level || profile?.experience_level,
               preferred_role: parsedResumeData?.preferred_role || profile?.preferred_role,
               location: parsedResumeData?.location || profile?.location,
@@ -566,43 +595,47 @@ export const JobApplicationFlow = ({
         }
 
         setAnalysisSubStep('scheduling');
-        
+
         if (analysisResult?.analysis) {
           setAiAnalysis(analysisResult.analysis);
         }
-        
-        // Track email sent status and next stage
+
         setEmailSent(analysisResult?.emailSent || false);
         setNextStage(analysisResult?.nextStage || 'AI Phone Interview');
 
-        // Create application record
-        await supabase
+        const desiredStatus = analysisResult?.status === 'manual_review' ? 'in_review' : 'in_review';
+        const { error: insertError } = await supabase
           .from('applications')
           .insert({
             candidate_id: user.id,
             job_id: job.id,
             cover_letter: coverLetter || null,
-            status: 'in_review',
+            status: desiredStatus,
           });
 
-        // Send application confirmation email
+        if (insertError && !insertError.message?.toLowerCase().includes('duplicate')) {
+          throw {
+            __stage: 'analyze' as const,
+            __status: insertError.code === '23505' ? 409 : undefined,
+            __message: insertError.message,
+            original: insertError,
+          };
+        }
+
         try {
-          const candidateName = parsedResumeData?.full_name || profile?.full_name || user.email?.split('@')[0] || 'Candidate';
-          const candidateEmail = profile?.email || user.email || '';
-          
           console.log('Sending application email to:', candidateEmail, 'for job:', dbJob.job_title);
-          
+
           const orgName = dbJob.organisation || (dbJob.employer as any)?.company_name || 'Gradia';
           const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-application-email', {
             body: {
               email: candidateEmail,
-              candidateName: candidateName,
+              candidateName,
               jobTitle: dbJob.job_title,
               companyName: orgName,
               aiScore: analysisResult?.analysis?.overall_score || null,
             },
           });
-          
+
           if (emailError) {
             console.error('Email function error:', emailError);
           } else {
@@ -611,21 +644,16 @@ export const JobApplicationFlow = ({
           }
         } catch (emailError) {
           console.error('Failed to send confirmation email:', emailError);
-          // Don't fail the application if email fails
         }
 
         setFlowStep('complete');
       } else {
-        // Sample job - run mock analysis but still create application if possible
         await runMockAnalysis();
       }
 
     } catch (err: any) {
       console.error('Application error:', err);
 
-      // Errors thrown from inside our try block include __stage / __status hints.
-      // Anything else (DB queries, profile lookups) is treated as analyze-stage
-      // when we have already uploaded, otherwise as a generic upload failure.
       const stage: 'upload' | 'analyze' =
         err?.__stage === 'upload' ? 'upload' : 'analyze';
       const resumeUploaded = !!uploadedResumeUrlRef.current;
