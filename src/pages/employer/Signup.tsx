@@ -196,11 +196,6 @@ const EmployerSignup = () => {
   const isNetErr = (msg?: string) =>
     !!msg && (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("TypeError") || msg.includes("timed out"));
 
-  const formatRetryWindow = (seconds: number) => {
-    if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
-    const mins = Math.ceil(seconds / 60);
-    return `${mins} minute${mins === 1 ? "" : "s"}`;
-  };
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
