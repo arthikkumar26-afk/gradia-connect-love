@@ -24,13 +24,21 @@ const FreelancerLogin = () => {
   const { isAuthenticated, profile } = useAuth();
   const { toast } = useToast();
 
-  // Inline EMAIL_NOT_CONFIRMED state. `unverifiedEmail` is the address tied to
-  // the failed login (we keep it separately from the input so the user can
-  // edit the field without losing the recovery panel). `resendCooldown` gates
-  // the resend button so we never hammer the upstream rate limit.
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [isResending, setIsResending] = useState(false);
+  // All resend-confirmation state lives in the shared hook so the
+  // freelancer/employer/candidate flows behave identically.
+  const {
+    unverifiedEmail,
+    setUnverifiedEmail,
+    resendCooldown,
+    isResending,
+    isDisabled: isResendDisabled,
+    cooldownLabel,
+    resend,
+    reset: resetResendState,
+  } = useResendConfirmation({
+    flow: "freelancer-login",
+    redirectTo: `${window.location.origin}/freelancer/login`,
+  });
 
   useEffect(() => {
     if (isAuthenticated && profile?.role === 'freelancer') {
@@ -38,22 +46,12 @@ const FreelancerLogin = () => {
     }
   }, [isAuthenticated, profile, navigate]);
 
-  // 1-second tick for the cooldown timer. The button stays disabled until
-  // this reaches 0, mirroring the employer-signup resend behaviour.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     // Clear any prior unverified-state when the user retries — the new
     // attempt may succeed or surface a different error.
-    setUnverifiedEmail(null);
+    resetResendState();
     try {
       const isNetErr = (msg?: string) =>
         msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("timed out");
