@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft, Check, ChevronsUpDown, Mail, RefreshCw, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   formatDateValue,
@@ -31,6 +31,14 @@ const BookSlot = () => {
   const [isBooking, setIsBooking] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Invitation delivery status shown on the confirmation screen.
+  // - idle: not applicable (e.g. multi-slot stage where employer confirms first)
+  // - sending: resend in flight
+  // - sent: edge function returned success
+  // - failed: edge function errored — user can retry
+  const [inviteStatus, setInviteStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+  const [inviteSentAt, setInviteSentAt] = useState<Date | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [candidateInfo, setCandidateInfo] = useState<{
     name: string;
     email: string;
@@ -234,6 +242,79 @@ const BookSlot = () => {
     period: TimeOfDay = timeOfDay,
   ) => buildTimeSlots(granularityMin, period);
 
+  /**
+   * Single source of truth for invoking an invitation/test-link email.
+   * Updates `inviteStatus` so the confirmation screen can show a verified
+   * "sent" indicator (or a retry button) without each call site having to
+   * remember to update the same three pieces of state.
+   */
+  const sendInvitationEmail = async (
+    args: { functionName: string; body: Record<string, unknown> },
+  ): Promise<{ ok: boolean; error?: string }> => {
+    setInviteStatus("sending");
+    setInviteError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke(args.functionName, {
+        body: args.body,
+      });
+      // Edge function explicitly returns { success: true } on the happy path;
+      // treat anything else (network error, success === false) as a failure
+      // so the user sees a retry path instead of a misleading green checkmark.
+      if (error || (data && data.success === false)) {
+        const msg = error?.message || data?.error || "Failed to send invitation email.";
+        console.error(`[${args.functionName}] invitation send failed`, msg);
+        setInviteStatus("failed");
+        setInviteError(msg);
+        return { ok: false, error: msg };
+      }
+      setInviteStatus("sent");
+      setInviteSentAt(new Date());
+      return { ok: true };
+    } catch (err: any) {
+      const msg = err?.message || "Failed to send invitation email.";
+      console.error(`[${args.functionName}] invitation send threw`, err);
+      setInviteStatus("failed");
+      setInviteError(msg);
+      return { ok: false, error: msg };
+    }
+  };
+
+  /**
+   * Manual resend triggered from the confirmation screen. Reuses the same
+   * routing logic the booking flow used so the candidate gets exactly the
+   * same email they would have received automatically.
+   */
+  const handleResendInvitation = async () => {
+    if (!candidateId || !selectedDate || !selectedTime) return;
+    const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+    const isWrittenTest =
+      stageName.toLowerCase().includes("written") && !isFeedbackStage;
+    const result = isWrittenTest
+      ? await sendInvitationEmail({
+          functionName: "send-pipeline-email",
+          body: {
+            interviewCandidateId: candidateId,
+            stageName: "Written Test",
+            emailType: "interview_invitation",
+            triggerSource: "book-slot-resend",
+            scheduledDate: scheduledDateTime,
+          },
+        })
+      : await sendInvitationEmail({
+          functionName: "send-interview-invitation",
+          body: {
+            interviewCandidateId: candidateId,
+            stageName,
+            scheduledDate: scheduledDateTime,
+          },
+        });
+    if (result.ok) {
+      toast.success("Invitation email resent. Please check your inbox.");
+    } else {
+      toast.error(result.error || "Could not resend the invitation email.");
+    }
+  };
+
   const handleBookSlot = async () => {
     // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
     let demoSlots: { date: string; time: string }[] = [];
@@ -362,7 +443,8 @@ const BookSlot = () => {
       } else if (isWrittenTestSlotBooking) {
         // Route through pipeline email gateway for idempotency
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-        const { error: inviteError } = await supabase.functions.invoke("send-pipeline-email", {
+        const result = await sendInvitationEmail({
+          functionName: "send-pipeline-email",
           body: {
             interviewCandidateId: candidateId,
             stageName: "Written Test",
@@ -371,23 +453,23 @@ const BookSlot = () => {
             scheduledDate: scheduledDateTime,
           },
         });
-        if (inviteError) {
-          console.error("Error sending invitation via gateway:", inviteError);
+        if (!result.ok) {
+          toast.warning("Slot booked, but we couldn't send the invitation email. You can resend it from the confirmation screen.");
         }
       } else {
         // Generic single-slot booking (e.g. Technical Assessment) — send the
         // interview/test invitation so the candidate gets the link for their booked time.
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-        const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
+        const result = await sendInvitationEmail({
+          functionName: "send-interview-invitation",
           body: {
             interviewCandidateId: candidateId,
             stageName,
             scheduledDate: scheduledDateTime,
           },
         });
-        if (inviteError) {
-          console.error("Error sending interview invitation:", inviteError);
-          toast.warning("Slot booked, but we couldn't send the invitation email. Please check your dashboard for the link.");
+        if (!result.ok) {
+          toast.warning("Slot booked, but we couldn't send the invitation email. You can resend it from the confirmation screen.");
         }
       }
 
@@ -533,9 +615,76 @@ const BookSlot = () => {
                     📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    📧 An interview invitation email with the link has been sent to your registered email address. Please check your inbox.
-                  </p>
+                  // End-to-end verification: shows whether the invitation email
+                  // actually went out, and lets the candidate resend it on demand.
+                  <div className="rounded-lg border bg-card p-3 space-y-2 text-left">
+                    <div className="flex items-start gap-2">
+                      {inviteStatus === "sent" && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                      )}
+                      {inviteStatus === "sending" && (
+                        <Loader2 className="h-4 w-4 text-blue-600 mt-0.5 shrink-0 animate-spin" />
+                      )}
+                      {inviteStatus === "failed" && (
+                        <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+                      )}
+                      {inviteStatus === "idle" && (
+                        <Mail className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      )}
+                      <div className="text-sm space-y-0.5 flex-1">
+                        {inviteStatus === "sent" && (
+                          <>
+                            <p className="font-medium text-foreground">
+                              Invitation email sent
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Sent to <strong>{candidateInfo?.email}</strong>
+                              {inviteSentAt && ` at ${inviteSentAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}.
+                              Check your inbox (and spam folder).
+                            </p>
+                          </>
+                        )}
+                        {inviteStatus === "sending" && (
+                          <p className="font-medium text-foreground">Sending invitation email…</p>
+                        )}
+                        {inviteStatus === "failed" && (
+                          <>
+                            <p className="font-medium text-red-700">
+                              Couldn't send the invitation email
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {inviteError || "Please retry — your slot is still booked."}
+                            </p>
+                          </>
+                        )}
+                        {inviteStatus === "idle" && (
+                          <p className="text-xs text-muted-foreground">
+                            We'll send the test link to <strong>{candidateInfo?.email}</strong>.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant={inviteStatus === "failed" ? "default" : "outline"}
+                      size="sm"
+                      className="w-full"
+                      onClick={handleResendInvitation}
+                      disabled={inviteStatus === "sending"}
+                    >
+                      {inviteStatus === "sending" ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                          Sending…
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                          {inviteStatus === "sent" ? "Resend test link" : "Send test link"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 )}
               </>
             )}
