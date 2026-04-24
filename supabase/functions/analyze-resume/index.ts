@@ -172,20 +172,10 @@ Provide your analysis using the suggest_analysis function.`;
       if (!response.ok) {
         const errorText = await response.text();
         console.error('AI gateway error:', response.status, errorText);
-        
-        if (response.status === 429) {
-          return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-            status: 429,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        if (response.status === 402) {
-          return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits.' }), {
-            status: 402,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        throw new Error('AI analysis failed');
+        // IMPORTANT: do NOT return early on 402/429/5xx. The application must
+        // still be created so the candidate is not blocked. We fall through
+        // to the default analysis below and flag the analysis as degraded.
+        analysis = null;
       }
 
       const aiResponse = await response.json();
