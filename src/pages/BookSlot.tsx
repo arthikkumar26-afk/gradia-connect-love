@@ -18,6 +18,10 @@ import {
   type Granularity,
   type TimeOfDay,
 } from "@/lib/scheduler/timeSlots";
+import {
+  assertInvitationRoute,
+  type InvitationFunctionName,
+} from "@/lib/scheduler/invitationRoute";
 
 const BookSlot = () => {
   const [searchParams] = useSearchParams();
