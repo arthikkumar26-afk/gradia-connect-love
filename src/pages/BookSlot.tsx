@@ -800,7 +800,7 @@ const BookSlot = () => {
                                     ? "bg-amber-100 text-amber-800"
                                     : "bg-blue-100 text-blue-800"
                               }`}
-                              title={expiresAtLabel ? `Expires ${expiresAtLabel}` : undefined}
+                              title={expiresAtLabel ? `Expires ${expiresAtLabel}\n${timeZoneHint}` : timeZoneHint}
                             >
                               {validityLabel}
                             </span>
@@ -846,10 +846,10 @@ const BookSlot = () => {
                           </Button>
                           <p className={`text-[10px] ${isExpired ? "text-destructive/80" : "text-blue-800/80"}`}>
                             {isExpired
-                              ? "Use “Resend invitation” below to get a fresh link, or rebook your slot."
+                              ? `Use "Resend invitation" below to get a fresh link, or rebook your slot. ${timeZoneHint}`
                               : expiresAtLabel
-                                ? `Expires on ${expiresAtLabel}. Bookmark this page or copy the link in case the email is delayed.`
-                                : "Tip: bookmark this page or copy the link in case the email is delayed."}
+                                ? `Expires on ${expiresAtLabel}. ${timeZoneHint} Bookmark this page or copy the link in case the email is delayed.`
+                                : `${timeZoneHint} Tip: bookmark this page or copy the link in case the email is delayed.`}
                           </p>
                         </div>
                       );
