@@ -357,6 +357,11 @@ const EmployerSignup = () => {
         description: "Explore the benefits of partnering with Gradia",
       });
 
+      // Arm the resend control. Supabase enforces a ~60s window between
+      // signup-confirmation emails, so we mirror that locally.
+      setPendingVerificationEmail(email);
+      setResendCooldown(60);
+
       setCurrentStep('benefits');
     } catch (error: any) {
       // Catch-all: also check for rate limit here in case the error escaped the inner branch.
