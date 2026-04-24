@@ -300,6 +300,7 @@ const MainRoutes = () => (
         <Route path="/admin/unsubscribed-candidates" element={<UnsubscribedCandidates />} />
         <Route path="/admin/companies" element={<AdminCompanies />} />
         <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/resume-analysis-audit" element={<AdminResumeAnalysisAudit />} />
         <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
         <Route path="/admin/audit" element={<AdminAuditLogs />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
