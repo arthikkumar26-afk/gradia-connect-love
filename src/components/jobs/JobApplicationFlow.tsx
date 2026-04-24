@@ -46,6 +46,30 @@ interface JobApplicationFlowProps {
 type FlowStep = 'description' | 'upload' | 'analyzing' | 'complete';
 type AnalysisSubStep = 'uploading' | 'analyzing' | 'matching' | 'scheduling';
 
+type ErrorCategory =
+  | 'network'
+  | 'auth'
+  | 'file_invalid'
+  | 'upload_failed'
+  | 'parse_failed'
+  | 'ai_credits'
+  | 'ai_rate_limit'
+  | 'ai_server'
+  | 'unknown';
+
+interface ApplicationError {
+  category: ErrorCategory;
+  title: string;
+  message: string;
+  steps: string[];
+  /** Was the resume successfully uploaded before this error? */
+  resumeUploaded: boolean;
+  /** Can the user safely retry without re-uploading? */
+  canRetry: boolean;
+  /** Can the user submit anyway (manual review fallback)? */
+  canSubmitWithoutAI: boolean;
+}
+
 interface AIAnalysis {
   overall_score: number;
   skill_match_score: number;
