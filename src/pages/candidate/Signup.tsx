@@ -251,6 +251,9 @@ const CandidateSignup = () => {
   const [primarySubject, setPrimarySubject] = useState("");
   const [segment, setSegment] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  // Bumped on every submit so the ARIA live announcer re-fires even when the
+  // user resubmits with the same unresolved errors.
+  const [submitCount, setSubmitCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
   // Agreement state
@@ -346,7 +349,10 @@ const CandidateSignup = () => {
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    // Bump first so the announcer re-runs even if validation errors are
+    // unchanged from the previous attempt.
+    setSubmitCount((n) => n + 1);
+
     if (!validateForm()) {
       return;
     }
