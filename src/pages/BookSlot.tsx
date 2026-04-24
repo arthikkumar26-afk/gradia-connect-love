@@ -64,7 +64,7 @@ const BookSlot = () => {
     "Asia/Kolkata";
   const [timezone, setTimezone] = useState<string>(detectedTimezone);
 
-  const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
+  const COMMON_TIMEZONES: { value: string; label: string }[] = [
     { value: "Asia/Kolkata", label: "India Standard Time (IST, UTC+5:30)" },
     { value: "Asia/Dubai", label: "Gulf Standard Time (GST, UTC+4:00)" },
     { value: "Asia/Singapore", label: "Singapore Time (SGT, UTC+8:00)" },
@@ -80,9 +80,54 @@ const BookSlot = () => {
     { value: "America/Sao_Paulo", label: "Brasília Time (BRT)" },
     { value: "UTC", label: "Coordinated Universal Time (UTC)" },
   ];
-  const timezoneChoices = TIMEZONE_OPTIONS.some((t) => t.value === detectedTimezone)
-    ? TIMEZONE_OPTIONS
-    : [{ value: detectedTimezone, label: `${detectedTimezone} (detected)` }, ...TIMEZONE_OPTIONS];
+
+  // Full IANA list when the runtime supports it; otherwise fall back to the curated set.
+  const allIanaTimezones: string[] = useMemo(() => {
+    try {
+      const supportedFn = (Intl as unknown as {
+        supportedValuesOf?: (key: string) => string[];
+      }).supportedValuesOf;
+      if (typeof supportedFn === "function") {
+        return supportedFn("timeZone");
+      }
+    } catch {
+      /* ignore */
+    }
+    return COMMON_TIMEZONES.map((t) => t.value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Combine: detected zone (if missing) + curated common labels first, then every other IANA zone.
+  const timezoneChoices = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { value: string; label: string; group: "detected" | "common" | "all" }[] = [];
+
+    if (!COMMON_TIMEZONES.some((t) => t.value === detectedTimezone)) {
+      list.push({
+        value: detectedTimezone,
+        label: `${detectedTimezone} (detected)`,
+        group: "detected",
+      });
+      seen.add(detectedTimezone);
+    }
+
+    for (const tz of COMMON_TIMEZONES) {
+      if (!seen.has(tz.value)) {
+        list.push({ ...tz, group: "common" });
+        seen.add(tz.value);
+      }
+    }
+
+    for (const tz of allIanaTimezones) {
+      if (!seen.has(tz)) {
+        list.push({ value: tz, label: tz, group: "all" });
+        seen.add(tz);
+      }
+    }
+    return list;
+  }, [allIanaTimezones, detectedTimezone]);
+
+  const [tzPickerOpen, setTzPickerOpen] = useState(false);
 
   // Friendly TZ abbreviation like "IST" / "PDT" / "GMT+5:30" for the chosen zone+date
   const getTimezoneAbbr = (date: Date, tz: string): string => {
