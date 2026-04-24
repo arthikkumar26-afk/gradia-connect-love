@@ -374,6 +374,21 @@ const BookSlot = () => {
         if (inviteError) {
           console.error("Error sending invitation via gateway:", inviteError);
         }
+      } else {
+        // Generic single-slot booking (e.g. Technical Assessment) — send the
+        // interview/test invitation so the candidate gets the link for their booked time.
+        const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+        const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
+          body: {
+            interviewCandidateId: candidateId,
+            stageName,
+            scheduledDate: scheduledDateTime,
+          },
+        });
+        if (inviteError) {
+          console.error("Error sending interview invitation:", inviteError);
+          toast.warning("Slot booked, but we couldn't send the invitation email. Please check your dashboard for the link.");
+        }
       }
 
       // Auto-advance after ANY slot booking — candidates manage everything from dashboard
