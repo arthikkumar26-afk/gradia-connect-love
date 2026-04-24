@@ -20,8 +20,10 @@ import { useEffect, useRef, useState } from "react";
  *    re-announce the content.
  */
 interface FormErrorAnnouncerProps {
-  /** Map of fieldName → error message. Falsy values are ignored. */
-  errors: Record<string, string | undefined | null>;
+  /** Map of fieldName → error message. Falsy values are ignored. Accepts
+   *  any object whose values are strings or absent (covers `FormErrors`
+   *  shapes with optional fields and plain `Record<string, string>` maps). */
+  errors: { [key: string]: string | undefined | null };
   /** Increment from the form on every submit attempt to force re-announcement. */
   submitCount: number;
   /** Optional prefix, e.g. "Please fix the following before continuing:". */
