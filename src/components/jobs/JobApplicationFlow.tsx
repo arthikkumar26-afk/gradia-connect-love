@@ -347,13 +347,28 @@ export const JobApplicationFlow = ({
     } catch (error: any) {
       console.error('Application error:', error);
       setError(error.message || "Failed to submit application");
-      
+
       // If it's a rate limit or payment error, show specific message
       if (error.message?.includes('Rate limit')) {
         setError('The AI service is busy. Please try again in a moment.');
       } else if (error.message?.includes('credits')) {
-        setError('AI analysis is temporarily unavailable. Your application will be reviewed manually.');
-        // Still complete the application without AI
+        setError('AI analysis is temporarily unavailable, but your application was submitted and will be reviewed manually.');
+        // Still record the application so the candidate's submission isn't lost
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && job) {
+            await supabase
+              .from('applications')
+              .insert({
+                candidate_id: user.id,
+                job_id: job.id,
+                cover_letter: coverLetter || null,
+                status: 'in_review',
+              });
+          }
+        } catch (insertErr) {
+          console.error('Failed to record application after AI failure:', insertErr);
+        }
         setFlowStep('complete');
         setAiAnalysis({
           overall_score: 0,
@@ -365,7 +380,7 @@ export const JobApplicationFlow = ({
         });
         return;
       }
-      
+
       setFlowStep('upload');
     } finally {
       setIsSubmitting(false);
