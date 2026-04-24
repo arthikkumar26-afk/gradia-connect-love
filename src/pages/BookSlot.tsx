@@ -47,6 +47,11 @@ const BookSlot = () => {
   // after a successful send. Surfaced inline on the confirmation screen so the
   // candidate can open the test even if the invitation email is delayed.
   const [interviewLink, setInterviewLink] = useState<string | null>(null);
+  // When the inline test/meeting link stops being valid. Sourced from
+  // `interview_invitations.expires_at` (set to 7 days from send by the
+  // edge function). Surfaced next to the link so candidates can tell at
+  // a glance whether they still have time, need to resend, or rebook.
+  const [linkExpiresAt, setLinkExpiresAt] = useState<Date | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [candidateInfo, setCandidateInfo] = useState<{
     name: string;
@@ -310,13 +315,16 @@ const BookSlot = () => {
       try {
         const { data: invitationRow } = await supabase
           .from("interview_invitations")
-          .select("meeting_link, interview_event_id, interview_events!inner(interview_candidate_id)")
+          .select("meeting_link, expires_at, interview_event_id, interview_events!inner(interview_candidate_id)")
           .eq("interview_events.interview_candidate_id", candidateId)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         if (invitationRow?.meeting_link) {
           setInterviewLink(invitationRow.meeting_link);
+        }
+        if (invitationRow?.expires_at) {
+          setLinkExpiresAt(new Date(invitationRow.expires_at));
         }
       } catch (linkErr) {
         // Not fatal — the email itself was sent. Just log.
