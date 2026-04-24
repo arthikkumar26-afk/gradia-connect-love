@@ -256,6 +256,12 @@ const CandidateSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
+  // Verification email resend cooldown. Single source of truth that gates
+  // any "resend verification" CTA — counts down 1s at a time so the user
+  // sees a live timer and we never re-hit the upstream rate limit early.
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+
   // Resume step state
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeParsing, setResumeParsing] = useState(false);
