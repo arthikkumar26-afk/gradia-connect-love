@@ -176,7 +176,9 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
     await waitFor(() =>
       expect(screen.getByText(/Slot Booked Successfully/i)).toBeInTheDocument(),
     );
-    expect(screen.getByText(/10:30 AM IST/)).toBeInTheDocument();
+    // Time + timezone abbreviation appear together (abbr depends on the test runner's TZ)
+    expect(screen.getByText(/10:30 AM/)).toBeInTheDocument();
+    expect(screen.getByText(/Time shown in/i)).toBeInTheDocument();
     expect(screen.getByText(/Senior Engineer at Acme Co/)).toBeInTheDocument();
 
     // Backend received the right payload
