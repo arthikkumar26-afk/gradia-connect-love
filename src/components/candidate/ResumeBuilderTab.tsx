@@ -717,7 +717,7 @@ export default function ResumeBuilderTab() {
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
-            {isPremiumUser ? "Export PDF" : "Export PDF - 150 pts"}
+            {isPremiumUser ? "Export PDF" : "Export PDF - ₹50"}
           </Button>
         </div>
       </div>

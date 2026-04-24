@@ -142,7 +142,7 @@ export const JobApplicationCostBreakdown = ({ candidateId, jobTitle }: Props) =>
                     </Badge>
                   ) : (
                     <span className="text-[11px] font-bold text-yellow-700 dark:text-yellow-400 shrink-0">
-                      {l.cost} pts
+                      ₹{l.cost}
                     </span>
                   )}
                 </li>
@@ -156,9 +156,9 @@ export const JobApplicationCostBreakdown = ({ candidateId, jobTitle }: Props) =>
             </p>
             <p className="text-sm font-bold text-foreground">
               {totalSpend === 0 ? (
-                <span className="text-emerald-600 dark:text-emerald-400">0 pts now</span>
+                <span className="text-emerald-600 dark:text-emerald-400">₹0 now</span>
               ) : (
-                <span className="text-yellow-700 dark:text-yellow-400">{totalSpend} pts</span>
+                <span className="text-yellow-700 dark:text-yellow-400">₹{totalSpend}</span>
               )}
             </p>
           </div>

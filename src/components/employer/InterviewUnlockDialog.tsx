@@ -41,14 +41,14 @@ export const InterviewUnlockDialog = ({
           <AlertDialogDescription className="space-y-2">
             <span className="block">
               To take interviews with{" "}
-              <strong>{candidateName || "this candidate"}</strong>, redeem{" "}
-              <strong>{cost} points</strong> from your wallet. This is a
+              <strong>{candidateName || "this candidate"}</strong>, pay{" "}
+              <strong>₹{cost}</strong> from your wallet. This is a
               one-time fee per candidate.
             </span>
             <span className="block text-sm">
-              Your balance: <strong>{walletPoints} pts</strong>
+              Your balance: <strong>₹{walletPoints}</strong>
               {insufficient && (
-                <span className="text-destructive"> — Insufficient points</span>
+                <span className="text-destructive"> — Insufficient balance</span>
               )}
             </span>
           </AlertDialogDescription>
@@ -62,7 +62,7 @@ export const InterviewUnlockDialog = ({
             }}
             disabled={unlocking || insufficient}
           >
-            {unlocking ? "Redeeming..." : `Redeem ${cost} pts`}
+            {unlocking ? "Processing..." : `Pay ₹${cost}`}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
