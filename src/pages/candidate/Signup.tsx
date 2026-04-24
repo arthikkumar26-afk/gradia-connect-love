@@ -501,12 +501,34 @@ const CandidateSignup = () => {
       return;
     }
 
-    // Move to wallet activation step (payment required to access dashboard)
-    setCurrentStep('wallet');
+    // Onboarding complete — confirm session is live with the backend, then route
+    // to the dashboard. We never gate on a wallet/payment step anymore.
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast({
+          title: 'Session expired',
+          description: 'Please log in to continue to your dashboard.',
+        });
+        navigate('/candidate/login', { replace: true });
+        return;
+      }
+      await refreshProfile();
+      toast({ title: '🎉 Welcome to Gradia!', description: 'Your dashboard is ready.' });
+      navigate('/candidate/dashboard', { replace: true });
+    } catch (err: any) {
+      console.error('Final onboarding step failed:', err);
+      toast({
+        title: 'Could not open dashboard',
+        description: err?.message || 'Please log in to continue.',
+        variant: 'destructive',
+      });
+      navigate('/candidate/login', { replace: true });
+    }
   };
 
   const goBack = () => {
-    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
+    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
