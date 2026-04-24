@@ -54,6 +54,64 @@ const BookSlot = () => {
   // Quick filters for the time-slot dropdowns
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
   const [granularity, setGranularity] = useState<Granularity>(30);
+
+  // Timezone selection — defaults to the browser's detected zone, falls back to IST
+  const detectedTimezone =
+    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) ||
+    "Asia/Kolkata";
+  const [timezone, setTimezone] = useState<string>(detectedTimezone);
+
+  const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
+    { value: "Asia/Kolkata", label: "India Standard Time (IST, UTC+5:30)" },
+    { value: "Asia/Dubai", label: "Gulf Standard Time (GST, UTC+4:00)" },
+    { value: "Asia/Singapore", label: "Singapore Time (SGT, UTC+8:00)" },
+    { value: "Asia/Tokyo", label: "Japan Standard Time (JST, UTC+9:00)" },
+    { value: "Australia/Sydney", label: "Australian Eastern Time (AEST/AEDT)" },
+    { value: "Europe/London", label: "United Kingdom (GMT/BST)" },
+    { value: "Europe/Berlin", label: "Central European Time (CET/CEST)" },
+    { value: "Europe/Paris", label: "Central European — Paris (CET/CEST)" },
+    { value: "America/New_York", label: "Eastern Time — New York (ET)" },
+    { value: "America/Chicago", label: "Central Time — Chicago (CT)" },
+    { value: "America/Denver", label: "Mountain Time — Denver (MT)" },
+    { value: "America/Los_Angeles", label: "Pacific Time — Los Angeles (PT)" },
+    { value: "America/Sao_Paulo", label: "Brasília Time (BRT)" },
+    { value: "UTC", label: "Coordinated Universal Time (UTC)" },
+  ];
+  const timezoneChoices = TIMEZONE_OPTIONS.some((t) => t.value === detectedTimezone)
+    ? TIMEZONE_OPTIONS
+    : [{ value: detectedTimezone, label: `${detectedTimezone} (detected)` }, ...TIMEZONE_OPTIONS];
+
+  // Friendly TZ abbreviation like "IST" / "PDT" / "GMT+5:30" for the chosen zone+date
+  const getTimezoneAbbr = (date: Date, tz: string): string => {
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        timeZoneName: "short",
+      }).formatToParts(date);
+      return parts.find((p) => p.type === "timeZoneName")?.value || tz;
+    } catch {
+      return tz;
+    }
+  };
+
+  // Format a "YYYY-MM-DD" + "HH:mm" wall-clock pair into a confirmation label,
+  // appending the abbreviation for the user's selected timezone.
+  const formatBookedDateTime = (dateStr: string, timeStr: string, tz: string) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const [hh, mm] = timeStr.split(":").map(Number);
+    const reference = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0);
+    const dateLabel = reference.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    const h = hh || 0;
+    const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    const ampm = h < 12 ? "AM" : "PM";
+    const timeLabel = `${displayHour}:${(mm || 0).toString().padStart(2, "0")} ${ampm}`;
+    return { dateLabel, timeLabel, tzAbbr: getTimezoneAbbr(reference, tz) };
+  };
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
@@ -353,18 +411,27 @@ const BookSlot = () => {
                   <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
                     <Calendar className="h-4 w-4" />
                     <span className="text-sm font-semibold">
-                      {demoDate ? new Date(demoDate).toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : ""}
+                      {demoDate
+                        ? formatBookedDateTime(demoDate, "00:00", timezone).dateLabel
+                        : ""}
                     </span>
                   </div>
-                  {preferredSlots.map((slot, i) => (
-                    <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
-                      <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {getTimeSlots().find((s) => s.value === slot.time)?.label || slot.time}
-                      </span>
-                    </div>
-                  ))}
+                  {preferredSlots.map((slot, i) => {
+                    const formatted = formatBookedDateTime(slot.date, slot.time, timezone);
+                    return (
+                      <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
+                        <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          {formatted.timeLabel}{" "}
+                          <span className="text-xs text-blue-600">({formatted.tzAbbr})</span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <p className="text-[11px] text-muted-foreground pt-1">
+                    Times shown in <strong>{timezone}</strong>
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   📧 The employer will review your preferred timings and confirm one. You'll receive an email once confirmed.
@@ -377,23 +444,26 @@ const BookSlot = () => {
                   Your <strong>{stageName}</strong> has been scheduled for:
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-center gap-2 text-blue-700">
-                    <Calendar className="h-4 w-4" />
-                    <span className="font-medium">
-                      {new Date(selectedDate).toLocaleDateString("en-IN", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-blue-700">
-                    <Clock className="h-4 w-4" />
-                    <span className="font-medium">
-                      {getTimeSlots().find((s) => s.value === selectedTime)?.label || selectedTime} IST
-                    </span>
-                  </div>
+                  {(() => {
+                    const f = formatBookedDateTime(selectedDate, selectedTime, timezone);
+                    return (
+                      <>
+                        <div className="flex items-center justify-center gap-2 text-blue-700">
+                          <Calendar className="h-4 w-4" />
+                          <span className="font-medium">{f.dateLabel}</span>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 text-blue-700">
+                          <Clock className="h-4 w-4" />
+                          <span className="font-medium">
+                            {f.timeLabel} <span className="text-sm text-blue-600">({f.tzAbbr})</span>
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground pt-1 text-center">
+                          Time shown in <strong>{timezone}</strong>
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
                 {stageName.toLowerCase().includes("hr") ? (
                   <p className="text-sm text-muted-foreground">
@@ -451,6 +521,30 @@ const BookSlot = () => {
                 {candidateInfo?.jobTitle} at {candidateInfo?.companyName}
               </span>
             </div>
+          </div>
+
+          {/* Timezone Selector — applies to both single-slot and multi-slot flows */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Clock className="h-4 w-4 text-indigo-600" />
+              Your Timezone *
+            </label>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger aria-label="Select your timezone">
+                <SelectValue placeholder="Choose your timezone" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {timezoneChoices.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Slot times below are interpreted in this timezone — the confirmation will show
+              the booked time as <strong>{getTimezoneAbbr(new Date(), timezone)}</strong>.
+            </p>
           </div>
 
           {isMultiSlotStage ? (
