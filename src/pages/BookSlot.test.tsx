@@ -109,6 +109,24 @@ const openSelectAndPick = async (
   await user.click(option);
 };
 
+/**
+ * Radix Select triggers don't get a label association, so we look up the
+ * trigger button by the placeholder text rendered inside <SelectValue>.
+ */
+const triggerByPlaceholder = (placeholder: string | RegExp): HTMLElement => {
+  const placeholderEl = screen.getByText(placeholder);
+  const trigger = placeholderEl.closest('[role="combobox"]') as HTMLElement | null;
+  if (!trigger) throw new Error(`No combobox trigger for placeholder: ${placeholder}`);
+  return trigger;
+};
+
+const allTriggersByPlaceholder = (placeholder: RegExp): HTMLElement[] => {
+  return screen
+    .getAllByText(placeholder)
+    .map((el) => el.closest('[role="combobox"]') as HTMLElement | null)
+    .filter((el): el is HTMLElement => Boolean(el));
+};
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
