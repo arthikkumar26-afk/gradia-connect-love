@@ -160,23 +160,70 @@ const EmployerSignup = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Helpers — kept inside the component so they share state.
+  // NOTE: validation runs BEFORE we ever hit Supabase, so validation failures
+  // can never count against the email-send rate limit upstream.
+  const isNetErr = (msg?: string) =>
+    !!msg && (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("TypeError") || msg.includes("timed out"));
+
+  // Supabase returns the email-send rate limit as either:
+  //   - status 429 with body { code: "over_email_send_rate_limit", message: "..." }
+  //   - error message containing "email rate limit exceeded" / "for security purposes" / "rate limit"
+  // and often includes a hint like "you can only request this after 23 seconds".
+  const isRateLimitErr = (err: any) => {
+    const msg = (err?.message || "").toLowerCase();
+    const code = (err?.code || "").toLowerCase();
+    const status = err?.status;
+    return (
+      status === 429 ||
+      code.includes("over_email_send_rate") ||
+      code.includes("rate_limit") ||
+      msg.includes("email rate limit") ||
+      msg.includes("rate limit") ||
+      msg.includes("for security purposes") ||
+      msg.includes("only request this after")
+    );
+  };
+
+  // Pull the retry-after seconds out of the Supabase error message.
+  // Falls back to 60s if no number is present.
+  const getRetryAfterSeconds = (err: any): number => {
+    const msg = err?.message || "";
+    const match =
+      msg.match(/after\s+(\d+)\s*seconds?/i) ||
+      msg.match(/in\s+(\d+)\s*seconds?/i) ||
+      msg.match(/(\d+)\s*seconds?/i);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (!Number.isNaN(n) && n > 0) return Math.min(n, 600); // cap at 10 min
+    }
+    return 60;
+  };
+
+  const formatRetryWindow = (seconds: number) => {
+    if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
+    const mins = Math.ceil(seconds / 60);
+    return `${mins} minute${mins === 1 ? "" : "s"}`;
+  };
+
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Validation runs first — failures here return early and never call Supabase,
+    // so a user fixing form errors won't be penalised by the email rate limit.
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
     setRetryError(null);
-    
+
     try {
       const redirectUrl = `${window.location.origin}/employer/signup`;
-      
-      const isNetErr = (msg?: string) => 
-        msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("TypeError") || msg?.includes("timed out");
 
-      // Sign up with retry + timeout
+      // Sign up with retry + timeout. We ONLY retry on transient network errors.
+      // Rate-limit (429) and "already registered" responses are terminal — retrying
+      // them would just deepen the rate-limit window for the user.
       let authData: any = null;
       let authError: any = null;
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -200,7 +247,10 @@ const EmployerSignup = () => {
           const result = await Promise.race([signupPromise, timeoutPromise]);
           authData = result.data;
           authError = result.error;
-          if (!authError || !isNetErr(authError.message)) break;
+          // Stop retrying immediately on success or any non-network error
+          // (rate limits, duplicate email, validation, etc. should NOT be retried).
+          if (!authError || (!isNetErr(authError.message) && !isRateLimitErr(authError))) break;
+          if (isRateLimitErr(authError)) break;
           console.warn(`Employer signup attempt ${attempt + 1} failed (network):`, authError.message);
         } catch (err: any) {
           authError = err;
@@ -212,6 +262,22 @@ const EmployerSignup = () => {
 
       if (authError && !authData?.user) {
         const msg = authError.message || '';
+
+        // Surface email rate limit as a friendly, actionable message with a clear
+        // retry window. Logged for debugging; the user sees a calm explanation.
+        if (isRateLimitErr(authError)) {
+          const retryAfter = getRetryAfterSeconds(authError);
+          const friendly = `Too many signup attempts for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
+          console.warn("[employer-signup] rate limit triggered", { email, retryAfter, raw: msg });
+          setRetryError(friendly);
+          toast({
+            title: "Please wait a moment",
+            description: friendly,
+            variant: "destructive",
+          });
+          return;
+        }
+
         if (msg.includes("already registered") || msg.includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
         } else if (isNetErr(msg)) {
@@ -273,6 +339,15 @@ const EmployerSignup = () => {
 
       setCurrentStep('benefits');
     } catch (error: any) {
+      // Catch-all: also check for rate limit here in case the error escaped the inner branch.
+      if (isRateLimitErr(error)) {
+        const retryAfter = getRetryAfterSeconds(error);
+        const friendly = `Too many signup attempts for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
+        console.warn("[employer-signup] rate limit triggered (catch)", { email, retryAfter, raw: error.message });
+        setRetryError(friendly);
+        toast({ title: "Please wait a moment", description: friendly, variant: "destructive" });
+        return;
+      }
       const isNetworkError = error.name === "TypeError" || error.message?.includes("Failed to fetch") || error.message?.includes("NetworkError") || error.message?.includes("timed out");
       if (isNetworkError) {
         setRetryError("Network issue detected. Please check your internet connection and try again.");
