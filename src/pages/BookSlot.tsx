@@ -577,18 +577,78 @@ const BookSlot = () => {
               <Clock className="h-4 w-4 text-indigo-600" />
               Your Timezone *
             </label>
-            <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger aria-label="Select your timezone">
-                <SelectValue placeholder="Choose your timezone" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {timezoneChoices.map((tz) => (
-                  <SelectItem key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={tzPickerOpen} onOpenChange={setTzPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-label="Select your timezone"
+                  aria-expanded={tzPickerOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  <span className="truncate text-left">
+                    {timezoneChoices.find((tz) => tz.value === timezone)?.label || timezone}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0 z-[1500]"
+                align="start"
+              >
+                <Command
+                  filter={(value, search) => {
+                    // Match either the IANA id or the curated label, case-insensitively.
+                    const tz = timezoneChoices.find((t) => t.value === value);
+                    const haystack = `${value} ${tz?.label ?? ""}`.toLowerCase();
+                    return haystack.includes(search.toLowerCase()) ? 1 : 0;
+                  }}
+                >
+                  <CommandInput placeholder="Search timezone (e.g. Vancouver, GMT, UTC)…" />
+                  <CommandList className="max-h-[280px]">
+                    <CommandEmpty>No matching timezone.</CommandEmpty>
+                    {(["detected", "common", "all"] as const).map((groupKey) => {
+                      const items = timezoneChoices.filter((tz) => tz.group === groupKey);
+                      if (items.length === 0) return null;
+                      const heading =
+                        groupKey === "detected"
+                          ? "Detected"
+                          : groupKey === "common"
+                            ? "Common timezones"
+                            : "All IANA timezones";
+                      return (
+                        <CommandGroup key={groupKey} heading={heading}>
+                          {items.map((tz) => (
+                            <CommandItem
+                              key={tz.value}
+                              value={tz.value}
+                              onSelect={(val) => {
+                                setTimezone(val);
+                                setTzPickerOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  timezone === tz.value ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              <span className="flex-1 truncate">{tz.label}</span>
+                              {tz.label !== tz.value && (
+                                <span className="ml-2 text-[10px] text-muted-foreground">
+                                  {tz.value}
+                                </span>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      );
+                    })}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <p className="text-[11px] text-muted-foreground">
               Slot times below are interpreted in this timezone — the confirmation will show
               the booked time as <strong>{getTimezoneAbbr(new Date(), timezone)}</strong>.
