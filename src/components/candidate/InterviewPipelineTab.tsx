@@ -1673,6 +1673,94 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                           );
                         })()}
                       </div>
+
+                      {/* Invitation / test-link delivery status — only shown for
+                          stages that have an interview_event (i.e. a scheduled
+                          test/interview where an email invitation makes sense).
+                          Hidden for completed stages and for feedback stages
+                          which don't email the candidate. */}
+                      {event && !isFeedbackStage && status !== 'completed' && (() => {
+                        const invitation = invitationsByEventId[event.id];
+                        const isResending = resendingEventId === event.id;
+                        // Treat a stalled `pending` (>5 min old with no
+                        // sent_at) as effectively failed so the candidate
+                        // isn't left waiting forever for a stuck email.
+                        const isStalledPending =
+                          invitation?.email_status === 'pending' &&
+                          !invitation.email_sent_at &&
+                          (Date.now() - new Date(invitation.created_at).getTime()) > 5 * 60 * 1000;
+                        const effectiveStatus: 'sent' | 'pending' | 'failed' | 'none' =
+                          !invitation
+                            ? 'none'
+                            : invitation.email_status === 'sent'
+                            ? 'sent'
+                            : isStalledPending || invitation.email_status === 'failed'
+                            ? 'failed'
+                            : 'pending';
+                        const showResend = effectiveStatus === 'failed' || effectiveStatus === 'none';
+                        return (
+                          <div
+                            className="mt-2 flex flex-wrap items-center gap-2"
+                            // Stop the parent stage card's expand-on-click handler
+                            // from firing when the candidate clicks Resend.
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {effectiveStatus === 'sent' && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30 text-[10px] gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Email sent
+                                {invitation?.email_sent_at && (
+                                  <span className="text-muted-foreground font-normal ml-1">
+                                    {new Date(invitation.email_sent_at).toLocaleString([], {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                )}
+                              </Badge>
+                            )}
+                            {effectiveStatus === 'pending' && (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px] gap-1">
+                                <Clock className="h-3 w-3" />
+                                Sending email…
+                              </Badge>
+                            )}
+                            {effectiveStatus === 'failed' && (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30 text-[10px] gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                Email not delivered
+                              </Badge>
+                            )}
+                            {effectiveStatus === 'none' && status === 'scheduled' && (
+                              <Badge variant="outline" className="bg-muted text-muted-foreground text-[10px] gap-1">
+                                <Mail className="h-3 w-3" />
+                                Invitation not sent yet
+                              </Badge>
+                            )}
+                            {showResend && (status === 'scheduled' || status === 'current') && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px] gap-1"
+                                disabled={isResending}
+                                onClick={() =>
+                                  handleResendInvitation(
+                                    currentInterview.id,
+                                    stage.name,
+                                    event.id,
+                                    event.scheduled_at,
+                                  )
+                                }
+                              >
+                                <RefreshCw className={`h-3 w-3 ${isResending ? 'animate-spin' : ''}`} />
+                                {isResending ? 'Resending…' : 'Resend link'}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Status badge + expand arrow */}
