@@ -242,6 +242,21 @@ export const JobApplicationFlow = ({
       };
     }
 
+    if (status === 409 || rawMsg.includes('already applied') || rawMsg.includes('duplicate')) {
+      return {
+        category: 'already_applied',
+        title: 'Already applied',
+        message: 'You have already applied for this job with this account.',
+        steps: [
+          'Open your Applications tab to track the current status',
+          'Use a different job posting if you want to apply elsewhere',
+        ],
+        resumeUploaded,
+        canRetry: false,
+        canSubmitWithoutAI: false,
+      };
+    }
+
     if (status === 401 || rawMsg.includes('not authenticated') || rawMsg.includes('unauthor')) {
       return {
         category: 'auth',
@@ -250,6 +265,21 @@ export const JobApplicationFlow = ({
         steps: [
           "Sign in with your candidate account",
           "Return to this job and click Apply",
+        ],
+        resumeUploaded,
+        canRetry: false,
+        canSubmitWithoutAI: false,
+      };
+    }
+
+    if (status === 422 || rawMsg.includes('profile incomplete') || rawMsg.includes('missing profile')) {
+      return {
+        category: 'profile_incomplete',
+        title: 'Profile incomplete',
+        message: 'Please complete your candidate profile before applying for this job.',
+        steps: [
+          'Add your full name, email, and basic profile details',
+          'Return here and submit your application again',
         ],
         resumeUploaded,
         canRetry: false,
