@@ -384,6 +384,25 @@ Provide your analysis using the suggest_analysis function.`;
       console.error('Failed to trigger post-application pipeline:', err);
     }
 
+
+    // Write audit log entry for this attempt (success or fallback)
+    const applicationState = usedFallbackAnalysis ? 'manual_review' : 'ai_reviewed';
+    const { error: auditErr } = await supabase
+      .from('resume_analysis_audit_logs')
+      .insert({
+        candidate_id: actualCandidateId,
+        candidate_email: candidateProfile.email || null,
+        job_id: jobId,
+        job_title: jobDetails.job_title || null,
+        http_status: aiHttpStatus,
+        fallback_reason: fallbackReason,
+        used_fallback: usedFallbackAnalysis,
+        application_state: applicationState,
+        overall_score: enrichedAnalysis.overall_score ?? null,
+        error_message: aiErrorMessage,
+      });
+    if (auditErr) console.error('Failed to write audit log:', auditErr);
+
     return new Response(JSON.stringify({
       success: true,
       interviewCandidateId: interviewCandidate.id,
@@ -391,7 +410,7 @@ Provide your analysis using the suggest_analysis function.`;
       emailSent: true,
       nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking',
       fallback: usedFallbackAnalysis,
-      status: usedFallbackAnalysis ? 'manual_review' : 'ai_reviewed'
+      status: applicationState
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
