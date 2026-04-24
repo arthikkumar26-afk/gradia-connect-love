@@ -654,6 +654,26 @@ export const JobApplicationFlow = ({
         setEmailSent(analysisResult?.emailSent || false);
         setNextStage(analysisResult?.nextStage || 'AI Phone Interview');
 
+        // Surface AI parse warning so candidate knows analysis was a fallback
+        if (analysisResult?.parse_warning) {
+          toast.warning('Analysis used a safe default', {
+            description: analysisResult.parse_warning,
+          });
+        } else if (analysisResult?.fallback && analysisResult?.fallback_reason) {
+          const reason = analysisResult.fallback_reason as string;
+          const reasonLabel: Record<string, string> = {
+            ai_credits: 'AI scoring is temporarily out of credits — your application is queued for manual review.',
+            ai_rate_limit: 'AI scoring service is busy — your application is queued for manual review.',
+            ai_server: 'AI scoring service had a temporary error — your application is queued for manual review.',
+            ai_other: 'AI scoring service was unavailable — your application is queued for manual review.',
+            ai_exception: 'AI scoring failed unexpectedly — your application is queued for manual review.',
+            parse_failed: 'AI returned an unreadable response — your application is queued for manual review.',
+          };
+          toast.info('Submitted for manual review', {
+            description: reasonLabel[reason] || 'Your application was saved and will be reviewed manually.',
+          });
+        }
+
         const desiredStatus = analysisResult?.status === 'manual_review' ? 'in_review' : 'in_review';
         const { error: insertError } = await supabase
           .from('applications')
