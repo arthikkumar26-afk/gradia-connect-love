@@ -274,6 +274,25 @@ const BookSlot = () => {
       }
       setInviteStatus("sent");
       setInviteSentAt(new Date());
+      // Fetch the actual meeting/test link the edge function just stored.
+      // We display it inline on the confirmation screen so the candidate can
+      // start the test immediately even if the email is delayed or filtered.
+      // RLS policy "Candidates can view their own invitations" allows this.
+      try {
+        const { data: invitationRow } = await supabase
+          .from("interview_invitations")
+          .select("meeting_link, interview_event_id, interview_events!inner(interview_candidate_id)")
+          .eq("interview_events.interview_candidate_id", candidateId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (invitationRow?.meeting_link) {
+          setInterviewLink(invitationRow.meeting_link);
+        }
+      } catch (linkErr) {
+        // Not fatal — the email itself was sent. Just log.
+        console.warn("Could not fetch meeting link for inline display", linkErr);
+      }
       return { ok: true };
     } catch (err: any) {
       const msg = err?.message || "Failed to send invitation email.";
