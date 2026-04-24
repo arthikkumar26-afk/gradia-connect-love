@@ -1657,8 +1657,8 @@ const CandidateSignup = () => {
       {currentStep === 'benefits' && renderBenefitsStep()}
       {currentStep === 'agreement' && renderAgreementStep()}
       {currentStep === 'terms' && renderTermsStep()}
-      </div>
     </div>
+
   );
 };
 
