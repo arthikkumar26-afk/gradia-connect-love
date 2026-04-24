@@ -411,18 +411,27 @@ const BookSlot = () => {
                   <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
                     <Calendar className="h-4 w-4" />
                     <span className="text-sm font-semibold">
-                      {demoDate ? new Date(demoDate).toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric", year: "numeric" }) : ""}
+                      {demoDate
+                        ? formatBookedDateTime(demoDate, "00:00", timezone).dateLabel
+                        : ""}
                     </span>
                   </div>
-                  {preferredSlots.map((slot, i) => (
-                    <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
-                      <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm font-medium">
-                        {getTimeSlots().find((s) => s.value === slot.time)?.label || slot.time}
-                      </span>
-                    </div>
-                  ))}
+                  {preferredSlots.map((slot, i) => {
+                    const formatted = formatBookedDateTime(slot.date, slot.time, timezone);
+                    return (
+                      <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
+                        <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm font-medium">
+                          {formatted.timeLabel}{" "}
+                          <span className="text-xs text-blue-600">({formatted.tzAbbr})</span>
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <p className="text-[11px] text-muted-foreground pt-1">
+                    Times shown in <strong>{timezone}</strong>
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   📧 The employer will review your preferred timings and confirm one. You'll receive an email once confirmed.
