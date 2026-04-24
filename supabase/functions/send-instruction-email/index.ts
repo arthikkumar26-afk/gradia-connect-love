@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { safeErrorMessage } from "../_shared/safeError.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -718,7 +719,7 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in send-instruction-email:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: safeErrorMessage(error) }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }

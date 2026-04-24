@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { safeErrorMessage } from "../_shared/safeError.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: safeErrorMessage(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

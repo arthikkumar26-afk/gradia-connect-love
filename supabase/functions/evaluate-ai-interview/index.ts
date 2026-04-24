@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { safeErrorMessage } from "../_shared/safeError.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -162,7 +163,7 @@ Return ONLY a valid JSON object in this exact format:
 
   } catch (error: any) {
     console.error("Error evaluating interview:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: safeErrorMessage(error) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
