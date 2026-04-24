@@ -345,6 +345,7 @@ const BookSlot = () => {
     const result = isWrittenTest
       ? await sendInvitationEmail({
           functionName: "send-pipeline-email",
+          expectedStageName: stageName,
           body: {
             interviewCandidateId: candidateId,
             stageName: "Written Test",
@@ -355,6 +356,7 @@ const BookSlot = () => {
         })
       : await sendInvitationEmail({
           functionName: "send-interview-invitation",
+          expectedStageName: stageName,
           body: {
             interviewCandidateId: candidateId,
             stageName,
