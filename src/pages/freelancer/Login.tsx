@@ -167,13 +167,13 @@ const FreelancerLogin = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleResendVerification}
-                    disabled={resendCooldown > 0 || isResending}
+                    disabled={isResendDisabled}
                     className="mt-1"
                   >
                     {isResending
                       ? 'Sending…'
                       : resendCooldown > 0
-                        ? `Try again in ${formatRetryWindow(resendCooldown)}`
+                        ? `Try again in ${cooldownLabel}`
                         : 'Resend confirmation email'}
                   </Button>
                 </div>
