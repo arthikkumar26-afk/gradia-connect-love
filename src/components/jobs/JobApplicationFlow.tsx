@@ -674,23 +674,34 @@ export const JobApplicationFlow = ({
           });
         }
 
+        // Use upsert so we never lose an application row to a transient
+        // failure or duplicate-key race. The unique (job_id, candidate_id)
+        // constraint guarantees idempotency.
         const desiredStatus = analysisResult?.status === 'manual_review' ? 'in_review' : 'in_review';
         const { error: insertError } = await supabase
           .from('applications')
-          .insert({
-            candidate_id: user.id,
-            job_id: job.id,
-            cover_letter: coverLetter || null,
-            status: desiredStatus,
-          });
+          .upsert(
+            {
+              candidate_id: user.id,
+              job_id: job.id,
+              cover_letter: coverLetter || null,
+              status: desiredStatus,
+            },
+            { onConflict: 'job_id,candidate_id' },
+          );
 
-        if (insertError && !insertError.message?.toLowerCase().includes('duplicate')) {
-          throw {
-            __stage: 'analyze' as const,
-            __status: insertError.code === '23505' ? 409 : undefined,
-            __message: insertError.message,
-            original: insertError,
-          };
+        if (insertError) {
+          const msg = (insertError.message || '').toLowerCase();
+          const isDuplicate = msg.includes('duplicate') || insertError.code === '23505';
+          if (!isDuplicate) {
+            console.error('Failed to save application row:', insertError);
+            throw {
+              __stage: 'analyze' as const,
+              __status: insertError.code === '23514' ? 422 : undefined,
+              __message: insertError.message || 'Could not save application',
+              original: insertError,
+            };
+          }
         }
 
         try {
