@@ -502,6 +502,7 @@ const BookSlot = () => {
                       key={opt.key}
                       type="button"
                       onClick={() => setTimeOfDay(opt.key)}
+                      aria-pressed={timeOfDay === opt.key}
                       className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                         timeOfDay === opt.key
                           ? "bg-purple-600 text-white border-purple-600"
@@ -643,11 +644,54 @@ const BookSlot = () => {
               </div>
 
               {/* Time Selection */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4 text-blue-600" />
                   Select Time *
                 </label>
+
+                {/* Quick filters: time of day + granularity */}
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Filter:</span>
+                  {([
+                    { key: "all", label: "All (12 AM – 12 AM)" },
+                    { key: "morning", label: "🌅 Morning (12 AM – 12 PM)" },
+                    { key: "afternoon", label: "☀️ Afternoon (12 PM – 5 PM)" },
+                    { key: "evening", label: "🌙 Evening (5 PM – 12 AM)" },
+                  ] as { key: TimeOfDay; label: string }[]).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setTimeOfDay(opt.key)}
+                      aria-pressed={timeOfDay === opt.key}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        timeOfDay === opt.key
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <span className="mx-1 h-4 w-px bg-border" />
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Step:</span>
+                  {([15, 30] as Granularity[]).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGranularity(g)}
+                      aria-pressed={granularity === g}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        granularity === g
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {g} min
+                    </button>
+                  ))}
+                </div>
+
                 <Select value={selectedTime} onValueChange={setSelectedTime}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a time slot" />
