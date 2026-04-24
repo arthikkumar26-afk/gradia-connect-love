@@ -44,10 +44,36 @@ serve(async (req) => {
     // Get the form data with the file
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    
+
     if (!file) {
       return new Response(
         JSON.stringify({ error: "No file provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Reject screenshots / images outright — resumes must be PDF or Word docs.
+    const fileNameLower = (file.name || "").toLowerCase();
+    const mimeLower = (file.type || "").toLowerCase();
+    const isImage =
+      mimeLower.startsWith("image/") ||
+      fileNameLower.endsWith(".png") ||
+      fileNameLower.endsWith(".jpg") ||
+      fileNameLower.endsWith(".jpeg") ||
+      fileNameLower.endsWith(".gif") ||
+      fileNameLower.endsWith(".webp") ||
+      fileNameLower.endsWith(".heic") ||
+      fileNameLower.endsWith(".heif");
+    const allowedExt = [".pdf", ".doc", ".docx"];
+    const hasAllowedExt = allowedExt.some((ext) => fileNameLower.endsWith(ext));
+
+    if (isImage || !hasAllowedExt) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Screenshots and image files are not accepted. Please upload your resume as a PDF or Word document (.pdf, .doc, .docx).",
+          code: "invalid_resume_format",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
