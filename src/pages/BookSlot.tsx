@@ -20,6 +20,8 @@ import {
 } from "@/lib/scheduler/timeSlots";
 import {
   assertInvitationRoute,
+  assertInvitationDeliveryRoute,
+  buildInvitationDeliveryInvocation,
   type InvitationFunctionName,
 } from "@/lib/scheduler/invitationRoute";
 
@@ -274,6 +276,7 @@ const BookSlot = () => {
        * of silently never delivering a test link.
        */
       expectedStageName: string;
+      validateForDelivery?: boolean;
     },
   ): Promise<{ ok: boolean; error?: string }> => {
     // ── Pre-flight: assert the routing is correct for this stage ──
@@ -282,7 +285,10 @@ const BookSlot = () => {
     // confirmed, the candidate sees an actionable error, and we don't
     // silently drop the test-link email.
     try {
-      assertInvitationRoute(args.expectedStageName, args.functionName);
+      (args.validateForDelivery ? assertInvitationDeliveryRoute : assertInvitationRoute)(
+        args.expectedStageName,
+        args.functionName as any,
+      );
     } catch (routeErr: any) {
       const msg = routeErr?.message || "Booking aborted: invitation routing mismatch.";
       console.error("[invitation pre-flight] routing assertion failed", msg);
@@ -348,29 +354,18 @@ const BookSlot = () => {
   const handleResendInvitation = async () => {
     if (!candidateId || !selectedDate || !selectedTime) return;
     const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-    const isWrittenTest =
-      stageName.toLowerCase().includes("written") && !isFeedbackStage;
-    const result = isWrittenTest
-      ? await sendInvitationEmail({
-          functionName: "send-pipeline-email",
-          expectedStageName: stageName,
-          body: {
-            interviewCandidateId: candidateId,
-            stageName: "Written Test",
-            emailType: "interview_invitation",
-            triggerSource: "book-slot-resend",
-            scheduledDate: scheduledDateTime,
-          },
-        })
-      : await sendInvitationEmail({
-          functionName: "send-interview-invitation",
-          expectedStageName: stageName,
-          body: {
-            interviewCandidateId: candidateId,
-            stageName,
-            scheduledDate: scheduledDateTime,
-          },
-        });
+    const invocation = buildInvitationDeliveryInvocation({
+      interviewCandidateId: candidateId,
+      stageName,
+      scheduledDate: scheduledDateTime,
+      triggerSource: "book-slot-resend",
+    });
+    const result = await sendInvitationEmail({
+      functionName: invocation.functionName,
+      expectedStageName: stageName,
+      body: invocation.body,
+      validateForDelivery: true,
+    });
     if (result.ok) {
       toast.success("Invitation email resent. Please check your inbox.");
     } else {
