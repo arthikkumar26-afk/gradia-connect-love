@@ -148,3 +148,95 @@ export function assertInvitationRoute(
   }
   return route;
 }
+
+type DeliveryFunctionName = Extract<
+  InvitationFunctionName,
+  "send-pipeline-email" | "send-interview-invitation"
+>;
+
+export interface InvitationDeliveryRoute {
+  functionName: DeliveryFunctionName;
+  stageName: string;
+  emailType?: "interview_invitation";
+}
+
+export interface InvitationDeliveryInvocation {
+  functionName: DeliveryFunctionName;
+  body: Record<string, unknown>;
+  route: InvitationDeliveryRoute;
+}
+
+/**
+ * Resolve the correct sender for an already-scheduled interview/test link.
+ *
+ * This differs from booking-time routing:
+ * - Written Test invitations must still flow through the pipeline gateway
+ * - All other actual stage invitations (Technical Assessment, HR Round,
+ *   Segment Round, etc.) should call `send-interview-invitation`
+ */
+export function resolveInvitationDeliveryRoute(rawStageName: string): InvitationDeliveryRoute {
+  const stage = lower(rawStageName ?? "").trim();
+
+  if (stage.includes("written")) {
+    return {
+      functionName: "send-pipeline-email",
+      stageName: "Written Test",
+      emailType: "interview_invitation",
+    };
+  }
+
+  return {
+    functionName: "send-interview-invitation",
+    stageName: rawStageName,
+  };
+}
+
+export function assertInvitationDeliveryRoute(
+  stageName: string,
+  intendedFunctionName: DeliveryFunctionName,
+): InvitationDeliveryRoute {
+  const route = resolveInvitationDeliveryRoute(stageName);
+  if (route.functionName !== intendedFunctionName) {
+    throw new Error(
+      `Invitation delivery routing mismatch for stage "${stageName}": ` +
+        `expected "${route.functionName}" but flow is about to call "${intendedFunctionName}".`,
+    );
+  }
+  return route;
+}
+
+export function buildInvitationDeliveryInvocation(args: {
+  interviewCandidateId: string;
+  stageName: string;
+  scheduledDate: string;
+  meetingLink?: string;
+  triggerSource?: string;
+}): InvitationDeliveryInvocation {
+  const route = resolveInvitationDeliveryRoute(args.stageName);
+
+  if (route.functionName === "send-pipeline-email") {
+    return {
+      functionName: route.functionName,
+      route,
+      body: {
+        interviewCandidateId: args.interviewCandidateId,
+        stageName: route.stageName,
+        emailType: route.emailType,
+        triggerSource: args.triggerSource ?? "manual-invitation",
+        scheduledDate: args.scheduledDate,
+        ...(args.meetingLink ? { meetingLink: args.meetingLink } : {}),
+      },
+    };
+  }
+
+  return {
+    functionName: route.functionName,
+    route,
+    body: {
+      interviewCandidateId: args.interviewCandidateId,
+      stageName: route.stageName,
+      scheduledDate: args.scheduledDate,
+      ...(args.meetingLink ? { meetingLink: args.meetingLink } : {}),
+    },
+  };
+}
