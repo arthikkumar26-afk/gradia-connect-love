@@ -109,6 +109,24 @@ const openSelectAndPick = async (
   await user.click(option);
 };
 
+/**
+ * Radix Select triggers don't get a label association, so we look up the
+ * trigger button by the placeholder text rendered inside <SelectValue>.
+ */
+const triggerByPlaceholder = (placeholder: string | RegExp): HTMLElement => {
+  const placeholderEl = screen.getByText(placeholder);
+  const trigger = placeholderEl.closest('[role="combobox"]') as HTMLElement | null;
+  if (!trigger) throw new Error(`No combobox trigger for placeholder: ${placeholder}`);
+  return trigger;
+};
+
+const allTriggersByPlaceholder = (placeholder: RegExp): HTMLElement[] => {
+  return screen
+    .getAllByText(placeholder)
+    .map((el) => el.closest('[role="combobox"]') as HTMLElement | null)
+    .filter((el): el is HTMLElement => Boolean(el));
+};
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -118,8 +136,9 @@ beforeEach(() => {
   functionInvokes.length = 0;
   toastSuccess.mockClear();
   toastError.mockClear();
-  // Stable "today" so date labels are predictable
-  vi.useFakeTimers();
+  // Stable "today" so date labels are predictable. Use shouldAdvanceTime so
+  // pending microtasks (supabase mock promises, React effects) still resolve.
+  vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.setSystemTime(new Date("2026-04-24T09:00:00"));
 });
 
@@ -143,11 +162,11 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
     expect(screen.getByText("Test Candidate")).toBeInTheDocument();
 
     // Pick "Today" date
-    const dateTrigger = screen.getByRole("combobox", { name: /Select Date/i });
+    const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
     // Pick a specific time slot (10:30 AM) — must exist because slots are 24h
-    const timeTrigger = screen.getByRole("combobox", { name: /Select Time/i });
+    const timeTrigger = triggerByPlaceholder("Choose a time slot");
     await openSelectAndPick(user, timeTrigger, "10:30 AM");
 
     // Submit
@@ -185,7 +204,7 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
       expect(screen.getByText(/Book Your Technical Assessment Slot/i)).toBeInTheDocument(),
     );
 
-    const timeTrigger = screen.getByRole("combobox", { name: /Select Time/i });
+    const timeTrigger = triggerByPlaceholder("Choose a time slot");
     await user.click(timeTrigger);
 
     expect(await screen.findByRole("option", { name: "12:00 AM" })).toBeInTheDocument();
@@ -208,7 +227,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     );
 
     // Pick a date
-    const dateTrigger = screen.getByRole("combobox", { name: /Select Date/i });
+    const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
     // Submit button should be disabled until we pick 3 distinct times
@@ -216,9 +235,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     expect(submit).toBeDisabled();
 
     // Pick 3 different times
-    const timeTriggers = screen.getAllByRole("combobox").filter((el) =>
-      /Choose time/i.test(el.textContent || ""),
-    );
+    const timeTriggers = allTriggersByPlaceholder(/^Choose time \d$/);
     expect(timeTriggers).toHaveLength(3);
     await openSelectAndPick(user, timeTriggers[0], "9:00 AM");
     await openSelectAndPick(user, timeTriggers[1], "2:00 PM");
@@ -265,12 +282,10 @@ describe("BookSlot — multi-slot HR Round flow", () => {
       expect(screen.getByText(/Book Your Demo Round Slot/i)).toBeInTheDocument(),
     );
 
-    const dateTrigger = screen.getByRole("combobox", { name: /Select Date/i });
+    const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
-    const timeTriggers = screen.getAllByRole("combobox").filter((el) =>
-      /Choose time/i.test(el.textContent || ""),
-    );
+    const timeTriggers = allTriggersByPlaceholder(/^Choose time \d$/);
     await openSelectAndPick(user, timeTriggers[0], "10:00 AM");
     await openSelectAndPick(user, timeTriggers[1], "10:00 AM");
     await openSelectAndPick(user, timeTriggers[2], "10:00 AM");
