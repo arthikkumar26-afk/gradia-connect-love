@@ -31,6 +31,14 @@ const BookSlot = () => {
   const [isBooking, setIsBooking] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
   const [loading, setLoading] = useState(true);
+  // Invitation delivery status shown on the confirmation screen.
+  // - idle: not applicable (e.g. multi-slot stage where employer confirms first)
+  // - sending: resend in flight
+  // - sent: edge function returned success
+  // - failed: edge function errored — user can retry
+  const [inviteStatus, setInviteStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+  const [inviteSentAt, setInviteSentAt] = useState<Date | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
   const [candidateInfo, setCandidateInfo] = useState<{
     name: string;
     email: string;
