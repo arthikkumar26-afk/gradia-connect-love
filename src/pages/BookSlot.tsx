@@ -258,8 +258,33 @@ const BookSlot = () => {
    * remember to update the same three pieces of state.
    */
   const sendInvitationEmail = async (
-    args: { functionName: string; body: Record<string, unknown> },
+    args: {
+      functionName: InvitationFunctionName;
+      body: Record<string, unknown>;
+      /**
+       * The stage the candidate is booking for. Used by
+       * `assertInvitationRoute` to verify we're calling the RIGHT edge
+       * function for this stage before we hit the network. Required so
+       * regressions in routing fail loudly at the booking step instead
+       * of silently never delivering a test link.
+       */
+      expectedStageName: string;
+    },
   ): Promise<{ ok: boolean; error?: string }> => {
+    // ── Pre-flight: assert the routing is correct for this stage ──
+    // If a future change wires "Technical Assessment" through the Written
+    // Test pipeline (or vice-versa), this throws BEFORE the booking is
+    // confirmed, the candidate sees an actionable error, and we don't
+    // silently drop the test-link email.
+    try {
+      assertInvitationRoute(args.expectedStageName, args.functionName);
+    } catch (routeErr: any) {
+      const msg = routeErr?.message || "Booking aborted: invitation routing mismatch.";
+      console.error("[invitation pre-flight] routing assertion failed", msg);
+      setInviteStatus("failed");
+      setInviteError(msg);
+      return { ok: false, error: msg };
+    }
     setInviteStatus("sending");
     setInviteError(null);
     try {
