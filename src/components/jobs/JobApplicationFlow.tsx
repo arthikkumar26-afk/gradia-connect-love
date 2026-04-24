@@ -437,12 +437,22 @@ export const JobApplicationFlow = ({
 
       setAnalysisSubStep('analyzing');
 
-      // Step 2: Upload resume to storage
-      let resumeUrl: string | null = null;
-      try {
-        resumeUrl = await uploadResumeToStorage();
-      } catch (uploadErr) {
-        console.log('Resume upload failed, continuing without URL:', uploadErr);
+      // Step 2: Upload resume to storage. Reuse cached URL on retries.
+      let resumeUrl: string | null = uploadedResumeUrlRef.current;
+      if (!resumeUrl) {
+        try {
+          resumeUrl = await uploadResumeToStorage();
+          uploadedResumeUrlRef.current = resumeUrl;
+        } catch (uploadErr) {
+          console.error('Resume upload failed:', uploadErr);
+          const info = await readFunctionError(uploadErr);
+          throw {
+            __stage: 'upload' as const,
+            __status: info.status,
+            __message: info.message,
+            original: uploadErr,
+          };
+        }
       }
 
       // Step 3: Get user profile for fallback data
@@ -493,13 +503,12 @@ export const JobApplicationFlow = ({
         if (analysisError) {
           const info = await readFunctionError(analysisError);
           console.error('Analysis error:', analysisError, info);
-          // Re-throw with a richer message so the catch block can branch on it.
-          const tag = info.status === 402
-            ? 'credits'
-            : info.status === 429
-              ? 'Rate limit'
-              : '';
-          throw new Error(`${tag} ${info.message || analysisError.message || 'AI analysis failed'}`.trim());
+          throw {
+            __stage: 'analyze' as const,
+            __status: info.status,
+            __message: info.message,
+            original: analysisError,
+          };
         }
 
         setAnalysisSubStep('scheduling');
