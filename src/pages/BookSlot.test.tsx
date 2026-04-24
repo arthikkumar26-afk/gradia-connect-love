@@ -204,7 +204,7 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
       expect(screen.getByText(/Book Your Technical Assessment Slot/i)).toBeInTheDocument(),
     );
 
-    const timeTrigger = screen.getByRole("combobox", { name: /Select Time/i });
+    const timeTrigger = triggerByPlaceholder("Choose a time slot");
     await user.click(timeTrigger);
 
     expect(await screen.findByRole("option", { name: "12:00 AM" })).toBeInTheDocument();
