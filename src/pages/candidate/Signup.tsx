@@ -979,9 +979,6 @@ const CandidateSignup = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSignupSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
         <form onSubmit={handleSignupSubmit} className="space-y-5" noValidate>
           {/* Aggregated, polite live region. Announces every validation error
               after each submit attempt — re-announces on repeat submits via
