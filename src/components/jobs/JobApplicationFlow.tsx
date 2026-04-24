@@ -133,6 +133,8 @@ export const JobApplicationFlow = ({
       }
       setResumeFile(file);
       setError(null);
+      // New file → invalidate any cached upload URL from a previous attempt.
+      uploadedResumeUrlRef.current = null;
     }
   };
 
