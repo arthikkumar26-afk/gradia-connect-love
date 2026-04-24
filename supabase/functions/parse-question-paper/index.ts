@@ -55,7 +55,7 @@ serve(async (req) => {
           // For docx, try to extract from XML content
           const textMatches = textContent.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
           if (textMatches && textMatches.length > 0) {
-            textContent = textMatches.map(m => m.replace(/<[^>]+>/g, '')).join(' ');
+            textContent = textMatches.map((m: string) => m.replace(/<[^>]+>/g, '')).join(' ');
             console.log('Extracted text from DOCX XML, length:', textContent.length);
           } else {
             console.log('Word file text (raw), length:', textContent.length);
