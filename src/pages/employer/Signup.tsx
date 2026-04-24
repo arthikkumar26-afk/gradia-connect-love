@@ -149,16 +149,7 @@ const EmployerSignup = () => {
     }
   }, [isAuthenticated, currentStep]);
 
-  // Tick down the resend cooldown every second. The button stays disabled
-  // until this reaches 0, so we never even attempt a resend during the
-  // upstream rate-limit window.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
+  // (Resend cooldown ticker is owned by `useResendConfirmation`.)
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -197,45 +188,13 @@ const EmployerSignup = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Helpers — kept inside the component so they share state.
+  // Helpers — only the network-error sniff is local. Rate-limit detection,
+  // retry-window extraction, and the friendly formatter all come from
+  // `@/lib/auth/resendCooldown` so every flow shares the same contract.
   // NOTE: validation runs BEFORE we ever hit Supabase, so validation failures
   // can never count against the email-send rate limit upstream.
   const isNetErr = (msg?: string) =>
     !!msg && (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("TypeError") || msg.includes("timed out"));
-
-  // Supabase returns the email-send rate limit as either:
-  //   - status 429 with body { code: "over_email_send_rate_limit", message: "..." }
-  //   - error message containing "email rate limit exceeded" / "for security purposes" / "rate limit"
-  // and often includes a hint like "you can only request this after 23 seconds".
-  const isRateLimitErr = (err: any) => {
-    const msg = (err?.message || "").toLowerCase();
-    const code = (err?.code || "").toLowerCase();
-    const status = err?.status;
-    return (
-      status === 429 ||
-      code.includes("over_email_send_rate") ||
-      code.includes("rate_limit") ||
-      msg.includes("email rate limit") ||
-      msg.includes("rate limit") ||
-      msg.includes("for security purposes") ||
-      msg.includes("only request this after")
-    );
-  };
-
-  // Pull the retry-after seconds out of the Supabase error message.
-  // Falls back to 60s if no number is present.
-  const getRetryAfterSeconds = (err: any): number => {
-    const msg = err?.message || "";
-    const match =
-      msg.match(/after\s+(\d+)\s*seconds?/i) ||
-      msg.match(/in\s+(\d+)\s*seconds?/i) ||
-      msg.match(/(\d+)\s*seconds?/i);
-    if (match) {
-      const n = parseInt(match[1], 10);
-      if (!Number.isNaN(n) && n > 0) return Math.min(n, 600); // cap at 10 min
-    }
-    return 60;
-  };
 
   const formatRetryWindow = (seconds: number) => {
     if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
