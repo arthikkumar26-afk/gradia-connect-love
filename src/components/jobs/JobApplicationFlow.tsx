@@ -867,6 +867,7 @@ export const JobApplicationFlow = ({
     setError(null);
     setEmailSent(false);
     setNextStage('AI Phone Interview');
+    setSubmissionStatus(null);
     uploadedResumeUrlRef.current = null;
     onOpenChange(false);
   };
