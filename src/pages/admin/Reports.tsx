@@ -398,6 +398,40 @@ const Reports = () => {
                   </Card>
                 </div>
 
+                {/* Audit log viewers */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <Link to="/admin/resume-analysis-audit" className="block">
+                    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-3 rounded-lg bg-primary/10">
+                          <FileText className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold">Resume Analysis Audit</p>
+                          <p className="text-xs text-muted-foreground">
+                            Every AI resume-analysis attempt — HTTP status, fallback reason (402/429/5xx), and resulting application state.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                  <Link to="/admin/audit-logs" className="block">
+                    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer h-full">
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <div className="p-3 rounded-lg bg-muted">
+                          <FileText className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold">General Admin Audit Logs</p>
+                          <p className="text-xs text-muted-foreground">
+                            Administrative actions and system-wide audit trail.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </div>
+
                 {/* Charts Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                   {/* Monthly Registrations Chart */}
