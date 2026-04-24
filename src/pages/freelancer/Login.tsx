@@ -120,53 +120,11 @@ const FreelancerLogin = () => {
     }
   };
 
-  // Resend the signup verification email. Gated by `resendCooldown` so this
-  // can only fire after the local timer elapses; if the upstream rate limit
-  // still trips, we re-arm the timer with the parsed retry-after value.
-  const handleResendVerification = async () => {
-    if (!unverifiedEmail) return;
-    if (resendCooldown > 0 || isResending) return;
-
-    setIsResending(true);
-    try {
-      const redirectUrl = `${window.location.origin}/freelancer/login`;
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: unverifiedEmail,
-        options: { emailRedirectTo: redirectUrl },
-      });
-
-      if (error) {
-        if (isRateLimitErr(error)) {
-          const retryAfter = getRetryAfterSeconds(error);
-          const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
-          console.warn('[freelancer-login] resend rate limit', { email: unverifiedEmail, retryAfter, raw: error.message });
-          setResendCooldown(retryAfter);
-          toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-          return;
-        }
-        toast({ title: 'Could not resend email', description: error.message || 'Please try again.', variant: 'destructive' });
-        return;
-      }
-
-      // Success — arm a 60s local cooldown to match Supabase's window.
-      setResendCooldown(60);
-      toast({
-        title: 'Resent successfully',
-        description: `Check your inbox at ${unverifiedEmail} for the confirmation link.`,
-      });
-    } catch (err: any) {
-      if (isRateLimitErr(err)) {
-        const retryAfter = getRetryAfterSeconds(err);
-        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
-        setResendCooldown(retryAfter);
-        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-      } else {
-        toast({ title: 'Could not resend email', description: err?.message || 'Please try again.', variant: 'destructive' });
-      }
-    } finally {
-      setIsResending(false);
-    }
+  // Resend the signup verification email. The shared hook handles cooldown
+  // gating, rate-limit detection, toast copy, and console logging — this is
+  // just a thin wrapper that invokes it.
+  const handleResendVerification = () => {
+    void resend();
   };
 
   return (
