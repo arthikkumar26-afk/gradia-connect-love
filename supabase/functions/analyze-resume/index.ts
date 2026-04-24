@@ -172,9 +172,25 @@ Provide your analysis using the suggest_analysis function.`;
       if (!response.ok) {
         const errorText = await response.text();
         console.error('AI gateway error:', response.status, errorText);
-        // IMPORTANT: do NOT return early on 402/429/5xx. The application must
-        // still be created so the candidate is not blocked. Fall through to
-        // the default analysis below.
+
+        const isFallbackable =
+          response.status === 402 ||
+          response.status === 429 ||
+          response.status >= 500;
+
+        if (!isFallbackable) {
+          return new Response(
+            JSON.stringify({
+              error: `AI_ANALYSIS_FAILED_${response.status}`,
+              fallback: false,
+            }),
+            {
+              status: response.status,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
         analysis = null;
       } else {
         const aiResponse = await response.json();
@@ -203,8 +219,9 @@ Provide your analysis using the suggest_analysis function.`;
     }
 
     // Fallback if AI analysis failed
-    if (!analysis || !analysis.overall_score) {
-      console.log('Using default analysis due to AI response format');
+    const usedFallbackAnalysis = !analysis || !analysis.overall_score;
+    if (usedFallbackAnalysis) {
+      console.log('Using default analysis due to AI response format or upstream availability issue');
       analysis = {
         overall_score: 50,
         skill_match_score: 50,
@@ -338,7 +355,9 @@ Provide your analysis using the suggest_analysis function.`;
       interviewCandidateId: interviewCandidate.id,
       analysis: enrichedAnalysis,
       emailSent: true,
-      nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking'
+      nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking',
+      fallback: usedFallbackAnalysis,
+      status: usedFallbackAnalysis ? 'manual_review' : 'ai_reviewed'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
