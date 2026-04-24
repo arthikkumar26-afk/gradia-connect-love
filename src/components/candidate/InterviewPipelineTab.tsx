@@ -318,6 +318,33 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
       setInterviews(interviewsWithEvents as InterviewCandidate[]);
 
+      // Fetch invitation status for every event so we can show whether the
+      // candidate's test-link email actually went out, and surface a "Resend
+      // link" action when delivery failed or stalled in `pending`.
+      const allEventIds = interviewsWithEvents.flatMap(i => i.events.map(e => e.id));
+      if (allEventIds.length > 0) {
+        const { data: invitations } = await supabase
+          .from('interview_invitations')
+          .select('interview_event_id, email_status, email_sent_at, meeting_link, created_at')
+          .in('interview_event_id', allEventIds)
+          .order('created_at', { ascending: false });
+        // Keep only the latest invitation per event (most-recent resend wins).
+        const map: Record<string, InvitationStatus> = {};
+        for (const row of invitations || []) {
+          if (!map[row.interview_event_id]) {
+            map[row.interview_event_id] = {
+              email_status: row.email_status,
+              email_sent_at: row.email_sent_at,
+              meeting_link: row.meeting_link,
+              created_at: row.created_at,
+            };
+          }
+        }
+        setInvitationsByEventId(map);
+      } else {
+        setInvitationsByEventId({});
+      }
+
       // Determine visible stages based on the first interview's job pipeline
       const firstInterview = interviewsWithEvents[0];
       const jobPipeline = (firstInterview?.job as any)?.pipeline_stages as Array<{ name: string; order: number }> | null;
