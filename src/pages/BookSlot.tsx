@@ -90,6 +90,14 @@ const BookSlot = () => {
     fetchDetails();
   }, [candidateId]);
 
+  const formatDateValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
   // Generate available dates (today + next 7 days, including all days)
   const getAvailableDates = () => {
     const dates: { value: string; label: string }[] = [];
@@ -99,7 +107,7 @@ const BookSlot = () => {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       
-      const value = date.toISOString().split("T")[0];
+      const value = formatDateValue(date);
       const label = date.toLocaleDateString("en-IN", {
         weekday: "long",
         month: "long",
@@ -112,43 +120,46 @@ const BookSlot = () => {
   };
 
   const getTodayDate = () => {
-    return new Date().toISOString().split("T")[0];
+    return formatDateValue(new Date());
   };
 
-  const getNext10MinTime = () => {
+  const getNextAvailableSlot = (stepMinutes: Granularity = 30) => {
     const now = new Date();
     now.setMinutes(now.getMinutes() + 10);
-    // Round up to nearest 30-min slot
-    const minutes = now.getMinutes();
-    const roundedMinutes = minutes < 30 ? 30 : 0;
-    if (roundedMinutes === 0) now.setHours(now.getHours() + 1);
-    now.setMinutes(roundedMinutes);
-    
-    const hour = now.getHours();
-    const minute = now.getMinutes().toString().padStart(2, "0");
-    
-    // Check if within valid range (9 AM - 5:30 PM)
-    if (hour < 9 || hour > 17 || (hour === 17 && parseInt(minute) > 0)) {
-      return "09:00"; // Default to 9 AM if outside range
-    }
-    
-    return `${hour.toString().padStart(2, "0")}:${minute}`;
+
+    const totalMinutes = now.getHours() * 60 + now.getMinutes();
+    const roundedTotalMinutes = Math.ceil(totalMinutes / stepMinutes) * stepMinutes;
+
+    const nextSlot = new Date(now);
+    nextSlot.setHours(0, 0, 0, 0);
+    nextSlot.setMinutes(roundedTotalMinutes);
+
+    return {
+      date: formatDateValue(nextSlot),
+      time: `${nextSlot.getHours().toString().padStart(2, "0")}:${nextSlot
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`,
+    };
   };
 
-  // Generate time slots (8 AM to 9 PM) — granularity & time-of-day filter applied
+  const getNext10MinTime = () => getNextAvailableSlot().time;
+
+  // Generate time slots (24 hours) — granularity & time-of-day filter applied
   const getTimeSlots = (
     granularityMin: Granularity = granularity,
     period: TimeOfDay = timeOfDay,
   ) => {
     const slots: { value: string; label: string }[] = [];
     const minuteSteps = granularityMin === 15 ? ["00", "15", "30", "45"] : ["00", "30"];
-    for (let hour = 8; hour <= 21; hour++) {
+
+    for (let hour = 0; hour < 24; hour++) {
       for (const minute of minuteSteps) {
-        if (hour === 21 && minute !== "00") continue;
-        // Period filter: morning 8-12, afternoon 12-17, evening 17-21
+        // Period filter: morning 00-11:59, afternoon 12-16:59, evening 17-23:59
         if (period === "morning" && hour >= 12) continue;
         if (period === "afternoon" && (hour < 12 || hour >= 17)) continue;
         if (period === "evening" && hour < 17) continue;
+
         const time = `${hour.toString().padStart(2, "0")}:${minute}`;
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const ampm = hour < 12 ? "AM" : "PM";
@@ -620,15 +631,9 @@ const BookSlot = () => {
                   variant="outline"
                   className="flex-1 h-11 text-sm font-semibold border-2 border-orange-400 text-orange-700 hover:bg-orange-100 bg-orange-50"
                   onClick={() => {
-                    const today = getTodayDate();
-                    setSelectedDate(today);
-                    const now = new Date();
-                    const minutes = now.getMinutes();
-                    const roundedMinutes = minutes < 30 ? 30 : 0;
-                    const hour = roundedMinutes === 0 ? now.getHours() + 1 : now.getHours();
-                    const minute = roundedMinutes.toString().padStart(2, "0");
-                    const validHour = hour < 9 ? 9 : hour > 17 ? 9 : hour;
-                    setSelectedTime(`${validHour.toString().padStart(2, "0")}:${minute}`);
+                    const nextSlot = getNextAvailableSlot();
+                    setSelectedDate(nextSlot.date);
+                    setSelectedTime(nextSlot.time);
                   }}
                 >
                   🚀 Start Now
@@ -638,11 +643,9 @@ const BookSlot = () => {
                   variant="outline"
                   className="flex-1 h-11 text-sm font-semibold border-2 border-green-400 text-green-700 hover:bg-green-100 bg-green-50"
                   onClick={() => {
-                    const nextTime = getNext10MinTime();
-                    setSelectedTime(nextTime);
-                    if (!selectedDate && getTodayDate()) {
-                      setSelectedDate(getTodayDate()!);
-                    }
+                    const nextSlot = getNextAvailableSlot();
+                    setSelectedDate(nextSlot.date);
+                    setSelectedTime(nextSlot.time);
                   }}
                 >
                   ⏰ Next 10 mins
@@ -693,7 +696,7 @@ const BookSlot = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a time slot" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60">
+                  <SelectContent className="max-h-[300px]">
                     {getTimeSlots().map((slot) => (
                       <SelectItem key={slot.value} value={slot.value}>
                         {slot.label}
