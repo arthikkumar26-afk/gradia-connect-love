@@ -147,14 +147,32 @@ export const JobApplicationFlow = ({
       return;
     }
 
-    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const fileNameLower = (file.name || '').toLowerCase();
+    const extension = fileNameLower.split('.').pop() ?? '';
+    const mimeLower = (file.type || '').toLowerCase();
     const mimeOk = ALLOWED_RESUME_MIME_TYPES.includes(file.type);
     const extOk = ALLOWED_RESUME_EXTENSIONS.includes(extension);
+
+    // Hard reject any image file (jpg/png/heic/etc.) or anything that
+    // looks like a screenshot — even if the file picker bypassed `accept`.
+    const isImage =
+      mimeLower.startsWith('image/') ||
+      ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp', 'tiff'].includes(extension) ||
+      fileNameLower.startsWith('screenshot') ||
+      fileNameLower.includes('screenshot_');
+
+    if (isImage) {
+      toast.error("Screenshots are not accepted", {
+        description: "Please upload your resume as a PDF or Word document (.pdf, .doc, .docx). Photos and screenshots cannot be used as a resume.",
+      });
+      resetInput();
+      return;
+    }
 
     // Browsers sometimes report an empty MIME for .doc/.docx — accept if extension matches.
     if (!mimeOk && !extOk) {
       toast.error("Invalid file format", {
-        description: "Only PDF or Word documents (.pdf, .doc, .docx) are accepted. Screenshots and images cannot be used as a resume.",
+        description: "Only PDF or Word documents (.pdf, .doc, .docx) are accepted.",
       });
       resetInput();
       return;
