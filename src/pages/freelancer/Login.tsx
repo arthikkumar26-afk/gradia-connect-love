@@ -9,58 +9,12 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-// Supabase signals an unverified email in a few different shapes depending on
-// project settings. We treat any of these as a structured EMAIL_NOT_CONFIRMED
-// error so the UI can show a recovery path instead of a generic failure toast.
-const isEmailNotConfirmedErr = (err: any): boolean => {
-  if (!err) return false;
-  const msg = (err.message || "").toLowerCase();
-  const code = (err.code || "").toLowerCase();
-  return (
-    code === "email_not_confirmed" ||
-    code === "email_address_not_confirmed" ||
-    msg.includes("email not confirmed") ||
-    msg.includes("email address not confirmed") ||
-    msg.includes("confirm your email") ||
-    msg.includes("not confirmed")
-  );
-};
-
-const isRateLimitErr = (err: any): boolean => {
-  if (!err) return false;
-  const msg = (err.message || "").toLowerCase();
-  const code = (err.code || "").toLowerCase();
-  const status = err.status;
-  return (
-    status === 429 ||
-    code.includes("over_email_send_rate") ||
-    code.includes("rate_limit") ||
-    msg.includes("rate limit") ||
-    msg.includes("for security purposes") ||
-    msg.includes("only request this after")
-  );
-};
-
-// Pull retry-after seconds from Supabase's error message; fall back to 60s.
-const getRetryAfterSeconds = (err: any): number => {
-  const msg = err?.message || "";
-  const match =
-    msg.match(/after\s+(\d+)\s*seconds?/i) ||
-    msg.match(/in\s+(\d+)\s*seconds?/i) ||
-    msg.match(/(\d+)\s*seconds?/i);
-  if (match) {
-    const n = parseInt(match[1], 10);
-    if (!Number.isNaN(n) && n > 0) return Math.min(n, 600);
-  }
-  return 60;
-};
-
-const formatRetryWindow = (seconds: number) => {
-  if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
-  const mins = Math.ceil(seconds / 60);
-  return `${mins} minute${mins === 1 ? "" : "s"}`;
-};
+// Shared helpers + hook for the resend-confirmation flow. Pure helpers stay
+// in `@/lib/auth/resendCooldown` so they remain unit-testable; the hook owns
+// state + the `supabase.auth.resend` call so every login/signup screen has
+// identical cooldown/rate-limit/toast behaviour.
+import { isEmailNotConfirmedErr } from "@/lib/auth/resendCooldown";
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 const FreelancerLogin = () => {
   const navigate = useNavigate();
