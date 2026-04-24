@@ -131,10 +131,11 @@ describe("getNextAvailableSlot — Start Now / Next 10 mins", () => {
     expect(validSlot(slot.time, 30)).toBe(true);
   });
 
-  it("near midnight (23:55) rolls into the next day at 00:00", () => {
+  it("near midnight (23:55) rolls into the next day", () => {
     vi.setSystemTime(new Date("2026-04-24T23:55:00"));
     const slot = getNextAvailableSlot(30);
-    expect(slot.time).toBe("00:00");
+    // 23:55 + 10min buffer → 00:05 next day → rounded up to 00:30
+    expect(slot.time).toBe("00:30");
     expect(slot.date).toBe("2026-04-25");
     expect(validSlot(slot.time, 30)).toBe(true);
   });
