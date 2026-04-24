@@ -385,7 +385,57 @@ const EmployerSignup = () => {
     }
   };
 
-  const handleAgreementContinue = async () => {
+  // Resend the signup verification email. The button is gated by `resendCooldown`,
+  // so this should only fire once the local timer has elapsed. We still defend
+  // against a server-side rate-limit response by re-arming the cooldown using the
+  // same friendly messaging the signup flow uses.
+  const handleResendVerification = async () => {
+    if (!pendingVerificationEmail) return;
+    if (resendCooldown > 0 || isResending) return;
+
+    setIsResending(true);
+    try {
+      const redirectUrl = `${window.location.origin}/employer/signup`;
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingVerificationEmail,
+        options: { emailRedirectTo: redirectUrl },
+      });
+
+      if (error) {
+        if (isRateLimitErr(error)) {
+          const retryAfter = getRetryAfterSeconds(error);
+          const friendly = `Too many requests for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
+          console.warn('[employer-signup] resend rate limit', { email: pendingVerificationEmail, retryAfter, raw: error.message });
+          setResendCooldown(retryAfter);
+          toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Could not resend email', description: error.message || 'Please try again.', variant: 'destructive' });
+        return;
+      }
+
+      // Success — re-arm the local cooldown to match Supabase's window.
+      setResendCooldown(60);
+      toast({
+        title: 'Verification email sent',
+        description: `A new verification email has been sent to ${pendingVerificationEmail}.`,
+      });
+    } catch (err: any) {
+      if (isRateLimitErr(err)) {
+        const retryAfter = getRetryAfterSeconds(err);
+        const friendly = `Too many requests for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
+        setResendCooldown(retryAfter);
+        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
+      } else {
+        toast({ title: 'Could not resend email', description: err?.message || 'Please try again.', variant: 'destructive' });
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+
     if (!agreementAccepted) {
       toast({ title: 'Please accept the agreement', variant: 'destructive' });
       return;
