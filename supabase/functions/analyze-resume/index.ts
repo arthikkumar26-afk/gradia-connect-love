@@ -219,8 +219,9 @@ Provide your analysis using the suggest_analysis function.`;
     }
 
     // Fallback if AI analysis failed
-    if (!analysis || !analysis.overall_score) {
-      console.log('Using default analysis due to AI response format');
+    const usedFallbackAnalysis = !analysis || !analysis.overall_score;
+    if (usedFallbackAnalysis) {
+      console.log('Using default analysis due to AI response format or upstream availability issue');
       analysis = {
         overall_score: 50,
         skill_match_score: 50,
