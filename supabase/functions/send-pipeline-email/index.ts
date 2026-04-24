@@ -339,7 +339,16 @@ async function callFunction(supabaseUrl: string, serviceKey: string, functionNam
     },
     body: JSON.stringify(body),
   });
-  return await response.json();
+  const text = await response.text();
+  const payload = text ? JSON.parse(text) : null;
+
+  if (!response.ok || payload?.error || payload?.success === false) {
+    throw new Error(
+      payload?.error || `Downstream function \"${functionName}\" failed with status ${response.status}`,
+    );
+  }
+
+  return payload;
 }
 
 function jsonResponse(data: any, status = 200) {
