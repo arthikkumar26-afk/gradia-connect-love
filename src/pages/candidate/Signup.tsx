@@ -188,25 +188,51 @@ const benefits = [
 const CandidateSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, refreshProfile } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, refreshProfile } = useAuth();
   const [searchParams] = useSearchParams();
   const referralCode = searchParams.get("ref") || "";
   const prefillEmail = searchParams.get("email") || "";
   const prefillName = searchParams.get("name") || "";
-  
-  // Wizard state — persisted so reloads/auth state changes don't skip steps
-  const STEP_STORAGE_KEY = 'candidateSignupWizardStep';
-  const [currentStep, setCurrentStep] = useState<WizardStep>(() => {
-    if (typeof window === 'undefined') return 'signup';
-    const saved = window.localStorage.getItem(STEP_STORAGE_KEY) as WizardStep | null;
-    const valid: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'wallet'];
-    return saved && valid.includes(saved) ? saved : 'signup';
-  });
 
-  // Track if user just signed up (to allow wizard flow to complete)
+  // Wizard step lives in memory only — never persisted to localStorage/sessionStorage
+  // so that browser-specific storage (Edge vs Chrome) cannot resurrect stale steps.
+  // The single source of truth for "is this user already onboarded?" is the backend
+  // session returned by Supabase auth.
+  const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
+
+  // Track if user just signed up in THIS tab session (to allow wizard flow to complete
+  // without the auth-listener bouncing them to dashboard mid-flow).
   const [justSignedUp, setJustSignedUp] = useState(false);
   const justSignedUpRef = useRef(false);
-  
+
+  // One-shot purge of any stale onboarding-related keys left over from previous flows
+  // (the legacy wallet activation step persisted state that caused Edge vs Chrome drift).
+  useEffect(() => {
+    try {
+      STALE_STORAGE_KEYS.forEach((k) => {
+        window.localStorage.removeItem(k);
+        window.sessionStorage.removeItem(k);
+      });
+    } catch { /* storage may be blocked in some browsers — ignore */ }
+  }, []);
+
+  // Disable HTTP/browser caching for this route so every navigation re-evaluates
+  // the auth/onboarding state from the backend instead of a cached HTML snapshot.
+  useEffect(() => {
+    const metas: HTMLMetaElement[] = [];
+    const add = (httpEquiv: string, content: string) => {
+      const m = document.createElement('meta');
+      m.httpEquiv = httpEquiv;
+      m.content = content;
+      document.head.appendChild(m);
+      metas.push(m);
+    };
+    add('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    add('Pragma', 'no-cache');
+    add('Expires', '0');
+    return () => { metas.forEach((m) => m.remove()); };
+  }, []);
+
   // Form state (prefilled from invite link if present)
   const [fullName, setFullName] = useState(prefillName);
   const [email, setEmail] = useState(prefillEmail);
@@ -235,38 +261,30 @@ const CandidateSignup = () => {
   const [resumeParsing, setResumeParsing] = useState(false);
   const [resumeParsed, setResumeParsed] = useState<any | null>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
-  // Wallet step state
-  const [walletPkg, setWalletPkg] = useState<typeof POINT_PACKAGES[0]>(POINT_PACKAGES[2]);
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponId, setCouponId] = useState<string | null>(null);
-  const [couponCode, setCouponCode] = useState<string | null>(null);
-  const [walletPaying, setWalletPaying] = useState(false);
   const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
 
   const normalizedIndustryCategory = industryCategory.trim().toLowerCase();
   const matchesIndustryCategory = (...categories: string[]) =>
     categories.some((category) => normalizedIndustryCategory === category.trim().toLowerCase());
 
+  // Backend-driven gating: once the AuthContext has finished loading the session,
+  // route strictly based on the verified backend state.
+  //   - Not authenticated  → stay on signup form (Step 1).
+  //   - Authenticated AND not mid-wizard in this tab → go to dashboard.
+  //   - Authenticated AND just signed up here → let the in-memory wizard continue.
   useEffect(() => {
-    // Only redirect to dashboard if already authenticated AND not in the middle of signup wizard
-    // If user just signed up, let them complete the wizard flow
-    if (isAuthenticated && currentStep === 'signup' && !justSignedUp && !justSignedUpRef.current) {
-      navigate('/candidate/dashboard');
-    }
-  }, [isAuthenticated, navigate, currentStep, justSignedUp]);
+    if (authLoading) return;
+    if (!isAuthenticated) return;
+    if (justSignedUp || justSignedUpRef.current) return;
+    if (currentStep !== 'signup') return;
+    navigate('/candidate/dashboard', { replace: true });
+  }, [authLoading, isAuthenticated, justSignedUp, currentStep, navigate]);
 
-  // Scroll to top whenever the wizard advances to a new step so users
-  // see the new step header instead of the previous step's footer position.
+  // Scroll to top whenever the wizard advances to a new step.
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    try {
-      if (currentStep === 'signup') {
-        window.localStorage.removeItem(STEP_STORAGE_KEY);
-      } else {
-        window.localStorage.setItem(STEP_STORAGE_KEY, currentStep);
-      }
-    } catch { /* ignore */ }
   }, [currentStep]);
+
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
