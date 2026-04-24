@@ -118,8 +118,9 @@ beforeEach(() => {
   functionInvokes.length = 0;
   toastSuccess.mockClear();
   toastError.mockClear();
-  // Stable "today" so date labels are predictable
-  vi.useFakeTimers();
+  // Stable "today" so date labels are predictable. Use shouldAdvanceTime so
+  // pending microtasks (supabase mock promises, React effects) still resolve.
+  vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.setSystemTime(new Date("2026-04-24T09:00:00"));
 });
 
