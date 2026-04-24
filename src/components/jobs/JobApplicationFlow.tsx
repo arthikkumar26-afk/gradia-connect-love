@@ -501,15 +501,38 @@ export const JobApplicationFlow = ({
             parsedResumeData = parseResponse.data;
             console.log('Parsed resume data:', parsedResumeData);
 
+            // Surface partial-parse warning so the candidate knows to review their profile
+            if (parsedResumeData?.parse_failed) {
+              toast.warning('Resume partially read', {
+                description: parsedResumeData.parse_warning ||
+                  'We could not fully read your resume. Please review your profile after submission.',
+              });
+            } else if (parsedResumeData?.parse_warning) {
+              toast.info('Resume read with notes', {
+                description: parsedResumeData.parse_warning,
+              });
+            }
+
             if (parsedResumeData.full_name) {
               await supabase
                 .from('profiles')
                 .update({ full_name: parsedResumeData.full_name })
                 .eq('id', user.id);
             }
+          } else if (parseResponse.error) {
+            // Don't fail the whole flow — parsing is best-effort. Inform the user.
+            const info = await readFunctionError(parseResponse.error);
+            console.warn('Resume parse failed, continuing with profile data:', info);
+            toast.info('Resume reading skipped', {
+              description: info.message ||
+                'We could not read details from your resume, so we will use your saved profile instead.',
+            });
           }
         } catch (parseError) {
           console.error('Resume parsing error:', parseError);
+          toast.info('Resume reading skipped', {
+            description: 'We could not read details from your resume; using your saved profile instead.',
+          });
         }
       }
 
@@ -630,6 +653,26 @@ export const JobApplicationFlow = ({
         setSubmissionStatus(analysisResult?.status === 'manual_review' ? 'manual_review' : 'ai_reviewed');
         setEmailSent(analysisResult?.emailSent || false);
         setNextStage(analysisResult?.nextStage || 'AI Phone Interview');
+
+        // Surface AI parse warning so candidate knows analysis was a fallback
+        if (analysisResult?.parse_warning) {
+          toast.warning('Analysis used a safe default', {
+            description: analysisResult.parse_warning,
+          });
+        } else if (analysisResult?.fallback && analysisResult?.fallback_reason) {
+          const reason = analysisResult.fallback_reason as string;
+          const reasonLabel: Record<string, string> = {
+            ai_credits: 'AI scoring is temporarily out of credits — your application is queued for manual review.',
+            ai_rate_limit: 'AI scoring service is busy — your application is queued for manual review.',
+            ai_server: 'AI scoring service had a temporary error — your application is queued for manual review.',
+            ai_other: 'AI scoring service was unavailable — your application is queued for manual review.',
+            ai_exception: 'AI scoring failed unexpectedly — your application is queued for manual review.',
+            parse_failed: 'AI returned an unreadable response — your application is queued for manual review.',
+          };
+          toast.info('Submitted for manual review', {
+            description: reasonLabel[reason] || 'Your application was saved and will be reviewed manually.',
+          });
+        }
 
         const desiredStatus = analysisResult?.status === 'manual_review' ? 'in_review' : 'in_review';
         const { error: insertError } = await supabase

@@ -403,6 +403,10 @@ Provide your analysis using the suggest_analysis function.`;
       });
     if (auditErr) console.error('Failed to write audit log:', auditErr);
 
+    const parseWarning = fallbackReason === 'parse_failed'
+      ? 'AI returned an unreadable analysis. Your application was saved with a safe default score and will be reviewed manually.'
+      : null;
+
     return new Response(JSON.stringify({
       success: true,
       interviewCandidateId: interviewCandidate.id,
@@ -410,6 +414,8 @@ Provide your analysis using the suggest_analysis function.`;
       emailSent: true,
       nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking',
       fallback: usedFallbackAnalysis,
+      fallback_reason: usedFallbackAnalysis ? fallbackReason : null,
+      parse_warning: parseWarning,
       status: applicationState
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
