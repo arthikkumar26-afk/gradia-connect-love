@@ -1121,26 +1121,72 @@ export const JobApplicationFlow = ({
         )}
 
         {/* Step 4: Complete */}
-        {flowStep === 'complete' && aiAnalysis && (
+        {flowStep === 'complete' && aiAnalysis && (() => {
+          // Derive the confirmation banner from the analysis result.
+          // - "pending" recommendation = manual review fallback (AI didn't run)
+          // - overall_score > 0 = AI analysis succeeded
+          const aiSucceeded = aiAnalysis.recommendation !== 'pending' && aiAnalysis.overall_score > 0;
+          const statusLabel = aiSucceeded ? 'Under AI Review' : 'Pending Manual Review';
+
+          return (
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <CheckCircle2 className="h-5 w-5 text-green-500" aria-hidden="true" />
                 Application Submitted!
               </DialogTitle>
               <DialogDescription>
-                Your AI interview analysis is complete
+                {aiSucceeded
+                  ? 'Your AI interview analysis is complete'
+                  : 'Your application is queued for our hiring team'}
               </DialogDescription>
             </DialogHeader>
 
             <ScrollArea className="flex-1 max-h-[400px] pr-4">
               <div className="py-6 space-y-6">
-                {/* Score Card */}
-                <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-green-500/10 rounded-xl p-6 text-center">
-                  <p className="text-sm text-muted-foreground mb-2">AI Match Score</p>
-                  <div className="text-5xl font-bold text-primary mb-3">{aiAnalysis.overall_score}%</div>
-                  {getRecommendationBadge(aiAnalysis.recommendation)}
+                {/* Status Confirmation Banner */}
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className={`rounded-xl border p-4 space-y-3 ${
+                    aiSucceeded
+                      ? 'bg-green-500/10 border-green-500/30'
+                      : 'bg-amber-500/10 border-amber-500/30'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {aiSucceeded ? (
+                      <Sparkles className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    ) : (
+                      <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    )}
+                    <div className="flex-1 space-y-1.5">
+                      <p className={`font-semibold ${aiSucceeded ? 'text-green-700 dark:text-green-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                        {aiSucceeded ? 'AI analysis succeeded' : 'AI analysis unavailable — manual review queued'}
+                      </p>
+                      <p className="text-sm text-foreground/80">
+                        {aiSucceeded
+                          ? `Your resume was analyzed and scored against this role. Your application is now being processed.`
+                          : `Your resume was uploaded successfully, but the AI scoring service was unavailable. Our hiring team will review your application by hand within 2–3 business days.`}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <span className="text-xs text-muted-foreground">Current status:</span>
+                        <Badge variant={aiSucceeded ? 'default' : 'secondary'} className="font-medium">
+                          {statusLabel}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Score Card — only meaningful when AI succeeded */}
+                {aiSucceeded && (
+                  <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-green-500/10 rounded-xl p-6 text-center">
+                    <p className="text-sm text-muted-foreground mb-2">AI Match Score</p>
+                    <div className="text-5xl font-bold text-primary mb-3">{aiAnalysis.overall_score}%</div>
+                    {getRecommendationBadge(aiAnalysis.recommendation)}
+                  </div>
+                )}
 
                 {/* Score Breakdown */}
                 <div className="grid grid-cols-2 gap-3">
@@ -1216,14 +1262,26 @@ export const JobApplicationFlow = ({
               </div>
             </ScrollArea>
 
-            <DialogFooter className="pt-4 border-t">
-              <Button onClick={handleCompleteAndClose} className="w-full gap-2">
-                <CheckCircle2 className="h-4 w-4" />
+            <DialogFooter className="pt-4 border-t flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  handleClose();
+                  window.location.href = '/candidate/dashboard?tab=applications';
+                }}
+                className="w-full sm:w-auto gap-2"
+              >
+                Track on Dashboard
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button onClick={handleCompleteAndClose} className="w-full sm:flex-1 gap-2">
+                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 Done
               </Button>
             </DialogFooter>
           </>
-        )}
+          );
+        })()}
       </DialogContent>
     </Dialog>
   );
