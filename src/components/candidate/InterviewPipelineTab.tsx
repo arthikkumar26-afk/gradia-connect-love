@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -121,6 +122,16 @@ interface InterviewPipelineTabProps {
   candidateId: string;
 }
 
+// Per-event invitation status pulled from `interview_invitations` so the
+// candidate dashboard can display whether the test-link email actually went
+// out, and offer a "Resend link" action when it didn't.
+interface InvitationStatus {
+  email_status: string | null; // 'sent' | 'pending' | 'failed' | null
+  email_sent_at: string | null;
+  meeting_link: string | null;
+  created_at: string;
+}
+
 export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps) => {
   const navigate = useNavigate();
   const [interviews, setInterviews] = useState<InterviewCandidate[]>([]);
@@ -137,6 +148,11 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  // Map: interview_event_id -> latest invitation row for that event.
+  const [invitationsByEventId, setInvitationsByEventId] = useState<Record<string, InvitationStatus>>({});
+  // Tracks which event is currently mid-resend so we can disable the button
+  // and swap in a spinner without blocking other resends.
+  const [resendingEventId, setResendingEventId] = useState<string | null>(null);
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -146,6 +162,44 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       toast.error("Failed to refresh pipeline");
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  /**
+   * Re-trigger the test-link email for a stage whose previous invitation
+   * either failed or never arrived. Reuses the same edge function the
+   * employer/booking flow uses, so the candidate gets the same templated
+   * email — just with a fresh `email_sent_at`.
+   */
+  const handleResendInvitation = async (
+    interviewCandidateId: string,
+    stageName: string,
+    eventId: string,
+    scheduledAt: string | null,
+  ) => {
+    setResendingEventId(eventId);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-interview-invitation', {
+        body: {
+          interviewCandidateId,
+          stageName,
+          // Fall back to "now" so the function still has a valid date to
+          // render in the email body if the original event lost its schedule.
+          scheduledDate: scheduledAt || new Date().toISOString(),
+        },
+      });
+      if (error || (data && data.success === false)) {
+        const msg = error?.message || data?.error || 'Failed to resend the test link.';
+        toast.error(msg);
+      } else {
+        toast.success('Test link resent. Please check your inbox.');
+        // Refetch invitations so the badge updates from "failed" -> "sent".
+        await fetchData();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to resend the test link.');
+    } finally {
+      setResendingEventId(null);
     }
   };
 
@@ -301,6 +355,33 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       );
 
       setInterviews(interviewsWithEvents as InterviewCandidate[]);
+
+      // Fetch invitation status for every event so we can show whether the
+      // candidate's test-link email actually went out, and surface a "Resend
+      // link" action when delivery failed or stalled in `pending`.
+      const allEventIds = interviewsWithEvents.flatMap(i => i.events.map(e => e.id));
+      if (allEventIds.length > 0) {
+        const { data: invitations } = await supabase
+          .from('interview_invitations')
+          .select('interview_event_id, email_status, email_sent_at, meeting_link, created_at')
+          .in('interview_event_id', allEventIds)
+          .order('created_at', { ascending: false });
+        // Keep only the latest invitation per event (most-recent resend wins).
+        const map: Record<string, InvitationStatus> = {};
+        for (const row of invitations || []) {
+          if (!map[row.interview_event_id]) {
+            map[row.interview_event_id] = {
+              email_status: row.email_status,
+              email_sent_at: row.email_sent_at,
+              meeting_link: row.meeting_link,
+              created_at: row.created_at,
+            };
+          }
+        }
+        setInvitationsByEventId(map);
+      } else {
+        setInvitationsByEventId({});
+      }
 
       // Determine visible stages based on the first interview's job pipeline
       const firstInterview = interviewsWithEvents[0];
@@ -1592,6 +1673,94 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                           );
                         })()}
                       </div>
+
+                      {/* Invitation / test-link delivery status — only shown for
+                          stages that have an interview_event (i.e. a scheduled
+                          test/interview where an email invitation makes sense).
+                          Hidden for completed stages and for feedback stages
+                          which don't email the candidate. */}
+                      {event && !isFeedbackStage && status !== 'completed' && (() => {
+                        const invitation = invitationsByEventId[event.id];
+                        const isResending = resendingEventId === event.id;
+                        // Treat a stalled `pending` (>5 min old with no
+                        // sent_at) as effectively failed so the candidate
+                        // isn't left waiting forever for a stuck email.
+                        const isStalledPending =
+                          invitation?.email_status === 'pending' &&
+                          !invitation.email_sent_at &&
+                          (Date.now() - new Date(invitation.created_at).getTime()) > 5 * 60 * 1000;
+                        const effectiveStatus: 'sent' | 'pending' | 'failed' | 'none' =
+                          !invitation
+                            ? 'none'
+                            : invitation.email_status === 'sent'
+                            ? 'sent'
+                            : isStalledPending || invitation.email_status === 'failed'
+                            ? 'failed'
+                            : 'pending';
+                        const showResend = effectiveStatus === 'failed' || effectiveStatus === 'none';
+                        return (
+                          <div
+                            className="mt-2 flex flex-wrap items-center gap-2"
+                            // Stop the parent stage card's expand-on-click handler
+                            // from firing when the candidate clicks Resend.
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {effectiveStatus === 'sent' && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30 text-[10px] gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Email sent
+                                {invitation?.email_sent_at && (
+                                  <span className="text-muted-foreground font-normal ml-1">
+                                    {new Date(invitation.email_sent_at).toLocaleString([], {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                )}
+                              </Badge>
+                            )}
+                            {effectiveStatus === 'pending' && (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px] gap-1">
+                                <Clock className="h-3 w-3" />
+                                Sending email…
+                              </Badge>
+                            )}
+                            {effectiveStatus === 'failed' && (
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/30 text-[10px] gap-1">
+                                <AlertCircle className="h-3 w-3" />
+                                Email not delivered
+                              </Badge>
+                            )}
+                            {effectiveStatus === 'none' && status === 'scheduled' && (
+                              <Badge variant="outline" className="bg-muted text-muted-foreground text-[10px] gap-1">
+                                <Mail className="h-3 w-3" />
+                                Invitation not sent yet
+                              </Badge>
+                            )}
+                            {showResend && (status === 'scheduled' || status === 'current') && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px] gap-1"
+                                disabled={isResending}
+                                onClick={() =>
+                                  handleResendInvitation(
+                                    currentInterview.id,
+                                    stage.name,
+                                    event.id,
+                                    event.scheduled_at,
+                                  )
+                                }
+                              >
+                                <RefreshCw className={`h-3 w-3 ${isResending ? 'animate-spin' : ''}`} />
+                                {isResending ? 'Resending…' : 'Resend link'}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Status badge + expand arrow */}
