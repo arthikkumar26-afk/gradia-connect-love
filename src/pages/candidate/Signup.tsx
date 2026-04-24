@@ -291,6 +291,17 @@ const CandidateSignup = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [currentStep]);
 
+  // Tick down the verification-email resend cooldown every second so the
+  // CTA shows a live countdown and stays disabled until the upstream
+  // rate-limit window has elapsed.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
+
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
