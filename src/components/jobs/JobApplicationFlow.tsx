@@ -278,8 +278,15 @@ export const JobApplicationFlow = ({
         });
 
         if (analysisError) {
-          console.error('Analysis error:', analysisError);
-          throw new Error(analysisError.message || 'AI analysis failed');
+          const info = await readFunctionError(analysisError);
+          console.error('Analysis error:', analysisError, info);
+          // Re-throw with a richer message so the catch block can branch on it.
+          const tag = info.status === 402
+            ? 'credits'
+            : info.status === 429
+              ? 'Rate limit'
+              : '';
+          throw new Error(`${tag} ${info.message || analysisError.message || 'AI analysis failed'}`.trim());
         }
 
         setAnalysisSubStep('scheduling');
