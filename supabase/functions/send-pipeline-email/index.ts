@@ -139,9 +139,31 @@ serve(async (req) => {
     }
 
     // ─── VALIDATION 5: Suppress non-critical candidate-facing emails ───
-    // Candidates now manage everything from their dashboard pipeline tab.
-    // Only keep: instruction (initial welcome), cv_results, feedback_request (observer-facing)
-    const SUPPRESSED_EMAIL_TYPES = ['slot_booking', 'interview_invitation'];
+    // Candidates manage most steps from their dashboard pipeline tab, so we
+    // suppress generic "slot booking" reminder emails. However, the Written
+    // Test invitation email IS sent because candidates explicitly expect to
+    // receive a link/email after booking their Written Test slot.
+    // Other 'interview_invitation' emails (live rounds) remain suppressed —
+    // those are scheduled by the employer and announced via the dashboard.
+    const SUPPRESSED_EMAIL_TYPES = ['slot_booking'];
+    const isWrittenTestInvitation =
+      emailType === 'interview_invitation' &&
+      typeof stageName === 'string' &&
+      stageName.toLowerCase().includes('written test');
+    if (
+      emailType === 'interview_invitation' &&
+      !isWrittenTestInvitation
+    ) {
+      console.log(`[SUPPRESSED] interview_invitation for non-written-test stage "${stageName}" - candidates use dashboard pipeline instead`);
+      return jsonResponse({
+        blocked: false,
+        suppressed: true,
+        reason: 'dashboard_driven',
+        message: `Email "${emailType}" suppressed for stage "${stageName}" — candidates manage this from their Interview Pipeline dashboard`,
+        emailType,
+        stageName,
+      });
+    }
     if (SUPPRESSED_EMAIL_TYPES.includes(emailType)) {
       console.log(`[SUPPRESSED] Email type "${emailType}" for stage "${stageName}" - candidates use dashboard pipeline instead`);
       return jsonResponse({
