@@ -172,9 +172,25 @@ Provide your analysis using the suggest_analysis function.`;
       if (!response.ok) {
         const errorText = await response.text();
         console.error('AI gateway error:', response.status, errorText);
-        // IMPORTANT: do NOT return early on 402/429/5xx. The application must
-        // still be created so the candidate is not blocked. Fall through to
-        // the default analysis below.
+
+        const isFallbackable =
+          response.status === 402 ||
+          response.status === 429 ||
+          response.status >= 500;
+
+        if (!isFallbackable) {
+          return new Response(
+            JSON.stringify({
+              error: `AI_ANALYSIS_FAILED_${response.status}`,
+              fallback: false,
+            }),
+            {
+              status: response.status,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+
         analysis = null;
       } else {
         const aiResponse = await response.json();
