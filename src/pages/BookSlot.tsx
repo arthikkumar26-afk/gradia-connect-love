@@ -521,7 +521,7 @@ const BookSlot = () => {
                       <SelectTrigger className="flex-1">
                         <SelectValue placeholder={`Choose time ${i + 1}`} />
                       </SelectTrigger>
-                      <SelectContent className="max-h-60">
+                      <SelectContent className="max-h-[300px]">
                         {getTimeSlots().map((ts) => (
                           <SelectItem key={ts.value} value={ts.value}>
                             {ts.label}
