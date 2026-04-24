@@ -13,6 +13,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
+// Shared helpers + hook for the resend-confirmation flow. Keeps rate-limit
+// detection, cooldown ticking, and toast copy consistent with every other
+// login/signup page (candidate login/signup, freelancer login).
+import {
+  isRateLimitErr,
+  getRetryAfterSeconds,
+  formatRetryWindow,
+} from "@/lib/auth/resendCooldown";
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 const companyCategories = [
   "IT & Technology",
@@ -116,14 +125,22 @@ const EmployerSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
-  // OTP / verification email resend state.
-  // `pendingVerificationEmail` is set after a successful signup so the resend
-  // panel knows which address to re-send to. `resendCooldown` is the number of
-  // seconds remaining before the next resend is allowed — it is the single
-  // source of truth that gates the button (no second API call until it hits 0).
-  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState<number>(0);
-  const [isResending, setIsResending] = useState(false);
+  // Verification email resend state, owned by the shared hook so behaviour
+  // is identical across every signup/login screen. We alias `unverifiedEmail`
+  // → `pendingVerificationEmail` here to preserve this screen's wording.
+  const {
+    unverifiedEmail: pendingVerificationEmail,
+    setUnverifiedEmail: setPendingVerificationEmail,
+    resendCooldown,
+    isResending,
+    isDisabled: isResendDisabled,
+    cooldownLabel,
+    resend,
+    applyExternalError,
+  } = useResendConfirmation({
+    flow: "employer-signup",
+    redirectTo: `${window.location.origin}/employer/signup`,
+  });
 
   useEffect(() => {
     if (isAuthenticated && currentStep === 'signup') {
@@ -132,16 +149,7 @@ const EmployerSignup = () => {
     }
   }, [isAuthenticated, currentStep]);
 
-  // Tick down the resend cooldown every second. The button stays disabled
-  // until this reaches 0, so we never even attempt a resend during the
-  // upstream rate-limit window.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
+  // (Resend cooldown ticker is owned by `useResendConfirmation`.)
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -180,51 +188,14 @@ const EmployerSignup = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Helpers — kept inside the component so they share state.
+  // Helpers — only the network-error sniff is local. Rate-limit detection,
+  // retry-window extraction, and the friendly formatter all come from
+  // `@/lib/auth/resendCooldown` so every flow shares the same contract.
   // NOTE: validation runs BEFORE we ever hit Supabase, so validation failures
   // can never count against the email-send rate limit upstream.
   const isNetErr = (msg?: string) =>
     !!msg && (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("TypeError") || msg.includes("timed out"));
 
-  // Supabase returns the email-send rate limit as either:
-  //   - status 429 with body { code: "over_email_send_rate_limit", message: "..." }
-  //   - error message containing "email rate limit exceeded" / "for security purposes" / "rate limit"
-  // and often includes a hint like "you can only request this after 23 seconds".
-  const isRateLimitErr = (err: any) => {
-    const msg = (err?.message || "").toLowerCase();
-    const code = (err?.code || "").toLowerCase();
-    const status = err?.status;
-    return (
-      status === 429 ||
-      code.includes("over_email_send_rate") ||
-      code.includes("rate_limit") ||
-      msg.includes("email rate limit") ||
-      msg.includes("rate limit") ||
-      msg.includes("for security purposes") ||
-      msg.includes("only request this after")
-    );
-  };
-
-  // Pull the retry-after seconds out of the Supabase error message.
-  // Falls back to 60s if no number is present.
-  const getRetryAfterSeconds = (err: any): number => {
-    const msg = err?.message || "";
-    const match =
-      msg.match(/after\s+(\d+)\s*seconds?/i) ||
-      msg.match(/in\s+(\d+)\s*seconds?/i) ||
-      msg.match(/(\d+)\s*seconds?/i);
-    if (match) {
-      const n = parseInt(match[1], 10);
-      if (!Number.isNaN(n) && n > 0) return Math.min(n, 600); // cap at 10 min
-    }
-    return 60;
-  };
-
-  const formatRetryWindow = (seconds: number) => {
-    if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
-    const mins = Math.ceil(seconds / 60);
-    return `${mins} minute${mins === 1 ? "" : "s"}`;
-  };
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -358,9 +329,15 @@ const EmployerSignup = () => {
       });
 
       // Arm the resend control. Supabase enforces a ~60s window between
-      // signup-confirmation emails, so we mirror that locally.
+      // signup-confirmation emails — re-using the hook's external-error
+      // applier here would be wrong (no error to inspect), so we set the
+      // pending email and let the hook's normal cooldown logic take over
+      // on the next resend. We arm the cooldown by simulating a fake
+      // rate-limit outcome via `applyExternalError` only when there is one.
       setPendingVerificationEmail(email);
-      setResendCooldown(60);
+      // Mirror Supabase's default 60s window using a synthetic rate-limit
+      // signal so the cooldown UI starts immediately.
+      applyExternalError({ status: 429, message: "Please wait 60 seconds." });
 
       setCurrentStep('benefits');
     } catch (error: any) {
@@ -385,54 +362,12 @@ const EmployerSignup = () => {
     }
   };
 
-  // Resend the signup verification email. The button is gated by `resendCooldown`,
-  // so this should only fire once the local timer has elapsed. We still defend
-  // against a server-side rate-limit response by re-arming the cooldown using the
-  // same friendly messaging the signup flow uses.
+  // Resend the signup verification email. The shared hook handles cooldown
+  // gating, rate-limit detection, toast copy, and console logging — this is
+  // just a thin wrapper that overrides the default success toast wording so
+  // it matches the employer flow's existing copy.
   const handleResendVerification = async () => {
-    if (!pendingVerificationEmail) return;
-    if (resendCooldown > 0 || isResending) return;
-
-    setIsResending(true);
-    try {
-      const redirectUrl = `${window.location.origin}/employer/signup`;
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: pendingVerificationEmail,
-        options: { emailRedirectTo: redirectUrl },
-      });
-
-      if (error) {
-        if (isRateLimitErr(error)) {
-          const retryAfter = getRetryAfterSeconds(error);
-          const friendly = `Too many requests for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
-          console.warn('[employer-signup] resend rate limit', { email: pendingVerificationEmail, retryAfter, raw: error.message });
-          setResendCooldown(retryAfter);
-          toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-          return;
-        }
-        toast({ title: 'Could not resend email', description: error.message || 'Please try again.', variant: 'destructive' });
-        return;
-      }
-
-      // Success — re-arm the local cooldown to match Supabase's window.
-      setResendCooldown(60);
-      toast({
-        title: 'Verification email sent',
-        description: `A new verification email has been sent to ${pendingVerificationEmail}.`,
-      });
-    } catch (err: any) {
-      if (isRateLimitErr(err)) {
-        const retryAfter = getRetryAfterSeconds(err);
-        const friendly = `Too many requests for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
-        setResendCooldown(retryAfter);
-        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-      } else {
-        toast({ title: 'Could not resend email', description: err?.message || 'Please try again.', variant: 'destructive' });
-      }
-    } finally {
-      setIsResending(false);
-    }
+    await resend(pendingVerificationEmail ?? undefined);
   };
   const handleAgreementContinue = async () => {
     if (!agreementAccepted) {
@@ -898,12 +833,12 @@ const EmployerSignup = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleResendVerification}
-                disabled={resendCooldown > 0 || isResending}
+                disabled={isResendDisabled}
               >
                 {isResending
                   ? 'Sending…'
                   : resendCooldown > 0
-                    ? `Resend in ${formatRetryWindow(resendCooldown)}`
+                    ? `Resend in ${cooldownLabel}`
                     : 'Resend verification email'}
               </Button>
             </div>

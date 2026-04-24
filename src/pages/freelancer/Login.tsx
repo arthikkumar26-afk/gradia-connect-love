@@ -9,58 +9,12 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-// Supabase signals an unverified email in a few different shapes depending on
-// project settings. We treat any of these as a structured EMAIL_NOT_CONFIRMED
-// error so the UI can show a recovery path instead of a generic failure toast.
-const isEmailNotConfirmedErr = (err: any): boolean => {
-  if (!err) return false;
-  const msg = (err.message || "").toLowerCase();
-  const code = (err.code || "").toLowerCase();
-  return (
-    code === "email_not_confirmed" ||
-    code === "email_address_not_confirmed" ||
-    msg.includes("email not confirmed") ||
-    msg.includes("email address not confirmed") ||
-    msg.includes("confirm your email") ||
-    msg.includes("not confirmed")
-  );
-};
-
-const isRateLimitErr = (err: any): boolean => {
-  if (!err) return false;
-  const msg = (err.message || "").toLowerCase();
-  const code = (err.code || "").toLowerCase();
-  const status = err.status;
-  return (
-    status === 429 ||
-    code.includes("over_email_send_rate") ||
-    code.includes("rate_limit") ||
-    msg.includes("rate limit") ||
-    msg.includes("for security purposes") ||
-    msg.includes("only request this after")
-  );
-};
-
-// Pull retry-after seconds from Supabase's error message; fall back to 60s.
-const getRetryAfterSeconds = (err: any): number => {
-  const msg = err?.message || "";
-  const match =
-    msg.match(/after\s+(\d+)\s*seconds?/i) ||
-    msg.match(/in\s+(\d+)\s*seconds?/i) ||
-    msg.match(/(\d+)\s*seconds?/i);
-  if (match) {
-    const n = parseInt(match[1], 10);
-    if (!Number.isNaN(n) && n > 0) return Math.min(n, 600);
-  }
-  return 60;
-};
-
-const formatRetryWindow = (seconds: number) => {
-  if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
-  const mins = Math.ceil(seconds / 60);
-  return `${mins} minute${mins === 1 ? "" : "s"}`;
-};
+// Shared helpers + hook for the resend-confirmation flow. Pure helpers stay
+// in `@/lib/auth/resendCooldown` so they remain unit-testable; the hook owns
+// state + the `supabase.auth.resend` call so every login/signup screen has
+// identical cooldown/rate-limit/toast behaviour.
+import { isEmailNotConfirmedErr } from "@/lib/auth/resendCooldown";
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 const FreelancerLogin = () => {
   const navigate = useNavigate();
@@ -70,13 +24,21 @@ const FreelancerLogin = () => {
   const { isAuthenticated, profile } = useAuth();
   const { toast } = useToast();
 
-  // Inline EMAIL_NOT_CONFIRMED state. `unverifiedEmail` is the address tied to
-  // the failed login (we keep it separately from the input so the user can
-  // edit the field without losing the recovery panel). `resendCooldown` gates
-  // the resend button so we never hammer the upstream rate limit.
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [isResending, setIsResending] = useState(false);
+  // All resend-confirmation state lives in the shared hook so the
+  // freelancer/employer/candidate flows behave identically.
+  const {
+    unverifiedEmail,
+    setUnverifiedEmail,
+    resendCooldown,
+    isResending,
+    isDisabled: isResendDisabled,
+    cooldownLabel,
+    resend,
+    reset: resetResendState,
+  } = useResendConfirmation({
+    flow: "freelancer-login",
+    redirectTo: `${window.location.origin}/freelancer/login`,
+  });
 
   useEffect(() => {
     if (isAuthenticated && profile?.role === 'freelancer') {
@@ -84,22 +46,12 @@ const FreelancerLogin = () => {
     }
   }, [isAuthenticated, profile, navigate]);
 
-  // 1-second tick for the cooldown timer. The button stays disabled until
-  // this reaches 0, mirroring the employer-signup resend behaviour.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     // Clear any prior unverified-state when the user retries — the new
     // attempt may succeed or surface a different error.
-    setUnverifiedEmail(null);
+    resetResendState();
     try {
       const isNetErr = (msg?: string) =>
         msg?.includes("Failed to fetch") || msg?.includes("NetworkError") || msg?.includes("timed out");
@@ -168,53 +120,11 @@ const FreelancerLogin = () => {
     }
   };
 
-  // Resend the signup verification email. Gated by `resendCooldown` so this
-  // can only fire after the local timer elapses; if the upstream rate limit
-  // still trips, we re-arm the timer with the parsed retry-after value.
-  const handleResendVerification = async () => {
-    if (!unverifiedEmail) return;
-    if (resendCooldown > 0 || isResending) return;
-
-    setIsResending(true);
-    try {
-      const redirectUrl = `${window.location.origin}/freelancer/login`;
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: unverifiedEmail,
-        options: { emailRedirectTo: redirectUrl },
-      });
-
-      if (error) {
-        if (isRateLimitErr(error)) {
-          const retryAfter = getRetryAfterSeconds(error);
-          const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
-          console.warn('[freelancer-login] resend rate limit', { email: unverifiedEmail, retryAfter, raw: error.message });
-          setResendCooldown(retryAfter);
-          toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-          return;
-        }
-        toast({ title: 'Could not resend email', description: error.message || 'Please try again.', variant: 'destructive' });
-        return;
-      }
-
-      // Success — arm a 60s local cooldown to match Supabase's window.
-      setResendCooldown(60);
-      toast({
-        title: 'Resent successfully',
-        description: `Check your inbox at ${unverifiedEmail} for the confirmation link.`,
-      });
-    } catch (err: any) {
-      if (isRateLimitErr(err)) {
-        const retryAfter = getRetryAfterSeconds(err);
-        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(retryAfter)}.`;
-        setResendCooldown(retryAfter);
-        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-      } else {
-        toast({ title: 'Could not resend email', description: err?.message || 'Please try again.', variant: 'destructive' });
-      }
-    } finally {
-      setIsResending(false);
-    }
+  // Resend the signup verification email. The shared hook handles cooldown
+  // gating, rate-limit detection, toast copy, and console logging — this is
+  // just a thin wrapper that invokes it.
+  const handleResendVerification = () => {
+    void resend();
   };
 
   return (
@@ -257,13 +167,13 @@ const FreelancerLogin = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleResendVerification}
-                    disabled={resendCooldown > 0 || isResending}
+                    disabled={isResendDisabled}
                     className="mt-1"
                   >
                     {isResending
                       ? 'Sending…'
                       : resendCooldown > 0
-                        ? `Try again in ${formatRetryWindow(resendCooldown)}`
+                        ? `Try again in ${cooldownLabel}`
                         : 'Resend confirmation email'}
                   </Button>
                 </div>

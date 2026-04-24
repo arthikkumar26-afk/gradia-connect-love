@@ -19,6 +19,10 @@ import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 import { Badge } from "@/components/ui/badge";
 import { CouponInput } from "@/components/shared/CouponInput";
+// Shared resend-confirmation helpers + hook so the candidate signup uses
+// the exact same cooldown / rate-limit semantics as the candidate login,
+// employer signup, and freelancer login flows.
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 interface FormErrors {
   fullName?: string;
@@ -256,11 +260,16 @@ const CandidateSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
-  // Verification email resend cooldown. Single source of truth that gates
-  // any "resend verification" CTA — counts down 1s at a time so the user
-  // sees a live timer and we never re-hit the upstream rate limit early.
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [isResending, setIsResending] = useState(false);
+  // Verification email resend cooldown is owned by the shared hook so the
+  // ticker, rate-limit detection, and toast copy match every other auth
+  // screen exactly. We only consume `applyExternalError` here because the
+  // candidate signup arms the cooldown from a *signup* error (not a resend
+  // call) — the helper guarantees we never start a timer for a non-rate-
+  // limit failure (validation, network, unknown).
+  const {
+    resendCooldown,
+    applyExternalError,
+  } = useResendConfirmation({ flow: "candidate-signup" });
 
   // Resume step state
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -291,16 +300,7 @@ const CandidateSignup = () => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [currentStep]);
 
-  // Tick down the verification-email resend cooldown every second so the
-  // CTA shows a live countdown and stays disabled until the upstream
-  // rate-limit window has elapsed.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
+  // (Resend cooldown ticker is owned by `useResendConfirmation`.)
 
 
   const validateForm = (): boolean => {
@@ -433,9 +433,11 @@ const CandidateSignup = () => {
           const friendly = `Too many signup attempts for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
           console.warn("[candidate-signup] rate limit triggered", { email, retryAfter, raw: signupMessage });
           setRetryError(friendly);
-          // Arm the resend cooldown so the verification-resend control on
-          // step 2 (and any retry CTA) respects the same upstream window.
-          setResendCooldown(retryAfter);
+          // Arm the resend cooldown via the shared hook so the verification
+          // resend CTA respects the same upstream window. The hook's
+          // `applyExternalError` only arms the timer for genuine rate-limit
+          // errors — non-throttling failures are a no-op.
+          applyExternalError({ status: 429, message: signupMessage });
           toast({
             title: "Please wait a moment",
             description: friendly,

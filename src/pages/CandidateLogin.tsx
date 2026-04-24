@@ -9,16 +9,12 @@ import { ArrowLeft, MailWarning } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-// Shared, unit-tested helpers for the resend-confirmation flow. Keeping
-// these in one module guarantees identical rate-limit detection and
-// cooldown decisions across every login/signup page.
-import {
-  isEmailNotConfirmedErr,
-  isRateLimitErr,
-  getRetryAfterSeconds,
-  formatRetryWindow,
-  decideResendOutcome,
-} from "@/lib/auth/resendCooldown";
+// Shared helpers + hook for the resend-confirmation flow. Pure helpers stay
+// in `@/lib/auth/resendCooldown` so they remain unit-testable; the hook owns
+// state + the `supabase.auth.resend` call so every login/signup screen has
+// identical cooldown/rate-limit/toast behaviour.
+import { isEmailNotConfirmedErr } from "@/lib/auth/resendCooldown";
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 const CandidateLogin = () => {
   const navigate = useNavigate();
@@ -31,13 +27,22 @@ const CandidateLogin = () => {
   const { profile, isAuthenticated } = useAuth();
   const { toast } = useToast();
 
-  // Inline EMAIL_NOT_CONFIRMED state. `unverifiedEmail` is the address tied
-  // to the failed login (kept separate from the input so editing the field
-  // doesn't dismiss the recovery panel). `resendCooldown` gates the resend
-  // button so we never re-hit the upstream rate limit early.
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [isResending, setIsResending] = useState(false);
+  // All resend-confirmation state (unverified email, cooldown, ticker, in-flight
+  // flag) is owned by the shared hook so the freelancer/employer/candidate
+  // flows behave identically.
+  const {
+    unverifiedEmail,
+    setUnverifiedEmail,
+    resendCooldown,
+    isResending,
+    isDisabled: isResendDisabled,
+    cooldownLabel,
+    resend,
+    reset: resetResendState,
+  } = useResendConfirmation({
+    flow: "candidate-login",
+    redirectTo: `${window.location.origin}/candidate/login`,
+  });
 
   useEffect(() => {
     if (isAuthenticated && profile) {
@@ -60,22 +65,14 @@ const CandidateLogin = () => {
     }
   }, [isAuthenticated, profile, navigate, toast, redirectUrl]);
 
-  // 1-second tick for the resend cooldown timer. Button stays disabled
-  // until this hits 0, mirroring the freelancer/employer flows.
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const id = setInterval(() => {
-      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [resendCooldown]);
+  // (Resend cooldown ticker now lives inside `useResendConfirmation`.)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     // Clear any prior unverified-state when the user retries — the new
     // attempt may succeed or surface a different error entirely.
-    setUnverifiedEmail(null);
+    resetResendState();
 
     try {
       const isNetErr = (msg?: string) =>
@@ -197,73 +194,11 @@ const CandidateLogin = () => {
     }
   };
 
-  // Resend the signup verification email. Gated by `resendCooldown` so it
-  // only fires once the local timer elapses; if the upstream rate limit
-  // still trips we re-arm the cooldown using the parsed retry-after value.
-  const handleResendVerification = async () => {
-    if (!unverifiedEmail) return;
-    if (resendCooldown > 0 || isResending) return;
-
-    setIsResending(true);
-    try {
-      const redirectTarget = `${window.location.origin}/candidate/login`;
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: unverifiedEmail,
-        options: { emailRedirectTo: redirectTarget },
-      });
-
-      // Single decision point — pure, unit-tested. Guarantees that
-      // non-rate-limit errors NEVER arm the cooldown timer and that
-      // a successful resend resets it to the default 60s window.
-      const outcome = decideResendOutcome(error);
-
-      if (outcome.kind === 'rate_limited') {
-        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(outcome.cooldown)}.`;
-        console.warn('[candidate-login] resend rate limit', {
-          email: unverifiedEmail,
-          retryAfter: outcome.cooldown,
-          raw: error?.message,
-        });
-        setResendCooldown(outcome.cooldown);
-        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-        return;
-      }
-
-      if (outcome.kind === 'other_error') {
-        // Cooldown intentionally untouched — the user should be able to
-        // retry immediately after a non-throttling failure.
-        toast({
-          title: 'Could not resend email',
-          description: error?.message || 'Please try again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // outcome.kind === 'success' — arm the default cooldown.
-      setResendCooldown(outcome.cooldown);
-      toast({
-        title: 'Resent successfully',
-        description: `Check your inbox at ${unverifiedEmail} for the confirmation link.`,
-      });
-    } catch (err: any) {
-      // Same decision function for thrown errors (e.g. fetch failures).
-      const outcome = decideResendOutcome(err);
-      if (outcome.kind === 'rate_limited') {
-        const friendly = `Too many requests for this email. Try again in ${formatRetryWindow(outcome.cooldown)}.`;
-        setResendCooldown(outcome.cooldown);
-        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
-      } else {
-        toast({
-          title: 'Could not resend email',
-          description: err?.message || 'Please try again.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setIsResending(false);
-    }
+  // Resend the signup verification email. The shared hook handles cooldown
+  // gating, rate-limit detection, toast copy, and console logging — this is
+  // just a thin wrapper that hands the address to the hook.
+  const handleResendVerification = () => {
+    void resend();
   };
 
   return (
@@ -321,13 +256,13 @@ const CandidateLogin = () => {
                     variant="outline"
                     size="sm"
                     onClick={handleResendVerification}
-                    disabled={resendCooldown > 0 || isResending}
+                    disabled={isResendDisabled}
                     className="mt-1"
                   >
                     {isResending
                       ? 'Sending…'
                       : resendCooldown > 0
-                        ? `Try again in ${formatRetryWindow(resendCooldown)}`
+                        ? `Try again in ${cooldownLabel}`
                         : 'Resend confirmation email'}
                   </Button>
                 </div>
