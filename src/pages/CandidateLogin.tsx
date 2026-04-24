@@ -238,17 +238,25 @@ const CandidateLogin = () => {
               login attempt surfaces an unverified email — provides a clear
               explanation and a one-click resend with cooldown feedback. */}
           {unverifiedEmail && (
-            <div
-              role="alert"
-              className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-4"
+            <section
+              ref={(el) => el?.focus()}
+              tabIndex={-1}
+              role="region"
+              aria-labelledby="candidate-login-resend-title"
+              aria-describedby="candidate-login-resend-desc"
+              className="mb-4 rounded-md border border-destructive/30 bg-destructive/5 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div className="flex gap-3">
-                <MailWarning className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <MailWarning aria-hidden="true" className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-2">
-                  <p className="text-sm font-medium text-foreground">
+                  <p
+                    id="candidate-login-resend-title"
+                    role="alert"
+                    className="text-sm font-medium text-foreground"
+                  >
                     Your email is not verified
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p id="candidate-login-resend-desc" className="text-xs text-muted-foreground">
                     Please confirm <span className="font-medium text-foreground">{unverifiedEmail}</span> to continue. Check your inbox for the verification link, or resend it below.
                   </p>
                   <Button
@@ -257,6 +265,15 @@ const CandidateLogin = () => {
                     size="sm"
                     onClick={handleResendVerification}
                     disabled={isResendDisabled}
+                    aria-busy={isResending}
+                    aria-describedby="candidate-login-resend-status"
+                    aria-label={
+                      isResending
+                        ? 'Sending verification email'
+                        : resendCooldown > 0
+                          ? `Resend available in ${cooldownLabel}`
+                          : `Resend confirmation email to ${unverifiedEmail}`
+                    }
                     className="mt-1"
                   >
                     {isResending
@@ -265,9 +282,21 @@ const CandidateLogin = () => {
                         ? `Try again in ${cooldownLabel}`
                         : 'Resend confirmation email'}
                   </Button>
+                  <span
+                    id="candidate-login-resend-status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className="sr-only"
+                  >
+                    {isResending
+                      ? 'Sending verification email'
+                      : resendCooldown > 0
+                        ? `You can resend in ${cooldownLabel}.`
+                        : 'You can resend the verification email now.'}
+                  </span>
                 </div>
               </div>
-            </div>
+            </section>
           )}
 
           {/* Login Form */}

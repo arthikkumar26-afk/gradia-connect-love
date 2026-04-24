@@ -1378,8 +1378,16 @@ const CandidateSignup = () => {
 
 
           {retryError && (
-            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+            <div
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+              className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-sm text-destructive"
+            >
               {retryError}
+              {resendCooldown > 0 && (
+                <span className="sr-only"> You can retry in {resendCooldown} seconds.</span>
+              )}
             </div>
           )}
 
@@ -1514,8 +1522,16 @@ const CandidateSignup = () => {
         </div>
 
         {retryError && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive">
+          <div
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive"
+          >
             {retryError}
+            {resendCooldown > 0 && (
+              <span className="sr-only"> You can retry in {resendCooldown} seconds.</span>
+            )}
           </div>
         )}
 
@@ -1584,7 +1600,19 @@ const CandidateSignup = () => {
           </label>
         </div>
 
-        {retryError && <div className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive">{retryError}</div>}
+        {retryError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            className="mb-4 p-3 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive"
+          >
+            {retryError}
+            {resendCooldown > 0 && (
+              <span className="sr-only"> You can retry in {resendCooldown} seconds.</span>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-4">
           <Button variant="outline" onClick={goBack} className="flex-1">

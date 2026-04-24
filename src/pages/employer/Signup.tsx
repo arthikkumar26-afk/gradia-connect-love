@@ -819,11 +819,20 @@ const EmployerSignup = () => {
             signup; the button stays disabled while the cooldown timer is
             counting down so users can't trigger upstream rate limits. */}
         {pendingVerificationEmail && (
-          <div className="mb-6 p-4 rounded-lg border border-border bg-muted/20">
+          <section
+            ref={(el) => el?.focus()}
+            tabIndex={-1}
+            role="region"
+            aria-labelledby="employer-signup-resend-title"
+            aria-describedby="employer-signup-resend-desc"
+            className="mb-6 p-4 rounded-lg border border-border bg-muted/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-sm">
-                <p className="font-medium text-foreground">Verify your email</p>
-                <p className="text-muted-foreground">
+                <p id="employer-signup-resend-title" className="font-medium text-foreground">
+                  Verify your email
+                </p>
+                <p id="employer-signup-resend-desc" className="text-muted-foreground">
                   We sent a verification link to{' '}
                   <span className="font-medium text-foreground">{pendingVerificationEmail}</span>.
                 </p>
@@ -834,6 +843,15 @@ const EmployerSignup = () => {
                 size="sm"
                 onClick={handleResendVerification}
                 disabled={isResendDisabled}
+                aria-busy={isResending}
+                aria-describedby="employer-signup-resend-status"
+                aria-label={
+                  isResending
+                    ? 'Sending verification email'
+                    : resendCooldown > 0
+                      ? `Resend available in ${cooldownLabel}`
+                      : `Resend verification email to ${pendingVerificationEmail}`
+                }
               >
                 {isResending
                   ? 'Sending…'
@@ -842,7 +860,19 @@ const EmployerSignup = () => {
                     : 'Resend verification email'}
               </Button>
             </div>
-          </div>
+            <span
+              id="employer-signup-resend-status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="sr-only"
+            >
+              {isResending
+                ? 'Sending verification email'
+                : resendCooldown > 0
+                  ? `You can resend in ${cooldownLabel}.`
+                  : 'You can resend the verification email now.'}
+            </span>
+          </section>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
