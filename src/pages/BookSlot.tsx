@@ -54,6 +54,64 @@ const BookSlot = () => {
   // Quick filters for the time-slot dropdowns
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
   const [granularity, setGranularity] = useState<Granularity>(30);
+
+  // Timezone selection — defaults to the browser's detected zone, falls back to IST
+  const detectedTimezone =
+    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) ||
+    "Asia/Kolkata";
+  const [timezone, setTimezone] = useState<string>(detectedTimezone);
+
+  const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
+    { value: "Asia/Kolkata", label: "India Standard Time (IST, UTC+5:30)" },
+    { value: "Asia/Dubai", label: "Gulf Standard Time (GST, UTC+4:00)" },
+    { value: "Asia/Singapore", label: "Singapore Time (SGT, UTC+8:00)" },
+    { value: "Asia/Tokyo", label: "Japan Standard Time (JST, UTC+9:00)" },
+    { value: "Australia/Sydney", label: "Australian Eastern Time (AEST/AEDT)" },
+    { value: "Europe/London", label: "United Kingdom (GMT/BST)" },
+    { value: "Europe/Berlin", label: "Central European Time (CET/CEST)" },
+    { value: "Europe/Paris", label: "Central European — Paris (CET/CEST)" },
+    { value: "America/New_York", label: "Eastern Time — New York (ET)" },
+    { value: "America/Chicago", label: "Central Time — Chicago (CT)" },
+    { value: "America/Denver", label: "Mountain Time — Denver (MT)" },
+    { value: "America/Los_Angeles", label: "Pacific Time — Los Angeles (PT)" },
+    { value: "America/Sao_Paulo", label: "Brasília Time (BRT)" },
+    { value: "UTC", label: "Coordinated Universal Time (UTC)" },
+  ];
+  const timezoneChoices = TIMEZONE_OPTIONS.some((t) => t.value === detectedTimezone)
+    ? TIMEZONE_OPTIONS
+    : [{ value: detectedTimezone, label: `${detectedTimezone} (detected)` }, ...TIMEZONE_OPTIONS];
+
+  // Friendly TZ abbreviation like "IST" / "PDT" / "GMT+5:30" for the chosen zone+date
+  const getTimezoneAbbr = (date: Date, tz: string): string => {
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        timeZoneName: "short",
+      }).formatToParts(date);
+      return parts.find((p) => p.type === "timeZoneName")?.value || tz;
+    } catch {
+      return tz;
+    }
+  };
+
+  // Format a "YYYY-MM-DD" + "HH:mm" wall-clock pair into a confirmation label,
+  // appending the abbreviation for the user's selected timezone.
+  const formatBookedDateTime = (dateStr: string, timeStr: string, tz: string) => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const [hh, mm] = timeStr.split(":").map(Number);
+    const reference = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0);
+    const dateLabel = reference.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    const h = hh || 0;
+    const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    const ampm = h < 12 ? "AM" : "PM";
+    const timeLabel = `${displayHour}:${(mm || 0).toString().padStart(2, "0")} ${ampm}`;
+    return { dateLabel, timeLabel, tzAbbr: getTimezoneAbbr(reference, tz) };
+  };
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
