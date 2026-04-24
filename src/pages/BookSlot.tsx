@@ -43,6 +43,12 @@ const BookSlot = () => {
   const [demoTime1, setDemoTime1] = useState("");
   const [demoTime2, setDemoTime2] = useState("");
   const [demoTime3, setDemoTime3] = useState("");
+
+  // Quick filters for the time-slot dropdowns
+  type TimeOfDay = "all" | "morning" | "afternoon" | "evening";
+  type Granularity = 15 | 30;
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
+  const [granularity, setGranularity] = useState<Granularity>(30);
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
@@ -129,12 +135,20 @@ const BookSlot = () => {
     return `${hour.toString().padStart(2, "0")}:${minute}`;
   };
 
-  // Generate time slots (8 AM to 9 PM, 30-min intervals) — full flexible range
-  const getTimeSlots = () => {
+  // Generate time slots (8 AM to 9 PM) — granularity & time-of-day filter applied
+  const getTimeSlots = (
+    granularityMin: Granularity = granularity,
+    period: TimeOfDay = timeOfDay,
+  ) => {
     const slots: { value: string; label: string }[] = [];
+    const minuteSteps = granularityMin === 15 ? ["00", "15", "30", "45"] : ["00", "30"];
     for (let hour = 8; hour <= 21; hour++) {
-      for (const minute of ["00", "30"]) {
-        if (hour === 21 && minute === "30") continue;
+      for (const minute of minuteSteps) {
+        if (hour === 21 && minute !== "00") continue;
+        // Period filter: morning 8-12, afternoon 12-17, evening 17-21
+        if (period === "morning" && hour >= 12) continue;
+        if (period === "afternoon" && (hour < 12 || hour >= 17)) continue;
+        if (period === "evening" && hour < 17) continue;
         const time = `${hour.toString().padStart(2, "0")}:${minute}`;
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const ampm = hour < 12 ? "AM" : "PM";
@@ -507,6 +521,46 @@ const BookSlot = () => {
                   <Clock className="h-4 w-4 text-purple-600" />
                   Select 3 Preferred Timings *
                 </label>
+
+                {/* Quick filters: time of day + granularity */}
+                <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Filter:</span>
+                  {([
+                    { key: "all", label: "All" },
+                    { key: "morning", label: "🌅 Morning" },
+                    { key: "afternoon", label: "☀️ Afternoon" },
+                    { key: "evening", label: "🌙 Evening" },
+                  ] as { key: TimeOfDay; label: string }[]).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setTimeOfDay(opt.key)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        timeOfDay === opt.key
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <span className="mx-1 h-4 w-px bg-border" />
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Step:</span>
+                  {([15, 30] as Granularity[]).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGranularity(g)}
+                      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                        granularity === g
+                          ? "bg-purple-600 text-white border-purple-600"
+                          : "bg-background text-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {g} min
+                    </button>
+                  ))}
+                </div>
 
                 {[
                   { label: "Option 1", value: demoTime1, setter: setDemoTime1 },
