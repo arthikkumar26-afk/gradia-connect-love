@@ -22,6 +22,8 @@ import {
   formatRetryWindow,
 } from "@/lib/auth/resendCooldown";
 import { useResendConfirmation } from "@/hooks/useResendConfirmation";
+// Aggregated ARIA live-region announcer for inline form validation errors.
+import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
 
 const companyCategories = [
   "IT & Technology",
@@ -112,6 +114,8 @@ const EmployerSignup = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  // Bumped on each submit so the ARIA announcer re-fires on repeat submits.
+  const [submitCount, setSubmitCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   
   // Agreement state
@@ -199,6 +203,9 @@ const EmployerSignup = () => {
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Bump first so the ARIA live region re-announces even if validation
+    // errors are unchanged from the previous attempt.
+    setSubmitCount((n) => n + 1);
 
     // Validation runs first — failures here return early and never call Supabase,
     // so a user fixing form errors won't be penalised by the email rate limit.
