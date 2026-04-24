@@ -162,11 +162,11 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
     expect(screen.getByText("Test Candidate")).toBeInTheDocument();
 
     // Pick "Today" date
-    const dateTrigger = screen.getByRole("combobox", { name: /Select Date/i });
+    const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
     // Pick a specific time slot (10:30 AM) — must exist because slots are 24h
-    const timeTrigger = screen.getByRole("combobox", { name: /Select Time/i });
+    const timeTrigger = triggerByPlaceholder("Choose a time");
     await openSelectAndPick(user, timeTrigger, "10:30 AM");
 
     // Submit
