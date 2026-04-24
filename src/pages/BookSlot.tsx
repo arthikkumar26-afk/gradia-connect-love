@@ -370,7 +370,8 @@ const BookSlot = () => {
       } else if (isWrittenTestSlotBooking) {
         // Route through pipeline email gateway for idempotency
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-        const { error: inviteError } = await supabase.functions.invoke("send-pipeline-email", {
+        const result = await sendInvitationEmail({
+          functionName: "send-pipeline-email",
           body: {
             interviewCandidateId: candidateId,
             stageName: "Written Test",
@@ -379,23 +380,23 @@ const BookSlot = () => {
             scheduledDate: scheduledDateTime,
           },
         });
-        if (inviteError) {
-          console.error("Error sending invitation via gateway:", inviteError);
+        if (!result.ok) {
+          toast.warning("Slot booked, but we couldn't send the invitation email. You can resend it from the confirmation screen.");
         }
       } else {
         // Generic single-slot booking (e.g. Technical Assessment) — send the
         // interview/test invitation so the candidate gets the link for their booked time.
         const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-        const { error: inviteError } = await supabase.functions.invoke("send-interview-invitation", {
+        const result = await sendInvitationEmail({
+          functionName: "send-interview-invitation",
           body: {
             interviewCandidateId: candidateId,
             stageName,
             scheduledDate: scheduledDateTime,
           },
         });
-        if (inviteError) {
-          console.error("Error sending interview invitation:", inviteError);
-          toast.warning("Slot booked, but we couldn't send the invitation email. Please check your dashboard for the link.");
+        if (!result.ok) {
+          toast.warning("Slot booked, but we couldn't send the invitation email. You can resend it from the confirmation screen.");
         }
       }
 
