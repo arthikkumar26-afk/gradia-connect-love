@@ -242,6 +242,79 @@ const BookSlot = () => {
     period: TimeOfDay = timeOfDay,
   ) => buildTimeSlots(granularityMin, period);
 
+  /**
+   * Single source of truth for invoking an invitation/test-link email.
+   * Updates `inviteStatus` so the confirmation screen can show a verified
+   * "sent" indicator (or a retry button) without each call site having to
+   * remember to update the same three pieces of state.
+   */
+  const sendInvitationEmail = async (
+    args: { functionName: string; body: Record<string, unknown> },
+  ): Promise<{ ok: boolean; error?: string }> => {
+    setInviteStatus("sending");
+    setInviteError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke(args.functionName, {
+        body: args.body,
+      });
+      // Edge function explicitly returns { success: true } on the happy path;
+      // treat anything else (network error, success === false) as a failure
+      // so the user sees a retry path instead of a misleading green checkmark.
+      if (error || (data && data.success === false)) {
+        const msg = error?.message || data?.error || "Failed to send invitation email.";
+        console.error(`[${args.functionName}] invitation send failed`, msg);
+        setInviteStatus("failed");
+        setInviteError(msg);
+        return { ok: false, error: msg };
+      }
+      setInviteStatus("sent");
+      setInviteSentAt(new Date());
+      return { ok: true };
+    } catch (err: any) {
+      const msg = err?.message || "Failed to send invitation email.";
+      console.error(`[${args.functionName}] invitation send threw`, err);
+      setInviteStatus("failed");
+      setInviteError(msg);
+      return { ok: false, error: msg };
+    }
+  };
+
+  /**
+   * Manual resend triggered from the confirmation screen. Reuses the same
+   * routing logic the booking flow used so the candidate gets exactly the
+   * same email they would have received automatically.
+   */
+  const handleResendInvitation = async () => {
+    if (!candidateId || !selectedDate || !selectedTime) return;
+    const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+    const isWrittenTest =
+      stageName.toLowerCase().includes("written") && !isFeedbackStage;
+    const result = isWrittenTest
+      ? await sendInvitationEmail({
+          functionName: "send-pipeline-email",
+          body: {
+            interviewCandidateId: candidateId,
+            stageName: "Written Test",
+            emailType: "interview_invitation",
+            triggerSource: "book-slot-resend",
+            scheduledDate: scheduledDateTime,
+          },
+        })
+      : await sendInvitationEmail({
+          functionName: "send-interview-invitation",
+          body: {
+            interviewCandidateId: candidateId,
+            stageName,
+            scheduledDate: scheduledDateTime,
+          },
+        });
+    if (result.ok) {
+      toast.success("Invitation email resent. Please check your inbox.");
+    } else {
+      toast.error(result.error || "Could not resend the invitation email.");
+    }
+  };
+
   const handleBookSlot = async () => {
     // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
     let demoSlots: { date: string; time: string }[] = [];
