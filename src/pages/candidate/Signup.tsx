@@ -28,7 +28,7 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
-type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms' | 'wallet';
+type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms';
 
 const wizardSteps = [
   { id: 'signup' as const, label: 'Create Account', stepNumber: 1 },
@@ -36,7 +36,13 @@ const wizardSteps = [
   { id: 'benefits' as const, label: 'Benefits', stepNumber: 3 },
   { id: 'agreement' as const, label: 'Agreement', stepNumber: 4 },
   { id: 'terms' as const, label: 'Terms & Conditions', stepNumber: 5 },
-  { id: 'wallet' as const, label: 'Activate Wallet', stepNumber: 6 },
+];
+
+// Keys we proactively clear on mount to prevent cross-browser stale-state divergence
+const STALE_STORAGE_KEYS = [
+  'candidateSignupWizardStep',
+  'candidateOnboardingStep',
+  'walletActivationPending',
 ];
 
 const POINT_PACKAGES = [
