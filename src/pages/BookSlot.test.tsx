@@ -166,7 +166,7 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
     // Pick a specific time slot (10:30 AM) — must exist because slots are 24h
-    const timeTrigger = triggerByPlaceholder("Choose a time");
+    const timeTrigger = triggerByPlaceholder("Choose a time slot");
     await openSelectAndPick(user, timeTrigger, "10:30 AM");
 
     // Submit
