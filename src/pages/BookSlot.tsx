@@ -493,10 +493,10 @@ const BookSlot = () => {
                 <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border">
                   <span className="text-xs font-medium text-muted-foreground mr-1">Filter:</span>
                   {([
-                    { key: "all", label: "All" },
-                    { key: "morning", label: "🌅 Morning" },
-                    { key: "afternoon", label: "☀️ Afternoon" },
-                    { key: "evening", label: "🌙 Evening" },
+                    { key: "all", label: "All (12 AM – 12 AM)" },
+                    { key: "morning", label: "🌅 Morning (12 AM – 12 PM)" },
+                    { key: "afternoon", label: "☀️ Afternoon (12 PM – 5 PM)" },
+                    { key: "evening", label: "🌙 Evening (5 PM – 12 AM)" },
                   ] as { key: TimeOfDay; label: string }[]).map((opt) => (
                     <button
                       key={opt.key}
