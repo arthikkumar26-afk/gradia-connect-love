@@ -427,6 +427,7 @@ export const JobApplicationFlow = ({
         strengths: ['Application submitted for manual review'],
         summary: 'Your application has been submitted and will be reviewed by our hiring team.',
       });
+      setSubmissionStatus('manual_review');
       setError(null);
       setFlowStep('complete');
       toast.success("Application submitted for manual review");
