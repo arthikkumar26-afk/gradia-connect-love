@@ -392,14 +392,32 @@ export const JobApplicationFlow = ({
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('applications').insert({
+      if (!user) {
+        setError(classifyError(new Error('Session expired'), 'analyze', !!uploadedResumeUrlRef.current, 401, 'Session expired'));
+        setFlowStep('upload');
+        return;
+      }
+
+      const { data: existingApplication } = await supabase
+        .from('applications')
+        .select('id')
+        .eq('candidate_id', user.id)
+        .eq('job_id', job.id)
+        .maybeSingle();
+
+      if (!existingApplication) {
+        const { error: insertError } = await supabase.from('applications').insert({
           candidate_id: user.id,
           job_id: job.id,
           cover_letter: coverLetter || null,
           status: 'in_review',
         });
+
+        if (insertError && !insertError.message?.toLowerCase().includes('duplicate')) {
+          throw insertError;
+        }
       }
+
       setAiAnalysis({
         overall_score: 0,
         skill_match_score: 0,
@@ -413,7 +431,9 @@ export const JobApplicationFlow = ({
       toast.success("Application submitted for manual review");
     } catch (err) {
       console.error('Manual review submission failed:', err);
-      toast.error("Could not submit application. Please try again.");
+      const message = err instanceof Error ? err.message : 'Could not submit application';
+      setError(classifyError(err, 'analyze', !!uploadedResumeUrlRef.current, undefined, message));
+      setFlowStep('upload');
     } finally {
       setIsSubmitting(false);
     }
