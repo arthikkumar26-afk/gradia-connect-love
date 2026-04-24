@@ -129,12 +129,12 @@ const BookSlot = () => {
     return `${hour.toString().padStart(2, "0")}:${minute}`;
   };
 
-  // Generate time slots (9 AM to 6 PM, 30-min intervals)
+  // Generate time slots (8 AM to 9 PM, 30-min intervals) — full flexible range
   const getTimeSlots = () => {
     const slots: { value: string; label: string }[] = [];
-    for (let hour = 9; hour <= 17; hour++) {
+    for (let hour = 8; hour <= 21; hour++) {
       for (const minute of ["00", "30"]) {
-        if (hour === 17 && minute === "30") continue;
+        if (hour === 21 && minute === "30") continue;
         const time = `${hour.toString().padStart(2, "0")}:${minute}`;
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const ampm = hour < 12 ? "AM" : "PM";
@@ -521,7 +521,7 @@ const BookSlot = () => {
                       <SelectTrigger className="flex-1">
                         <SelectValue placeholder={`Choose time ${i + 1}`} />
                       </SelectTrigger>
-                      <SelectContent className="max-h-60">
+                      <SelectContent className="max-h-[300px]">
                         {getTimeSlots().map((ts) => (
                           <SelectItem key={ts.value} value={ts.value}>
                             {ts.label}
