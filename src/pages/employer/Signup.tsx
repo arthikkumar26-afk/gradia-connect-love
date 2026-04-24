@@ -833,12 +833,12 @@ const EmployerSignup = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleResendVerification}
-                disabled={resendCooldown > 0 || isResending}
+                disabled={isResendDisabled}
               >
                 {isResending
                   ? 'Sending…'
                   : resendCooldown > 0
-                    ? `Resend in ${formatRetryWindow(resendCooldown)}`
+                    ? `Resend in ${cooldownLabel}`
                     : 'Resend verification email'}
               </Button>
             </div>
