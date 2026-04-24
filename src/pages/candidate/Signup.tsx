@@ -256,6 +256,12 @@ const CandidateSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
+  // Verification email resend cooldown. Single source of truth that gates
+  // any "resend verification" CTA — counts down 1s at a time so the user
+  // sees a live timer and we never re-hit the upstream rate limit early.
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+
   // Resume step state
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeParsing, setResumeParsing] = useState(false);
@@ -284,6 +290,17 @@ const CandidateSignup = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [currentStep]);
+
+  // Tick down the verification-email resend cooldown every second so the
+  // CTA shows a live countdown and stays disabled until the upstream
+  // rate-limit window has elapsed.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
 
 
   const validateForm = (): boolean => {
@@ -379,18 +396,49 @@ const CandidateSignup = () => {
       }
 
       const signupMessage = signupData?.error || signupError?.message || '';
+      // Detect Supabase email-send rate limit. Status 429 / "over_email_send_rate_limit"
+      // can also surface here when the upstream confirmation email throttles.
       const isRateLimit = (msg?: string) =>
-        !!msg && (msg.toLowerCase().includes("for security purposes") || msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("only request this after"));
+        !!msg && (
+          msg.toLowerCase().includes("for security purposes") ||
+          msg.toLowerCase().includes("rate limit") ||
+          msg.toLowerCase().includes("only request this after") ||
+          msg.toLowerCase().includes("over_email_send_rate")
+        );
+      // Pull the retry-after seconds out of Supabase's error message; falls
+      // back to 60s. Capped at 10 min so a malformed value can't lock the UI.
+      const getRetryAfterSeconds = (msg?: string): number => {
+        const m = msg || '';
+        const match =
+          m.match(/after\s+(\d+)\s*seconds?/i) ||
+          m.match(/in\s+(\d+)\s*seconds?/i) ||
+          m.match(/(\d+)\s*seconds?/i);
+        if (match) {
+          const n = parseInt(match[1], 10);
+          if (!Number.isNaN(n) && n > 0) return Math.min(n, 600);
+        }
+        return 60;
+      };
+      const formatRetryWindow = (seconds: number) => {
+        if (seconds < 60) return `${seconds} second${seconds === 1 ? "" : "s"}`;
+        const mins = Math.ceil(seconds / 60);
+        return `${mins} minute${mins === 1 ? "" : "s"}`;
+      };
 
       if (signupError || !signupData?.userId) {
         if (signupMessage.toLowerCase().includes("already registered") || signupMessage.toLowerCase().includes("already been registered")) {
           setErrors({ email: "This email is already registered. Please login instead." });
         } else if (isRateLimit(signupMessage)) {
-          const match = signupMessage.match(/(\d+)\s*seconds?/i);
-          const secs = match ? match[1] : "a few";
+          const retryAfter = getRetryAfterSeconds(signupMessage);
+          const friendly = `Too many signup attempts for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
+          console.warn("[candidate-signup] rate limit triggered", { email, retryAfter, raw: signupMessage });
+          setRetryError(friendly);
+          // Arm the resend cooldown so the verification-resend control on
+          // step 2 (and any retry CTA) respects the same upstream window.
+          setResendCooldown(retryAfter);
           toast({
-            title: "Please wait",
-            description: `For security, you can try again in ${secs} seconds.`,
+            title: "Please wait a moment",
+            description: friendly,
             variant: "destructive",
           });
         } else if (isNetErr(signupMessage)) {
