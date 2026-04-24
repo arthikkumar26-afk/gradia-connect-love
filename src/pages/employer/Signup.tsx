@@ -116,12 +116,32 @@ const EmployerSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
+  // OTP / verification email resend state.
+  // `pendingVerificationEmail` is set after a successful signup so the resend
+  // panel knows which address to re-send to. `resendCooldown` is the number of
+  // seconds remaining before the next resend is allowed — it is the single
+  // source of truth that gates the button (no second API call until it hits 0).
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const [isResending, setIsResending] = useState(false);
+
   useEffect(() => {
     if (isAuthenticated && currentStep === 'signup') {
       // If already authenticated, skip to benefits
       setCurrentStep('benefits');
     }
   }, [isAuthenticated, currentStep]);
+
+  // Tick down the resend cooldown every second. The button stays disabled
+  // until this reaches 0, so we never even attempt a resend during the
+  // upstream rate-limit window.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -337,6 +357,11 @@ const EmployerSignup = () => {
         description: "Explore the benefits of partnering with Gradia",
       });
 
+      // Arm the resend control. Supabase enforces a ~60s window between
+      // signup-confirmation emails, so we mirror that locally.
+      setPendingVerificationEmail(email);
+      setResendCooldown(60);
+
       setCurrentStep('benefits');
     } catch (error: any) {
       // Catch-all: also check for rate limit here in case the error escaped the inner branch.
@@ -360,6 +385,55 @@ const EmployerSignup = () => {
     }
   };
 
+  // Resend the signup verification email. The button is gated by `resendCooldown`,
+  // so this should only fire once the local timer has elapsed. We still defend
+  // against a server-side rate-limit response by re-arming the cooldown using the
+  // same friendly messaging the signup flow uses.
+  const handleResendVerification = async () => {
+    if (!pendingVerificationEmail) return;
+    if (resendCooldown > 0 || isResending) return;
+
+    setIsResending(true);
+    try {
+      const redirectUrl = `${window.location.origin}/employer/signup`;
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: pendingVerificationEmail,
+        options: { emailRedirectTo: redirectUrl },
+      });
+
+      if (error) {
+        if (isRateLimitErr(error)) {
+          const retryAfter = getRetryAfterSeconds(error);
+          const friendly = `Too many requests for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
+          console.warn('[employer-signup] resend rate limit', { email: pendingVerificationEmail, retryAfter, raw: error.message });
+          setResendCooldown(retryAfter);
+          toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Could not resend email', description: error.message || 'Please try again.', variant: 'destructive' });
+        return;
+      }
+
+      // Success — re-arm the local cooldown to match Supabase's window.
+      setResendCooldown(60);
+      toast({
+        title: 'Verification email sent',
+        description: `A new verification email has been sent to ${pendingVerificationEmail}.`,
+      });
+    } catch (err: any) {
+      if (isRateLimitErr(err)) {
+        const retryAfter = getRetryAfterSeconds(err);
+        const friendly = `Too many requests for this email. Please try again in ${formatRetryWindow(retryAfter)}.`;
+        setResendCooldown(retryAfter);
+        toast({ title: 'Please wait a moment', description: friendly, variant: 'destructive' });
+      } else {
+        toast({ title: 'Could not resend email', description: err?.message || 'Please try again.', variant: 'destructive' });
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
   const handleAgreementContinue = async () => {
     if (!agreementAccepted) {
       toast({ title: 'Please accept the agreement', variant: 'destructive' });
@@ -805,6 +879,36 @@ const EmployerSignup = () => {
             Discover the advantages of partnering with Gradia Connect for your recruitment needs.
           </p>
         </div>
+
+        {/* Verification email resend control. Only renders after a successful
+            signup; the button stays disabled while the cooldown timer is
+            counting down so users can't trigger upstream rate limits. */}
+        {pendingVerificationEmail && (
+          <div className="mb-6 p-4 rounded-lg border border-border bg-muted/20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm">
+                <p className="font-medium text-foreground">Verify your email</p>
+                <p className="text-muted-foreground">
+                  We sent a verification link to{' '}
+                  <span className="font-medium text-foreground">{pendingVerificationEmail}</span>.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResendVerification}
+                disabled={resendCooldown > 0 || isResending}
+              >
+                {isResending
+                  ? 'Sending…'
+                  : resendCooldown > 0
+                    ? `Resend in ${formatRetryWindow(resendCooldown)}`
+                    : 'Resend verification email'}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           {benefits.map((benefit, index) => (
