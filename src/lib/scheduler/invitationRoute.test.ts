@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   resolveInvitationRoute,
   assertInvitationRoute,
+  buildInvitationDeliveryInvocation,
+  resolveInvitationDeliveryRoute,
+  assertInvitationDeliveryRoute,
 } from "./invitationRoute";
 
 describe("resolveInvitationRoute", () => {
@@ -109,5 +112,69 @@ describe("assertInvitationRoute", () => {
     expect(() =>
       assertInvitationRoute("HR Round", "send-interview-invitation"),
     ).toThrow(/Invitation routing mismatch/);
+  });
+});
+
+describe("resolveInvitationDeliveryRoute", () => {
+  it("routes Written Test delivery through the pipeline gateway", () => {
+    const route = resolveInvitationDeliveryRoute("Written Test");
+    expect(route.functionName).toBe("send-pipeline-email");
+    expect(route.stageName).toBe("Written Test");
+    expect(route.emailType).toBe("interview_invitation");
+  });
+
+  it.each([
+    "Technical Assessment",
+    "HR Round",
+    "Segment Round",
+    "Management Round",
+  ])("routes %s delivery through send-interview-invitation", (stage) => {
+    const route = resolveInvitationDeliveryRoute(stage);
+    expect(route.functionName).toBe("send-interview-invitation");
+    expect(route.stageName).toBe(stage);
+  });
+});
+
+describe("assertInvitationDeliveryRoute", () => {
+  it("throws when a Written Test delivery is wired to the direct sender", () => {
+    expect(() =>
+      assertInvitationDeliveryRoute("Written Test", "send-interview-invitation"),
+    ).toThrow(/delivery routing mismatch/i);
+  });
+});
+
+describe("buildInvitationDeliveryInvocation", () => {
+  it("builds the pipeline-email payload for Written Test", () => {
+    const invocation = buildInvitationDeliveryInvocation({
+      interviewCandidateId: "ic-1",
+      stageName: "Written Test",
+      scheduledDate: "2026-04-24T10:30:00.000Z",
+      triggerSource: "candidate-resend",
+    });
+
+    expect(invocation.functionName).toBe("send-pipeline-email");
+    expect(invocation.body).toMatchObject({
+      interviewCandidateId: "ic-1",
+      stageName: "Written Test",
+      emailType: "interview_invitation",
+      triggerSource: "candidate-resend",
+    });
+  });
+
+  it("builds the direct-invitation payload for HR Round", () => {
+    const invocation = buildInvitationDeliveryInvocation({
+      interviewCandidateId: "ic-1",
+      stageName: "HR Round",
+      scheduledDate: "2026-04-24T10:30:00.000Z",
+      meetingLink: "https://example.com/meet",
+    });
+
+    expect(invocation.functionName).toBe("send-interview-invitation");
+    expect(invocation.body).toMatchObject({
+      interviewCandidateId: "ic-1",
+      stageName: "HR Round",
+      scheduledDate: "2026-04-24T10:30:00.000Z",
+      meetingLink: "https://example.com/meet",
+    });
   });
 });
