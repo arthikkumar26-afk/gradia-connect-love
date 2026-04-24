@@ -24,6 +24,8 @@ interface FormErrorAnnouncerProps {
    *  Typed loosely so it accepts both `Record<string,string>` and interfaces
    *  with optional string fields (e.g. `{ email?: string }`). */
   errors: Record<string, unknown> | object;
+  /** Increment from the form on every submit attempt to force re-announcement. */
+  submitCount: number;
   /** Optional prefix, e.g. "Please fix the following before continuing:". */
   prefix?: string;
   /** Optional id so inputs can `aria-describedby` it as a fallback. */
