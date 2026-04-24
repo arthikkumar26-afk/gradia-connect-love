@@ -227,7 +227,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     );
 
     // Pick a date
-    const dateTrigger = screen.getByRole("combobox", { name: /Select Date/i });
+    const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
     // Submit button should be disabled until we pick 3 distinct times
@@ -235,9 +235,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     expect(submit).toBeDisabled();
 
     // Pick 3 different times
-    const timeTriggers = screen.getAllByRole("combobox").filter((el) =>
-      /Choose time/i.test(el.textContent || ""),
-    );
+    const timeTriggers = allTriggersByPlaceholder(/^Choose time \d$/);
     expect(timeTriggers).toHaveLength(3);
     await openSelectAndPick(user, timeTriggers[0], "9:00 AM");
     await openSelectAndPick(user, timeTriggers[1], "2:00 PM");
