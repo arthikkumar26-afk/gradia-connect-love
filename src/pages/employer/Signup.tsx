@@ -116,12 +116,32 @@ const EmployerSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
+  // OTP / verification email resend state.
+  // `pendingVerificationEmail` is set after a successful signup so the resend
+  // panel knows which address to re-send to. `resendCooldown` is the number of
+  // seconds remaining before the next resend is allowed — it is the single
+  // source of truth that gates the button (no second API call until it hits 0).
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
+  const [isResending, setIsResending] = useState(false);
+
   useEffect(() => {
     if (isAuthenticated && currentStep === 'signup') {
       // If already authenticated, skip to benefits
       setCurrentStep('benefits');
     }
   }, [isAuthenticated, currentStep]);
+
+  // Tick down the resend cooldown every second. The button stays disabled
+  // until this reaches 0, so we never even attempt a resend during the
+  // upstream rate-limit window.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => {
+      setResendCooldown((s) => (s > 0 ? s - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
