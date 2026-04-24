@@ -19,6 +19,10 @@ import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 import { Badge } from "@/components/ui/badge";
 import { CouponInput } from "@/components/shared/CouponInput";
+// Shared resend-confirmation helpers + hook so the candidate signup uses
+// the exact same cooldown / rate-limit semantics as the candidate login,
+// employer signup, and freelancer login flows.
+import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 
 interface FormErrors {
   fullName?: string;
@@ -256,11 +260,16 @@ const CandidateSignup = () => {
   // Retry error state
   const [retryError, setRetryError] = useState<string | null>(null);
 
-  // Verification email resend cooldown. Single source of truth that gates
-  // any "resend verification" CTA — counts down 1s at a time so the user
-  // sees a live timer and we never re-hit the upstream rate limit early.
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [isResending, setIsResending] = useState(false);
+  // Verification email resend cooldown is owned by the shared hook so the
+  // ticker, rate-limit detection, and toast copy match every other auth
+  // screen exactly. We only consume `applyExternalError` here because the
+  // candidate signup arms the cooldown from a *signup* error (not a resend
+  // call) — the helper guarantees we never start a timer for a non-rate-
+  // limit failure (validation, network, unknown).
+  const {
+    resendCooldown,
+    applyExternalError,
+  } = useResendConfirmation({ flow: "candidate-signup" });
 
   // Resume step state
   const [resumeFile, setResumeFile] = useState<File | null>(null);
