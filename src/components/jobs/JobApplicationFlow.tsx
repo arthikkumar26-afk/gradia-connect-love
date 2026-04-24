@@ -1262,14 +1262,26 @@ export const JobApplicationFlow = ({
               </div>
             </ScrollArea>
 
-            <DialogFooter className="pt-4 border-t">
-              <Button onClick={handleCompleteAndClose} className="w-full gap-2">
-                <CheckCircle2 className="h-4 w-4" />
+            <DialogFooter className="pt-4 border-t flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  handleClose();
+                  window.location.href = '/candidate/dashboard?tab=applications';
+                }}
+                className="w-full sm:w-auto gap-2"
+              >
+                Track on Dashboard
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button onClick={handleCompleteAndClose} className="w-full sm:flex-1 gap-2">
+                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                 Done
               </Button>
             </DialogFooter>
           </>
-        )}
+          );
+        })()}
       </DialogContent>
     </Dialog>
   );
