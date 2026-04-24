@@ -41,6 +41,7 @@ import {
   Layers,
   Trash2,
 } from "lucide-react";
+import { ApplicationTimeline } from "./ApplicationTimeline";
 
 interface Application {
   id: string;
@@ -467,6 +468,21 @@ export const ApplicationsTab = ({ candidateId, onViewPipeline }: ApplicationsTab
                     <Separator />
                   </>
                 )}
+
+                {/* Backend processing timeline */}
+                <div className="bg-muted/30 rounded-lg p-4 border border-border/60">
+                  <ApplicationTimeline
+                    candidateId={candidateId}
+                    applicationId={selectedApp.id}
+                    jobId={selectedApp.job_id}
+                    appliedAt={selectedApp.applied_date}
+                    applicationStatus={selectedApp.status}
+                    hasInterviewCandidate={!!selectedApp.interview_candidate}
+                    aiScore={selectedApp.interview_candidate?.ai_score ?? null}
+                  />
+                </div>
+
+                <Separator />
 
                 {selectedApp.job?.description && (
                   <div>
