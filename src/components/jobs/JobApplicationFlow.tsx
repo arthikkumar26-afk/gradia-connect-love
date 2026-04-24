@@ -566,43 +566,24 @@ export const JobApplicationFlow = ({
         await runMockAnalysis();
       }
 
-    } catch (error: any) {
-      console.error('Application error:', error);
-      setError(error.message || "Failed to submit application");
+    } catch (err: any) {
+      console.error('Application error:', err);
 
-      // If it's a rate limit or payment error, show specific message
-      if (error.message?.includes('Rate limit')) {
-        setError('The AI service is busy. Please try again in a moment.');
-      } else if (error.message?.includes('credits')) {
-        setError('AI analysis is temporarily unavailable, but your application was submitted and will be reviewed manually.');
-        // Still record the application so the candidate's submission isn't lost
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && job) {
-            await supabase
-              .from('applications')
-              .insert({
-                candidate_id: user.id,
-                job_id: job.id,
-                cover_letter: coverLetter || null,
-                status: 'in_review',
-              });
-          }
-        } catch (insertErr) {
-          console.error('Failed to record application after AI failure:', insertErr);
-        }
-        setFlowStep('complete');
-        setAiAnalysis({
-          overall_score: 0,
-          skill_match_score: 0,
-          experience_match_score: 0,
-          recommendation: 'pending',
-          strengths: ['Application submitted for manual review'],
-          summary: 'Your application has been submitted and will be reviewed by our hiring team.',
-        });
-        return;
-      }
+      // Errors thrown from inside our try block include __stage / __status hints.
+      // Anything else (DB queries, profile lookups) is treated as analyze-stage
+      // when we have already uploaded, otherwise as a generic upload failure.
+      const stage: 'upload' | 'analyze' =
+        err?.__stage === 'upload' ? 'upload' : 'analyze';
+      const resumeUploaded = !!uploadedResumeUrlRef.current;
+      const classified = classifyError(
+        err?.original ?? err,
+        stage,
+        resumeUploaded,
+        err?.__status,
+        err?.__message,
+      );
 
+      setError(classified);
       setFlowStep('upload');
     } finally {
       setIsSubmitting(false);
