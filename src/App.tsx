@@ -117,6 +117,7 @@ const AdminUsers = lazyWithRetry(() => import("./pages/admin/Users"));
 const AdminCompanies = lazyWithRetry(() => import("./pages/admin/Companies"));
 const AdminReports = lazyWithRetry(() => import("./pages/admin/Reports"));
 const AdminAuditLogs = lazyWithRetry(() => import("./pages/admin/AuditLogs"));
+const AdminResumeAnalysisAudit = lazyWithRetry(() => import("./pages/admin/ResumeAnalysisAudit"));
 const AdminSettings = lazyWithRetry(() => import("./pages/admin/AdminSettings"));
 const SubscribedEmployers = lazyWithRetry(() => import("./pages/admin/SubscribedEmployers"));
 const SubscribedCandidates = lazyWithRetry(() => import("./pages/admin/SubscribedCandidates"));
