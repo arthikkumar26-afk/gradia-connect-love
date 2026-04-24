@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   formatDateValue,
   getNextAvailableSlot,
@@ -61,7 +64,7 @@ const BookSlot = () => {
     "Asia/Kolkata";
   const [timezone, setTimezone] = useState<string>(detectedTimezone);
 
-  const TIMEZONE_OPTIONS: { value: string; label: string }[] = [
+  const COMMON_TIMEZONES: { value: string; label: string }[] = [
     { value: "Asia/Kolkata", label: "India Standard Time (IST, UTC+5:30)" },
     { value: "Asia/Dubai", label: "Gulf Standard Time (GST, UTC+4:00)" },
     { value: "Asia/Singapore", label: "Singapore Time (SGT, UTC+8:00)" },
@@ -77,9 +80,54 @@ const BookSlot = () => {
     { value: "America/Sao_Paulo", label: "Brasília Time (BRT)" },
     { value: "UTC", label: "Coordinated Universal Time (UTC)" },
   ];
-  const timezoneChoices = TIMEZONE_OPTIONS.some((t) => t.value === detectedTimezone)
-    ? TIMEZONE_OPTIONS
-    : [{ value: detectedTimezone, label: `${detectedTimezone} (detected)` }, ...TIMEZONE_OPTIONS];
+
+  // Full IANA list when the runtime supports it; otherwise fall back to the curated set.
+  const allIanaTimezones: string[] = useMemo(() => {
+    try {
+      const supportedFn = (Intl as unknown as {
+        supportedValuesOf?: (key: string) => string[];
+      }).supportedValuesOf;
+      if (typeof supportedFn === "function") {
+        return supportedFn("timeZone");
+      }
+    } catch {
+      /* ignore */
+    }
+    return COMMON_TIMEZONES.map((t) => t.value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Combine: detected zone (if missing) + curated common labels first, then every other IANA zone.
+  const timezoneChoices = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { value: string; label: string; group: "detected" | "common" | "all" }[] = [];
+
+    if (!COMMON_TIMEZONES.some((t) => t.value === detectedTimezone)) {
+      list.push({
+        value: detectedTimezone,
+        label: `${detectedTimezone} (detected)`,
+        group: "detected",
+      });
+      seen.add(detectedTimezone);
+    }
+
+    for (const tz of COMMON_TIMEZONES) {
+      if (!seen.has(tz.value)) {
+        list.push({ ...tz, group: "common" });
+        seen.add(tz.value);
+      }
+    }
+
+    for (const tz of allIanaTimezones) {
+      if (!seen.has(tz)) {
+        list.push({ value: tz, label: tz, group: "all" });
+        seen.add(tz);
+      }
+    }
+    return list;
+  }, [allIanaTimezones, detectedTimezone]);
+
+  const [tzPickerOpen, setTzPickerOpen] = useState(false);
 
   // Friendly TZ abbreviation like "IST" / "PDT" / "GMT+5:30" for the chosen zone+date
   const getTimezoneAbbr = (date: Date, tz: string): string => {
@@ -529,18 +577,78 @@ const BookSlot = () => {
               <Clock className="h-4 w-4 text-indigo-600" />
               Your Timezone *
             </label>
-            <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger aria-label="Select your timezone">
-                <SelectValue placeholder="Choose your timezone" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {timezoneChoices.map((tz) => (
-                  <SelectItem key={tz.value} value={tz.value}>
-                    {tz.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={tzPickerOpen} onOpenChange={setTzPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-label="Select your timezone"
+                  aria-expanded={tzPickerOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  <span className="truncate text-left">
+                    {timezoneChoices.find((tz) => tz.value === timezone)?.label || timezone}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[--radix-popover-trigger-width] p-0 z-[1500]"
+                align="start"
+              >
+                <Command
+                  filter={(value, search) => {
+                    // Match either the IANA id or the curated label, case-insensitively.
+                    const tz = timezoneChoices.find((t) => t.value === value);
+                    const haystack = `${value} ${tz?.label ?? ""}`.toLowerCase();
+                    return haystack.includes(search.toLowerCase()) ? 1 : 0;
+                  }}
+                >
+                  <CommandInput placeholder="Search timezone (e.g. Vancouver, GMT, UTC)…" />
+                  <CommandList className="max-h-[280px]">
+                    <CommandEmpty>No matching timezone.</CommandEmpty>
+                    {(["detected", "common", "all"] as const).map((groupKey) => {
+                      const items = timezoneChoices.filter((tz) => tz.group === groupKey);
+                      if (items.length === 0) return null;
+                      const heading =
+                        groupKey === "detected"
+                          ? "Detected"
+                          : groupKey === "common"
+                            ? "Common timezones"
+                            : "All IANA timezones";
+                      return (
+                        <CommandGroup key={groupKey} heading={heading}>
+                          {items.map((tz) => (
+                            <CommandItem
+                              key={tz.value}
+                              value={tz.value}
+                              onSelect={(val) => {
+                                setTimezone(val);
+                                setTzPickerOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  timezone === tz.value ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              <span className="flex-1 truncate">{tz.label}</span>
+                              {tz.label !== tz.value && (
+                                <span className="ml-2 text-[10px] text-muted-foreground">
+                                  {tz.value}
+                                </span>
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      );
+                    })}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
             <p className="text-[11px] text-muted-foreground">
               Slot times below are interpreted in this timezone — the confirmation will show
               the booked time as <strong>{getTimezoneAbbr(new Date(), timezone)}</strong>.
