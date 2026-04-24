@@ -98,6 +98,7 @@ export const JobApplicationFlow = ({
   const [error, setError] = useState<ApplicationError | null>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [nextStage, setNextStage] = useState<string>('AI Phone Interview');
+  const [submissionStatus, setSubmissionStatus] = useState<'ai_reviewed' | 'manual_review' | null>(null);
   /** Cache the storage URL so retry-after-AI-failure does not re-upload. */
   const uploadedResumeUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
