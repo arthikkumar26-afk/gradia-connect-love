@@ -126,6 +126,9 @@ JOB DETAILS:
 Provide your analysis using the suggest_analysis function.`;
 
     let analysis: any;
+    let aiHttpStatus: number | null = null;
+    let aiErrorMessage: string | null = null;
+    let fallbackReason: 'success' | 'ai_credits' | 'ai_rate_limit' | 'ai_server' | 'ai_other' | 'ai_exception' | 'parse_failed' = 'success';
 
     try {
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -169,9 +172,17 @@ Provide your analysis using the suggest_analysis function.`;
         }),
       });
 
+      aiHttpStatus = response.status;
+
       if (!response.ok) {
         const errorText = await response.text();
+        aiErrorMessage = errorText.slice(0, 500);
         console.error('AI gateway error:', response.status, errorText);
+
+        if (response.status === 402) fallbackReason = 'ai_credits';
+        else if (response.status === 429) fallbackReason = 'ai_rate_limit';
+        else if (response.status >= 500) fallbackReason = 'ai_server';
+        else fallbackReason = 'ai_other';
 
         const isFallbackable =
           response.status === 402 ||
@@ -179,6 +190,22 @@ Provide your analysis using the suggest_analysis function.`;
           response.status >= 500;
 
         if (!isFallbackable) {
+          // Log the failed attempt before returning
+          await supabase.from('resume_analysis_audit_logs').insert({
+            candidate_id: actualCandidateId,
+            candidate_email: candidateProfile.email || null,
+            job_id: jobId,
+            job_title: jobDetails.job_title || null,
+            http_status: response.status,
+            fallback_reason: fallbackReason,
+            used_fallback: false,
+            application_state: 'failed',
+            overall_score: null,
+            error_message: aiErrorMessage,
+          }).then(({ error: auditErr }) => {
+            if (auditErr) console.error('Failed to write audit log:', auditErr);
+          });
+
           return new Response(
             JSON.stringify({
               error: `AI_ANALYSIS_FAILED_${response.status}`,
@@ -209,13 +236,20 @@ Provide your analysis using the suggest_analysis function.`;
                 console.log('AI analysis from content parse, score:', analysis.overall_score);
               } catch (e) {
                 console.error('Failed to parse content as JSON:', e);
+                fallbackReason = 'parse_failed';
               }
+            } else {
+              fallbackReason = 'parse_failed';
             }
+          } else {
+            fallbackReason = 'parse_failed';
           }
         }
       }
     } catch (aiError) {
       console.error('AI analysis error:', aiError);
+      fallbackReason = 'ai_exception';
+      aiErrorMessage = aiError instanceof Error ? aiError.message.slice(0, 500) : 'Unknown AI exception';
     }
 
     // Fallback if AI analysis failed
@@ -350,6 +384,25 @@ Provide your analysis using the suggest_analysis function.`;
       console.error('Failed to trigger post-application pipeline:', err);
     }
 
+
+    // Write audit log entry for this attempt (success or fallback)
+    const applicationState = usedFallbackAnalysis ? 'manual_review' : 'ai_reviewed';
+    const { error: auditErr } = await supabase
+      .from('resume_analysis_audit_logs')
+      .insert({
+        candidate_id: actualCandidateId,
+        candidate_email: candidateProfile.email || null,
+        job_id: jobId,
+        job_title: jobDetails.job_title || null,
+        http_status: aiHttpStatus,
+        fallback_reason: fallbackReason,
+        used_fallback: usedFallbackAnalysis,
+        application_state: applicationState,
+        overall_score: enrichedAnalysis.overall_score ?? null,
+        error_message: aiErrorMessage,
+      });
+    if (auditErr) console.error('Failed to write audit log:', auditErr);
+
     return new Response(JSON.stringify({
       success: true,
       interviewCandidateId: interviewCandidate.id,
@@ -357,7 +410,7 @@ Provide your analysis using the suggest_analysis function.`;
       emailSent: true,
       nextStage: writtenTestSlotBookingStage?.name || 'Written Test Slot Booking',
       fallback: usedFallbackAnalysis,
-      status: usedFallbackAnalysis ? 'manual_review' : 'ai_reviewed'
+      status: applicationState
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -2983,6 +2983,51 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_analysis_audit_logs: {
+        Row: {
+          application_state: string
+          candidate_email: string | null
+          candidate_id: string | null
+          created_at: string
+          error_message: string | null
+          fallback_reason: string
+          http_status: number | null
+          id: string
+          job_id: string | null
+          job_title: string | null
+          overall_score: number | null
+          used_fallback: boolean
+        }
+        Insert: {
+          application_state?: string
+          candidate_email?: string | null
+          candidate_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          fallback_reason?: string
+          http_status?: number | null
+          id?: string
+          job_id?: string | null
+          job_title?: string | null
+          overall_score?: number | null
+          used_fallback?: boolean
+        }
+        Update: {
+          application_state?: string
+          candidate_email?: string | null
+          candidate_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          fallback_reason?: string
+          http_status?: number | null
+          id?: string
+          job_id?: string | null
+          job_title?: string | null
+          overall_score?: number | null
+          used_fallback?: boolean
+        }
+        Relationships: []
+      }
       slot_bookings: {
         Row: {
           booking_date: string

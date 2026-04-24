@@ -117,6 +117,7 @@ const AdminUsers = lazyWithRetry(() => import("./pages/admin/Users"));
 const AdminCompanies = lazyWithRetry(() => import("./pages/admin/Companies"));
 const AdminReports = lazyWithRetry(() => import("./pages/admin/Reports"));
 const AdminAuditLogs = lazyWithRetry(() => import("./pages/admin/AuditLogs"));
+const AdminResumeAnalysisAudit = lazyWithRetry(() => import("./pages/admin/ResumeAnalysisAudit"));
 const AdminSettings = lazyWithRetry(() => import("./pages/admin/AdminSettings"));
 const SubscribedEmployers = lazyWithRetry(() => import("./pages/admin/SubscribedEmployers"));
 const SubscribedCandidates = lazyWithRetry(() => import("./pages/admin/SubscribedCandidates"));
@@ -299,6 +300,7 @@ const MainRoutes = () => (
         <Route path="/admin/unsubscribed-candidates" element={<UnsubscribedCandidates />} />
         <Route path="/admin/companies" element={<AdminCompanies />} />
         <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/resume-analysis-audit" element={<AdminResumeAnalysisAudit />} />
         <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
         <Route path="/admin/audit" element={<AdminAuditLogs />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
