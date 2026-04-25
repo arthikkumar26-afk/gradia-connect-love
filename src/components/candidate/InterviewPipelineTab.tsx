@@ -2226,6 +2226,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                           status === 'current' ||
                           (!!booking && status !== 'passed');
 
+                        // For Demo slot bookings, surface a "Start/Join Demo" action
+                        // as soon as the scheduled slot time has arrived so the candidate
+                        // is not blocked when status is still pending.
+                        const slotTimeReached = isBookingTimeReached(booking);
+                        const demoStartHref = isDemo && booking && slotTimeReached
+                          ? (booking.demo_meet_link
+                              ? booking.demo_meet_link
+                              : booking.demo_meet_type === 'ai_video'
+                                ? `/candidate/demo-round?interviewCandidateId=${currentInterview.id}&stageId=${stage.id}`
+                                : null)
+                          : null;
+                        const demoStartIsExternal = !!booking?.demo_meet_link;
+
                         return (
                           <>
                             {booking && (
@@ -2233,6 +2246,31 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                                 <Calendar className="h-3 w-3 mr-1" />
                                 {formatDate(booking.booking_date)} • {booking.booking_time}
                               </Badge>
+                            )}
+                            {demoStartHref && (
+                              demoStartIsExternal ? (
+                                <a
+                                  href={demoStartHref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
+                                >
+                                  <Video className="h-3 w-3" />
+                                  Join Demo
+                                </a>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(demoStartHref);
+                                  }}
+                                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
+                                >
+                                  <Video className="h-3 w-3" />
+                                  Start Demo
+                                </button>
+                              )
                             )}
                             {canReschedule && (
                               <button
