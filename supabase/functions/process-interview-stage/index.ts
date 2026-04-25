@@ -173,33 +173,13 @@ serve(async (req) => {
         });
 
       if (nextStage) {
-        let targetStage = nextStage;
+        const targetStage = nextStage;
 
-        // Skip only Demo Round (the meeting happens via the slot booking confirmation)
-        // All other rounds (Segment, Admin & Academic, Core Team, Management, HR) are visible
-        // so candidates can see "Join Meeting" button on the Round stage itself
-        const roundStagesToSkip = [
-          'Demo Round'
-        ];
-        
-        if (roundStagesToSkip.includes(nextStage.name)) {
-          // Find the feedback stage after the round stage
-          const feedbackStage = stages.find(s => s.stage_order === nextStage.stage_order + 1);
-          if (feedbackStage) {
-            // Mark Round as auto-passed
-            await supabase
-              .from('interview_events')
-              .insert({
-                interview_candidate_id: interviewCandidateId,
-                stage_id: nextStage.id,
-                status: 'passed',
-                completed_at: new Date().toISOString(),
-                notes: `${nextStage.name} auto-completed — slot booking confirmed`,
-              });
-            targetStage = feedbackStage;
-            console.log(`Skipping ${nextStage.name}, advancing directly to ${targetStage.name}`);
-          }
-        }
+        // NOTE: We intentionally do NOT auto-skip Demo Round (or any other Round)
+        // anymore. The candidate must actually attend & complete the demo before
+        // the pipeline advances to Demo Feedback. Auto-skipping previously caused
+        // candidates to be locked out of taking their demo when the slot booking
+        // immediately advanced the pipeline past the Round stage.
 
         // Move to target stage
         await supabase
