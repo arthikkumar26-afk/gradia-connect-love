@@ -60,6 +60,11 @@ const BookSlot = () => {
   const [selectedTime, setSelectedTime] = useState("");
   const [isBooking, setIsBooking] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
+  // Tracks whether the just-completed booking replaced an earlier slot. Drives
+  // the heading + copy on the confirmation screen so the candidate gets an
+  // explicit "rescheduled" status step (and knows to expect a *new* invite
+  // email rather than re-using the old link).
+  const [wasRescheduled, setWasRescheduled] = useState(false);
   const [loading, setLoading] = useState(true);
   // Invitation delivery status shown on the confirmation screen.
   // - idle: not applicable (e.g. multi-slot stage where employer confirms first)
@@ -697,6 +702,7 @@ const BookSlot = () => {
       }
 
       setIsBooked(true);
+      setWasRescheduled(isRebook);
       if (isMultiSlotStage) {
         toast.success(
           isRebook
@@ -766,9 +772,13 @@ const BookSlot = () => {
             </div>
             {isMultiSlotStage ? (
               <>
-                <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  {wasRescheduled ? "Preferred Timings Updated! 🔁" : "Preferred Timings Submitted! 🎉"}
+                </h2>
                 <p className="text-muted-foreground">
-                  You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.
+                  {wasRescheduled
+                    ? <>You have updated your <strong>3</strong> preferred timings for <strong>{stageName}</strong>. Your earlier choices have been replaced.</>
+                    : <>You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.</>}
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
@@ -802,9 +812,13 @@ const BookSlot = () => {
               </>
             ) : (
               <>
-                <h2 className="text-xl font-bold text-foreground">Slot Booked Successfully! 🎉</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  {wasRescheduled ? "Slot Rescheduled Successfully! 🔁" : "Slot Booked Successfully! 🎉"}
+                </h2>
                 <p className="text-muted-foreground">
-                  Your <strong>{stageName}</strong> has been scheduled for:
+                  {wasRescheduled
+                    ? <>Your <strong>{stageName}</strong> has been moved to:</>
+                    : <>Your <strong>{stageName}</strong> has been scheduled for:</>}
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                   {(() => {
@@ -830,11 +844,16 @@ const BookSlot = () => {
                 </div>
                 {stageName.toLowerCase().includes("hr") ? (
                   <p className="text-sm text-muted-foreground">
-                    📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox.
+                    {wasRescheduled
+                      ? "📧 You will receive an updated HR Round invitation email reflecting your new time. Please check your inbox."
+                      : "📧 You will receive an HR Round invitation email with instructions shortly. Please check your inbox."}
                   </p>
                 ) : (
                   // End-to-end verification: shows whether the invitation email
                   // actually went out, and lets the candidate resend it on demand.
+                  // When `wasRescheduled` is true we make the copy explicit that
+                  // the test/meeting link reflects the NEW time — otherwise a
+                  // candidate might assume the old email is still valid.
                   <div className="rounded-lg border bg-card p-3 space-y-2 text-left">
                     <div className="flex items-start gap-2">
                       {inviteStatus === "sent" && (
@@ -853,31 +872,43 @@ const BookSlot = () => {
                         {inviteStatus === "sent" && (
                           <>
                             <p className="font-medium text-foreground">
-                              Invitation email sent
+                              {wasRescheduled ? "Updated invitation email sent" : "Invitation email sent"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Sent to <strong>{candidateInfo?.email}</strong>
+                              {wasRescheduled ? "Resent to " : "Sent to "}
+                              <strong>{candidateInfo?.email}</strong>
                               {inviteSentAt && ` at ${inviteSentAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}.
-                              Check your inbox (and spam folder).
+                              {wasRescheduled
+                                ? " It reflects your new time — please ignore the previous email."
+                                : " Check your inbox (and spam folder)."}
                             </p>
                           </>
                         )}
                         {inviteStatus === "sending" && (
-                          <p className="font-medium text-foreground">Sending invitation email…</p>
+                          <p className="font-medium text-foreground">
+                            {wasRescheduled ? "Sending updated invitation email…" : "Sending invitation email…"}
+                          </p>
                         )}
                         {inviteStatus === "failed" && (
                           <>
                             <p className="font-medium text-red-700">
-                              Couldn't send the invitation email
+                              {wasRescheduled
+                                ? "Couldn't send the updated invitation email"
+                                : "Couldn't send the invitation email"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {inviteError || "Please retry — your slot is still booked."}
+                              {inviteError ||
+                                (wasRescheduled
+                                  ? "Please retry — your new slot is still saved."
+                                  : "Please retry — your slot is still booked.")}
                             </p>
                           </>
                         )}
                         {inviteStatus === "idle" && (
                           <p className="text-xs text-muted-foreground">
-                            We'll send the test link to <strong>{candidateInfo?.email}</strong>.
+                            {wasRescheduled
+                              ? <>We'll send the updated test link to <strong>{candidateInfo?.email}</strong>.</>
+                              : <>We'll send the test link to <strong>{candidateInfo?.email}</strong>.</>}
                           </p>
                         )}
                       </div>
