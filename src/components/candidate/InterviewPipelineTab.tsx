@@ -1533,6 +1533,155 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         </ScrollArea>
       )}
 
+      {/* Latest Test Invitation Status — at-a-glance dashboard panel showing
+          whether an invitation token was created, whether the email actually
+          went out, and when the link expires. Only rendered for the latest
+          tokenised test stage on the selected interview. */}
+      {latestTestInvitation && (() => {
+        const { invitation, stageName, event } = latestTestInvitation;
+        const tokenCreated = !!invitation.invitation_token;
+        const emailSent = invitation.email_status === 'sent' && !!invitation.email_sent_at;
+        const emailFailed = invitation.email_status === 'failed';
+        const emailPendingStalled =
+          invitation.email_status === 'pending' &&
+          !invitation.email_sent_at &&
+          (Date.now() - new Date(invitation.created_at).getTime()) > 5 * 60 * 1000;
+        const expiresAt = invitation.expires_at ? new Date(invitation.expires_at) : null;
+        const expired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+        const expiresSoon = expiresAt && !expired
+          ? expiresAt.getTime() - Date.now() < 24 * 60 * 60 * 1000
+          : false;
+        const fmtDateTime = (iso: string) => new Date(iso).toLocaleString([], {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        });
+        const tzAbbr = (() => {
+          try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const parts = new Intl.DateTimeFormat([], { timeZoneName: 'short', timeZone: tz }).formatToParts(new Date());
+            return parts.find(p => p.type === 'timeZoneName')?.value || tz;
+          } catch { return ''; }
+        })();
+        return (
+          <Card className="p-5 border-primary/30 bg-primary/[0.02]">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <h3 className="font-semibold text-foreground">Latest Test Invitation</h3>
+                  <Badge variant="outline" className="text-xs">{stageName}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Status of the email & link for your most recent test booking
+                </p>
+              </div>
+              {(emailFailed || emailPendingStalled || expired) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={resendingEventId === event.id}
+                  onClick={() => handleResendInvitation(currentInterview.id, stageName, event.id, event.scheduled_at)}
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${resendingEventId === event.id ? 'animate-spin' : ''}`} />
+                  {resendingEventId === event.id ? 'Resending…' : 'Resend link'}
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Token created */}
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  {tokenCreated ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                  )}
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Token</p>
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  {tokenCreated ? 'Created' : 'Not created'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {fmtDateTime(invitation.created_at)}
+                </p>
+              </div>
+
+              {/* Email sent */}
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  {emailSent ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  ) : emailFailed ? (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  ) : (
+                    <Clock className={`h-4 w-4 ${emailPendingStalled ? 'text-amber-600' : 'text-muted-foreground'}`} />
+                  )}
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email</p>
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  {emailSent ? 'Sent' : emailFailed ? 'Failed' : emailPendingStalled ? 'Pending (stalled)' : 'Pending'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {invitation.email_sent_at
+                    ? fmtDateTime(invitation.email_sent_at)
+                    : 'Not yet delivered'}
+                </p>
+              </div>
+
+              {/* Expiry */}
+              <div className="rounded-md border border-border bg-background p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  {!expiresAt ? (
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  ) : expired ? (
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                  ) : expiresSoon ? (
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  )}
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Expires</p>
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  {!expiresAt
+                    ? 'No expiry set'
+                    : expired
+                      ? 'Expired'
+                      : expiresSoon
+                        ? 'Expires soon'
+                        : 'Active'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {expiresAt
+                    ? `${fmtDateTime(expiresAt.toISOString())}${tzAbbr ? ` (${tzAbbr})` : ''}`
+                    : 'Link does not auto-expire'}
+                </p>
+              </div>
+            </div>
+
+            {/* Inline test link when available */}
+            {invitation.meeting_link && emailSent && !expired && (
+              <div className="mt-3 flex items-center justify-between gap-2 rounded-md border border-border bg-background p-2.5">
+                <p className="text-xs text-muted-foreground truncate">
+                  Direct link: <span className="font-mono text-foreground">{invitation.meeting_link}</span>
+                </p>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    navigator.clipboard.writeText(invitation.meeting_link!);
+                    toast.success('Link copied');
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
+            )}
+          </Card>
+        );
+      })()}
+
       {/* Selected Interview Details */}
       <Card className="p-6">
         <div className="flex items-start justify-between mb-6">
