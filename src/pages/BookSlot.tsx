@@ -872,6 +872,15 @@ const BookSlot = () => {
 
       setIsBooked(true);
       setWasRescheduled(isRebook);
+      if (isRebook) {
+        // Mark the multi-step reschedule as confirmed and close the dialog —
+        // we only reach this branch after the slot row was inserted AND any
+        // invitation/notification side effects ran, so it is safe to let the
+        // candidate proceed to the success screen.
+        setRescheduleStatus("confirmed");
+        setRescheduleError(null);
+        setShowRescheduleConfirm(false);
+      }
       if (isMultiSlotStage) {
         toast.success(
           isRebook
@@ -885,9 +894,17 @@ const BookSlot = () => {
             : "Slot booked successfully! Check your Interview Pipeline for next steps."
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error booking slot:", err);
-      toast.error("Failed to book slot. Please try again.");
+      const msg = err?.message || "Failed to book slot. Please try again.";
+      toast.error(msg);
+      // Surface inside the reschedule dialog so the candidate can see WHY
+      // the new time wasn't accepted and decide to retry — instead of the
+      // dialog vanishing and leaving them to wonder if it worked.
+      if (showRescheduleConfirm || existingBooking) {
+        setRescheduleStatus("failed");
+        setRescheduleError(msg);
+      }
     } finally {
       setIsBooking(false);
     }
