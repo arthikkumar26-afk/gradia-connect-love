@@ -427,6 +427,8 @@ describe("BookSlot — invocation ordering and invitation creation", () => {
     );
 
     await openSelectAndPick(user, triggerByPlaceholder("Choose a date"), /Today -/i);
+    // Default filter is Morning; switch to Afternoon to expose 2:30 PM
+    await user.click(screen.getByRole("button", { name: /Afternoon/i }));
     await openSelectAndPick(user, triggerByPlaceholder("Choose a time slot"), "2:30 PM");
     await user.click(screen.getByRole("button", { name: /Confirm Booking/i }));
 
