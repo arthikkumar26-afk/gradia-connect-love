@@ -1450,6 +1450,35 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
   const currentInterview = interviews.find(i => i.id === selectedInterview) || interviews[0];
 
+  // Find the most recent test-stage invitation for the selected interview so
+  // we can render an at-a-glance status panel: was a token created? did the
+  // email send? when does the link expire? Stages considered "tests" are the
+  // ones that issue a tokenised link (Written Test, Technical Assessment,
+  // Coding Test, Mock Interview, Aptitude Test).
+  const TEST_STAGE_KEYWORDS = ["written test", "technical", "coding", "aptitude", "mock interview", "assessment"];
+  const isTestStageName = (name: string) => {
+    const n = name.toLowerCase();
+    return TEST_STAGE_KEYWORDS.some(k => n.includes(k));
+  };
+  const stageNameById = new Map(allDbStages.map(s => [s.id, s.name]));
+  // Walk events in reverse-chronological order (by created invitation, falling
+  // back to event order in the array — already newest-first because the fetch
+  // sorts by created_at DESC). Pick the first event whose stage looks like a
+  // test AND has an invitation row.
+  const latestTestInvitation = (() => {
+    const candidates = currentInterview.events
+      .map(ev => {
+        const inv = invitationsByEventId[ev.id];
+        if (!inv) return null;
+        const stageName = stageNameById.get(ev.stage_id) || "";
+        if (!isTestStageName(stageName)) return null;
+        return { event: ev, invitation: inv, stageName };
+      })
+      .filter((x): x is { event: InterviewEvent; invitation: InvitationStatus; stageName: string } => x !== null)
+      .sort((a, b) => new Date(b.invitation.created_at).getTime() - new Date(a.invitation.created_at).getTime());
+    return candidates[0] || null;
+  })();
+
   return (
     <div className="space-y-6">
       {/* Action Buttons */}
