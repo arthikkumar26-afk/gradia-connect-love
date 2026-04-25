@@ -230,6 +230,46 @@ const BookSlot = () => {
     }
   };
 
+  // Convert a wall-clock "YYYY-MM-DD HH:mm" pair (interpreted IN the given
+  // timezone) into a UTC epoch (ms). Used by inline validation so a slot like
+  // "today 09:00 IST" picked from a browser running in PST is correctly
+  // compared against the real `Date.now()`. Returns NaN if inputs are invalid.
+  const slotEpochInTimezone = (dateStr: string, timeStr: string, tz: string): number => {
+    if (!dateStr || !timeStr) return NaN;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const [hh, mm] = timeStr.split(":").map(Number);
+    if ([y, m, d, hh, mm].some((n) => Number.isNaN(n))) return NaN;
+    // Build a UTC guess, then measure how that instant is rendered in the
+    // target timezone and correct for the offset.
+    const utcGuess = Date.UTC(y, (m || 1) - 1, d || 1, hh || 0, mm || 0);
+    try {
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      const parts = fmt.formatToParts(new Date(utcGuess));
+      const lookup: Record<string, string> = {};
+      for (const p of parts) lookup[p.type] = p.value;
+      const renderedHour = lookup.hour === "24" ? 0 : Number(lookup.hour);
+      const asTzMs = Date.UTC(
+        Number(lookup.year),
+        Number(lookup.month) - 1,
+        Number(lookup.day),
+        renderedHour,
+        Number(lookup.minute),
+      );
+      const offset = asTzMs - utcGuess;
+      return utcGuess - offset;
+    } catch {
+      return utcGuess;
+    }
+  };
+
   // Format a "YYYY-MM-DD" + "HH:mm" wall-clock pair into a confirmation label,
   // appending the abbreviation for the user's selected timezone.
   const formatBookedDateTime = (dateStr: string, timeStr: string, tz: string) => {
@@ -248,6 +288,48 @@ const BookSlot = () => {
     const timeLabel = `${displayHour}:${(mm || 0).toString().padStart(2, "0")} ${ampm}`;
     return { dateLabel, timeLabel, tzAbbr: getTimezoneAbbr(reference, tz) };
   };
+
+  // ── Inline validation for the single-preferred-timing form ──
+  // Recomputed whenever date/time/timezone/existingBooking changes so the UI
+  // can show field-level errors and disable the submit button without waiting
+  // for the user to click. Logic:
+  //   1. Date is required and must not be before "today" in the chosen tz.
+  //   2. Time is required.
+  //   3. If the slot is today (in tz), it must be ≥ 10 min in the future to
+  //      match the next-available-slot rule used elsewhere.
+  //   4. The chosen slot must differ from any existing booking — picking the
+  //      same date+time as the prior slot is not a valid reschedule.
+  const slotValidation = useMemo(() => {
+    const errors: { date?: string; time?: string } = {};
+    if (!demoDate) errors.date = "Please select a date.";
+    if (!demoTime1) errors.time = "Please choose a preferred time.";
+
+    if (demoDate && demoTime1) {
+      const slotMs = slotEpochInTimezone(demoDate, demoTime1, timezone);
+      if (Number.isNaN(slotMs)) {
+        errors.time = "Selected time is invalid for this timezone.";
+      } else {
+        const minLeadMs = 10 * 60 * 1000;
+        if (slotMs < Date.now() + minLeadMs) {
+          errors.time =
+            `This time has already passed in ${getTimezoneAbbr(new Date(), timezone)}. ` +
+            `Please pick a slot at least 10 minutes from now.`;
+        }
+        if (
+          existingBooking &&
+          existingBooking.booking_date === demoDate &&
+          existingBooking.booking_time === demoTime1
+        ) {
+          errors.time =
+            "This matches your current booking. Pick a different date or time to reschedule.";
+        }
+      }
+    }
+
+    return { errors, isValid: Object.keys(errors).length === 0 };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoDate, demoTime1, timezone, existingBooking]);
+
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
@@ -472,8 +554,12 @@ const BookSlot = () => {
   // dialog or proceeding directly. Returns true when inputs are usable.
   const validateBookingInputs = (): boolean => {
     if (isMultiSlotStage) {
-      if (!demoDate || !demoTime1) {
-        toast.error("Please select a date and your preferred timing");
+      if (!slotValidation.isValid) {
+        toast.error(
+          slotValidation.errors.date ||
+            slotValidation.errors.time ||
+            "Please select a valid date and time.",
+        );
         return false;
       }
     } else if (!selectedDate || !selectedTime) {
@@ -1220,7 +1306,13 @@ const BookSlot = () => {
                   Select Date *
                 </label>
                 <Select value={demoDate} onValueChange={setDemoDate}>
-                  <SelectTrigger>
+                  <SelectTrigger
+                    aria-invalid={Boolean(slotValidation.errors.date)}
+                    aria-describedby={slotValidation.errors.date ? "demo-date-error" : undefined}
+                    className={cn(
+                      slotValidation.errors.date && "border-destructive focus:ring-destructive",
+                    )}
+                  >
                     <SelectValue placeholder="Choose a date" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1231,6 +1323,16 @@ const BookSlot = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {slotValidation.errors.date && (
+                  <p
+                    id="demo-date-error"
+                    role="alert"
+                    className="flex items-start gap-1 text-xs text-destructive"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{slotValidation.errors.date}</span>
+                  </p>
+                )}
               </div>
 
               {/* Single Time Selection */}
@@ -1281,7 +1383,14 @@ const BookSlot = () => {
                 </div>
 
                 <Select value={demoTime1} onValueChange={setDemoTime1}>
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger
+                    className={cn(
+                      "flex-1",
+                      slotValidation.errors.time && "border-destructive focus:ring-destructive",
+                    )}
+                    aria-invalid={Boolean(slotValidation.errors.time)}
+                    aria-describedby={slotValidation.errors.time ? "demo-time-error" : undefined}
+                  >
                     <SelectValue placeholder="Choose your preferred time" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
@@ -1292,12 +1401,26 @@ const BookSlot = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {slotValidation.errors.time && (
+                  <p
+                    id="demo-time-error"
+                    role="alert"
+                    className="flex items-start gap-1 text-xs text-destructive"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{slotValidation.errors.time}</span>
+                  </p>
+                )}
+                <p className="text-[11px] text-muted-foreground">
+                  Times are interpreted in <strong>{getTimezoneAbbr(new Date(), timezone)}</strong>.
+                  Pick a slot at least 10 minutes from now.
+                </p>
               </div>
 
               {/* Submit Button */}
               <Button
                 onClick={handleSubmitClick}
-                disabled={isBooking || !demoDate || !demoTime1}
+                disabled={isBooking || !slotValidation.isValid}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               >
                 {isBooking ? (

@@ -307,9 +307,10 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
-    // Pick the single preferred time (Morning is the default filter; 9:00 AM is valid)
+    // Pick the single preferred time. System time is 09:00, so we need a slot
+    // at least 10 min in the future (Morning is the default filter).
     const timeTrigger = triggerByPlaceholder("Choose your preferred time");
-    await openSelectAndPick(user, timeTrigger, "9:00 AM");
+    await openSelectAndPick(user, timeTrigger, "11:00 AM");
 
     expect(submit).toBeEnabled();
     await user.click(submit);
@@ -318,7 +319,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     await waitFor(() =>
       expect(screen.getByText(/Preferred Timing Submitted/i)).toBeInTheDocument(),
     );
-    expect(screen.getByText("9:00 AM")).toBeInTheDocument();
+    expect(screen.getByText("11:00 AM")).toBeInTheDocument();
 
     // Backend got the multi-slot payload (single slot) with hr_round type
     expect(slotBookingInserts).toHaveLength(1);
@@ -329,7 +330,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
       subject: "HR Round",
     });
     expect(slotBookingInserts[0].preferred_slots).toEqual([
-      { date: "2026-04-24", time: "09:00" },
+      { date: "2026-04-24", time: "11:00" },
     ]);
 
     // Confirmation email function was invoked
