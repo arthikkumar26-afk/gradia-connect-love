@@ -215,8 +215,19 @@ serve(async (req) => {
 
         // Allow if previous stage has at least one event (pending counts for auto-advanced stages)
         if (!prevEvents || prevEvents.length === 0) {
-          // Special exceptions: Interview Guidelines and CV/Resume are auto-processed
-          const autoProcessedStages = ['Interview Guidelines', 'CV/Resume', 'Written Test Slot Booking'];
+          // Special exceptions: these stages are auto-processed or candidate-driven
+          // and don't create interview_events rows of their own:
+          //  - Interview Guidelines / CV/Resume: auto-processed by post-application pipeline
+          //  - Written Test Slot Booking: candidate self-books from the dashboard
+          //  - Written Test: gated by the slot booking above; the test-link email
+          //    must be allowed to send AFTER booking even though the slot booking
+          //    stage never produced an `interview_events` row.
+          const autoProcessedStages = [
+            'Interview Guidelines',
+            'CV/Resume',
+            'Written Test Slot Booking',
+            'Written Test',
+          ];
           if (!autoProcessedStages.includes(stageName)) {
             console.log(`[BLOCKED] Previous stage "${previousStageName}" not completed`);
             return jsonResponse({
