@@ -144,6 +144,7 @@ const BulkMailRegister = lazyWithRetry(() => import("./pages/admin/BulkMailRegis
 const AIFlyerMaker = lazyWithRetry(() => import("./pages/admin/AIFlyerMaker"));
 const InviteFromResume = lazyWithRetry(() => import("./pages/admin/InviteFromResume"));
 const CandidateResumes = lazyWithRetry(() => import("./pages/admin/CandidateResumes"));
+const RazorpayWebhooks = lazyWithRetry(() => import("./pages/admin/RazorpayWebhooks"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
