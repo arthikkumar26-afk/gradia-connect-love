@@ -155,6 +155,27 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   // Tracks which event is currently mid-resend so we can disable the button
   // and swap in a spinner without blocking other resends.
   const [resendingEventId, setResendingEventId] = useState<string | null>(null);
+  // User-controlled toggle: when ON, a stalled-pending invitation (no email
+  // delivery after >5 min from creation) auto-fires a single resend without
+  // requiring a manual click. We track which event IDs we've already
+  // auto-resent for so the effect can't loop after the refetch updates state.
+  const [autoResendEnabled, setAutoResendEnabled] = useState(false);
+  const [autoResentEventIds, setAutoResentEventIds] = useState<Set<string>>(new Set());
+  // Wall-clock tick (ms) used to re-evaluate the >5min stall condition without
+  // waiting for an unrelated state change. Bumped every 30s.
+  const [nowTick, setNowTick] = useState<number>(() => Date.now());
+  // Snapshot taken right BEFORE a resend fires so we can highlight what
+  // changed (token / email-sent-at / expires_at) once the refetch completes.
+  // Cleared automatically after a short window so the "Updated just now"
+  // affordance doesn't linger.
+  const [lastResendSnapshot, setLastResendSnapshot] = useState<
+    | {
+        eventId: string;
+        before: { invitation_token: string | null; email_sent_at: string | null; expires_at: string | null };
+        completedAt: number;
+      }
+    | null
+  >(null);
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -180,6 +201,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     scheduledAt: string | null,
   ) => {
     setResendingEventId(eventId);
+    // Snapshot what the candidate sees RIGHT NOW so we can render a
+    // "before → after" diff once the refetch returns the new row.
+    const beforeRow = invitationsByEventId[eventId];
+    if (beforeRow) {
+      setLastResendSnapshot({
+        eventId,
+        before: {
+          invitation_token: beforeRow.invitation_token,
+          email_sent_at: beforeRow.email_sent_at,
+          expires_at: beforeRow.expires_at,
+        },
+        completedAt: 0, // populated on success below
+      });
+    }
     try {
       const { data, error } = await supabase.functions.invoke('send-interview-invitation', {
         body: {
@@ -193,13 +228,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       if (error || (data && data.success === false)) {
         const msg = error?.message || data?.error || 'Failed to resend the test link.';
         toast.error(msg);
+        // Roll back the snapshot — there's nothing new to compare against.
+        setLastResendSnapshot(null);
       } else {
         toast.success('Test link resent. Please check your inbox.');
         // Refetch invitations so the badge updates from "failed" -> "sent".
         await fetchData();
+        // Stamp completion so the "Updated just now" affordance can decay.
+        setLastResendSnapshot((prev) =>
+          prev && prev.eventId === eventId ? { ...prev, completedAt: Date.now() } : prev,
+        );
       }
     } catch (err: any) {
       toast.error(err?.message || 'Failed to resend the test link.');
+      setLastResendSnapshot(null);
     } finally {
       setResendingEventId(null);
     }
@@ -538,6 +580,60 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       }
     }
   }, [selectedInterview]);
+
+  // Heartbeat — re-renders the panel every 30s so "stalled >5min" / "expires
+  // soon" / "Updated just now" affordances update without depending on
+  // unrelated state changes. 30s is enough granularity for minute-scale UI
+  // cues without burning render cycles.
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Auto-resend: when the user has opted in via the toggle, watch the latest
+  // test invitation for the selected interview. If it's been "pending" for
+  // more than 5 minutes with no email_sent_at, fire ONE resend automatically.
+  // We dedupe on the eventId to guarantee at-most-once per stalled invitation,
+  // and skip if a manual resend is already in flight.
+  useEffect(() => {
+    if (!autoResendEnabled || !selectedInterview) return;
+    const interview = interviews.find((i) => i.id === selectedInterview);
+    if (!interview) return;
+
+    const stageNameById = new Map(allDbStages.map((s) => [s.id, s.name]));
+    const TEST_KEYWORDS = ['written test', 'technical', 'coding test', 'aptitude', 'mcq', 'assessment'];
+    const isTest = (n: string) => TEST_KEYWORDS.some((k) => n.toLowerCase().includes(k));
+
+    for (const ev of interview.events) {
+      const inv = invitationsByEventId[ev.id];
+      if (!inv) continue;
+      const stageName = stageNameById.get(ev.stage_id) || '';
+      if (!isTest(stageName)) continue;
+      const stalled =
+        inv.email_status === 'pending' &&
+        !inv.email_sent_at &&
+        nowTick - new Date(inv.created_at).getTime() > 5 * 60 * 1000;
+      if (!stalled) continue;
+      if (autoResentEventIds.has(ev.id)) continue;
+      if (resendingEventId === ev.id) continue;
+
+      // Mark BEFORE awaiting so the next render can't double-trigger.
+      setAutoResentEventIds((prev) => {
+        const next = new Set(prev);
+        next.add(ev.id);
+        return next;
+      });
+      toast.info('Auto-resending stalled test link…');
+      void handleResendInvitation(interview.id, stageName, ev.id, ev.scheduled_at);
+      // Only one auto-fire per tick — break out so we don't stampede.
+      break;
+    }
+    // We intentionally exclude `handleResendInvitation` from deps — it's
+    // stable enough for this read-only fire-and-forget use, and including
+    // it would require a useCallback refactor outside the scope of this fix.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoResendEnabled, nowTick, invitationsByEventId, selectedInterview, interviews, allDbStages, autoResentEventIds, resendingEventId]);
+
 
   const getStageIcon = (stageName: string) => {
     switch (stageName) {
@@ -1542,14 +1638,16 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         const tokenCreated = !!invitation.invitation_token;
         const emailSent = invitation.email_status === 'sent' && !!invitation.email_sent_at;
         const emailFailed = invitation.email_status === 'failed';
+        // Use the heartbeat tick so the "stalled" badge flips on at the
+        // 5-minute mark even if no other state changes in between.
         const emailPendingStalled =
           invitation.email_status === 'pending' &&
           !invitation.email_sent_at &&
-          (Date.now() - new Date(invitation.created_at).getTime()) > 5 * 60 * 1000;
+          (nowTick - new Date(invitation.created_at).getTime()) > 5 * 60 * 1000;
         const expiresAt = invitation.expires_at ? new Date(invitation.expires_at) : null;
-        const expired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+        const expired = expiresAt ? expiresAt.getTime() < nowTick : false;
         const expiresSoon = expiresAt && !expired
-          ? expiresAt.getTime() - Date.now() < 24 * 60 * 60 * 1000
+          ? expiresAt.getTime() - nowTick < 24 * 60 * 60 * 1000
           : false;
         const fmtDateTime = (iso: string) => new Date(iso).toLocaleString([], {
           dateStyle: 'medium',
@@ -1562,6 +1660,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
             return parts.find(p => p.type === 'timeZoneName')?.value || tz;
           } catch { return ''; }
         })();
+        // "Updated just now" diff: only show for ~60s after a successful
+        // resend, and only on fields that actually changed.
+        const snap =
+          lastResendSnapshot &&
+          lastResendSnapshot.eventId === event.id &&
+          lastResendSnapshot.completedAt > 0 &&
+          nowTick - lastResendSnapshot.completedAt < 60_000
+            ? lastResendSnapshot
+            : null;
+        const tokenChanged = !!snap && snap.before.invitation_token !== invitation.invitation_token;
+        const emailChanged = !!snap && snap.before.email_sent_at !== invitation.email_sent_at;
+        const expiryChanged = !!snap && snap.before.expires_at !== invitation.expires_at;
+        const updatedHighlight = "ring-2 ring-primary/40 transition-shadow";
         return (
           <Card className="p-5 border-primary/30 bg-primary/[0.02]">
             <div className="flex items-start justify-between gap-4 mb-4">
@@ -1570,27 +1681,53 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                   <Mail className="h-4 w-4 text-primary" />
                   <h3 className="font-semibold text-foreground">Latest Test Invitation</h3>
                   <Badge variant="outline" className="text-xs">{stageName}</Badge>
+                  {snap && (tokenChanged || emailChanged || expiryChanged) && (
+                    <Badge className="text-[10px] bg-green-100 text-green-700 hover:bg-green-100">
+                      Updated just now
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Status of the email & link for your most recent test booking
                 </p>
               </div>
-              {(emailFailed || emailPendingStalled || expired) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={resendingEventId === event.id}
-                  onClick={() => handleResendInvitation(currentInterview.id, stageName, event.id, event.scheduled_at)}
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${resendingEventId === event.id ? 'animate-spin' : ''}`} />
-                  {resendingEventId === event.id ? 'Resending…' : 'Resend link'}
-                </Button>
-              )}
+              <div className="flex flex-col items-end gap-2">
+                {(emailFailed || emailPendingStalled || expired) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={resendingEventId === event.id}
+                    onClick={() => handleResendInvitation(currentInterview.id, stageName, event.id, event.scheduled_at)}
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${resendingEventId === event.id ? 'animate-spin' : ''}`} />
+                    {resendingEventId === event.id ? 'Resending…' : 'Resend link'}
+                  </Button>
+                )}
+                {/* Auto-resend opt-in. Only meaningful for pending/stalled
+                    states, but we always show the toggle so the user can
+                    arm it before a future stall. */}
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 accent-primary cursor-pointer"
+                    checked={autoResendEnabled}
+                    onChange={(e) => {
+                      setAutoResendEnabled(e.target.checked);
+                      if (!e.target.checked) {
+                        // Re-arm: clear the dedupe set so a future re-enable
+                        // can fire again for the same event if still stalled.
+                        setAutoResentEventIds(new Set());
+                      }
+                    }}
+                  />
+                  Auto-resend if pending &gt; 5 min
+                </label>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Token created */}
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className={`rounded-md border border-border bg-background p-3 ${tokenChanged ? updatedHighlight : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {tokenCreated ? (
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -1608,7 +1745,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
               </div>
 
               {/* Email sent */}
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className={`rounded-md border border-border bg-background p-3 ${emailChanged ? updatedHighlight : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {emailSent ? (
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
@@ -1630,7 +1767,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
               </div>
 
               {/* Expiry */}
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className={`rounded-md border border-border bg-background p-3 ${expiryChanged ? updatedHighlight : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {!expiresAt ? (
                     <Clock className="h-4 w-4 text-muted-foreground" />
