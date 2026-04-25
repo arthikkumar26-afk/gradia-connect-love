@@ -1767,7 +1767,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
               </div>
 
               {/* Expiry */}
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className={`rounded-md border border-border bg-background p-3 ${expiryChanged ? updatedHighlight : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {!expiresAt ? (
                     <Clock className="h-4 w-4 text-muted-foreground" />
