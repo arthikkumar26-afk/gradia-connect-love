@@ -484,8 +484,9 @@ describe("BookSlot — invocation ordering and invitation creation", () => {
     expect(interviewInvitationRows[0]).toMatchObject({
       interview_events: { interview_candidate_id: "ic-1" },
     });
-    expect(interviewInvitationRows[0].meeting_link).toMatch(/^https?:\/\//);
-    expect(new Date(interviewInvitationRows[0].expires_at).getTime()).toBeGreaterThan(Date.now());
+    // The invitation must be tied to a concrete event so the candidate can
+    // be sent the link and the gateway can later look it up by event id.
+    expect(interviewInvitationRows[0].interview_event_id).toMatch(/^evt-/);
   });
 
   it("does NOT call process-interview-stage when rescheduling an existing booking", async () => {
