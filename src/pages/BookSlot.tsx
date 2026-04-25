@@ -288,6 +288,48 @@ const BookSlot = () => {
     const timeLabel = `${displayHour}:${(mm || 0).toString().padStart(2, "0")} ${ampm}`;
     return { dateLabel, timeLabel, tzAbbr: getTimezoneAbbr(reference, tz) };
   };
+
+  // ── Inline validation for the single-preferred-timing form ──
+  // Recomputed whenever date/time/timezone/existingBooking changes so the UI
+  // can show field-level errors and disable the submit button without waiting
+  // for the user to click. Logic:
+  //   1. Date is required and must not be before "today" in the chosen tz.
+  //   2. Time is required.
+  //   3. If the slot is today (in tz), it must be ≥ 10 min in the future to
+  //      match the next-available-slot rule used elsewhere.
+  //   4. The chosen slot must differ from any existing booking — picking the
+  //      same date+time as the prior slot is not a valid reschedule.
+  const slotValidation = useMemo(() => {
+    const errors: { date?: string; time?: string } = {};
+    if (!demoDate) errors.date = "Please select a date.";
+    if (!demoTime1) errors.time = "Please choose a preferred time.";
+
+    if (demoDate && demoTime1) {
+      const slotMs = slotEpochInTimezone(demoDate, demoTime1, timezone);
+      if (Number.isNaN(slotMs)) {
+        errors.time = "Selected time is invalid for this timezone.";
+      } else {
+        const minLeadMs = 10 * 60 * 1000;
+        if (slotMs < Date.now() + minLeadMs) {
+          errors.time =
+            `This time has already passed in ${getTimezoneAbbr(new Date(), timezone)}. ` +
+            `Please pick a slot at least 10 minutes from now.`;
+        }
+        if (
+          existingBooking &&
+          existingBooking.booking_date === demoDate &&
+          existingBooking.booking_time === demoTime1
+        ) {
+          errors.time =
+            "This matches your current booking. Pick a different date or time to reschedule.";
+        }
+      }
+    }
+
+    return { errors, isValid: Object.keys(errors).length === 0 };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoDate, demoTime1, timezone, existingBooking]);
+
   useEffect(() => {
     const fetchDetails = async () => {
       if (!candidateId) {
