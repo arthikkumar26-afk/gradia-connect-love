@@ -386,12 +386,20 @@ const BookSlot = () => {
       const { data, error } = await supabase.functions.invoke(args.functionName, {
         body: args.body,
       });
-      // Edge function explicitly returns { success: true } on the happy path;
-      // treat anything else (network error, success === false) as a failure
-      // so the user sees a retry path instead of a misleading green checkmark.
-      if (error || (data && data.success === false)) {
-        const msg = error?.message || data?.error || "Failed to send invitation email.";
-        console.error(`[${args.functionName}] invitation send failed`, msg);
+      // Edge function explicitly returns { success: true } on the happy path.
+      // We also have to treat `{ blocked: true }` as a failure — the pipeline
+      // gateway returns this WITHOUT a `success` field when it refuses to send
+      // (e.g. idempotency, sequential-flow, locking). Without this guard, a
+      // reschedule that hits "already_sent" would show a green checkmark while
+      // no email actually goes out.
+      const isBlocked = data && (data as any).blocked === true;
+      if (error || (data && data.success === false) || isBlocked) {
+        const msg =
+          error?.message ||
+          (isBlocked ? (data as any).message : null) ||
+          data?.error ||
+          "Failed to send invitation email.";
+        console.error(`[${args.functionName}] invitation send failed`, msg, data);
         setInviteStatus("failed");
         setInviteError(msg);
         return { ok: false, error: msg };
