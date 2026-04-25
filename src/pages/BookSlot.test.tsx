@@ -335,6 +335,55 @@ describe("BookSlot — multi-slot HR Round flow", () => {
 
     // Confirmation email function was invoked
     expect(functionInvokes.some((c) => c.name === "send-demo-slot-confirmation")).toBe(true);
+
+    // The legacy "you'll receive an email once confirmed" copy was removed —
+    // ensure neither the submit nor the reschedule flow ever shows it.
+    expect(
+      screen.queryByText(/receive an email once confirmed/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/employer will review your preferred timing/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("lets the candidate proceed back to the pipeline after updating preferred timing", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderBookSlot({
+      candidateId: "ic-1",
+      stageId: "stage-2",
+      stageName: "Demo Round",
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Book Your Demo Round Slot/i)).toBeInTheDocument(),
+    );
+
+    // First submission
+    await openSelectAndPick(user, triggerByPlaceholder("Choose a date"), /Today -/i);
+    await openSelectAndPick(
+      user,
+      triggerByPlaceholder("Choose your preferred time"),
+      "11:00 AM",
+    );
+    await user.click(screen.getByRole("button", { name: /Submit Preferred Timing/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Preferred Timing Submitted/i)).toBeInTheDocument(),
+    );
+
+    // Confirmation must NOT contain the removed email-confirmation note.
+    expect(
+      screen.queryByText(/receive an email once confirmed/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/employer will review your preferred timing/i),
+    ).not.toBeInTheDocument();
+
+    // Candidate can proceed: the "Back to Interview Pipeline" CTA is present
+    // and clickable on the success card.
+    const backCta = screen.getByRole("button", { name: /Back to Interview Pipeline/i });
+    expect(backCta).toBeEnabled();
+    await user.click(backCta);
   });
 
   it("does not expose the legacy 'All' time-of-day filter", async () => {
