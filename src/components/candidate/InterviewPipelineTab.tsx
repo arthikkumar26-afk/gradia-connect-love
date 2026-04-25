@@ -841,6 +841,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return slotBookings.find((booking) => bookingTypes.includes(booking.booking_type)) || null;
   };
 
+  const isBookingTimeReached = (booking: SlotBooking | null | undefined): boolean => {
+    if (!booking?.booking_date || !booking?.booking_time) return false;
+    // booking_time is "HH:mm" wall-clock in user's timezone; combining locally is acceptable here.
+    const slotMs = new Date(`${booking.booking_date}T${booking.booking_time}:00`).getTime();
+    if (Number.isNaN(slotMs)) return false;
+    return Date.now() >= slotMs;
+  };
+
   const getLiveRoundJoinAction = (stageName: string, interviewCandidateId: string, stageId: string) => {
     if (hasSubmittedFeedbackForRoundStage(stageName)) {
       return null;
@@ -848,7 +856,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
     const booking = getLiveRoundBooking(stageName);
 
-    if (!booking || booking.status !== 'confirmed') {
+    if (!booking) {
+      return null;
+    }
+
+    // Allow joining once the booking is confirmed OR the scheduled slot time
+    // has arrived (covers AI-video flows where employer confirmation isn't required).
+    const timeReached = isBookingTimeReached(booking);
+    if (booking.status !== 'confirmed' && !timeReached) {
       return null;
     }
 
@@ -856,6 +871,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       return {
         href: booking.demo_meet_link,
         external: true,
+      };
+    }
+
+    // AI-video demo: route to the platform-hosted demo round once time has arrived.
+    if (booking.demo_meet_type === 'ai_video' && timeReached && stageName === 'Demo Round') {
+      return {
+        href: `/candidate/demo-round?interviewCandidateId=${interviewCandidateId}&stageId=${stageId}`,
+        external: false,
       };
     }
 
