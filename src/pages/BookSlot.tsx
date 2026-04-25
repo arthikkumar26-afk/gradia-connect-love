@@ -686,6 +686,10 @@ const BookSlot = () => {
             emailType: "interview_invitation",
             triggerSource: "book-slot",
             scheduledDate: scheduledDateTime,
+            // On reschedule, force the gateway to re-send the test link with
+            // the new date/time. Without this, the idempotency check blocks
+            // the second email and the candidate never gets the updated link.
+            forceResend: isRebook,
           },
         });
         if (!result.ok) {
