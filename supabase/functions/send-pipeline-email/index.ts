@@ -69,7 +69,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: PipelineEmailRequest = await req.json();
-    const { interviewCandidateId, stageName, emailType, triggerSource, feedbackType, scheduledDate, meetingLink, analysisData } = body;
+    const { interviewCandidateId, stageName, emailType, triggerSource, feedbackType, scheduledDate, meetingLink, analysisData, forceResend } = body;
 
     console.log(`[PIPELINE EMAIL GATEWAY] Request:`, { interviewCandidateId, stageName, emailType, triggerSource });
 
