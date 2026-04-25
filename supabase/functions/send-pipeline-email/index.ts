@@ -51,6 +51,11 @@ interface PipelineEmailRequest {
   scheduledDate?: string;
   meetingLink?: string;
   analysisData?: any;
+  // When true, bypass the "already_sent" idempotency guard. Used by the
+  // candidate reschedule flow so a second booking for the same stage
+  // re-issues the test-link email with the new time/token instead of being
+  // silently blocked because the original invitation was already logged.
+  forceResend?: boolean;
 }
 
 serve(async (req) => {
