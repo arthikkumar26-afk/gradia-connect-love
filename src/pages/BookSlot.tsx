@@ -114,6 +114,18 @@ const BookSlot = () => {
     booking_time: string;
   } | null>(null);
   const [showRescheduleConfirm, setShowRescheduleConfirm] = useState(false);
+  // Multi-step reschedule state machine. Drives the dialog so the candidate
+  // cannot dismiss / proceed until the new time is actually confirmed by the
+  // backend:
+  //   - idle:       dialog closed or freshly opened, awaiting confirm click
+  //   - validating: re-running slot validation right before submit
+  //   - submitting: booking + invitation in flight; cancel disabled
+  //   - confirmed:  backend accepted; dialog auto-closes into success screen
+  //   - failed:     show inline error inside the dialog, allow retry
+  const [rescheduleStatus, setRescheduleStatus] = useState<
+    "idle" | "validating" | "submitting" | "confirmed" | "failed"
+  >("idle");
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
 
   // Derived booking_type matches the value persisted into `slot_bookings`. Kept
   // at the component level (rather than inside the handler) so we can:
@@ -580,11 +592,70 @@ const BookSlot = () => {
   const handleSubmitClick = () => {
     if (!validateBookingInputs()) return;
     if (existingBooking) {
+      // Reset reschedule machine each time we open the dialog so a previous
+      // failed attempt doesn't pre-fill an error or leave the action button
+      // stuck in the wrong state.
+      setRescheduleStatus("idle");
+      setRescheduleError(null);
       setShowRescheduleConfirm(true);
       return;
     }
     void handleBookSlot();
   };
+
+  /**
+   * Reschedule confirm action. Implements stricter multi-step validation:
+   *   1. Re-runs `validateBookingInputs` (the slot may have just expired
+   *      while the dialog was open).
+   *   2. Verifies the new slot is actually different from the existing one.
+   *   3. Awaits `handleBookSlot` and only treats the reschedule as complete
+   *      when `isBooked` flips true. On failure we keep the dialog open with
+   *      an inline error so the candidate cannot accidentally proceed
+   *      thinking their new time was saved.
+   */
+  const handleConfirmReschedule = async () => {
+    setRescheduleStatus("validating");
+    setRescheduleError(null);
+
+    if (!validateBookingInputs()) {
+      setRescheduleStatus("failed");
+      setRescheduleError(
+        "The selected time is no longer valid. Please pick another slot.",
+      );
+      return;
+    }
+
+    // Defence-in-depth: block confirming the exact same slot. The inline
+    // validator already covers this for multi-slot stages, but single-slot
+    // stages reach this path through `selectedDate`/`selectedTime` which
+    // skip that check.
+    if (
+      existingBooking &&
+      ((isMultiSlotStage &&
+        existingBooking.booking_date === demoDate &&
+        existingBooking.booking_time === demoTime1) ||
+        (!isMultiSlotStage &&
+          existingBooking.booking_date === selectedDate &&
+          existingBooking.booking_time === selectedTime))
+    ) {
+      setRescheduleStatus("failed");
+      setRescheduleError(
+        "This matches your current slot. Pick a different date or time to reschedule.",
+      );
+      return;
+    }
+
+    setRescheduleStatus("submitting");
+    try {
+      await handleBookSlot();
+    } catch (err: any) {
+      setRescheduleStatus("failed");
+      setRescheduleError(
+        err?.message || "Could not reschedule your slot. Please try again.",
+      );
+    }
+  };
+
 
   const handleBookSlot = async () => {
     // For multi-slot stages (demo/HR), build a single preferred slot from date + time
@@ -658,9 +729,10 @@ const BookSlot = () => {
             .in("id", existingBookings.map((b) => b.id));
           if (deleteError) {
             console.error("Error clearing previous slot bookings:", deleteError);
-            toast.error("Failed to update your previous booking. Please try again.");
-            setIsBooking(false);
-            return;
+            // Throw so the outer catch flips the reschedule status to "failed"
+            // and surfaces the message inside the dialog instead of silently
+            // exiting and leaving the candidate stuck.
+            throw new Error("Failed to update your previous booking. Please try again.");
           }
         }
 
@@ -676,9 +748,7 @@ const BookSlot = () => {
           });
           if (insertError) {
             console.error("Error inserting slot booking:", insertError);
-            toast.error("Failed to save booking. Please try again.");
-            setIsBooking(false);
-            return;
+            throw new Error("Failed to save booking. Please try again.");
           }
         } else {
           const { error: insertError } = await supabase.from("slot_bookings").insert({
@@ -691,9 +761,7 @@ const BookSlot = () => {
           });
           if (insertError) {
             console.error("Error inserting slot booking:", insertError);
-            toast.error("Failed to save booking. Please try again.");
-            setIsBooking(false);
-            return;
+            throw new Error("Failed to save booking. Please try again.");
           }
         }
       }
@@ -801,6 +869,15 @@ const BookSlot = () => {
 
       setIsBooked(true);
       setWasRescheduled(isRebook);
+      if (isRebook) {
+        // Mark the multi-step reschedule as confirmed and close the dialog —
+        // we only reach this branch after the slot row was inserted AND any
+        // invitation/notification side effects ran, so it is safe to let the
+        // candidate proceed to the success screen.
+        setRescheduleStatus("confirmed");
+        setRescheduleError(null);
+        setShowRescheduleConfirm(false);
+      }
       if (isMultiSlotStage) {
         toast.success(
           isRebook
@@ -814,9 +891,17 @@ const BookSlot = () => {
             : "Slot booked successfully! Check your Interview Pipeline for next steps."
         );
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error booking slot:", err);
-      toast.error("Failed to book slot. Please try again.");
+      const msg = err?.message || "Failed to book slot. Please try again.";
+      toast.error(msg);
+      // Surface inside the reschedule dialog so the candidate can see WHY
+      // the new time wasn't accepted and decide to retry — instead of the
+      // dialog vanishing and leaving them to wonder if it worked.
+      if (showRescheduleConfirm || existingBooking) {
+        setRescheduleStatus("failed");
+        setRescheduleError(msg);
+      }
     } finally {
       setIsBooking(false);
     }
@@ -1602,7 +1687,23 @@ const BookSlot = () => {
       {/* Reschedule confirmation — only shown when a prior slot exists for this
           candidate + booking_type. Lets the candidate verify the new time and
           round before we delete their previous booking. */}
-      <AlertDialog open={showRescheduleConfirm} onOpenChange={setShowRescheduleConfirm}>
+      <AlertDialog
+        open={showRescheduleConfirm}
+        onOpenChange={(open) => {
+          // Lock the dialog while the reschedule is in flight — the candidate
+          // must not be able to dismiss/escape until the new time is either
+          // confirmed by the backend or explicitly fails. This prevents the
+          // "I clicked confirm and the dialog vanished — did it save?" bug.
+          if (rescheduleStatus === "validating" || rescheduleStatus === "submitting") {
+            return;
+          }
+          setShowRescheduleConfirm(open);
+          if (!open) {
+            setRescheduleStatus("idle");
+            setRescheduleError(null);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reschedule your {bookingTypeLabel}?</AlertDialogTitle>
@@ -1648,23 +1749,76 @@ const BookSlot = () => {
                     </p>
                   )}
                 </div>
+
+                {/* Inline status / error surface — keeps the candidate
+                    inside the multi-step flow until the new slot is
+                    actually accepted by the backend. */}
+                {rescheduleStatus === "validating" && (
+                  <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground"
+                  >
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Re-checking your selected slot…
+                  </div>
+                )}
+                {rescheduleStatus === "submitting" && (
+                  <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-primary"
+                  >
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Saving your new time. Please don't close this window…
+                  </div>
+                )}
+                {rescheduleStatus === "failed" && rescheduleError && (
+                  <div
+                    role="alert"
+                    className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{rescheduleError}</span>
+                  </div>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBooking}>Keep current slot</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={
+                isBooking ||
+                rescheduleStatus === "validating" ||
+                rescheduleStatus === "submitting"
+              }
+            >
+              Keep current slot
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 // Prevent the dialog from closing before the async flow runs;
-                // we close it manually after the booking attempt resolves so
-                // the cancel button stays disabled while in flight.
+                // it now only closes when `handleBookSlot` flips
+                // rescheduleStatus to "confirmed" on the success path. On
+                // failure the dialog stays open with the inline error so the
+                // candidate can retry.
                 e.preventDefault();
-                setShowRescheduleConfirm(false);
-                void handleBookSlot();
+                void handleConfirmReschedule();
               }}
-              disabled={isBooking}
+              disabled={
+                isBooking ||
+                rescheduleStatus === "validating" ||
+                rescheduleStatus === "submitting"
+              }
             >
-              Confirm reschedule
+              {rescheduleStatus === "submitting" ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Confirming…
+                </>
+              ) : rescheduleStatus === "failed" ? (
+                "Try again"
+              ) : (
+                "Confirm reschedule"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
