@@ -729,9 +729,10 @@ const BookSlot = () => {
             .in("id", existingBookings.map((b) => b.id));
           if (deleteError) {
             console.error("Error clearing previous slot bookings:", deleteError);
-            toast.error("Failed to update your previous booking. Please try again.");
-            setIsBooking(false);
-            return;
+            // Throw so the outer catch flips the reschedule status to "failed"
+            // and surfaces the message inside the dialog instead of silently
+            // exiting and leaving the candidate stuck.
+            throw new Error("Failed to update your previous booking. Please try again.");
           }
         }
 
@@ -747,9 +748,7 @@ const BookSlot = () => {
           });
           if (insertError) {
             console.error("Error inserting slot booking:", insertError);
-            toast.error("Failed to save booking. Please try again.");
-            setIsBooking(false);
-            return;
+            throw new Error("Failed to save booking. Please try again.");
           }
         } else {
           const { error: insertError } = await supabase.from("slot_bookings").insert({
@@ -762,9 +761,7 @@ const BookSlot = () => {
           });
           if (insertError) {
             console.error("Error inserting slot booking:", insertError);
-            toast.error("Failed to save booking. Please try again.");
-            setIsBooking(false);
-            return;
+            throw new Error("Failed to save booking. Please try again.");
           }
         }
       }
