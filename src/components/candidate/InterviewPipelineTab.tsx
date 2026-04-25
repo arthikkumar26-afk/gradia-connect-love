@@ -201,6 +201,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     scheduledAt: string | null,
   ) => {
     setResendingEventId(eventId);
+    // Snapshot what the candidate sees RIGHT NOW so we can render a
+    // "before → after" diff once the refetch returns the new row.
+    const beforeRow = invitationsByEventId[eventId];
+    if (beforeRow) {
+      setLastResendSnapshot({
+        eventId,
+        before: {
+          invitation_token: beforeRow.invitation_token,
+          email_sent_at: beforeRow.email_sent_at,
+          expires_at: beforeRow.expires_at,
+        },
+        completedAt: 0, // populated on success below
+      });
+    }
     try {
       const { data, error } = await supabase.functions.invoke('send-interview-invitation', {
         body: {
@@ -214,13 +228,20 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       if (error || (data && data.success === false)) {
         const msg = error?.message || data?.error || 'Failed to resend the test link.';
         toast.error(msg);
+        // Roll back the snapshot — there's nothing new to compare against.
+        setLastResendSnapshot(null);
       } else {
         toast.success('Test link resent. Please check your inbox.');
         // Refetch invitations so the badge updates from "failed" -> "sent".
         await fetchData();
+        // Stamp completion so the "Updated just now" affordance can decay.
+        setLastResendSnapshot((prev) =>
+          prev && prev.eventId === eventId ? { ...prev, completedAt: Date.now() } : prev,
+        );
       }
     } catch (err: any) {
       toast.error(err?.message || 'Failed to resend the test link.');
+      setLastResendSnapshot(null);
     } finally {
       setResendingEventId(null);
     }
