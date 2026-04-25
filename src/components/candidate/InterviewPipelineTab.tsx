@@ -586,7 +586,10 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   // unrelated state changes. 30s is enough granularity for minute-scale UI
   // cues without burning render cycles.
   useEffect(() => {
-    const id = window.setInterval(() => setNowTick(Date.now()), 30_000);
+    // 1s tick so the live expiry countdown updates every second. This also
+    // keeps the >5min stall / "expires soon" affordances fresh — well within
+    // the cost of a single setState per second on this panel.
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
 
