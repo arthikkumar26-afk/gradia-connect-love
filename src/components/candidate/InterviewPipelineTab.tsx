@@ -130,6 +130,8 @@ interface InvitationStatus {
   email_sent_at: string | null;
   meeting_link: string | null;
   created_at: string;
+  expires_at: string | null;
+  invitation_token: string | null;
 }
 
 export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps) => {
