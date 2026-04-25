@@ -211,6 +211,11 @@ export function buildInvitationDeliveryInvocation(args: {
   scheduledDate: string;
   meetingLink?: string;
   triggerSource?: string;
+  // When true, the pipeline gateway will bypass its `already_sent`
+  // idempotency guard. The manual "Resend" button on the booking
+  // confirmation screen always sets this — by definition the candidate is
+  // explicitly asking for a fresh email.
+  forceResend?: boolean;
 }): InvitationDeliveryInvocation {
   const route = resolveInvitationDeliveryRoute(args.stageName);
 
@@ -225,6 +230,7 @@ export function buildInvitationDeliveryInvocation(args: {
         triggerSource: args.triggerSource ?? "manual-invitation",
         scheduledDate: args.scheduledDate,
         ...(args.meetingLink ? { meetingLink: args.meetingLink } : {}),
+        ...(args.forceResend ? { forceResend: true } : {}),
       },
     };
   }
