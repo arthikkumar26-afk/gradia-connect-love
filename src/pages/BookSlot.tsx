@@ -702,6 +702,7 @@ const BookSlot = () => {
       }
 
       setIsBooked(true);
+      setWasRescheduled(isRebook);
       if (isMultiSlotStage) {
         toast.success(
           isRebook
