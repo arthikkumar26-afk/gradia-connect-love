@@ -155,6 +155,27 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   // Tracks which event is currently mid-resend so we can disable the button
   // and swap in a spinner without blocking other resends.
   const [resendingEventId, setResendingEventId] = useState<string | null>(null);
+  // User-controlled toggle: when ON, a stalled-pending invitation (no email
+  // delivery after >5 min from creation) auto-fires a single resend without
+  // requiring a manual click. We track which event IDs we've already
+  // auto-resent for so the effect can't loop after the refetch updates state.
+  const [autoResendEnabled, setAutoResendEnabled] = useState(false);
+  const [autoResentEventIds, setAutoResentEventIds] = useState<Set<string>>(new Set());
+  // Wall-clock tick (ms) used to re-evaluate the >5min stall condition without
+  // waiting for an unrelated state change. Bumped every 30s.
+  const [nowTick, setNowTick] = useState<number>(() => Date.now());
+  // Snapshot taken right BEFORE a resend fires so we can highlight what
+  // changed (token / email-sent-at / expires_at) once the refetch completes.
+  // Cleared automatically after a short window so the "Updated just now"
+  // affordance doesn't linger.
+  const [lastResendSnapshot, setLastResendSnapshot] = useState<
+    | {
+        eventId: string;
+        before: { invitation_token: string | null; email_sent_at: string | null; expires_at: string | null };
+        completedAt: number;
+      }
+    | null
+  >(null);
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try {
