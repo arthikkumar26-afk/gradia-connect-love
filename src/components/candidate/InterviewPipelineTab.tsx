@@ -1745,7 +1745,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
               </div>
 
               {/* Email sent */}
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className={`rounded-md border border-border bg-background p-3 ${emailChanged ? updatedHighlight : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {emailSent ? (
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
