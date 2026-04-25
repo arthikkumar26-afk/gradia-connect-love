@@ -47,7 +47,8 @@ import PointsPricingPanel from "./PointsPricingPanel";
 const RUPEE_PER_POINT = 5;
 
 const POINT_PACKAGES = [
-  { points: 400, price: 2000, popular: false, label: "Starter" },
+  // TEST MODE: Starter reduced to ₹1 for payment testing
+  { points: 400, price: 1, popular: false, label: "Starter" },
   { points: 1000, price: 5000, popular: false, label: "Basic" },
   { points: 2000, price: 10000, popular: true, label: "Pro" },
   { points: 5000, price: 25000, popular: false, label: "Premium" },
