@@ -812,9 +812,13 @@ const BookSlot = () => {
               </>
             ) : (
               <>
-                <h2 className="text-xl font-bold text-foreground">Slot Booked Successfully! 🎉</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  {wasRescheduled ? "Slot Rescheduled Successfully! 🔁" : "Slot Booked Successfully! 🎉"}
+                </h2>
                 <p className="text-muted-foreground">
-                  Your <strong>{stageName}</strong> has been scheduled for:
+                  {wasRescheduled
+                    ? <>Your <strong>{stageName}</strong> has been moved to:</>
+                    : <>Your <strong>{stageName}</strong> has been scheduled for:</>}
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                   {(() => {
