@@ -271,12 +271,18 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
       expect(screen.getByText(/Book Your Technical Assessment Slot/i)).toBeInTheDocument(),
     );
 
+    // Default filter is Morning; switch to Evening to expose 11:30 PM,
+    // then back to Morning to verify 12:00 AM. 9:00 AM is in the default Morning set.
     const timeTrigger = triggerByPlaceholder("Choose a time slot");
     await user.click(timeTrigger);
-
     expect(await screen.findByRole("option", { name: "12:00 AM" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "11:30 PM" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "9:00 AM" })).toBeInTheDocument();
+    // close
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByRole("button", { name: /Evening/i }));
+    await user.click(triggerByPlaceholder("Choose a time slot"));
+    expect(await screen.findByRole("option", { name: "11:30 PM" })).toBeInTheDocument();
   });
 });
 
