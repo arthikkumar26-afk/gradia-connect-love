@@ -841,6 +841,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     return slotBookings.find((booking) => bookingTypes.includes(booking.booking_type)) || null;
   };
 
+  const isBookingTimeReached = (booking: SlotBooking | null | undefined): boolean => {
+    if (!booking?.booking_date || !booking?.booking_time) return false;
+    // booking_time is "HH:mm" wall-clock in user's timezone; combining locally is acceptable here.
+    const slotMs = new Date(`${booking.booking_date}T${booking.booking_time}:00`).getTime();
+    if (Number.isNaN(slotMs)) return false;
+    return Date.now() >= slotMs;
+  };
+
   const getLiveRoundJoinAction = (stageName: string, interviewCandidateId: string, stageId: string) => {
     if (hasSubmittedFeedbackForRoundStage(stageName)) {
       return null;
@@ -848,7 +856,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
     const booking = getLiveRoundBooking(stageName);
 
-    if (!booking || booking.status !== 'confirmed') {
+    if (!booking) {
+      return null;
+    }
+
+    // Allow joining once the booking is confirmed OR the scheduled slot time
+    // has arrived (covers AI-video flows where employer confirmation isn't required).
+    const timeReached = isBookingTimeReached(booking);
+    if (booking.status !== 'confirmed' && !timeReached) {
       return null;
     }
 
@@ -856,6 +871,14 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       return {
         href: booking.demo_meet_link,
         external: true,
+      };
+    }
+
+    // AI-video demo: route to the platform-hosted demo round once time has arrived.
+    if (booking.demo_meet_type === 'ai_video' && timeReached && stageName === 'Demo Round') {
+      return {
+        href: `/candidate/demo-round?interviewCandidateId=${interviewCandidateId}&stageId=${stageId}`,
+        external: false,
       };
     }
 
@@ -2203,6 +2226,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                           status === 'current' ||
                           (!!booking && status !== 'passed');
 
+                        // For Demo slot bookings, surface a "Start/Join Demo" action
+                        // as soon as the scheduled slot time has arrived so the candidate
+                        // is not blocked when status is still pending.
+                        const slotTimeReached = isBookingTimeReached(booking);
+                        const demoStartHref = isDemo && booking && slotTimeReached
+                          ? (booking.demo_meet_link
+                              ? booking.demo_meet_link
+                              : booking.demo_meet_type === 'ai_video'
+                                ? `/candidate/demo-round?interviewCandidateId=${currentInterview.id}&stageId=${stage.id}`
+                                : null)
+                          : null;
+                        const demoStartIsExternal = !!booking?.demo_meet_link;
+
                         return (
                           <>
                             {booking && (
@@ -2210,6 +2246,31 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                                 <Calendar className="h-3 w-3 mr-1" />
                                 {formatDate(booking.booking_date)} • {booking.booking_time}
                               </Badge>
+                            )}
+                            {demoStartHref && (
+                              demoStartIsExternal ? (
+                                <a
+                                  href={demoStartHref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
+                                >
+                                  <Video className="h-3 w-3" />
+                                  Join Demo
+                                </a>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(demoStartHref);
+                                  }}
+                                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
+                                >
+                                  <Video className="h-3 w-3" />
+                                  Start Demo
+                                </button>
+                              )
                             )}
                             {canReschedule && (
                               <button
