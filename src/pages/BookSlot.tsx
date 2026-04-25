@@ -60,6 +60,11 @@ const BookSlot = () => {
   const [selectedTime, setSelectedTime] = useState("");
   const [isBooking, setIsBooking] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
+  // Tracks whether the just-completed booking replaced an earlier slot. Drives
+  // the heading + copy on the confirmation screen so the candidate gets an
+  // explicit "rescheduled" status step (and knows to expect a *new* invite
+  // email rather than re-using the old link).
+  const [wasRescheduled, setWasRescheduled] = useState(false);
   const [loading, setLoading] = useState(true);
   // Invitation delivery status shown on the confirmation screen.
   // - idle: not applicable (e.g. multi-slot stage where employer confirms first)
