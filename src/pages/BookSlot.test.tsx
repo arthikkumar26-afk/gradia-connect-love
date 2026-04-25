@@ -193,6 +193,7 @@ const allTriggersByPlaceholder = (placeholder: RegExp): HTMLElement[] => {
 beforeEach(() => {
   slotBookingInserts.length = 0;
   functionInvokes.length = 0;
+  interviewInvitationRows.length = 0;
   toastSuccess.mockClear();
   toastError.mockClear();
   // Stable "today" so date labels are predictable. Use shouldAdvanceTime so
