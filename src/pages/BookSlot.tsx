@@ -592,11 +592,70 @@ const BookSlot = () => {
   const handleSubmitClick = () => {
     if (!validateBookingInputs()) return;
     if (existingBooking) {
+      // Reset reschedule machine each time we open the dialog so a previous
+      // failed attempt doesn't pre-fill an error or leave the action button
+      // stuck in the wrong state.
+      setRescheduleStatus("idle");
+      setRescheduleError(null);
       setShowRescheduleConfirm(true);
       return;
     }
     void handleBookSlot();
   };
+
+  /**
+   * Reschedule confirm action. Implements stricter multi-step validation:
+   *   1. Re-runs `validateBookingInputs` (the slot may have just expired
+   *      while the dialog was open).
+   *   2. Verifies the new slot is actually different from the existing one.
+   *   3. Awaits `handleBookSlot` and only treats the reschedule as complete
+   *      when `isBooked` flips true. On failure we keep the dialog open with
+   *      an inline error so the candidate cannot accidentally proceed
+   *      thinking their new time was saved.
+   */
+  const handleConfirmReschedule = async () => {
+    setRescheduleStatus("validating");
+    setRescheduleError(null);
+
+    if (!validateBookingInputs()) {
+      setRescheduleStatus("failed");
+      setRescheduleError(
+        "The selected time is no longer valid. Please pick another slot.",
+      );
+      return;
+    }
+
+    // Defence-in-depth: block confirming the exact same slot. The inline
+    // validator already covers this for multi-slot stages, but single-slot
+    // stages reach this path through `selectedDate`/`selectedTime` which
+    // skip that check.
+    if (
+      existingBooking &&
+      ((isMultiSlotStage &&
+        existingBooking.booking_date === demoDate &&
+        existingBooking.booking_time === demoTime1) ||
+        (!isMultiSlotStage &&
+          existingBooking.booking_date === selectedDate &&
+          existingBooking.booking_time === selectedTime))
+    ) {
+      setRescheduleStatus("failed");
+      setRescheduleError(
+        "This matches your current slot. Pick a different date or time to reschedule.",
+      );
+      return;
+    }
+
+    setRescheduleStatus("submitting");
+    try {
+      await handleBookSlot();
+    } catch (err: any) {
+      setRescheduleStatus("failed");
+      setRescheduleError(
+        err?.message || "Could not reschedule your slot. Please try again.",
+      );
+    }
+  };
+
 
   const handleBookSlot = async () => {
     // For multi-slot stages (demo/HR), build a single preferred slot from date + time
