@@ -1507,16 +1507,17 @@ const BookSlot = () => {
                 <div className="rounded-md border border-primary/40 bg-primary/5 p-3">
                   <p className="text-xs uppercase tracking-wide text-primary">New slot</p>
                   {isMultiSlotStage ? (
-                    <ul className="mt-1 space-y-1 font-medium text-foreground">
-                      {[demoTime1, demoTime2, demoTime3].filter(Boolean).map((t) => {
-                        const f = formatBookedDateTime(demoDate, t, timezone);
-                        return (
-                          <li key={t}>
-                            {f.dateLabel} · {f.timeLabel} ({f.tzAbbr})
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <p className="font-medium text-foreground">
+                      {demoTime1 ? (
+                        <>
+                          {formatBookedDateTime(demoDate, demoTime1, timezone).dateLabel}
+                          {" · "}
+                          {formatBookedDateTime(demoDate, demoTime1, timezone).timeLabel}
+                          {" "}
+                          ({formatBookedDateTime(demoDate, demoTime1, timezone).tzAbbr})
+                        </>
+                      ) : null}
+                    </p>
                   ) : (
                     <p className="font-medium text-foreground">
                       {formatBookedDateTime(selectedDate, selectedTime, timezone).dateLabel}
