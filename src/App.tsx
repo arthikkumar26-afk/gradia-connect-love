@@ -304,6 +304,7 @@ const MainRoutes = () => (
         <Route path="/admin/resume-analysis-audit" element={<AdminResumeAnalysisAudit />} />
         <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
         <Route path="/admin/audit" element={<AdminAuditLogs />} />
+        <Route path="/admin/razorpay-webhooks" element={<RazorpayWebhooks />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/admin/mock-interview-pipeline" element={<MockInterviewPipeline />} />
         <Route path="/admin/management" element={<AdminManagement />} />
