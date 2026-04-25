@@ -7,6 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft, Check, ChevronsUpDown, Mail, RefreshCw, AlertCircle } from "lucide-react";
@@ -24,6 +34,20 @@ import {
   buildInvitationDeliveryInvocation,
   type InvitationFunctionName,
 } from "@/lib/scheduler/invitationRoute";
+
+// Friendly labels for the booking_type values we persist into `slot_bookings`.
+// Surfaced in the rescheduling confirmation dialog so candidates can verify
+// they're updating the right round before we delete their previous slot.
+const BOOKING_TYPE_LABELS: Record<string, string> = {
+  demo_round: "Demo Round",
+  hr_round: "HR Round",
+  segment_round: "Segment Round",
+  admin_academic_round: "Admin & Academic Round",
+  core_team_round: "Core Team Round",
+  management_round: "Management Round",
+  written_test: "Written Test",
+  technical_assessment: "Technical Assessment",
+};
 
 const BookSlot = () => {
   const [searchParams] = useSearchParams();
