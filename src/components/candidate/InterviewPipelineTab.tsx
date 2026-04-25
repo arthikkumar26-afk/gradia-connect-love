@@ -581,6 +581,60 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
     }
   }, [selectedInterview]);
 
+  // Heartbeat — re-renders the panel every 30s so "stalled >5min" / "expires
+  // soon" / "Updated just now" affordances update without depending on
+  // unrelated state changes. 30s is enough granularity for minute-scale UI
+  // cues without burning render cycles.
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Auto-resend: when the user has opted in via the toggle, watch the latest
+  // test invitation for the selected interview. If it's been "pending" for
+  // more than 5 minutes with no email_sent_at, fire ONE resend automatically.
+  // We dedupe on the eventId to guarantee at-most-once per stalled invitation,
+  // and skip if a manual resend is already in flight.
+  useEffect(() => {
+    if (!autoResendEnabled || !selectedInterview) return;
+    const interview = interviews.find((i) => i.id === selectedInterview);
+    if (!interview) return;
+
+    const stageNameById = new Map(allDbStages.map((s) => [s.id, s.name]));
+    const TEST_KEYWORDS = ['written test', 'technical', 'coding test', 'aptitude', 'mcq', 'assessment'];
+    const isTest = (n: string) => TEST_KEYWORDS.some((k) => n.toLowerCase().includes(k));
+
+    for (const ev of interview.events) {
+      const inv = invitationsByEventId[ev.id];
+      if (!inv) continue;
+      const stageName = stageNameById.get(ev.stage_id) || '';
+      if (!isTest(stageName)) continue;
+      const stalled =
+        inv.email_status === 'pending' &&
+        !inv.email_sent_at &&
+        nowTick - new Date(inv.created_at).getTime() > 5 * 60 * 1000;
+      if (!stalled) continue;
+      if (autoResentEventIds.has(ev.id)) continue;
+      if (resendingEventId === ev.id) continue;
+
+      // Mark BEFORE awaiting so the next render can't double-trigger.
+      setAutoResentEventIds((prev) => {
+        const next = new Set(prev);
+        next.add(ev.id);
+        return next;
+      });
+      toast.info('Auto-resending stalled test link…');
+      void handleResendInvitation(interview.id, stageName, ev.id, ev.scheduled_at);
+      // Only one auto-fire per tick — break out so we don't stampede.
+      break;
+    }
+    // We intentionally exclude `handleResendInvitation` from deps — it's
+    // stable enough for this read-only fire-and-forget use, and including
+    // it would require a useCallback refactor outside the scope of this fix.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoResendEnabled, nowTick, invitationsByEventId, selectedInterview, interviews, allDbStages, autoResentEventIds, resendingEventId]);
+
+
   const getStageIcon = (stageName: string) => {
     switch (stageName) {
       case 'Interview Guidelines':
