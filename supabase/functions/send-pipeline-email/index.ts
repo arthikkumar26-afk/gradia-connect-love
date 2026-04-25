@@ -125,13 +125,25 @@ serve(async (req) => {
       .eq('email_type', emailType)
       .single();
 
-    if (existingLog?.email_sent) {
+    if (existingLog?.email_sent && !forceResend) {
       console.log(`[BLOCKED] Email already sent: ${emailType} for stage "${stageName}"`);
       return jsonResponse({
         blocked: true,
         reason: 'already_sent',
         message: `Email "${emailType}" for stage "${stageName}" was already sent at ${existingLog.sent_at}`,
       });
+    }
+    if (existingLog?.email_sent && forceResend) {
+      // Reset the log so the upsert below records a fresh send timestamp.
+      // Reschedule flow needs this — the candidate is explicitly asking for
+      // an updated test link with the new date/time and a new token.
+      console.log(`[FORCE RESEND] Bypassing idempotency for "${stageName}" (${emailType}) — candidate reschedule`);
+      await supabase
+        .from('pipeline_email_log')
+        .update({ email_sent: false })
+        .eq('interview_candidate_id', interviewCandidateId)
+        .eq('stage_name', stageName)
+        .eq('email_type', emailType);
     }
 
     // ─── VALIDATION 4: Check if stage is locked ───
