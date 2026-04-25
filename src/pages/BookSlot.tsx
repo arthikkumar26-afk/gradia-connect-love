@@ -452,6 +452,39 @@ const BookSlot = () => {
     }
   };
 
+  // Validate the form once before either showing the reschedule confirmation
+  // dialog or proceeding directly. Returns true when inputs are usable.
+  const validateBookingInputs = (): boolean => {
+    if (isMultiSlotStage) {
+      const uniqueTimes = [...new Set([demoTime1, demoTime2, demoTime3].filter(Boolean))];
+      if (!demoDate || uniqueTimes.length < 3) {
+        toast.error("Please select a date and 3 different timings");
+        return false;
+      }
+    } else if (!selectedDate || !selectedTime) {
+      toast.error("Please select both date and time");
+      return false;
+    }
+    if (!candidateId) {
+      toast.error("Invalid booking link - missing candidate information");
+      return false;
+    }
+    return true;
+  };
+
+  // Submit-button click. If the candidate already has a slot for this round,
+  // open the reschedule confirmation dialog so they can verify the new
+  // booking type + time before we delete the prior row. Otherwise, fall
+  // through to the normal booking flow.
+  const handleSubmitClick = () => {
+    if (!validateBookingInputs()) return;
+    if (existingBooking) {
+      setShowRescheduleConfirm(true);
+      return;
+    }
+    void handleBookSlot();
+  };
+
   const handleBookSlot = async () => {
     // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
     let demoSlots: { date: string; time: string }[] = [];
