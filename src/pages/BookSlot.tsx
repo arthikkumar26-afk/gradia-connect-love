@@ -772,9 +772,13 @@ const BookSlot = () => {
             </div>
             {isMultiSlotStage ? (
               <>
-                <h2 className="text-xl font-bold text-foreground">Preferred Timings Submitted! 🎉</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  {wasRescheduled ? "Preferred Timings Updated! 🔁" : "Preferred Timings Submitted! 🎉"}
+                </h2>
                 <p className="text-muted-foreground">
-                  You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.
+                  {wasRescheduled
+                    ? <>You have updated your <strong>3</strong> preferred timings for <strong>{stageName}</strong>. Your earlier choices have been replaced.</>
+                    : <>You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.</>}
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
