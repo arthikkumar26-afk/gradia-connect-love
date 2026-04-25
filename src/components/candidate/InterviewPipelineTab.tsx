@@ -1727,7 +1727,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Token created */}
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className={`rounded-md border border-border bg-background p-3 ${tokenChanged ? updatedHighlight : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {tokenCreated ? (
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
