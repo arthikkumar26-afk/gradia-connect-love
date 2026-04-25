@@ -123,9 +123,14 @@ vi.mock("@/integrations/supabase/client", () => {
         // assertions can verify the row was "created".
         if (name === "send-pipeline-email" || name === "send-interview-invitation") {
           const body = (opts?.body ?? {}) as Record<string, any>;
+          // NOTE: leave meeting_link and expires_at as null. happy-dom's Intl
+          // polyfill doesn't support `dateStyle`/`timeStyle` options used by
+          // the inline link/expiry display, and we only need the row's
+          // existence + candidate linkage for these tests — the production
+          // edge function decides the actual link + expiry timestamp.
           interviewInvitationRows.unshift({
-            meeting_link: `https://gradiaa.com/test/${name}-${interviewInvitationRows.length + 1}`,
-            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            meeting_link: null,
+            expires_at: null,
             interview_event_id: `evt-${interviewInvitationRows.length + 1}`,
             interview_events: {
               interview_candidate_id: String(body.interviewCandidateId ?? ""),
