@@ -102,6 +102,41 @@ const BookSlot = () => {
   const [demoTime2, setDemoTime2] = useState("");
   const [demoTime3, setDemoTime3] = useState("");
 
+  // Existing booking detection — populated on mount so the submit button can
+  // open a confirmation dialog before we delete the candidate's prior slot.
+  const [existingBooking, setExistingBooking] = useState<{
+    booking_date: string;
+    booking_time: string;
+  } | null>(null);
+  const [showRescheduleConfirm, setShowRescheduleConfirm] = useState(false);
+
+  // Derived booking_type matches the value persisted into `slot_bookings`. Kept
+  // at the component level (rather than inside the handler) so we can:
+  //   1. Pre-fetch any existing booking on mount.
+  //   2. Render a friendly label in the reschedule confirmation dialog.
+  const isWrittenTestSlotBooking = stageName.toLowerCase().includes("written") && !isFeedbackStage;
+  const isHrSlotBooking = isHrStage;
+  const isSegmentSlotBooking = isSegmentStage;
+  const isAdminAcademicSlotBooking = isAdminAcademicStage;
+  const isCoreTeamSlotBooking = isCoreTeamStage;
+  const isManagementSlotBooking = isManagementStage;
+  const bookingType = isDemoStage
+    ? "demo_round"
+    : isHrSlotBooking
+    ? "hr_round"
+    : isSegmentSlotBooking
+    ? "segment_round"
+    : isAdminAcademicSlotBooking
+    ? "admin_academic_round"
+    : isCoreTeamSlotBooking
+    ? "core_team_round"
+    : isManagementSlotBooking
+    ? "management_round"
+    : isWrittenTestSlotBooking
+    ? "written_test"
+    : "technical_assessment";
+  const bookingTypeLabel = BOOKING_TYPE_LABELS[bookingType] ?? stageName;
+
   // Quick filters for the time-slot dropdowns
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
   const [granularity, setGranularity] = useState<Granularity>(30);
