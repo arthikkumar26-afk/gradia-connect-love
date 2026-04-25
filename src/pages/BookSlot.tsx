@@ -785,12 +785,12 @@ const BookSlot = () => {
             {isMultiSlotStage ? (
               <>
                 <h2 className="text-xl font-bold text-foreground">
-                  {wasRescheduled ? "Preferred Timings Updated! 🔁" : "Preferred Timings Submitted! 🎉"}
+                  {wasRescheduled ? "Preferred Timing Updated! 🔁" : "Preferred Timing Submitted! 🎉"}
                 </h2>
                 <p className="text-muted-foreground">
                   {wasRescheduled
-                    ? <>You have updated your <strong>3</strong> preferred timings for <strong>{stageName}</strong>. Your earlier choices have been replaced.</>
-                    : <>You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.</>}
+                    ? <>You have updated your preferred timing for <strong>{stageName}</strong>. Your earlier choice has been replaced.</>
+                    : <>You have submitted your preferred timing for <strong>{stageName}</strong>.</>}
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
@@ -805,7 +805,6 @@ const BookSlot = () => {
                     const formatted = formatBookedDateTime(slot.date, slot.time, timezone);
                     return (
                       <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
-                        <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
                         <Clock className="h-4 w-4" />
                         <span className="text-sm font-medium">
                           {formatted.timeLabel}{" "}
@@ -819,7 +818,7 @@ const BookSlot = () => {
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  📧 The employer will review your preferred timings and confirm one. You'll receive an email once confirmed.
+                  📧 The employer will review your preferred timing and confirm. You'll receive an email once confirmed.
                 </p>
               </>
             ) : (
