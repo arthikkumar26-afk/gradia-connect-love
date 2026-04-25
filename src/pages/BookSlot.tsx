@@ -114,6 +114,18 @@ const BookSlot = () => {
     booking_time: string;
   } | null>(null);
   const [showRescheduleConfirm, setShowRescheduleConfirm] = useState(false);
+  // Multi-step reschedule state machine. Drives the dialog so the candidate
+  // cannot dismiss / proceed until the new time is actually confirmed by the
+  // backend:
+  //   - idle:       dialog closed or freshly opened, awaiting confirm click
+  //   - validating: re-running slot validation right before submit
+  //   - submitting: booking + invitation in flight; cancel disabled
+  //   - confirmed:  backend accepted; dialog auto-closes into success screen
+  //   - failed:     show inline error inside the dialog, allow retry
+  const [rescheduleStatus, setRescheduleStatus] = useState<
+    "idle" | "validating" | "submitting" | "confirmed" | "failed"
+  >("idle");
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null);
 
   // Derived booking_type matches the value persisted into `slot_bookings`. Kept
   // at the component level (rather than inside the handler) so we can:
