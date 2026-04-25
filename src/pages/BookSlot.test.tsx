@@ -61,6 +61,17 @@ vi.mock("@/integrations/supabase/client", () => {
             slotBookingInserts.push(payload);
             return { data: null, error: null };
           },
+          // The booking flow first checks for an existing slot booking so
+          // a rebook REPLACES the old row instead of stacking duplicates.
+          // Tests start with an empty table → return [].
+          select: () => ({
+            eq: () => ({
+              eq: async () => ({ data: [], error: null }),
+            }),
+          }),
+          delete: () => ({
+            in: async () => ({ data: null, error: null }),
+          }),
         };
       }
       if (table === "employer_notifications") {
