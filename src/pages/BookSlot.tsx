@@ -1383,7 +1383,14 @@ const BookSlot = () => {
                 </div>
 
                 <Select value={demoTime1} onValueChange={setDemoTime1}>
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger
+                    className={cn(
+                      "flex-1",
+                      slotValidation.errors.time && "border-destructive focus:ring-destructive",
+                    )}
+                    aria-invalid={Boolean(slotValidation.errors.time)}
+                    aria-describedby={slotValidation.errors.time ? "demo-time-error" : undefined}
+                  >
                     <SelectValue placeholder="Choose your preferred time" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
@@ -1394,12 +1401,26 @@ const BookSlot = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {slotValidation.errors.time && (
+                  <p
+                    id="demo-time-error"
+                    role="alert"
+                    className="flex items-start gap-1 text-xs text-destructive"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{slotValidation.errors.time}</span>
+                  </p>
+                )}
+                <p className="text-[11px] text-muted-foreground">
+                  Times are interpreted in <strong>{getTimezoneAbbr(new Date(), timezone)}</strong>.
+                  Pick a slot at least 10 minutes from now.
+                </p>
               </div>
 
               {/* Submit Button */}
               <Button
                 onClick={handleSubmitClick}
-                disabled={isBooking || !demoDate || !demoTime1}
+                disabled={isBooking || !slotValidation.isValid}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               >
                 {isBooking ? (
