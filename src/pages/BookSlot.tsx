@@ -143,7 +143,7 @@ const BookSlot = () => {
   const bookingTypeLabel = BOOKING_TYPE_LABELS[bookingType] ?? stageName;
 
   // Quick filters for the time-slot dropdowns
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("morning");
   const [granularity, setGranularity] = useState<Granularity>(30);
 
   // Timezone selection — defaults to the browser's detected zone, falls back to IST
@@ -472,9 +472,8 @@ const BookSlot = () => {
   // dialog or proceeding directly. Returns true when inputs are usable.
   const validateBookingInputs = (): boolean => {
     if (isMultiSlotStage) {
-      const uniqueTimes = [...new Set([demoTime1, demoTime2, demoTime3].filter(Boolean))];
-      if (!demoDate || uniqueTimes.length < 3) {
-        toast.error("Please select a date and 3 different timings");
+      if (!demoDate || !demoTime1) {
+        toast.error("Please select a date and your preferred timing");
         return false;
       }
     } else if (!selectedDate || !selectedTime) {
@@ -502,16 +501,14 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
+    // For multi-slot stages (demo/HR), build a single preferred slot from date + time
     let demoSlots: { date: string; time: string }[] = [];
     if (isMultiSlotStage) {
-      const times = [demoTime1, demoTime2, demoTime3].filter(Boolean);
-      const uniqueTimes = [...new Set(times)];
-      if (!demoDate || uniqueTimes.length < 3) {
-        toast.error("Please select a date and 3 different timings");
+      if (!demoDate || !demoTime1) {
+        toast.error("Please select a date and your preferred timing");
         return;
       }
-      demoSlots = uniqueTimes.map(t => ({ date: demoDate, time: t }));
+      demoSlots = [{ date: demoDate, time: demoTime1 }];
       setPreferredSlots(demoSlots);
     } else {
       if (!selectedDate || !selectedTime) {
@@ -788,12 +785,12 @@ const BookSlot = () => {
             {isMultiSlotStage ? (
               <>
                 <h2 className="text-xl font-bold text-foreground">
-                  {wasRescheduled ? "Preferred Timings Updated! 🔁" : "Preferred Timings Submitted! 🎉"}
+                  {wasRescheduled ? "Preferred Timing Updated! 🔁" : "Preferred Timing Submitted! 🎉"}
                 </h2>
                 <p className="text-muted-foreground">
                   {wasRescheduled
-                    ? <>You have updated your <strong>3</strong> preferred timings for <strong>{stageName}</strong>. Your earlier choices have been replaced.</>
-                    : <>You have submitted <strong>3</strong> preferred timings for <strong>{stageName}</strong>.</>}
+                    ? <>You have updated your preferred timing for <strong>{stageName}</strong>. Your earlier choice has been replaced.</>
+                    : <>You have submitted your preferred timing for <strong>{stageName}</strong>.</>}
                 </p>
                 <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                   <div className="flex items-center justify-center gap-2 text-blue-700 mb-2">
@@ -808,7 +805,6 @@ const BookSlot = () => {
                     const formatted = formatBookedDateTime(slot.date, slot.time, timezone);
                     return (
                       <div key={i} className="flex items-center justify-center gap-2 text-blue-700">
-                        <Badge variant="outline" className="text-xs">Option {i + 1}</Badge>
                         <Clock className="h-4 w-4" />
                         <span className="text-sm font-medium">
                           {formatted.timeLabel}{" "}
@@ -822,7 +818,7 @@ const BookSlot = () => {
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  📧 The employer will review your preferred timings and confirm one. You'll receive an email once confirmed.
+                  📧 The employer will review your preferred timing and confirm. You'll receive an email once confirmed.
                 </p>
               </>
             ) : (
@@ -1210,10 +1206,10 @@ const BookSlot = () => {
 
           {isMultiSlotStage ? (
             <>
-              {/* Multi-slot: Single Date + 3 Preferred Timings */}
+              {/* Multi-slot: Single Date + Preferred Time */}
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <p className="text-sm text-purple-800 font-medium">
-                  📋 Select a date and choose 3 preferred timings. The employer will confirm one and send you the meeting link.
+                  📋 Select a date and your preferred timing. The employer will confirm and send you the meeting link.
                 </p>
               </div>
 
@@ -1237,18 +1233,17 @@ const BookSlot = () => {
                 </Select>
               </div>
 
-              {/* 3 Time Selections */}
+              {/* Single Time Selection */}
               <div className="space-y-3">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4 text-purple-600" />
-                  Select 3 Preferred Timings *
+                  Select Preferred Timing *
                 </label>
 
                 {/* Quick filters: time of day + granularity */}
                 <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border">
                   <span className="text-xs font-medium text-muted-foreground mr-1">Filter:</span>
                   {([
-                    { key: "all", label: "All (12 AM – 12 AM)" },
                     { key: "morning", label: "🌅 Morning (12 AM – 12 PM)" },
                     { key: "afternoon", label: "☀️ Afternoon (12 PM – 5 PM)" },
                     { key: "evening", label: "🌙 Evening (5 PM – 12 AM)" },
@@ -1285,40 +1280,24 @@ const BookSlot = () => {
                   ))}
                 </div>
 
-                {[
-                  { label: "Option 1", value: demoTime1, setter: setDemoTime1 },
-                  { label: "Option 2", value: demoTime2, setter: setDemoTime2 },
-                  { label: "Option 3", value: demoTime3, setter: setDemoTime3 },
-                ].map((slot, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 shrink-0 text-xs">
-                      {slot.label}
-                    </Badge>
-                    <Select value={slot.value} onValueChange={slot.setter}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder={`Choose time ${i + 1}`} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {getTimeSlots().map((ts) => (
-                          <SelectItem key={ts.value} value={ts.value}>
-                            {ts.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-
-                {/* Duplicate warning */}
-                {demoTime1 && demoTime2 && demoTime3 && new Set([demoTime1, demoTime2, demoTime3]).size < 3 && (
-                  <p className="text-xs text-red-500">⚠️ Please choose 3 different timings</p>
-                )}
+                <Select value={demoTime1} onValueChange={setDemoTime1}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Choose your preferred time" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {getTimeSlots().map((ts) => (
+                      <SelectItem key={ts.value} value={ts.value}>
+                        {ts.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Submit Button */}
               <Button
                 onClick={handleSubmitClick}
-                disabled={isBooking || !demoDate || !demoTime1 || !demoTime2 || !demoTime3 || new Set([demoTime1, demoTime2, demoTime3]).size < 3}
+                disabled={isBooking || !demoDate || !demoTime1}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               >
                 {isBooking ? (
@@ -1329,11 +1308,12 @@ const BookSlot = () => {
                 ) : (
                   <>
                     <Calendar className="h-5 w-5 mr-2" />
-                    Submit 3 Preferred Timings
+                    Submit Preferred Timing
                   </>
                 )}
               </Button>
             </>
+
           ) : (
             <>
               {/* Quick Action Buttons */}
@@ -1409,7 +1389,6 @@ const BookSlot = () => {
                 <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border">
                   <span className="text-xs font-medium text-muted-foreground mr-1">Filter:</span>
                   {([
-                    { key: "all", label: "All (12 AM – 12 AM)" },
                     { key: "morning", label: "🌅 Morning (12 AM – 12 PM)" },
                     { key: "afternoon", label: "☀️ Afternoon (12 PM – 5 PM)" },
                     { key: "evening", label: "🌙 Evening (5 PM – 12 AM)" },
@@ -1528,16 +1507,17 @@ const BookSlot = () => {
                 <div className="rounded-md border border-primary/40 bg-primary/5 p-3">
                   <p className="text-xs uppercase tracking-wide text-primary">New slot</p>
                   {isMultiSlotStage ? (
-                    <ul className="mt-1 space-y-1 font-medium text-foreground">
-                      {[demoTime1, demoTime2, demoTime3].filter(Boolean).map((t) => {
-                        const f = formatBookedDateTime(demoDate, t, timezone);
-                        return (
-                          <li key={t}>
-                            {f.dateLabel} · {f.timeLabel} ({f.tzAbbr})
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <p className="font-medium text-foreground">
+                      {demoTime1 ? (
+                        <>
+                          {formatBookedDateTime(demoDate, demoTime1, timezone).dateLabel}
+                          {" · "}
+                          {formatBookedDateTime(demoDate, demoTime1, timezone).timeLabel}
+                          {" "}
+                          ({formatBookedDateTime(demoDate, demoTime1, timezone).tzAbbr})
+                        </>
+                      ) : null}
+                    </p>
                   ) : (
                     <p className="font-medium text-foreground">
                       {formatBookedDateTime(selectedDate, selectedTime, timezone).dateLabel}

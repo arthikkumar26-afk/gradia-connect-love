@@ -271,17 +271,23 @@ describe("BookSlot — single-slot Technical Assessment flow", () => {
       expect(screen.getByText(/Book Your Technical Assessment Slot/i)).toBeInTheDocument(),
     );
 
+    // Default filter is Morning; switch to Evening to expose 11:30 PM,
+    // then back to Morning to verify 12:00 AM. 9:00 AM is in the default Morning set.
     const timeTrigger = triggerByPlaceholder("Choose a time slot");
     await user.click(timeTrigger);
-
     expect(await screen.findByRole("option", { name: "12:00 AM" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "11:30 PM" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "9:00 AM" })).toBeInTheDocument();
+    // close
+    await user.keyboard("{Escape}");
+
+    await user.click(screen.getByRole("button", { name: /Evening/i }));
+    await user.click(triggerByPlaceholder("Choose a time slot"));
+    expect(await screen.findByRole("option", { name: "11:30 PM" })).toBeInTheDocument();
   });
 });
 
 describe("BookSlot — multi-slot HR Round flow", () => {
-  it("requires 3 distinct preferred times and shows them all on the confirmation", async () => {
+  it("requires a date and a single preferred timing, and shows it on the confirmation", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderBookSlot({
       candidateId: "ic-1",
@@ -293,33 +299,28 @@ describe("BookSlot — multi-slot HR Round flow", () => {
       expect(screen.getByText(/Book Your HR Round Slot/i)).toBeInTheDocument(),
     );
 
+    // Submit button should be disabled until we pick date + time
+    const submit = screen.getByRole("button", { name: /Submit Preferred Timing/i });
+    expect(submit).toBeDisabled();
+
     // Pick a date
     const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
-    // Submit button should be disabled until we pick 3 distinct times
-    const submit = screen.getByRole("button", { name: /Submit 3 Preferred Timings/i });
-    expect(submit).toBeDisabled();
-
-    // Pick 3 different times
-    const timeTriggers = allTriggersByPlaceholder(/^Choose time \d$/);
-    expect(timeTriggers).toHaveLength(3);
-    await openSelectAndPick(user, timeTriggers[0], "9:00 AM");
-    await openSelectAndPick(user, timeTriggers[1], "2:00 PM");
-    await openSelectAndPick(user, timeTriggers[2], "5:30 PM");
+    // Pick the single preferred time (Morning is the default filter; 9:00 AM is valid)
+    const timeTrigger = triggerByPlaceholder("Choose your preferred time");
+    await openSelectAndPick(user, timeTrigger, "9:00 AM");
 
     expect(submit).toBeEnabled();
     await user.click(submit);
 
-    // Confirmation lists all three booked times
+    // Confirmation lists the booked time
     await waitFor(() =>
-      expect(screen.getByText(/Preferred Timings Submitted/i)).toBeInTheDocument(),
+      expect(screen.getByText(/Preferred Timing Submitted/i)).toBeInTheDocument(),
     );
     expect(screen.getByText("9:00 AM")).toBeInTheDocument();
-    expect(screen.getByText("2:00 PM")).toBeInTheDocument();
-    expect(screen.getByText("5:30 PM")).toBeInTheDocument();
 
-    // Backend got the multi-slot payload with hr_round type
+    // Backend got the multi-slot payload (single slot) with hr_round type
     expect(slotBookingInserts).toHaveLength(1);
     expect(slotBookingInserts[0]).toMatchObject({
       candidate_id: "cand-1",
@@ -329,15 +330,13 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     });
     expect(slotBookingInserts[0].preferred_slots).toEqual([
       { date: "2026-04-24", time: "09:00" },
-      { date: "2026-04-24", time: "14:00" },
-      { date: "2026-04-24", time: "17:30" },
     ]);
 
     // Confirmation email function was invoked
     expect(functionInvokes.some((c) => c.name === "send-demo-slot-confirmation")).toBe(true);
   });
 
-  it("rejects duplicate preferred times with a warning and does not submit", async () => {
+  it("does not expose the legacy 'All' time-of-day filter", async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderBookSlot({
       candidateId: "ic-1",
@@ -349,18 +348,12 @@ describe("BookSlot — multi-slot HR Round flow", () => {
       expect(screen.getByText(/Book Your Demo Round Slot/i)).toBeInTheDocument(),
     );
 
-    const dateTrigger = triggerByPlaceholder("Choose a date");
-    await openSelectAndPick(user, dateTrigger, /Today -/i);
-
-    const timeTriggers = allTriggersByPlaceholder(/^Choose time \d$/);
-    await openSelectAndPick(user, timeTriggers[0], "10:00 AM");
-    await openSelectAndPick(user, timeTriggers[1], "10:00 AM");
-    await openSelectAndPick(user, timeTriggers[2], "10:00 AM");
-
-    // Warning shown, submit disabled, no insert happened
-    expect(screen.getByText(/Please choose 3 different timings/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Submit 3 Preferred Timings/i })).toBeDisabled();
-    expect(slotBookingInserts).toHaveLength(0);
+    // The "All (12 AM – 12 AM)" filter pill must be gone
+    expect(screen.queryByRole("button", { name: /All \(12 AM – 12 AM\)/i })).toBeNull();
+    // Morning / Afternoon / Evening pills should still exist
+    expect(screen.getByRole("button", { name: /Morning/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Afternoon/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Evening/i })).toBeInTheDocument();
   });
 });
 
@@ -434,6 +427,8 @@ describe("BookSlot — invocation ordering and invitation creation", () => {
     );
 
     await openSelectAndPick(user, triggerByPlaceholder("Choose a date"), /Today -/i);
+    // Default filter is Morning; switch to Afternoon to expose 2:30 PM
+    await user.click(screen.getByRole("button", { name: /Afternoon/i }));
     await openSelectAndPick(user, triggerByPlaceholder("Choose a time slot"), "2:30 PM");
     await user.click(screen.getByRole("button", { name: /Confirm Booking/i }));
 
