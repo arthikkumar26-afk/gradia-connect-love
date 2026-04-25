@@ -319,7 +319,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     await waitFor(() =>
       expect(screen.getByText(/Preferred Timing Submitted/i)).toBeInTheDocument(),
     );
-    expect(screen.getByText("9:00 AM")).toBeInTheDocument();
+    expect(screen.getByText("11:00 AM")).toBeInTheDocument();
 
     // Backend got the multi-slot payload (single slot) with hr_round type
     expect(slotBookingInserts).toHaveLength(1);
