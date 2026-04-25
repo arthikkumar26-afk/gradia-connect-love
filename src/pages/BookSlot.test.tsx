@@ -34,6 +34,16 @@ const fakeInterviewCandidate = {
   },
 };
 
+// In-memory store of fake invitation rows the test can seed/inspect.
+// The booking flow queries `interview_invitations` after sending the email
+// to fetch the meeting_link, so we model that side-effect here.
+const interviewInvitationRows: Array<{
+  meeting_link: string;
+  expires_at: string;
+  interview_event_id: string;
+  interview_events: { interview_candidate_id: string };
+}> = [];
+
 vi.mock("@/integrations/supabase/client", () => {
   const buildSelectChain = (data: any) => ({
     select: () => ({
@@ -78,6 +88,25 @@ vi.mock("@/integrations/supabase/client", () => {
           }),
         };
       }
+      if (table === "interview_invitations") {
+        // The post-send lookup fetches the latest invitation for the candidate
+        // via .select().eq().order().limit().maybeSingle(). Return whatever the
+        // current test seeded into `interviewInvitationRows` (newest first).
+        return {
+          select: () => ({
+            eq: () => ({
+              order: () => ({
+                limit: () => ({
+                  maybeSingle: async () => ({
+                    data: interviewInvitationRows[0] ?? null,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
       if (table === "employer_notifications") {
         return {
           insert: async () => ({ data: null, error: null }),
@@ -88,7 +117,22 @@ vi.mock("@/integrations/supabase/client", () => {
     functions: {
       invoke: async (name: string, opts?: { body?: unknown }) => {
         functionInvokes.push({ name, body: opts?.body });
-        return { data: { ok: true }, error: null };
+        // Simulate the edge function's side-effect: the real
+        // `send-pipeline-email` / `send-interview-invitation` functions create
+        // a row in `interview_invitations`. Mirror that here so downstream
+        // assertions can verify the row was "created".
+        if (name === "send-pipeline-email" || name === "send-interview-invitation") {
+          const body = (opts?.body ?? {}) as Record<string, any>;
+          interviewInvitationRows.unshift({
+            meeting_link: `https://gradiaa.com/test/${name}-${interviewInvitationRows.length + 1}`,
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            interview_event_id: `evt-${interviewInvitationRows.length + 1}`,
+            interview_events: {
+              interview_candidate_id: String(body.interviewCandidateId ?? ""),
+            },
+          });
+        }
+        return { data: { success: true, ok: true }, error: null };
       },
     },
   };
