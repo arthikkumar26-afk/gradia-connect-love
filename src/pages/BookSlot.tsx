@@ -274,6 +274,26 @@ const BookSlot = () => {
           jobTitle: (data.job as any)?.job_title || "Position",
           companyName: (data.job as any)?.employer?.company_name || "Company",
         });
+
+        // Pre-load any prior slot booking for this candidate + booking_type so
+        // we can show a "Reschedule" confirmation dialog instead of silently
+        // overwriting their existing time.
+        const candidateProfileId = (data as any)?.candidate_id;
+        if (candidateProfileId) {
+          const { data: priorBookings } = await supabase
+            .from("slot_bookings")
+            .select("booking_date, booking_time")
+            .eq("candidate_id", candidateProfileId)
+            .eq("booking_type", bookingType)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          if (priorBookings && priorBookings.length > 0) {
+            setExistingBooking({
+              booking_date: priorBookings[0].booking_date,
+              booking_time: priorBookings[0].booking_time,
+            });
+          }
+        }
       } catch (err) {
         setError("Something went wrong. Please try again later.");
       } finally {
@@ -282,7 +302,7 @@ const BookSlot = () => {
     };
 
     fetchDetails();
-  }, [candidateId]);
+  }, [candidateId, bookingType]);
 
   // Generate available dates (today + next 7 days, including all days)
   const getAvailableDates = () => {
