@@ -1687,7 +1687,23 @@ const BookSlot = () => {
       {/* Reschedule confirmation — only shown when a prior slot exists for this
           candidate + booking_type. Lets the candidate verify the new time and
           round before we delete their previous booking. */}
-      <AlertDialog open={showRescheduleConfirm} onOpenChange={setShowRescheduleConfirm}>
+      <AlertDialog
+        open={showRescheduleConfirm}
+        onOpenChange={(open) => {
+          // Lock the dialog while the reschedule is in flight — the candidate
+          // must not be able to dismiss/escape until the new time is either
+          // confirmed by the backend or explicitly fails. This prevents the
+          // "I clicked confirm and the dialog vanished — did it save?" bug.
+          if (rescheduleStatus === "validating" || rescheduleStatus === "submitting") {
+            return;
+          }
+          setShowRescheduleConfirm(open);
+          if (!open) {
+            setRescheduleStatus("idle");
+            setRescheduleError(null);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reschedule your {bookingTypeLabel}?</AlertDialogTitle>
@@ -1733,23 +1749,76 @@ const BookSlot = () => {
                     </p>
                   )}
                 </div>
+
+                {/* Inline status / error surface — keeps the candidate
+                    inside the multi-step flow until the new slot is
+                    actually accepted by the backend. */}
+                {rescheduleStatus === "validating" && (
+                  <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground"
+                  >
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Re-checking your selected slot…
+                  </div>
+                )}
+                {rescheduleStatus === "submitting" && (
+                  <div
+                    role="status"
+                    className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-primary"
+                  >
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Saving your new time. Please don't close this window…
+                  </div>
+                )}
+                {rescheduleStatus === "failed" && rescheduleError && (
+                  <div
+                    role="alert"
+                    className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{rescheduleError}</span>
+                  </div>
+                )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBooking}>Keep current slot</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={
+                isBooking ||
+                rescheduleStatus === "validating" ||
+                rescheduleStatus === "submitting"
+              }
+            >
+              Keep current slot
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 // Prevent the dialog from closing before the async flow runs;
-                // we close it manually after the booking attempt resolves so
-                // the cancel button stays disabled while in flight.
+                // it now only closes when `handleBookSlot` flips
+                // rescheduleStatus to "confirmed" on the success path. On
+                // failure the dialog stays open with the inline error so the
+                // candidate can retry.
                 e.preventDefault();
-                setShowRescheduleConfirm(false);
-                void handleBookSlot();
+                void handleConfirmReschedule();
               }}
-              disabled={isBooking}
+              disabled={
+                isBooking ||
+                rescheduleStatus === "validating" ||
+                rescheduleStatus === "submitting"
+              }
             >
-              Confirm reschedule
+              {rescheduleStatus === "submitting" ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Confirming…
+                </>
+              ) : rescheduleStatus === "failed" ? (
+                "Try again"
+              ) : (
+                "Confirm reschedule"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
