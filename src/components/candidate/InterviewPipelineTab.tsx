@@ -1788,13 +1788,23 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                     ? 'No expiry set'
                     : expired
                       ? 'Expired'
-                      : expiresSoon
-                        ? 'Expires soon'
-                        : 'Active'}
+                      : (() => {
+                          // Live countdown — recomputed every second via nowTick.
+                          const ms = expiresAt.getTime() - nowTick;
+                          const totalSec = Math.max(0, Math.floor(ms / 1000));
+                          const days = Math.floor(totalSec / 86400);
+                          const hours = Math.floor((totalSec % 86400) / 3600);
+                          const minutes = Math.floor((totalSec % 3600) / 60);
+                          const seconds = totalSec % 60;
+                          const pad = (n: number) => n.toString().padStart(2, '0');
+                          if (days > 0) return `${days}d ${pad(hours)}h ${pad(minutes)}m left`;
+                          if (hours > 0) return `${hours}h ${pad(minutes)}m ${pad(seconds)}s left`;
+                          return `${pad(minutes)}m ${pad(seconds)}s left`;
+                        })()}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {expiresAt
-                    ? `${fmtDateTime(expiresAt.toISOString())}${tzAbbr ? ` (${tzAbbr})` : ''}`
+                    ? `Expires ${fmtDateTime(expiresAt.toISOString())}${tzAbbr ? ` (${tzAbbr})` : ''}`
                     : 'Link does not auto-expire'}
                 </p>
               </div>
