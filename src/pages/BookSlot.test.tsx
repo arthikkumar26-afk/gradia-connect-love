@@ -38,8 +38,8 @@ const fakeInterviewCandidate = {
 // The booking flow queries `interview_invitations` after sending the email
 // to fetch the meeting_link, so we model that side-effect here.
 const interviewInvitationRows: Array<{
-  meeting_link: string;
-  expires_at: string;
+  meeting_link: string | null;
+  expires_at: string | null;
   interview_event_id: string;
   interview_events: { interview_candidate_id: string };
 }> = [];
