@@ -365,7 +365,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       if (allEventIds.length > 0) {
         const { data: invitations } = await supabase
           .from('interview_invitations')
-          .select('interview_event_id, email_status, email_sent_at, meeting_link, created_at')
+          .select('interview_event_id, email_status, email_sent_at, meeting_link, created_at, expires_at, invitation_token')
           .in('interview_event_id', allEventIds)
           .order('created_at', { ascending: false });
         // Keep only the latest invitation per event (most-recent resend wins).
@@ -377,6 +377,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
               email_sent_at: row.email_sent_at,
               meeting_link: row.meeting_link,
               created_at: row.created_at,
+              expires_at: row.expires_at,
+              invitation_token: row.invitation_token,
             };
           }
         }
