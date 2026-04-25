@@ -143,7 +143,7 @@ const BookSlot = () => {
   const bookingTypeLabel = BOOKING_TYPE_LABELS[bookingType] ?? stageName;
 
   // Quick filters for the time-slot dropdowns
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("morning");
   const [granularity, setGranularity] = useState<Granularity>(30);
 
   // Timezone selection — defaults to the browser's detected zone, falls back to IST
