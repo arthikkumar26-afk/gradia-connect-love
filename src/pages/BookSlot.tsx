@@ -554,8 +554,12 @@ const BookSlot = () => {
   // dialog or proceeding directly. Returns true when inputs are usable.
   const validateBookingInputs = (): boolean => {
     if (isMultiSlotStage) {
-      if (!demoDate || !demoTime1) {
-        toast.error("Please select a date and your preferred timing");
+      if (!slotValidation.isValid) {
+        toast.error(
+          slotValidation.errors.date ||
+            slotValidation.errors.time ||
+            "Please select a valid date and time.",
+        );
         return false;
       }
     } else if (!selectedDate || !selectedTime) {
