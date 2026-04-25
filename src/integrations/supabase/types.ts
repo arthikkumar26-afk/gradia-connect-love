@@ -2941,6 +2941,78 @@ export type Database = {
           },
         ]
       }
+      razorpay_webhook_logs: {
+        Row: {
+          amount_paise: number | null
+          created_at: string
+          currency: string | null
+          error_message: string | null
+          event_type: string | null
+          http_status: number | null
+          id: string
+          metadata: Json | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          related_id: string | null
+          related_table: string | null
+          request_body: Json | null
+          request_headers: Json | null
+          response_body: Json | null
+          signature_valid: boolean | null
+          source: string
+          status: string
+          user_id: string | null
+          webhook_event_id: string | null
+        }
+        Insert: {
+          amount_paise?: number | null
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          http_status?: number | null
+          id?: string
+          metadata?: Json | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          related_id?: string | null
+          related_table?: string | null
+          request_body?: Json | null
+          request_headers?: Json | null
+          response_body?: Json | null
+          signature_valid?: boolean | null
+          source: string
+          status?: string
+          user_id?: string | null
+          webhook_event_id?: string | null
+        }
+        Update: {
+          amount_paise?: number | null
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          event_type?: string | null
+          http_status?: number | null
+          id?: string
+          metadata?: Json | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          related_id?: string | null
+          related_table?: string | null
+          request_body?: Json | null
+          request_headers?: Json | null
+          response_body?: Json | null
+          signature_valid?: boolean | null
+          source?: string
+          status?: string
+          user_id?: string | null
+          webhook_event_id?: string | null
+        }
+        Relationships: []
+      }
       resume_analyses: {
         Row: {
           analyzed_at: string

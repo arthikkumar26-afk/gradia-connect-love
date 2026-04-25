@@ -28,7 +28,8 @@ import {
   MessageSquare,
   CreditCard,
   Ticket,
-  UserX
+  UserX,
+  Webhook
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -228,6 +229,7 @@ const AdminDashboard = () => {
     { title: "Invite from Resume", icon: FileText, path: "/admin/invite-from-resume" },
     { title: "Reports", icon: BarChart3, path: "/admin/reports" },
     { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
+    { title: "Razorpay Webhooks", icon: Webhook, path: "/admin/razorpay-webhooks" },
     { title: "Settings", icon: Settings, path: "/admin/settings" },
   ];
 

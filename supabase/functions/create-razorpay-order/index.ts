@@ -23,10 +23,12 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+    const admin = createClient(supabaseUrl, SERVICE_KEY);
 
     const token = authHeader.replace('Bearer ', '');
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
@@ -39,7 +41,8 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub;
 
-    const { amount, currency, plan_id, plan_name, employer_id, receipt } = await req.json();
+    const body = await req.json();
+    const { amount, currency, plan_id, plan_name, employer_id, receipt } = body;
 
     if (!amount) {
       return new Response(
@@ -48,7 +51,6 @@ serve(async (req) => {
       );
     }
 
-    // If employer_id is provided, verify it matches the authenticated user
     if (employer_id && userId !== employer_id) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: user mismatch' }),
@@ -60,7 +62,12 @@ serve(async (req) => {
     const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET');
 
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
-      console.error('Razorpay credentials not configured');
+      console.error('[create-razorpay-order] credentials not configured');
+      await admin.from('razorpay_webhook_logs').insert({
+        source: 'create-order', event_type: 'order.config_error', status: 'error',
+        user_id: userId, amount_paise: amount * 100, currency: currency || 'INR',
+        error_message: 'Razorpay credentials not configured', request_body: body,
+      });
       return new Response(
         JSON.stringify({ error: 'Payment gateway not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -72,7 +79,7 @@ serve(async (req) => {
       : `ord_${(plan_id || 'wallet').slice(0, 8)}_${Date.now()}`;
 
     const orderData = {
-      amount: amount * 100, // Razorpay expects amount in paise
+      amount: amount * 100,
       currency: currency || 'INR',
       receipt: safeReceipt,
       notes: {
@@ -86,16 +93,19 @@ serve(async (req) => {
 
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Basic ${auth}`,
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}` },
       body: JSON.stringify(orderData),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Razorpay order creation failed:', errorText);
+      console.error('[create-razorpay-order] order creation failed:', errorText);
+      await admin.from('razorpay_webhook_logs').insert({
+        source: 'create-order', event_type: 'order.create_failed', status: 'failure',
+        user_id: userId, amount_paise: amount * 100, currency: currency || 'INR',
+        http_status: response.status, error_message: errorText.slice(0, 1000),
+        request_body: body, response_body: { raw: errorText.slice(0, 2000) },
+      });
       return new Response(
         JSON.stringify({ error: 'Failed to create payment order' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -103,6 +113,18 @@ serve(async (req) => {
     }
 
     const order = await response.json();
+    console.log('[create-razorpay-order] order created', { order_id: order.id, amount: order.amount, user_id: userId });
+
+    await admin.from('razorpay_webhook_logs').insert({
+      source: 'create-order', event_type: 'order.created', status: 'success',
+      razorpay_order_id: order.id,
+      user_id: userId,
+      amount_paise: order.amount, currency: order.currency,
+      http_status: 200,
+      request_body: body,
+      response_body: { id: order.id, amount: order.amount, currency: order.currency, receipt: order.receipt, status: order.status },
+      metadata: { plan_id: plan_id || null, plan_name: plan_name || null, receipt: safeReceipt },
+    });
 
     return new Response(
       JSON.stringify({
@@ -113,8 +135,18 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    console.error('Error creating Razorpay order:', error);
+  } catch (error: any) {
+    console.error('[create-razorpay-order] internal error:', error);
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+      const admin = createClient(supabaseUrl, SERVICE_KEY);
+      await admin.from('razorpay_webhook_logs').insert({
+        source: 'create-order', event_type: 'order.exception', status: 'error',
+        error_message: error?.message || String(error),
+      });
+    } catch (_) { /* swallow */ }
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
