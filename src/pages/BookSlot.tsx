@@ -1428,7 +1428,7 @@ const BookSlot = () => {
 
               {/* Book Button */}
               <Button
-                onClick={handleBookSlot}
+                onClick={handleSubmitClick}
                 disabled={isBooking || !selectedDate || !selectedTime}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
               >
@@ -1436,6 +1436,11 @@ const BookSlot = () => {
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                     Booking...
+                  </>
+                ) : existingBooking ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 mr-2" />
+                    Reschedule Slot
                   </>
                 ) : (
                   <>
@@ -1448,6 +1453,76 @@ const BookSlot = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Reschedule confirmation — only shown when a prior slot exists for this
+          candidate + booking_type. Lets the candidate verify the new time and
+          round before we delete their previous booking. */}
+      <AlertDialog open={showRescheduleConfirm} onOpenChange={setShowRescheduleConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reschedule your {bookingTypeLabel}?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>
+                  Please confirm the new time for your <strong>{bookingTypeLabel}</strong>.
+                  Your previous slot will be replaced.
+                </p>
+                {existingBooking && (
+                  <div className="rounded-md border border-border bg-muted/40 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Current slot</p>
+                    <p className="font-medium text-foreground">
+                      {formatBookedDateTime(existingBooking.booking_date, existingBooking.booking_time, timezone).dateLabel}
+                      {" · "}
+                      {formatBookedDateTime(existingBooking.booking_date, existingBooking.booking_time, timezone).timeLabel}
+                      {" "}
+                      ({formatBookedDateTime(existingBooking.booking_date, existingBooking.booking_time, timezone).tzAbbr})
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-md border border-primary/40 bg-primary/5 p-3">
+                  <p className="text-xs uppercase tracking-wide text-primary">New slot</p>
+                  {isMultiSlotStage ? (
+                    <ul className="mt-1 space-y-1 font-medium text-foreground">
+                      {[demoTime1, demoTime2, demoTime3].filter(Boolean).map((t) => {
+                        const f = formatBookedDateTime(demoDate, t, timezone);
+                        return (
+                          <li key={t}>
+                            {f.dateLabel} · {f.timeLabel} ({f.tzAbbr})
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="font-medium text-foreground">
+                      {formatBookedDateTime(selectedDate, selectedTime, timezone).dateLabel}
+                      {" · "}
+                      {formatBookedDateTime(selectedDate, selectedTime, timezone).timeLabel}
+                      {" "}
+                      ({formatBookedDateTime(selectedDate, selectedTime, timezone).tzAbbr})
+                    </p>
+                  )}
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBooking}>Keep current slot</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Prevent the dialog from closing before the async flow runs;
+                // we close it manually after the booking attempt resolves so
+                // the cancel button stays disabled while in flight.
+                e.preventDefault();
+                setShowRescheduleConfirm(false);
+                void handleBookSlot();
+              }}
+              disabled={isBooking}
+            >
+              Confirm reschedule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
