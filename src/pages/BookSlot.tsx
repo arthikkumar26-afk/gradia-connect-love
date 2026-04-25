@@ -517,6 +517,27 @@ const BookSlot = () => {
         console.error("Error creating employer notification:", notifErr);
       }
 
+      // Auto-advance the pipeline FIRST, before sending the test/interview link.
+      // The pipeline gateway (`send-pipeline-email`) blocks invitation emails for
+      // the next stage until the current "Slot Booking" stage has a completed
+      // event. If we send the email before advancing, the gateway returns
+      // `previous_stage_incomplete` and the candidate never receives their link.
+      // Skip on rebook so we don't double-advance past the next stage if the
+      // candidate is just updating their preferred time.
+      if (!isRebook) {
+        try {
+          await supabase.functions.invoke("process-interview-stage", {
+            body: {
+              interviewCandidateId: candidateId,
+              action: "advance",
+              feedback: `${stageName} slot booked by candidate, auto-advancing to next stage`,
+            },
+          });
+        } catch (advanceErr) {
+          console.error("Error auto-advancing after slot booking:", advanceErr);
+        }
+      }
+
       if (isMultiSlotStage) {
         try {
           await supabase.functions.invoke("send-demo-slot-confirmation", {
@@ -560,23 +581,6 @@ const BookSlot = () => {
         });
         if (!result.ok) {
           toast.warning("Slot booked, but we couldn't send the invitation email. You can resend it from the confirmation screen.");
-        }
-      }
-
-      // Auto-advance after the FIRST slot booking — candidates manage everything
-      // from dashboard. Skip on rebook so we don't double-advance past the next
-      // stage if the candidate is just updating their preferred time.
-      if (!isRebook) {
-        try {
-          await supabase.functions.invoke("process-interview-stage", {
-            body: {
-              interviewCandidateId: candidateId,
-              action: "advance",
-              feedback: `${stageName} slot booked by candidate, auto-advancing to next stage`,
-            },
-          });
-        } catch (advanceErr) {
-          console.error("Error auto-advancing after slot booking:", advanceErr);
         }
       }
 
