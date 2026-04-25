@@ -1210,10 +1210,10 @@ const BookSlot = () => {
 
           {isMultiSlotStage ? (
             <>
-              {/* Multi-slot: Single Date + 3 Preferred Timings */}
+              {/* Multi-slot: Single Date + Preferred Time */}
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <p className="text-sm text-purple-800 font-medium">
-                  📋 Select a date and choose 3 preferred timings. The employer will confirm one and send you the meeting link.
+                  📋 Select a date and your preferred timing. The employer will confirm and send you the meeting link.
                 </p>
               </div>
 
@@ -1237,18 +1237,17 @@ const BookSlot = () => {
                 </Select>
               </div>
 
-              {/* 3 Time Selections */}
+              {/* Single Time Selection */}
               <div className="space-y-3">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4 text-purple-600" />
-                  Select 3 Preferred Timings *
+                  Select Preferred Timing *
                 </label>
 
                 {/* Quick filters: time of day + granularity */}
                 <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-muted/40 border border-border">
                   <span className="text-xs font-medium text-muted-foreground mr-1">Filter:</span>
                   {([
-                    { key: "all", label: "All (12 AM – 12 AM)" },
                     { key: "morning", label: "🌅 Morning (12 AM – 12 PM)" },
                     { key: "afternoon", label: "☀️ Afternoon (12 PM – 5 PM)" },
                     { key: "evening", label: "🌙 Evening (5 PM – 12 AM)" },
@@ -1285,40 +1284,24 @@ const BookSlot = () => {
                   ))}
                 </div>
 
-                {[
-                  { label: "Option 1", value: demoTime1, setter: setDemoTime1 },
-                  { label: "Option 2", value: demoTime2, setter: setDemoTime2 },
-                  { label: "Option 3", value: demoTime3, setter: setDemoTime3 },
-                ].map((slot, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 shrink-0 text-xs">
-                      {slot.label}
-                    </Badge>
-                    <Select value={slot.value} onValueChange={slot.setter}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder={`Choose time ${i + 1}`} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {getTimeSlots().map((ts) => (
-                          <SelectItem key={ts.value} value={ts.value}>
-                            {ts.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-
-                {/* Duplicate warning */}
-                {demoTime1 && demoTime2 && demoTime3 && new Set([demoTime1, demoTime2, demoTime3]).size < 3 && (
-                  <p className="text-xs text-red-500">⚠️ Please choose 3 different timings</p>
-                )}
+                <Select value={demoTime1} onValueChange={setDemoTime1}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Choose your preferred time" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {getTimeSlots().map((ts) => (
+                      <SelectItem key={ts.value} value={ts.value}>
+                        {ts.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Submit Button */}
               <Button
                 onClick={handleSubmitClick}
-                disabled={isBooking || !demoDate || !demoTime1 || !demoTime2 || !demoTime3 || new Set([demoTime1, demoTime2, demoTime3]).size < 3}
+                disabled={isBooking || !demoDate || !demoTime1}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               >
                 {isBooking ? (
@@ -1329,11 +1312,12 @@ const BookSlot = () => {
                 ) : (
                   <>
                     <Calendar className="h-5 w-5 mr-2" />
-                    Submit 3 Preferred Timings
+                    Submit Preferred Timing
                   </>
                 )}
               </Button>
             </>
+
           ) : (
             <>
               {/* Quick Action Buttons */}
