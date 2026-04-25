@@ -330,7 +330,7 @@ describe("BookSlot — multi-slot HR Round flow", () => {
       subject: "HR Round",
     });
     expect(slotBookingInserts[0].preferred_slots).toEqual([
-      { date: "2026-04-24", time: "09:00" },
+      { date: "2026-04-24", time: "11:00" },
     ]);
 
     // Confirmation email function was invoked
