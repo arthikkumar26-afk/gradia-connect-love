@@ -422,7 +422,37 @@ const BookSlot = () => {
         : isWrittenTestSlotBooking ? "written_test" 
         : "technical_assessment";
 
+      // Detect rebook: any existing slot_bookings for this candidate + booking_type.
+      // We delete them first so the new booking REPLACES the old one instead of
+      // creating a duplicate row (the table has no unique constraint on
+      // candidate_id + booking_type, so a plain insert would silently stack rows
+      // and the dashboard would keep showing the stale time).
+      let isRebook = false;
       if (interviewCandidate?.candidate_id) {
+        const { data: existingBookings, error: fetchExistingError } = await supabase
+          .from("slot_bookings")
+          .select("id")
+          .eq("candidate_id", interviewCandidate.candidate_id)
+          .eq("booking_type", bookingType);
+
+        if (fetchExistingError) {
+          console.error("Error checking existing slot bookings:", fetchExistingError);
+        }
+
+        if (existingBookings && existingBookings.length > 0) {
+          isRebook = true;
+          const { error: deleteError } = await supabase
+            .from("slot_bookings")
+            .delete()
+            .in("id", existingBookings.map((b) => b.id));
+          if (deleteError) {
+            console.error("Error clearing previous slot bookings:", deleteError);
+            toast.error("Failed to update your previous booking. Please try again.");
+            setIsBooking(false);
+            return;
+          }
+        }
+
         if (isMultiSlotStage) {
           const { error: insertError } = await supabase.from("slot_bookings").insert({
             candidate_id: interviewCandidate.candidate_id,
@@ -533,24 +563,36 @@ const BookSlot = () => {
         }
       }
 
-      // Auto-advance after ANY slot booking — candidates manage everything from dashboard
-      try {
-        await supabase.functions.invoke("process-interview-stage", {
-          body: {
-            interviewCandidateId: candidateId,
-            action: "advance",
-            feedback: `${stageName} slot booked by candidate, auto-advancing to next stage`,
-          },
-        });
-      } catch (advanceErr) {
-        console.error("Error auto-advancing after slot booking:", advanceErr);
+      // Auto-advance after the FIRST slot booking — candidates manage everything
+      // from dashboard. Skip on rebook so we don't double-advance past the next
+      // stage if the candidate is just updating their preferred time.
+      if (!isRebook) {
+        try {
+          await supabase.functions.invoke("process-interview-stage", {
+            body: {
+              interviewCandidateId: candidateId,
+              action: "advance",
+              feedback: `${stageName} slot booked by candidate, auto-advancing to next stage`,
+            },
+          });
+        } catch (advanceErr) {
+          console.error("Error auto-advancing after slot booking:", advanceErr);
+        }
       }
 
       setIsBooked(true);
       if (isMultiSlotStage) {
-        toast.success("Preferred timings submitted! The employer will confirm your slot.");
+        toast.success(
+          isRebook
+            ? "Preferred timings updated! The employer will confirm your new slot."
+            : "Preferred timings submitted! The employer will confirm your slot."
+        );
       } else {
-        toast.success("Slot booked successfully! Check your Interview Pipeline for next steps.");
+        toast.success(
+          isRebook
+            ? "Slot rescheduled successfully! Your new time has been sent to the team."
+            : "Slot booked successfully! Check your Interview Pipeline for next steps."
+        );
       }
     } catch (err) {
       console.error("Error booking slot:", err);
