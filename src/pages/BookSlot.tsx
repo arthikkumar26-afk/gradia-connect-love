@@ -1306,7 +1306,13 @@ const BookSlot = () => {
                   Select Date *
                 </label>
                 <Select value={demoDate} onValueChange={setDemoDate}>
-                  <SelectTrigger>
+                  <SelectTrigger
+                    aria-invalid={Boolean(slotValidation.errors.date)}
+                    aria-describedby={slotValidation.errors.date ? "demo-date-error" : undefined}
+                    className={cn(
+                      slotValidation.errors.date && "border-destructive focus:ring-destructive",
+                    )}
+                  >
                     <SelectValue placeholder="Choose a date" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1317,6 +1323,16 @@ const BookSlot = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                {slotValidation.errors.date && (
+                  <p
+                    id="demo-date-error"
+                    role="alert"
+                    className="flex items-start gap-1 text-xs text-destructive"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{slotValidation.errors.date}</span>
+                  </p>
+                )}
               </div>
 
               {/* Single Time Selection */}
