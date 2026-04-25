@@ -451,6 +451,9 @@ const BookSlot = () => {
       stageName,
       scheduledDate: scheduledDateTime,
       triggerSource: "book-slot-resend",
+      // Manual resend always force-resends. The candidate explicitly clicked
+      // "Resend" — they want a new email even if one was logged earlier.
+      forceResend: true,
     });
     const result = await sendInvitationEmail({
       functionName: invocation.functionName,
