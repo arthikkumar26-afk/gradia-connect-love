@@ -56,18 +56,22 @@ vi.mock("@/integrations/supabase/client", () => {
         };
       }
       if (table === "slot_bookings") {
+        // Builder shared by mount-time prefetch (.select().eq().eq().order().limit())
+        // AND click-time rebook check (.select().eq().eq() awaited directly).
+        // Both call sites resolve to the same empty-result shape so tests start
+        // with no prior bookings.
+        const emptyResult = { data: [], error: null };
+        const eqLeaf: any = {
+          order: () => ({ limit: async () => emptyResult }),
+          then: (resolve: any) => resolve(emptyResult),
+        };
         return {
           insert: async (payload: any) => {
             slotBookingInserts.push(payload);
             return { data: null, error: null };
           },
-          // The booking flow first checks for an existing slot booking so
-          // a rebook REPLACES the old row instead of stacking duplicates.
-          // Tests start with an empty table → return [].
           select: () => ({
-            eq: () => ({
-              eq: async () => ({ data: [], error: null }),
-            }),
+            eq: () => ({ eq: () => eqLeaf }),
           }),
           delete: () => ({
             in: async () => ({ data: null, error: null }),

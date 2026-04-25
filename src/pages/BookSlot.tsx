@@ -7,6 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, Clock, CheckCircle2, Loader2, Briefcase, User, ArrowLeft, Check, ChevronsUpDown, Mail, RefreshCw, AlertCircle } from "lucide-react";
@@ -24,6 +34,20 @@ import {
   buildInvitationDeliveryInvocation,
   type InvitationFunctionName,
 } from "@/lib/scheduler/invitationRoute";
+
+// Friendly labels for the booking_type values we persist into `slot_bookings`.
+// Surfaced in the rescheduling confirmation dialog so candidates can verify
+// they're updating the right round before we delete their previous slot.
+const BOOKING_TYPE_LABELS: Record<string, string> = {
+  demo_round: "Demo Round",
+  hr_round: "HR Round",
+  segment_round: "Segment Round",
+  admin_academic_round: "Admin & Academic Round",
+  core_team_round: "Core Team Round",
+  management_round: "Management Round",
+  written_test: "Written Test",
+  technical_assessment: "Technical Assessment",
+};
 
 const BookSlot = () => {
   const [searchParams] = useSearchParams();
@@ -77,6 +101,41 @@ const BookSlot = () => {
   const [demoTime1, setDemoTime1] = useState("");
   const [demoTime2, setDemoTime2] = useState("");
   const [demoTime3, setDemoTime3] = useState("");
+
+  // Existing booking detection — populated on mount so the submit button can
+  // open a confirmation dialog before we delete the candidate's prior slot.
+  const [existingBooking, setExistingBooking] = useState<{
+    booking_date: string;
+    booking_time: string;
+  } | null>(null);
+  const [showRescheduleConfirm, setShowRescheduleConfirm] = useState(false);
+
+  // Derived booking_type matches the value persisted into `slot_bookings`. Kept
+  // at the component level (rather than inside the handler) so we can:
+  //   1. Pre-fetch any existing booking on mount.
+  //   2. Render a friendly label in the reschedule confirmation dialog.
+  const isWrittenTestSlotBooking = stageName.toLowerCase().includes("written") && !isFeedbackStage;
+  const isHrSlotBooking = isHrStage;
+  const isSegmentSlotBooking = isSegmentStage;
+  const isAdminAcademicSlotBooking = isAdminAcademicStage;
+  const isCoreTeamSlotBooking = isCoreTeamStage;
+  const isManagementSlotBooking = isManagementStage;
+  const bookingType = isDemoStage
+    ? "demo_round"
+    : isHrSlotBooking
+    ? "hr_round"
+    : isSegmentSlotBooking
+    ? "segment_round"
+    : isAdminAcademicSlotBooking
+    ? "admin_academic_round"
+    : isCoreTeamSlotBooking
+    ? "core_team_round"
+    : isManagementSlotBooking
+    ? "management_round"
+    : isWrittenTestSlotBooking
+    ? "written_test"
+    : "technical_assessment";
+  const bookingTypeLabel = BOOKING_TYPE_LABELS[bookingType] ?? stageName;
 
   // Quick filters for the time-slot dropdowns
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
@@ -215,6 +274,26 @@ const BookSlot = () => {
           jobTitle: (data.job as any)?.job_title || "Position",
           companyName: (data.job as any)?.employer?.company_name || "Company",
         });
+
+        // Pre-load any prior slot booking for this candidate + booking_type so
+        // we can show a "Reschedule" confirmation dialog instead of silently
+        // overwriting their existing time.
+        const candidateProfileId = (data as any)?.candidate_id;
+        if (candidateProfileId) {
+          const { data: priorBookings } = await supabase
+            .from("slot_bookings")
+            .select("booking_date, booking_time")
+            .eq("candidate_id", candidateProfileId)
+            .eq("booking_type", bookingType)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          if (priorBookings && priorBookings.length > 0) {
+            setExistingBooking({
+              booking_date: priorBookings[0].booking_date,
+              booking_time: priorBookings[0].booking_time,
+            });
+          }
+        }
       } catch (err) {
         setError("Something went wrong. Please try again later.");
       } finally {
@@ -223,7 +302,7 @@ const BookSlot = () => {
     };
 
     fetchDetails();
-  }, [candidateId]);
+  }, [candidateId, bookingType]);
 
   // Generate available dates (today + next 7 days, including all days)
   const getAvailableDates = () => {
@@ -371,6 +450,39 @@ const BookSlot = () => {
     } else {
       toast.error(result.error || "Could not resend the invitation email.");
     }
+  };
+
+  // Validate the form once before either showing the reschedule confirmation
+  // dialog or proceeding directly. Returns true when inputs are usable.
+  const validateBookingInputs = (): boolean => {
+    if (isMultiSlotStage) {
+      const uniqueTimes = [...new Set([demoTime1, demoTime2, demoTime3].filter(Boolean))];
+      if (!demoDate || uniqueTimes.length < 3) {
+        toast.error("Please select a date and 3 different timings");
+        return false;
+      }
+    } else if (!selectedDate || !selectedTime) {
+      toast.error("Please select both date and time");
+      return false;
+    }
+    if (!candidateId) {
+      toast.error("Invalid booking link - missing candidate information");
+      return false;
+    }
+    return true;
+  };
+
+  // Submit-button click. If the candidate already has a slot for this round,
+  // open the reschedule confirmation dialog so they can verify the new
+  // booking type + time before we delete the prior row. Otherwise, fall
+  // through to the normal booking flow.
+  const handleSubmitClick = () => {
+    if (!validateBookingInputs()) return;
+    if (existingBooking) {
+      setShowRescheduleConfirm(true);
+      return;
+    }
+    void handleBookSlot();
   };
 
   const handleBookSlot = async () => {
@@ -1159,7 +1271,7 @@ const BookSlot = () => {
 
               {/* Submit Button */}
               <Button
-                onClick={handleBookSlot}
+                onClick={handleSubmitClick}
                 disabled={isBooking || !demoDate || !demoTime1 || !demoTime2 || !demoTime3 || new Set([demoTime1, demoTime2, demoTime3]).size < 3}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               >
@@ -1316,7 +1428,7 @@ const BookSlot = () => {
 
               {/* Book Button */}
               <Button
-                onClick={handleBookSlot}
+                onClick={handleSubmitClick}
                 disabled={isBooking || !selectedDate || !selectedTime}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
               >
@@ -1324,6 +1436,11 @@ const BookSlot = () => {
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                     Booking...
+                  </>
+                ) : existingBooking ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 mr-2" />
+                    Reschedule Slot
                   </>
                 ) : (
                   <>
@@ -1336,6 +1453,76 @@ const BookSlot = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Reschedule confirmation — only shown when a prior slot exists for this
+          candidate + booking_type. Lets the candidate verify the new time and
+          round before we delete their previous booking. */}
+      <AlertDialog open={showRescheduleConfirm} onOpenChange={setShowRescheduleConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reschedule your {bookingTypeLabel}?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>
+                  Please confirm the new time for your <strong>{bookingTypeLabel}</strong>.
+                  Your previous slot will be replaced.
+                </p>
+                {existingBooking && (
+                  <div className="rounded-md border border-border bg-muted/40 p-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Current slot</p>
+                    <p className="font-medium text-foreground">
+                      {formatBookedDateTime(existingBooking.booking_date, existingBooking.booking_time, timezone).dateLabel}
+                      {" · "}
+                      {formatBookedDateTime(existingBooking.booking_date, existingBooking.booking_time, timezone).timeLabel}
+                      {" "}
+                      ({formatBookedDateTime(existingBooking.booking_date, existingBooking.booking_time, timezone).tzAbbr})
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-md border border-primary/40 bg-primary/5 p-3">
+                  <p className="text-xs uppercase tracking-wide text-primary">New slot</p>
+                  {isMultiSlotStage ? (
+                    <ul className="mt-1 space-y-1 font-medium text-foreground">
+                      {[demoTime1, demoTime2, demoTime3].filter(Boolean).map((t) => {
+                        const f = formatBookedDateTime(demoDate, t, timezone);
+                        return (
+                          <li key={t}>
+                            {f.dateLabel} · {f.timeLabel} ({f.tzAbbr})
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : (
+                    <p className="font-medium text-foreground">
+                      {formatBookedDateTime(selectedDate, selectedTime, timezone).dateLabel}
+                      {" · "}
+                      {formatBookedDateTime(selectedDate, selectedTime, timezone).timeLabel}
+                      {" "}
+                      ({formatBookedDateTime(selectedDate, selectedTime, timezone).tzAbbr})
+                    </p>
+                  )}
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBooking}>Keep current slot</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Prevent the dialog from closing before the async flow runs;
+                // we close it manually after the booking attempt resolves so
+                // the cancel button stays disabled while in flight.
+                e.preventDefault();
+                setShowRescheduleConfirm(false);
+                void handleBookSlot();
+              }}
+              disabled={isBooking}
+            >
+              Confirm reschedule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
