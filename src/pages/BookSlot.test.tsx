@@ -307,9 +307,10 @@ describe("BookSlot — multi-slot HR Round flow", () => {
     const dateTrigger = triggerByPlaceholder("Choose a date");
     await openSelectAndPick(user, dateTrigger, /Today -/i);
 
-    // Pick the single preferred time (Morning is the default filter; 9:00 AM is valid)
+    // Pick the single preferred time. System time is 09:00, so we need a slot
+    // at least 10 min in the future (Morning is the default filter).
     const timeTrigger = triggerByPlaceholder("Choose your preferred time");
-    await openSelectAndPick(user, timeTrigger, "9:00 AM");
+    await openSelectAndPick(user, timeTrigger, "11:00 AM");
 
     expect(submit).toBeEnabled();
     await user.click(submit);
