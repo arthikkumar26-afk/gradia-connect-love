@@ -1862,6 +1862,15 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                           b.booking_type === bookingType || b.booking_type === stageLabel
                         );
                         
+                        // Allow rescheduling whenever the booking stage is not
+                        // yet completed: either the candidate is on this stage
+                        // (`current`) OR they already booked once and the
+                        // pipeline auto-advanced (`completed`/`scheduled`) but
+                        // the actual round hasn't been taken/closed yet.
+                        const canReschedule =
+                          status === 'current' ||
+                          (!!booking && status !== 'passed');
+
                         return (
                           <>
                             {booking && (
@@ -1870,7 +1879,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                                 {formatDate(booking.booking_date)} • {booking.booking_time}
                               </Badge>
                             )}
-                            {status === 'current' && (
+                            {canReschedule && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1879,7 +1888,7 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                                 className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
                               >
                                 <Calendar className="h-3 w-3" />
-                                {booking ? 'Rebook Slot' : 'Book Slot'}
+                                {booking ? 'Reschedule Slot' : 'Book Slot'}
                               </button>
                             )}
                           </>
