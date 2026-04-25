@@ -903,9 +903,6 @@ const BookSlot = () => {
                     Times shown in <strong>{timezone}</strong>
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  📧 The employer will review your preferred timing and confirm. You'll receive an email once confirmed.
-                </p>
               </>
             ) : (
               <>
