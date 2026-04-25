@@ -502,16 +502,14 @@ const BookSlot = () => {
   };
 
   const handleBookSlot = async () => {
-    // For multi-slot stages (demo/HR), build preferred slots from single date + 3 times
+    // For multi-slot stages (demo/HR), build a single preferred slot from date + time
     let demoSlots: { date: string; time: string }[] = [];
     if (isMultiSlotStage) {
-      const times = [demoTime1, demoTime2, demoTime3].filter(Boolean);
-      const uniqueTimes = [...new Set(times)];
-      if (!demoDate || uniqueTimes.length < 3) {
-        toast.error("Please select a date and 3 different timings");
+      if (!demoDate || !demoTime1) {
+        toast.error("Please select a date and your preferred timing");
         return;
       }
-      demoSlots = uniqueTimes.map(t => ({ date: demoDate, time: t }));
+      demoSlots = [{ date: demoDate, time: demoTime1 }];
       setPreferredSlots(demoSlots);
     } else {
       if (!selectedDate || !selectedTime) {
