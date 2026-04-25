@@ -230,6 +230,46 @@ const BookSlot = () => {
     }
   };
 
+  // Convert a wall-clock "YYYY-MM-DD HH:mm" pair (interpreted IN the given
+  // timezone) into a UTC epoch (ms). Used by inline validation so a slot like
+  // "today 09:00 IST" picked from a browser running in PST is correctly
+  // compared against the real `Date.now()`. Returns NaN if inputs are invalid.
+  const slotEpochInTimezone = (dateStr: string, timeStr: string, tz: string): number => {
+    if (!dateStr || !timeStr) return NaN;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const [hh, mm] = timeStr.split(":").map(Number);
+    if ([y, m, d, hh, mm].some((n) => Number.isNaN(n))) return NaN;
+    // Build a UTC guess, then measure how that instant is rendered in the
+    // target timezone and correct for the offset.
+    const utcGuess = Date.UTC(y, (m || 1) - 1, d || 1, hh || 0, mm || 0);
+    try {
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      const parts = fmt.formatToParts(new Date(utcGuess));
+      const lookup: Record<string, string> = {};
+      for (const p of parts) lookup[p.type] = p.value;
+      const renderedHour = lookup.hour === "24" ? 0 : Number(lookup.hour);
+      const asTzMs = Date.UTC(
+        Number(lookup.year),
+        Number(lookup.month) - 1,
+        Number(lookup.day),
+        renderedHour,
+        Number(lookup.minute),
+      );
+      const offset = asTzMs - utcGuess;
+      return utcGuess - offset;
+    } catch {
+      return utcGuess;
+    }
+  };
+
   // Format a "YYYY-MM-DD" + "HH:mm" wall-clock pair into a confirmation label,
   // appending the abbreviation for the user's selected timezone.
   const formatBookedDateTime = (dateStr: string, timeStr: string, tz: string) => {
