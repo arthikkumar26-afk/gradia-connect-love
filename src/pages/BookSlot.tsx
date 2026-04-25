@@ -1271,7 +1271,7 @@ const BookSlot = () => {
 
               {/* Submit Button */}
               <Button
-                onClick={handleBookSlot}
+                onClick={handleSubmitClick}
                 disabled={isBooking || !demoDate || !demoTime1 || !demoTime2 || !demoTime3 || new Set([demoTime1, demoTime2, demoTime3]).size < 3}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg"
               >
