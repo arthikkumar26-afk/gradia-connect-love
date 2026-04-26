@@ -335,7 +335,7 @@ export const TestPapersContent = () => {
 
   // Filter preview questions based on selected job's section_config
   const filteredPreviewQuestions = (() => {
-    if (!previewPaper || !previewJobId) return previewQuestions;
+    if (!previewPaper || !previewJobId || previewJobId === "__all__") return previewQuestions;
     const assignment = previewPaper.assigned_jobs.find(a => a.job_id === previewJobId);
     const config = assignment?.section_config;
     if (!config || Object.keys(config).length === 0) return previewQuestions;
