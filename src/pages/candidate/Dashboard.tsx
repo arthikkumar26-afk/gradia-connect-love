@@ -545,17 +545,18 @@ const CandidateDashboard = () => {
             );
 
             if (verifyError || !verifyData?.verified) {
-              throw new Error("Payment verification failed");
+              throw new Error(verifyError?.message || "Payment verification failed");
             }
 
+            try { rzp.close(); } catch {}
             await activateCandidateSubscription(plan, amountToCharge, planPrice);
           } catch (err: any) {
+            try { rzp.close(); } catch {}
             toast({
-              title: "Activation failed",
-              description: err.message || "Payment received but activation failed. Contact support.",
+              title: "❌ Payment verification failed",
+              description: err.message || "Your payment was received but could not be verified. Please contact support with your payment ID.",
               variant: "destructive",
             });
-          } finally {
             setUpgradingPlan(null);
           }
         },
