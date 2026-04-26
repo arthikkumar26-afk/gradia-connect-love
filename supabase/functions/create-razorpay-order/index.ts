@@ -31,15 +31,16 @@ serve(async (req) => {
     const admin = createClient(supabaseUrl, SERVICE_KEY);
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData?.user) {
+      console.error('[create-razorpay-order] auth failed:', userError?.message);
       return new Response(
         JSON.stringify({ error: 'Invalid authentication token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = userData.user.id;
 
     const body = await req.json();
     const { amount, currency, plan_id, plan_name, employer_id, receipt } = body;
