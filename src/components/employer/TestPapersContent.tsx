@@ -80,6 +80,7 @@ export const TestPapersContent = () => {
   const [previewPaper, setPreviewPaper] = useState<QuestionPaper | null>(null);
   const [previewQuestions, setPreviewQuestions] = useState<any[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewJobId, setPreviewJobId] = useState<string>("");
   const [sectionCounts, setSectionCounts] = useState<SectionCount[]>([]);
   const [loadingSections, setLoadingSections] = useState(false);
 
@@ -313,6 +314,7 @@ export const TestPapersContent = () => {
 
   const handlePreview = async (paper: QuestionPaper) => {
     setPreviewPaper(paper);
+    setPreviewJobId(paper.assigned_jobs[0]?.job_id || "");
     setLoadingPreview(true);
     try {
       const { data, error } = await supabase
@@ -330,6 +332,23 @@ export const TestPapersContent = () => {
       setLoadingPreview(false);
     }
   };
+
+  // Filter preview questions based on selected job's section_config
+  const filteredPreviewQuestions = (() => {
+    if (!previewPaper || !previewJobId || previewJobId === "__all__") return previewQuestions;
+    const assignment = previewPaper.assigned_jobs.find(a => a.job_id === previewJobId);
+    const config = assignment?.section_config;
+    if (!config || Object.keys(config).length === 0) return previewQuestions;
+
+    const counters: Record<string, number> = {};
+    return previewQuestions.filter(q => {
+      const sec = q.section || "General";
+      const limit = config[sec] ?? 0;
+      if (limit <= 0) return false;
+      counters[sec] = (counters[sec] || 0) + 1;
+      return counters[sec] <= limit;
+    });
+  })();
 
   const getStageTypeLabel = (type: string) => {
     const map: Record<string, string> = {
@@ -612,7 +631,7 @@ export const TestPapersContent = () => {
       </Dialog>
 
       {/* Preview Dialog */}
-      <Dialog open={!!previewPaper} onOpenChange={(open) => { if (!open) setPreviewPaper(null); }}>
+      <Dialog open={!!previewPaper} onOpenChange={(open) => { if (!open) { setPreviewPaper(null); setPreviewJobId(""); } }}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
@@ -621,20 +640,62 @@ export const TestPapersContent = () => {
             </DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="max-h-[60vh] pr-3">
+          {previewPaper && previewPaper.assigned_jobs.length > 0 && (
+            <div className="space-y-2 border-b border-border pb-3">
+              <div className="flex items-center gap-2">
+                <Briefcase className="h-3.5 w-3.5 text-primary" />
+                <p className="text-xs font-medium text-foreground">View questions assigned to vacancy:</p>
+              </div>
+              <Select value={previewJobId} onValueChange={setPreviewJobId}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Show full paper" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__" onSelect={() => setPreviewJobId("")}>
+                    Full paper ({previewQuestions.length} questions)
+                  </SelectItem>
+                  {previewPaper.assigned_jobs.map(aj => (
+                    <SelectItem key={aj.job_id} value={aj.job_id}>
+                      {aj.job_title}
+                      {aj.section_config && ` — ${Object.values(aj.section_config).reduce((a, b) => a + b, 0)}Q`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {previewJobId && previewJobId !== "__all__" && (() => {
+                const aj = previewPaper.assigned_jobs.find(a => a.job_id === previewJobId);
+                const cfg = aj?.section_config;
+                if (!cfg) return null;
+                return (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {Object.entries(cfg).filter(([, v]) => v > 0).map(([k, v]) => (
+                      <Badge key={k} variant="secondary" className="text-[10px]">
+                        {k}: {v}Q
+                      </Badge>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          <ScrollArea className="max-h-[55vh] pr-3">
             {loadingPreview ? (
               <div className="flex items-center justify-center py-10">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
-            ) : previewQuestions.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">No questions in this paper.</p>
+            ) : filteredPreviewQuestions.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-10">No questions assigned for this vacancy.</p>
             ) : (
               <div className="space-y-4">
-                {previewQuestions.map((q, idx) => (
+                <p className="text-xs text-muted-foreground">
+                  Showing {filteredPreviewQuestions.length} of {previewQuestions.length} questions
+                </p>
+                {filteredPreviewQuestions.map((q, idx) => (
                   <div key={idx} className="border border-border rounded-lg p-3">
                     <div className="flex items-start gap-2">
                       <span className="text-xs font-bold text-primary bg-primary/10 rounded-full h-5 w-5 flex items-center justify-center shrink-0 mt-0.5">
-                        {q.question_number}
+                        {idx + 1}
                       </span>
                       <div className="flex-1">
                         <p className="text-sm text-foreground font-medium">{q.question_text}</p>
