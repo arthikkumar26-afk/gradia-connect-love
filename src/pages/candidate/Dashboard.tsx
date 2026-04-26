@@ -1887,17 +1887,7 @@ const CandidateDashboard = () => {
     fetchApplicationCount();
     fetchInterviewCount();
     fetchMockTestSessions();
-    fetchWalletBalance();
-
-    // Subscribe to wallet changes
-    const walletChannel = supabase
-      .channel('wallet-balance-sidebar')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${profile?.id}` },
-        () => fetchWalletBalance()
-      )
-      .subscribe();
+    // Wallet realtime subscription removed — candidate area is now subscription-only.
 
     // Subscribe to real-time job updates
     const channel = supabase
