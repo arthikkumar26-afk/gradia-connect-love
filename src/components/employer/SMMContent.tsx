@@ -415,33 +415,57 @@ export const SMMContent = () => {
                     </div>
                   )}
 
-                  <div>
-                    <Label>Job URL</Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input value={jobUrl} readOnly className="flex-1 text-sm" />
-                      <Button variant="outline" size="icon" onClick={handleCopyLink}>
-                        {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                  {isQrUnlocked ? (
+                    <>
+                      <div>
+                        <Label>Job URL</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input value={jobUrl} readOnly className="flex-1 text-sm" />
+                          <Button variant="outline" size="icon" onClick={handleCopyLink}>
+                            {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <Button onClick={handleDownloadQR} className="flex-1">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download QR
+                        </Button>
+                        <Button variant="outline" asChild className="flex-1">
+                          <a href={jobUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Preview Page
+                          </a>
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Lock className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">Unlock Job QR & Link</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Spend <span className="font-semibold text-primary">{QR_UNLOCK_COST} pts</span> to reveal the shareable QR code, job URL, download and preview options for this posting.
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handleUnlockQr}
+                        disabled={!selectedJob || unlockingQr}
+                        className="w-full"
+                      >
+                        <Lock className="h-4 w-4 mr-2" />
+                        {unlockingQr ? "Processing..." : `Unlock QR (${QR_UNLOCK_COST} pts)`}
                       </Button>
                     </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <Button onClick={handleDownloadQR} className="flex-1">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download QR
-                    </Button>
-                    <Button variant="outline" asChild className="flex-1">
-                      <a href={jobUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Preview Page
-                      </a>
-                    </Button>
-                  </div>
+                  )}
                 </div>
 
                 {/* Right: QR Preview */}
-                <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-lg border">
-                  <div className="bg-white p-4 rounded-xl shadow-md">
+                <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-lg border relative">
+                  <div className={`bg-white p-4 rounded-xl shadow-md ${isQrUnlocked ? "" : "blur-md select-none pointer-events-none"}`}>
                     <QRCodeSVG
                       id="job-qr-code"
                       value={selectedJob === "all" ? companyJobsUrl : jobUrl}
@@ -452,10 +476,19 @@ export const SMMContent = () => {
                       fgColor="#1a365d"
                     />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-4 text-center">
+                  <p className={`text-sm text-muted-foreground mt-4 text-center ${isQrUnlocked ? "" : "blur-sm select-none"}`}>
                     {selectedJobData ? (selectedJobData.designation || selectedJobData.job_title) : "All Job Openings"}
                   </p>
-                  <p className="text-xs text-muted-foreground">Scan to apply</p>
+                  <p className={`text-xs text-muted-foreground ${isQrUnlocked ? "" : "blur-sm select-none"}`}>
+                    {isQrUnlocked ? "Scan to apply" : "Locked preview"}
+                  </p>
+                  {!isQrUnlocked && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-background/80 backdrop-blur-sm rounded-full p-3 border shadow-md">
+                        <Lock className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
