@@ -5,6 +5,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const PLAN_IDS = new Set(["basic", "pro", "premium"]);
+
+const normalizePlan = (value: unknown) => {
+  const raw = String(value || "").toLowerCase().trim();
+  const cleaned = raw.replace(/\s+plan$/i, "").replace(/[^a-z]/g, "");
+  return PLAN_IDS.has(cleaned) ? cleaned : null;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -37,7 +45,6 @@ serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    // Latest subscription
     const { data: subs } = await admin
       .from("candidate_subscriptions")
       .select("id, plan, status, started_at, ends_at, updated_at, created_at")
@@ -45,10 +52,9 @@ serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(5);
 
-    const activeSub = subs?.find((s: any) => s.status === "active") || null;
-    const latestSub = subs?.[0] || null;
+    let activeSub = subs?.find((s: any) => s.status === "active") || null;
+    let latestSub = subs?.[0] || null;
 
-    // Latest order
     const { data: orders } = await admin
       .from("razorpay_webhook_logs")
       .select(
@@ -60,7 +66,9 @@ serve(async (req) => {
       .limit(1);
 
     let latestPayment: any = null;
+    let activation: any = null;
     const latestOrder = orders?.[0] || null;
+    const latestPlan = normalizePlan((latestOrder?.metadata as any)?.plan_id) || normalizePlan((latestOrder?.metadata as any)?.plan_name);
 
     if (latestOrder?.razorpay_order_id) {
       const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
@@ -76,13 +84,12 @@ serve(async (req) => {
           if (r.ok) {
             const j = await r.json();
             const items = (j.items || []) as any[];
-            // Pick the most recent attempt
             const sorted = items.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
             const p = sorted[0];
             if (p) {
               latestPayment = {
                 payment_id: p.id,
-                status: p.status, // captured | authorized | failed | created
+                status: p.status,
                 amount_paise: p.amount,
                 currency: p.currency,
                 method: p.method,
@@ -91,9 +98,75 @@ serve(async (req) => {
                 created_at: p.created_at ? new Date(p.created_at * 1000).toISOString() : null,
               };
             }
+
+            const capturedPayment = sorted.find((p) => p.status === "captured");
+            if (capturedPayment && latestPlan && !activeSub) {
+              const { data: existingActivation } = await admin
+                .from("subscription_activation_logs")
+                .select("subscription_id")
+                .eq("payment_id", capturedPayment.id)
+                .eq("activation_result", "success")
+                .maybeSingle();
+
+              if (existingActivation?.subscription_id) {
+                const { data: existingSub } = await admin
+                  .from("candidate_subscriptions")
+                  .select("id, plan, status, started_at, ends_at, updated_at, created_at")
+                  .eq("id", existingActivation.subscription_id)
+                  .maybeSingle();
+                activeSub = existingSub || activeSub;
+                latestSub = existingSub || latestSub;
+                activation = { activated: !!existingSub, source: "existing_activation" };
+              } else {
+                const now = new Date();
+                const endsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+                await admin
+                  .from("candidate_subscriptions")
+                  .update({ status: "inactive", updated_at: now.toISOString() })
+                  .eq("candidate_id", userId)
+                  .in("status", ["active", "trial"]);
+
+                const { data: newSub, error: subErr } = await admin
+                  .from("candidate_subscriptions")
+                  .insert({
+                    candidate_id: userId,
+                    plan: latestPlan,
+                    status: "active",
+                    started_at: now.toISOString(),
+                    ends_at: endsAt.toISOString(),
+                  })
+                  .select("id, plan, status, started_at, ends_at, updated_at, created_at")
+                  .single();
+
+                await admin.from("subscription_activation_logs").insert({
+                  candidate_id: userId,
+                  plan: latestPlan,
+                  source: "dashboard_status_refresh",
+                  payment_id: capturedPayment.id,
+                  order_id: latestOrder.razorpay_order_id,
+                  amount_paise: capturedPayment.amount ?? latestOrder.amount_paise,
+                  currency: capturedPayment.currency || latestOrder.currency || "INR",
+                  activation_result: subErr ? "failed" : "success",
+                  error_message: subErr?.message || null,
+                  subscription_id: newSub?.id || null,
+                  payload_summary: {
+                    payment_status: capturedPayment.status,
+                    payment_method: capturedPayment.method,
+                    order_metadata: latestOrder.metadata,
+                  },
+                });
+
+                if (subErr) throw subErr;
+                activeSub = newSub;
+                latestSub = newSub;
+                activation = { activated: true, source: "dashboard_status_refresh" };
+              }
+            }
           }
         } catch (e) {
-          console.error("[get-candidate-payment-status] razorpay fetch failed", e);
+          console.error("[get-candidate-payment-status] razorpay fetch/sync failed", e);
+          activation = { activated: false, error: e instanceof Error ? e.message : String(e) };
         }
       }
     }
@@ -110,10 +183,12 @@ serve(async (req) => {
               amount_paise: latestOrder.amount_paise,
               currency: latestOrder.currency,
               created_at: latestOrder.created_at,
-              plan: (latestOrder.metadata as any)?.plan_name || null,
+              plan: (latestOrder.metadata as any)?.plan_name || latestPlan,
+              plan_id: latestPlan,
             }
           : null,
         latest_payment: latestPayment,
+        activation,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
