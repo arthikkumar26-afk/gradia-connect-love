@@ -789,6 +789,38 @@ export type Database = {
         }
         Relationships: []
       }
+      external_job_unlocks: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          external_job_id: string
+          id: string
+          points_spent: number
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          external_job_id: string
+          id?: string
+          points_spent?: number
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          external_job_id?: string
+          id?: string
+          points_spent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_job_unlocks_external_job_id_fkey"
+            columns: ["external_job_id"]
+            isOneToOne: false
+            referencedRelation: "external_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_jobs: {
         Row: {
           apply_url: string
