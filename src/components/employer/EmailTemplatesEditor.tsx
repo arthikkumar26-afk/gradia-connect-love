@@ -683,6 +683,7 @@ export function EmailTemplatesEditor() {
           )}
         </Card>
       </div>
+      )}
     </div>
   );
 }
