@@ -305,7 +305,8 @@ serve(async (req) => {
     const paidAt = data.paid_at ? new Date(data.paid_at) : new Date();
     const invoiceNo = buildInvoiceNumber(data.payment_id, paidAt);
 
-    const pdfBytes = generatePdf({ ...data, name, email, user_role: role }, invoiceNo, paidAt);
+    const logoDataUrl = await fetchLogoDataUrl();
+    const pdfBytes = generatePdf({ ...data, name, email, user_role: role }, invoiceNo, paidAt, logoDataUrl);
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
