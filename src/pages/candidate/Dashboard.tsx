@@ -3891,44 +3891,71 @@ const CandidateDashboard = () => {
             )}
 
             {/* Upskill Yourself - Standalone Section */}
-            {activeMenu === "upskill" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">Upskill Yourself</h2>
-                  <p className="text-sm text-muted-foreground">Improve your weak areas with recommended courses</p>
-                </div>
+            {activeMenu === "upskill" && (() => {
+              // Aggregate weak areas from resume analysis + mock interview stage feedback
+              const weakAreas: string[] = [];
+              if (resumeAnalysis?.improvements?.length) {
+                weakAreas.push(...resumeAnalysis.improvements);
+              }
+              (mockInterviewStageResults || []).forEach((s: any) => {
+                if (typeof s?.score === "number" && s.score < 60) {
+                  weakAreas.push(`${s.stage_name || s.name || "Interview Stage"}: needs improvement (score ${s.score}%)`);
+                }
+                if (Array.isArray(s?.weaknesses)) weakAreas.push(...s.weaknesses);
+                if (Array.isArray(s?.improvements)) weakAreas.push(...s.improvements);
+              });
+              const uniqueWeakAreas = Array.from(new Set(weakAreas.filter(Boolean))).slice(0, 8);
 
-                {/* Skill Analysis from Resume */}
-                {resumeAnalysis && resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 && (
+              // Skillory suggested courses — all open skilory.in
+              const skilloryCourses = (upskillCourseSuggestions && upskillCourseSuggestions.length > 0)
+                ? upskillCourseSuggestions.map((c: any) => ({
+                    title: c.title,
+                    description: c.description,
+                    category: c.category,
+                    level: c.level,
+                    duration: c.duration,
+                  }))
+                : [
+                    { title: "Communication & Soft Skills Mastery", description: "Sharpen interview communication, clarity and confidence.", category: "Soft Skills", level: "Beginner", duration: "4 weeks" },
+                    { title: "Aptitude & Reasoning Bootcamp", description: "Quantitative, logical and verbal reasoning practice.", category: "Aptitude", level: "Intermediate", duration: "6 weeks" },
+                    { title: "Resume & LinkedIn Optimization", description: "Build an ATS-friendly resume and a recruiter-ready profile.", category: "Career", level: "Beginner", duration: "2 weeks" },
+                    { title: "Domain Fundamentals Refresher", description: "Strengthen the core concepts most asked in interviews for your role.", category: "Domain", level: "Intermediate", duration: "5 weeks" },
+                    { title: "Mock Interview Practice Track", description: "Guided mock interviews with feedback to fix recurring weak areas.", category: "Interview Prep", level: "All Levels", duration: "4 weeks" },
+                    { title: "Problem Solving & Case Studies", description: "Apply structured thinking to real-world scenarios.", category: "Problem Solving", level: "Advanced", duration: "6 weeks" },
+                  ];
+
+              return (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Upskill Yourself</h2>
+                    <p className="text-sm text-muted-foreground">Your weak areas and Skillory-suggested courses to fix them</p>
+                  </div>
+
+                  {/* Weak Areas */}
                   <Card className="p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Lightbulb className="h-5 w-5 text-amber-500" />
-                      <h3 className="font-semibold text-foreground">Areas to Improve</h3>
+                      <h3 className="font-semibold text-foreground">Your Weak Areas</h3>
                     </div>
-                    <div className="space-y-3">
-                      {resumeAnalysis.improvements.map((improvement: string, index: number) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                          <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
-                            {index + 1}
+                    {uniqueWeakAreas.length > 0 ? (
+                      <div className="space-y-3">
+                        {uniqueWeakAreas.map((item, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+                              {index + 1}
+                            </div>
+                            <p className="text-sm text-foreground">{item}</p>
                           </div>
-                          <p className="text-sm text-foreground">{improvement}</p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Complete a mock interview or upload your resume so we can highlight specific weak areas to focus on.
+                      </p>
+                    )}
                   </Card>
-                )}
 
-                {/* AI-Recommended Courses Based on Mock Interview Performance */}
-                {isLoadingUpskillCourses && (
-                  <Card className="p-6">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      <span className="text-muted-foreground">Loading personalized course recommendations...</span>
-                    </div>
-                  </Card>
-                )}
-
-                {!isLoadingUpskillCourses && upskillCourseSuggestions.length > 0 && (
+                  {/* Skillory Suggested Courses */}
                   <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
                     <div className="p-6">
                       <div className="flex items-center justify-between mb-4">
@@ -3937,143 +3964,63 @@ const CandidateDashboard = () => {
                             <BookOpen className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-foreground">Recommended Courses</h3>
-                            <p className="text-xs text-muted-foreground">Based on your mock interview performance</p>
+                            <h3 className="font-semibold text-foreground">Skillory Suggested Courses</h3>
+                            <p className="text-xs text-muted-foreground">Curated to address your weak areas</p>
                           </div>
                         </div>
                         <Badge variant="secondary" className="bg-primary/10 text-primary">
                           <GraduationCap className="h-3 w-3 mr-1" />
-                          {upskillCourseSuggestions.length} Courses
+                          {skilloryCourses.length} Courses
                         </Badge>
                       </div>
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {upskillCourseSuggestions.map((course) => (
-                          <a
-                            key={course.id}
-                            href={course.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block p-4 rounded-lg border bg-background hover:shadow-md hover:border-primary/50 transition-all group"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <Badge variant="outline" className="text-xs">
-                                {course.category}
-                              </Badge>
-                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            </div>
-                            <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2">
-                              {course.title}
-                            </h4>
-                            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                              {course.description}
-                            </p>
-                            <div className="flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-2">
-                                <span className="flex items-center gap-1 text-amber-500">
-                                  <Star className="h-3 w-3 fill-current" />
-                                  {course.rating}
-                                </span>
-                                <span className="text-muted-foreground">•</span>
-                                <span className="text-muted-foreground">{course.duration}</span>
+                      {isLoadingUpskillCourses ? (
+                        <div className="flex items-center justify-center gap-2 py-6">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                          <span className="text-muted-foreground">Loading personalized course recommendations...</span>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {skilloryCourses.map((course, idx) => (
+                            <a
+                              key={idx}
+                              href="https://skilory.in"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block p-4 rounded-lg border bg-background hover:shadow-md hover:border-primary/50 transition-all group"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <Badge variant="outline" className="text-xs">{course.category}</Badge>
+                                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                               </div>
-                              <Badge variant="secondary" className="text-xs">
-                                {course.level}
-                              </Badge>
-                            </div>
-                          </a>
-                        ))}
+                              <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                                {course.title}
+                              </h4>
+                              <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                                {course.description}
+                              </p>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">{course.duration}</span>
+                                <Badge variant="secondary" className="text-xs">{course.level}</Badge>
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-4 text-center">
+                        <a
+                          href="https://skilory.in"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                        >
+                          Browse all courses on Skillory <ExternalLink className="h-3 w-3" />
+                        </a>
                       </div>
                     </div>
                   </Card>
-                )}
-
-                {/* AI Learning Recommendations - Mentors, EdTech & Institutions */}
-                <AILearningRecommendations 
-                  stageResults={mockInterviewStageResults} 
-                  candidateProfile={profile}
-                />
-
-                {/* General Course Platforms */}
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <GraduationCap className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Popular Learning Platforms</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <a 
-                      href="https://www.coursera.org" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Coursera</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">World-class courses from top universities</p>
-                    </a>
-                    <a 
-                      href="https://www.udemy.com" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Udemy</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Affordable courses on any topic</p>
-                    </a>
-                    <a 
-                      href="https://www.linkedin.com/learning" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">LinkedIn Learning</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Professional skills development</p>
-                    </a>
-                    <a 
-                      href="https://www.edx.org" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">edX</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Free courses from Harvard, MIT & more</p>
-                    </a>
-                    <a 
-                      href="https://www.skillshare.com" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Skillshare</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Creative & business skills</p>
-                    </a>
-                    <a 
-                      href="https://www.khanacademy.org" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Khan Academy</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Free education for everyone</p>
-                    </a>
-                  </div>
-                </Card>
+                </div>
+              );
+            })()}
 
                 {/* Top Freelancer Mentors */}
                 <Card className="p-6">
