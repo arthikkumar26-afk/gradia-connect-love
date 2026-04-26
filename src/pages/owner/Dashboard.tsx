@@ -22,7 +22,8 @@ import {
   LayoutDashboard,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +36,7 @@ const sidebarItems = [
   { id: "live-activity", label: "Live Activity", icon: Activity, hasLiveDot: true },
   { id: "user-roles", label: "User Roles", icon: Users },
   { id: "revenue", label: "Revenue Analytics", icon: BarChart3, path: "/owner/revenue-analytics" },
+  { id: "plan-control", label: "Plan Control", icon: CreditCard, path: "/owner/plan-control" },
   { id: "jobs", label: "All Jobs", icon: Briefcase, path: "/owner/all-jobs" },
   { id: "database", label: "Database", icon: Database, path: "/owner/database-management" },
   { id: "growth", label: "Growth Metrics", icon: TrendingUp, path: "/owner/growth-metrics" },
