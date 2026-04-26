@@ -320,25 +320,28 @@ const CandidateDashboard = () => {
   const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
   const [candidateCoupon, setCandidateCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string; plan: string } | null>(null);
 
+  const fetchActiveCandidateSubscription = async () => {
+    if (!profile?.id) return null;
+    try {
+      const { data } = await supabase
+        .from("candidate_subscriptions")
+        .select("*")
+        .eq("candidate_id", profile.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setCandidateSubscription(data);
+      return data;
+    } catch (e) {
+      console.warn("Error fetching subscription:", e);
+      return null;
+    }
+  };
+
   // Fetch current candidate subscription
   useEffect(() => {
-    const fetchSubscription = async () => {
-      if (!profile?.id) return;
-      try {
-        const { data } = await supabase
-          .from("candidate_subscriptions")
-          .select("*")
-          .eq("candidate_id", profile.id)
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        setCandidateSubscription(data);
-      } catch (e) {
-        console.warn("Error fetching subscription:", e);
-      }
-    };
-    fetchSubscription();
+    fetchActiveCandidateSubscription();
   }, [profile?.id]);
 
   // Fetch real freelancer mentors
@@ -433,33 +436,11 @@ const CandidateDashboard = () => {
 
   // Trial removed - direct subscription only
 
-  const activateCandidateSubscription = async (
+  const recordCandidateCouponUsage = async (
     plan: string,
-    chargedAmount: number,
     originalAmount: number,
   ) => {
     if (!profile?.id) return;
-    // Deactivate old subs
-    await supabase
-      .from("candidate_subscriptions")
-      .update({ status: "inactive" })
-      .eq("candidate_id", profile.id)
-      .in("status", ["active", "trial"]);
-
-    // Activate new sub
-    const { error: insertErr } = await supabase
-      .from("candidate_subscriptions")
-      .insert({
-        candidate_id: profile.id,
-        plan,
-        status: "active",
-        started_at: new Date().toISOString(),
-        ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-
-    if (insertErr) throw insertErr;
-
-    // Record coupon usage if applied
     if (candidateCoupon?.plan === plan) {
       await supabase.from("coupon_usages").insert({
         coupon_id: candidateCoupon.couponId,
@@ -473,12 +454,46 @@ const CandidateDashboard = () => {
       await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: candidateCoupon.couponId });
       setCandidateCoupon(null);
     }
+  };
+
+  const syncCandidateSubscriptionPayment = async ({
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
+    plan,
+    chargedAmount,
+    originalAmount,
+  }: {
+    razorpayOrderId: string;
+    razorpayPaymentId?: string;
+    razorpaySignature?: string;
+    plan: string;
+    chargedAmount: number;
+    originalAmount: number;
+  }) => {
+    const { data, error } = await supabase.functions.invoke("sync-candidate-subscription-payment", {
+      body: {
+        razorpay_order_id: razorpayOrderId,
+        razorpay_payment_id: razorpayPaymentId,
+        razorpay_signature: razorpaySignature,
+        plan,
+        amount: chargedAmount,
+      },
+    });
+
+    if (error || !data?.activated) {
+      throw new Error(error?.message || data?.message || "Payment completed, but subscription activation is still syncing");
+    }
+
+    await recordCandidateCouponUsage(plan, originalAmount);
+    setCandidateSubscription(data.subscription || await fetchActiveCandidateSubscription());
 
     toast({
       title: `✅ ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Activated`,
-      description: `Payment of ₹${chargedAmount} confirmed. A receipt has been emailed to you. Refreshing your dashboard with new benefits…`,
+      description: `Payment of ₹${chargedAmount} confirmed. Your dashboard benefits are now active.`,
     });
-    setTimeout(() => window.location.reload(), 1800);
+    setUpgradingPlan(null);
+    return data;
   };
 
   const handleCandidateUpgrade = async (plan: string, planPrice: number) => {
