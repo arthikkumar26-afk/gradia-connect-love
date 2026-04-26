@@ -2013,35 +2013,68 @@ export const MockInterviewTab = () => {
               if (!user?.id) return;
               setPayingForMock(true);
               try {
-                const { data: wallet, error: wErr } = await supabase
-                  .from('wallets')
-                  .select('id, points_balance')
-                  .eq('user_id', user.id)
+                // Check active subscription instead of wallet balance
+                const { data: subRow } = await supabase
+                  .from('candidate_subscriptions')
+                  .select('plan, status, ends_at')
+                  .eq('candidate_id', user.id)
+                  .eq('status', 'active')
                   .maybeSingle();
-                if (wErr) throw wErr;
-                if (!wallet || (wallet.points_balance ?? 0) < MOCK_INTERVIEW_POINTS) {
-                  toast.error(`Insufficient wallet balance. You need ₹${MOCK_INTERVIEW_POINTS * 5} to unlock.`);
+
+                const active = subRow && (subRow.ends_at == null || new Date(subRow.ends_at) > new Date());
+                const plan = active ? (subRow!.plan as string) : 'basic';
+
+                // Plan limits for mock_interview (mirrors src/config/candidatePlans.ts)
+                const monthlyLimit: Record<string, number> = { basic: 1, pro: 10, premium: Infinity };
+                const limit = monthlyLimit[plan] ?? 0;
+
+                // Count this month's mock interviews used
+                const periodStart = new Date();
+                periodStart.setDate(1);
+                periodStart.setHours(0, 0, 0, 0);
+                const psDate = periodStart.toISOString().slice(0, 10);
+
+                const { data: usageRow } = await supabase
+                  .from('candidate_feature_usage')
+                  .select('id, used_count')
+                  .eq('candidate_id', user.id)
+                  .eq('feature', 'mock_interview')
+                  .eq('period_start', psDate)
+                  .maybeSingle();
+
+                const used = usageRow?.used_count ?? 0;
+                if (limit !== Infinity && used >= limit) {
+                  toast.error(
+                    plan === 'basic'
+                      ? 'Free plan includes 1 mock interview per month. Upgrade to Pro or Premium for more.'
+                      : 'Monthly mock interview quota reached. Upgrade your plan for more.',
+                  );
                   return;
                 }
-                const newBalance = (wallet.points_balance ?? 0) - MOCK_INTERVIEW_POINTS;
-                const { error: updErr } = await supabase
-                  .from('wallets')
-                  .update({ points_balance: newBalance })
-                  .eq('id', wallet.id);
-                if (updErr) throw updErr;
-                await supabase.from('wallet_transactions').insert({
-                  wallet_id: wallet.id,
-                  transaction_type: 'debit',
-                  category: 'mock_interview',
-                  points: -MOCK_INTERVIEW_POINTS,
-                  description: 'AI Mock Interview Pipeline unlock',
-                } as any);
+
+                // Increment usage
+                if (usageRow) {
+                  await supabase
+                    .from('candidate_feature_usage')
+                    .update({ used_count: used + 1 })
+                    .eq('id', usageRow.id);
+                } else {
+                  await supabase
+                    .from('candidate_feature_usage')
+                    .insert({
+                      candidate_id: user.id,
+                      feature: 'mock_interview',
+                      period_start: psDate,
+                      used_count: 1,
+                    });
+                }
+
                 await supabase
                   .from('mock_interview_sessions')
                   .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
                   .eq('id', currentSession.id);
                 setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
-                toast.success(`₹${MOCK_INTERVIEW_POINTS * 5} deducted from wallet. Pipeline unlocked!`);
+                toast.success('Pipeline unlocked using your subscription quota.');
               } catch (e: any) {
                 console.error('Mock interview unlock error:', e);
                 toast.error(e?.message || 'Failed to unlock');
@@ -2053,8 +2086,8 @@ export const MockInterviewTab = () => {
             className="gap-2"
             size="lg"
           >
-            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <IndianRupee className="h-4 w-4" />}
-            Pay ₹{MOCK_INTERVIEW_POINTS * 5} to Unlock
+            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+            Unlock with my plan
           </Button>
         </Card>
       ) : (

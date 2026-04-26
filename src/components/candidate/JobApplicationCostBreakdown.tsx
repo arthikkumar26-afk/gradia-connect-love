@@ -1,178 +1,136 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import {
-  Coins, Briefcase, BookOpen, FileText, MessageSquare,
-  CheckCircle2, AlertTriangle, Loader2, Wallet,
-} from "lucide-react";
-
-// Tier definitions — must mirror POINT_PACKAGES in WalletTab/Signup
-const TIERS = [
-  { name: "Starter",  min: 400,   max: 999,  mockSessions: 0, exports: 1, feedback: "Basic" },
-  { name: "Basic",    min: 1000,  max: 1999, mockSessions: 1, exports: 2, feedback: "Standard" },
-  { name: "Pro",      min: 2000,  max: 4999, mockSessions: 3, exports: 5, feedback: "Detailed" },
-  { name: "Premium",  min: 5000,  max: Infinity, mockSessions: 5, exports: 10, feedback: "Detailed + Coach" },
-];
-
-// Per-action costs (sync with PointsPricingPanel & WalletTab deductions)
-const COSTS = {
-  application: 0,
-  mockInterview: 500,
-  resumeExport: 150,
-  feedbackReview: 0,
-};
+import { Crown, Briefcase, BookOpen, FileText, MessageSquare, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 
 interface Props {
   candidateId: string;
   jobTitle?: string;
 }
 
-export const JobApplicationCostBreakdown = ({ candidateId, jobTitle }: Props) => {
-  const [balance, setBalance] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+/**
+ * Subscription-driven application summary.
+ * Replaces the old wallet/points cost breakdown — every value is now derived
+ * from the candidate's active plan and monthly usage counters.
+ */
+export const JobApplicationCostBreakdown = ({ jobTitle }: Props) => {
+  const sub = useCandidateSubscription();
 
-  useEffect(() => {
-    if (!candidateId) return;
-    (async () => {
-      const { data } = await supabase
-        .from("wallets")
-        .select("points_balance")
-        .eq("user_id", candidateId)
-        .maybeSingle();
-      setBalance(data?.points_balance ?? 0);
-      setLoading(false);
-    })();
-  }, [candidateId]);
+  if (sub.loading) {
+    return (
+      <div className="rounded-lg border border-border bg-muted/30 p-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Loading your plan…
+      </div>
+    );
+  }
 
-  const tier = balance == null
-    ? null
-    : TIERS.find((t) => balance >= t.min && balance <= t.max) || TIERS[0];
+  const applyLimit = sub.limitFor("job_apply");
+  const applyRemaining = sub.remainingFor("job_apply");
+  const applyUnlimited = applyLimit === Infinity;
+  const noQuota = !applyUnlimited && applyRemaining <= 0;
 
-  const lines = tier
-    ? [
-        {
-          icon: Briefcase,
-          label: "Submit application",
-          detail: "Includes AI resume match score",
-          cost: COSTS.application,
-          included: true,
-        },
-        {
-          icon: BookOpen,
-          label: `AI Mock Interview rounds`,
-          detail: tier.mockSessions
-            ? `${tier.mockSessions}× included by your ${tier.name} tier`
-            : `Top up to Basic+ to unlock`,
-          cost: tier.mockSessions ? 0 : COSTS.mockInterview,
-          included: tier.mockSessions > 0,
-        },
-        {
-          icon: FileText,
-          label: "Resume PDF exports",
-          detail: `${tier.exports} export${tier.exports > 1 ? "s" : ""} bundled with this tier`,
-          cost: 0,
-          included: true,
-        },
-        {
-          icon: MessageSquare,
-          label: "Round-by-round feedback",
-          detail: `${tier.feedback} feedback after each interview`,
-          cost: 0,
-          included: true,
-        },
-      ]
-    : [];
-
-  const totalSpend = lines.reduce((s, l) => s + (l.included ? 0 : l.cost), 0);
-  const lowBalance = balance != null && balance < 400;
+  const lines = [
+    {
+      icon: Briefcase,
+      label: "Submit application",
+      detail: applyUnlimited
+        ? "Unlimited applications on your plan"
+        : `${applyRemaining} of ${applyLimit} applications left this month`,
+      included: true,
+    },
+    {
+      icon: BookOpen,
+      label: "AI Mock Interview rounds",
+      detail:
+        sub.limitFor("mock_interview") === 0
+          ? "Upgrade to Pro or Premium to unlock"
+          : sub.limitFor("mock_interview") === Infinity
+            ? "Unlimited mock interviews"
+            : `${sub.remainingFor("mock_interview")} of ${sub.limitFor("mock_interview")} mock interviews left`,
+      included: sub.limitFor("mock_interview") > 0,
+    },
+    {
+      icon: FileText,
+      label: "Resume PDF exports",
+      detail:
+        sub.limitFor("resume_download") === Infinity
+          ? "Unlimited downloads"
+          : `${sub.remainingFor("resume_download")} of ${sub.limitFor("resume_download")} downloads left`,
+      included: true,
+    },
+    {
+      icon: MessageSquare,
+      label: "Round-by-round feedback",
+      detail: "Included after every interview",
+      included: true,
+    },
+  ];
 
   return (
     <div className="rounded-lg border border-border bg-gradient-to-br from-primary/5 via-card to-card p-3 space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Coins className="h-4 w-4 text-yellow-600" />
+          <Crown className="h-4 w-4 text-primary" />
           <p className="text-sm font-semibold text-foreground">
-            Points breakdown for this application
+            Included with your subscription
           </p>
         </div>
-        {loading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-        ) : (
-          <Badge variant="outline" className="gap-1 text-[10px]">
-            <Wallet className="h-3 w-3" />
-            {balance} pts
-          </Badge>
-        )}
+        <Badge className="bg-primary/10 text-primary border-primary/30 text-[10px]">
+          {sub.planDef.name}
+        </Badge>
       </div>
 
-      {!loading && tier && (
-        <>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            Your tier:
-            <Badge className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/15 text-[10px]">
-              {tier.name}
-            </Badge>
-            {jobTitle && <span className="truncate">• {jobTitle}</span>}
-          </div>
+      {jobTitle && (
+        <p className="text-[11px] text-muted-foreground truncate">For: {jobTitle}</p>
+      )}
 
-          <ul className="space-y-1.5">
-            {lines.map((l) => {
-              const Icon = l.icon;
-              return (
-                <li
-                  key={l.label}
-                  className="flex items-start gap-2 p-2 rounded-md bg-muted/40 border border-border/40"
+      <ul className="space-y-1.5">
+        {lines.map((l) => {
+          const Icon = l.icon;
+          return (
+            <li
+              key={l.label}
+              className="flex items-start gap-2 p-2 rounded-md bg-muted/40 border border-border/40"
+            >
+              <Icon className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-medium text-foreground leading-tight">
+                  {l.label}
+                </p>
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  {l.detail}
+                </p>
+              </div>
+              {l.included ? (
+                <Badge
+                  variant="secondary"
+                  className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0 gap-0.5"
                 >
-                  <Icon className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-foreground leading-tight">
-                      {l.label}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground leading-snug">
-                      {l.detail}
-                    </p>
-                  </div>
-                  {l.included ? (
-                    <Badge
-                      variant="secondary"
-                      className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0 gap-0.5"
-                    >
-                      <CheckCircle2 className="h-2.5 w-2.5" />
-                      {l.cost === 0 ? "Free" : "Included"}
-                    </Badge>
-                  ) : (
-                    <span className="text-[11px] font-bold text-yellow-700 dark:text-yellow-400 shrink-0">
-                      ₹{l.cost}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="flex items-center justify-between pt-2 border-t border-dashed">
-            <p className="text-[11px] text-muted-foreground">
-              Charged on <span className="font-semibold text-foreground">Apply</span>
-            </p>
-            <p className="text-sm font-bold text-foreground">
-              {totalSpend === 0 ? (
-                <span className="text-emerald-600 dark:text-emerald-400">₹0 now</span>
+                  <CheckCircle2 className="h-2.5 w-2.5" />
+                  Included
+                </Badge>
               ) : (
-                <span className="text-yellow-700 dark:text-yellow-400">₹{totalSpend}</span>
+                <Badge variant="outline" className="text-[9px] shrink-0">
+                  Upgrade
+                </Badge>
               )}
-            </p>
-          </div>
+            </li>
+          );
+        })}
+      </ul>
 
-          {lowBalance && (
-            <div className="flex items-start gap-1.5 p-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-              <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-snug">
-                Your balance is below the Starter tier. Top up your wallet to unlock mock
-                interviews and feedback after applying.
-              </p>
-            </div>
-          )}
-        </>
+      {noQuota && (
+        <div className="flex items-start gap-1.5 p-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-snug">
+            You've used all your monthly applications.{" "}
+            <Link to="/pricing" className="underline font-medium">
+              Upgrade your plan
+            </Link>{" "}
+            to apply to more jobs.
+          </p>
+        </div>
       )}
     </div>
   );

@@ -83,7 +83,7 @@ import { CouponInput } from "@/components/shared/CouponInput";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
-import WalletTab from "@/components/candidate/WalletTab";
+import SubscriptionTab from "@/components/candidate/SubscriptionTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
 import { useActionPayment } from "@/hooks/useActionPayment";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
@@ -1439,7 +1439,7 @@ const CandidateDashboard = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "wallet", label: "My Wallet", icon: Wallet },
+    { id: "wallet", label: "My Subscription", icon: Crown },
     { id: "resume", label: "Resume Builder", icon: FileText },
     { id: "jobs", label: "Suitable Jobs", icon: Briefcase },
     { id: "aijobapply", label: "AI Job Apply", icon: Rocket },
@@ -1478,10 +1478,10 @@ const CandidateDashboard = () => {
       gradient: "from-success/20 to-success/5",
     },
     {
-      title: "Wallet",
-      value: `₹${walletPoints}`,
-      subtitle: "Available balance",
-      icon: Wallet,
+      title: "Plan",
+      value: candidateSub.planDef.name,
+      subtitle: candidateSub.planDef.priceLabel,
+      icon: Crown,
       gradient: "from-secondary/20 to-secondary/5",
     },
   ];
@@ -1495,14 +1495,9 @@ const CandidateDashboard = () => {
     setApplicationCount(count || 0);
   };
 
+  // Wallet system removed — kept as a no-op so existing call sites compile.
   const fetchWalletBalance = async () => {
-    if (!profile?.id) return;
-    const { data } = await supabase
-      .from('wallets')
-      .select('points_balance')
-      .eq('user_id', profile.id)
-      .maybeSingle();
-    setWalletPoints(data?.points_balance || 0);
+    setWalletPoints(0);
   };
 
   const fetchInterviewCount = async () => {
@@ -1892,17 +1887,7 @@ const CandidateDashboard = () => {
     fetchApplicationCount();
     fetchInterviewCount();
     fetchMockTestSessions();
-    fetchWalletBalance();
-
-    // Subscribe to wallet changes
-    const walletChannel = supabase
-      .channel('wallet-balance-sidebar')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${profile?.id}` },
-        () => fetchWalletBalance()
-      )
-      .subscribe();
+    // Wallet realtime subscription removed — candidate area is now subscription-only.
 
     // Subscribe to real-time job updates
     const channel = supabase
@@ -2246,8 +2231,8 @@ const CandidateDashboard = () => {
                   </Badge>
                 )}
                 {item.id === "wallet" && (
-                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0 bg-accent/15 text-accent border-accent/20">
-                    ₹{walletPoints}
+                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0 bg-primary/10 text-primary border-primary/20">
+                    {candidateSub.planDef.name}
                   </Badge>
                 )}
               </button>
@@ -4718,9 +4703,9 @@ const CandidateDashboard = () => {
               <ExternalJobListings />
             )}
 
-            {/* Wallet */}
+            {/* Subscription */}
             {activeMenu === "wallet" && profile?.id && (
-              <WalletTab userId={profile.id} />
+              <SubscriptionTab />
             )}
 
             {/* Upgrade Plans */}
