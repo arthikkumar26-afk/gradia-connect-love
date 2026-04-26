@@ -457,15 +457,10 @@ export const SMMContent = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Create a general flyer for all your open positions
                 </p>
-                <QRFlyerModal
+                <FlyerLauncher
                   employerId={user?.id || ""}
                   companyName={companyName || profile?.company_name || "Company"}
-                  trigger={
-                    <Button>
-                      <FileText className="h-4 w-4 mr-2" />
-                      Create Company Flyer
-                    </Button>
-                  }
+                  buttonLabel="Create Company Flyer"
                 />
               </div>
             </CardContent>
