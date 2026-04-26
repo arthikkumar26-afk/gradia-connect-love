@@ -314,6 +314,7 @@ export const TestPapersContent = () => {
 
   const handlePreview = async (paper: QuestionPaper) => {
     setPreviewPaper(paper);
+    setPreviewJobId(paper.assigned_jobs[0]?.job_id || "");
     setLoadingPreview(true);
     try {
       const { data, error } = await supabase
@@ -331,6 +332,23 @@ export const TestPapersContent = () => {
       setLoadingPreview(false);
     }
   };
+
+  // Filter preview questions based on selected job's section_config
+  const filteredPreviewQuestions = (() => {
+    if (!previewPaper || !previewJobId) return previewQuestions;
+    const assignment = previewPaper.assigned_jobs.find(a => a.job_id === previewJobId);
+    const config = assignment?.section_config;
+    if (!config || Object.keys(config).length === 0) return previewQuestions;
+
+    const counters: Record<string, number> = {};
+    return previewQuestions.filter(q => {
+      const sec = q.section || "General";
+      const limit = config[sec] ?? 0;
+      if (limit <= 0) return false;
+      counters[sec] = (counters[sec] || 0) + 1;
+      return counters[sec] <= limit;
+    });
+  })();
 
   const getStageTypeLabel = (type: string) => {
     const map: Record<string, string> = {
