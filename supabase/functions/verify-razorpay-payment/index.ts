@@ -234,7 +234,7 @@ serve(async (req) => {
     } catch (e) { console.error('[verify-razorpay-payment] receipt send failed', e); }
 
     return new Response(JSON.stringify({
-      success: true, subscription_id: subscription.id,
+      success: true, verified: true, subscription_id: subscription.id,
       message: 'Payment verified and subscription activated',
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error: any) {
