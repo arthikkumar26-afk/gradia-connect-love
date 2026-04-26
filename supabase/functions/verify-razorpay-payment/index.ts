@@ -65,6 +65,7 @@ serve(async (req) => {
     const {
       razorpay_order_id, razorpay_payment_id, razorpay_signature,
       plan_id, plan_name, amount, employer_id, billing_cycle,
+      item_name, item_type, user_role,
     } = body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -77,7 +78,9 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (userId !== employer_id) {
+    // Only enforce employer_id match when this is an employer subscription flow.
+    const isEmployerSubscriptionFlow = !!employer_id;
+    if (isEmployerSubscriptionFlow && userId !== employer_id) {
       await log({
         event_type: 'verify.user_mismatch', status: 'failure', user_id: userId, http_status: 403,
         razorpay_order_id, razorpay_payment_id, request_body: body,
@@ -114,6 +117,38 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, SERVICE_KEY);
 
+    // Non-employer flows (candidate subscriptions, wallet top-ups, unlocks, etc.):
+    // Signature is valid — caller handles its own DB writes. Just send receipt + return.
+    if (!isEmployerSubscriptionFlow) {
+      await log({
+        event_type: 'verify.success', status: 'success', user_id: userId, http_status: 200,
+        razorpay_order_id, razorpay_payment_id, razorpay_signature, signature_valid: true,
+        amount_paise: typeof amount === 'number' ? amount * 100 : null, currency: 'INR',
+        request_body: body,
+        metadata: { item_type, user_role, item_name },
+      });
+
+      try {
+        await admin.functions.invoke('send-payment-receipt', {
+          body: {
+            user_id: userId,
+            payment_id: razorpay_payment_id,
+            order_id: razorpay_order_id,
+            amount,
+            item_name: item_name || plan_name || 'Gradia Service',
+            item_description: item_name || plan_name || 'Gradia Service',
+            item_type: item_type || 'subscription',
+            user_role: user_role || 'candidate',
+          },
+        });
+      } catch (e) { console.error('[verify-razorpay-payment] receipt send failed', e); }
+
+      return new Response(JSON.stringify({
+        success: true, verified: true,
+        message: 'Payment verified',
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // Idempotency: if this Razorpay payment already activated a subscription, return it.
     const { data: existing } = await supabase
       .from('subscriptions')
@@ -129,7 +164,7 @@ serve(async (req) => {
         request_body: body,
       });
       return new Response(JSON.stringify({
-        success: true, subscription_id: existing.id, plan_id: existing.plan_id,
+        success: true, verified: true, subscription_id: existing.id, plan_id: existing.plan_id,
         status: existing.status, idempotent: true,
         message: 'Subscription already active for this payment',
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -155,7 +190,7 @@ serve(async (req) => {
           .maybeSingle();
         if (raced) {
           return new Response(JSON.stringify({
-            success: true, subscription_id: raced.id, plan_id: raced.plan_id,
+            success: true, verified: true, subscription_id: raced.id, plan_id: raced.plan_id,
             status: raced.status, idempotent: true,
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
@@ -199,7 +234,7 @@ serve(async (req) => {
     } catch (e) { console.error('[verify-razorpay-payment] receipt send failed', e); }
 
     return new Response(JSON.stringify({
-      success: true, subscription_id: subscription.id,
+      success: true, verified: true, subscription_id: subscription.id,
       message: 'Payment verified and subscription activated',
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error: any) {
