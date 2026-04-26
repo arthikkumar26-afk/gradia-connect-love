@@ -71,6 +71,8 @@ export default function DemoRound() {
   const [voiceAIMessage, setVoiceAIMessage] = useState('');
   const [lastSpokenInstruction, setLastSpokenInstruction] = useState(-1);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [permissionErrorType, setPermissionErrorType] = useState<PermissionErrorType | null>(null);
+  const [showPermissionHelp, setShowPermissionHelp] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,6 +106,7 @@ export default function DemoRound() {
     }
   });
 
+type PermissionErrorType = 'denied' | 'notfound' | 'inuse' | 'insecure' | 'unsupported' | 'unknown';
 
   const MAX_DURATION = 600; // 10 minutes
 
