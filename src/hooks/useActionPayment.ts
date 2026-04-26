@@ -61,7 +61,8 @@ export const useActionPayment = () => {
           name: "Gradia",
           description: data.label,
           order_id: data.order_id,
-          prefill: { name: args.userName || "", email: args.userEmail || "" },
+          prefill: { name: args.userName || "", email: args.userEmail || "", contact: "" },
+          hidden: { contact: true },
           theme: { color: "#0066ff" },
           handler: async (response: any) => {
             const { data: verify, error: vErr } = await supabase.functions.invoke(
