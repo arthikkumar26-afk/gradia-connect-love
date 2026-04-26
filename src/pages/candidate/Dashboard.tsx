@@ -81,6 +81,7 @@ import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import WalletTab from "@/components/candidate/WalletTab";
+import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
 import { useActionPayment } from "@/hooks/useActionPayment";
 
 interface FamilyRecord {
