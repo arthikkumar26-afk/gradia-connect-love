@@ -1691,18 +1691,18 @@ export const MockInterviewTab = () => {
                   <>
                     <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
                       <Crown className="h-4 w-4" />
-                      Upgrade to Pro — 5 tests/month (₹499/mo)
+                      Upgrade to Pro — 10 tests/month (₹15,000/mo)
                     </Button>
                     <Button variant="outline" className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
                       <Zap className="h-4 w-4" />
-                      Go Premium — Unlimited tests (₹999/mo)
+                      Go Premium — Unlimited tests (₹30,000/mo)
                     </Button>
                   </>
                 )}
                 {mockTestLimits.plan === 'pro' && (
                   <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
                     <Crown className="h-4 w-4" />
-                    Upgrade to Premium — Unlimited tests (₹999/mo)
+                    Upgrade to Premium — Unlimited tests (₹30,000/mo)
                   </Button>
                 )}
               </div>
