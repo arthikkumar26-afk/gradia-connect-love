@@ -330,7 +330,7 @@ export const UpgradePlanContent = () => {
         <p className="text-muted-foreground mb-6">
           {currentPlan
             ? `You're currently on the ${plans.find((p) => p.id === currentPlan)?.name || "Starter"} plan`
-            : "Select a plan • Pay with wallet points"}
+            : "Select a plan • Pay securely with Razorpay"}
         </p>
         <Badge variant="secondary" className="text-xs">₹5,000 = 1,000 Points</Badge>
       </div>
@@ -413,8 +413,8 @@ export const UpgradePlanContent = () => {
                     : plan.cta === "free"
                     ? "Get Started Free"
                     : isUpgrade
-                    ? `Upgrade – ${plan.points} pts`
-                    : `Switch – ${plan.points} pts`}
+                    ? `Upgrade – Pay ₹${(plan.points * 5).toLocaleString("en-IN")}`
+                    : `Switch – Pay ₹${(plan.points * 5).toLocaleString("en-IN")}`}
                 </Button>
 
                 {/* Coupon Input for paid plans */}
