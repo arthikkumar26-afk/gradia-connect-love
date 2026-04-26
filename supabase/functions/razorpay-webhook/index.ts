@@ -108,6 +108,86 @@ serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
+  // Activate subscription on payment.captured (server-to-server fallback when handler() never fires)
+  if (eventType === 'payment.captured' && paymentEntity) {
+    try {
+      const notes = paymentEntity.notes || {};
+      const userId = notes.user_id || userIdNote;
+      const planId = (notes.plan_id || '').toString().toLowerCase();
+      const flow = (notes.flow || '').toString();
+
+      // Candidate subscription flow: notes.plan_id is set ('basic'/'pro'/etc.) and not an employer flow
+      if (userId && planId && flow !== 'employer_subscription') {
+        // Idempotency: skip if we've already recorded this payment_id
+        const { data: existingLog } = await admin.from('razorpay_webhook_logs')
+          .select('id')
+          .eq('razorpay_payment_id', razorpayPaymentId)
+          .eq('event_type', 'webhook.subscription_activated')
+          .maybeSingle();
+
+        if (!existingLog) {
+          // Cancel any other active candidate subscriptions
+          await admin.from('candidate_subscriptions')
+            .update({ status: 'inactive', updated_at: new Date().toISOString() })
+            .eq('candidate_id', userId)
+            .eq('status', 'active');
+
+          const startedAt = new Date();
+          const endsAt = new Date(startedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+          const { data: sub, error: insertErr } = await admin.from('candidate_subscriptions')
+            .insert({
+              candidate_id: userId,
+              plan: planId,
+              status: 'active',
+              started_at: startedAt.toISOString(),
+              ends_at: endsAt.toISOString(),
+            })
+            .select().single();
+
+          await admin.from('razorpay_webhook_logs').insert({
+            source: 'webhook',
+            event_type: 'webhook.subscription_activated',
+            status: insertErr ? 'error' : 'success',
+            razorpay_order_id: razorpayOrderId,
+            razorpay_payment_id: razorpayPaymentId,
+            user_id: userId,
+            amount_paise: typeof amountPaise === 'number' ? amountPaise : null,
+            currency,
+            related_table: 'candidate_subscriptions',
+            related_id: sub?.id || null,
+            error_message: insertErr?.message || null,
+            metadata: { plan_id: planId, activated_via: 'webhook_fallback' },
+          });
+
+          // Fire-and-forget receipt email
+          if (!insertErr) {
+            try {
+              await admin.functions.invoke('send-payment-receipt', {
+                body: {
+                  user_id: userId,
+                  payment_id: razorpayPaymentId,
+                  order_id: razorpayOrderId,
+                  amount: typeof amountPaise === 'number' ? amountPaise / 100 : null,
+                  item_name: `${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan Subscription`,
+                  item_description: `Candidate ${planId} plan subscription`,
+                  item_type: 'subscription',
+                  user_role: 'candidate',
+                },
+              });
+            } catch (e) { console.error('[razorpay-webhook] receipt send failed', e); }
+          }
+        }
+      }
+    } catch (actErr: any) {
+      console.error('[razorpay-webhook] activation error', actErr);
+      await admin.from('razorpay_webhook_logs').insert({
+        source: 'webhook', event_type: 'webhook.activation_exception', status: 'error',
+        razorpay_payment_id: razorpayPaymentId, razorpay_order_id: razorpayOrderId,
+        error_message: actErr?.message || String(actErr),
+      });
+    }
+  }
+
   return new Response(JSON.stringify({ ok: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });
