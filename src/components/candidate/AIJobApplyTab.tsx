@@ -63,7 +63,11 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const hasAnalysis = !!(localResumeAnalysis || resumeAnalysis);
   const effectiveAnalysis = localResumeAnalysis || resumeAnalysis;
   const effectiveProfile = localProfile || profile;
-  const hasAccess = candidatePlan === "pro" || candidatePlan === "premium";
+  const [dayPassExpiresAt, setDayPassExpiresAt] = useState<number | null>(null);
+  const [isPurchasingDayPass, setIsPurchasingDayPass] = useState(false);
+  const DAY_PASS_POINTS = 400;
+  const hasActiveDayPass = !!dayPassExpiresAt && dayPassExpiresAt > Date.now();
+  const hasAccess = candidatePlan === "pro" || candidatePlan === "premium" || hasActiveDayPass;
 
   // Sync external props into local state when they update
   useEffect(() => { if (resumeAnalysis) setLocalResumeAnalysis(resumeAnalysis); }, [resumeAnalysis]);
