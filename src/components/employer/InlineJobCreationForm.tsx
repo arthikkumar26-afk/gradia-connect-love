@@ -599,6 +599,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     toast({ title: "Vacancy applied!", description: "Interview type, role & fields auto-filled. Review and submit." });
   };
 
+  const POST_JOB_COST = 1100;
+
   const onSubmit = async (values: JobFormValues) => {
     setIsSubmitting(true);
     try {
@@ -609,9 +611,27 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         return;
       }
 
+      // Check wallet balance before posting
+      const { data: wallet, error: walletErr } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (walletErr) throw walletErr;
+      if (!wallet || (wallet.points_balance ?? 0) < POST_JOB_COST) {
+        toast({
+          title: "Insufficient points",
+          description: `Posting a job requires ${POST_JOB_COST} pts. Please top up your wallet.`,
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const skillsArray = (values.skills || "").split(",").map((s) => s.trim()).filter((s) => s.length > 0);
 
-      const { error } = await supabase.from("jobs").insert([{
+      const { data: insertedJob, error } = await supabase.from("jobs").insert([{
         employer_id: user.id,
         job_title: values.job_title || "Untitled Job",
         department: values.department || null,
