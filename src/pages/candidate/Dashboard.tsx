@@ -4718,9 +4718,9 @@ const CandidateDashboard = () => {
               <ExternalJobListings />
             )}
 
-            {/* Wallet */}
+            {/* Subscription */}
             {activeMenu === "wallet" && profile?.id && (
-              <WalletTab userId={profile.id} />
+              <SubscriptionTab />
             )}
 
             {/* Upgrade Plans */}
