@@ -3946,6 +3946,29 @@ const CandidateDashboard = () => {
                 return Boolean(w.text);
               }).slice(0, 8);
 
+              // Score breakdown — Resume sections vs Mock Interview rounds
+              const resumeScore = typeof (resumeAnalysis as any)?.score === "number" ? (resumeAnalysis as any).score : null;
+              const resumeWeakCount = uniqueWeakAreas.filter(w => w.source === "Resume").length;
+              const mockWeakCount = uniqueWeakAreas.filter(w => w.source === "Mock Interview").length;
+
+              const mockRounds = (mockInterviewStageResults || []).map((s: any) => ({
+                name: s?.stage_name || s?.name || "Round",
+                score: typeof s?.score === "number" ? s.score : null,
+              }));
+              const scoredRounds = mockRounds.filter(r => typeof r.score === "number") as { name: string; score: number }[];
+              const mockAvg = scoredRounds.length
+                ? Math.round(scoredRounds.reduce((sum, r) => sum + r.score, 0) / scoredRounds.length)
+                : null;
+              const weakRounds = scoredRounds.filter(r => r.score < 60);
+              const strongRounds = scoredRounds.filter(r => r.score >= 75);
+
+              const scoreBadgeClass = (n: number | null) =>
+                n == null ? "bg-muted text-muted-foreground"
+                  : n >= 75 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                  : n >= 60 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                  : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
+
+
               // Skillory suggested courses — all open skilory.in
               const skilloryCourses = (upskillCourseSuggestions && upskillCourseSuggestions.length > 0)
                 ? upskillCourseSuggestions.map((c: any) => ({
