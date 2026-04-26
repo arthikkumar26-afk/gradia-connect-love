@@ -1,0 +1,2 @@
+UPDATE candidate_subscriptions SET status='inactive', updated_at=now() WHERE candidate_id='46f55b6d-43bd-44a8-8bb6-25950c66a242' AND status='active';
+INSERT INTO candidate_subscriptions (candidate_id, plan, status, started_at, ends_at) VALUES ('46f55b6d-43bd-44a8-8bb6-25950c66a242', 'basic', 'active', now(), now() + interval '30 days');
