@@ -474,10 +474,10 @@ const CandidateDashboard = () => {
     }
 
     toast({
-      title: "🎉 Subscription Activated!",
-      description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active. Paid ₹${chargedAmount}.`,
+      title: `✅ ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Activated`,
+      description: `Payment of ₹${chargedAmount} confirmed. A receipt has been emailed to you. Refreshing your dashboard with new benefits…`,
     });
-    window.location.reload();
+    setTimeout(() => window.location.reload(), 1800);
   };
 
   const handleCandidateUpgrade = async (plan: string, planPrice: number) => {
@@ -545,17 +545,18 @@ const CandidateDashboard = () => {
             );
 
             if (verifyError || !verifyData?.verified) {
-              throw new Error("Payment verification failed");
+              throw new Error(verifyError?.message || "Payment verification failed");
             }
 
+            try { rzp.close(); } catch {}
             await activateCandidateSubscription(plan, amountToCharge, planPrice);
           } catch (err: any) {
+            try { rzp.close(); } catch {}
             toast({
-              title: "Activation failed",
-              description: err.message || "Payment received but activation failed. Contact support.",
+              title: "❌ Payment verification failed",
+              description: err.message || "Your payment was received but could not be verified. Please contact support with your payment ID.",
               variant: "destructive",
             });
-          } finally {
             setUpgradingPlan(null);
           }
         },
