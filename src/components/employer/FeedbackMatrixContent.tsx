@@ -57,6 +57,8 @@ interface CandidateProfile {
   highestQualification?: string;
 }
 
+const FEEDBACK_REVIEW_COST = 150;
+
 export const FeedbackMatrixContent = () => {
   const { user } = useAuth();
   const [feedbackEntries, setFeedbackEntries] = useState<FeedbackEntry[]>([]);
@@ -71,9 +73,83 @@ export const FeedbackMatrixContent = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
 
+  // Per-candidate review unlocks (150 pts each)
+  const [unlockedReviews, setUnlockedReviews] = useState<Set<string>>(new Set());
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
+
   useEffect(() => {
     fetchFeedbackData();
   }, [user?.id]);
+
+  // Preload prior unlocks so employer doesn't pay twice
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("wallet_transactions")
+        .select("description")
+        .eq("category", "feedback_review_unlock");
+      if (data) {
+        const ids = new Set<string>();
+        data.forEach((r: any) => {
+          const m = String(r.description || "").match(/\[cid:([0-9a-f-]+)\]/i);
+          if (m) ids.add(m[1]);
+        });
+        setUnlockedReviews(ids);
+      }
+    })();
+  }, [user?.id]);
+
+  const ensureReviewUnlocked = async (entry: FeedbackEntry): Promise<boolean> => {
+    if (!user?.id) {
+      toast.error("Please sign in");
+      return false;
+    }
+    if (unlockedReviews.has(entry.candidateId)) return true;
+
+    setUnlockingId(entry.candidateId);
+    try {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!wallet) {
+        toast.error("Wallet not found. Please load points first.");
+        return false;
+      }
+      const balance = wallet.points_balance ?? 0;
+      if (balance < FEEDBACK_REVIEW_COST) {
+        toast.error(`Insufficient points. Need ${FEEDBACK_REVIEW_COST} pts, have ${balance} pts.`);
+        return false;
+      }
+
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - FEEDBACK_REVIEW_COST })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "feedback_review_unlock",
+        amount: 0,
+        points: FEEDBACK_REVIEW_COST,
+        description: `Feedback review unlocked for ${entry.candidateName} [cid:${entry.candidateId}]`,
+      });
+
+      setUnlockedReviews((prev) => new Set(prev).add(entry.candidateId));
+      toast.success(`${FEEDBACK_REVIEW_COST} pts deducted. Review unlocked.`);
+      return true;
+    } catch (e: any) {
+      console.error("Feedback unlock error:", e);
+      toast.error(e.message || "Failed to deduct points");
+      return false;
+    } finally {
+      setUnlockingId(null);
+    }
+  };
 
   const fetchFeedbackData = async () => {
     if (!user?.id) return;
@@ -148,6 +224,8 @@ export const FeedbackMatrixContent = () => {
 
   const handleCandidateClick = async (entry: FeedbackEntry, e: React.MouseEvent) => {
     e.stopPropagation();
+    const ok = await ensureReviewUnlocked(entry);
+    if (!ok) return;
     setSelectedCandidate(entry.candidateId);
     setPopupOpen(true);
     setProfileLoading(true);
@@ -331,6 +409,11 @@ export const FeedbackMatrixContent = () => {
                         >
                           {entry.candidateName}
                         </span>
+                        {!unlockedReviews.has(entry.candidateId) && (
+                          <Badge variant="outline" className="text-[10px] ml-1">
+                            {unlockingId === entry.candidateId ? "..." : `${FEEDBACK_REVIEW_COST} pts`}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>{entry.jobTitle}</TableCell>
