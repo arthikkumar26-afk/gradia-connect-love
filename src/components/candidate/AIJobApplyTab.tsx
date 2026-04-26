@@ -582,10 +582,28 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
               <p className="text-xs text-muted-foreground mt-1">Unlimited auto-applies</p>
             </Card>
           </div>
-          <Button onClick={onNavigateToUpgrade} className="gap-2">
-            <Crown className="h-4 w-4" />
-            Upgrade Now
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button onClick={onNavigateToUpgrade} className="gap-2">
+              <Crown className="h-4 w-4" />
+              Upgrade Now
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePurchaseDayPass}
+              disabled={isPurchasingDayPass}
+              className="gap-2"
+            >
+              {isPurchasingDayPass ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Rocket className="h-4 w-4" />
+              )}
+              Unlock 1 Day — ₹{DAY_PASS_POINTS}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            Pay ₹{DAY_PASS_POINTS} from your wallet to unlock AI Job Apply for 24 hours.
+          </p>
         </Card>
       </div>
     );
