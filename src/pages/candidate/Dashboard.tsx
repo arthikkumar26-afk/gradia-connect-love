@@ -329,6 +329,7 @@ const CandidateDashboard = () => {
           .from("candidate_subscriptions")
           .select("*")
           .eq("candidate_id", profile.id)
+          .eq("status", "active")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
