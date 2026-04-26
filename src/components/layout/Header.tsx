@@ -179,13 +179,8 @@ const Header = () => {
               Employer
             </Link>
 
-            <Link to="/freelancer/login" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-              Freelancer
-            </Link>
+            {/* Freelancer & EduTech temporarily hidden */}
 
-            <Link to="/edutech/login" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-              EduTech
-            </Link>
 
             <Link to="/pricing" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
               Pricing
@@ -249,28 +244,8 @@ const Header = () => {
                         </div>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/freelancer/login" className="flex items-center gap-3 py-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900">
-                          <Award className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-foreground">Freelancer Login</div>
-                          <div className="text-xs text-muted-foreground">Projects & mentorship</div>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/edutech/login" className="flex items-center gap-3 py-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900">
-                          <GraduationCap className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-foreground">EduTech Login</div>
-                          <div className="text-xs text-muted-foreground">Institutes & training</div>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
+                    {/* Freelancer & EduTech logins temporarily hidden */}
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link to="/admin/login" className="flex items-center gap-3 py-2">
