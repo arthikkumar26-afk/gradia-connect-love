@@ -507,6 +507,19 @@ const CandidateDashboard = () => {
 
       toast({ title: "Opening payment…", description: `Pay ₹${amountToCharge} via Razorpay to activate ${plan}` });
 
+      // Ensure we have a fresh session token before invoking the edge function
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        toast({ title: "Session expired", description: "Please sign in again to continue.", variant: "destructive" });
+        setUpgradingPlan(null);
+        return;
+      }
+      // Refresh proactively if token expires within 60s
+      const expiresAt = sessionData.session.expires_at ?? 0;
+      if (expiresAt && expiresAt * 1000 - Date.now() < 60_000) {
+        await supabase.auth.refreshSession();
+      }
+
       // Create Razorpay order
       const { data: orderData, error: orderError } = await supabase.functions.invoke(
         "create-razorpay-order",

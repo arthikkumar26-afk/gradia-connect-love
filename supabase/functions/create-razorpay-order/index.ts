@@ -25,17 +25,15 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
     const admin = createClient(supabaseUrl, SERVICE_KEY);
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    const token = authHeader.replace('Bearer ', '').trim();
+    // Validate JWT using admin client (does not depend on a stored session)
+    const { data: userData, error: userError } = await admin.auth.getUser(token);
     if (userError || !userData?.user) {
-      console.error('[create-razorpay-order] auth failed:', userError?.message);
+      console.error('[create-razorpay-order] auth failed:', userError?.message || 'no user');
       return new Response(
-        JSON.stringify({ error: 'Invalid authentication token' }),
+        JSON.stringify({ error: 'Your session has expired. Please refresh the page and sign in again.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
