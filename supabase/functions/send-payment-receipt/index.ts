@@ -32,8 +32,33 @@ const COMPANY = {
   email: "info@gradiaa.com",
   website: "www.gradiaa.com",
   gstin: "—",
-  brandHex: "#5b21b6",
+  brandHex: "#1e6fd9",
+  accentHex: "#22c55e",
 };
+
+// RGB tuples derived from logo: blue + green
+const BRAND_RGB: [number, number, number] = [30, 111, 217];
+const ACCENT_RGB: [number, number, number] = [34, 197, 94];
+
+const LOGO_URL =
+  "https://cybqlimobxpjygwcdojv.supabase.co/storage/v1/object/public/profile-pictures/brand/gradia-logo.png";
+
+async function fetchLogoDataUrl(): Promise<string | null> {
+  try {
+    const r = await fetch(LOGO_URL);
+    if (!r.ok) return null;
+    const buf = new Uint8Array(await r.arrayBuffer());
+    let bin = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < buf.length; i += chunk) {
+      bin += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + chunk)) as any);
+    }
+    return `data:image/png;base64,${btoa(bin)}`;
+  } catch (e) {
+    console.error("[send-payment-receipt] logo fetch failed", e);
+    return null;
+  }
+}
 
 function inr(n: number): string {
   return `INR ${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
