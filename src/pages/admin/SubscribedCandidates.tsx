@@ -593,8 +593,8 @@ const SubscribedCandidates = () => {
                 <Select value={activatePlan} onValueChange={(v) => setActivatePlan(v as "pro" | "premium")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pro">Pro (₹499/mo)</SelectItem>
-                    <SelectItem value="premium">Premium (₹999/mo)</SelectItem>
+                    <SelectItem value="pro">Pro (₹15,000/mo)</SelectItem>
+                    <SelectItem value="premium">Premium (₹30,000/mo)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
