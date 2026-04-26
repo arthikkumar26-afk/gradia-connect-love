@@ -15,7 +15,7 @@ declare global {
 }
 
 const plans = [
-  { id: 'basic', name: 'Basic', duration: '1 Month', price: 2499, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
+  { id: 'basic', name: 'Basic', duration: '1 Month', price: 5, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
   { id: 'standard', name: 'Standard', duration: '3 Months', price: 4999, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
   { id: 'premium', name: 'Premium', duration: '6 Months', price: 9999, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
 ];
