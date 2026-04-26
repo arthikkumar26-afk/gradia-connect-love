@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -811,72 +813,7 @@ export default function WalletTab({ userId }: { userId: string }) {
 
         {/* Transaction History */}
         <TabsContent value="history" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Transaction History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {transactions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Wallet className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                  <p>No transactions yet</p>
-                  <p className="text-xs mt-1">Your wallet activity will appear here</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {transactions.map((txn) => {
-                    const Icon = categoryIcons[txn.category] || IndianRupee;
-                    const colorClass = categoryColors[txn.category] || "text-gray-600 bg-gray-100";
-                    const isCredit = txn.transaction_type === "credit";
-                    return (
-                      <div key={txn.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className={`p-2 rounded-lg ${colorClass}`}>
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {txn.description || (categoryLabels[txn.category] || txn.category.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()))}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(txn.created_at).toLocaleDateString("en-IN", {
-                              day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          {txn.amount > 0 && (
-                            <p className={`text-sm font-semibold ${isCredit ? "text-green-600" : "text-red-600"}`}>
-                              {isCredit ? "+" : "-"}₹{txn.amount}
-                            </p>
-                          )}
-                          {txn.points > 0 && (
-                            <p className={`text-xs font-medium ${isCredit ? "text-yellow-600" : "text-red-500"}`}>
-                              {isCredit ? "+" : "-"}{txn.points} pts
-                            </p>
-                          )}
-                          {txn.rewards > 0 && (
-                            <p className={`text-xs font-medium ${isCredit ? "text-purple-600" : "text-red-500"}`}>
-                              {isCredit ? "+" : "-"}{txn.rewards} rewards
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          {isCredit ? (
-                            <ArrowDownLeft className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <ArrowUpRight className="h-4 w-4 text-red-500" />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <TransactionHistoryPanel transactions={transactions} />
         </TabsContent>
       </Tabs>
 
