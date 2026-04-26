@@ -35,6 +35,8 @@ interface QRFlyerModalProps {
   companyLogo?: string;
   jobData?: JobData | null;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // ---- Theme colors ----
@@ -64,8 +66,14 @@ const splitDescriptionIntoResponsibilities = (desc?: string | null) => {
   });
 };
 
-const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, jobData, trigger }: QRFlyerModalProps) => {
-  const [open, setOpen] = useState(false);
+const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, jobData, trigger, open: openProp, onOpenChange }: QRFlyerModalProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (!isControlled) setInternalOpen(v);
+    onOpenChange?.(v);
+  };
   const [isGenerating, setIsGenerating] = useState(false);
   const flyerRef = useRef<HTMLDivElement>(null);
 
