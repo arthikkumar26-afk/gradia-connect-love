@@ -432,90 +432,147 @@ const CandidateDashboard = () => {
 
   // Trial removed - direct subscription only
 
-  const handleCandidateUpgrade = async (plan: string, pointsCost: number) => {
+  const activateCandidateSubscription = async (
+    plan: string,
+    chargedAmount: number,
+    originalAmount: number,
+  ) => {
+    if (!profile?.id) return;
+    // Deactivate old subs
+    await supabase
+      .from("candidate_subscriptions")
+      .update({ status: "inactive" })
+      .eq("candidate_id", profile.id)
+      .in("status", ["active", "trial"]);
+
+    // Activate new sub
+    const { error: insertErr } = await supabase
+      .from("candidate_subscriptions")
+      .insert({
+        candidate_id: profile.id,
+        plan,
+        status: "active",
+        started_at: new Date().toISOString(),
+        ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+
+    if (insertErr) throw insertErr;
+
+    // Record coupon usage if applied
+    if (candidateCoupon?.plan === plan) {
+      await supabase.from("coupon_usages").insert({
+        coupon_id: candidateCoupon.couponId,
+        user_id: profile.id,
+        user_role: "candidate",
+        plan_name: plan,
+        discount_applied: candidateCoupon.discount,
+        original_amount: originalAmount,
+        final_amount: candidateCoupon.finalAmount,
+      });
+      await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: candidateCoupon.couponId });
+      setCandidateCoupon(null);
+    }
+
+    toast({
+      title: "🎉 Subscription Activated!",
+      description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active. Paid ₹${chargedAmount}.`,
+    });
+    window.location.reload();
+  };
+
+  const handleCandidateUpgrade = async (plan: string, planPrice: number) => {
     if (!profile?.id) return;
     setUpgradingPlan(plan);
     try {
-      toast({ title: "Processing subscription...", description: "Checking wallet balance" });
+      // Determine final price (apply coupon if present for this plan)
+      const amountToCharge =
+        candidateCoupon?.plan === plan ? candidateCoupon.finalAmount : planPrice;
 
-      // Get wallet
-      const { data: wallet, error: walletErr } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("user_id", profile.id)
-        .maybeSingle();
+      toast({ title: "Opening payment…", description: `Pay ₹${amountToCharge} via Razorpay to activate ${plan}` });
 
-      if (walletErr || !wallet) {
-        throw new Error("Wallet not found. Please visit My Wallet first.");
+      // Create Razorpay order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke(
+        "create-razorpay-order",
+        {
+          body: {
+            amount: amountToCharge,
+            currency: "INR",
+            receipt: `sub_${plan}_${profile.id.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
+          },
+        },
+      );
+
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderError?.message || orderData?.error || "Failed to create payment order");
       }
 
-      if ((wallet.points_balance || 0) < pointsCost) {
-        toast({
-          title: "Insufficient Balance",
-          description: `You need ₹${pointsCost} but have ₹${wallet.points_balance || 0}. Top up from My Wallet.`,
-          variant: "destructive",
+      // Load Razorpay checkout script if not present
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load payment gateway"));
+          document.body.appendChild(script);
         });
-        return;
       }
 
-      // Deduct points
-      const newBalance = (wallet.points_balance || 0) - pointsCost;
-      const { error: deductErr } = await supabase
-        .from("wallets")
-        .update({ points_balance: newBalance })
-        .eq("id", wallet.id);
-
-      if (deductErr) throw new Error("Failed to deduct points");
-
-      // Record transaction
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        transaction_type: "debit",
-        category: "subscription",
-        points: pointsCost,
+      const options = {
+        key: orderData.key_id,
+        amount: amountToCharge * 100,
+        currency: "INR",
+        name: "Gradia",
         description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Subscription`,
-      });
+        order_id: orderData.order_id,
+        prefill: {
+          name: profile?.full_name || "",
+          email: profile?.email || "",
+        },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
+              "verify-razorpay-payment",
+              {
+                body: {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  item_name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Subscription`,
+                  item_type: "subscription",
+                  user_role: "candidate",
+                },
+              },
+            );
 
-      // Deactivate old subs
-      await supabase
-        .from("candidate_subscriptions")
-        .update({ status: "inactive" })
-        .eq("candidate_id", profile.id)
-        .in("status", ["active", "trial"]);
+            if (verifyError || !verifyData?.verified) {
+              throw new Error("Payment verification failed");
+            }
 
-      // Activate new sub
-      const { error: insertErr } = await supabase
-        .from("candidate_subscriptions")
-        .insert({
-          candidate_id: profile.id,
-          plan,
-          status: "active",
-          started_at: new Date().toISOString(),
-          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        });
+            await activateCandidateSubscription(plan, amountToCharge, planPrice);
+          } catch (err: any) {
+            toast({
+              title: "Activation failed",
+              description: err.message || "Payment received but activation failed. Contact support.",
+              variant: "destructive",
+            });
+          } finally {
+            setUpgradingPlan(null);
+          }
+        },
+        theme: { color: "#10b981" },
+        modal: {
+          ondismiss: () => setUpgradingPlan(null),
+        },
+      };
 
-      if (insertErr) throw insertErr;
-
-      // Record coupon usage if applied
-      if (candidateCoupon?.plan === plan) {
-        await supabase.from("coupon_usages").insert({
-          coupon_id: candidateCoupon.couponId,
-          user_id: profile.id,
-          user_role: "candidate",
-          plan_name: plan,
-          discount_applied: candidateCoupon.discount,
-          original_amount: pointsCost,
-          final_amount: candidateCoupon.finalAmount,
-        });
-        await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: candidateCoupon.couponId });
-        setCandidateCoupon(null);
-      }
-
-      toast({ title: "🎉 Subscription Activated!", description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active. ${pointsCost} pts deducted.` });
-      window.location.reload();
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (error: any) {
-      toast({ title: isNetworkError(error) ? "Connection Error" : "Error", description: friendlyError(error, "Failed to process"), variant: "destructive" });
-    } finally {
+      toast({
+        title: isNetworkError(error) ? "Connection Error" : "Error",
+        description: friendlyError(error, "Failed to start payment"),
+        variant: "destructive",
+      });
       setUpgradingPlan(null);
     }
   };
