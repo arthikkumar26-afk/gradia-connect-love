@@ -158,7 +158,7 @@ function generatePdf(
 
   // Items header
   y += 90;
-  doc.setFillColor(91, 33, 182);
+  doc.setFillColor(BRAND_RGB[0], BRAND_RGB[1], BRAND_RGB[2]);
   doc.rect(left, y, right - left, 26, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold"); doc.setFontSize(10);
@@ -194,7 +194,7 @@ function generatePdf(
   drawRow("Subtotal", inr(data.amount));
   drawRow("CGST (0%)", inr(0));
   drawRow("SGST (0%)", inr(0));
-  doc.setDrawColor(91, 33, 182);
+  doc.setDrawColor(BRAND_RGB[0], BRAND_RGB[1], BRAND_RGB[2]);
   doc.line(totalsX, y - 4, right - 12, y - 4);
   y += 4;
   drawRow("Total Paid", inr(data.amount), true);
@@ -232,9 +232,18 @@ function generatePdf(
 function emailHtml(data: ReceiptPayload, invoiceNo: string, paidAt: Date) {
   return `<!DOCTYPE html><html><body style="margin:0;background:#f5f4fa;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1f2937;">
   <div style="max-width:600px;margin:0 auto;background:#ffffff;">
-    <div style="background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 100%);padding:28px 32px;color:#fff;">
-      <div style="font-size:22px;font-weight:700;letter-spacing:1px;">GRADIA</div>
-      <div style="font-size:13px;opacity:.9;margin-top:4px;">Payment Receipt</div>
+    <div style="background:linear-gradient(135deg,#1e6fd9 0%,#22c55e 100%);padding:28px 32px;color:#fff;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding-right:14px;vertical-align:middle;">
+            <img src="${LOGO_URL}" alt="Gradia" width="44" height="44" style="display:block;border-radius:8px;background:#fff;padding:4px;" />
+          </td>
+          <td style="vertical-align:middle;">
+            <div style="font-size:22px;font-weight:700;letter-spacing:1px;line-height:1;">GRADIA</div>
+            <div style="font-size:13px;opacity:.9;margin-top:4px;">Payment Receipt</div>
+          </td>
+        </tr>
+      </table>
     </div>
     <div style="padding:32px;">
       <p style="font-size:16px;margin:0 0 8px;">Hi ${data.name || "there"},</p>
