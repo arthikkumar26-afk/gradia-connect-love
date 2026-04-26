@@ -479,7 +479,38 @@ export function EmailTemplatesEditor() {
         </CardContent>
       </Card>
 
+      {/* Paywall — shown until employer unlocks templates for this vacancy */}
+      {!isTemplatesUnlocked && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="p-3 rounded-full bg-primary/10 shrink-0">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-foreground">
+                Unlock Email Templates for this Vacancy
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Spend <span className="font-semibold text-primary">{TEMPLATE_UNLOCK_COST} pts</span> to customize and use email templates for{" "}
+                <span className="font-medium text-foreground">{selectedJob?.job_title || "this job"}</span>.
+                One-time deduction per vacancy.
+              </p>
+            </div>
+            <Button
+              onClick={handleUnlockTemplates}
+              disabled={!selectedJobId || unlocking}
+              size="lg"
+              className="shrink-0"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              {unlocking ? "Processing..." : `Unlock (${TEMPLATE_UNLOCK_COST} pts)`}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pipeline Stage Sidebar + Editor */}
+      {isTemplatesUnlocked && (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Stages List */}
         <Card className="lg:col-span-1">
