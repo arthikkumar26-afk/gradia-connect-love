@@ -292,6 +292,22 @@ const CandidateSignup = () => {
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
 
+  // Plan / payment step state
+  const [selectedPlanIdx, setSelectedPlanIdx] = useState<number>(2); // default Pro
+  const [paying, setPaying] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  useEffect(() => {
+    if ((window as any).Razorpay) { setRazorpayLoaded(true); return; }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) { existing.addEventListener('load', () => setRazorpayLoaded(true)); return; }
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.async = true;
+    s.onload = () => setRazorpayLoaded(true);
+    document.body.appendChild(s);
+  }, []);
+
   const normalizedIndustryCategory = industryCategory.trim().toLowerCase();
   const matchesIndustryCategory = (...categories: string[]) =>
     categories.some((category) => normalizedIndustryCategory === category.trim().toLowerCase());
