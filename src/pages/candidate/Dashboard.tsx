@@ -4936,15 +4936,23 @@ const CandidateDashboard = () => {
                         <Zap className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-lg">Basic</CardTitle>
-                      <p className="text-xs text-muted-foreground">Get started for just ₹5</p>
+                      <p className="text-xs text-muted-foreground">Kickstart your job hunt</p>
                       <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹5</span>
+                        <span className="text-2xl font-bold text-foreground">₹5,000</span>
                         <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
                       <ul className="space-y-2 flex-1">
-                        {["Job search & apply", "Basic profile creation", "Email notifications", "1 mock test", "View job recommendations"].map((f, i) => (
+                        {[
+                          "Unlimited job search & apply",
+                          "Full candidate profile builder",
+                          "1× Resume PDF export / month",
+                          "AI ATS score & basic resume report",
+                          "3× AI mock tests / month",
+                          "Application tracker & email alerts",
+                          "Personalised job recommendations",
+                        ].map((f, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs">
                             <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
                             <span className="text-muted-foreground">{f}</span>
@@ -4954,8 +4962,8 @@ const CandidateDashboard = () => {
                       {isActiveSub && candidateSubscription?.plan === "basic" ? (
                         <Button className="w-full" variant="outline" disabled>Current Plan</Button>
                       ) : (
-                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "basic"} onClick={() => handleCandidateUpgrade("basic", 5)}>
-                          {upgradingPlan === "basic" ? "Processing..." : "Subscribe – ₹5/mo"}
+                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "basic"} onClick={() => handleCandidateUpgrade("basic", 5000)}>
+                          {upgradingPlan === "basic" ? "Processing..." : "Subscribe – ₹5,000/mo"}
                         </Button>
                       )}
                     </CardContent>
@@ -4973,7 +4981,7 @@ const CandidateDashboard = () => {
                       <CardTitle className="text-lg">Pro</CardTitle>
                       <p className="text-xs text-muted-foreground">Accelerate your job search</p>
                        <div className="mt-3">
-                         <span className="text-2xl font-bold text-foreground">₹499</span>
+                         <span className="text-2xl font-bold text-foreground">₹15,000</span>
                          <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
@@ -4981,13 +4989,14 @@ const CandidateDashboard = () => {
                       <ul className="space-y-2 flex-1">
                         {[
                           "Everything in Basic",
-                          "AI Resume Analysis & Scoring",
-                          "All premium resume templates",
-                          "Priority job recommendations",
-                          "Mock test access (5/month)",
-                          "AI Job Apply (10 auto-applies/month)",
-                          "Interview preparation tips",
-                          "Profile visibility boost",
+                          "Advanced AI Resume Analysis & Scoring",
+                          "All premium resume templates + unlimited PDF exports",
+                          "Priority job matching & recommendations",
+                          "10× AI mock interviews / month (Tech + HR)",
+                          "AI Job Apply — 10 auto-applies / month",
+                          "AI cover letter generation",
+                          "Profile visibility boost (Featured tag)",
+                          "Interview preparation library access",
                         ].map((f, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs">
                             <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
@@ -5000,20 +5009,20 @@ const CandidateDashboard = () => {
                           Current Plan
                         </Button>
                       ) : (
-                         <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 499)}>
-                           {upgradingPlan === "pro" ? "Processing..." : "Subscribe – ₹499/mo"}
+                         <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 15000)}>
+                           {upgradingPlan === "pro" ? "Processing..." : "Subscribe – ₹15,000/mo"}
                         </Button>
                       )}
                       {!(isActiveSub && candidateSubscription?.plan === "pro") && (
                         <CouponInput
-                          originalAmount={499}
+                          originalAmount={15000}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "pro" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "pro" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹499</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹15,000</p>
                       )}
                     </CardContent>
                   </Card>
@@ -5028,7 +5037,7 @@ const CandidateDashboard = () => {
                       <CardTitle className="text-lg">Premium</CardTitle>
                       <p className="text-xs text-muted-foreground">Full career support</p>
                        <div className="mt-3">
-                         <span className="text-2xl font-bold text-foreground">₹999</span>
+                         <span className="text-2xl font-bold text-foreground">₹30,000</span>
                          <span className="text-muted-foreground text-xs">/month</span>
                        </div>
                     </CardHeader>
@@ -5036,13 +5045,15 @@ const CandidateDashboard = () => {
                       <ul className="space-y-2 flex-1">
                         {[
                           "Everything in Pro",
-                          "Unlimited mock tests",
-                          "AI Mock Interview Pipeline",
-                          "Unlimited AI Job Apply",
-                          "1-on-1 career coaching session",
-                          "Advanced analytics & insights",
-                          "Custom cover letter generation",
-                          "Direct recruiter messaging",
+                          "Unlimited AI mock tests & interviews",
+                          "Full AI Mock Interview Pipeline (Coding + Demo + HR + Final)",
+                          "Unlimited AI Job Apply (auto-apply 24×7)",
+                          "Dedicated 1-on-1 career coaching (2 sessions / month)",
+                          "AI-personalised 30-day career roadmap",
+                          "Custom AI cover letter for every job",
+                          "Direct recruiter messaging & verified badge",
+                          "Featured profile boost (3×) at top of search",
+                          "Advanced analytics & application insights",
                           "Priority support (4h response)",
                         ].map((f, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs">
@@ -5054,21 +5065,21 @@ const CandidateDashboard = () => {
                       {isActiveSub && candidateSubscription?.plan === "premium" ? (
                         <Button className="w-full" variant="outline" disabled>Current Plan</Button>
                       ) : (
-                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 999)}>
-                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe – ₹999/mo"}
+                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 30000)}>
+                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe – ₹30,000/mo"}
                         </Button>
                       )}
                       {/* Coupon for Premium */}
                       {!(isActiveSub && candidateSubscription?.plan === "premium") && (
                         <CouponInput
-                          originalAmount={999}
+                          originalAmount={30000}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "premium" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "premium" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹999</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹30,000</p>
                       )}
                     </CardContent>
                   </Card>
