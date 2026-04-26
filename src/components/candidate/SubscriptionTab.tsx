@@ -121,7 +121,6 @@ export default function SubscriptionTab() {
         prefill: {
           name: profile?.full_name || "",
           email: user?.email || "",
-          contact: profile?.phone || "",
         },
         theme: { color: "#7c3aed" },
         handler: async (response: any) => {
