@@ -15,9 +15,35 @@ declare global {
 }
 
 const plans = [
-  { id: 'basic', name: 'Basic', duration: '1 Month', price: 5, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
-  { id: 'standard', name: 'Standard', duration: '3 Months', price: 4999, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
-  { id: 'premium', name: 'Premium', duration: '6 Months', price: 9999, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
+  {
+    id: 'starter',
+    name: 'Starter',
+    duration: 'Free',
+    price: 0,
+    features: ['3 job posts', '1 team seat', 'Basic applicant tracker', 'Email support'],
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    duration: '1 Month',
+    price: 5000,
+    popular: true,
+    features: ['15 job posts', '5 team seats', 'Screening tests', 'Analytics dashboard', 'Priority support'],
+  },
+  {
+    id: 'professional',
+    name: 'Professional',
+    duration: '1 Month',
+    price: 15000,
+    features: ['50 job posts', '15 team seats', 'AI interview automation', 'Advanced analytics', 'Dedicated account manager', 'API access'],
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    duration: '1 Month',
+    price: 29000,
+    features: ['Unlimited job posts', 'Unlimited seats', 'Custom integrations', 'SLA guarantee', 'White-label options', 'Dedicated support team'],
+  },
 ];
 
 export default function Plans() {
