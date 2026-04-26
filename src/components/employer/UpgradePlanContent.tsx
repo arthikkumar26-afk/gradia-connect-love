@@ -210,8 +210,9 @@ export const UpgradePlanContent = () => {
         },
         handler: async (response: any) => {
           try {
-            // Verify payment server-side BEFORE granting plan / deducting points
-            const { error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
+            // Verify payment server-side BEFORE granting plan / deducting points.
+            // The edge function is the sole authority that activates the subscription.
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -225,9 +226,26 @@ export const UpgradePlanContent = () => {
             });
 
             if (verifyError) throw verifyError;
+            if (!verifyData?.success) {
+              throw new Error(verifyData?.error || "Payment could not be verified");
+            }
 
-            // Payment verified — record the wallet ledger entry for traceability
-            // (points are NOT deducted; the user paid cash via Razorpay).
+            // Re-read the active subscription from the DB so UI reflects the
+            // backend source of truth (works on refresh too — the effect re-runs).
+            const { data: activeSub } = await supabase
+              .from("subscriptions")
+              .select("plan_id, status")
+              .eq("employer_id", user.id)
+              .eq("status", "active")
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (!activeSub || activeSub.status !== "active") {
+              throw new Error("Subscription not found after payment. Please refresh.");
+            }
+
+            // Optional: traceability ledger entry (Razorpay-paid; no points deducted).
             const { data: wallet } = await supabase
               .from("wallets")
               .select("*")
@@ -259,13 +277,16 @@ export const UpgradePlanContent = () => {
               setSelectedPlanForCoupon(null);
             }
 
-            toast({ title: "Payment Successful!", description: `${selectedPlan.name} plan activated.` });
-            setCurrentPlan(planId);
+            toast({
+              title: verifyData.idempotent ? "Plan already active" : "Payment Successful!",
+              description: `${selectedPlan.name} plan activated.`,
+            });
+            setCurrentPlan(activeSub.plan_id);
           } catch (err: any) {
             console.error("Payment verification error:", err);
             toast({
               title: "Verification Failed",
-              description: "Payment received but verification failed. Please contact support.",
+              description: err?.message || "Payment received but verification failed. Please contact support.",
               variant: "destructive",
             });
           } finally {
