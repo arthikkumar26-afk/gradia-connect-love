@@ -96,31 +96,97 @@ const buildEmailHtml = (opts: {
     `<li>${String.fromCharCode(65 + i)}. ${jobRoles[i] || `Suitable Role ${i + 1}`}</li>`
   ).join("");
 
+  const planTiers: {
+    name: string;
+    headerColor: string;
+    bg: string;
+    highlight?: boolean;
+    features: { text: string; included: boolean; bold?: boolean; sub?: string }[];
+  }[] = [
+    {
+      name: "Basic",
+      headerColor: "#475569",
+      bg: "#ffffff",
+      features: [
+        { text: "Apply to job", included: true },
+        { text: "Resume export (1×)", included: true },
+        { text: "ATS score check", included: true },
+        { text: "Mock interview", included: false },
+        { text: "AI feedback report", included: false },
+        { text: "Featured profile boost", included: false },
+      ],
+    },
+    {
+      name: "Standard",
+      headerColor: "#1e3a8a",
+      bg: "#ffffff",
+      features: [
+        { text: "Apply to job", included: true },
+        { text: "Resume export (1×)", included: true },
+        { text: "ATS score check", included: true },
+        { text: "1× Mock Interview", included: true, bold: true, sub: "(Aptitude + 1 Technical round)" },
+        { text: "Basic AI feedback", included: true },
+        { text: "Featured boost", included: false },
+      ],
+    },
+    {
+      name: "Premium",
+      headerColor: "#b45309",
+      bg: "#fffbeb",
+      highlight: true,
+      features: [
+        { text: "Apply to job", included: true },
+        { text: "Resume export (2×)", included: true },
+        { text: "ATS score check", included: true },
+        { text: "2× Mock Interviews", included: true, bold: true, sub: "(Aptitude + Technical + HR rounds)" },
+        { text: "Detailed AI feedback report", included: true },
+        { text: "Featured profile boost (1×)", included: true },
+        { text: "Priority application tag", included: true },
+      ],
+    },
+    {
+      name: "Professional",
+      headerColor: "#065f46",
+      bg: "#ffffff",
+      features: [
+        { text: "Apply to job", included: true },
+        { text: "Unlimited resume exports", included: true },
+        { text: "ATS score check", included: true },
+        { text: "5× Mock Interviews", included: true, bold: true, sub: "(Aptitude + Technical + Coding/Demo + HR + Final rounds)" },
+        { text: "Full AI feedback + improvement plan", included: true },
+        { text: "Featured profile boost (3×)", included: true },
+        { text: "Priority support & faster shortlisting", included: true },
+      ],
+    },
+  ];
+
+  const renderFeature = (f: { text: string; included: boolean; bold?: boolean; sub?: string }) => {
+    const symbol = f.included ? "✓" : "✗";
+    const color = f.included ? "#15803d" : "#9ca3af";
+    const textColor = f.included ? "#111827" : "#9ca3af";
+    const fontWeight = f.bold ? "600" : "400";
+    return `
+      <div style="margin-bottom:6px;font-size:13px;line-height:1.45;color:${textColor};font-weight:${fontWeight};">
+        <span style="color:${color};font-weight:700;margin-right:6px;">${symbol}</span>${f.text}
+        ${f.sub ? `<div style="font-size:11px;color:#6b7280;font-weight:400;margin-left:16px;margin-top:2px;">${f.sub}</div>` : ""}
+      </div>`;
+  };
+
   const subscriptionBlock = showSubscription ? `
     <h3 style="color:#1e3a8a;margin-top:24px;">📋 Subscription Plans</h3>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
-      <thead style="background:#f3f4f6;">
-        <tr>
-          <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Feature</th>
-          <th style="border:1px solid #e5e7eb;padding:8px;">Basic</th>
-          <th style="border:1px solid #e5e7eb;padding:8px;">Standard</th>
-          <th style="border:1px solid #e5e7eb;padding:8px;">Premium</th>
-          <th style="border:1px solid #e5e7eb;padding:8px;">Professional</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${[
-          ["Resume Submission", "✓", "✓", "✓", "✓"],
-          ["Job Access", "Limited", "✓", "✓", "✓"],
-          ["Job Alerts", "✗", "✓", "✓", "✓"],
-          ["Interview Guidance", "✗", "✗", "✓", "✓"],
-          ["Resume Review", "✗", "✓", "✓", "✓"],
-          ["Dedicated Support", "✗", "✗", "✓", "✓"],
-          ["Career Guidance", "✗", "✗", "✓", "✓"],
-          ["Employer Connection", "✗", "✗", "✗", "✓"],
-        ].map((r) => `<tr>${r.map((c, i) => `<td style="border:1px solid #e5e7eb;padding:6px;${i===0?'':'text-align:center;'}">${c}</td>`).join("")}</tr>`).join("")}
-      </tbody>
+    <table role="presentation" style="width:100%;border-collapse:separate;border-spacing:8px 0;margin-top:12px;table-layout:fixed;">
+      <tr>
+        ${planTiers.map((tier) => `
+          <td valign="top" style="width:25%;background:${tier.bg};border:1px solid ${tier.highlight ? "#f59e0b" : "#e5e7eb"};border-top:4px solid ${tier.headerColor};border-radius:6px;padding:14px;vertical-align:top;">
+            <div style="font-size:15px;font-weight:700;color:${tier.headerColor};margin-bottom:10px;text-align:center;letter-spacing:0.3px;">
+              ${tier.name}${tier.highlight ? ' <span style="background:#fbbf24;color:#7c2d12;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">POPULAR</span>' : ""}
+            </div>
+            ${tier.features.map(renderFeature).join("")}
+          </td>
+        `).join("")}
+      </tr>
     </table>` : "";
+
 
   const paymentBlock = showPayment ? `
     <h3 style="color:#1e3a8a;margin-top:24px;">💳 Payment Methods</h3>
