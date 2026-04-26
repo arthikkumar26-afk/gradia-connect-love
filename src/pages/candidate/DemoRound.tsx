@@ -50,6 +50,8 @@ interface DemoEvaluation {
   detailedFeedback: string;
 }
 
+type PermissionErrorType = 'denied' | 'notfound' | 'inuse' | 'insecure' | 'unsupported' | 'unknown';
+
 export default function DemoRound() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
