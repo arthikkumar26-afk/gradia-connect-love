@@ -135,6 +135,22 @@ serve(async (req) => {
       );
     }
 
+    // Fire-and-forget: email branded PDF invoice
+    try {
+      await supabase.functions.invoke('send-payment-receipt', {
+        body: {
+          user_id: candidate_id,
+          payment_id: razorpay_payment_id,
+          order_id: razorpay_order_id,
+          amount,
+          item_name: `Candidate ${plan} Plan`,
+          item_description: `Gradia candidate subscription – ${plan}`,
+          item_type: 'subscription',
+          user_role: 'candidate',
+        },
+      });
+    } catch (e) { console.error('[verify-candidate-payment] receipt send failed', e); }
+
     return new Response(
       JSON.stringify({
         success: true,
