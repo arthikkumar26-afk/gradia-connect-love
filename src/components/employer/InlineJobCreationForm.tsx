@@ -599,6 +599,8 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
     toast({ title: "Vacancy applied!", description: "Interview type, role & fields auto-filled. Review and submit." });
   };
 
+  const POST_JOB_COST = 1100;
+
   const onSubmit = async (values: JobFormValues) => {
     setIsSubmitting(true);
     try {
@@ -609,9 +611,27 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         return;
       }
 
+      // Check wallet balance before posting
+      const { data: wallet, error: walletErr } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (walletErr) throw walletErr;
+      if (!wallet || (wallet.points_balance ?? 0) < POST_JOB_COST) {
+        toast({
+          title: "Insufficient points",
+          description: `Posting a job requires ${POST_JOB_COST} pts. Please top up your wallet.`,
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const skillsArray = (values.skills || "").split(",").map((s) => s.trim()).filter((s) => s.length > 0);
 
-      const { error } = await supabase.from("jobs").insert([{
+      const { data: insertedJob, error } = await supabase.from("jobs").insert([{
         employer_id: user.id,
         job_title: values.job_title || "Untitled Job",
         department: values.department || null,
@@ -636,11 +656,28 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         designation: selectedRole || dynamicFieldValues["designation"] || null,
         subjects: dynamicFieldValues["subjects"] || dynamicFieldValues["specialized_subjects"] || null,
         pipeline_stages: customStages.length > 0 ? customStages : null,
-      } as any]);
+      } as any]).select("id").maybeSingle();
 
       if (error) throw error;
 
-      toast({ title: "Job posted successfully!", description: "Your job listing is now live." });
+      // Deduct points & log transaction
+      await supabase
+        .from("wallets")
+        .update({ points_balance: (wallet.points_balance ?? 0) - POST_JOB_COST })
+        .eq("id", wallet.id);
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "job_post",
+        amount: 0,
+        points: -POST_JOB_COST,
+        rewards: 0,
+        description: `Job posted: ${values.job_title || "Untitled Job"}`,
+        reference_id: insertedJob?.id ?? null,
+      });
+
+      toast({ title: "Job posted successfully!", description: `${POST_JOB_COST} pts deducted from your wallet.` });
       onJobCreated();
     } catch (error: any) {
       console.error("Error posting job:", error);
@@ -1770,11 +1807,17 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="flex-1">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
+              <Button type="submit" disabled={isSubmitting} className="flex-1 gap-2">
                 {isSubmitting ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Posting Job...</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Posting Job...</>
                 ) : (
-                  <><Briefcase className="h-4 w-4 mr-2" /> Post Job</>
+                  <>
+                    <Briefcase className="h-4 w-4" />
+                    <span>Post Job</span>
+                    <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 font-semibold">
+                      1000 pts
+                    </Badge>
+                  </>
                 )}
               </Button>
             </div>
