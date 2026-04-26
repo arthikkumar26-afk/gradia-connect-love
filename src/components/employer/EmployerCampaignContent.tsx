@@ -510,7 +510,7 @@ export function EmployerCampaignContent() {
 
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSendCampaign} disabled={isSending || emailList.length === 0} className="flex-1">
-                {isSending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending {emailList.length} email(s)...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign ({emailList.length})</>}
+                {isSending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending {emailList.length} email(s)...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign ({emailList.length}) • {emailList.length * COST_PER_EMAIL} pts</>}
               </Button>
               <Button variant="ghost" onClick={resetForm} disabled={isSending}>Cancel</Button>
             </div>
