@@ -1648,16 +1648,6 @@ const BookSlot = () => {
                 </Select>
               </div>
 
-              {/* Info Note - only show for Written Test/Technical stages */}
-              {!stageName.toLowerCase().includes("hr") && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <p className="text-xs text-amber-800">
-                    <strong>Note:</strong> Once booked, you'll receive an email with your interview link. 
-                    The assessment consists of 10 MCQ questions with 90 seconds per question. 
-                    Ensure you have a stable internet connection.
-                  </p>
-                </div>
-              )}
 
               {/* Book Button */}
               <Button
