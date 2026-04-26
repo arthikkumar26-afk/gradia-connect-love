@@ -36,6 +36,11 @@ interface StatusData {
     error_description: string | null;
     created_at: string | null;
   } | null;
+  activation?: {
+    activated?: boolean;
+    source?: string;
+    error?: string;
+  } | null;
 }
 
 const formatINR = (paise: number) =>
@@ -94,7 +99,7 @@ export default function PaymentStatusPanel({ userId }: Props) {
     }
     if (pay.status === "captured" || pay.status === "authorized") {
       return (
-        <Badge className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <Badge className="gap-1 bg-primary/10 text-primary hover:bg-primary/10">
           <CheckCircle2 className="h-3 w-3" /> Success ({pay.status})
         </Badge>
       );
@@ -117,7 +122,7 @@ export default function PaymentStatusPanel({ userId }: Props) {
     if (!sub) return <Badge variant="outline">No subscription</Badge>;
     if (subActive) {
       return (
-        <Badge className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <Badge className="gap-1 bg-primary/10 text-primary hover:bg-primary/10">
           <CheckCircle2 className="h-3 w-3" /> Active
         </Badge>
       );
@@ -232,6 +237,11 @@ export default function PaymentStatusPanel({ userId }: Props) {
                       {pay.error_code && (
                         <span className="block opacity-80 mt-0.5">Code: {pay.error_code}</span>
                       )}
+                    </div>
+                  )}
+                  {data?.activation?.activated && (
+                    <div className="mt-2 p-2 rounded bg-primary/10 border border-primary/30 text-primary text-[11px] leading-snug">
+                      Plan activated from the captured Razorpay payment.
                     </div>
                   )}
                 </div>
