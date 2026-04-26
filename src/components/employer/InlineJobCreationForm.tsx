@@ -1807,11 +1807,17 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="flex-1">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
+              <Button type="submit" disabled={isSubmitting} className="flex-1 gap-2">
                 {isSubmitting ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Posting Job...</>
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Posting Job...</>
                 ) : (
-                  <><Briefcase className="h-4 w-4 mr-2" /> Post Job</>
+                  <>
+                    <Briefcase className="h-4 w-4" />
+                    <span>Post Job</span>
+                    <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 font-semibold">
+                      1000 pts
+                    </Badge>
+                  </>
                 )}
               </Button>
             </div>
