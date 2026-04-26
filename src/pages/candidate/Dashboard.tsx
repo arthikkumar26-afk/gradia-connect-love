@@ -4936,15 +4936,23 @@ const CandidateDashboard = () => {
                         <Zap className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-lg">Basic</CardTitle>
-                      <p className="text-xs text-muted-foreground">Get started for just ₹5</p>
+                      <p className="text-xs text-muted-foreground">Kickstart your job hunt</p>
                       <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹5</span>
+                        <span className="text-2xl font-bold text-foreground">₹5,000</span>
                         <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
                       <ul className="space-y-2 flex-1">
-                        {["Job search & apply", "Basic profile creation", "Email notifications", "1 mock test", "View job recommendations"].map((f, i) => (
+                        {[
+                          "Unlimited job search & apply",
+                          "Full candidate profile builder",
+                          "1× Resume PDF export / month",
+                          "AI ATS score & basic resume report",
+                          "3× AI mock tests / month",
+                          "Application tracker & email alerts",
+                          "Personalised job recommendations",
+                        ].map((f, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs">
                             <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
                             <span className="text-muted-foreground">{f}</span>
@@ -4954,8 +4962,8 @@ const CandidateDashboard = () => {
                       {isActiveSub && candidateSubscription?.plan === "basic" ? (
                         <Button className="w-full" variant="outline" disabled>Current Plan</Button>
                       ) : (
-                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "basic"} onClick={() => handleCandidateUpgrade("basic", 5)}>
-                          {upgradingPlan === "basic" ? "Processing..." : "Subscribe – ₹5/mo"}
+                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "basic"} onClick={() => handleCandidateUpgrade("basic", 5000)}>
+                          {upgradingPlan === "basic" ? "Processing..." : "Subscribe – ₹5,000/mo"}
                         </Button>
                       )}
                     </CardContent>
