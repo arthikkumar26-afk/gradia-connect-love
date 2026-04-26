@@ -144,6 +144,34 @@ serve(async (req) => {
     );
 
     if (!capturedPayment) {
+      const failedPayment = (payments?.items || []).find((payment: any) =>
+        payment?.status === "failed" && (!razorpayPaymentId || payment?.id === razorpayPaymentId)
+      );
+      if (failedPayment) {
+        await logAttempt({
+          candidate_id: userId,
+          plan,
+          source: signatureValid ? "client_verify" : "client_poll",
+          payment_id: failedPayment.id || razorpayPaymentId,
+          order_id: razorpayOrderId,
+          amount_paise: failedPayment?.amount ?? order?.amount ?? (amount !== null ? Math.round(amount * 100) : null),
+          currency: failedPayment?.currency || order?.currency || "INR",
+          activation_result: "failed",
+          error_message: failedPayment?.error_description || "Payment failed in Razorpay",
+          payload_summary: {
+            order_status: order?.status,
+            payment_status: failedPayment?.status,
+            payment_method: failedPayment?.method,
+            error_code: failedPayment?.error_code,
+            error_reason: failedPayment?.error_reason,
+          },
+        });
+        return new Response(JSON.stringify({ activated: false, message: failedPayment?.error_description || "Payment failed" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(JSON.stringify({ activated: false, message: "Payment is not captured yet" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
