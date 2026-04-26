@@ -2135,13 +2135,23 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       {/* Show slot booking for all Slot Booking stages */}
 
                       {/* Join Meeting / Start Test for current non-slot stages */}
-                      {(status === 'current' || (!!liveRoundJoinAction && !isFeedbackStage)) && !stage.name.toLowerCase().includes('slot booking') && (() => {
+                      {(status === 'current' || status === 'scheduled' || (!!liveRoundJoinAction && !isFeedbackStage)) && !stage.name.toLowerCase().includes('slot booking') && (() => {
                         const sn = stage.name.toLowerCase();
                         const isWrittenTest = sn.includes('written test') || sn.includes('technical assessment');
                         const isFeedbackStage = sn.includes('feedback');
                         const isLiveRound = !isFeedbackStage && sn.includes(' round');
 
                         if (isWrittenTest) {
+                          // Find the matching slot booking (Written Test or Technical Assessment)
+                          const bookingType = sn.includes('written') ? 'written_test' : 'technical_assessment';
+                          const booking = slotBookings.find(b =>
+                            b.booking_type === bookingType ||
+                            b.booking_type?.toLowerCase().includes(sn.includes('written') ? 'written' : 'technical')
+                          );
+                          // Allow Start Test once status is current, OR the booked slot time has arrived.
+                          const canStart = status === 'current' || isBookingTimeReached(booking);
+                          if (!canStart) return null;
+
                           return (
                             <button
                               onClick={(e) => {
