@@ -151,51 +151,34 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     if (!profile?.id) return;
     setIsPurchasingDayPass(true);
     try {
-      const { data: wallet, error: walletErr } = await supabase
-        .from("wallets")
-        .select("id, points_balance")
-        .eq("user_id", profile.id)
+      // AI Job Apply is now subscription-gated (see useCandidateSubscription)
+      const { data: sub } = await supabase
+        .from("candidate_subscriptions")
+        .select("plan, status, ends_at")
+        .eq("candidate_id", profile.id)
+        .eq("status", "active")
         .maybeSingle();
 
-      if (walletErr || !wallet) {
-        toast({ title: "Wallet not found", description: "Please visit 'My Wallet' tab first to activate your wallet.", variant: "destructive" });
-        return;
-      }
+      const active = sub && (sub.ends_at == null || new Date(sub.ends_at) > new Date());
+      const plan = active ? (sub!.plan as string) : "basic";
 
-      if ((wallet.points_balance || 0) < DAY_PASS_POINTS) {
+      if (plan === "basic") {
         toast({
-          title: "Insufficient Balance",
-          description: `You need ₹${DAY_PASS_POINTS}. Your balance: ₹${wallet.points_balance || 0}.`,
+          title: "Upgrade required",
+          description: "AI Job Apply is available on the Pro and Premium plans.",
           variant: "destructive",
         });
         return;
       }
 
-      const newBalance = (wallet.points_balance || 0) - DAY_PASS_POINTS;
-      const { error: deductErr } = await supabase
-        .from("wallets")
-        .update({ points_balance: newBalance })
-        .eq("id", wallet.id);
-
-      if (deductErr) {
-        toast({ title: "Error", description: "Failed to deduct from wallet. Please try again.", variant: "destructive" });
-        return;
-      }
-
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        transaction_type: "debit",
-        category: "ai_job_apply",
-        points: DAY_PASS_POINTS,
-        description: "AI Job Apply — 1 Day Pass",
-      });
-
+      // Pro / Premium: grant a 24h access window for AI Job Apply.
+      // Per-application quota is enforced inside the apply flow via consume("ai_job_apply").
       const expires = Date.now() + 24 * 60 * 60 * 1000;
       localStorage.setItem(`ai_job_apply_day_pass_${profile.id}`, String(expires));
       setDayPassExpiresAt(expires);
-      toast({ title: "Access unlocked", description: `₹${DAY_PASS_POINTS} deducted. AI Job Apply is unlocked for 24 hours.` });
+      toast({ title: "Access unlocked", description: "AI Job Apply is unlocked for 24 hours under your plan." });
     } catch (e) {
-      console.error("Day pass purchase failed:", e);
+      console.error("Day pass unlock failed:", e);
       toast({ title: "Error", description: "Could not unlock access. Please try again.", variant: "destructive" });
     } finally {
       setIsPurchasingDayPass(false);
