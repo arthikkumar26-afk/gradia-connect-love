@@ -77,7 +77,7 @@ const CouponManagement = () => {
   // Form state
   const candidatePackages = ["Pro (₹1499/mo)", "Premium (₹1999/mo)"];
   const employerPackages = ["Growth (₹4,999/mo)", "Professional (₹14,999/mo)", "Enterprise (₹29,000/mo)"];
-  const freelancerPackages = ["Starter (₹0/mo)", "Pro (₹1,499/mo)", "Premium (₹2,999/mo)"];
+  const freelancerPackages: string[] = []; // temporarily hidden
   const walletPackages = ["200 pts", "500 pts", "1,000 pts", "2,000 pts"];
 
   const [form, setForm] = useState({
@@ -365,7 +365,7 @@ const CouponManagement = () => {
               <SelectItem value="both">All Users</SelectItem>
               <SelectItem value="candidate">Candidates Only</SelectItem>
               <SelectItem value="employer">Employers Only</SelectItem>
-              <SelectItem value="freelancer">Freelancers Only</SelectItem>
+              {/* Freelancers temporarily hidden */}
               <SelectItem value="wallet">Wallet Top-up Only</SelectItem>
             </SelectContent>
           </Select>
