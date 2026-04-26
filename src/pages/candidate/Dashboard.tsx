@@ -83,7 +83,7 @@ import { CouponInput } from "@/components/shared/CouponInput";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
-import WalletTab from "@/components/candidate/WalletTab";
+import SubscriptionTab from "@/components/candidate/SubscriptionTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
 import { useActionPayment } from "@/hooks/useActionPayment";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
