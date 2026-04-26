@@ -1495,14 +1495,9 @@ const CandidateDashboard = () => {
     setApplicationCount(count || 0);
   };
 
+  // Wallet system removed — kept as a no-op so existing call sites compile.
   const fetchWalletBalance = async () => {
-    if (!profile?.id) return;
-    const { data } = await supabase
-      .from('wallets')
-      .select('points_balance')
-      .eq('user_id', profile.id)
-      .maybeSingle();
-    setWalletPoints(data?.points_balance || 0);
+    setWalletPoints(0);
   };
 
   const fetchInterviewCount = async () => {
