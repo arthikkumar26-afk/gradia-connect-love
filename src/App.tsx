@@ -145,6 +145,7 @@ const AIFlyerMaker = lazyWithRetry(() => import("./pages/admin/AIFlyerMaker"));
 const InviteFromResume = lazyWithRetry(() => import("./pages/admin/InviteFromResume"));
 const CandidateResumes = lazyWithRetry(() => import("./pages/admin/CandidateResumes"));
 const RazorpayWebhooks = lazyWithRetry(() => import("./pages/admin/RazorpayWebhooks"));
+const SubscriptionActivationLogs = lazyWithRetry(() => import("./pages/admin/SubscriptionActivationLogs"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -305,6 +306,7 @@ const MainRoutes = () => (
         <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
         <Route path="/admin/audit" element={<AdminAuditLogs />} />
         <Route path="/admin/razorpay-webhooks" element={<RazorpayWebhooks />} />
+        <Route path="/admin/subscription-activations" element={<SubscriptionActivationLogs />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
         <Route path="/admin/mock-interview-pipeline" element={<MockInterviewPipeline />} />
         <Route path="/admin/management" element={<AdminManagement />} />

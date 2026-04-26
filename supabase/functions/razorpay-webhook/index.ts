@@ -159,6 +159,28 @@ serve(async (req) => {
             metadata: { plan_id: planId, activated_via: 'webhook_fallback' },
           });
 
+          // Audit log entry for the activation attempt
+          await admin.from('subscription_activation_logs').insert({
+            candidate_id: userId,
+            plan: planId,
+            source: 'webhook',
+            payment_id: razorpayPaymentId,
+            order_id: razorpayOrderId,
+            amount_paise: typeof amountPaise === 'number' ? amountPaise : null,
+            currency,
+            activation_result: insertErr ? 'failed' : 'success',
+            error_message: insertErr?.message || null,
+            webhook_event_id: eventId,
+            subscription_id: sub?.id || null,
+            payload_summary: {
+              event_type: eventType,
+              method: paymentEntity?.method,
+              email: paymentEntity?.email,
+              contact: paymentEntity?.contact,
+              status: paymentEntity?.status,
+            },
+          });
+
           // Fire-and-forget receipt email
           if (!insertErr) {
             try {

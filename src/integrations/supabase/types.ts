@@ -3395,6 +3395,57 @@ export type Database = {
           },
         ]
       }
+      subscription_activation_logs: {
+        Row: {
+          activation_result: string
+          amount_paise: number | null
+          candidate_id: string | null
+          created_at: string
+          currency: string | null
+          error_message: string | null
+          id: string
+          order_id: string | null
+          payload_summary: Json | null
+          payment_id: string | null
+          plan: string | null
+          source: string
+          subscription_id: string | null
+          webhook_event_id: string | null
+        }
+        Insert: {
+          activation_result?: string
+          amount_paise?: number | null
+          candidate_id?: string | null
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          payload_summary?: Json | null
+          payment_id?: string | null
+          plan?: string | null
+          source?: string
+          subscription_id?: string | null
+          webhook_event_id?: string | null
+        }
+        Update: {
+          activation_result?: string
+          amount_paise?: number | null
+          candidate_id?: string | null
+          created_at?: string
+          currency?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          payload_summary?: Json | null
+          payment_id?: string | null
+          plan?: string | null
+          source?: string
+          subscription_id?: string | null
+          webhook_event_id?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           amount: number
