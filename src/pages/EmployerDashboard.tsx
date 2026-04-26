@@ -99,6 +99,27 @@ const EmployerDashboard = () => {
   const { user, profile, isAuthenticated, isLoading, logout } = useAuth();
   const [candidateStatusData, setCandidateStatusData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [applicationsPerJob, setApplicationsPerJob] = useState<{ name: string; applications: number }[]>([]);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+
+  // Fetch wallet balance + subscribe to changes
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("wallets")
+        .select("points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) setWalletBalance(data?.points_balance ?? 0);
+    };
+    load();
+    const channel = supabase
+      .channel(`wallet-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${user.id}` }, load)
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [user?.id]);
 
   // Role-based access control - wait for auth to finish loading
   useEffect(() => {
@@ -454,6 +475,11 @@ const EmployerDashboard = () => {
                 {sidebarOpen && (
                   <>
                     <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
+                    {item.id === "wallet" && walletBalance !== null && (
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5 font-semibold">
+                        {walletBalance.toLocaleString("en-IN")} pts
+                      </Badge>
+                    )}
                     {showBadge && (
                       <Badge className="bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 animate-pulse">
                         {newApplications}
