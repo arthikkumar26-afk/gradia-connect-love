@@ -5037,7 +5037,7 @@ const CandidateDashboard = () => {
                       <CardTitle className="text-lg">Premium</CardTitle>
                       <p className="text-xs text-muted-foreground">Full career support</p>
                        <div className="mt-3">
-                         <span className="text-2xl font-bold text-foreground">₹999</span>
+                         <span className="text-2xl font-bold text-foreground">₹30,000</span>
                          <span className="text-muted-foreground text-xs">/month</span>
                        </div>
                     </CardHeader>
@@ -5045,13 +5045,15 @@ const CandidateDashboard = () => {
                       <ul className="space-y-2 flex-1">
                         {[
                           "Everything in Pro",
-                          "Unlimited mock tests",
-                          "AI Mock Interview Pipeline",
-                          "Unlimited AI Job Apply",
-                          "1-on-1 career coaching session",
-                          "Advanced analytics & insights",
-                          "Custom cover letter generation",
-                          "Direct recruiter messaging",
+                          "Unlimited AI mock tests & interviews",
+                          "Full AI Mock Interview Pipeline (Coding + Demo + HR + Final)",
+                          "Unlimited AI Job Apply (auto-apply 24×7)",
+                          "Dedicated 1-on-1 career coaching (2 sessions / month)",
+                          "AI-personalised 30-day career roadmap",
+                          "Custom AI cover letter for every job",
+                          "Direct recruiter messaging & verified badge",
+                          "Featured profile boost (3×) at top of search",
+                          "Advanced analytics & application insights",
                           "Priority support (4h response)",
                         ].map((f, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs">
@@ -5063,21 +5065,21 @@ const CandidateDashboard = () => {
                       {isActiveSub && candidateSubscription?.plan === "premium" ? (
                         <Button className="w-full" variant="outline" disabled>Current Plan</Button>
                       ) : (
-                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 999)}>
-                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe – ₹999/mo"}
+                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 30000)}>
+                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe – ₹30,000/mo"}
                         </Button>
                       )}
                       {/* Coupon for Premium */}
                       {!(isActiveSub && candidateSubscription?.plan === "premium") && (
                         <CouponInput
-                          originalAmount={999}
+                          originalAmount={30000}
                           userRole="candidate"
                           onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "premium" })}
                           onCouponRemoved={() => setCandidateCoupon(null)}
                         />
                       )}
                       {candidateCoupon?.plan === "premium" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹999</p>
+                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹30,000</p>
                       )}
                     </CardContent>
                   </Card>
