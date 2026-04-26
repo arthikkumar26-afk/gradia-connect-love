@@ -128,17 +128,31 @@ function generatePdf(
   y += 12; doc.text(`Email: ${COMPANY.email}  |  ${COMPANY.website}`, left, y);
   y += 12; doc.text(`GSTIN: ${COMPANY.gstin}`, left, y);
 
-  // Invoice meta (right column)
+  // Invoice meta (right column) — two-column layout with fixed label x
+  // and value right-aligned. Wide enough gutter so long IDs don't overlap labels.
   let yr = 110;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.text("Invoice No:", right - 150, yr); doc.setFont("helvetica", "normal"); doc.text(invoiceNo, right, yr, { align: "right" });
-  yr += 14; doc.setFont("helvetica", "bold"); doc.text("Invoice Date:", right - 150, yr); doc.setFont("helvetica", "normal"); doc.text(paidAt.toLocaleDateString("en-IN"), right, yr, { align: "right" });
-  yr += 14; doc.setFont("helvetica", "bold"); doc.text("Payment ID:", right - 150, yr); doc.setFont("helvetica", "normal"); doc.text(data.payment_id, right, yr, { align: "right" });
-  if (data.order_id) {
-    yr += 14; doc.setFont("helvetica", "bold"); doc.text("Order ID:", right - 150, yr); doc.setFont("helvetica", "normal"); doc.text(data.order_id, right, yr, { align: "right" });
-  }
-  yr += 14; doc.setFont("helvetica", "bold"); doc.text("Payment Mode:", right - 150, yr); doc.setFont("helvetica", "normal"); doc.text("Razorpay", right, yr, { align: "right" });
+  const metaLabelX = right - 230; // labels start here (left-aligned)
+  const metaValueMaxWidth = 170;  // values render right-aligned within this width
+  const drawMetaRow = (label: string, value: string, mono = false) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(label, metaLabelX, yr);
+    doc.setFont(mono ? "courier" : "helvetica", "normal");
+    // Auto-shrink long values so they never bleed into the label column
+    let fontSize = 9;
+    doc.setFontSize(fontSize);
+    while (doc.getTextWidth(value) > metaValueMaxWidth && fontSize > 7) {
+      fontSize -= 0.5;
+      doc.setFontSize(fontSize);
+    }
+    doc.text(value, right, yr, { align: "right" });
+    yr += 14;
+  };
+  drawMetaRow("Invoice No:", invoiceNo, true);
+  drawMetaRow("Invoice Date:", paidAt.toLocaleDateString("en-IN"));
+  drawMetaRow("Payment ID:", data.payment_id, true);
+  if (data.order_id) drawMetaRow("Order ID:", data.order_id, true);
+  drawMetaRow("Payment Mode:", "Razorpay");
 
   // Bill-to box
   y = Math.max(y, yr) + 30;
