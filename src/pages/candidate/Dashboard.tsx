@@ -3892,50 +3892,67 @@ const CandidateDashboard = () => {
 
             {/* Upskill Yourself - Standalone Section */}
             {activeMenu === "upskill" && (() => {
-              // Aggregate weak areas from resume analysis + mock interview stage feedback
-              const weakAreas: string[] = [];
-              if (resumeAnalysis?.improvements?.length) {
-                weakAreas.push(...resumeAnalysis.improvements);
+              // Aggregate weak areas with supporting evidence (source + detail)
+              type WeakArea = { text: string; source: "Resume" | "Mock Interview"; evidence: string; score?: number };
+              const weakAreasDetailed: WeakArea[] = [];
+
+              if (Array.isArray(resumeAnalysis?.improvements)) {
+                resumeAnalysis.improvements.forEach((imp: string) => {
+                  weakAreasDetailed.push({
+                    text: imp,
+                    source: "Resume",
+                    evidence: typeof resumeAnalysis?.score === "number"
+                      ? `From AI resume analysis (overall score ${resumeAnalysis.score}/100)`
+                      : "From AI resume analysis",
+                  });
+                });
               }
+
               (mockInterviewStageResults || []).forEach((s: any) => {
-                if (typeof s?.score === "number" && s.score < 60) {
-                  weakAreas.push(`${s.stage_name || s.name || "Interview Stage"}: needs improvement (score ${s.score}%)`);
+                const stageName = s?.stage_name || s?.name || "Interview Stage";
+                const score = typeof s?.score === "number" ? s.score : undefined;
+                if (typeof score === "number" && score < 60) {
+                  weakAreasDetailed.push({
+                    text: `${stageName} performance needs improvement`,
+                    source: "Mock Interview",
+                    evidence: `Scored ${score}% in the ${stageName} round (below 60% threshold)`,
+                    score,
+                  });
                 }
-                if (Array.isArray(s?.weaknesses)) weakAreas.push(...s.weaknesses);
-                if (Array.isArray(s?.improvements)) weakAreas.push(...s.improvements);
+                if (Array.isArray(s?.weaknesses)) {
+                  s.weaknesses.forEach((w: string) => weakAreasDetailed.push({
+                    text: w,
+                    source: "Mock Interview",
+                    evidence: `Flagged in ${stageName}${typeof score === "number" ? ` (score ${score}%)` : ""}`,
+                    score,
+                  }));
+                }
+                if (Array.isArray(s?.improvements)) {
+                  s.improvements.forEach((w: string) => weakAreasDetailed.push({
+                    text: w,
+                    source: "Mock Interview",
+                    evidence: `Suggested in ${stageName}${typeof score === "number" ? ` (score ${score}%)` : ""}`,
+                    score,
+                  }));
+                }
               });
-              const uniqueWeakAreas = Array.from(new Set(weakAreas.filter(Boolean))).slice(0, 8);
 
-              // Skillory suggested courses — all open skilory.in
-              const skilloryCourses = (upskillCourseSuggestions && upskillCourseSuggestions.length > 0)
-                ? upskillCourseSuggestions.map((c: any) => ({
-                    title: c.title,
-                    description: c.description,
-                    category: c.category,
-                    level: c.level,
-                    duration: c.duration,
-                  }))
-                : [
-                    { title: "Communication & Soft Skills Mastery", description: "Sharpen interview communication, clarity and confidence.", category: "Soft Skills", level: "Beginner", duration: "4 weeks" },
-                    { title: "Aptitude & Reasoning Bootcamp", description: "Quantitative, logical and verbal reasoning practice.", category: "Aptitude", level: "Intermediate", duration: "6 weeks" },
-                    { title: "Resume & LinkedIn Optimization", description: "Build an ATS-friendly resume and a recruiter-ready profile.", category: "Career", level: "Beginner", duration: "2 weeks" },
-                    { title: "Domain Fundamentals Refresher", description: "Strengthen the core concepts most asked in interviews for your role.", category: "Domain", level: "Intermediate", duration: "5 weeks" },
-                    { title: "Mock Interview Practice Track", description: "Guided mock interviews with feedback to fix recurring weak areas.", category: "Interview Prep", level: "All Levels", duration: "4 weeks" },
-                    { title: "Problem Solving & Case Studies", description: "Apply structured thinking to real-world scenarios.", category: "Problem Solving", level: "Advanced", duration: "6 weeks" },
-                  ];
-
-              return (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">Upskill Yourself</h2>
-                    <p className="text-sm text-muted-foreground">Your weak areas and Skillory-suggested courses to fix them</p>
-                  </div>
-
+              const seen = new Set<string>();
+              const uniqueWeakAreas = weakAreasDetailed.filter(w => {
+                const key = `${w.source}::${w.text}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return Boolean(w.text);
+              }).slice(0, 8);
+...
                   {/* Weak Areas */}
                   <Card className="p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Lightbulb className="h-5 w-5 text-amber-500" />
                       <h3 className="font-semibold text-foreground">Your Weak Areas</h3>
+                      <Badge variant="outline" className="ml-auto text-[10px]">
+                        {uniqueWeakAreas.length} found
+                      </Badge>
                     </div>
                     {uniqueWeakAreas.length > 0 ? (
                       <div className="space-y-3">
@@ -3944,13 +3961,29 @@ const CandidateDashboard = () => {
                             <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
                               {index + 1}
                             </div>
-                            <p className="text-sm text-foreground">{item}</p>
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge
+                                  variant="secondary"
+                                  className={`text-[10px] ${item.source === "Resume" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" : "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"}`}
+                                >
+                                  {item.source}
+                                </Badge>
+                                {typeof item.score === "number" && (
+                                  <Badge variant="outline" className="text-[10px]">
+                                    Score: {item.score}%
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-foreground font-medium">{item.text}</p>
+                              <p className="text-xs text-muted-foreground italic">📌 {item.evidence}</p>
+                            </div>
                           </div>
                         ))}
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Complete a mock interview or upload your resume so we can highlight specific weak areas to focus on.
+                        Complete a mock interview or upload your resume so we can highlight specific weak areas with supporting evidence.
                       </p>
                     )}
                   </Card>
