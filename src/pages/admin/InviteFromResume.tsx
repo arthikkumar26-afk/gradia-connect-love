@@ -416,7 +416,7 @@ const InviteFromResume = () => {
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-background rounded border p-2">
                         <p className="font-semibold text-foreground">Subscription Plans</p>
-                        <p className="text-muted-foreground">Basic — Free</p>
+                        <p className="text-muted-foreground">Basic — ₹5/mo</p>
                         <p className="text-muted-foreground">Pro — ₹499/mo</p>
                         <p className="text-muted-foreground">Premium — ₹999/mo</p>
                       </div>

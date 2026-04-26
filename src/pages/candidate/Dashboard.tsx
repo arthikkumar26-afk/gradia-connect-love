@@ -4828,9 +4828,10 @@ const CandidateDashboard = () => {
                         <Zap className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-lg">Basic</CardTitle>
-                      <p className="text-xs text-muted-foreground">Get started for free</p>
+                      <p className="text-xs text-muted-foreground">Get started for just ₹5</p>
                       <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">Free</span>
+                        <span className="text-2xl font-bold text-foreground">₹5</span>
+                        <span className="text-muted-foreground text-xs">/month</span>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -4842,7 +4843,13 @@ const CandidateDashboard = () => {
                           </li>
                         ))}
                       </ul>
-                      <Button className="w-full" variant="outline" disabled>Current Plan</Button>
+                      {isActiveSub && candidateSubscription?.plan === "basic" ? (
+                        <Button className="w-full" variant="outline" disabled>Current Plan</Button>
+                      ) : (
+                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "basic"} onClick={() => handleCandidateUpgrade("basic", 5)}>
+                          {upgradingPlan === "basic" ? "Processing..." : "Subscribe – ₹5/mo"}
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
 
