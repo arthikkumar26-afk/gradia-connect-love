@@ -303,64 +303,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* EduTech Section */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 rounded-2xl p-8 md:p-12 border border-border/50">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div>
-                <Badge variant="secondary" className="mb-4">
-                  <GraduationCap className="h-3.5 w-3.5 mr-1.5" />
-                  For Training Institutes & EduTech
-                </Badge>
-                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                  Grow Your Institute with Gradia
-                </h2>
-                <p className="text-lg text-muted-foreground mb-6">
-                  Register your training institute, showcase courses, run marketing campaigns, and track candidate placements — all from one powerful platform.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button variant="cta" size="lg" asChild>
-                    <Link to="/edutech">
-                      Explore EduTech
-                      <ArrowRight className="h-5 w-5 ml-2" />
-                    </Link>
-                  </Button>
-                  <Button variant="outline" size="lg" asChild>
-                    <Link to="/contact">Talk to Sales</Link>
-                  </Button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="text-center p-4">
-                  <CardContent className="p-0">
-                    <Megaphone className="h-8 w-8 text-accent mx-auto mb-2" />
-                    <div className="font-semibold text-sm">Banner Ads & Campaigns</div>
-                  </CardContent>
-                </Card>
-                <Card className="text-center p-4">
-                  <CardContent className="p-0">
-                    <Users className="h-8 w-8 text-accent mx-auto mb-2" />
-                    <div className="font-semibold text-sm">Candidate Follow-up</div>
-                  </CardContent>
-                </Card>
-                <Card className="text-center p-4">
-                  <CardContent className="p-0">
-                    <BarChart3 className="h-8 w-8 text-accent mx-auto mb-2" />
-                    <div className="font-semibold text-sm">Analytics & ROI</div>
-                  </CardContent>
-                </Card>
-                <Card className="text-center p-4">
-                  <CardContent className="p-0">
-                    <Building2 className="h-8 w-8 text-accent mx-auto mb-2" />
-                    <div className="font-semibold text-sm">Stall Booking</div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* EduTech Section temporarily hidden */}
 
 
       {/* Call to Action */}
