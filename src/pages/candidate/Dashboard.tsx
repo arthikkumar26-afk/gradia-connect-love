@@ -2246,8 +2246,8 @@ const CandidateDashboard = () => {
                   </Badge>
                 )}
                 {item.id === "wallet" && (
-                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0 bg-accent/15 text-accent border-accent/20">
-                    ₹{walletPoints}
+                  <Badge variant="secondary" className="ml-auto text-xs flex-shrink-0 bg-primary/10 text-primary border-primary/20">
+                    {candidateSub.planDef.name}
                   </Badge>
                 )}
               </button>
