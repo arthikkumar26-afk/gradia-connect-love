@@ -113,6 +113,28 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, SERVICE_KEY);
+
+    // Idempotency: if this Razorpay payment already activated a subscription, return it.
+    const { data: existing } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('stripe_subscription_id', razorpay_payment_id)
+      .maybeSingle();
+
+    if (existing) {
+      await log({
+        event_type: 'verify.idempotent_replay', status: 'success', user_id: userId, http_status: 200,
+        razorpay_order_id, razorpay_payment_id, signature_valid: true,
+        related_table: 'subscriptions', related_id: existing.id,
+        request_body: body,
+      });
+      return new Response(JSON.stringify({
+        success: true, subscription_id: existing.id, plan_id: existing.plan_id,
+        status: existing.status, idempotent: true,
+        message: 'Subscription already active for this payment',
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const { data: subscription, error: insertError } = await supabase
       .from('subscriptions')
       .insert({
@@ -124,6 +146,20 @@ serve(async (req) => {
       .select().single();
 
     if (insertError) {
+      // Race-condition fallback: another concurrent verify won the unique-index insert.
+      if ((insertError as any).code === '23505') {
+        const { data: raced } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('stripe_subscription_id', razorpay_payment_id)
+          .maybeSingle();
+        if (raced) {
+          return new Response(JSON.stringify({
+            success: true, subscription_id: raced.id, plan_id: raced.plan_id,
+            status: raced.status, idempotent: true,
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
       console.error('[verify-razorpay-payment] subscription insert failed', insertError);
       await log({
         event_type: 'verify.db_insert_failed', status: 'error', user_id: userId, http_status: 500,
