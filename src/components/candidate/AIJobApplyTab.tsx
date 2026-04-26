@@ -69,7 +69,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const DAY_PASS_POINTS = 400;
 
   // Subscription-driven quota for AI Job Apply (basic=0, pro=5/mo, premium=∞)
-  const sub = useCandidateSubscription(profile?.id);
+  const sub = useCandidateSubscription();
   const aiApplyLimit = sub.limitFor("ai_job_apply");
   const aiApplyUsed = sub.usedFor("ai_job_apply");
   const aiApplyRemaining = sub.remainingFor("ai_job_apply");
