@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mail, Save, RefreshCw, Eye, Palette, ChevronRight, Info } from "lucide-react";
+import { Mail, Save, RefreshCw, Eye, Palette, ChevronRight, Info, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -168,6 +168,8 @@ const buildDefaultTemplate = (stageName: string, companyName = "{{companyName}}"
   };
 };
 
+const TEMPLATE_UNLOCK_COST = 200;
+
 export function EmailTemplatesEditor() {
   const [templates, setTemplates] = useState<Record<string, EmailTemplate>>({});
   const [loading, setLoading] = useState(true);
@@ -178,6 +180,61 @@ export function EmailTemplatesEditor() {
   const [pipelineStages, setPipelineStages] = useState<{ name: string; icon: string; description: string }[]>([]);
   const [activeStage, setActiveStage] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [unlockedJobs, setUnlockedJobs] = useState<Set<string>>(new Set());
+  const [unlocking, setUnlocking] = useState(false);
+
+  const handleUnlockTemplates = async () => {
+    if (!userId || !selectedJobId) {
+      toast.error("Please select a job first");
+      return;
+    }
+    if (unlockedJobs.has(selectedJobId)) return;
+
+    setUnlocking(true);
+    try {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!wallet) {
+        toast.error("Wallet not found. Please load points first.");
+        return;
+      }
+      const balance = wallet.points_balance ?? 0;
+      if (balance < TEMPLATE_UNLOCK_COST) {
+        toast.error(`Insufficient points. You need ${TEMPLATE_UNLOCK_COST} pts but have ${balance} pts.`);
+        return;
+      }
+
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - TEMPLATE_UNLOCK_COST })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      const jobLabel = jobs.find(j => j.id === selectedJobId)?.job_title || "Vacancy";
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "email_template_unlock",
+        amount: 0,
+        points: TEMPLATE_UNLOCK_COST,
+        description: `Email templates unlocked for "${jobLabel}"`,
+      });
+
+      setUnlockedJobs(prev => new Set(prev).add(selectedJobId));
+      toast.success(`${TEMPLATE_UNLOCK_COST} pts deducted. Email templates unlocked!`);
+    } catch (e: any) {
+      console.error("Email template unlock error:", e);
+      toast.error(e.message || "Failed to deduct points");
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const isTemplatesUnlocked = selectedJobId ? unlockedJobs.has(selectedJobId) : false;
 
   useEffect(() => {
     initEditor();
@@ -422,7 +479,38 @@ export function EmailTemplatesEditor() {
         </CardContent>
       </Card>
 
+      {/* Paywall — shown until employer unlocks templates for this vacancy */}
+      {!isTemplatesUnlocked && (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="p-3 rounded-full bg-primary/10 shrink-0">
+              <Lock className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-semibold text-foreground">
+                Unlock Email Templates for this Vacancy
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Spend <span className="font-semibold text-primary">{TEMPLATE_UNLOCK_COST} pts</span> to customize and use email templates for{" "}
+                <span className="font-medium text-foreground">{selectedJob?.job_title || "this job"}</span>.
+                One-time deduction per vacancy.
+              </p>
+            </div>
+            <Button
+              onClick={handleUnlockTemplates}
+              disabled={!selectedJobId || unlocking}
+              size="lg"
+              className="shrink-0"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              {unlocking ? "Processing..." : `Unlock (${TEMPLATE_UNLOCK_COST} pts)`}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pipeline Stage Sidebar + Editor */}
+      {isTemplatesUnlocked && (
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Stages List */}
         <Card className="lg:col-span-1">
@@ -595,6 +683,7 @@ export function EmailTemplatesEditor() {
           )}
         </Card>
       </div>
+      )}
     </div>
   );
 }
