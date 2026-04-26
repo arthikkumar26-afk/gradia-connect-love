@@ -32,8 +32,33 @@ const COMPANY = {
   email: "info@gradiaa.com",
   website: "www.gradiaa.com",
   gstin: "—",
-  brandHex: "#5b21b6",
+  brandHex: "#1e6fd9",
+  accentHex: "#22c55e",
 };
+
+// RGB tuples derived from logo: blue + green
+const BRAND_RGB: [number, number, number] = [30, 111, 217];
+const ACCENT_RGB: [number, number, number] = [34, 197, 94];
+
+const LOGO_URL =
+  "https://cybqlimobxpjygwcdojv.supabase.co/storage/v1/object/public/profile-pictures/brand/gradia-logo.png";
+
+async function fetchLogoDataUrl(): Promise<string | null> {
+  try {
+    const r = await fetch(LOGO_URL);
+    if (!r.ok) return null;
+    const buf = new Uint8Array(await r.arrayBuffer());
+    let bin = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < buf.length; i += chunk) {
+      bin += String.fromCharCode.apply(null, Array.from(buf.subarray(i, i + chunk)) as any);
+    }
+    return `data:image/png;base64,${btoa(bin)}`;
+  } catch (e) {
+    console.error("[send-payment-receipt] logo fetch failed", e);
+    return null;
+  }
+}
 
 function inr(n: number): string {
   return `INR ${Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -45,35 +70,54 @@ function buildInvoiceNumber(paymentId: string, dt: Date): string {
   return `GRD-${yyyymm}-${tail}`;
 }
 
-function generatePdf(data: ReceiptPayload, invoiceNo: string, paidAt: Date): Uint8Array {
+function generatePdf(
+  data: ReceiptPayload,
+  invoiceNo: string,
+  paidAt: Date,
+  logoDataUrl: string | null,
+): Uint8Array {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const left = 40;
   const right = W - 40;
 
-  // Brand bar
-  doc.setFillColor(91, 33, 182);
-  doc.rect(0, 0, W, 70, "F");
+  // Brand bar (logo blue)
+  doc.setFillColor(BRAND_RGB[0], BRAND_RGB[1], BRAND_RGB[2]);
+  doc.rect(0, 0, W, 80, "F");
+  // Green accent stripe along bottom of header
+  doc.setFillColor(ACCENT_RGB[0], ACCENT_RGB[1], ACCENT_RGB[2]);
+  doc.rect(0, 80, W, 4, "F");
+
+  // Logo (left)
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "PNG", left, 14, 52, 52);
+    } catch (e) {
+      console.error("[send-payment-receipt] addImage failed", e);
+    }
+  }
+
+  // Wordmark next to logo
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.text("GRADIA", left, 32);
+  doc.text("GRADIA", left + (logoDataUrl ? 64 : 0), 38);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("Hiring. Simplified.", left, 50);
+  doc.text("Your Next Step", left + (logoDataUrl ? 64 : 0), 56);
 
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("TAX INVOICE", right, 32, { align: "right" });
+  doc.text("TAX INVOICE", right, 38, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Original for Recipient", right, 50, { align: "right" });
+  doc.text("Original for Recipient", right, 56, { align: "right" });
 
   // Reset text color
   doc.setTextColor(30, 30, 30);
 
   // Company block
-  let y = 100;
+  let y = 110;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.text(COMPANY.name, left, y);
@@ -85,7 +129,7 @@ function generatePdf(data: ReceiptPayload, invoiceNo: string, paidAt: Date): Uin
   y += 12; doc.text(`GSTIN: ${COMPANY.gstin}`, left, y);
 
   // Invoice meta (right column)
-  let yr = 100;
+  let yr = 110;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("Invoice No:", right - 150, yr); doc.setFont("helvetica", "normal"); doc.text(invoiceNo, right, yr, { align: "right" });
@@ -114,7 +158,7 @@ function generatePdf(data: ReceiptPayload, invoiceNo: string, paidAt: Date): Uin
 
   // Items header
   y += 90;
-  doc.setFillColor(91, 33, 182);
+  doc.setFillColor(BRAND_RGB[0], BRAND_RGB[1], BRAND_RGB[2]);
   doc.rect(left, y, right - left, 26, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold"); doc.setFontSize(10);
@@ -150,7 +194,7 @@ function generatePdf(data: ReceiptPayload, invoiceNo: string, paidAt: Date): Uin
   drawRow("Subtotal", inr(data.amount));
   drawRow("CGST (0%)", inr(0));
   drawRow("SGST (0%)", inr(0));
-  doc.setDrawColor(91, 33, 182);
+  doc.setDrawColor(BRAND_RGB[0], BRAND_RGB[1], BRAND_RGB[2]);
   doc.line(totalsX, y - 4, right - 12, y - 4);
   y += 4;
   drawRow("Total Paid", inr(data.amount), true);
@@ -188,9 +232,18 @@ function generatePdf(data: ReceiptPayload, invoiceNo: string, paidAt: Date): Uin
 function emailHtml(data: ReceiptPayload, invoiceNo: string, paidAt: Date) {
   return `<!DOCTYPE html><html><body style="margin:0;background:#f5f4fa;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1f2937;">
   <div style="max-width:600px;margin:0 auto;background:#ffffff;">
-    <div style="background:linear-gradient(135deg,#5b21b6 0%,#7c3aed 100%);padding:28px 32px;color:#fff;">
-      <div style="font-size:22px;font-weight:700;letter-spacing:1px;">GRADIA</div>
-      <div style="font-size:13px;opacity:.9;margin-top:4px;">Payment Receipt</div>
+    <div style="background:linear-gradient(135deg,#1e6fd9 0%,#22c55e 100%);padding:28px 32px;color:#fff;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="padding-right:14px;vertical-align:middle;">
+            <img src="${LOGO_URL}" alt="Gradia" width="44" height="44" style="display:block;border-radius:8px;background:#fff;padding:4px;" />
+          </td>
+          <td style="vertical-align:middle;">
+            <div style="font-size:22px;font-weight:700;letter-spacing:1px;line-height:1;">GRADIA</div>
+            <div style="font-size:13px;opacity:.9;margin-top:4px;">Payment Receipt</div>
+          </td>
+        </tr>
+      </table>
     </div>
     <div style="padding:32px;">
       <p style="font-size:16px;margin:0 0 8px;">Hi ${data.name || "there"},</p>
@@ -252,7 +305,8 @@ serve(async (req) => {
     const paidAt = data.paid_at ? new Date(data.paid_at) : new Date();
     const invoiceNo = buildInvoiceNumber(data.payment_id, paidAt);
 
-    const pdfBytes = generatePdf({ ...data, name, email, user_role: role }, invoiceNo, paidAt);
+    const logoDataUrl = await fetchLogoDataUrl();
+    const pdfBytes = generatePdf({ ...data, name, email, user_role: role }, invoiceNo, paidAt, logoDataUrl);
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
