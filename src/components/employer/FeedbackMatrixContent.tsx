@@ -409,6 +409,11 @@ export const FeedbackMatrixContent = () => {
                         >
                           {entry.candidateName}
                         </span>
+                        {!unlockedReviews.has(entry.candidateId) && (
+                          <Badge variant="outline" className="text-[10px] ml-1">
+                            {unlockingId === entry.candidateId ? "..." : `${FEEDBACK_REVIEW_COST} pts`}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>{entry.jobTitle}</TableCell>
