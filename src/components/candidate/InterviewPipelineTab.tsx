@@ -433,9 +433,15 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
       const firstInterview = interviewsWithEvents[0];
       const jobPipeline = (firstInterview?.job as any)?.pipeline_stages as Array<{ name: string; order: number }> | null;
 
-      // Hidden "Round" stages that should be skipped in candidate view
+      // Hidden stages skipped in candidate view.
+      // - 'Demo Round' is replaced by 'Demo Feedback' card.
+      // - 'Written Test Feedback' is redundant: 'Written Test' card already shows score, correct/total, time and AI feedback.
+      // - 'HR Feedback' / 'HR Round Feedback' are redundant: HR outcome is delivered to the candidate via email; the 'HR Round' card already represents the stage.
       const hiddenRoundStages = new Set([
         'Demo Round',
+        'Written Test Feedback',
+        'HR Feedback',
+        'HR Round Feedback',
       ]);
 
       let filteredStages: InterviewStage[];
