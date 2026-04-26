@@ -3896,31 +3896,93 @@ const CandidateDashboard = () => {
             {/* Upskill Yourself - Standalone Section */}
             {activeMenu === "upskill" && (() => {
               // Aggregate weak areas with supporting evidence (source + detail)
-              type WeakArea = { text: string; source: "Resume" | "Mock Interview"; evidence: string; score?: number };
+              type DrilldownDetail = {
+                label: string; // e.g. "Resume section" or "Question 3 (Technical Round)"
+                content: string; // exact text from resume / question text
+                meta?: string; // optional extra (your answer, expected, etc.)
+              };
+              type WeakArea = {
+                text: string;
+                source: "Resume" | "Mock Interview";
+                evidence: string;
+                score?: number;
+                details?: DrilldownDetail[];
+              };
               const weakAreasDetailed: WeakArea[] = [];
+
+              // Heuristic to map an improvement string to the resume section it relates to
+              const resumeSectionFor = (imp: string): { section: string; text: string } => {
+                const lower = imp.toLowerCase();
+                const ra: any = resumeAnalysis || {};
+                if (/skill|technolog|stack|tool/.test(lower)) {
+                  const skills = Array.isArray(ra.skill_highlights) ? ra.skill_highlights.join(", ") : "";
+                  return { section: "Skills", text: skills || "(no skills listed on resume)" };
+                }
+                if (/experience|work|role|job|project/.test(lower)) {
+                  return { section: "Experience", text: ra.experience_summary || "(no experience summary on resume)" };
+                }
+                if (/career|level|seniority/.test(lower)) {
+                  return { section: "Career Level", text: ra.career_level || "(not detected)" };
+                }
+                if (/strength|highlight/.test(lower)) {
+                  const s = Array.isArray(ra.strengths) ? ra.strengths.join("; ") : "";
+                  return { section: "Strengths", text: s || "(none captured)" };
+                }
+                return { section: "Overall Resume", text: ra.experience_summary || "(no resume summary available)" };
+              };
 
               if (Array.isArray(resumeAnalysis?.improvements)) {
                 resumeAnalysis.improvements.forEach((imp: string) => {
-                  const score = (resumeAnalysis as any)?.score;
+                  const score = (resumeAnalysis as any)?.score ?? (resumeAnalysis as any)?.overall_score;
+                  const sec = resumeSectionFor(imp);
                   weakAreasDetailed.push({
                     text: imp,
                     source: "Resume",
                     evidence: typeof score === "number"
                       ? `From AI resume analysis (overall score ${score}/100)`
                       : "From AI resume analysis",
+                    details: [
+                      { label: `Resume section: ${sec.section}`, content: sec.text, meta: "AI flagged this section as needing improvement." },
+                    ],
                   });
                 });
               }
 
+              // Build detail list for a mock interview stage — pick lowest-scoring questions if available
+              const buildStageDetails = (s: any, stageName: string): DrilldownDetail[] => {
+                const questions: any[] = Array.isArray(s?.questions) ? s.questions
+                  : Array.isArray(s?.question_results) ? s.question_results
+                  : Array.isArray(s?.answers) ? s.answers : [];
+                if (!questions.length) return [];
+                const scored = questions
+                  .map((q: any, idx: number) => ({
+                    idx: idx + 1,
+                    text: q?.question || q?.question_text || q?.prompt || q?.text || `Question ${idx + 1}`,
+                    answer: q?.answer || q?.user_answer || q?.response || "",
+                    score: typeof q?.score === "number" ? q.score
+                      : typeof q?.rating === "number" ? q.rating
+                      : (q?.is_correct === false ? 0 : (q?.is_correct === true ? 100 : null)),
+                  }));
+                const weakOnes = scored.filter(q => typeof q.score === "number" && q.score < 60);
+                const picks = (weakOnes.length ? weakOnes : scored).slice(0, 3);
+                return picks.map(q => ({
+                  label: `Q${q.idx} • ${stageName}${typeof q.score === "number" ? ` • ${q.score}%` : ""}`,
+                  content: String(q.text),
+                  meta: q.answer ? `Your answer: ${String(q.answer).slice(0, 240)}` : undefined,
+                }));
+              };
+
               (mockInterviewStageResults || []).forEach((s: any) => {
                 const stageName = s?.stage_name || s?.name || "Interview Stage";
                 const score = typeof s?.score === "number" ? s.score : undefined;
+                const stageDetails = buildStageDetails(s, stageName);
                 if (typeof score === "number" && score < 60) {
                   weakAreasDetailed.push({
                     text: `${stageName} performance needs improvement`,
                     source: "Mock Interview",
                     evidence: `Scored ${score}% in the ${stageName} round (below 60% threshold)`,
                     score,
+                    details: stageDetails.length ? stageDetails : [{ label: stageName, content: `Round score: ${score}%. No question-level data was recorded for this round.` }],
                   });
                 }
                 if (Array.isArray(s?.weaknesses)) {
@@ -3929,6 +3991,7 @@ const CandidateDashboard = () => {
                     source: "Mock Interview",
                     evidence: `Flagged in ${stageName}${typeof score === "number" ? ` (score ${score}%)` : ""}`,
                     score,
+                    details: stageDetails,
                   }));
                 }
                 if (Array.isArray(s?.improvements)) {
@@ -3937,6 +4000,7 @@ const CandidateDashboard = () => {
                     source: "Mock Interview",
                     evidence: `Suggested in ${stageName}${typeof score === "number" ? ` (score ${score}%)` : ""}`,
                     score,
+                    details: stageDetails,
                   }));
                 }
               });
