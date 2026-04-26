@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -6,13 +6,16 @@ import {
   Home, Users, CreditCard, UserCheck, UserX, Briefcase, Building2,
   ClipboardList, UserCog, MessageSquare, Ticket, Bell, BarChart3,
   FileText, Settings, ShieldCheck, Upload, Mail, Send, Loader2, FileUp,
-  Sparkles, MapPin, Wand2,
+  Sparkles, MapPin, Wand2, Search, Save, Database, Eye, FileEdit,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   SidebarProvider, Sidebar, SidebarContent, SidebarGroup,
   SidebarGroupContent, SidebarGroupLabel, SidebarMenu,
@@ -55,20 +58,141 @@ interface ParsedResume {
   experience?: Array<{ designation?: string; organization?: string }>;
 }
 
-interface BulkRow {
-  fileName: string;
-  status: "pending" | "parsing" | "sending" | "sent" | "failed";
-  email?: string;
-  fullName?: string;
-  matchedJobs?: number;
-  error?: string;
+interface CandidateRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  mobile: string | null;
+  location: string | null;
+  resume_url: string | null;
+  preferred_role: string | null;
 }
+
+const DRAFT_KEY = "invite_from_resume_draft_v1";
+
+const DEFAULT_SUBJECT = "Opportunity Update – Your Profile Review";
+
+const buildSuggestedRoles = (p: ParsedResume | null): string[] => {
+  if (!p) return [];
+  const roles = new Set<string>();
+  if (p.preferred_role) roles.add(p.preferred_role);
+  (p.experience || []).forEach((e) => e.designation && roles.add(e.designation));
+  (p.skills || []).slice(0, 3).forEach((s) => roles.add(`${s} Specialist`));
+  return Array.from(roles).slice(0, 5);
+};
+
+const buildEmailHtml = (opts: {
+  candidateName: string;
+  jobRoles: string[];
+  adminName: string;
+  companyName: string;
+  contactInfo: string;
+  showSubscription: boolean;
+  showPayment: boolean;
+  showTerms: boolean;
+}) => {
+  const { candidateName, jobRoles, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms } = opts;
+  const roleList = Array.from({ length: 5 }, (_, i) =>
+    `<li>${String.fromCharCode(65 + i)}. ${jobRoles[i] || `Suitable Role ${i + 1}`}</li>`
+  ).join("");
+
+  const subscriptionBlock = showSubscription ? `
+    <h3 style="color:#1e3a8a;margin-top:24px;">📋 Subscription Plans</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">
+      <thead style="background:#f3f4f6;">
+        <tr>
+          <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Feature</th>
+          <th style="border:1px solid #e5e7eb;padding:8px;">Basic</th>
+          <th style="border:1px solid #e5e7eb;padding:8px;">Standard</th>
+          <th style="border:1px solid #e5e7eb;padding:8px;">Premium</th>
+          <th style="border:1px solid #e5e7eb;padding:8px;">Professional</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${[
+          ["Resume Submission", "✓", "✓", "✓", "✓"],
+          ["Job Access", "Limited", "✓", "✓", "✓"],
+          ["Job Alerts", "✗", "✓", "✓", "✓"],
+          ["Interview Guidance", "✗", "✗", "✓", "✓"],
+          ["Resume Review", "✗", "✓", "✓", "✓"],
+          ["Dedicated Support", "✗", "✗", "✓", "✓"],
+          ["Career Guidance", "✗", "✗", "✓", "✓"],
+          ["Employer Connection", "✗", "✗", "✗", "✓"],
+        ].map((r) => `<tr>${r.map((c, i) => `<td style="border:1px solid #e5e7eb;padding:6px;${i===0?'':'text-align:center;'}">${c}</td>`).join("")}</tr>`).join("")}
+      </tbody>
+    </table>` : "";
+
+  const paymentBlock = showPayment ? `
+    <h3 style="color:#1e3a8a;margin-top:24px;">💳 Payment Methods</h3>
+    <ul style="font-size:14px;line-height:1.7;">
+      <li>UPI (GPay, PhonePe, Paytm, BHIM)</li>
+      <li>Credit / Debit Cards</li>
+      <li>Net Banking</li>
+      <li>Wallets</li>
+      <li>Bank Transfer</li>
+    </ul>
+    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px;margin-top:12px;font-size:13px;">
+      <strong>Important Notes:</strong>
+      <ul style="margin:6px 0 0 18px;padding:0;">
+        <li>No job guarantee</li>
+        <li>Payment non-refundable</li>
+        <li>Subscription activates after verification</li>
+      </ul>
+    </div>` : "";
+
+  const termsBlock = showTerms ? `
+    <h3 style="color:#1e3a8a;margin-top:24px;">📜 Terms &amp; Conditions</h3>
+    <ul style="font-size:13px;line-height:1.6;color:#4b5563;">
+      <li>Resume must be accurate</li>
+      <li>Opportunities depend on employer</li>
+      <li>Profile may be shared with recruiters</li>
+      <li>Communication via email/phone</li>
+    </ul>` : "";
+
+  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#111827;background:#ffffff;">
+  <h2 style="color:#1e3a8a;margin:0 0 16px;">Dear ${candidateName},</h2>
+  <p style="font-size:15px;line-height:1.6;">Greetings!</p>
+  <p style="font-size:15px;line-height:1.6;">We have received your resume/CV through our job portal. Thank you for your interest in exploring opportunities with us.</p>
+  <p style="font-size:15px;line-height:1.6;">Our team is currently reviewing your profile, and we will be scheduling the interview process at the earliest possible time. You will be notified with further details shortly.</p>
+  <p style="font-size:15px;line-height:1.6;">Additionally, based on your qualifications and experience, we will guide you toward job opportunities that closely match your profile.</p>
+  <p style="font-size:15px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
+
+  <h3 style="color:#1e3a8a;margin-top:24px;">STEP 2 — Based on your CV, suitable openings:</h3>
+  <ul style="font-size:14px;line-height:1.7;">
+    <li>Principal – State Board (Hyderabad)</li>
+    <li>Principal – State Board (Nizamabad)</li>
+    <li>Principal – CBSE Board</li>
+    <li>SME (Subject Matter Expert)</li>
+    <li>Resource Person</li>
+    <li>HOD / Senior Teacher</li>
+  </ul>
+
+  <h3 style="color:#1e3a8a;margin-top:24px;">STEP 3 — Suitable Jobs according to your qualifications:</h3>
+  <ul style="font-size:14px;line-height:1.7;list-style:none;padding-left:0;">${roleList}</ul>
+
+  <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
+  <p style="font-size:14px;">☐ With Interview &nbsp;&nbsp; ☐ Without Interview</p>
+
+  <h3 style="color:#1e3a8a;margin-top:24px;">⚖️ Comparison Overview</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <tr style="background:#f3f4f6;"><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">With Interview</th><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Without Interview</th></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on interview performance<br/>• Direct interaction with employer<br/>• Multi-stage evaluation<br/>• Higher transparency</td>
+        <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on resume/profile<br/>• Faster hiring process<br/>• Limited interaction<br/>• Quick employer decision</td></tr>
+  </table>
+
+  ${subscriptionBlock}
+  ${paymentBlock}
+  ${termsBlock}
+
+  <p style="font-size:15px;margin-top:24px;">We will keep you updated with the next steps shortly.</p>
+  <p style="font-size:15px;margin-top:16px;">Best regards,<br/><strong>${adminName}</strong><br/>${companyName}<br/>${contactInfo}</p>
+</div>`;
+};
 
 const InviteFromResume = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
-  const bulkRef = useRef<HTMLInputElement>(null);
 
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -76,12 +200,28 @@ const InviteFromResume = () => {
   const [sending, setSending] = useState(false);
   const [fileName, setFileName] = useState("");
   const [parsed, setParsed] = useState<ParsedResume | null>(null);
-  const [emailOverride, setEmailOverride] = useState("");
-  const [lastResult, setLastResult] = useState<{ matchedJobs: number; jobs: any[] } | null>(null);
 
-  // Bulk state
-  const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
-  const [bulkRunning, setBulkRunning] = useState(false);
+  const [activeTab, setActiveTab] = useState("resume");
+
+  // Recipient + roles
+  const [candidateName, setCandidateName] = useState("");
+  const [candidateEmail, setCandidateEmail] = useState("");
+  const [jobRoles, setJobRoles] = useState<string[]>(["", "", "", "", ""]);
+
+  // Email
+  const [subject, setSubject] = useState(DEFAULT_SUBJECT);
+  const [adminName, setAdminName] = useState("Gradia Hiring Team");
+  const [companyName, setCompanyName] = useState("Gradia");
+  const [contactInfo, setContactInfo] = useState("info@gradiaa.com");
+  const [showSubscription, setShowSubscription] = useState(true);
+  const [showPayment, setShowPayment] = useState(true);
+  const [showTerms, setShowTerms] = useState(true);
+  const [editedHtml, setEditedHtml] = useState<string | null>(null);
+
+  // Candidate DB selector
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [candidates, setCandidates] = useState<CandidateRow[]>([]);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -91,15 +231,71 @@ const InviteFromResume = () => {
       const has = roles?.some((r) => r.role === "admin" || r.role === "owner");
       if (!has) { navigate("/admin/login"); return; }
       setAuthorized(true); setLoading(false);
+
+      // load draft
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (raw) {
+          const d = JSON.parse(raw);
+          if (d.candidateName) setCandidateName(d.candidateName);
+          if (d.candidateEmail) setCandidateEmail(d.candidateEmail);
+          if (d.jobRoles) setJobRoles(d.jobRoles);
+          if (d.subject) setSubject(d.subject);
+          if (d.adminName) setAdminName(d.adminName);
+          if (d.companyName) setCompanyName(d.companyName);
+          if (d.contactInfo) setContactInfo(d.contactInfo);
+          if (typeof d.editedHtml === "string") setEditedHtml(d.editedHtml);
+          if (typeof d.showSubscription === "boolean") setShowSubscription(d.showSubscription);
+          if (typeof d.showPayment === "boolean") setShowPayment(d.showPayment);
+          if (typeof d.showTerms === "boolean") setShowTerms(d.showTerms);
+        }
+      } catch { /* ignore */ }
     })();
   }, [navigate]);
+
+  const loadCandidates = async () => {
+    setLoadingCandidates(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, mobile, location, resume_url, preferred_role")
+        .eq("role", "candidate")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      setCandidates((data || []) as CandidateRow[]);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to load candidates");
+    } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
+  const filteredCandidates = useMemo(() => {
+    const q = candidateSearch.trim().toLowerCase();
+    if (!q) return candidates;
+    return candidates.filter((c) =>
+      [c.full_name, c.email, c.mobile, c.location, c.preferred_role]
+        .filter(Boolean)
+        .some((v) => (v as string).toLowerCase().includes(q))
+    );
+  }, [candidates, candidateSearch]);
+
+  const applyParsed = (p: ParsedResume) => {
+    setParsed(p);
+    if (p.full_name) setCandidateName(p.full_name);
+    if (p.email) setCandidateEmail(p.email);
+    const suggested = buildSuggestedRoles(p);
+    if (suggested.length) {
+      setJobRoles((prev) => prev.map((r, i) => suggested[i] || r));
+    }
+    setEditedHtml(null);
+  };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
-    setParsed(null);
-    setLastResult(null);
     setParsing(true);
     try {
       const fd = new FormData();
@@ -107,121 +303,87 @@ const InviteFromResume = () => {
       const { data, error } = await supabase.functions.invoke("parse-resume", { body: fd });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setParsed(data);
-      setEmailOverride(data?.email || "");
+      applyParsed(data);
       toast.success("Resume parsed successfully");
     } catch (err: any) {
-      console.error(err);
       toast.error(err.message || "Failed to parse resume");
     } finally {
       setParsing(false);
     }
   };
 
-  const handleSendInvite = async () => {
-    const email = (emailOverride || parsed?.email || "").trim();
-    if (!email || !email.includes("@")) {
-      toast.error("Please provide a valid email address");
-      return;
+  const selectCandidate = (c: CandidateRow) => {
+    setCandidateName(c.full_name || "");
+    setCandidateEmail(c.email || "");
+    setFileName(c.full_name ? `${c.full_name} (from database)` : "Candidate selected");
+    const synthetic: ParsedResume = {
+      full_name: c.full_name,
+      email: c.email,
+      mobile: c.mobile,
+      location: c.location,
+      preferred_role: c.preferred_role,
+    };
+    applyParsed(synthetic);
+    toast.success(`Selected ${c.full_name || c.email}`);
+  };
+
+  const generatedHtml = useMemo(
+    () =>
+      buildEmailHtml({
+        candidateName: candidateName || "Candidate",
+        jobRoles,
+        adminName,
+        companyName,
+        contactInfo,
+        showSubscription,
+        showPayment,
+        showTerms,
+      }),
+    [candidateName, jobRoles, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms]
+  );
+
+  const finalHtml = editedHtml ?? generatedHtml;
+
+  const handleSaveDraft = () => {
+    const payload = {
+      candidateName, candidateEmail, jobRoles, subject,
+      adminName, companyName, contactInfo, editedHtml,
+      showSubscription, showPayment, showTerms,
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+    toast.success("Draft saved locally");
+  };
+
+  const handleClearDraft = () => {
+    localStorage.removeItem(DRAFT_KEY);
+    setEditedHtml(null);
+    toast.success("Draft cleared");
+  };
+
+  const handleSend = async () => {
+    if (!candidateEmail || !candidateEmail.includes("@")) {
+      toast.error("Enter a valid recipient email"); return;
     }
+    if (!subject.trim()) { toast.error("Subject is required"); return; }
     setSending(true);
     try {
-      const lastDesignation = parsed?.experience?.[0]?.designation || "";
-      const { data, error } = await supabase.functions.invoke("invite-candidate-from-resume", {
-        body: {
-          email,
-          fullName: parsed?.full_name || undefined,
-          skills: parsed?.skills || [],
-          preferredRole: parsed?.preferred_role || "",
-          experienceLevel: parsed?.experience_level || "",
-          lastDesignation,
-          location: parsed?.location || "",
-          maxJobs: 6,
-        },
+      const { data, error } = await supabase.functions.invoke("send-resume-invite-email", {
+        body: { to: candidateEmail.trim(), subject: subject.trim(), html: finalHtml, fromName: companyName },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setLastResult({ matchedJobs: data.matchedJobs, jobs: data.jobs });
-      toast.success(`Invite sent to ${email} with ${data.matchedJobs} matched job${data.matchedJobs !== 1 ? "s" : ""}`);
+      toast.success(`Email sent to ${candidateEmail}`);
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to send invite");
+      toast.error(err.message || "Failed to send email");
     } finally {
       setSending(false);
     }
-  };
-
-  const handleBulkFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    setBulkRows(files.map((f) => ({ fileName: f.name, status: "pending" as const })));
-    // Store actual files via dataset on a ref-less map: re-trigger via input instead
-    (window as any).__bulkResumeFiles = files;
-    toast.success(`${files.length} resume${files.length > 1 ? "s" : ""} queued. Click "Process & Invite All" to start.`);
-  };
-
-  const processBulk = async () => {
-    const files: File[] = (window as any).__bulkResumeFiles || [];
-    if (!files.length) { toast.error("No files queued"); return; }
-    setBulkRunning(true);
-    let sent = 0, failed = 0;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      // parse
-      setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "parsing" } : r));
-      try {
-        const fd = new FormData();
-        fd.append("file", file);
-        const { data: parsedData, error: parseErr } = await supabase.functions.invoke("parse-resume", { body: fd });
-        if (parseErr) throw parseErr;
-        if (parsedData?.error) throw new Error(parsedData.error);
-
-        const email = (parsedData?.email || "").trim();
-        const fullName = parsedData?.full_name || "";
-        if (!email || !email.includes("@")) {
-          throw new Error("No valid email found in resume");
-        }
-
-        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "sending", email, fullName } : r));
-
-        const lastDesignation = parsedData?.experience?.[0]?.designation || "";
-        const { data: inviteData, error: inviteErr } = await supabase.functions.invoke("invite-candidate-from-resume", {
-          body: {
-            email,
-            fullName: fullName || undefined,
-            skills: parsedData?.skills || [],
-            preferredRole: parsedData?.preferred_role || "",
-            experienceLevel: parsedData?.experience_level || "",
-            lastDesignation,
-            location: parsedData?.location || "",
-            maxJobs: 6,
-          },
-        });
-        if (inviteErr) throw inviteErr;
-        if (inviteData?.error) throw new Error(inviteData.error);
-
-        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "sent", matchedJobs: inviteData.matchedJobs } : r));
-        sent++;
-      } catch (err: any) {
-        console.error("Bulk row failed:", file.name, err);
-        setBulkRows((rows) => rows.map((r, idx) => idx === i ? { ...r, status: "failed", error: err.message || "Failed" } : r));
-        failed++;
-      }
-      // small gap to avoid rate limits
-      await new Promise((r) => setTimeout(r, 800));
-    }
-
-    setBulkRunning(false);
-    toast.success(`Bulk complete: ${sent} sent, ${failed} failed`);
   };
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
   if (!authorized) return null;
-
-  const lastDesig = parsed?.experience?.[0]?.designation || "";
 
   return (
     <SidebarProvider>
@@ -257,243 +419,293 @@ const InviteFromResume = () => {
         <main className="flex-1 overflow-auto">
           <header className="bg-background border-b px-6 py-4 flex items-center gap-3 sticky top-0 z-10">
             <SidebarTrigger />
-            <div>
+            <div className="flex-1">
               <h1 className="text-xl font-bold flex items-center gap-2">
                 <Wand2 className="h-5 w-5 text-primary" />
                 Invite from Resume
               </h1>
-              <p className="text-sm text-muted-foreground">Upload a candidate's resume → AI matches open vacancies → email them an invite</p>
+              <p className="text-sm text-muted-foreground">Upload or pick a candidate → auto-generate a branded invite → preview, edit and send.</p>
             </div>
+            <Button variant="outline" size="sm" onClick={handleSaveDraft}><Save className="h-4 w-4 mr-2" />Save Draft</Button>
           </header>
 
-          <div className="p-6 max-w-5xl mx-auto space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Upload className="h-4 w-4" /> Step 1 — Upload Resume
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition"
-                >
-                  <FileUp className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                  <p className="font-medium">{fileName || "Click to upload PDF / DOCX / Image"}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Max 20MB. AI will extract skills, role, location.</p>
-                </div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,.docx,.doc,.png,.jpg,.jpeg"
-                  onChange={handleFile}
-                  className="hidden"
-                />
-                {parsing && (
-                  <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Analyzing resume with AI…
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div className="p-6 max-w-6xl mx-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid grid-cols-3 w-full max-w-xl mx-auto mb-6">
+                <TabsTrigger value="resume"><FileText className="h-4 w-4 mr-2" />Resume Info</TabsTrigger>
+                <TabsTrigger value="preview"><Eye className="h-4 w-4 mr-2" />Email Preview</TabsTrigger>
+                <TabsTrigger value="send"><Send className="h-4 w-4 mr-2" />Send</TabsTrigger>
+              </TabsList>
 
-            {parsed && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Sparkles className="h-4 w-4 text-primary" /> Step 2 — Review Extracted Profile
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Name</Label>
-                      <p className="font-medium">{parsed.full_name || "—"}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Phone</Label>
-                      <p className="font-medium">{parsed.mobile || "—"}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Last Designation</Label>
-                      <p className="font-medium">{lastDesig || "—"}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Preferred Role</Label>
-                      <p className="font-medium">{parsed.preferred_role || "—"}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Experience</Label>
-                      <p className="font-medium">{parsed.experience_level || "—"}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />Location</Label>
-                      <p className="font-medium">{parsed.location || "—"}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Top Skills</Label>
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {(parsed.skills || []).slice(0, 20).map((s) => (
-                        <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
-                      ))}
-                      {(!parsed.skills || parsed.skills.length === 0) && <p className="text-sm text-muted-foreground">No skills detected</p>}
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t">
-                    <Label htmlFor="email" className="text-sm">Send invite to</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={emailOverride}
-                      onChange={(e) => setEmailOverride(e.target.value)}
-                      placeholder="candidate@example.com"
-                      className="mt-1.5"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">Auto-detected from resume. Edit if needed.</p>
-                  </div>
-
-                  <Button
-                    onClick={handleSendInvite}
-                    disabled={sending || !emailOverride}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {sending ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Matching jobs & sending email…</>
-                    ) : (
-                      <><Send className="h-4 w-4 mr-2" /> Send Invite with Matched Vacancies</>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {lastResult && (
-              <Card className="border-green-200 bg-green-50/50">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-green-700" />
-                    Invite Sent — {lastResult.matchedJobs} job{lastResult.matchedJobs !== 1 ? "s" : ""} included
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {lastResult.jobs.map((j, i) => (
-                      <div key={i} className="bg-background border rounded-md px-3 py-2 text-sm space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{j.title}</p>
-                            <p className="text-xs text-muted-foreground truncate">{j.company} {j.location ? `· ${j.location}` : ""}</p>
-                          </div>
-                          <div className="flex items-center gap-2 ml-3 shrink-0">
-                            <Badge variant={j.source === "internal" ? "default" : "outline"} className="text-[10px]">{j.source}</Badge>
-                            <Badge variant="secondary" className="text-[10px]">Score {j.matchScore}</Badge>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 pt-1.5 border-t">
-                          <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">Apply — FREE</Badge>
-                          <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">ATS Score — FREE</Badge>
-                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Resume Export — ₹50</Badge>
-                          {j.source === "internal" ? (
-                            <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Mock Interview — ₹99</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px] bg-muted text-muted-foreground">External · redirects off-site</Badge>
-                          )}
-                          <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-700 border-orange-200">Featured Boost — ₹199</Badge>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">
-                          Likely spend if candidate applies + boosts profile: <span className="font-semibold text-foreground">~₹{j.source === "internal" ? "350" : "250"}</span>
-                        </p>
+              {/* TAB 1: RESUME INFO */}
+              <TabsContent value="resume" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Upload className="h-4 w-4" /> Upload Resume
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div
+                        onClick={() => fileRef.current?.click()}
+                        className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:bg-muted/50 transition"
+                      >
+                        <FileUp className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                        <p className="font-medium text-sm">{fileName || "Click to upload PDF / DOCX / Image"}</p>
+                        <p className="text-xs text-muted-foreground mt-1">AI extracts name, email, role, skills.</p>
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">💎 Pricing summary included in the email</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-background rounded border p-2">
-                        <p className="font-semibold text-foreground">Subscription Plans</p>
-                        <p className="text-muted-foreground">Basic — ₹5,000/mo</p>
-                        <p className="text-muted-foreground">Pro — ₹15,000/mo</p>
-                        <p className="text-muted-foreground">Premium — ₹30,000/mo</p>
-                      </div>
-                      <div className="bg-background rounded border p-2">
-                        <p className="font-semibold text-foreground">Pay-as-you-go</p>
-                        <p className="text-muted-foreground">Mock Interview — <span className="text-orange-600 font-semibold">₹99</span></p>
-                        <p className="text-muted-foreground">Resume Export — <span className="text-orange-600 font-semibold">₹50</span></p>
-                        <p className="text-muted-foreground">Mentor Contact — <span className="text-orange-600 font-semibold">₹1,500</span></p>
-                        <p className="text-muted-foreground">Featured Boost — <span className="text-orange-600 font-semibold">₹199</span></p>
-                        <p className="text-green-700 font-semibold">Job Apply / ATS — FREE</p>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-2">Mock Interview includes department-specific rounds (e.g. Education = 7 rounds, IT = 6 rounds).</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* BULK INVITE SECTION */}
-            <Card className="border-primary/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <FileUp className="h-4 w-4 text-primary" /> Bulk Invite — Upload Multiple Resumes
-                </CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  Upload multiple PDF/DOCX resumes. Each one is parsed → AI suggests jobs → invite email sent automatically.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div
-                  onClick={() => bulkRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition"
-                >
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="font-medium text-sm">Click to select multiple resumes</p>
-                  <p className="text-xs text-muted-foreground mt-1">PDF / DOCX / Image. Up to 10 files at once.</p>
-                </div>
-                <input
-                  ref={bulkRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.docx,.doc,.png,.jpg,.jpeg"
-                  onChange={handleBulkFiles}
-                  className="hidden"
-                />
-
-                {bulkRows.length > 0 && (
-                  <>
-                    <div className="border rounded-md divide-y">
-                      {bulkRows.map((row, i) => (
-                        <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium truncate">{row.fileName}</p>
-                            {row.email && <p className="text-xs text-muted-foreground truncate">{row.fullName ? `${row.fullName} · ` : ""}{row.email}</p>}
-                            {row.error && <p className="text-xs text-destructive truncate">{row.error}</p>}
-                          </div>
-                          <div className="ml-3 shrink-0">
-                            {row.status === "pending" && <Badge variant="outline" className="text-[10px]">Queued</Badge>}
-                            {row.status === "parsing" && <Badge variant="secondary" className="text-[10px]"><Loader2 className="h-3 w-3 mr-1 animate-spin inline" />Parsing</Badge>}
-                            {row.status === "sending" && <Badge variant="secondary" className="text-[10px]"><Loader2 className="h-3 w-3 mr-1 animate-spin inline" />Sending</Badge>}
-                            {row.status === "sent" && <Badge className="text-[10px] bg-green-600">Sent · {row.matchedJobs} jobs</Badge>}
-                            {row.status === "failed" && <Badge variant="destructive" className="text-[10px]">Failed</Badge>}
-                          </div>
+                      <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.png,.jpg,.jpeg" onChange={handleFile} className="hidden" />
+                      {parsing && (
+                        <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Analyzing resume…
                         </div>
-                      ))}
-                    </div>
-                    <Button onClick={processBulk} disabled={bulkRunning} className="w-full">
-                      {bulkRunning ? (
-                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing {bulkRows.filter(r => r.status === "sent" || r.status === "failed").length}/{bulkRows.length}…</>
-                      ) : (
-                        <><Send className="h-4 w-4 mr-2" /> Process & Invite All ({bulkRows.length})</>
                       )}
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Database className="h-4 w-4" /> Or Select from Database
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search by name, email, role…"
+                            value={candidateSearch}
+                            onChange={(e) => setCandidateSearch(e.target.value)}
+                            className="pl-8"
+                          />
+                        </div>
+                        <Button variant="outline" onClick={loadCandidates} disabled={loadingCandidates}>
+                          {loadingCandidates ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load"}
+                        </Button>
+                      </div>
+                      <div className="border rounded-md max-h-56 overflow-auto divide-y">
+                        {filteredCandidates.length === 0 ? (
+                          <p className="text-xs text-muted-foreground p-3 text-center">
+                            {candidates.length === 0 ? "Click Load to fetch candidates" : "No matches"}
+                          </p>
+                        ) : filteredCandidates.slice(0, 50).map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => selectCandidate(c)}
+                            className="w-full text-left px-3 py-2 hover:bg-muted/50 transition"
+                          >
+                            <p className="font-medium text-sm truncate">{c.full_name || "Unnamed"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{c.email} {c.preferred_role ? `· ${c.preferred_role}` : ""}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Sparkles className="h-4 w-4 text-primary" /> Extracted / Editable Profile
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Candidate Name</Label>
+                        <Input value={candidateName} onChange={(e) => setCandidateName(e.target.value)} placeholder="Full name" />
+                      </div>
+                      <div>
+                        <Label>Email</Label>
+                        <Input type="email" value={candidateEmail} onChange={(e) => setCandidateEmail(e.target.value)} placeholder="candidate@example.com" />
+                      </div>
+                      {parsed && (
+                        <>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Phone</Label>
+                            <p className="text-sm font-medium">{parsed.mobile || "—"}</p>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />Location</Label>
+                            <p className="text-sm font-medium">{parsed.location || "—"}</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label className="mb-2 block">Suggested Job Roles (AI-prefilled, editable)</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {jobRoles.map((r, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="text-xs font-semibold w-5">{String.fromCharCode(65 + i)}.</span>
+                            <Input
+                              value={r}
+                              onChange={(e) => setJobRoles((prev) => prev.map((x, idx) => idx === i ? e.target.value : x))}
+                              placeholder={`Job role ${i + 1}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {parsed?.skills?.length ? (
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Top Skills (from resume)</Label>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {parsed.skills.slice(0, 20).map((s) => (
+                            <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="flex justify-end pt-2">
+                      <Button onClick={() => setActiveTab("preview")} disabled={!candidateName || !candidateEmail}>
+                        Continue to Preview <Eye className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* TAB 2: PREVIEW */}
+              <TabsContent value="preview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <Card className="lg:col-span-1 shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2"><FileEdit className="h-4 w-4" />Email Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label>Subject</Label>
+                        <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>From / Admin Name</Label>
+                        <Input value={adminName} onChange={(e) => setAdminName(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>Company</Label>
+                        <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>Contact Info</Label>
+                        <Input value={contactInfo} onChange={(e) => setContactInfo(e.target.value)} />
+                      </div>
+
+                      <div className="pt-2 border-t space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground">Sections</p>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-normal">Subscription Plans</Label>
+                          <Switch checked={showSubscription} onCheckedChange={setShowSubscription} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-normal">Payment Methods</Label>
+                          <Switch checked={showPayment} onCheckedChange={setShowPayment} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-normal">Terms &amp; Conditions</Label>
+                          <Switch checked={showTerms} onCheckedChange={setShowTerms} />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t flex flex-col gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setEditedHtml(null)}>
+                          Reset to Auto-Generated
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={handleClearDraft}>
+                          Clear Draft
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="lg:col-span-2 shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2"><Eye className="h-4 w-4" />Live Preview</CardTitle>
+                      <Badge variant={editedHtml ? "default" : "secondary"} className="text-[10px]">
+                        {editedHtml ? "Custom edited" : "Auto-generated"}
+                      </Badge>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="border rounded-lg bg-white max-h-[480px] overflow-auto">
+                        <div dangerouslySetInnerHTML={{ __html: finalHtml }} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2"><FileEdit className="h-4 w-4" />HTML Editor (Advanced)</CardTitle>
+                    <p className="text-xs text-muted-foreground">Edit raw HTML for full control. Changes override the auto-generated preview.</p>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      value={finalHtml}
+                      onChange={(e) => setEditedHtml(e.target.value)}
+                      className="font-mono text-xs min-h-[280px]"
+                    />
+                    <div className="flex justify-end mt-3">
+                      <Button onClick={() => setActiveTab("send")}>
+                        Continue to Send <Send className="h-4 w-4 ml-2" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* TAB 3: SEND */}
+              <TabsContent value="send" className="space-y-6">
+                <Card className="shadow-sm max-w-2xl mx-auto">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2"><Send className="h-4 w-4 text-primary" />Review &amp; Send</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="text-muted-foreground">To</span>
+                        <span className="font-medium">{candidateEmail || "—"}</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="text-muted-foreground">Recipient</span>
+                        <span className="font-medium">{candidateName || "—"}</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="text-muted-foreground">Subject</span>
+                        <span className="font-medium truncate max-w-[60%]">{subject}</span>
+                      </div>
+                      <div className="flex justify-between border-b pb-2">
+                        <span className="text-muted-foreground">Sender</span>
+                        <span className="font-medium">{adminName} · {companyName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Sections enabled</span>
+                        <span className="font-medium text-xs">
+                          {[showSubscription && "Subscription", showPayment && "Payment", showTerms && "Terms"].filter(Boolean).join(", ") || "Core only"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                      <Button variant="outline" className="flex-1" onClick={handleSaveDraft}>
+                        <Save className="h-4 w-4 mr-2" />Save as Draft
+                      </Button>
+                      <Button className="flex-1" onClick={handleSend} disabled={sending || !candidateEmail}>
+                        {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending…</> : <><Send className="h-4 w-4 mr-2" />Send Email</>}
+                      </Button>
+                    </div>
+
+                    <p className="text-[11px] text-muted-foreground text-center">
+                      Email is sent from <strong>noreply@gradia.co.in</strong>. Drafts are saved locally in this browser.
+                    </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </main>
       </div>
