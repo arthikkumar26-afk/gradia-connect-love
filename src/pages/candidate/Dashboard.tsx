@@ -3898,12 +3898,14 @@ const CandidateDashboard = () => {
 
               if (Array.isArray(resumeAnalysis?.improvements)) {
                 resumeAnalysis.improvements.forEach((imp: string) => {
+                  const score = (resumeAnalysis as any)?.score;
                   weakAreasDetailed.push({
                     text: imp,
                     source: "Resume",
-                    evidence: typeof resumeAnalysis?.score === "number"
-                      ? `From AI resume analysis (overall score ${resumeAnalysis.score}/100)`
+                    evidence: typeof score === "number"
+                      ? `From AI resume analysis (overall score ${score}/100)`
                       : "From AI resume analysis",
+                  });
                   });
                 });
               }
