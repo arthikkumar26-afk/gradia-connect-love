@@ -22,6 +22,7 @@ import {
   FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 
 interface MatchedJob {
   id: string;
