@@ -1985,8 +1985,8 @@ export const MockInterviewTab = () => {
           <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Premium Feature</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            AI Mock Interview Pipeline is a paid feature. Pay{" "}
-            <strong>₹{MOCK_INTERVIEW_PRICE}</strong> to unlock the full 8-stage
+            AI Mock Interview Pipeline is a paid feature. Spend{" "}
+            <strong>{MOCK_INTERVIEW_POINTS} pts</strong> from your wallet to unlock the full 8-stage
             interview simulation.
           </p>
           <div className="flex justify-center mb-6">
@@ -1998,7 +1998,7 @@ export const MockInterviewTab = () => {
                 </span>
               </div>
               <p className="text-lg font-bold text-foreground">
-                ₹{MOCK_INTERVIEW_PRICE}
+                {MOCK_INTERVIEW_POINTS} pts
                 <span className="text-xs text-muted-foreground font-normal">
                   /attempt
                 </span>
@@ -2010,28 +2010,51 @@ export const MockInterviewTab = () => {
           </div>
           <Button
             onClick={async () => {
-              const ok = await startMockPayment({
-                actionKey: "extra_mock_test",
-                relatedEntityId: currentSession.id,
-                userName: profile?.full_name || "",
-                userEmail: profile?.email || "",
-                userPhone: (profile as any)?.mobile || "",
-                metadata: { session_id: currentSession.id },
-              });
-              if (ok) {
+              if (!user?.id) return;
+              setPayingForMock(true);
+              try {
+                const { data: wallet, error: wErr } = await supabase
+                  .from('wallets')
+                  .select('id, points_balance')
+                  .eq('user_id', user.id)
+                  .maybeSingle();
+                if (wErr) throw wErr;
+                if (!wallet || (wallet.points_balance ?? 0) < MOCK_INTERVIEW_POINTS) {
+                  toast.error(`Insufficient points. You need ${MOCK_INTERVIEW_POINTS} pts to unlock.`);
+                  return;
+                }
+                const newBalance = (wallet.points_balance ?? 0) - MOCK_INTERVIEW_POINTS;
+                const { error: updErr } = await supabase
+                  .from('wallets')
+                  .update({ points_balance: newBalance })
+                  .eq('id', wallet.id);
+                if (updErr) throw updErr;
+                await supabase.from('wallet_transactions').insert({
+                  wallet_id: wallet.id,
+                  transaction_type: 'debit',
+                  category: 'mock_interview',
+                  points: -MOCK_INTERVIEW_POINTS,
+                  description: 'AI Mock Interview Pipeline unlock',
+                } as any);
                 await supabase
                   .from('mock_interview_sessions')
                   .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
                   .eq('id', currentSession.id);
                 setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
+                toast.success(`${MOCK_INTERVIEW_POINTS} pts deducted. Pipeline unlocked!`);
+              } catch (e: any) {
+                console.error('Mock interview unlock error:', e);
+                toast.error(e?.message || 'Failed to unlock');
+              } finally {
+                setPayingForMock(false);
               }
             }}
             disabled={payingForMock}
             className="gap-2"
             size="lg"
           >
-            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <IndianRupee className="h-4 w-4" />}
-            Pay ₹{MOCK_INTERVIEW_PRICE} to Unlock
+            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
+            Spend {MOCK_INTERVIEW_POINTS} pts to Unlock
           </Button>
         </Card>
       ) : (
