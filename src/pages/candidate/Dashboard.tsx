@@ -3891,44 +3891,71 @@ const CandidateDashboard = () => {
             )}
 
             {/* Upskill Yourself - Standalone Section */}
-            {activeMenu === "upskill" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">Upskill Yourself</h2>
-                  <p className="text-sm text-muted-foreground">Improve your weak areas with recommended courses</p>
-                </div>
+            {activeMenu === "upskill" && (() => {
+              // Aggregate weak areas from resume analysis + mock interview stage feedback
+              const weakAreas: string[] = [];
+              if (resumeAnalysis?.improvements?.length) {
+                weakAreas.push(...resumeAnalysis.improvements);
+              }
+              (mockInterviewStageResults || []).forEach((s: any) => {
+                if (typeof s?.score === "number" && s.score < 60) {
+                  weakAreas.push(`${s.stage_name || s.name || "Interview Stage"}: needs improvement (score ${s.score}%)`);
+                }
+                if (Array.isArray(s?.weaknesses)) weakAreas.push(...s.weaknesses);
+                if (Array.isArray(s?.improvements)) weakAreas.push(...s.improvements);
+              });
+              const uniqueWeakAreas = Array.from(new Set(weakAreas.filter(Boolean))).slice(0, 8);
 
-                {/* Skill Analysis from Resume */}
-                {resumeAnalysis && resumeAnalysis.improvements && resumeAnalysis.improvements.length > 0 && (
+              // Skillory suggested courses — all open skilory.in
+              const skilloryCourses = (upskillCourseSuggestions && upskillCourseSuggestions.length > 0)
+                ? upskillCourseSuggestions.map((c: any) => ({
+                    title: c.title,
+                    description: c.description,
+                    category: c.category,
+                    level: c.level,
+                    duration: c.duration,
+                  }))
+                : [
+                    { title: "Communication & Soft Skills Mastery", description: "Sharpen interview communication, clarity and confidence.", category: "Soft Skills", level: "Beginner", duration: "4 weeks" },
+                    { title: "Aptitude & Reasoning Bootcamp", description: "Quantitative, logical and verbal reasoning practice.", category: "Aptitude", level: "Intermediate", duration: "6 weeks" },
+                    { title: "Resume & LinkedIn Optimization", description: "Build an ATS-friendly resume and a recruiter-ready profile.", category: "Career", level: "Beginner", duration: "2 weeks" },
+                    { title: "Domain Fundamentals Refresher", description: "Strengthen the core concepts most asked in interviews for your role.", category: "Domain", level: "Intermediate", duration: "5 weeks" },
+                    { title: "Mock Interview Practice Track", description: "Guided mock interviews with feedback to fix recurring weak areas.", category: "Interview Prep", level: "All Levels", duration: "4 weeks" },
+                    { title: "Problem Solving & Case Studies", description: "Apply structured thinking to real-world scenarios.", category: "Problem Solving", level: "Advanced", duration: "6 weeks" },
+                  ];
+
+              return (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Upskill Yourself</h2>
+                    <p className="text-sm text-muted-foreground">Your weak areas and Skillory-suggested courses to fix them</p>
+                  </div>
+
+                  {/* Weak Areas */}
                   <Card className="p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Lightbulb className="h-5 w-5 text-amber-500" />
-                      <h3 className="font-semibold text-foreground">Areas to Improve</h3>
+                      <h3 className="font-semibold text-foreground">Your Weak Areas</h3>
                     </div>
-                    <div className="space-y-3">
-                      {resumeAnalysis.improvements.map((improvement: string, index: number) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                          <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
-                            {index + 1}
+                    {uniqueWeakAreas.length > 0 ? (
+                      <div className="space-y-3">
+                        {uniqueWeakAreas.map((item, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+                              {index + 1}
+                            </div>
+                            <p className="text-sm text-foreground">{item}</p>
                           </div>
-                          <p className="text-sm text-foreground">{improvement}</p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Complete a mock interview or upload your resume so we can highlight specific weak areas to focus on.
+                      </p>
+                    )}
                   </Card>
-                )}
 
-                {/* AI-Recommended Courses Based on Mock Interview Performance */}
-                {isLoadingUpskillCourses && (
-                  <Card className="p-6">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      <span className="text-muted-foreground">Loading personalized course recommendations...</span>
-                    </div>
-                  </Card>
-                )}
-
-                {!isLoadingUpskillCourses && upskillCourseSuggestions.length > 0 && (
+                  {/* Skillory Suggested Courses */}
                   <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
                     <div className="p-6">
                       <div className="flex items-center justify-between mb-4">
@@ -3937,574 +3964,64 @@ const CandidateDashboard = () => {
                             <BookOpen className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-foreground">Recommended Courses</h3>
-                            <p className="text-xs text-muted-foreground">Based on your mock interview performance</p>
+                            <h3 className="font-semibold text-foreground">Skillory Suggested Courses</h3>
+                            <p className="text-xs text-muted-foreground">Curated to address your weak areas</p>
                           </div>
                         </div>
                         <Badge variant="secondary" className="bg-primary/10 text-primary">
                           <GraduationCap className="h-3 w-3 mr-1" />
-                          {upskillCourseSuggestions.length} Courses
+                          {skilloryCourses.length} Courses
                         </Badge>
                       </div>
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {upskillCourseSuggestions.map((course) => (
-                          <a
-                            key={course.id}
-                            href={course.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block p-4 rounded-lg border bg-background hover:shadow-md hover:border-primary/50 transition-all group"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <Badge variant="outline" className="text-xs">
-                                {course.category}
-                              </Badge>
-                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            </div>
-                            <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2">
-                              {course.title}
-                            </h4>
-                            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                              {course.description}
-                            </p>
-                            <div className="flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-2">
-                                <span className="flex items-center gap-1 text-amber-500">
-                                  <Star className="h-3 w-3 fill-current" />
-                                  {course.rating}
-                                </span>
-                                <span className="text-muted-foreground">•</span>
+                      {isLoadingUpskillCourses ? (
+                        <div className="flex items-center justify-center gap-2 py-6">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                          <span className="text-muted-foreground">Loading personalized course recommendations...</span>
+                        </div>
+                      ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {skilloryCourses.map((course, idx) => (
+                            <a
+                              key={idx}
+                              href="https://skilory.in"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block p-4 rounded-lg border bg-background hover:shadow-md hover:border-primary/50 transition-all group"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <Badge variant="outline" className="text-xs">{course.category}</Badge>
+                                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              </div>
+                              <h4 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                                {course.title}
+                              </h4>
+                              <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                                {course.description}
+                              </p>
+                              <div className="flex items-center justify-between text-xs">
                                 <span className="text-muted-foreground">{course.duration}</span>
+                                <Badge variant="secondary" className="text-xs">{course.level}</Badge>
                               </div>
-                              <Badge variant="secondary" className="text-xs">
-                                {course.level}
-                              </Badge>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-                )}
-
-                {/* AI Learning Recommendations - Mentors, EdTech & Institutions */}
-                <AILearningRecommendations 
-                  stageResults={mockInterviewStageResults} 
-                  candidateProfile={profile}
-                />
-
-                {/* General Course Platforms */}
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <GraduationCap className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Popular Learning Platforms</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <a 
-                      href="https://www.coursera.org" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Coursera</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">World-class courses from top universities</p>
-                    </a>
-                    <a 
-                      href="https://www.udemy.com" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Udemy</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Affordable courses on any topic</p>
-                    </a>
-                    <a 
-                      href="https://www.linkedin.com/learning" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">LinkedIn Learning</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Professional skills development</p>
-                    </a>
-                    <a 
-                      href="https://www.edx.org" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">edX</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Free courses from Harvard, MIT & more</p>
-                    </a>
-                    <a 
-                      href="https://www.skillshare.com" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Skillshare</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Creative & business skills</p>
-                    </a>
-                    <a 
-                      href="https://www.khanacademy.org" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-foreground">Khan Academy</h4>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Free education for everyone</p>
-                    </a>
-                  </div>
-                </Card>
-
-                {/* Top Freelancer Mentors */}
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Users className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Top Freelancer Mentors</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">Learn directly from experienced freelancer mentors who excel in their fields</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[
-                      { name: "Rajesh Kumar", expertise: "Full Stack Development", rating: 4.9, students: 1250, avatar: "RK", color: "bg-blue-500", email: "rajesh.kumar@mentor.com", phone: "+91 9876543210", location: "Hyderabad, Telangana", experience: "8 years", qualification: "B.Tech CSE, IIT Delhi", bio: "Senior Full Stack Developer with expertise in React, Node.js, and cloud technologies. Passionate about mentoring the next generation of developers.", skills: ["React", "Node.js", "TypeScript", "AWS", "MongoDB", "Docker"], courses: ["Advanced React Patterns", "Node.js Microservices", "System Design"], totalSessions: 450, completionRate: 96 },
-                      { name: "Priya Sharma", expertise: "Data Science & AI", rating: 4.8, students: 980, avatar: "PS", color: "bg-purple-500", email: "priya.sharma@mentor.com", phone: "+91 9123456789", location: "Bangalore, Karnataka", experience: "6 years", qualification: "M.Tech AI, IISc Bangalore", bio: "Data Scientist specializing in machine learning, deep learning, and NLP. Former lead at a top AI startup.", skills: ["Python", "TensorFlow", "PyTorch", "SQL", "Pandas", "Scikit-learn"], courses: ["ML Fundamentals", "Deep Learning with PyTorch", "NLP Masterclass"], totalSessions: 320, completionRate: 94 },
-                      { name: "Amit Patel", expertise: "UI/UX Design", rating: 4.9, students: 1120, avatar: "AP", color: "bg-pink-500", email: "amit.patel@mentor.com", phone: "+91 9988776655", location: "Mumbai, Maharashtra", experience: "10 years", qualification: "B.Des, NID Ahmedabad", bio: "Award-winning UI/UX designer with experience at leading design agencies. Expert in user research and design systems.", skills: ["Figma", "Adobe XD", "Sketch", "Prototyping", "User Research", "Design Systems"], courses: ["UI Design Bootcamp", "UX Research Methods", "Design Systems"], totalSessions: 520, completionRate: 98 },
-                      { name: "Sneha Reddy", expertise: "Digital Marketing", rating: 4.7, students: 870, avatar: "SR", color: "bg-amber-500", email: "sneha.reddy@mentor.com", phone: "+91 9876501234", location: "Chennai, Tamil Nadu", experience: "7 years", qualification: "MBA Marketing, XLRI", bio: "Digital marketing strategist helping brands grow online through SEO, SEM, and social media campaigns.", skills: ["SEO", "Google Ads", "Social Media", "Content Marketing", "Analytics", "Email Marketing"], courses: ["SEO Mastery", "Google Ads Certification Prep", "Social Media Strategy"], totalSessions: 280, completionRate: 92 },
-                      { name: "Vikram Singh", expertise: "Cloud & DevOps", rating: 4.8, students: 760, avatar: "VS", color: "bg-emerald-500", email: "vikram.singh@mentor.com", phone: "+91 9112233445", location: "Pune, Maharashtra", experience: "9 years", qualification: "B.Tech IT, BITS Pilani", bio: "DevOps engineer and AWS certified solutions architect with deep expertise in CI/CD, Kubernetes, and infrastructure as code.", skills: ["AWS", "Kubernetes", "Docker", "Terraform", "Jenkins", "Linux"], courses: ["AWS Solutions Architect", "Kubernetes Deep Dive", "CI/CD Pipelines"], totalSessions: 390, completionRate: 95 },
-                      { name: "Anita Desai", expertise: "Business Analytics", rating: 4.9, students: 1050, avatar: "AD", color: "bg-indigo-500", email: "anita.desai@mentor.com", phone: "+91 9556677889", location: "Delhi NCR", experience: "8 years", qualification: "MBA Analytics, ISB", bio: "Business analytics leader helping professionals master data-driven decision making using modern tools and frameworks.", skills: ["Power BI", "Tableau", "SQL", "Excel", "R", "Statistics"], courses: ["Power BI Masterclass", "Business Analytics with R", "Data Storytelling"], totalSessions: 410, completionRate: 97 },
-                    ].map((mentor) => (
-                      <div key={mentor.name} className="p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50 cursor-pointer" onClick={() => setSelectedMentorProfile(mentor)}>
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className={`h-10 w-10 rounded-full ${mentor.color} text-white flex items-center justify-center text-sm font-bold`}>
-                            {mentor.avatar}
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-foreground text-sm">{mentor.name}</h4>
-                            <p className="text-xs text-muted-foreground">{mentor.expertise}</p>
-                          </div>
+                            </a>
+                          ))}
                         </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1 text-amber-500">
-                            <Star className="h-3 w-3 fill-current" />
-                            {mentor.rating}
-                          </span>
-                          <span className="text-muted-foreground flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {mentor.students.toLocaleString()} students
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Mentor Profile Detail Modal */}
-                  <Dialog open={!!selectedMentorProfile} onOpenChange={(open) => !open && setSelectedMentorProfile(null)}>
-                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-                      {selectedMentorProfile && (
-                        <>
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-3">
-                              <div className={`h-12 w-12 rounded-full ${selectedMentorProfile.color} text-white flex items-center justify-center text-base font-bold`}>
-                                {selectedMentorProfile.avatar}
-                              </div>
-                              <div>
-                                <span className="block">{selectedMentorProfile.name}</span>
-                                <span className="block text-sm font-normal text-muted-foreground">{selectedMentorProfile.expertise}</span>
-                              </div>
-                            </DialogTitle>
-                          </DialogHeader>
-
-                          <div className="space-y-5 mt-2">
-                            {/* Bio */}
-                            <p className="text-sm text-muted-foreground">{selectedMentorProfile.bio}</p>
-
-                            {/* Stats Row */}
-                            <div className="grid grid-cols-4 gap-3">
-                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
-                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.rating}</p>
-                                <p className="text-xs text-muted-foreground">Rating</p>
-                              </div>
-                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
-                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.students.toLocaleString()}</p>
-                                <p className="text-xs text-muted-foreground">Students</p>
-                              </div>
-                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
-                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.totalSessions}</p>
-                                <p className="text-xs text-muted-foreground">Sessions</p>
-                              </div>
-                              <div className="text-center p-3 rounded-lg bg-muted/50 border border-border">
-                                <p className="text-lg font-bold text-foreground">{selectedMentorProfile.completionRate}%</p>
-                                <p className="text-xs text-muted-foreground">Completion</p>
-                              </div>
-                            </div>
-
-                            {/* Personal Details */}
-                            <div className="border border-border rounded-lg overflow-hidden">
-                              <table className="w-full text-sm">
-                                <tbody>
-                                  <tr className="border-b border-border">
-                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30 w-36">Email</td>
-                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.email}</td>
-                                  </tr>
-                                  <tr className="border-b border-border">
-                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Phone</td>
-                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.phone}</td>
-                                  </tr>
-                                  <tr className="border-b border-border">
-                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Location</td>
-                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.location}</td>
-                                  </tr>
-                                  <tr className="border-b border-border">
-                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Experience</td>
-                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.experience}</td>
-                                  </tr>
-                                  <tr>
-                                    <td className="px-4 py-2.5 text-muted-foreground font-medium bg-muted/30">Qualification</td>
-                                    <td className="px-4 py-2.5 text-foreground">{selectedMentorProfile.qualification}</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-
-                            {/* Skills */}
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Skills & Expertise</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {selectedMentorProfile.skills.map((skill: string) => (
-                                  <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Courses Offered */}
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Courses Offered</h4>
-                              <div className="space-y-2">
-                                {selectedMentorProfile.courses.map((course: string) => (
-                                  <div key={course} className="flex items-center gap-2 p-2.5 rounded-md bg-muted/30 border border-border">
-                                    <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
-                                    <span className="text-sm text-foreground">{course}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-3 pt-2">
-                              <Button className="flex-1" onClick={() => { setSelectedMentorProfile(null); setActiveMenu("mentors"); }}>
-                                <GraduationCap className="h-4 w-4 mr-2" /> Enroll Now
-                              </Button>
-                              <Button variant="outline" onClick={() => toast({ title: "Message Sent", description: `Your inquiry has been sent to ${selectedMentorProfile.name}` })}>
-                                <Mail className="h-4 w-4 mr-2" /> Contact
-                              </Button>
-                            </div>
-                          </div>
-                        </>
                       )}
-                    </DialogContent>
-                  </Dialog>
-                </Card>
-
-                {/* Top Institutions */}
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Award className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-foreground">Top Institutions</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">Trusted institutions offering quality education and certifications</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[
-                      { name: "IIT Madras Online", courses: 45, speciality: "Technology & Engineering", rating: 4.9, url: "https://onlinedegree.iitm.ac.in" },
-                      { name: "BITS Pilani (WILP)", courses: 32, speciality: "Work Integrated Programs", rating: 4.8, url: "https://www.bits-pilani.ac.in/wilp" },
-                      { name: "IIIT Hyderabad", courses: 28, speciality: "AI & Machine Learning", rating: 4.8, url: "https://www.iiit.ac.in" },
-                      { name: "NPTEL / Swayam", courses: 500, speciality: "Free Govt. Certifications", rating: 4.7, url: "https://nptel.ac.in" },
-                      { name: "Great Learning", courses: 120, speciality: "Data Science & Business", rating: 4.6, url: "https://www.greatlearning.in" },
-                      { name: "Simplilearn", courses: 85, speciality: "Professional Certifications", rating: 4.5, url: "https://www.simplilearn.com" },
-                    ].map((inst) => (
-                      <a
-                        key={inst.name}
-                        href={inst.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50 group"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium text-foreground text-sm group-hover:text-primary transition-colors">{inst.name}</h4>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-3">{inst.speciality}</p>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1 text-amber-500">
-                            <Star className="h-3 w-3 fill-current" />
-                            {inst.rating}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {inst.courses}+ courses
-                          </Badge>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Request Mentorship from Real Freelancers */}
-                {realFreelancerMentors.length > 0 && (
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Zap className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-foreground">Request Mentorship</h3>
+                      <div className="mt-4 text-center">
+                        <a
+                          href="https://skilory.in"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                        >
+                          Browse all courses on Skillory <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-4">Connect with real freelancer mentors on our platform</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {realFreelancerMentors.map((mentor) => (
-                        <div key={mentor.id} className="p-4 border rounded-lg hover:shadow-md transition-all hover:border-primary/50">
-                          <div className="flex items-center gap-3 mb-3">
-                            {mentor.profile_picture ? (
-                              <img src={mentor.profile_picture} alt="" className="h-10 w-10 rounded-full object-cover border-2 border-border" />
-                            ) : (
-                              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                                {mentor.full_name?.charAt(0) || "M"}
-                              </div>
-                            )}
-                            <div>
-                              <h4 className="font-medium text-foreground text-sm">{mentor.full_name}</h4>
-                              <p className="text-xs text-muted-foreground">{mentor.preferred_role || mentor.primary_subject || "Mentor"}</p>
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {mentor.location && <Badge variant="outline" className="text-xs"><MapPin className="h-3 w-3 mr-1" />{mentor.location}</Badge>}
-                            {mentor.experience_level && <Badge variant="secondary" className="text-xs">{mentor.experience_level}</Badge>}
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowMentorRequestForm(mentor)}>
-                              <Mail className="h-3.5 w-3.5 mr-1" /> Request
-                            </Button>
-                            {mentorUnlocks[mentor.id] ? (
-                              <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => setUnlockedContactView(mentor)}>
-                                <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> View Contact
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                className="text-xs bg-yellow-500 hover:bg-yellow-600 text-white"
-                                onClick={() => setUnlockConfirmMentor(mentor)}
-                                disabled={unlockingMentorId === mentor.id}
-                              >
-                                {unlockingMentorId === mentor.id
-                                  ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-                                  : <Coins className="h-3.5 w-3.5 mr-1" />}
-                                ₹{MENTOR_UNLOCK_PRICE}
-                              </Button>
-                            )}
-                          </div>
-                          <p className="text-[10px] text-muted-foreground text-center mt-1.5">
-                            Pay ₹{MENTOR_UNLOCK_PRICE} for private 1-on-1 class contact
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Request Mentorship Modal */}
-                    <Dialog open={!!showMentorRequestForm} onOpenChange={(open) => { if (!open) { setShowMentorRequestForm(null); setMentorRequestTopic(""); setMentorRequestMessage(""); } }}>
-                      <DialogContent className="max-w-md">
-                        {showMentorRequestForm && (
-                          <>
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-3">
-                                {showMentorRequestForm.profile_picture ? (
-                                  <img src={showMentorRequestForm.profile_picture} alt="" className="h-10 w-10 rounded-full object-cover" />
-                                ) : (
-                                  <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                                    {showMentorRequestForm.full_name?.charAt(0)}
-                                  </div>
-                                )}
-                                <div>
-                                  <span className="block">Request Mentorship</span>
-                                  <span className="block text-sm font-normal text-muted-foreground">from {showMentorRequestForm.full_name}</span>
-                                </div>
-                              </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 mt-2">
-                              <div>
-                                <Label className="text-sm font-medium">Topic *</Label>
-                                <Input
-                                  placeholder="e.g., Full Stack Development, Data Science"
-                                  value={mentorRequestTopic}
-                                  onChange={(e) => setMentorRequestTopic(e.target.value)}
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Message (optional)</Label>
-                                <Textarea
-                                  placeholder="Tell the mentor about your goals and what you want to learn..."
-                                  value={mentorRequestMessage}
-                                  onChange={(e) => setMentorRequestMessage(e.target.value)}
-                                  className="min-h-[80px]"
-                                />
-                              </div>
-                              <Button
-                                className="w-full"
-                                disabled={sendingMentorRequest || !mentorRequestTopic.trim()}
-                                onClick={() => sendMentorshipRequest(showMentorRequestForm.id, showMentorRequestForm.full_name)}
-                              >
-                                {sendingMentorRequest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
-                                Send Request
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-
-                    {/* Unlock Confirmation Dialog */}
-                    <Dialog open={!!unlockConfirmMentor} onOpenChange={(open) => { if (!open) setUnlockConfirmMentor(null); }}>
-                      <DialogContent className="max-w-md">
-                        {unlockConfirmMentor && (
-                          <>
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <Coins className="h-5 w-5 text-yellow-500" />
-                                Unlock Private Mentor Contact
-                              </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 mt-2">
-                              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
-                                {unlockConfirmMentor.profile_picture ? (
-                                  <img src={unlockConfirmMentor.profile_picture} alt="" className="h-12 w-12 rounded-full object-cover" />
-                                ) : (
-                                  <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                                    {unlockConfirmMentor.full_name?.charAt(0)}
-                                  </div>
-                                )}
-                                <div className="min-w-0">
-                                  <p className="font-semibold text-foreground text-sm truncate">{unlockConfirmMentor.full_name}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{unlockConfirmMentor.preferred_role || unlockConfirmMentor.primary_subject || "Mentor"}</p>
-                                </div>
-                              </div>
-                              <div className="rounded-lg p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/40 text-sm">
-                                <p className="font-medium text-foreground mb-1">What you get</p>
-                                <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-                                  <li>Email & phone number</li>
-                                  <li>WhatsApp / Telegram link (if provided)</li>
-                                  <li>Personal calendar link for booking 1-on-1 sessions</li>
-                                </ul>
-                              </div>
-                              <div className="flex items-center justify-between p-3 rounded-md bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 border border-yellow-200 dark:border-yellow-900/40">
-                                <p className="text-xs font-medium text-foreground">One-time cost</p>
-                                <span className="text-xl font-bold text-yellow-700 dark:text-yellow-400">₹{MENTOR_UNLOCK_PRICE}</span>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1" onClick={() => setUnlockConfirmMentor(null)}>Cancel</Button>
-                                <Button
-                                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
-                                  disabled={unlockingMentorId === unlockConfirmMentor.id}
-                                  onClick={() => handleUnlockMentorContact(unlockConfirmMentor)}
-                                >
-                                  {unlockingMentorId === unlockConfirmMentor.id
-                                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
-                                    : <>Pay ₹{MENTOR_UNLOCK_PRICE}</>}
-                                </Button>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-
-                    {/* Unlocked Contact Reveal Dialog */}
-                    <Dialog open={!!unlockedContactView} onOpenChange={(open) => { if (!open) setUnlockedContactView(null); }}>
-                      <DialogContent className="max-w-md">
-                        {unlockedContactView && (
-                          <>
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                                Mentor Contact Details
-                              </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-3 mt-2">
-                              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 border">
-                                {unlockedContactView.profile_picture ? (
-                                  <img src={unlockedContactView.profile_picture} alt="" className="h-12 w-12 rounded-full object-cover" />
-                                ) : (
-                                  <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                                    {unlockedContactView.full_name?.charAt(0)}
-                                  </div>
-                                )}
-                                <div className="min-w-0">
-                                  <p className="font-semibold text-foreground text-sm truncate">{unlockedContactView.full_name}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{unlockedContactView.preferred_role || unlockedContactView.primary_subject || "Mentor"}</p>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                {unlockedContactView.email && (
-                                  <a href={`mailto:${unlockedContactView.email}`} className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
-                                    <Mail className="h-4 w-4 text-primary shrink-0" />
-                                    <span className="text-sm text-foreground truncate">{unlockedContactView.email}</span>
-                                  </a>
-                                )}
-                                {unlockedContactView.mobile && (
-                                  <>
-                                    <a href={`tel:${unlockedContactView.mobile}`} className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
-                                      <Phone className="h-4 w-4 text-primary shrink-0" />
-                                      <span className="text-sm text-foreground">{unlockedContactView.mobile}</span>
-                                    </a>
-                                    <a href={`https://wa.me/${(unlockedContactView.mobile || "").replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2.5 rounded-md border hover:bg-muted/50 transition-colors">
-                                      <MessageCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-                                      <span className="text-sm text-foreground">Chat on WhatsApp</span>
-                                    </a>
-                                  </>
-                                )}
-                                {!unlockedContactView.email && !unlockedContactView.mobile && (
-                                  <p className="text-xs text-muted-foreground p-2">This mentor hasn't shared additional contact details yet. Try reaching out via the Request Mentorship form.</p>
-                                )}
-                              </div>
-                              <div className="rounded-md p-2.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40">
-                                <p className="text-[11px] text-emerald-800 dark:text-emerald-300 leading-snug">
-                                  ✓ ₹{MENTOR_UNLOCK_PRICE} paid to {unlockedContactView.full_name}. You can contact them anytime — this unlock is permanent.
-                                </p>
-                              </div>
-                              <Button variant="outline" className="w-full" onClick={() => setUnlockedContactView(null)}>Close</Button>
-                            </div>
-                          </>
-                        )}
-                      </DialogContent>
-                    </Dialog>
                   </Card>
-                )}
+                </div>
+              );
+            })()}
 
-                {/* Internal Learning Platform */}
-                <Card className="p-6 bg-gradient-to-r from-primary/5 to-accent/5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-foreground mb-1">Explore Our Learning Platform</h3>
-                      <p className="text-sm text-muted-foreground">Access curated courses tailored for education professionals</p>
-                    </div>
-                    <Button variant="cta" onClick={() => window.open('https://skillory.in', '_blank')}>
-                      Explore Courses
-                    </Button>
-                  </div>
-                </Card>
-              </div>
-            )}
 
             {/* My Mentors */}
             {activeMenu === "mentors" && (
