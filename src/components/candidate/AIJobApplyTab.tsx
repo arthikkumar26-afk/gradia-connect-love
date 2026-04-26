@@ -63,7 +63,11 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const hasAnalysis = !!(localResumeAnalysis || resumeAnalysis);
   const effectiveAnalysis = localResumeAnalysis || resumeAnalysis;
   const effectiveProfile = localProfile || profile;
-  const hasAccess = candidatePlan === "pro" || candidatePlan === "premium";
+  const [dayPassExpiresAt, setDayPassExpiresAt] = useState<number | null>(null);
+  const [isPurchasingDayPass, setIsPurchasingDayPass] = useState(false);
+  const DAY_PASS_POINTS = 400;
+  const hasActiveDayPass = !!dayPassExpiresAt && dayPassExpiresAt > Date.now();
+  const hasAccess = candidatePlan === "pro" || candidatePlan === "premium" || hasActiveDayPass;
 
   // Sync external props into local state when they update
   useEffect(() => { if (resumeAnalysis) setLocalResumeAnalysis(resumeAnalysis); }, [resumeAnalysis]);
@@ -127,6 +131,76 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     };
     fetchPlan();
   }, [profile?.id]);
+
+  // Load existing day pass from localStorage (per user)
+  useEffect(() => {
+    if (!profile?.id) return;
+    const key = `ai_job_apply_day_pass_${profile.id}`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const expires = parseInt(stored, 10);
+      if (!Number.isNaN(expires) && expires > Date.now()) {
+        setDayPassExpiresAt(expires);
+      } else {
+        localStorage.removeItem(key);
+      }
+    }
+  }, [profile?.id]);
+
+  const handlePurchaseDayPass = async () => {
+    if (!profile?.id) return;
+    setIsPurchasingDayPass(true);
+    try {
+      const { data: wallet, error: walletErr } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+
+      if (walletErr || !wallet) {
+        toast({ title: "Wallet not found", description: "Please visit 'My Wallet' tab first to activate your wallet.", variant: "destructive" });
+        return;
+      }
+
+      if ((wallet.points_balance || 0) < DAY_PASS_POINTS) {
+        toast({
+          title: "Insufficient Balance",
+          description: `You need ₹${DAY_PASS_POINTS}. Your balance: ₹${wallet.points_balance || 0}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newBalance = (wallet.points_balance || 0) - DAY_PASS_POINTS;
+      const { error: deductErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: newBalance })
+        .eq("id", wallet.id);
+
+      if (deductErr) {
+        toast({ title: "Error", description: "Failed to deduct from wallet. Please try again.", variant: "destructive" });
+        return;
+      }
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "ai_job_apply",
+        points: DAY_PASS_POINTS,
+        description: "AI Job Apply — 1 Day Pass",
+      });
+
+      const expires = Date.now() + 24 * 60 * 60 * 1000;
+      localStorage.setItem(`ai_job_apply_day_pass_${profile.id}`, String(expires));
+      setDayPassExpiresAt(expires);
+      toast({ title: "Access unlocked", description: `₹${DAY_PASS_POINTS} deducted. AI Job Apply is unlocked for 24 hours.` });
+    } catch (e) {
+      console.error("Day pass purchase failed:", e);
+      toast({ title: "Error", description: "Could not unlock access. Please try again.", variant: "destructive" });
+    } finally {
+      setIsPurchasingDayPass(false);
+    }
+  };
 
   // Fetch existing applications to avoid duplicates
   useEffect(() => {
@@ -508,10 +582,28 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
               <p className="text-xs text-muted-foreground mt-1">Unlimited auto-applies</p>
             </Card>
           </div>
-          <Button onClick={onNavigateToUpgrade} className="gap-2">
-            <Crown className="h-4 w-4" />
-            Upgrade Now
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button onClick={onNavigateToUpgrade} className="gap-2">
+              <Crown className="h-4 w-4" />
+              Upgrade Now
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePurchaseDayPass}
+              disabled={isPurchasingDayPass}
+              className="gap-2"
+            >
+              {isPurchasingDayPass ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Rocket className="h-4 w-4" />
+              )}
+              Unlock 1 Day — ₹{DAY_PASS_POINTS}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            Pay ₹{DAY_PASS_POINTS} from your wallet to unlock AI Job Apply for 24 hours.
+          </p>
         </Card>
       </div>
     );
