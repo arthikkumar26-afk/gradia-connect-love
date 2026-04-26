@@ -4201,6 +4201,34 @@ const CandidateDashboard = () => {
                               </div>
                               <p className="text-sm text-foreground font-medium">{item.text}</p>
                               <p className="text-xs text-muted-foreground italic">📌 {item.evidence}</p>
+                              {item.details && item.details.length > 0 && (
+                                <Collapsible>
+                                  <CollapsibleTrigger className="group mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                                    <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                                    View source evidence ({item.details.length})
+                                  </CollapsibleTrigger>
+                                  <CollapsibleContent className="mt-2 space-y-2">
+                                    {item.details.map((d, di) => (
+                                      <div
+                                        key={di}
+                                        className={`rounded-md border p-2.5 text-xs ${
+                                          item.source === "Resume"
+                                            ? "border-blue-200 bg-blue-50/60 dark:border-blue-800 dark:bg-blue-900/20"
+                                            : "border-purple-200 bg-purple-50/60 dark:border-purple-800 dark:bg-purple-900/20"
+                                        }`}
+                                      >
+                                        <div className={`font-semibold mb-1 ${item.source === "Resume" ? "text-blue-700 dark:text-blue-300" : "text-purple-700 dark:text-purple-300"}`}>
+                                          {d.label}
+                                        </div>
+                                        <p className="text-foreground whitespace-pre-wrap break-words">"{d.content}"</p>
+                                        {d.meta && (
+                                          <p className="mt-1 text-[11px] text-muted-foreground italic">{d.meta}</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </CollapsibleContent>
+                                </Collapsible>
+                              )}
                             </div>
                           </div>
                         ))}
