@@ -11,6 +11,23 @@ import { Clock, CheckCircle, XCircle, AlertCircle, Video, Loader2, RefreshCw, Ca
 import { AIInterviewSession } from "@/components/interview/AIInterviewSession";
 import { DraggableWebcam } from "@/components/interview/DraggableWebcam";
 
+const handleCloseWindow = () => {
+  // window.close() only works on windows opened via script. Try it first, then
+  // fall back to navigating the candidate back to their dashboard so the
+  // "Interview Completed" screen doesn't get stuck.
+  try {
+    window.close();
+  } catch {
+    /* no-op */
+  }
+  // If the window is still open after a short delay, redirect.
+  setTimeout(() => {
+    if (!window.closed) {
+      window.location.href = "/candidate/dashboard";
+    }
+  }, 150);
+};
+
 interface Question {
   question: string;
   options: string[];
@@ -264,7 +281,7 @@ const Interview = () => {
       setCloseCountdown(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          window.close();
+          handleCloseWindow();
           return 0;
         }
         return prev - 1;
@@ -702,7 +719,7 @@ const Interview = () => {
             <Button 
               variant="outline" 
               className="mt-4"
-              onClick={() => window.close()}
+              onClick={handleCloseWindow}
             >
               Close Now
             </Button>
