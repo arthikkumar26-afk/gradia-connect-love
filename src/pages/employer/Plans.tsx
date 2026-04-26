@@ -77,7 +77,23 @@ export default function Plans() {
 
   const handleSelectPlan = async (planId: string) => {
     const selectedPlan = plans.find(p => p.id === planId);
-    if (!selectedPlan || !scriptLoaded) return;
+    if (!selectedPlan) return;
+
+    // Free plan — activate without payment
+    if (selectedPlan.price === 0) {
+      setLoading(planId);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { navigate("/employer/signup"); return; }
+        toast({ title: 'Starter Plan Activated', description: 'You can post up to 3 jobs free.' });
+        navigate('/employer/dashboard');
+      } finally {
+        setLoading(null);
+      }
+      return;
+    }
+
+    if (!scriptLoaded) return;
 
     setLoading(planId);
     setRetryError(null);
@@ -179,7 +195,7 @@ export default function Plans() {
 
         {retryError && <div className="mb-8 p-4 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive text-center max-w-md mx-auto">{retryError}</div>}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {plans.map((plan) => (
             <Card key={plan.id} className={`p-6 relative flex flex-col ${plan.popular ? 'ring-2 ring-primary shadow-xl md:scale-105' : ''}`}>
               {plan.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Recommended</Badge>}
@@ -187,7 +203,7 @@ export default function Plans() {
                 <h3 className="text-2xl font-bold text-foreground mb-1">{plan.name} Plan</h3>
                 <p className="text-sm text-muted-foreground mb-4">Duration: {plan.duration}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-primary">₹{plan.price.toLocaleString("en-IN")}</span>
+                  <span className="text-3xl font-bold text-primary">{plan.price === 0 ? 'Free' : `₹${plan.price.toLocaleString("en-IN")}`}</span>
                 </div>
               </div>
               <ul className="space-y-3 mb-6 flex-grow">
@@ -200,12 +216,16 @@ export default function Plans() {
               </ul>
               <Button
                 onClick={() => handleSelectPlan(plan.id)}
-                disabled={loading !== null || !scriptLoaded}
+                disabled={loading !== null || (plan.price > 0 && !scriptLoaded)}
                 className="w-full"
                 variant={plan.popular ? 'default' : 'outline'}
               >
                 <CreditCard className="mr-2 h-4 w-4" />
-                {loading === plan.id ? 'Processing...' : `Pay ₹${plan.price.toLocaleString("en-IN")}`}
+                {loading === plan.id
+                  ? 'Processing...'
+                  : plan.price === 0
+                  ? 'Get Started Free'
+                  : `Pay ₹${plan.price.toLocaleString("en-IN")}`}
               </Button>
             </Card>
           ))}
