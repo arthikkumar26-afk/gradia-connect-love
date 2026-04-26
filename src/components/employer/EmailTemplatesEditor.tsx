@@ -168,6 +168,8 @@ const buildDefaultTemplate = (stageName: string, companyName = "{{companyName}}"
   };
 };
 
+const TEMPLATE_UNLOCK_COST = 200;
+
 export function EmailTemplatesEditor() {
   const [templates, setTemplates] = useState<Record<string, EmailTemplate>>({});
   const [loading, setLoading] = useState(true);
@@ -178,6 +180,61 @@ export function EmailTemplatesEditor() {
   const [pipelineStages, setPipelineStages] = useState<{ name: string; icon: string; description: string }[]>([]);
   const [activeStage, setActiveStage] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
+  const [unlockedJobs, setUnlockedJobs] = useState<Set<string>>(new Set());
+  const [unlocking, setUnlocking] = useState(false);
+
+  const handleUnlockTemplates = async () => {
+    if (!userId || !selectedJobId) {
+      toast.error("Please select a job first");
+      return;
+    }
+    if (unlockedJobs.has(selectedJobId)) return;
+
+    setUnlocking(true);
+    try {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!wallet) {
+        toast.error("Wallet not found. Please load points first.");
+        return;
+      }
+      const balance = wallet.points_balance ?? 0;
+      if (balance < TEMPLATE_UNLOCK_COST) {
+        toast.error(`Insufficient points. You need ${TEMPLATE_UNLOCK_COST} pts but have ${balance} pts.`);
+        return;
+      }
+
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - TEMPLATE_UNLOCK_COST })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      const jobLabel = jobs.find(j => j.id === selectedJobId)?.job_title || "Vacancy";
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "email_template_unlock",
+        amount: 0,
+        points: TEMPLATE_UNLOCK_COST,
+        description: `Email templates unlocked for "${jobLabel}"`,
+      });
+
+      setUnlockedJobs(prev => new Set(prev).add(selectedJobId));
+      toast.success(`${TEMPLATE_UNLOCK_COST} pts deducted. Email templates unlocked!`);
+    } catch (e: any) {
+      console.error("Email template unlock error:", e);
+      toast.error(e.message || "Failed to deduct points");
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const isTemplatesUnlocked = selectedJobId ? unlockedJobs.has(selectedJobId) : false;
 
   useEffect(() => {
     initEditor();
