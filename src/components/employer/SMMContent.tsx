@@ -140,6 +140,66 @@ export const SMMContent = () => {
   const [selectedJob, setSelectedJob] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [companyName, setCompanyName] = useState<string>("");
+  const [qrUnlocked, setQrUnlocked] = useState<Set<string>>(new Set());
+  const [unlockingQr, setUnlockingQr] = useState(false);
+
+  const handleUnlockQr = async () => {
+    if (!user?.id || !selectedJob) {
+      toast.error("Please select a job first");
+      return;
+    }
+    if (qrUnlocked.has(selectedJob)) return;
+
+    setUnlockingQr(true);
+    try {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!wallet) {
+        toast.error("Wallet not found. Please load points first.");
+        return;
+      }
+      const balance = wallet.points_balance ?? 0;
+      if (balance < QR_UNLOCK_COST) {
+        toast.error(`Insufficient points. You need ${QR_UNLOCK_COST} pts but have ${balance} pts.`);
+        return;
+      }
+
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - QR_UNLOCK_COST })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      const jobLabel = selectedJob === "all"
+        ? "Company-wide QR"
+        : (jobs.find(j => j.id === selectedJob)?.designation
+            || jobs.find(j => j.id === selectedJob)?.job_title
+            || "Job QR");
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "qr_unlock",
+        amount: 0,
+        points: QR_UNLOCK_COST,
+        description: `QR unlocked for "${jobLabel}"`,
+      });
+
+      setQrUnlocked(prev => new Set(prev).add(selectedJob));
+      toast.success(`${QR_UNLOCK_COST} pts deducted. QR unlocked!`);
+    } catch (e: any) {
+      console.error("QR unlock error:", e);
+      toast.error(e.message || "Failed to deduct points");
+    } finally {
+      setUnlockingQr(false);
+    }
+  };
+
+  const isQrUnlocked = selectedJob ? qrUnlocked.has(selectedJob) : false;
 
   useEffect(() => {
     const fetchJobs = async () => {
