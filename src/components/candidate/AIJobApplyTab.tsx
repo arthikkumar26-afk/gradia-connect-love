@@ -132,6 +132,76 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     fetchPlan();
   }, [profile?.id]);
 
+  // Load existing day pass from localStorage (per user)
+  useEffect(() => {
+    if (!profile?.id) return;
+    const key = `ai_job_apply_day_pass_${profile.id}`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const expires = parseInt(stored, 10);
+      if (!Number.isNaN(expires) && expires > Date.now()) {
+        setDayPassExpiresAt(expires);
+      } else {
+        localStorage.removeItem(key);
+      }
+    }
+  }, [profile?.id]);
+
+  const handlePurchaseDayPass = async () => {
+    if (!profile?.id) return;
+    setIsPurchasingDayPass(true);
+    try {
+      const { data: wallet, error: walletErr } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+
+      if (walletErr || !wallet) {
+        toast({ title: "Wallet not found", description: "Please visit 'My Wallet' tab first to activate your wallet.", variant: "destructive" });
+        return;
+      }
+
+      if ((wallet.points_balance || 0) < DAY_PASS_POINTS) {
+        toast({
+          title: "Insufficient Balance",
+          description: `You need ₹${DAY_PASS_POINTS}. Your balance: ₹${wallet.points_balance || 0}.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newBalance = (wallet.points_balance || 0) - DAY_PASS_POINTS;
+      const { error: deductErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: newBalance })
+        .eq("id", wallet.id);
+
+      if (deductErr) {
+        toast({ title: "Error", description: "Failed to deduct from wallet. Please try again.", variant: "destructive" });
+        return;
+      }
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "ai_job_apply",
+        points: DAY_PASS_POINTS,
+        description: "AI Job Apply — 1 Day Pass",
+      });
+
+      const expires = Date.now() + 24 * 60 * 60 * 1000;
+      localStorage.setItem(`ai_job_apply_day_pass_${profile.id}`, String(expires));
+      setDayPassExpiresAt(expires);
+      toast({ title: "Access unlocked", description: `₹${DAY_PASS_POINTS} deducted. AI Job Apply is unlocked for 24 hours.` });
+    } catch (e) {
+      console.error("Day pass purchase failed:", e);
+      toast({ title: "Error", description: "Could not unlock access. Please try again.", variant: "destructive" });
+    } finally {
+      setIsPurchasingDayPass(false);
+    }
+  };
+
   // Fetch existing applications to avoid duplicates
   useEffect(() => {
     const fetchExisting = async () => {
