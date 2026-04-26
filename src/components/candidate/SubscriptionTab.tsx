@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  Crown, Check, Loader2, Sparkles, ArrowUpRight, Infinity as InfinityIcon,
+  Crown, Check, Loader2, Sparkles, ArrowUpRight, Infinity as InfinityIcon, ShieldCheck,
 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 import {
   CANDIDATE_PLANS,
@@ -23,9 +26,150 @@ const FEATURE_ORDER: CandidateFeature[] = [
   "resume_download",
 ];
 
+// Annual plan prices in INR (must mirror the priceLabel in candidatePlans.ts).
+const PLAN_PRICES: Record<CandidatePlan, number> = {
+  basic: 4999,
+  pro: 14999,
+  premium: 24999,
+};
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const loadRazorpay = (): Promise<boolean> =>
+  new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if (window.Razorpay) return resolve(true);
+    const existing = document.querySelector(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
+    );
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true));
+      existing.addEventListener("error", () => resolve(false));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.body.appendChild(s);
+  });
+
 export default function SubscriptionTab() {
   const navigate = useNavigate();
   const sub = useCandidateSubscription();
+  const [purchasing, setPurchasing] = useState<CandidatePlan | null>(null);
+
+  const startPurchase = async (planId: CandidatePlan) => {
+    if (!sub.userId) {
+      toast.error("Please sign in to purchase a plan");
+      return;
+    }
+    if (planId === "basic") {
+      toast.info("Basic plan is the starter tier — no payment needed.");
+      return;
+    }
+    const amount = PLAN_PRICES[planId];
+    setPurchasing(planId);
+
+    try {
+      const ok = await loadRazorpay();
+      if (!ok) {
+        toast.error("Failed to load payment gateway. Check your connection and retry.");
+        return;
+      }
+
+      // 1) Create Razorpay order via existing edge function
+      const { data: orderRes, error: orderErr } = await supabase.functions.invoke(
+        "create-razorpay-order",
+        {
+          body: {
+            amount,
+            currency: "INR",
+            plan_id: planId,
+            plan_name: `Candidate ${planId} (annual)`,
+          },
+        },
+      );
+
+      if (orderErr || !orderRes?.order_id) {
+        console.error("Order creation failed", orderErr, orderRes);
+        toast.error(orderRes?.error || "Could not start payment. Please retry.");
+        return;
+      }
+
+      // 2) Get user info for prefill
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", sub.userId)
+        .maybeSingle();
+
+      // 3) Open Razorpay checkout
+      const planDef = CANDIDATE_PLANS[planId];
+      const rzp = new window.Razorpay({
+        key: orderRes.key_id,
+        amount: orderRes.amount,
+        currency: orderRes.currency || "INR",
+        order_id: orderRes.order_id,
+        name: "Gradia",
+        description: `${planDef.name} Plan – Annual Subscription`,
+        prefill: {
+          name: profile?.full_name || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#7c3aed" },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyRes, error: verifyErr } = await supabase.functions.invoke(
+              "verify-candidate-payment",
+              {
+                body: {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  plan: planId,
+                  amount,
+                  candidate_id: sub.userId,
+                },
+              },
+            );
+            if (verifyErr || !verifyRes?.success) {
+              console.error("Verify failed", verifyErr, verifyRes);
+              toast.error(verifyRes?.error || "Payment verification failed.");
+              return;
+            }
+            toast.success(`${planDef.name} plan activated! 🎉`);
+            await sub.refresh();
+          } catch (e) {
+            console.error("verify exception", e);
+            toast.error("Activation failed after payment. Contact support.");
+          } finally {
+            setPurchasing(null);
+          }
+        },
+        modal: {
+          ondismiss: () => setPurchasing(null),
+        },
+      });
+
+      rzp.on("payment.failed", (resp: any) => {
+        console.error("payment.failed", resp);
+        toast.error(resp?.error?.description || "Payment failed.");
+        setPurchasing(null);
+      });
+
+      rzp.open();
+    } catch (err: any) {
+      console.error("Purchase exception", err);
+      toast.error(err.message || "Unexpected error during checkout.");
+      setPurchasing(null);
+    }
+  };
 
   if (sub.loading) {
     return (
@@ -104,6 +248,8 @@ export default function SubscriptionTab() {
           {(Object.keys(CANDIDATE_PLANS) as CandidatePlan[]).map((id) => {
             const p = CANDIDATE_PLANS[id];
             const isCurrent = sub.plan === id;
+            const isProcessing = purchasing === id;
+            const isPaidPlan = id !== "basic";
             return (
               <Card
                 key={id}
@@ -140,19 +286,39 @@ export default function SubscriptionTab() {
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    size="sm"
-                    variant={isCurrent ? "outline" : p.highlight ? "default" : "outline"}
-                    disabled={isCurrent}
-                    onClick={() => navigate("/pricing")}
-                    className="gap-1"
-                  >
-                    {isCurrent ? "Active" : (
-                      <>
-                        Choose {p.name} <ArrowUpRight className="h-3.5 w-3.5" />
-                      </>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      size="sm"
+                      variant={isCurrent ? "outline" : p.highlight ? "default" : "outline"}
+                      disabled={isCurrent || isProcessing || !isPaidPlan}
+                      onClick={() => startPurchase(id)}
+                      className="gap-1"
+                    >
+                      {isCurrent ? (
+                        "Active"
+                      ) : !isPaidPlan ? (
+                        "Free tier"
+                      ) : isProcessing ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Processing…
+                        </>
+                      ) : (
+                        <>
+                          Buy {p.name} <ArrowUpRight className="h-3.5 w-3.5" />
+                        </>
+                      )}
+                    </Button>
+                    {isPaidPlan && !isCurrent && (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/pricing")}
+                        className="text-[11px] text-muted-foreground hover:text-primary underline-offset-2 hover:underline"
+                      >
+                        Compare on pricing page
+                      </button>
                     )}
-                  </Button>
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -160,9 +326,10 @@ export default function SubscriptionTab() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
-        Quotas reset on the 1st of every month. Upgrade anytime to lift the limits instantly.
-      </p>
+      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+        <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+        Secure payments via Razorpay · UPI, Cards, Net Banking & Wallets supported · Plan activates instantly
+      </div>
     </div>
   );
 }

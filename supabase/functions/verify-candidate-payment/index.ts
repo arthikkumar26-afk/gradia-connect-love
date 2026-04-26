@@ -110,9 +110,9 @@ serve(async (req) => {
       .eq('candidate_id', candidate_id)
       .eq('status', 'active');
 
-    // Calculate end date (30 days from now)
+    // Calculate end date (1 year from now — annual plan)
     const endsAt = new Date();
-    endsAt.setDate(endsAt.getDate() + 30);
+    endsAt.setDate(endsAt.getDate() + 365);
 
     // Insert new subscription
     const { data: subscription, error: insertError } = await supabase
