@@ -1478,10 +1478,10 @@ const CandidateDashboard = () => {
       gradient: "from-success/20 to-success/5",
     },
     {
-      title: "Wallet",
-      value: `₹${walletPoints}`,
-      subtitle: "Available balance",
-      icon: Wallet,
+      title: "Plan",
+      value: candidateSub.planDef.name,
+      subtitle: candidateSub.planDef.priceLabel,
+      icon: Crown,
       gradient: "from-secondary/20 to-secondary/5",
     },
   ];
