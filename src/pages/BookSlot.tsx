@@ -1127,8 +1127,11 @@ const BookSlot = () => {
                       // the title tooltip — useful when "GMT+5:30" alone is ambiguous.
                       const expiresAtLabel = linkExpiresAt
                         ? linkExpiresAt.toLocaleString(undefined, {
-                            dateStyle: "medium",
-                            timeStyle: "short",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
                             timeZoneName: "short",
                           })
                         : null;
