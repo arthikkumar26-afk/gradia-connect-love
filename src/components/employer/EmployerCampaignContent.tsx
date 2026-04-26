@@ -157,6 +157,8 @@ export function EmployerCampaignContent() {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  const COST_PER_EMAIL = 50;
+
   const handleSendCampaign = async () => {
     if (emailList.length === 0) { toast.error("Add at least one recipient email"); return; }
     if (!subject.trim()) { toast.error("Subject is required"); return; }
@@ -166,6 +168,44 @@ export function EmployerCampaignContent() {
     setSendResults(null);
 
     try {
+      // Deduct points before sending: 50 pts per recipient
+      const totalCost = emailList.length * COST_PER_EMAIL;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Please sign in again"); setIsSending(false); return; }
+
+      const { data: wallet, error: wErr } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (wErr) throw wErr;
+      if (!wallet) { toast.error("Wallet not found. Please load points first."); setIsSending(false); return; }
+
+      const balance = wallet.points_balance ?? 0;
+      if (balance < totalCost) {
+        toast.error(`Insufficient points. Need ${totalCost} pts (${COST_PER_EMAIL} × ${emailList.length}), have ${balance} pts.`);
+        setIsSending(false);
+        return;
+      }
+
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - totalCost })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      const campaignLabel = campaignName.trim() || "Untitled Campaign";
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "campaign_email_send",
+        amount: 0,
+        points: totalCost,
+        description: `Campaign "${campaignLabel}" sent to ${emailList.length} recipient(s) @ ${COST_PER_EMAIL} pts each`,
+      });
+
+      toast.success(`${totalCost} pts deducted for ${emailList.length} email(s)`);
+
       const htmlBody = messageBody
         .split("\n")
         .map(line => line.trim() ? `<p style="margin:0 0 12px;color:#374151;font-size:15px;line-height:1.7;">${line}</p>` : `<br/>`)
@@ -470,7 +510,7 @@ export function EmployerCampaignContent() {
 
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSendCampaign} disabled={isSending || emailList.length === 0} className="flex-1">
-                {isSending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending {emailList.length} email(s)...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign ({emailList.length})</>}
+                {isSending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending {emailList.length} email(s)...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign ({emailList.length}) • {emailList.length * COST_PER_EMAIL} pts</>}
               </Button>
               <Button variant="ghost" onClick={resetForm} disabled={isSending}>Cancel</Button>
             </div>
