@@ -491,13 +491,49 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     const jobsToApply = matchedJobs.filter((j) => j.applyStatus === "pending");
     if (jobsToApply.length === 0) return;
 
+    // Re-check plan + remaining quota at execution time so basic users (or
+    // exhausted Pro users) never slip through stale UI state.
+    if (!isPaidPlan) {
+      toast({
+        title: "Upgrade required",
+        description: "AI Job Apply is available on the Pro and Premium plans.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const monthlyCap = aiApplyLimit; // Infinity for Premium, 5 for Pro
+    let remainingThisRun = aiApplyRemaining;
+    if (monthlyCap !== Infinity && remainingThisRun <= 0) {
+      toast({
+        title: "Monthly limit reached",
+        description: `You've used all ${monthlyCap} AI Job Apply auto-runs this month. Upgrade to Premium for unlimited runs.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setStep("applying");
-    setTotalToApply(jobsToApply.length);
+    setTotalToApply(
+      monthlyCap === Infinity
+        ? jobsToApply.length
+        : Math.min(jobsToApply.length, remainingThisRun),
+    );
     setAppliedCount(0);
+    let appliedThisRun = 0;
 
     for (let i = 0; i < matchedJobs.length; i++) {
       const job = matchedJobs[i];
       if (job.applyStatus !== "pending") continue;
+
+      // Stop early once the monthly cap has been reached.
+      if (monthlyCap !== Infinity && remainingThisRun <= 0) {
+        toast({
+          title: "Monthly limit reached",
+          description: `Stopped after ${appliedThisRun} application${appliedThisRun === 1 ? "" : "s"} — your ${monthlyCap}/month AI Job Apply quota is now used up.`,
+        });
+        break;
+      }
 
       setApplyingIndex(i);
       setMatchedJobs((prev) => prev.map((j, idx) => (idx === i ? { ...j, applyStatus: "applying" } : j)));
@@ -517,8 +553,23 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           throw error;
         }
 
+        // Record the AI Job Apply usage against the subscription quota.
+        if (monthlyCap !== Infinity) {
+          const ok = await sub.consume("ai_job_apply");
+          if (!ok) {
+            // Quota was exhausted between checks — mark as failed and stop.
+            setMatchedJobs((prev) => prev.map((j, idx) => (idx === i ? { ...j, applyStatus: "failed" } : j)));
+            break;
+          }
+          remainingThisRun -= 1;
+        } else {
+          // Premium: still record usage for analytics.
+          await sub.consume("ai_job_apply");
+        }
+
         setMatchedJobs((prev) => prev.map((j, idx) => (idx === i ? { ...j, applyStatus: "applied" } : j)));
         setAppliedCount((c) => c + 1);
+        appliedThisRun += 1;
         setExistingApplicationJobIds((prev) => new Set([...prev, job.id]));
       } catch (err) {
         console.error("Apply error for job", job.id, err);
@@ -529,7 +580,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     setApplyingIndex(-1);
     toast({
       title: "Auto-Apply Complete",
-      description: `Successfully applied to ${appliedCount + 1} jobs!`,
+      description: `Successfully applied to ${appliedThisRun} job${appliedThisRun === 1 ? "" : "s"}!`,
     });
   };
 
