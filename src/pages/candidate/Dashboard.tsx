@@ -497,6 +497,8 @@ const CandidateDashboard = () => {
           body: {
             amount: amountToCharge,
             currency: "INR",
+            plan_id: plan,
+            plan_name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
             receipt: `sub_${plan}_${profile.id.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
           },
         },
