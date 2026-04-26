@@ -611,7 +611,7 @@ const SignupPortal = () => {
 
   // Plans data for payment step (points-based)
   const employerPlans = [
-    { id: 'basic', name: 'Basic', duration: '1 Month', price: 0, points: 100, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
+    { id: 'basic', name: 'Basic', duration: '1 Month', price: 5, points: 1, features: ['Post up to 3 jobs', 'Basic candidate tracking'] },
     { id: 'standard', name: 'Standard', duration: '3 Months', price: 0, points: 260, popular: true, features: ['Post up to 10 jobs', 'Candidate tracking', 'Email support'] },
     { id: 'premium', name: 'Premium', duration: '6 Months', price: 0, points: 500, features: ['Unlimited jobs', 'Advanced tracking', 'Priority support'] },
   ];
