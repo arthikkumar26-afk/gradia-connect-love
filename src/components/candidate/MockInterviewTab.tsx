@@ -399,9 +399,9 @@ export const MockInterviewTab = () => {
   const [courseSuggestions, setCourseSuggestions] = useState<any[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
 
-  // ₹ payment gating for starting a mock interview (extra test beyond plan)
-  const MOCK_INTERVIEW_PRICE = 99;
-  const { startPayment: startMockPayment, isProcessing: payingForMock } = useActionPayment();
+  // Wallet points gating for starting a mock interview (extra test beyond plan)
+  const MOCK_INTERVIEW_POINTS = 20;
+  const [payingForMock, setPayingForMock] = useState(false);
 
   useEffect(() => {
     if (user) {
