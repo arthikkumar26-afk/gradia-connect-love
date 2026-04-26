@@ -30,6 +30,7 @@ import {
   Ticket,
   UserX,
   Webhook
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
