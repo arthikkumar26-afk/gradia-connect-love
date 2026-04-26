@@ -22,6 +22,7 @@ import {
   FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 
 interface MatchedJob {
   id: string;
@@ -66,8 +67,17 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const [dayPassExpiresAt, setDayPassExpiresAt] = useState<number | null>(null);
   const [isPurchasingDayPass, setIsPurchasingDayPass] = useState(false);
   const DAY_PASS_POINTS = 400;
-  const hasActiveDayPass = !!dayPassExpiresAt && dayPassExpiresAt > Date.now();
-  const hasAccess = candidatePlan === "pro" || candidatePlan === "premium" || hasActiveDayPass;
+
+  // Subscription-driven quota for AI Job Apply (basic=0, pro=5/mo, premium=∞)
+  const sub = useCandidateSubscription();
+  const aiApplyLimit = sub.limitFor("ai_job_apply");
+  const aiApplyUsed = sub.usedFor("ai_job_apply");
+  const aiApplyRemaining = sub.remainingFor("ai_job_apply");
+
+  // Day-pass is only honoured for paid plans — basic users can never bypass the gate.
+  const isPaidPlan = candidatePlan === "pro" || candidatePlan === "premium";
+  const hasActiveDayPass = isPaidPlan && !!dayPassExpiresAt && dayPassExpiresAt > Date.now();
+  const hasAccess = isPaidPlan || hasActiveDayPass;
 
   // Sync external props into local state when they update
   useEffect(() => { if (resumeAnalysis) setLocalResumeAnalysis(resumeAnalysis); }, [resumeAnalysis]);
@@ -481,13 +491,49 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     const jobsToApply = matchedJobs.filter((j) => j.applyStatus === "pending");
     if (jobsToApply.length === 0) return;
 
+    // Re-check plan + remaining quota at execution time so basic users (or
+    // exhausted Pro users) never slip through stale UI state.
+    if (!isPaidPlan) {
+      toast({
+        title: "Upgrade required",
+        description: "AI Job Apply is available on the Pro and Premium plans.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const monthlyCap = aiApplyLimit; // Infinity for Premium, 5 for Pro
+    let remainingThisRun = aiApplyRemaining;
+    if (monthlyCap !== Infinity && remainingThisRun <= 0) {
+      toast({
+        title: "Monthly limit reached",
+        description: `You've used all ${monthlyCap} AI Job Apply auto-runs this month. Upgrade to Premium for unlimited runs.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setStep("applying");
-    setTotalToApply(jobsToApply.length);
+    setTotalToApply(
+      monthlyCap === Infinity
+        ? jobsToApply.length
+        : Math.min(jobsToApply.length, remainingThisRun),
+    );
     setAppliedCount(0);
+    let appliedThisRun = 0;
 
     for (let i = 0; i < matchedJobs.length; i++) {
       const job = matchedJobs[i];
       if (job.applyStatus !== "pending") continue;
+
+      // Stop early once the monthly cap has been reached.
+      if (monthlyCap !== Infinity && remainingThisRun <= 0) {
+        toast({
+          title: "Monthly limit reached",
+          description: `Stopped after ${appliedThisRun} application${appliedThisRun === 1 ? "" : "s"} — your ${monthlyCap}/month AI Job Apply quota is now used up.`,
+        });
+        break;
+      }
 
       setApplyingIndex(i);
       setMatchedJobs((prev) => prev.map((j, idx) => (idx === i ? { ...j, applyStatus: "applying" } : j)));
@@ -507,8 +553,23 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
           throw error;
         }
 
+        // Record the AI Job Apply usage against the subscription quota.
+        if (monthlyCap !== Infinity) {
+          const ok = await sub.consume("ai_job_apply");
+          if (!ok) {
+            // Quota was exhausted between checks — mark as failed and stop.
+            setMatchedJobs((prev) => prev.map((j, idx) => (idx === i ? { ...j, applyStatus: "failed" } : j)));
+            break;
+          }
+          remainingThisRun -= 1;
+        } else {
+          // Premium: still record usage for analytics.
+          await sub.consume("ai_job_apply");
+        }
+
         setMatchedJobs((prev) => prev.map((j, idx) => (idx === i ? { ...j, applyStatus: "applied" } : j)));
         setAppliedCount((c) => c + 1);
+        appliedThisRun += 1;
         setExistingApplicationJobIds((prev) => new Set([...prev, job.id]));
       } catch (err) {
         console.error("Apply error for job", job.id, err);
@@ -519,7 +580,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
     setApplyingIndex(-1);
     toast({
       title: "Auto-Apply Complete",
-      description: `Successfully applied to ${appliedCount + 1} jobs!`,
+      description: `Successfully applied to ${appliedThisRun} job${appliedThisRun === 1 ? "" : "s"}!`,
     });
   };
 
@@ -707,16 +768,36 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
                     <p className="text-sm text-muted-foreground">
                       {matchedJobs.filter((j) => j.applyStatus === "already_applied").length} already applied
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      AI Job Apply this month:{" "}
+                      <span className="font-medium text-foreground">
+                        {aiApplyUsed}
+                        {" / "}
+                        {aiApplyLimit === Infinity ? "∞" : aiApplyLimit}
+                      </span>
+                      {aiApplyLimit !== Infinity && (
+                        <> · {aiApplyRemaining} remaining</>
+                      )}
+                    </p>
                   </div>
                   <Button
                     onClick={autoApplyAll}
-                    disabled={step === "applying" || matchedJobs.filter((j) => j.applyStatus === "pending").length === 0}
+                    disabled={
+                      step === "applying" ||
+                      matchedJobs.filter((j) => j.applyStatus === "pending").length === 0 ||
+                      (aiApplyLimit !== Infinity && aiApplyRemaining <= 0)
+                    }
                     className="gap-2"
                   >
                     {step === "applying" ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Applying... ({appliedCount}/{totalToApply})
+                      </>
+                    ) : aiApplyLimit !== Infinity && aiApplyRemaining <= 0 ? (
+                      <>
+                        <Lock className="h-4 w-4" />
+                        Monthly Limit Reached
                       </>
                     ) : (
                       <>
