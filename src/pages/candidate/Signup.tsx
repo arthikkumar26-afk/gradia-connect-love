@@ -36,7 +36,7 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
-type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms';
+type WizardStep = 'signup' | 'resume' | 'benefits' | 'agreement' | 'terms' | 'plan';
 
 const wizardSteps = [
   { id: 'signup' as const, label: 'Create Account', stepNumber: 1 },
@@ -44,7 +44,14 @@ const wizardSteps = [
   { id: 'benefits' as const, label: 'Benefits', stepNumber: 3 },
   { id: 'agreement' as const, label: 'Agreement', stepNumber: 4 },
   { id: 'terms' as const, label: 'Terms & Conditions', stepNumber: 5 },
+  { id: 'plan' as const, label: 'Choose Plan', stepNumber: 6 },
 ];
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 // Keys we proactively clear on mount to prevent cross-browser stale-state divergence
 const STALE_STORAGE_KEYS = [
@@ -284,6 +291,22 @@ const CandidateSignup = () => {
   const [resumeParsed, setResumeParsed] = useState<any | null>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
   const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
+
+  // Plan / payment step state
+  const [selectedPlanIdx, setSelectedPlanIdx] = useState<number>(2); // default Pro
+  const [paying, setPaying] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  useEffect(() => {
+    if ((window as any).Razorpay) { setRazorpayLoaded(true); return; }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) { existing.addEventListener('load', () => setRazorpayLoaded(true)); return; }
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.async = true;
+    s.onload = () => setRazorpayLoaded(true);
+    document.body.appendChild(s);
+  }, []);
 
   const normalizedIndustryCategory = industryCategory.trim().toLowerCase();
   const matchesIndustryCategory = (...categories: string[]) =>
@@ -561,25 +584,23 @@ const CandidateSignup = () => {
       return;
     }
 
-    // Onboarding complete — confirm session is live with the backend, then route
-    // to the dashboard. We never gate on a wallet/payment step anymore.
+    // Confirm session, then proceed to plan selection
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         toast({
           title: 'Session expired',
-          description: 'Please log in to continue to your dashboard.',
+          description: 'Please log in to continue.',
         });
         navigate('/candidate/login', { replace: true });
         return;
       }
       await refreshProfile();
-      toast({ title: '🎉 Welcome to Gradia!', description: 'Your dashboard is ready.' });
-      navigate('/candidate/dashboard', { replace: true });
+      setCurrentStep('plan');
     } catch (err: any) {
       console.error('Final onboarding step failed:', err);
       toast({
-        title: 'Could not open dashboard',
+        title: 'Could not continue',
         description: err?.message || 'Please log in to continue.',
         variant: 'destructive',
       });
@@ -588,7 +609,7 @@ const CandidateSignup = () => {
   };
 
   const goBack = () => {
-    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms'];
+    const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'plan'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
@@ -1754,7 +1775,178 @@ const CandidateSignup = () => {
     </div>
   );
 
-  // (Wallet activation step removed — onboarding ends at the Terms step.)
+  // ---------- Plan / payment step ----------
+  const planIdToSlug = (name: string) => name.toLowerCase(); // 'starter' | 'basic' | 'pro' | 'premium'
+
+  const handlePayPlan = async () => {
+    const plan = POINT_PACKAGES[selectedPlanIdx];
+    if (!plan) return;
+    if (!razorpayLoaded) {
+      toast({ title: 'Payment gateway loading…', description: 'Please try again in a moment.' });
+      return;
+    }
+    setPaying(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.user) {
+        toast({ title: 'Session expired', description: 'Please sign in again.', variant: 'destructive' });
+        navigate('/candidate/login', { replace: true });
+        return;
+      }
+      const user = sessionData.session.user;
+      const planSlug = planIdToSlug(plan.name);
+
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: plan.price,
+          currency: 'INR',
+          plan_id: planSlug,
+          plan_name: `${plan.name} Plan`,
+          receipt: `cand_${planSlug}_${Date.now()}`,
+        },
+      });
+      if (orderError || !orderData?.order_id) throw new Error(orderError?.message || 'Failed to create order');
+
+      const options: any = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Gradia',
+        description: `${plan.name} Plan — Candidate Subscription`,
+        order_id: orderData.order_id,
+        prefill: { name: fullName, email: user.email || email, contact: mobile },
+        theme: { color: '#6366f1' },
+        handler: async (response: any) => {
+          try {
+            const { data, error } = await supabase.functions.invoke('sync-candidate-subscription-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan: planSlug,
+                amount: plan.price,
+              },
+            });
+            if (error || !data?.activated) {
+              throw new Error(error?.message || data?.message || 'Subscription activation failed');
+            }
+            toast({
+              title: `🎉 ${plan.name} Plan Activated!`,
+              description: `Welcome to Gradia. Your ${plan.points} points are ready.`,
+            });
+            await refreshProfile();
+            navigate('/candidate/dashboard', { replace: true });
+          } catch (err: any) {
+            toast({
+              title: 'Payment captured, activation pending',
+              description: err?.message || 'Please contact support if your plan does not activate.',
+              variant: 'destructive',
+            });
+          } finally {
+            setPaying(false);
+          }
+        },
+        modal: {
+          ondismiss: () => setPaying(false),
+        },
+      };
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', (resp: any) => {
+        toast({
+          title: 'Payment Failed',
+          description: resp?.error?.description || 'Please try another method.',
+          variant: 'destructive',
+        });
+        setPaying(false);
+      });
+      rzp.open();
+    } catch (err: any) {
+      console.error('Plan payment error:', err);
+      toast({ title: 'Could not start payment', description: err?.message || 'Please try again.', variant: 'destructive' });
+      setPaying(false);
+    }
+  };
+
+  const renderPlanStep = () => (
+    <div className="w-full max-w-6xl">
+      <ProgressIndicator />
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-foreground mb-2">Choose Your Plan</h2>
+        <p className="text-muted-foreground">
+          Pick a plan to activate your dashboard. Secure payment via Razorpay.
+        </p>
+        <Badge variant="secondary" className="mt-3">₹5,000 = 1,000 Points</Badge>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {POINT_PACKAGES.map((pkg, idx) => {
+          const isSelected = selectedPlanIdx === idx;
+          return (
+            <Card
+              key={pkg.name}
+              onClick={() => setSelectedPlanIdx(idx)}
+              className={`p-5 relative flex flex-col cursor-pointer transition-all ${
+                isSelected ? 'ring-2 ring-primary shadow-xl scale-[1.02]' : 'hover:shadow-md'
+              } ${pkg.popular ? 'border-primary' : ''}`}
+            >
+              {pkg.popular && (
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gap-1">
+                  <Star className="h-3 w-3" /> Most Popular
+                </Badge>
+              )}
+              <div className="text-center mb-4">
+                <h3 className="text-lg font-bold text-foreground">{pkg.name}</h3>
+                <p className="text-xs text-muted-foreground mb-3">{pkg.tagline}</p>
+                <div className="text-3xl font-bold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
+                <p className="text-xs text-muted-foreground mt-1">{pkg.points.toLocaleString('en-IN')} pts • /month</p>
+              </div>
+              <ul className="space-y-2 mb-4 flex-1">
+                {pkg.features.slice(0, 5).map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className={`text-center text-xs font-medium ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                {isSelected ? '✓ Selected' : 'Click to select'}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card className="p-5 max-w-2xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-sm text-muted-foreground">Selected plan</p>
+            <p className="text-lg font-bold text-foreground">{POINT_PACKAGES[selectedPlanIdx].name}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Amount due</p>
+            <p className="text-2xl font-bold text-primary">
+              ₹{POINT_PACKAGES[selectedPlanIdx].price.toLocaleString('en-IN')}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+          <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
+            {paying ? (
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+            ) : (
+              <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{POINT_PACKAGES[selectedPlanIdx].price.toLocaleString('en-IN')}</>
+            )}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground text-center mt-3">
+          Payment is required to activate your account. Powered by Razorpay (secure).
+        </p>
+      </Card>
+    </div>
+  );
 
 
   return (
@@ -1764,6 +1956,7 @@ const CandidateSignup = () => {
       {currentStep === 'benefits' && renderBenefitsStep()}
       {currentStep === 'agreement' && renderAgreementStep()}
       {currentStep === 'terms' && renderTermsStep()}
+      {currentStep === 'plan' && renderPlanStep()}
     </div>
 
   );
