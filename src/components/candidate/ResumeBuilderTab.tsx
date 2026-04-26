@@ -528,7 +528,7 @@ export default function ResumeBuilderTab() {
     }
   };
 
-  const EXPORT_PDF_POINTS = 150;
+  const EXPORT_PDF_POINTS = 50;
 
   const handleExport = async () => {
     try {
