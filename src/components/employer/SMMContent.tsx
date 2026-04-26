@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import QRFlyerModal from "./QRFlyerModal";
 
 const FLYER_COST = 100;
+const QR_UNLOCK_COST = 150;
 
 const FlyerLauncher = ({
   employerId,
