@@ -53,6 +53,28 @@ export const SubscriptionsContent = () => {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if ((window as any).Razorpay) {
+      setScriptLoaded(true);
+      return;
+    }
+
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener("load", () => setScriptLoaded(true));
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => setScriptLoaded(true);
+    script.onerror = () => toast.error("Failed to load payment gateway");
+    document.body.appendChild(script);
+  }, []);
 
   useEffect(() => {
     if (user?.id) {
@@ -122,30 +144,81 @@ export const SubscriptionsContent = () => {
 
       const amount = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
 
-      // Insert or update subscription
-      const { error } = await supabase.from("subscriptions").upsert({
-        employer_id: user?.id,
-        plan_id: planId,
-        plan_name: plan.name,
-        status: "active",
-        billing_cycle: billingCycle,
-        amount,
-        currency: "INR",
-        started_at: new Date().toISOString(),
-        ends_at: new Date(
-          Date.now() + (billingCycle === "monthly" ? 30 : 365) * 24 * 60 * 60 * 1000
-        ).toISOString(),
-        auto_renew: true,
+      if (amount <= 0) {
+        toast.info("Free plan does not require payment");
+        return;
+      }
+
+      if (!scriptLoaded || !(window as any).Razorpay) {
+        toast.error("Razorpay is still loading. Please try again in a moment.");
+        return;
+      }
+
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
+        body: {
+          amount,
+          currency: "INR",
+          plan_id: planId,
+          plan_name: `${plan.name} Plan`,
+          employer_id: user?.id,
+          receipt: `sub_${planId}_${Date.now()}`,
+        },
       });
 
-      if (error) throw error;
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderError?.message || "Failed to create payment order");
+      }
 
-      toast.success(`Successfully subscribed to ${plan.name} plan!`);
-      fetchSubscription();
-      setActiveTab("confirmation");
+      const razorpay = new (window as any).Razorpay({
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Gradia",
+        description: `${plan.name} Plan Subscription`,
+        order_id: orderData.order_id,
+        prefill: { email: user?.email || "" },
+        theme: { color: "#6366f1" },
+        modal: {
+          ondismiss: () => setProcessingPlan(null),
+        },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_id: planId,
+                plan_name: plan.name,
+                amount,
+                billing_cycle: billingCycle,
+                employer_id: user?.id,
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error(verifyError?.message || verifyData?.error || "Payment verification failed");
+            }
+
+            await fetchSubscription();
+            toast.success(`Payment successful. ${plan.name} plan activated!`);
+            setActiveTab("confirmation");
+          } catch (error: any) {
+            toast.error(error.message || "Payment verification failed. Please contact support.");
+          } finally {
+            setProcessingPlan(null);
+          }
+        },
+      });
+
+      razorpay.on("payment.failed", (response: any) => {
+        toast.error(response.error?.description || "Payment failed. Please try again.");
+        setProcessingPlan(null);
+      });
+
+      razorpay.open();
     } catch (error: any) {
       toast.error(error.message || "Failed to process subscription");
-    } finally {
       setProcessingPlan(null);
     }
   };
