@@ -414,6 +414,7 @@ const CandidateDashboard = () => {
         relatedUserId: mentor.id,
         userName: profile.full_name || "",
         userEmail: profile.email || "",
+        userPhone: (profile as any)?.mobile || "",
         metadata: { mentor_name: mentor.full_name },
       });
       if (!ok) return;

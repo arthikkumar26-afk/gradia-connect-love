@@ -2015,6 +2015,7 @@ export const MockInterviewTab = () => {
                 relatedEntityId: currentSession.id,
                 userName: profile?.full_name || "",
                 userEmail: profile?.email || "",
+                userPhone: (profile as any)?.mobile || "",
                 metadata: { session_id: currentSession.id },
               });
               if (ok) {
