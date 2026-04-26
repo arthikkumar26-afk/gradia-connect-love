@@ -67,8 +67,17 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const [dayPassExpiresAt, setDayPassExpiresAt] = useState<number | null>(null);
   const [isPurchasingDayPass, setIsPurchasingDayPass] = useState(false);
   const DAY_PASS_POINTS = 400;
-  const hasActiveDayPass = !!dayPassExpiresAt && dayPassExpiresAt > Date.now();
-  const hasAccess = candidatePlan === "pro" || candidatePlan === "premium" || hasActiveDayPass;
+
+  // Subscription-driven quota for AI Job Apply (basic=0, pro=5/mo, premium=∞)
+  const sub = useCandidateSubscription(profile?.id);
+  const aiApplyLimit = sub.limitFor("ai_job_apply");
+  const aiApplyUsed = sub.usedFor("ai_job_apply");
+  const aiApplyRemaining = sub.remainingFor("ai_job_apply");
+
+  // Day-pass is only honoured for paid plans — basic users can never bypass the gate.
+  const isPaidPlan = candidatePlan === "pro" || candidatePlan === "premium";
+  const hasActiveDayPass = isPaidPlan && !!dayPassExpiresAt && dayPassExpiresAt > Date.now();
+  const hasAccess = isPaidPlan || hasActiveDayPass;
 
   // Sync external props into local state when they update
   useEffect(() => { if (resumeAnalysis) setLocalResumeAnalysis(resumeAnalysis); }, [resumeAnalysis]);
