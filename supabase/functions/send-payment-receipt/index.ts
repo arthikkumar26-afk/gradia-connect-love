@@ -70,35 +70,54 @@ function buildInvoiceNumber(paymentId: string, dt: Date): string {
   return `GRD-${yyyymm}-${tail}`;
 }
 
-function generatePdf(data: ReceiptPayload, invoiceNo: string, paidAt: Date): Uint8Array {
+function generatePdf(
+  data: ReceiptPayload,
+  invoiceNo: string,
+  paidAt: Date,
+  logoDataUrl: string | null,
+): Uint8Array {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const left = 40;
   const right = W - 40;
 
-  // Brand bar
-  doc.setFillColor(91, 33, 182);
-  doc.rect(0, 0, W, 70, "F");
+  // Brand bar (logo blue)
+  doc.setFillColor(BRAND_RGB[0], BRAND_RGB[1], BRAND_RGB[2]);
+  doc.rect(0, 0, W, 80, "F");
+  // Green accent stripe along bottom of header
+  doc.setFillColor(ACCENT_RGB[0], ACCENT_RGB[1], ACCENT_RGB[2]);
+  doc.rect(0, 80, W, 4, "F");
+
+  // Logo (left)
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "PNG", left, 14, 52, 52);
+    } catch (e) {
+      console.error("[send-payment-receipt] addImage failed", e);
+    }
+  }
+
+  // Wordmark next to logo
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.text("GRADIA", left, 32);
+  doc.text("GRADIA", left + (logoDataUrl ? 64 : 0), 38);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("Hiring. Simplified.", left, 50);
+  doc.text("Your Next Step", left + (logoDataUrl ? 64 : 0), 56);
 
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("TAX INVOICE", right, 32, { align: "right" });
+  doc.text("TAX INVOICE", right, 38, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  doc.text("Original for Recipient", right, 50, { align: "right" });
+  doc.text("Original for Recipient", right, 56, { align: "right" });
 
   // Reset text color
   doc.setTextColor(30, 30, 30);
 
   // Company block
-  let y = 100;
+  let y = 110;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.text(COMPANY.name, left, y);
@@ -110,7 +129,7 @@ function generatePdf(data: ReceiptPayload, invoiceNo: string, paidAt: Date): Uin
   y += 12; doc.text(`GSTIN: ${COMPANY.gstin}`, left, y);
 
   // Invoice meta (right column)
-  let yr = 100;
+  let yr = 110;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("Invoice No:", right - 150, yr); doc.setFont("helvetica", "normal"); doc.text(invoiceNo, right, yr, { align: "right" });
