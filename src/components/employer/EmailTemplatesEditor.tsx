@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mail, Save, RefreshCw, Eye, Palette, ChevronRight, Info } from "lucide-react";
+import { Mail, Save, RefreshCw, Eye, Palette, ChevronRight, Info, Lock } from "lucide-react";
+import { toast as sonnerToast } from "sonner";
 import {
   Dialog,
   DialogContent,
