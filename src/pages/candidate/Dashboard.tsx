@@ -3944,7 +3944,32 @@ const CandidateDashboard = () => {
                 seen.add(key);
                 return Boolean(w.text);
               }).slice(0, 8);
-...
+
+              // Skillory suggested courses — all open skilory.in
+              const skilloryCourses = (upskillCourseSuggestions && upskillCourseSuggestions.length > 0)
+                ? upskillCourseSuggestions.map((c: any) => ({
+                    title: c.title,
+                    description: c.description,
+                    category: c.category,
+                    level: c.level,
+                    duration: c.duration,
+                  }))
+                : [
+                    { title: "Communication & Soft Skills Mastery", description: "Sharpen interview communication, clarity and confidence.", category: "Soft Skills", level: "Beginner", duration: "4 weeks" },
+                    { title: "Aptitude & Reasoning Bootcamp", description: "Quantitative, logical and verbal reasoning practice.", category: "Aptitude", level: "Intermediate", duration: "6 weeks" },
+                    { title: "Resume & LinkedIn Optimization", description: "Build an ATS-friendly resume and a recruiter-ready profile.", category: "Career", level: "Beginner", duration: "2 weeks" },
+                    { title: "Domain Fundamentals Refresher", description: "Strengthen the core concepts most asked in interviews for your role.", category: "Domain", level: "Intermediate", duration: "5 weeks" },
+                    { title: "Mock Interview Practice Track", description: "Guided mock interviews with feedback to fix recurring weak areas.", category: "Interview Prep", level: "All Levels", duration: "4 weeks" },
+                    { title: "Problem Solving & Case Studies", description: "Apply structured thinking to real-world scenarios.", category: "Problem Solving", level: "Advanced", duration: "6 weeks" },
+                  ];
+
+              return (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Upskill Yourself</h2>
+                    <p className="text-sm text-muted-foreground">Your weak areas and Skillory-suggested courses to fix them</p>
+                  </div>
+
                   {/* Weak Areas */}
                   <Card className="p-6">
                     <div className="flex items-center gap-2 mb-4">
