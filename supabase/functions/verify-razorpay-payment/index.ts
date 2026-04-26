@@ -65,6 +65,7 @@ serve(async (req) => {
     const {
       razorpay_order_id, razorpay_payment_id, razorpay_signature,
       plan_id, plan_name, amount, employer_id, billing_cycle,
+      item_name, item_type, user_role,
     } = body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -77,7 +78,9 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (userId !== employer_id) {
+    // Only enforce employer_id match when this is an employer subscription flow.
+    const isEmployerSubscriptionFlow = !!employer_id;
+    if (isEmployerSubscriptionFlow && userId !== employer_id) {
       await log({
         event_type: 'verify.user_mismatch', status: 'failure', user_id: userId, http_status: 403,
         razorpay_order_id, razorpay_payment_id, request_body: body,
