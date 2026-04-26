@@ -559,10 +559,8 @@ const CandidateDashboard = () => {
         prefill: {
           name: profile?.full_name || "",
           email: profile?.email || "",
-          contact: "",
+          contact: (profile as any)?.mobile || "",
         },
-        hidden: { contact: true },
-        readonly: { contact: false },
         notes: {
           user_id: profile.id,
         },
