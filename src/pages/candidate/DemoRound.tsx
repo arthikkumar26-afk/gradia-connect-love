@@ -108,8 +108,6 @@ export default function DemoRound() {
     }
   });
 
-type PermissionErrorType = 'denied' | 'notfound' | 'inuse' | 'insecure' | 'unsupported' | 'unknown';
-
   const MAX_DURATION = 600; // 10 minutes
 
   // AI Instructor messages based on time
