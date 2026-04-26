@@ -29,7 +29,7 @@ import {
   CreditCard,
   Ticket,
   UserX,
-  Webhook
+  Webhook,
   Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
