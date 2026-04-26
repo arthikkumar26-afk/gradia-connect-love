@@ -497,6 +497,8 @@ const CandidateDashboard = () => {
           body: {
             amount: amountToCharge,
             currency: "INR",
+            plan_id: plan,
+            plan_name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
             receipt: `sub_${plan}_${profile.id.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
           },
         },
@@ -562,7 +564,31 @@ const CandidateDashboard = () => {
         },
         theme: { color: "#10b981" },
         modal: {
-          ondismiss: () => setUpgradingPlan(null),
+          ondismiss: () => {
+            // Razorpay's handler() doesn't always fire (esp. UPI). Poll briefly to see
+            // if the webhook activated the plan in the background.
+            setUpgradingPlan(null);
+            const startedPolling = Date.now();
+            const pollInterval = setInterval(async () => {
+              if (Date.now() - startedPolling > 30000) { clearInterval(pollInterval); return; }
+              const { data: activeSub } = await supabase
+                .from("candidate_subscriptions")
+                .select("id, plan, status, started_at")
+                .eq("candidate_id", profile.id)
+                .eq("status", "active")
+                .eq("plan", plan)
+                .gte("started_at", new Date(startedPolling - 60000).toISOString())
+                .maybeSingle();
+              if (activeSub) {
+                clearInterval(pollInterval);
+                toast({
+                  title: `✅ ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Activated`,
+                  description: "Payment confirmed via gateway. Receipt sent by email. Refreshing your dashboard…",
+                });
+                setTimeout(() => window.location.reload(), 1500);
+              }
+            }, 3000);
+          },
         },
       };
 
