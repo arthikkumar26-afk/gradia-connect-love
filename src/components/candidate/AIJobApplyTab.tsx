@@ -768,16 +768,36 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
                     <p className="text-sm text-muted-foreground">
                       {matchedJobs.filter((j) => j.applyStatus === "already_applied").length} already applied
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      AI Job Apply this month:{" "}
+                      <span className="font-medium text-foreground">
+                        {aiApplyUsed}
+                        {" / "}
+                        {aiApplyLimit === Infinity ? "∞" : aiApplyLimit}
+                      </span>
+                      {aiApplyLimit !== Infinity && (
+                        <> · {aiApplyRemaining} remaining</>
+                      )}
+                    </p>
                   </div>
                   <Button
                     onClick={autoApplyAll}
-                    disabled={step === "applying" || matchedJobs.filter((j) => j.applyStatus === "pending").length === 0}
+                    disabled={
+                      step === "applying" ||
+                      matchedJobs.filter((j) => j.applyStatus === "pending").length === 0 ||
+                      (aiApplyLimit !== Infinity && aiApplyRemaining <= 0)
+                    }
                     className="gap-2"
                   >
                     {step === "applying" ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Applying... ({appliedCount}/{totalToApply})
+                      </>
+                    ) : aiApplyLimit !== Infinity && aiApplyRemaining <= 0 ? (
+                      <>
+                        <Lock className="h-4 w-4" />
+                        Monthly Limit Reached
                       </>
                     ) : (
                       <>
