@@ -63,29 +63,36 @@ serve(async (req) => {
       .eq("user_id", userId)
       .eq("source", "create-order")
       .order("created_at", { ascending: false })
-      .limit(1);
+      .limit(10);
 
     let latestPayment: any = null;
     let activation: any = null;
     const latestOrder = orders?.[0] || null;
     const latestPlan = normalizePlan((latestOrder?.metadata as any)?.plan_id) || normalizePlan((latestOrder?.metadata as any)?.plan_name);
 
-    if (latestOrder?.razorpay_order_id) {
-      const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
-      const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
+    const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
+    const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
 
-      if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET) {
+    if (RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET && (orders?.length ?? 0) > 0) {
+      const auth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
+
+      // Scan recent orders to find any captured payment, not just the latest order.
+      for (const order of orders!) {
+        if (!order.razorpay_order_id) continue;
         try {
-          const auth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
           const r = await fetch(
-            `https://api.razorpay.com/v1/orders/${latestOrder.razorpay_order_id}/payments`,
+            `https://api.razorpay.com/v1/orders/${order.razorpay_order_id}/payments`,
             { headers: { Authorization: `Basic ${auth}` } }
           );
-          if (r.ok) {
-            const j = await r.json();
-            const items = (j.items || []) as any[];
-            const sorted = items.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
-            const p = sorted[0];
+          if (!r.ok) continue;
+          const j = await r.json();
+          const items = ((j.items || []) as any[]).sort(
+            (a, b) => (b.created_at || 0) - (a.created_at || 0)
+          );
+
+          // Surface the most recent payment attempt across the latest order only.
+          if (order.id === latestOrder?.id) {
+            const p = items[0];
             if (p) {
               latestPayment = {
                 payment_id: p.id,
@@ -98,9 +105,16 @@ serve(async (req) => {
                 created_at: p.created_at ? new Date(p.created_at * 1000).toISOString() : null,
               };
             }
+          }
 
-            const capturedPayment = sorted.find((p) => p.status === "captured");
-            if (capturedPayment && latestPlan && !activeSub) {
+          const capturedPayment = items.find((p) => p.status === "captured");
+          if (!capturedPayment) continue;
+
+          const orderPlan =
+            normalizePlan((order.metadata as any)?.plan_id) ||
+            normalizePlan((order.metadata as any)?.plan_name);
+          if (!orderPlan) continue;
+
               const { data: existingActivation } = await admin
                 .from("subscription_activation_logs")
                 .select("subscription_id")
@@ -114,10 +128,15 @@ serve(async (req) => {
                   .select("id, plan, status, started_at, ends_at, updated_at, created_at")
                   .eq("id", existingActivation.subscription_id)
                   .maybeSingle();
-                activeSub = existingSub || activeSub;
-                latestSub = existingSub || latestSub;
-                activation = { activated: !!existingSub, source: "existing_activation" };
-              } else {
+                if (existingSub?.status === "active") {
+                  activeSub = existingSub;
+                  latestSub = existingSub;
+                  activation = { activated: true, source: "existing_activation" };
+                  break;
+                }
+              }
+
+              if (!activeSub) {
                 const now = new Date();
                 const endsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -131,7 +150,7 @@ serve(async (req) => {
                   .from("candidate_subscriptions")
                   .insert({
                     candidate_id: userId,
-                    plan: latestPlan,
+                    plan: orderPlan,
                     status: "active",
                     started_at: now.toISOString(),
                     ends_at: endsAt.toISOString(),
@@ -141,29 +160,32 @@ serve(async (req) => {
 
                 await admin.from("subscription_activation_logs").insert({
                   candidate_id: userId,
-                  plan: latestPlan,
+                  plan: orderPlan,
                   source: "dashboard_status_refresh",
                   payment_id: capturedPayment.id,
-                  order_id: latestOrder.razorpay_order_id,
-                  amount_paise: capturedPayment.amount ?? latestOrder.amount_paise,
-                  currency: capturedPayment.currency || latestOrder.currency || "INR",
+                  order_id: order.razorpay_order_id,
+                  amount_paise: capturedPayment.amount ?? order.amount_paise,
+                  currency: capturedPayment.currency || order.currency || "INR",
                   activation_result: subErr ? "failed" : "success",
                   error_message: subErr?.message || null,
                   subscription_id: newSub?.id || null,
                   payload_summary: {
                     payment_status: capturedPayment.status,
                     payment_method: capturedPayment.method,
-                    order_metadata: latestOrder.metadata,
+                    order_metadata: order.metadata,
                   },
                 });
 
-                if (subErr) throw subErr;
-                activeSub = newSub;
-                latestSub = newSub;
-                activation = { activated: true, source: "dashboard_status_refresh" };
+                if (!subErr && newSub) {
+                  activeSub = newSub;
+                  latestSub = newSub;
+                  activation = { activated: true, source: "dashboard_status_refresh" };
+                  break;
+                }
+                if (subErr) {
+                  activation = { activated: false, error: subErr.message };
+                }
               }
-            }
-          }
         } catch (e) {
           console.error("[get-candidate-payment-status] razorpay fetch/sync failed", e);
           activation = { activated: false, error: e instanceof Error ? e.message : String(e) };
