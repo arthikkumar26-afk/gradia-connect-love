@@ -656,11 +656,28 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreat
         designation: selectedRole || dynamicFieldValues["designation"] || null,
         subjects: dynamicFieldValues["subjects"] || dynamicFieldValues["specialized_subjects"] || null,
         pipeline_stages: customStages.length > 0 ? customStages : null,
-      } as any]);
+      } as any]).select("id").maybeSingle();
 
       if (error) throw error;
 
-      toast({ title: "Job posted successfully!", description: "Your job listing is now live." });
+      // Deduct points & log transaction
+      await supabase
+        .from("wallets")
+        .update({ points_balance: (wallet.points_balance ?? 0) - POST_JOB_COST })
+        .eq("id", wallet.id);
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "job_post",
+        amount: 0,
+        points: -POST_JOB_COST,
+        rewards: 0,
+        description: `Job posted: ${values.job_title || "Untitled Job"}`,
+        reference_id: insertedJob?.id ?? null,
+      });
+
+      toast({ title: "Job posted successfully!", description: `${POST_JOB_COST} pts deducted from your wallet.` });
       onJobCreated();
     } catch (error: any) {
       console.error("Error posting job:", error);
