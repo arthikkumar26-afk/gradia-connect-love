@@ -35,6 +35,8 @@ interface QRFlyerModalProps {
   companyLogo?: string;
   jobData?: JobData | null;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // ---- Theme colors ----
