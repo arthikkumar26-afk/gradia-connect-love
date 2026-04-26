@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PLAN_IDS = new Set(["basic", "pro", "premium"]);
+const PLAN_IDS = new Set(["starter", "basic", "pro", "premium"]);
 
 async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const enc = new TextEncoder();
