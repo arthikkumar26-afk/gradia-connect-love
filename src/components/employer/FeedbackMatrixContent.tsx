@@ -224,6 +224,8 @@ export const FeedbackMatrixContent = () => {
 
   const handleCandidateClick = async (entry: FeedbackEntry, e: React.MouseEvent) => {
     e.stopPropagation();
+    const ok = await ensureReviewUnlocked(entry);
+    if (!ok) return;
     setSelectedCandidate(entry.candidateId);
     setPopupOpen(true);
     setProfileLoading(true);
