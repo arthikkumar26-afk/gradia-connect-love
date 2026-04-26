@@ -105,7 +105,7 @@ export default function SubscriptionTab() {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, phone")
+        .select("full_name")
         .eq("id", sub.userId)
         .maybeSingle();
 
