@@ -949,6 +949,92 @@ export default function DemoRound() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Permission help dialog */}
+      <Dialog open={showPermissionHelp} onOpenChange={setShowPermissionHelp}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              {permissionErrorType === 'denied' && 'Camera & microphone blocked'}
+              {permissionErrorType === 'notfound' && 'No camera or microphone found'}
+              {permissionErrorType === 'inuse' && 'Camera/mic in use by another app'}
+              {permissionErrorType === 'insecure' && 'Secure connection required'}
+              {permissionErrorType === 'unsupported' && 'Browser not supported'}
+              {(permissionErrorType === 'unknown' || !permissionErrorType) && 'Cannot access camera & microphone'}
+            </DialogTitle>
+            <DialogDescription>
+              The demo round needs your camera and microphone to record your teaching session.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 text-sm">
+            {permissionErrorType === 'denied' && (
+              <>
+                <p className="font-medium">How to allow access in your browser:</p>
+                <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+                  <p><strong>Chrome / Edge / Brave:</strong></p>
+                  <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+                    <li>Click the 🔒 lock icon in the address bar</li>
+                    <li>Set <strong>Camera</strong> and <strong>Microphone</strong> to <em>Allow</em></li>
+                    <li>Reload this page and click <em>Enable Camera</em> again</li>
+                  </ol>
+                </div>
+                <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+                  <p><strong>Firefox:</strong></p>
+                  <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+                    <li>Click the 🔒 lock icon → <em>Connection secure</em> → <em>More information</em></li>
+                    <li>Open <em>Permissions</em> tab and clear blocked Camera/Microphone entries</li>
+                    <li>Reload this page</li>
+                  </ol>
+                </div>
+                <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+                  <p><strong>Safari (macOS):</strong></p>
+                  <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+                    <li>Safari → Settings → Websites → Camera & Microphone</li>
+                    <li>Set this site to <em>Allow</em></li>
+                    <li>Reload the page</li>
+                  </ol>
+                </div>
+              </>
+            )}
+            {permissionErrorType === 'notfound' && (
+              <p className="text-muted-foreground">
+                We couldn't detect a camera or microphone on this device. Please connect a webcam
+                and microphone (or use a device that has them built in), then try again.
+              </p>
+            )}
+            {permissionErrorType === 'inuse' && (
+              <p className="text-muted-foreground">
+                Another application (Zoom, Teams, Meet, OBS, etc.) is currently using your camera
+                or microphone. Please close that app and click <em>Try Again</em>.
+              </p>
+            )}
+            {permissionErrorType === 'insecure' && (
+              <p className="text-muted-foreground">
+                Camera and microphone access requires an HTTPS connection. Please open this page
+                via the secure (https://) URL.
+              </p>
+            )}
+            {permissionErrorType === 'unsupported' && (
+              <p className="text-muted-foreground">
+                Your browser doesn't support media access. Please switch to the latest Chrome,
+                Edge, Firefox, or Safari and try again.
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setShowPermissionHelp(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => { setShowPermissionHelp(false); requestPermissions(); }}>
+              <Video className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
