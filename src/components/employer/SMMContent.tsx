@@ -438,16 +438,12 @@ export const SMMContent = () => {
                             <span className="flex items-center gap-0.5"><IndianRupee className="h-3 w-3" />{job.salary_range}</span>
                           )}
                         </div>
-                        <QRFlyerModal
+                        <FlyerLauncher
                           employerId={user?.id || ""}
                           companyName={companyName || profile?.company_name || "Company"}
                           jobData={job}
-                          trigger={
-                            <Button variant="outline" size="sm" className="w-full">
-                              <FileText className="h-4 w-4 mr-2" />
-                              Create Flyer
-                            </Button>
-                          }
+                          buttonLabel="Create Flyer"
+                          buttonProps={{ variant: "outline", size: "sm", className: "w-full" }}
                         />
                       </CardContent>
                     </Card>
