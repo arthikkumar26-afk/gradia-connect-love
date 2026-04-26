@@ -25,6 +25,7 @@ export interface ActionPaymentArgs {
   metadata?: Record<string, any>;
   userName?: string;
   userEmail?: string;
+  userPhone?: string;
 }
 
 export const useActionPayment = () => {
@@ -61,8 +62,11 @@ export const useActionPayment = () => {
           name: "Gradia",
           description: data.label,
           order_id: data.order_id,
-          prefill: { name: args.userName || "", email: args.userEmail || "", contact: "" },
-          hidden: { contact: true },
+          prefill: {
+            name: args.userName || "",
+            email: args.userEmail || "",
+            contact: args.userPhone || "",
+          },
           theme: { color: "#0066ff" },
           handler: async (response: any) => {
             const { data: verify, error: vErr } = await supabase.functions.invoke(

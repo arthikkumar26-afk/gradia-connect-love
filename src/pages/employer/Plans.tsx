@@ -77,6 +77,13 @@ export default function Plans() {
 
       if (error || !data?.order_id) throw new Error(error?.message || 'Failed to create order');
 
+      // Fetch user's mobile from profile for prefill (no hardcoded admin number)
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('full_name, mobile')
+        .eq('id', user.id)
+        .maybeSingle();
+
       const options = {
         key: data.key_id,
         amount: data.amount,
@@ -109,8 +116,11 @@ export default function Plans() {
             toast({ title: 'Verification Failed', description: 'Payment received but verification failed. Contact support.', variant: 'destructive' });
           }
         },
-        prefill: { email: user.email, contact: "" },
-        hidden: { contact: true },
+        prefill: {
+          name: profileRow?.full_name || "",
+          email: user.email || "",
+          contact: (profileRow as any)?.mobile || "",
+        },
         theme: { color: '#6366f1' },
         modal: {
           ondismiss: () => setLoading(null),

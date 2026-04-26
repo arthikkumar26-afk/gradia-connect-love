@@ -414,6 +414,7 @@ const CandidateDashboard = () => {
         relatedUserId: mentor.id,
         userName: profile.full_name || "",
         userEmail: profile.email || "",
+        userPhone: (profile as any)?.mobile || "",
         metadata: { mentor_name: mentor.full_name },
       });
       if (!ok) return;
@@ -559,10 +560,8 @@ const CandidateDashboard = () => {
         prefill: {
           name: profile?.full_name || "",
           email: profile?.email || "",
-          contact: "",
+          contact: (profile as any)?.mobile || "",
         },
-        hidden: { contact: true },
-        readonly: { contact: false },
         notes: {
           user_id: profile.id,
         },
