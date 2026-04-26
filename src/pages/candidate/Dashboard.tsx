@@ -321,6 +321,7 @@ const CandidateDashboard = () => {
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
   const { startPayment: startActionPayment } = useActionPayment();
+  const candidateSub = useCandidateSubscription();
   const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
   const [candidateCoupon, setCandidateCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string; plan: string } | null>(null);
 
