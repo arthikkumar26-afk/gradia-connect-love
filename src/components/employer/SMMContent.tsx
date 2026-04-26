@@ -28,6 +28,91 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import QRFlyerModal from "./QRFlyerModal";
 
+const FLYER_COST = 100;
+
+const FlyerLauncher = ({
+  employerId,
+  companyName,
+  jobData,
+  buttonLabel,
+  buttonProps,
+}: {
+  employerId: string;
+  companyName: string;
+  jobData?: Job | null;
+  buttonLabel: string;
+  buttonProps?: React.ComponentProps<typeof Button>;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [charging, setCharging] = useState(false);
+
+  const handleClick = async () => {
+    if (!employerId) {
+      toast.error("Please sign in");
+      return;
+    }
+    setCharging(true);
+    try {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", employerId)
+        .maybeSingle();
+
+      if (!wallet) {
+        toast.error("Wallet not found. Please load points first.");
+        return;
+      }
+      const balance = wallet.points_balance ?? 0;
+      if (balance < FLYER_COST) {
+        toast.error(`Insufficient points. You need ${FLYER_COST} pts but have ${balance} pts.`);
+        return;
+      }
+
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - FLYER_COST })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "flyer_creation",
+        amount: 0,
+        points: FLYER_COST,
+        description: jobData
+          ? `Flyer created for "${jobData.designation || jobData.job_title}"`
+          : "Company-wide flyer created",
+      });
+
+      toast.success(`${FLYER_COST} pts deducted. Opening flyer designer...`);
+      setOpen(true);
+    } catch (e: any) {
+      console.error("Flyer charge error:", e);
+      toast.error(e.message || "Failed to deduct points");
+    } finally {
+      setCharging(false);
+    }
+  };
+
+  return (
+    <QRFlyerModal
+      employerId={employerId}
+      companyName={companyName}
+      jobData={jobData ?? undefined}
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button {...buttonProps} onClick={handleClick} disabled={charging || buttonProps?.disabled}>
+          <FileText className="h-4 w-4 mr-2" />
+          {charging ? "Processing..." : `${buttonLabel} (${FLYER_COST} pts)`}
+        </Button>
+      }
+    />
+  );
+};
+
 interface Job {
   id: string;
   job_title: string;
