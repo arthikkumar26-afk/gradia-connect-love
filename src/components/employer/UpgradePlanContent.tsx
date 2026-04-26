@@ -110,6 +110,27 @@ export const UpgradePlanContent = () => {
   const [loading, setLoading] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string } | null>(null);
   const [selectedPlanForCoupon, setSelectedPlanForCoupon] = useState<string | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  // Load Razorpay checkout script once.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if ((window as any).Razorpay) {
+      setScriptLoaded(true);
+      return;
+    }
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener("load", () => setScriptLoaded(true));
+      setScriptLoaded(!!(window as any).Razorpay);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => setScriptLoaded(true);
+    document.body.appendChild(script);
+  }, []);
 
   useEffect(() => {
     const fetchCurrentPlan = async () => {
@@ -144,63 +165,129 @@ export const UpgradePlanContent = () => {
     if (!selectedPlan || !user?.id) return;
 
     const pointsCost = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.points;
+    // ₹5 = 1 point (project-wide wallet pricing). Razorpay charges in INR.
+    const amountInRupees = pointsCost * 5;
+
+    if (amountInRupees <= 0) {
+      toast({ title: "Invalid plan amount", description: "This plan can't be activated via payment.", variant: "destructive" });
+      return;
+    }
+
+    if (!scriptLoaded || !(window as any).Razorpay) {
+      toast({ title: "Payment unavailable", description: "Razorpay is still loading. Please try again in a moment.", variant: "destructive" });
+      return;
+    }
 
     setLoading(planId);
     try {
-      // Get wallet
-      const { data: wallet } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!wallet) {
-        throw new Error("Wallet not found. Please set up your wallet first.");
-      }
-
-      if ((wallet.points_balance || 0) < pointsCost) {
-        toast({
-          title: "Insufficient Balance",
-          description: `You need ₹${pointsCost} but have ₹${wallet.points_balance || 0}. Top up from your Wallet.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Deduct points
-      const newBalance = (wallet.points_balance || 0) - pointsCost;
-      await supabase.from("wallets").update({ points_balance: newBalance }).eq("id", wallet.id);
-
-      // Record transaction
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        transaction_type: "debit",
-        category: "subscription",
-        points: pointsCost,
-        description: `Employer ${selectedPlan.name} Plan Subscription`,
+      // Create Razorpay order via edge function
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
+        body: {
+          amount: amountInRupees,
+          currency: "INR",
+          plan_id: selectedPlan.id,
+          plan_name: `${selectedPlan.name} Plan (Upgrade)`,
+          employer_id: user.id,
+          receipt: `upg_${selectedPlan.id}_${Date.now()}`,
+        },
       });
 
-      // Record coupon usage if applied
-      if (appliedCoupon && selectedPlanForCoupon === planId) {
-        await supabase.from("coupon_usages").insert({
-          coupon_id: appliedCoupon.couponId,
-          user_id: user.id,
-          user_role: "employer",
-          plan_name: selectedPlan.name,
-          discount_applied: appliedCoupon.discount,
-          original_amount: selectedPlan.points,
-          final_amount: appliedCoupon.finalAmount,
-        });
-        await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: appliedCoupon.couponId });
-        setAppliedCoupon(null);
-        setSelectedPlanForCoupon(null);
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderError?.message || "Failed to create payment order");
       }
 
-      toast({ title: "Plan Activated!", description: `${selectedPlan.name} plan activated. ${pointsCost} pts deducted.` });
-      setCurrentPlan(planId);
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Gradia",
+        description: `${selectedPlan.name} Plan Subscription`,
+        order_id: orderData.order_id,
+        prefill: { email: user.email },
+        theme: { color: "#6366f1" },
+        modal: {
+          ondismiss: () => setLoading(null),
+        },
+        handler: async (response: any) => {
+          try {
+            // Verify payment server-side BEFORE granting plan / deducting points
+            const { error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                plan_id: selectedPlan.id,
+                plan_name: selectedPlan.name,
+                amount: amountInRupees,
+                duration: "monthly",
+                employer_id: user.id,
+              },
+            });
+
+            if (verifyError) throw verifyError;
+
+            // Payment verified — record the wallet ledger entry for traceability
+            // (points are NOT deducted; the user paid cash via Razorpay).
+            const { data: wallet } = await supabase
+              .from("wallets")
+              .select("*")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            if (wallet) {
+              await supabase.from("wallet_transactions").insert({
+                wallet_id: wallet.id,
+                transaction_type: "debit",
+                category: "subscription",
+                points: 0,
+                description: `Employer ${selectedPlan.name} Plan Subscription (Razorpay ₹${amountInRupees})`,
+              });
+            }
+
+            // Record coupon usage if applied
+            if (appliedCoupon && selectedPlanForCoupon === planId) {
+              await supabase.from("coupon_usages").insert({
+                coupon_id: appliedCoupon.couponId,
+                user_id: user.id,
+                user_role: "employer",
+                plan_name: selectedPlan.name,
+                discount_applied: appliedCoupon.discount,
+                original_amount: selectedPlan.points,
+                final_amount: appliedCoupon.finalAmount,
+              });
+              await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: appliedCoupon.couponId });
+              setAppliedCoupon(null);
+              setSelectedPlanForCoupon(null);
+            }
+
+            toast({ title: "Payment Successful!", description: `${selectedPlan.name} plan activated.` });
+            setCurrentPlan(planId);
+          } catch (err: any) {
+            console.error("Payment verification error:", err);
+            toast({
+              title: "Verification Failed",
+              description: "Payment received but verification failed. Please contact support.",
+              variant: "destructive",
+            });
+          } finally {
+            setLoading(null);
+          }
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", (resp: any) => {
+        console.error("Razorpay payment failed:", resp.error);
+        toast({
+          title: "Payment Failed",
+          description: resp.error?.description || "Please try again.",
+          variant: "destructive",
+        });
+        setLoading(null);
+      });
+      rzp.open();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to process", variant: "destructive" });
-    } finally {
+      console.error("Upgrade error:", error);
+      toast({ title: "Error", description: error.message || "Failed to start payment", variant: "destructive" });
       setLoading(null);
     }
   };
