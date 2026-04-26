@@ -1985,8 +1985,8 @@ export const MockInterviewTab = () => {
           <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
           <h3 className="text-lg font-semibold text-foreground mb-2">Premium Feature</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            AI Mock Interview Pipeline is a paid feature. Spend{" "}
-            <strong>{MOCK_INTERVIEW_POINTS} pts</strong> from your wallet to unlock the full 8-stage
+            AI Mock Interview Pipeline is a paid feature. Pay{" "}
+            <strong>₹{MOCK_INTERVIEW_POINTS * 5}</strong> to unlock the full 8-stage
             interview simulation.
           </p>
           <div className="flex justify-center mb-6">
@@ -1998,7 +1998,7 @@ export const MockInterviewTab = () => {
                 </span>
               </div>
               <p className="text-lg font-bold text-foreground">
-                {MOCK_INTERVIEW_POINTS} pts
+                ₹{MOCK_INTERVIEW_POINTS * 5}
                 <span className="text-xs text-muted-foreground font-normal">
                   /attempt
                 </span>
@@ -2020,7 +2020,7 @@ export const MockInterviewTab = () => {
                   .maybeSingle();
                 if (wErr) throw wErr;
                 if (!wallet || (wallet.points_balance ?? 0) < MOCK_INTERVIEW_POINTS) {
-                  toast.error(`Insufficient points. You need ${MOCK_INTERVIEW_POINTS} pts to unlock.`);
+                  toast.error(`Insufficient wallet balance. You need ₹${MOCK_INTERVIEW_POINTS * 5} to unlock.`);
                   return;
                 }
                 const newBalance = (wallet.points_balance ?? 0) - MOCK_INTERVIEW_POINTS;
@@ -2041,7 +2041,7 @@ export const MockInterviewTab = () => {
                   .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
                   .eq('id', currentSession.id);
                 setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
-                toast.success(`${MOCK_INTERVIEW_POINTS} pts deducted. Pipeline unlocked!`);
+                toast.success(`₹${MOCK_INTERVIEW_POINTS * 5} deducted from wallet. Pipeline unlocked!`);
               } catch (e: any) {
                 console.error('Mock interview unlock error:', e);
                 toast.error(e?.message || 'Failed to unlock');
@@ -2053,8 +2053,8 @@ export const MockInterviewTab = () => {
             className="gap-2"
             size="lg"
           >
-            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-            Spend {MOCK_INTERVIEW_POINTS} pts to Unlock
+            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <IndianRupee className="h-4 w-4" />}
+            Pay ₹{MOCK_INTERVIEW_POINTS * 5} to Unlock
           </Button>
         </Card>
       ) : (
