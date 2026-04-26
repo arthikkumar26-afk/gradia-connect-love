@@ -300,7 +300,9 @@ export function AllCandidatesContent() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {filtered.map((candidate) => (
+          {filtered.map((candidate) => {
+            const isUnlocked = unlockedProfiles.has(candidate.id);
+            return (
             <Card
               key={candidate.id}
               className="border-border hover:shadow-md transition-shadow cursor-pointer"
@@ -309,15 +311,17 @@ export function AllCandidatesContent() {
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={candidate.profile_picture || undefined} />
+                    <AvatarImage src={isUnlocked ? (candidate.profile_picture || undefined) : undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                      {getInitials(candidate.full_name)}
+                      {isUnlocked ? getInitials(candidate.full_name) : "?"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="text-sm font-semibold text-foreground truncate">
-                        {candidate.full_name}
+                        {isUnlocked
+                          ? candidate.full_name
+                          : `Candidate #${candidate.id.slice(0, 6).toUpperCase()}`}
                       </h3>
                       <Badge
                         variant={candidate.status === "active" ? "default" : "secondary"}
@@ -327,36 +331,52 @@ export function AllCandidatesContent() {
                       </Badge>
                     </div>
 
-                    <div className="mt-1 space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{candidate.email}</span>
+                    {isUnlocked ? (
+                      <div className="mt-1 space-y-0.5">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Mail className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{candidate.email}</span>
+                        </div>
+                        {candidate.mobile && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Phone className="h-3 w-3 shrink-0" />
+                            <span>{candidate.mobile}</span>
+                          </div>
+                        )}
+                        {(candidate.current_state || candidate.location) && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3 shrink-0" />
+                            <span className="truncate">
+                              {candidate.current_district && candidate.current_state
+                                ? `${candidate.current_district}, ${candidate.current_state}`
+                                : candidate.location || candidate.current_state}
+                            </span>
+                          </div>
+                        )}
+                        {candidate.preferred_role && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Briefcase className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{candidate.preferred_role}</span>
+                          </div>
+                        )}
                       </div>
-                      {candidate.mobile && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Phone className="h-3 w-3 shrink-0" />
-                          <span>{candidate.mobile}</span>
-                        </div>
-                      )}
-                      {(candidate.current_state || candidate.location) && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          <span className="truncate">
-                            {candidate.current_district && candidate.current_state
-                              ? `${candidate.current_district}, ${candidate.current_state}`
-                              : candidate.location || candidate.current_state}
-                          </span>
-                        </div>
-                      )}
-                      {candidate.preferred_role && (
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Briefcase className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{candidate.preferred_role}</span>
-                        </div>
-                      )}
-                    </div>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-muted-foreground italic">
+                        Contact details locked. Skills shown below.
+                      </p>
+                    )}
 
                     <div className="mt-2 flex flex-wrap gap-1">
+                      {candidate.primary_subject && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {candidate.primary_subject}
+                        </Badge>
+                      )}
+                      {!isUnlocked && candidate.preferred_role && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {candidate.preferred_role}
+                        </Badge>
+                      )}
                       {candidate.segment && (
                         <Badge variant="outline" className="text-[10px]">
                           {getSegmentLabel(candidate.segment)}
@@ -373,11 +393,26 @@ export function AllCandidatesContent() {
                         </Badge>
                       )}
                     </div>
+
+                    {!isUnlocked && (
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="mt-3 w-full h-8 text-xs"
+                        disabled={unlockingProfileId === candidate.id}
+                        onClick={(e) => unlockProfile(candidate, e)}
+                      >
+                        {unlockingProfileId === candidate.id
+                          ? "Processing..."
+                          : `Unlock Profile (${PROFILE_UNLOCK_COST} pts)`}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
