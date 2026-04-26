@@ -59,6 +59,7 @@ import {
   CheckCircle2,
   Phone,
   MessageCircle,
+  BarChart3,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
