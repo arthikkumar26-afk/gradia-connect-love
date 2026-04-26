@@ -103,7 +103,7 @@ const specialFeatures = [
 ];
 
 export const UpgradePlanContent = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
@@ -203,8 +203,11 @@ export const UpgradePlanContent = () => {
         name: "Gradia",
         description: `${selectedPlan.name} Plan Subscription`,
         order_id: orderData.order_id,
-        prefill: { email: user.email, contact: "" },
-        hidden: { contact: true },
+        prefill: {
+          name: profile?.full_name || "",
+          email: user.email || "",
+          contact: profile?.mobile || "",
+        },
         theme: { color: "#6366f1" },
         modal: {
           ondismiss: () => setLoading(null),

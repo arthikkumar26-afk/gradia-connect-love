@@ -46,7 +46,7 @@ interface Receipt {
 }
 
 export const SubscriptionsContent = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState("tariffs");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
@@ -176,8 +176,11 @@ export const SubscriptionsContent = () => {
         name: "Gradia",
         description: `${plan.name} Plan Subscription`,
         order_id: orderData.order_id,
-        prefill: { email: user?.email || "", contact: "" },
-        hidden: { contact: true },
+        prefill: {
+          name: profile?.full_name || "",
+          email: user?.email || "",
+          contact: profile?.mobile || "",
+        },
         theme: { color: "#6366f1" },
         modal: {
           ondismiss: () => setProcessingPlan(null),
