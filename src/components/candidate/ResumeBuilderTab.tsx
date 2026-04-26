@@ -528,7 +528,7 @@ export default function ResumeBuilderTab() {
     }
   };
 
-  const EXPORT_PDF_POINTS = 150;
+  const EXPORT_PDF_POINTS = 50;
 
   const handleExport = async () => {
     try {
@@ -594,7 +594,7 @@ export default function ResumeBuilderTab() {
         description: 'Resume PDF Export',
       });
 
-      sonnerToast.success(`${EXPORT_PDF_POINTS} pts deducted. Generating PDF...`);
+      sonnerToast.success(`₹${EXPORT_PDF_POINTS} deducted from wallet. Generating PDF...`);
       await generatePDF();
     } catch (error) {
       console.error("Export error:", error);
