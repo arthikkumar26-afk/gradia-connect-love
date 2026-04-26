@@ -548,31 +548,20 @@ const CandidateDashboard = () => {
         },
         handler: async (response: any) => {
           try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
-              "verify-razorpay-payment",
-              {
-                body: {
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  item_name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Subscription`,
-                  item_type: "subscription",
-                  user_role: "candidate",
-                },
-              },
-            );
-
-            if (verifyError || !verifyData?.verified) {
-              throw new Error(verifyError?.message || "Payment verification failed");
-            }
-
             try { rzp.close(); } catch {}
-            await activateCandidateSubscription(plan, amountToCharge, planPrice);
+            await syncCandidateSubscriptionPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              plan,
+              chargedAmount: amountToCharge,
+              originalAmount: planPrice,
+            });
           } catch (err: any) {
             try { rzp.close(); } catch {}
             toast({
-              title: "❌ Payment verification failed",
-              description: err.message || "Your payment was received but could not be verified. Please contact support with your payment ID.",
+              title: "❌ Subscription activation failed",
+              description: err.message || "Your payment was received but the plan could not be activated. Please contact support with your payment ID.",
               variant: "destructive",
             });
             setUpgradingPlan(null);
@@ -582,26 +571,24 @@ const CandidateDashboard = () => {
         modal: {
           ondismiss: () => {
             // Razorpay's handler() doesn't always fire (esp. UPI). Poll briefly to see
-            // if the webhook activated the plan in the background.
-            setUpgradingPlan(null);
+            // if the payment was captured and activate the plan from the backend.
             const startedPolling = Date.now();
             const pollInterval = setInterval(async () => {
-              if (Date.now() - startedPolling > 30000) { clearInterval(pollInterval); return; }
-              const { data: activeSub } = await supabase
-                .from("candidate_subscriptions")
-                .select("id, plan, status, started_at")
-                .eq("candidate_id", profile.id)
-                .eq("status", "active")
-                .eq("plan", plan)
-                .gte("started_at", new Date(startedPolling - 60000).toISOString())
-                .maybeSingle();
-              if (activeSub) {
+              if (Date.now() - startedPolling > 30000) {
                 clearInterval(pollInterval);
-                toast({
-                  title: `✅ ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Activated`,
-                  description: "Payment confirmed via gateway. Receipt sent by email. Refreshing your dashboard…",
+                setUpgradingPlan(null);
+                return;
+              }
+              try {
+                await syncCandidateSubscriptionPayment({
+                  razorpayOrderId: orderData.order_id,
+                  plan,
+                  chargedAmount: amountToCharge,
+                  originalAmount: planPrice,
                 });
-                setTimeout(() => window.location.reload(), 1500);
+                clearInterval(pollInterval);
+              } catch {
+                // Payment may still be pending, or the user may have closed without paying.
               }
             }, 3000);
           },
