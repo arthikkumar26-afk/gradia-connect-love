@@ -82,6 +82,7 @@ import AILearningRecommendations from "@/components/candidate/AILearningRecommen
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import WalletTab from "@/components/candidate/WalletTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
+import RazorpayDomainChecklist from "@/components/candidate/RazorpayDomainChecklist";
 import { useActionPayment } from "@/hooks/useActionPayment";
 
 interface FamilyRecord {
