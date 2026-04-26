@@ -26,10 +26,16 @@ const Layout = ({ children }: LayoutProps) => {
                      location.pathname.startsWith('/owner/') ||
                      location.pathname.startsWith('/edutech/dashboard') ||
                      location.pathname === '/edit-profile';
-  
+
+  // Hide global public header on admin/owner panels — these pages have their
+  // own sidebar + topbar, and the public header was incorrectly showing the
+  // "Login" dropdown to already-signed-in admins.
+  const hideHeader = (location.pathname.startsWith('/admin/') && location.pathname !== '/admin/login') ||
+                     (location.pathname.startsWith('/owner/') && location.pathname !== '/owner/login');
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {!hideHeader && <Header />}
       <main className="flex-1">
         {children}
       </main>
