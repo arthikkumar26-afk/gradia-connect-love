@@ -105,6 +105,29 @@ serve(async (req) => {
       }).then(() => null, () => null);
     }
 
+    // Fire-and-forget: email branded PDF invoice
+    try {
+      const actionLabels: Record<string, string> = {
+        mentor_contact_unlock: 'Mentor Contact Unlock',
+        cv_unlock: 'Candidate CV Unlock',
+        interview_unlock: 'Interview Recording Unlock',
+        wallet_topup: 'Wallet Points Top-up',
+        extra_mock_test: 'Extra Mock Test',
+      };
+      const itemName = actionLabels[tx.action_key] || tx.action_key || 'Service';
+      await admin.functions.invoke('send-payment-receipt', {
+        body: {
+          user_id: userId,
+          payment_id: razorpay_payment_id,
+          order_id: razorpay_order_id,
+          amount: tx.amount_inr,
+          item_name: itemName,
+          item_description: `Gradia ${itemName.toLowerCase()}`,
+          item_type: tx.action_key === 'wallet_topup' ? 'wallet' : 'unlock',
+        },
+      });
+    } catch (e) { console.error('[verify-action-payment] receipt send failed', e); }
+
     return new Response(JSON.stringify({
       success: true,
       action_key: tx.action_key,
