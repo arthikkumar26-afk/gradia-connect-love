@@ -320,25 +320,28 @@ const CandidateDashboard = () => {
   const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
   const [candidateCoupon, setCandidateCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string; plan: string } | null>(null);
 
+  const fetchActiveCandidateSubscription = async () => {
+    if (!profile?.id) return null;
+    try {
+      const { data } = await supabase
+        .from("candidate_subscriptions")
+        .select("*")
+        .eq("candidate_id", profile.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setCandidateSubscription(data);
+      return data;
+    } catch (e) {
+      console.warn("Error fetching subscription:", e);
+      return null;
+    }
+  };
+
   // Fetch current candidate subscription
   useEffect(() => {
-    const fetchSubscription = async () => {
-      if (!profile?.id) return;
-      try {
-        const { data } = await supabase
-          .from("candidate_subscriptions")
-          .select("*")
-          .eq("candidate_id", profile.id)
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        setCandidateSubscription(data);
-      } catch (e) {
-        console.warn("Error fetching subscription:", e);
-      }
-    };
-    fetchSubscription();
+    fetchActiveCandidateSubscription();
   }, [profile?.id]);
 
   // Fetch real freelancer mentors
@@ -433,33 +436,11 @@ const CandidateDashboard = () => {
 
   // Trial removed - direct subscription only
 
-  const activateCandidateSubscription = async (
+  const recordCandidateCouponUsage = async (
     plan: string,
-    chargedAmount: number,
     originalAmount: number,
   ) => {
     if (!profile?.id) return;
-    // Deactivate old subs
-    await supabase
-      .from("candidate_subscriptions")
-      .update({ status: "inactive" })
-      .eq("candidate_id", profile.id)
-      .in("status", ["active", "trial"]);
-
-    // Activate new sub
-    const { error: insertErr } = await supabase
-      .from("candidate_subscriptions")
-      .insert({
-        candidate_id: profile.id,
-        plan,
-        status: "active",
-        started_at: new Date().toISOString(),
-        ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-
-    if (insertErr) throw insertErr;
-
-    // Record coupon usage if applied
     if (candidateCoupon?.plan === plan) {
       await supabase.from("coupon_usages").insert({
         coupon_id: candidateCoupon.couponId,
@@ -473,12 +454,46 @@ const CandidateDashboard = () => {
       await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: candidateCoupon.couponId });
       setCandidateCoupon(null);
     }
+  };
+
+  const syncCandidateSubscriptionPayment = async ({
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
+    plan,
+    chargedAmount,
+    originalAmount,
+  }: {
+    razorpayOrderId: string;
+    razorpayPaymentId?: string;
+    razorpaySignature?: string;
+    plan: string;
+    chargedAmount: number;
+    originalAmount: number;
+  }) => {
+    const { data, error } = await supabase.functions.invoke("sync-candidate-subscription-payment", {
+      body: {
+        razorpay_order_id: razorpayOrderId,
+        razorpay_payment_id: razorpayPaymentId,
+        razorpay_signature: razorpaySignature,
+        plan,
+        amount: chargedAmount,
+      },
+    });
+
+    if (error || !data?.activated) {
+      throw new Error(error?.message || data?.message || "Payment completed, but subscription activation is still syncing");
+    }
+
+    await recordCandidateCouponUsage(plan, originalAmount);
+    setCandidateSubscription(data.subscription || await fetchActiveCandidateSubscription());
 
     toast({
       title: `✅ ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Activated`,
-      description: `Payment of ₹${chargedAmount} confirmed. A receipt has been emailed to you. Refreshing your dashboard with new benefits…`,
+      description: `Payment of ₹${chargedAmount} confirmed. Your dashboard benefits are now active.`,
     });
-    setTimeout(() => window.location.reload(), 1800);
+    setUpgradingPlan(null);
+    return data;
   };
 
   const handleCandidateUpgrade = async (plan: string, planPrice: number) => {
@@ -533,31 +548,20 @@ const CandidateDashboard = () => {
         },
         handler: async (response: any) => {
           try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke(
-              "verify-razorpay-payment",
-              {
-                body: {
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  item_name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Subscription`,
-                  item_type: "subscription",
-                  user_role: "candidate",
-                },
-              },
-            );
-
-            if (verifyError || !verifyData?.verified) {
-              throw new Error(verifyError?.message || "Payment verification failed");
-            }
-
             try { rzp.close(); } catch {}
-            await activateCandidateSubscription(plan, amountToCharge, planPrice);
+            await syncCandidateSubscriptionPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              plan,
+              chargedAmount: amountToCharge,
+              originalAmount: planPrice,
+            });
           } catch (err: any) {
             try { rzp.close(); } catch {}
             toast({
-              title: "❌ Payment verification failed",
-              description: err.message || "Your payment was received but could not be verified. Please contact support with your payment ID.",
+              title: "❌ Subscription activation failed",
+              description: err.message || "Your payment was received but the plan could not be activated. Please contact support with your payment ID.",
               variant: "destructive",
             });
             setUpgradingPlan(null);
@@ -567,26 +571,24 @@ const CandidateDashboard = () => {
         modal: {
           ondismiss: () => {
             // Razorpay's handler() doesn't always fire (esp. UPI). Poll briefly to see
-            // if the webhook activated the plan in the background.
-            setUpgradingPlan(null);
+            // if the payment was captured and activate the plan from the backend.
             const startedPolling = Date.now();
             const pollInterval = setInterval(async () => {
-              if (Date.now() - startedPolling > 30000) { clearInterval(pollInterval); return; }
-              const { data: activeSub } = await supabase
-                .from("candidate_subscriptions")
-                .select("id, plan, status, started_at")
-                .eq("candidate_id", profile.id)
-                .eq("status", "active")
-                .eq("plan", plan)
-                .gte("started_at", new Date(startedPolling - 60000).toISOString())
-                .maybeSingle();
-              if (activeSub) {
+              if (Date.now() - startedPolling > 30000) {
                 clearInterval(pollInterval);
-                toast({
-                  title: `✅ ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Activated`,
-                  description: "Payment confirmed via gateway. Receipt sent by email. Refreshing your dashboard…",
+                setUpgradingPlan(null);
+                return;
+              }
+              try {
+                await syncCandidateSubscriptionPayment({
+                  razorpayOrderId: orderData.order_id,
+                  plan,
+                  chargedAmount: amountToCharge,
+                  originalAmount: planPrice,
                 });
-                setTimeout(() => window.location.reload(), 1500);
+                clearInterval(pollInterval);
+              } catch {
+                // Payment may still be pending, or the user may have closed without paying.
               }
             }, 3000);
           },
