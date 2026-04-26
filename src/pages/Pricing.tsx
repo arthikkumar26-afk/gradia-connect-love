@@ -333,9 +333,7 @@ const PricingPage = () => {
             {[
               { value: "candidates", label: "Candidates" },
               { value: "employers", label: "Employers" },
-              { value: "freelancers", label: "Freelancers" },
               { value: "sponsors", label: "Sponsors" },
-              { value: "edutech", label: "EduTech" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -350,9 +348,7 @@ const PricingPage = () => {
 
           <TabsContent value="candidates">{renderPlans(candidatePlans)}</TabsContent>
           <TabsContent value="employers">{renderPlans(employerPlans)}</TabsContent>
-          <TabsContent value="freelancers">{renderPlans(freelancerPlans)}</TabsContent>
           <TabsContent value="sponsors">{renderPlans(sponsorPlans)}</TabsContent>
-          <TabsContent value="edutech">{renderPlans(edutechPlans)}</TabsContent>
         </Tabs>
       </section>
 
