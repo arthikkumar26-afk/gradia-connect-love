@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { 
   Video, 
@@ -282,22 +283,70 @@ export default function DemoRound() {
   };
 
   const requestPermissions = async () => {
+    // Secure-context guard (camera/mic require HTTPS or localhost)
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      setPermissionErrorType('insecure');
+      setShowPermissionHelp(true);
+      toast.error('Camera/microphone requires a secure (HTTPS) connection');
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setPermissionErrorType('unsupported');
+      setShowPermissionHelp(true);
+      toast.error('Your browser does not support camera/microphone access');
+      return;
+    }
+
+    // Pre-check permission state when supported (Chrome/Edge/Firefox)
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
+      // @ts-ignore - permissions.query name typing
+      const camStatus = await navigator.permissions?.query?.({ name: 'camera' as PermissionName });
+      // @ts-ignore
+      const micStatus = await navigator.permissions?.query?.({ name: 'microphone' as PermissionName });
+      if (camStatus?.state === 'denied' || micStatus?.state === 'denied') {
+        setPermissionErrorType('denied');
+        setShowPermissionHelp(true);
+        toast.error('Camera or microphone is blocked in your browser settings');
+        return;
+      }
+    } catch {
+      // Safari doesn't support permissions.query for camera/mic — proceed
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-      
+
       setLocalStream(stream);
       setHasPermissions(true);
+      setPermissionErrorType(null);
+      setShowPermissionHelp(false);
       toast.success('Camera and microphone ready!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Permission error:', error);
-      toast.error('Please allow camera and microphone access');
+      const name = error?.name || '';
+      let type: PermissionErrorType = 'unknown';
+      if (name === 'NotAllowedError' || name === 'SecurityError') type = 'denied';
+      else if (name === 'NotFoundError' || name === 'OverconstrainedError') type = 'notfound';
+      else if (name === 'NotReadableError' || name === 'AbortError') type = 'inuse';
+      setPermissionErrorType(type);
+      setShowPermissionHelp(true);
+      const messages: Record<PermissionErrorType, string> = {
+        denied: 'Permission denied — please allow camera & microphone',
+        notfound: 'No camera or microphone detected on this device',
+        inuse: 'Camera/microphone is being used by another app',
+        insecure: 'Camera/mic requires HTTPS',
+        unsupported: 'Browser does not support camera/mic',
+        unknown: 'Could not access camera and microphone',
+      };
+      toast.error(messages[type]);
     }
   };
 
