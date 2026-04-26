@@ -326,6 +326,36 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_feature_usage: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          feature: string
+          id: string
+          period_start: string
+          updated_at: string
+          used_count: number
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          feature: string
+          id?: string
+          period_start?: string
+          updated_at?: string
+          used_count?: number
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          feature?: string
+          id?: string
+          period_start?: string
+          updated_at?: string
+          used_count?: number
+        }
+        Relationships: []
+      }
       candidate_resumes: {
         Row: {
           created_at: string
@@ -788,38 +818,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      external_job_unlocks: {
-        Row: {
-          candidate_id: string
-          created_at: string
-          external_job_id: string
-          id: string
-          points_spent: number
-        }
-        Insert: {
-          candidate_id: string
-          created_at?: string
-          external_job_id: string
-          id?: string
-          points_spent?: number
-        }
-        Update: {
-          candidate_id?: string
-          created_at?: string
-          external_job_id?: string
-          id?: string
-          points_spent?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "external_job_unlocks_external_job_id_fkey"
-            columns: ["external_job_id"]
-            isOneToOne: false
-            referencedRelation: "external_jobs"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       external_jobs: {
         Row: {
@@ -1992,30 +1990,6 @@ export type Database = {
           receives_slot_notifications?: boolean | null
           role?: string | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      mentor_contact_unlocks: {
-        Row: {
-          candidate_id: string
-          created_at: string
-          id: string
-          mentor_id: string
-          points_spent: number
-        }
-        Insert: {
-          candidate_id: string
-          created_at?: string
-          id?: string
-          mentor_id: string
-          points_spent?: number
-        }
-        Update: {
-          candidate_id?: string
-          created_at?: string
-          id?: string
-          mentor_id?: string
-          points_spent?: number
         }
         Relationships: []
       }

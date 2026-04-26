@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Building2, Loader2, IndianRupee, Globe, User, Phone, Mail, Lock } from "lucide-react";
+import { MapPin, Clock, Building2, Loader2, IndianRupee, Globe, User, Phone, Mail, Lock, Crown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 
 interface ExternalJob {
   id: string;
@@ -24,42 +26,32 @@ interface ExternalJob {
   hr_email: string | null;
 }
 
-const UNLOCK_POINTS = 4; // ₹20 = 4 points (₹5 per point)
-const UNLOCK_AMOUNT = UNLOCK_POINTS * 5;
-
 const ExternalJobListings = () => {
+  const sub = useCandidateSubscription();
   const [jobs, setJobs] = useState<ExternalJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [hrModalJob, setHrModalJob] = useState<ExternalJob | null>(null);
   const [confirmJob, setConfirmJob] = useState<ExternalJob | null>(null);
+  // Unlocks are now session-only. They don't grant lifetime access — quota gates each unlock.
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const [processing, setProcessing] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUserId(user?.id ?? null);
-
       const { data: jobsData } = await supabase
         .from("external_jobs")
         .select("*")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
       if (jobsData) setJobs(jobsData as ExternalJob[]);
-
-      if (user?.id) {
-        const { data: unlocks } = await supabase
-          .from("external_job_unlocks")
-          .select("external_job_id")
-          .eq("candidate_id", user.id);
-        if (unlocks) setUnlockedIds(new Set(unlocks.map((u: any) => u.external_job_id)));
-      }
-
       setLoading(false);
     };
     init();
   }, []);
+
+  const remaining = sub.remainingFor("external_job_unlock");
+  const limit = sub.limitFor("external_job_unlock");
+  const isUnlimited = limit === Infinity;
 
   const handleApplyClick = (job: ExternalJob) => {
     if (unlockedIds.has(job.id)) {
@@ -67,70 +59,40 @@ const ExternalJobListings = () => {
       if (job.apply_url) window.open(job.apply_url, "_blank", "noopener,noreferrer");
       return;
     }
+    if (limit === 0) {
+      toast.error("Your plan doesn't include external HR contact unlocks. Upgrade to Pro or Premium.");
+      return;
+    }
+    if (!isUnlimited && remaining <= 0) {
+      toast.error("Monthly quota reached. Upgrade your plan for more unlocks.");
+      return;
+    }
     setConfirmJob(job);
   };
 
   const handleConfirmUnlock = async () => {
-    if (!confirmJob || !userId) {
-      toast.error("Please sign in to apply");
-      return;
-    }
+    if (!confirmJob) return;
     setProcessing(true);
     try {
-      const { data: wallet, error: wErr } = await supabase
-        .from("wallets")
-        .select("id, points_balance")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (wErr || !wallet) {
-        toast.error("Wallet not found. Please add funds.");
+      const ok = await sub.consume("external_job_unlock");
+      if (!ok) {
+        toast.error("Monthly quota reached. Upgrade your plan.");
         return;
       }
-      if ((wallet.points_balance ?? 0) < UNLOCK_POINTS) {
-        toast.error(`Insufficient balance. You need ₹${UNLOCK_AMOUNT} to apply.`);
-        return;
-      }
-
-      const newBalance = (wallet.points_balance ?? 0) - UNLOCK_POINTS;
-      const { error: uErr } = await supabase
-        .from("wallets")
-        .update({ points_balance: newBalance })
-        .eq("id", wallet.id);
-      if (uErr) throw uErr;
-
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        transaction_type: "debit",
-        category: "external_job_apply",
-        points: -UNLOCK_POINTS,
-        amount: UNLOCK_AMOUNT,
-        description: `Applied to ${confirmJob.job_title} at ${confirmJob.company_name}`,
-        reference_id: confirmJob.id,
-      });
-
-      const { error: insErr } = await supabase.from("external_job_unlocks").insert({
-        candidate_id: userId,
-        external_job_id: confirmJob.id,
-        points_spent: UNLOCK_POINTS,
-      });
-      if (insErr && !insErr.message.includes("duplicate")) throw insErr;
-
       setUnlockedIds(prev => new Set(prev).add(confirmJob.id));
-      toast.success(`₹${UNLOCK_AMOUNT} deducted. HR contact unlocked!`);
-
+      toast.success("HR contact unlocked!");
       const job = confirmJob;
       setConfirmJob(null);
       setHrModalJob(job);
       if (job.apply_url) window.open(job.apply_url, "_blank", "noopener,noreferrer");
     } catch (e: any) {
-      toast.error(e?.message || "Could not process payment");
+      toast.error(e?.message || "Could not unlock contact");
     } finally {
       setProcessing(false);
     }
   };
 
-  if (loading) {
+  if (loading || sub.loading) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -140,14 +102,26 @@ const ExternalJobListings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Globe className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold">External Job Listings</h2>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Globe className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-bold">External Job Listings</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Browse openings from external companies. Unlocking HR contact details is part of your <strong className="text-foreground">{sub.planDef.name}</strong> plan quota.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Browse openings from external companies. Applying costs <strong>₹{UNLOCK_AMOUNT}</strong> from your wallet and unlocks the HR contact details for that job.
-        </p>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {limit === 0 ? "Not in your plan" : isUnlimited ? "Unlimited unlocks" : `${remaining} of ${limit} unlocks left this month`}
+          </Badge>
+          {!isUnlimited && (
+            <Button asChild size="sm" variant="default" className="gap-1 text-xs">
+              <Link to="/pricing"><Crown className="h-3 w-3" /> Upgrade</Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {jobs.length === 0 ? (
@@ -240,7 +214,7 @@ const ExternalJobListings = () => {
                       ) : (
                         <>
                           <Lock className="h-3.5 w-3.5" />
-                          Apply (₹{UNLOCK_AMOUNT})
+                          Apply & unlock HR
                         </>
                       )}
                     </Button>
@@ -252,13 +226,13 @@ const ExternalJobListings = () => {
         </div>
       )}
 
-      {/* Confirm payment dialog */}
+      {/* Confirm unlock dialog */}
       <Dialog open={!!confirmJob} onOpenChange={(open) => !open && !processing && setConfirmJob(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Apply for this job?</DialogTitle>
+            <DialogTitle>Unlock HR contact?</DialogTitle>
             <DialogDescription>
-              <strong>₹{UNLOCK_AMOUNT}</strong> will be deducted from your wallet to apply and unlock the HR contact details for{" "}
+              This will use 1 of your monthly external job unlocks ({isUnlimited ? "unlimited" : `${remaining} left`}) on the <strong className="text-foreground">{sub.planDef.name}</strong> plan to reveal the HR contact details for{" "}
               <span className="font-medium text-foreground">{confirmJob?.job_title}</span> at{" "}
               <span className="font-medium text-foreground">{confirmJob?.company_name}</span>.
             </DialogDescription>
@@ -266,7 +240,7 @@ const ExternalJobListings = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmJob(null)} disabled={processing}>Cancel</Button>
             <Button onClick={handleConfirmUnlock} disabled={processing}>
-              {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pay ₹${UNLOCK_AMOUNT}`}
+              {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unlock"}
             </Button>
           </DialogFooter>
         </DialogContent>

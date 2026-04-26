@@ -86,6 +86,8 @@ import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChalleng
 import WalletTab from "@/components/candidate/WalletTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
 import { useActionPayment } from "@/hooks/useActionPayment";
+import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
+import { CANDIDATE_PLANS, FEATURE_LABELS, type CandidateFeature } from "@/config/candidatePlans";
 
 interface FamilyRecord {
   id?: string;
@@ -321,6 +323,7 @@ const CandidateDashboard = () => {
   const [isLoadingUpskillCourses, setIsLoadingUpskillCourses] = useState(false);
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
   const { startPayment: startActionPayment } = useActionPayment();
+  const candidateSub = useCandidateSubscription();
   const [candidateSubscription, setCandidateSubscription] = useState<any>(null);
   const [candidateCoupon, setCandidateCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string; plan: string } | null>(null);
 
@@ -391,43 +394,47 @@ const CandidateDashboard = () => {
     }
   };
 
-  // Fetch which mentors this candidate has already unlocked
+  // Fetch which mentors this candidate has already unlocked (in this session).
+  // Lifetime unlock storage was removed with the wallet system; access is gated per-month by the subscription quota.
   useEffect(() => {
-    if (!profile?.id) return;
-    (async () => {
-      const { data } = await supabase
-        .from("mentor_contact_unlocks")
-        .select("mentor_id")
-        .eq("candidate_id", profile.id);
-      if (data) {
-        const map: Record<string, boolean> = {};
-        data.forEach((r: any) => { map[r.mentor_id] = true; });
-        setMentorUnlocks(map);
-      }
-    })();
+    setMentorUnlocks({});
   }, [profile?.id]);
 
-  // Pay ₹1500 via Razorpay to unlock mentor contact details
+  // Use a subscription-quota mentor unlock instead of a per-action payment
   const handleUnlockMentorContact = async (mentor: any) => {
     if (!profile?.id) return;
     setUnlockingMentorId(mentor.id);
     try {
-      const ok = await startActionPayment({
-        actionKey: "mentor_contact_unlock",
-        relatedUserId: mentor.id,
-        userName: profile.full_name || "",
-        userEmail: profile.email || "",
-        userPhone: (profile as any)?.mobile || "",
-        metadata: { mentor_name: mentor.full_name },
-      });
-      if (!ok) return;
+      const limit = candidateSub.limitFor("mentor_unlock");
+      const remaining = candidateSub.remainingFor("mentor_unlock");
+      if (limit === 0) {
+        toast({
+          title: "Not in your plan",
+          description: "Mentor contact unlocks are part of Pro and Premium plans.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (limit !== Infinity && remaining <= 0) {
+        toast({
+          title: "Monthly quota reached",
+          description: "Upgrade your plan for more mentor contact unlocks this month.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const ok = await candidateSub.consume("mentor_unlock");
+      if (!ok) {
+        toast({ title: "Unlock failed", description: "Quota exceeded.", variant: "destructive" });
+        return;
+      }
 
       setMentorUnlocks((prev) => ({ ...prev, [mentor.id]: true }));
       setUnlockConfirmMentor(null);
       setUnlockedContactView(mentor);
       toast({
         title: "🎉 Contact Unlocked!",
-        description: `Payment of ₹${MENTOR_UNLOCK_PRICE} successful. ${mentor.full_name}'s contact details are now visible.`,
+        description: `${mentor.full_name}'s contact details are now visible. ${limit === Infinity ? "" : `${Math.max(0, remaining - 1)} unlocks left this month.`}`,
       });
     } catch (err: any) {
       toast({ title: "Unlock failed", description: err.message || "Please try again", variant: "destructive" });
