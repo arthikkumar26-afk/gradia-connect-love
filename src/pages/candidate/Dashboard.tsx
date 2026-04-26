@@ -4901,6 +4901,7 @@ const CandidateDashboard = () => {
             {activeMenu === "upgrade" && (
               <div className="space-y-6">
                 {profile?.id && <PaymentStatusPanel userId={profile.id} />}
+                <RazorpayDomainChecklist />
 
                 <div className="text-center space-y-2">
                   <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
