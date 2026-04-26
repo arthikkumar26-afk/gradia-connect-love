@@ -80,6 +80,7 @@ export const TestPapersContent = () => {
   const [previewPaper, setPreviewPaper] = useState<QuestionPaper | null>(null);
   const [previewQuestions, setPreviewQuestions] = useState<any[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewJobId, setPreviewJobId] = useState<string>("");
   const [sectionCounts, setSectionCounts] = useState<SectionCount[]>([]);
   const [loadingSections, setLoadingSections] = useState(false);
 
