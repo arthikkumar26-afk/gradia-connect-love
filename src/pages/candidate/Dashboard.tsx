@@ -3906,7 +3906,6 @@ const CandidateDashboard = () => {
                       ? `From AI resume analysis (overall score ${score}/100)`
                       : "From AI resume analysis",
                   });
-                  });
                 });
               }
 
