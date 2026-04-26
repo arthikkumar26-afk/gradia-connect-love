@@ -552,49 +552,53 @@ export default function ResumeBuilderTab() {
         return;
       }
 
-      // Use wallet points instead of Razorpay
-      const { data: wallet, error: walletErr } = await supabase
-        .from('wallets')
-        .select('id, points_balance')
-        .eq('user_id', user.id)
+      // Subscription-quota-based PDF export.
+      // Plan limits (mirrors src/config/candidatePlans.ts):
+      //   basic: 1 download / month
+      //   pro / premium: unlimited
+      const periodStart = new Date();
+      periodStart.setDate(1);
+      periodStart.setHours(0, 0, 0, 0);
+      const psDate = periodStart.toISOString().slice(0, 10);
+
+      const monthlyLimit = activeSub ? Infinity : 1;
+
+      const { data: usageRow } = await supabase
+        .from('candidate_feature_usage')
+        .select('id, used_count')
+        .eq('candidate_id', user.id)
+        .eq('feature', 'resume_download')
+        .eq('period_start', psDate)
         .maybeSingle();
 
-      if (walletErr || !wallet) {
-        toast({ title: "Wallet not found", description: "Please visit 'My Wallet' tab first to activate your wallet.", variant: "destructive" });
-        return;
-      }
-
-      if ((wallet.points_balance || 0) < EXPORT_PDF_POINTS) {
+      const used = usageRow?.used_count ?? 0;
+      if (monthlyLimit !== Infinity && used >= monthlyLimit) {
         toast({
-          title: "Insufficient Balance",
-          description: `You need ₹${EXPORT_PDF_POINTS} to export. Your balance: ₹${wallet.points_balance || 0}.`,
-          variant: "destructive",
+          title: 'Monthly download limit reached',
+          description: 'Free plan includes 1 resume PDF per month. Upgrade to Pro or Premium for unlimited downloads.',
+          variant: 'destructive',
         });
         return;
       }
 
-      // Deduct points
-      const newBalance = (wallet.points_balance || 0) - EXPORT_PDF_POINTS;
-      const { error: deductErr } = await supabase
-        .from('wallets')
-        .update({ points_balance: newBalance })
-        .eq('id', wallet.id);
-
-      if (deductErr) {
-        toast({ title: "Error", description: "Failed to deduct points. Please try again.", variant: "destructive" });
-        return;
+      // Increment usage
+      if (usageRow) {
+        await supabase
+          .from('candidate_feature_usage')
+          .update({ used_count: used + 1 })
+          .eq('id', usageRow.id);
+      } else {
+        await supabase
+          .from('candidate_feature_usage')
+          .insert({
+            candidate_id: user.id,
+            feature: 'resume_download',
+            period_start: psDate,
+            used_count: 1,
+          });
       }
 
-      // Log transaction
-      await supabase.from('wallet_transactions').insert({
-        wallet_id: wallet.id,
-        transaction_type: 'debit',
-        category: 'resume_builder',
-        points: EXPORT_PDF_POINTS,
-        description: 'Resume PDF Export',
-      });
-
-      sonnerToast.success(`₹${EXPORT_PDF_POINTS} deducted from wallet. Generating PDF...`);
+      sonnerToast.success('Generating PDF using your plan quota...');
       await generatePDF();
     } catch (error) {
       console.error("Export error:", error);
