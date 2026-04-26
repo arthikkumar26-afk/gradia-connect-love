@@ -474,10 +474,10 @@ const CandidateDashboard = () => {
     }
 
     toast({
-      title: "🎉 Subscription Activated!",
-      description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan is now active. Paid ₹${chargedAmount}.`,
+      title: `✅ ${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan Activated`,
+      description: `Payment of ₹${chargedAmount} confirmed. A receipt has been emailed to you. Refreshing your dashboard with new benefits…`,
     });
-    window.location.reload();
+    setTimeout(() => window.location.reload(), 1800);
   };
 
   const handleCandidateUpgrade = async (plan: string, planPrice: number) => {
