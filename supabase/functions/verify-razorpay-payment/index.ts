@@ -182,6 +182,22 @@ serve(async (req) => {
       metadata: { plan_id, plan_name, billing_cycle: billing_cycle || 'monthly' },
     });
 
+    // Fire-and-forget: email the user a branded PDF invoice
+    try {
+      await admin.functions.invoke('send-payment-receipt', {
+        body: {
+          user_id: userId,
+          payment_id: razorpay_payment_id,
+          order_id: razorpay_order_id,
+          amount,
+          item_name: `${plan_name || plan_id || 'Subscription Plan'} (${billing_cycle || 'monthly'})`,
+          item_description: `Employer subscription – ${plan_name || plan_id} billed ${billing_cycle || 'monthly'}`,
+          item_type: 'subscription',
+          user_role: 'employer',
+        },
+      });
+    } catch (e) { console.error('[verify-razorpay-payment] receipt send failed', e); }
+
     return new Response(JSON.stringify({
       success: true, subscription_id: subscription.id,
       message: 'Payment verified and subscription activated',
