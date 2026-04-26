@@ -3994,6 +3994,114 @@ const CandidateDashboard = () => {
                     <p className="text-sm text-muted-foreground">Your weak areas and Skillory-suggested courses to fix them</p>
                   </div>
 
+                  {/* Score Breakdown */}
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <BarChart3 className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold text-foreground">Score Breakdown</h3>
+                      <Badge variant="outline" className={`ml-auto text-[10px] ${scoreBadgeClass(resumeScore != null && mockAvg != null ? Math.round((resumeScore + mockAvg) / 2) : resumeScore ?? mockAvg)}`}>
+                        Total weak areas: {uniqueWeakAreas.length}
+                      </Badge>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {/* Resume Sections */}
+                      <div className="rounded-lg border border-border p-4 bg-muted/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-blue-600" />
+                            <h4 className="text-sm font-semibold text-foreground">Resume Sections</h4>
+                          </div>
+                          <Badge className={`text-[10px] ${scoreBadgeClass(resumeScore)}`}>
+                            {resumeScore != null ? `${resumeScore}/100` : "Not analyzed"}
+                          </Badge>
+                        </div>
+                        {resumeScore != null ? (
+                          <>
+                            <div className="w-full h-2 rounded-full bg-muted overflow-hidden mb-3">
+                              <div className="h-full bg-blue-500" style={{ width: `${resumeScore}%` }} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="flex justify-between p-2 rounded bg-background border border-border">
+                                <span className="text-muted-foreground">Weak items</span>
+                                <span className="font-semibold text-foreground">{resumeWeakCount}</span>
+                              </div>
+                              <div className="flex justify-between p-2 rounded bg-background border border-border">
+                                <span className="text-muted-foreground">Strengths</span>
+                                <span className="font-semibold text-foreground">{Array.isArray((resumeAnalysis as any)?.strengths) ? (resumeAnalysis as any).strengths.length : 0}</span>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Upload your resume to see section-level scoring.</p>
+                        )}
+                      </div>
+
+                      {/* Mock Interview Rounds */}
+                      <div className="rounded-lg border border-border p-4 bg-muted/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4 text-purple-600" />
+                            <h4 className="text-sm font-semibold text-foreground">Mock Interview Rounds</h4>
+                          </div>
+                          <Badge className={`text-[10px] ${scoreBadgeClass(mockAvg)}`}>
+                            {mockAvg != null ? `Avg ${mockAvg}%` : "No attempts"}
+                          </Badge>
+                        </div>
+                        {scoredRounds.length > 0 ? (
+                          <>
+                            <div className="w-full h-2 rounded-full bg-muted overflow-hidden mb-3">
+                              <div className="h-full bg-purple-500" style={{ width: `${mockAvg ?? 0}%` }} />
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="flex flex-col p-2 rounded bg-background border border-border">
+                                <span className="text-muted-foreground text-[10px]">Rounds</span>
+                                <span className="font-semibold text-foreground">{scoredRounds.length}</span>
+                              </div>
+                              <div className="flex flex-col p-2 rounded bg-background border border-border">
+                                <span className="text-muted-foreground text-[10px]">Weak (&lt;60)</span>
+                                <span className="font-semibold text-red-600">{weakRounds.length}</span>
+                              </div>
+                              <div className="flex flex-col p-2 rounded bg-background border border-border">
+                                <span className="text-muted-foreground text-[10px]">Strong (≥75)</span>
+                                <span className="font-semibold text-emerald-600">{strongRounds.length}</span>
+                              </div>
+                            </div>
+                            <div className="mt-3 space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                              {scoredRounds.map((r, i) => (
+                                <div key={i} className="flex items-center justify-between gap-2 text-xs">
+                                  <span className="text-foreground truncate flex-1">{r.name}</span>
+                                  <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
+                                    <div className={`h-full ${r.score >= 75 ? "bg-emerald-500" : r.score >= 60 ? "bg-amber-500" : "bg-red-500"}`} style={{ width: `${r.score}%` }} />
+                                  </div>
+                                  <span className={`font-medium tabular-nums w-10 text-right ${r.score >= 75 ? "text-emerald-600" : r.score >= 60 ? "text-amber-600" : "text-red-600"}`}>{r.score}%</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Take a mock interview to see per-round performance.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Weak area split summary */}
+                    <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                        <div className="text-xs text-muted-foreground">From Resume</div>
+                        <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{resumeWeakCount}</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+                        <div className="text-xs text-muted-foreground">From Interviews</div>
+                        <div className="text-lg font-bold text-purple-700 dark:text-purple-300">{mockWeakCount}</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                        <div className="text-xs text-muted-foreground">Total Weak Areas</div>
+                        <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{uniqueWeakAreas.length}</div>
+                      </div>
+                    </div>
+                  </Card>
+
                   {/* Weak Areas */}
                   <Card className="p-6">
                     <div className="flex items-center gap-2 mb-4">
