@@ -176,7 +176,8 @@ export const SubscriptionsContent = () => {
         name: "Gradia",
         description: `${plan.name} Plan Subscription`,
         order_id: orderData.order_id,
-        prefill: { email: user?.email || "" },
+        prefill: { email: user?.email || "", contact: "" },
+        hidden: { contact: true },
         theme: { color: "#6366f1" },
         modal: {
           ondismiss: () => setProcessingPlan(null),

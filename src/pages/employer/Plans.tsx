@@ -109,7 +109,8 @@ export default function Plans() {
             toast({ title: 'Verification Failed', description: 'Payment received but verification failed. Contact support.', variant: 'destructive' });
           }
         },
-        prefill: { email: user.email },
+        prefill: { email: user.email, contact: "" },
+        hidden: { contact: true },
         theme: { color: '#6366f1' },
         modal: {
           ondismiss: () => setLoading(null),
