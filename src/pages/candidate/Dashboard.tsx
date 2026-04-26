@@ -86,6 +86,8 @@ import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChalleng
 import WalletTab from "@/components/candidate/WalletTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
 import { useActionPayment } from "@/hooks/useActionPayment";
+import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
+import { CANDIDATE_PLANS, FEATURE_LABELS, type CandidateFeature } from "@/config/candidatePlans";
 
 interface FamilyRecord {
   id?: string;
