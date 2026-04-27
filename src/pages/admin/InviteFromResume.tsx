@@ -153,6 +153,7 @@ const buildEmailHtml = (opts: {
 
   const cvOpeningsRows = cvOpenings
     .filter((o) => o.title && o.title.trim())
+    .slice(0, 3)
     .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
     .join("");
 
